@@ -159,3 +159,101 @@ func deleteKeyEvent(c *gin.Context) {
 		return
 	}
 }
+
+// GET /api/v1/key-events/:date/images
+func listKeyEventImages(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
+	ws := workspace.Manager.OpenedWorkspace()
+	if ws == nil {
+		ret.Code = -1
+		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
+		return
+	}
+
+	date := c.Param("date")
+	if date == "" {
+		ret.Code = -1
+		ret.Msg = "missing date parameter"
+		return
+	}
+
+	images, err := service.GetKeyEventImageService().GetImagesByEventDate(ws, date)
+	if err != nil {
+		ret.Code = -1
+		ret.Msg = err.Error()
+		return
+	}
+
+	ret.Data = images
+}
+
+// POST /api/v1/key-events/:date/images  body: { data, filename }
+func addKeyEventImage(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
+	ws := workspace.Manager.OpenedWorkspace()
+	if ws == nil {
+		ret.Code = -1
+		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
+		return
+	}
+
+	date := c.Param("date")
+	if date == "" {
+		ret.Code = -1
+		ret.Msg = "missing date parameter"
+		return
+	}
+
+	arg, ok := JsonArg(c, ret)
+	if !ok {
+		return
+	}
+
+	data, ok := arg["data"].(string)
+	if !ok || data == "" {
+		ret.Code = -1
+		ret.Msg = "invalid image data"
+		return
+	}
+
+	filename, _ := arg["filename"].(string)
+
+	image, err := service.GetKeyEventImageService().AddImage(ws, date, data, filename)
+	if err != nil {
+		ret.Code = -1
+		ret.Msg = err.Error()
+		return
+	}
+
+	ret.Data = image.ID
+}
+
+// DELETE /api/v1/key-event-images/:id
+func deleteKeyEventImage(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
+	ws := workspace.Manager.OpenedWorkspace()
+	if ws == nil {
+		ret.Code = -1
+		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
+		return
+	}
+
+	imageId := c.Param("id")
+	if imageId == "" {
+		ret.Code = -1
+		ret.Msg = "missing image id parameter"
+		return
+	}
+
+	if err := service.GetKeyEventImageService().DeleteImage(ws, imageId); err != nil {
+		ret.Code = -1
+		ret.Msg = err.Error()
+		return
+	}
+}

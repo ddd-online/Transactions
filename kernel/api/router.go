@@ -81,6 +81,13 @@ func ServeAPI(ginServer *gin.Engine) {
 			keyEvents.GET("/:date", getKeyEvent)
 			keyEvents.POST("", upsertKeyEvent)
 			keyEvents.DELETE("/:date", deleteKeyEvent)
+			keyEvents.GET("/:date/images", listKeyEventImages)
+			keyEvents.POST("/:date/images", addKeyEventImage)
+		}
+
+		keyEventImages := v1.Group("/key-event-images")
+		{
+			keyEventImages.DELETE("/:id", deleteKeyEventImage)
 		}
 
 		// MCP server control
