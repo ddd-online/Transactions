@@ -111,9 +111,6 @@
                     :src="img.data"
                     :preview="true"
                     preview-mask="预览"
-                    width="100%"
-                    height="120px"
-                    style="object-fit: cover; border-radius: 4px;"
                   />
                   <a-button
                     type="text"
@@ -719,6 +716,7 @@ onUnmounted(() => {
 
 .event-modal-content :deep(.ant-input-textarea textarea) {
   flex: 1;
+  min-height: 140px;
   resize: none;
 }
 
@@ -806,41 +804,57 @@ onUnmounted(() => {
 /* ========== 图片区域 ========== */
 .image-section {
   margin-top: var(--billadm-space-sm);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .image-section-header {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: var(--billadm-space-sm);
+  margin-bottom: var(--billadm-space-xs);
+  flex-shrink: 0;
 }
 
 .image-section-title {
-  font-size: var(--billadm-size-text-body-sm);
+  font-size: var(--billadm-size-text-caption);
   font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  color: var(--billadm-color-text-secondary);
 }
 
 .image-section-count {
   font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  color: var(--billadm-color-text-tertiary);
 }
 
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: var(--billadm-space-sm);
+  gap: 6px;
+  margin-bottom: var(--billadm-space-xs);
+  max-height: 280px;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .image-thumb {
   position: relative;
   border-radius: var(--billadm-radius-sm);
   overflow: hidden;
+  aspect-ratio: 1;
 }
 
 .image-thumb :deep(.ant-image) {
   display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-thumb :deep(.ant-image-img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .image-delete-btn {
@@ -872,15 +886,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: var(--billadm-space-md);
+  gap: 6px;
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
   border: 1px dashed var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
   color: var(--billadm-color-text-secondary);
-  font-size: var(--billadm-size-text-body-sm);
+  font-size: var(--billadm-size-text-caption);
   cursor: pointer;
   transition: border-color var(--billadm-transition-fast),
               background-color var(--billadm-transition-fast);
+  flex-shrink: 0;
 }
 
 .image-drop-zone:hover {
