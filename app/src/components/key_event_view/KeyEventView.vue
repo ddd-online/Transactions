@@ -66,7 +66,7 @@
       :width="modalWidth"
       :body-style="{ height: modalBodyHeight }"
       @ok="handleSave"
-      @cancel="modalVisible = false"
+      @cancel="handleModalClose"
     >
       <div class="event-modal-content">
         <a-tabs v-model:activeKey="activeTab">
@@ -96,6 +96,53 @@
               :maxlength="5000"
               show-count
             />
+            <div class="image-section">
+              <div class="image-section-header">
+                <span class="image-section-title">图片</span>
+                <span class="image-section-count" v-if="images.length">({{ images.length }})</span>
+              </div>
+              <div class="image-grid" v-if="images.length > 0">
+                <div
+                  v-for="img in images"
+                  :key="img.id"
+                  class="image-thumb"
+                >
+                  <a-image
+                    :src="img.data"
+                    :preview="{ mask: '预览' }"
+                    width="100%"
+                    height="120px"
+                    style="object-fit: cover; border-radius: 4px;"
+                  />
+                  <a-button
+                    type="text"
+                    danger
+                    size="small"
+                    class="image-delete-btn"
+                    @click="handleDeleteImage(img.id)"
+                  >
+                    <template #icon><CloseOutlined /></template>
+                  </a-button>
+                </div>
+              </div>
+              <div
+                class="image-drop-zone"
+                tabindex="0"
+                @click="triggerFileInput"
+                @paste="handlePaste"
+              >
+                <PlusOutlined />
+                <span>点击或粘贴添加图片</span>
+              </div>
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/*"
+                multiple
+                style="display: none"
+                @change="handleFileSelect"
+              />
+            </div>
           </a-tab-pane>
 
           <a-tab-pane key="linked" :tab="`关联交易 (${linkedCount})`">
@@ -160,7 +207,7 @@
         >
           <a-button danger>删除</a-button>
         </a-popconfirm>
-        <a-button @click="modalVisible = false">取消</a-button>
+        <a-button @click="handleModalClose">取消</a-button>
         <a-button type="primary" :loading="confirmLoading" @click="handleSave">保存</a-button>
       </template>
     </a-modal>
@@ -172,7 +219,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useKeyEventStore } from "@/stores/keyEventStore";
 import dayjs, { type Dayjs } from "dayjs";
 import NotificationUtil from "@/backend/notification";
-import { LeftOutlined, RightOutlined, CheckOutlined } from "@ant-design/icons-vue";
+import { LeftOutlined, RightOutlined, CheckOutlined, PlusOutlined, CloseOutlined } from "@ant-design/icons-vue";
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent, centsToYuan } from "@/backend/functions.ts";
 import { useLedgerStore } from "@/stores/ledgerStore";
 import type { TransactionRecord } from "@/types/billadm";
@@ -315,6 +362,64 @@ const linkedColumns = [
   { title: '操作', dataIndex: 'action', width: 70, align: 'center' as const },
 ];
 
+// ========== 图片 ==========
+const images = computed(() => keyEventStore.images);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const triggerFileInput = () => {
+  fileInputRef.value?.click();
+};
+
+const handleFileSelect = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
+  if (!files || files.length === 0) return;
+  for (const file of files) {
+    const data = await fileToBase64(file);
+    try {
+      await keyEventStore.addImage(selectedDate.value, data, file.name);
+    } catch {
+      // error already shown by store
+    }
+  }
+  input.value = '';
+};
+
+const handlePaste = async (event: ClipboardEvent) => {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) {
+        const data = await fileToBase64(file);
+        try {
+          await keyEventStore.addImage(selectedDate.value, data, file.name || 'pasted-image.png');
+        } catch {
+          // error already shown by store
+        }
+      }
+    }
+  }
+};
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('读取文件失败'));
+    reader.readAsDataURL(file);
+  });
+};
+
+const handleDeleteImage = async (imageId: string) => {
+  try {
+    await keyEventStore.removeImage(imageId);
+  } catch {
+    // error already shown by store
+  }
+};
+
 const loadLinkedTransactions = async (date: string) => {
   linkedLoading.value = true;
   try {
@@ -370,6 +475,7 @@ const onDayClick = async (year: number, month: number, day: number) => {
 
   activeTab.value = 'detail';
   loadLinkedTransactions(dateStr);
+  keyEventStore.fetchImages(dateStr);
   modalVisible.value = true;
 };
 
@@ -383,6 +489,7 @@ const handleSave = async () => {
   try {
     await keyEventStore.saveEvent(selectedDate.value, title, eventContent.value.trim(), eventColor.value);
     modalVisible.value = false;
+    keyEventStore.clearImages();
   } finally {
     confirmLoading.value = false;
   }
@@ -393,9 +500,15 @@ const handleDelete = async () => {
   try {
     await keyEventStore.deleteEvent(selectedDate.value);
     modalVisible.value = false;
+    keyEventStore.clearImages();
   } finally {
     confirmLoading.value = false;
   }
+};
+
+const handleModalClose = () => {
+  modalVisible.value = false;
+  keyEventStore.clearImages();
 };
 
 // ========== 初始化 ==========
@@ -687,5 +800,90 @@ onUnmounted(() => {
 
 .summary-item.transfer .summary-value {
   color: var(--billadm-color-transfer);
+}
+
+/* ========== 图片区域 ========== */
+.image-section {
+  margin-top: var(--billadm-space-sm);
+}
+
+.image-section-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: var(--billadm-space-sm);
+}
+
+.image-section-title {
+  font-size: var(--billadm-size-text-body-sm);
+  font-weight: var(--billadm-weight-medium);
+  color: var(--billadm-color-text-major);
+}
+
+.image-section-count {
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: var(--billadm-space-sm);
+}
+
+.image-thumb {
+  position: relative;
+  border-radius: var(--billadm-radius-sm);
+  overflow: hidden;
+}
+
+.image-thumb :deep(.ant-image) {
+  display: block;
+}
+
+.image-delete-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--billadm-transition-fast);
+}
+
+.image-thumb:hover .image-delete-btn {
+  opacity: 1;
+}
+
+.image-delete-btn :deep(.anticon) {
+  color: #fff;
+  font-size: 10px;
+}
+
+.image-drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: var(--billadm-space-md);
+  border: 1px dashed var(--billadm-color-window-border);
+  border-radius: var(--billadm-radius-md);
+  color: var(--billadm-color-text-secondary);
+  font-size: var(--billadm-size-text-body-sm);
+  cursor: pointer;
+  transition: border-color var(--billadm-transition-fast),
+              background-color var(--billadm-transition-fast);
+}
+
+.image-drop-zone:hover {
+  border-color: var(--billadm-color-primary);
+  background-color: var(--billadm-color-hover-bg);
 }
 </style>
