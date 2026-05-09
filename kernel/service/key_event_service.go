@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/billadm/dao"
@@ -98,8 +99,11 @@ func (s *keyEventServiceImpl) DeleteByDate(ws *workspace.Workspace, date string)
 	logrus.Infof("delete key event, date: %s", date)
 	return ws.Transaction(func(tx *workspace.Workspace) error {
 		if err := s.imageDao.DeleteImagesByEventDate(tx, date); err != nil {
-			return err
+			return fmt.Errorf("delete key event images: %w", err)
 		}
-		return s.keyEventDao.DeleteByDate(tx, date)
+		if err := s.keyEventDao.DeleteByDate(tx, date); err != nil {
+			return fmt.Errorf("delete key event: %w", err)
+		}
+		return nil
 	})
 }
