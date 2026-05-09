@@ -375,8 +375,8 @@ const handleFileSelect = async (event: Event) => {
   const files = input.files;
   if (!files || files.length === 0) return;
   for (const file of files) {
-    const data = await fileToBase64(file);
     try {
+      const data = await fileToBase64(file);
       await keyEventStore.addImage(selectedDate.value, data, file.name);
     } catch {
       // error already shown by store
@@ -392,8 +392,8 @@ const handlePaste = async (event: ClipboardEvent) => {
     if (item.type.startsWith('image/')) {
       const file = item.getAsFile();
       if (file) {
-        const data = await fileToBase64(file);
         try {
+          const data = await fileToBase64(file);
           await keyEventStore.addImage(selectedDate.value, data, file.name || 'pasted-image.png');
         } catch {
           // error already shown by store
