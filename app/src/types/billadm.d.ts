@@ -154,3 +154,15 @@ export interface KeyEvent {
     createdAt: number;    // 创建时间戳
     updatedAt: number;     // 更新时间戳
 }
+
+/**
+ * 关键事件图片
+ */
+export interface KeyEventImage {
+    id: string;
+    eventDate: string;
+    data: string;
+    filename: string;
+    sortOrder: number;
+    createdAt: number;
+}
