@@ -109,7 +109,8 @@
                 >
                   <a-image
                     :src="img.data"
-                    :preview="{ mask: '预览' }"
+                    :preview="true"
+                    preview-mask="预览"
                     width="100%"
                     height="120px"
                     style="object-fit: cover; border-radius: 4px;"
