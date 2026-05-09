@@ -21,7 +21,7 @@ export async function deleteKeyEvent(date: string): Promise<void> {
     return api.delete<void>(`/v1/key-events/${date}`, '删除关键事件');
 }
 
-export async function fetchKeyEventImages(date: string): Promise<KeyEventImage[]> {
+export async function queryKeyEventImages(date: string): Promise<KeyEventImage[]> {
     return api.get<KeyEventImage[]>(`/v1/key-events/${date}/images`, '查询关键事件图片');
 }
 
