@@ -17,7 +17,9 @@
       "Bash(node .claude/skills/impeccable/scripts/cleanup-deprecated.mjs)",
       "Bash(node:*)",
       "Bash(bash *)",
-      "Bash(go vet *)"
+      "Bash(go vet *)",
+      "Bash(git *)",
+      "Bash(npx vite *)"
     ]
   }
 }
