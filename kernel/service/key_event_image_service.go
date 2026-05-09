@@ -44,7 +44,13 @@ func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string
 	if err != nil {
 		return nil, err
 	}
-	sortOrder := len(images) + 1
+	maxOrder := 0
+	for _, img := range images {
+		if img.SortOrder > maxOrder {
+			maxOrder = img.SortOrder
+		}
+	}
+	sortOrder := maxOrder + 1
 	image := &models.KeyEventImage{
 		ID:        util.GetUUID(),
 		EventDate: date,
