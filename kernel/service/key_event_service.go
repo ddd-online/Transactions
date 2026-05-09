@@ -23,6 +23,7 @@ func GetKeyEventService() KeyEventService {
 	keyEventServiceOnce.Do(func() {
 		keyEventService = &keyEventServiceImpl{
 			keyEventDao: dao.GetKeyEventDao(),
+			imageDao:    dao.GetKeyEventImageDao(),
 		}
 	})
 	return keyEventService
@@ -40,6 +41,7 @@ var _ KeyEventService = &keyEventServiceImpl{}
 
 type keyEventServiceImpl struct {
 	keyEventDao dao.KeyEventDao
+	imageDao    dao.KeyEventImageDao
 }
 
 // UpsertKeyEvent 根据 date 判断是否存在：存在则更新 title、content、color，不存在则新建
@@ -94,5 +96,10 @@ func (s *keyEventServiceImpl) QueryDatesByYear(ws *workspace.Workspace, year str
 
 func (s *keyEventServiceImpl) DeleteByDate(ws *workspace.Workspace, date string) error {
 	logrus.Infof("delete key event, date: %s", date)
-	return s.keyEventDao.DeleteByDate(ws, date)
+	return ws.Transaction(func(tx *workspace.Workspace) error {
+		if err := s.imageDao.DeleteImagesByEventDate(tx, date); err != nil {
+			return err
+		}
+		return s.keyEventDao.DeleteByDate(tx, date)
+	})
 }
