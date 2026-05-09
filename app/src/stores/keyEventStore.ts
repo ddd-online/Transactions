@@ -4,10 +4,13 @@ import {
     queryKeyEventsByYear,
     queryKeyEventByDate,
     saveKeyEvent,
-    deleteKeyEvent
+    deleteKeyEvent,
+    queryKeyEventImages,
+    addKeyEventImage,
+    deleteKeyEventImage
 } from "@/backend/api/key-event";
 import NotificationUtil from "@/backend/notification";
-import type { KeyEvent } from "@/types/billadm";
+import type { KeyEvent, KeyEventImage } from "@/types/billadm";
 
 export const useKeyEventStore = defineStore('keyEvent', () => {
     // 某年有记录的日期集合，用于日历高亮
@@ -17,6 +20,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     const titles = ref(new Map<string, string>());
     // 日期 -> 颜色 的缓存
     const colors = ref(new Map<string, string>());
+    const images = ref<KeyEventImage[]>([]);
 
     // 获取某年有记录的日期列表
     const fetchDatesByYear = async (year: number) => {
@@ -89,6 +93,46 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         return colors.value.get(date) || '';
     };
 
+    const fetchImages = async (date: string): Promise<void> => {
+        try {
+            images.value = await queryKeyEventImages(date);
+        } catch (error) {
+            NotificationUtil.error('加载图片失败', `${error}`);
+            images.value = [];
+        }
+    };
+
+    const addImage = async (date: string, data: string, filename: string): Promise<void> => {
+        try {
+            const imageId = await addKeyEventImage(date, data, filename);
+            images.value.push({
+                id: imageId,
+                eventDate: date,
+                data,
+                filename,
+                sortOrder: images.value.length + 1,
+                createdAt: Math.floor(Date.now() / 1000),
+            });
+        } catch (error) {
+            NotificationUtil.error('添加图片失败', `${error}`);
+            throw error;
+        }
+    };
+
+    const removeImage = async (imageId: string): Promise<void> => {
+        try {
+            await deleteKeyEventImage(imageId);
+            images.value = images.value.filter(img => img.id !== imageId);
+        } catch (error) {
+            NotificationUtil.error('删除图片失败', `${error}`);
+            throw error;
+        }
+    };
+
+    const clearImages = (): void => {
+        images.value = [];
+    };
+
     return {
         datesWithRecords,
         currentYear,
@@ -99,5 +143,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         hasRecord,
         getTitle,
         getColor,
+        images,
+        fetchImages,
+        addImage,
+        removeImage,
+        clearImages,
     };
 });
