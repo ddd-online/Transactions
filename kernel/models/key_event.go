@@ -13,3 +13,16 @@ type KeyEvent struct {
 func (k *KeyEvent) TableName() string {
 	return "tbl_billadm_key_event"
 }
+
+type KeyEventImage struct {
+	ID        string `gorm:"primaryKey;comment:图片UUID" json:"id"`
+	EventDate string `gorm:"index;not null;comment:关联的关键事件日期" json:"eventDate"`
+	Data      string `gorm:"type:text;not null;comment:Base64图片数据" json:"data"`
+	Filename  string `gorm:"type:varchar(255);comment:原始文件名" json:"filename"`
+	SortOrder int    `gorm:"not null;default:0;comment:排序序号" json:"sortOrder"`
+	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+}
+
+func (k *KeyEventImage) TableName() string {
+	return "tbl_billadm_key_event_image"
+}
