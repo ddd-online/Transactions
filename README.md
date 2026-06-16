@@ -1,4 +1,4 @@
-# Transactions-GO
+# Transactions
 
 一款桌面端记账工具
 
