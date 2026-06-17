@@ -1,9 +1,7 @@
 <template>
   <div class="workspace-setting">
     <!-- 页面标题 -->
-    <div class="setting-header">
-      <span class="setting-title">工作空间</span>
-    </div>
+    <BilladmPageHeader title="工作空间" />
 
     <!-- 主要工作空间卡片 -->
     <div class="workspace-hero">
@@ -75,21 +73,6 @@ const handleSwitchWorkspace = async (newWorkspaceDir: string) => {
   display: flex;
   flex-direction: column;
   gap: var(--billadm-space-lg);
-}
-
-/* Page Header */
-.setting-header {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: var(--billadm-space-sm);
-}
-
-.setting-title {
-  font-size: var(--billadm-size-text-title-sm);
-  font-weight: 600;
-  color: var(--billadm-color-text-major);
-  margin: 0;
 }
 
 /* Hero Section */

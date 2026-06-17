@@ -1,8 +1,6 @@
 <template>
   <div class="template-setting">
-    <div class="setting-header">
-      <span class="setting-title">消费模板</span>
-    </div>
+    <BilladmPageHeader title="消费模板" />
 
     <a-table :columns="columns" :data-source="templates" :loading="loading" :pagination="false" row-key="template_id">
       <template #bodyCell="{ column, record, index }">
@@ -163,16 +161,6 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.setting-header {
-  margin-bottom: var(--billadm-space-md);
-}
-
-.setting-title {
-  font-size: var(--billadm-size-text-title-sm);
-  font-weight: 600;
-  color: var(--billadm-color-text-major);
 }
 
 .action-buttons {
