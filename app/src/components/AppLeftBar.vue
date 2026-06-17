@@ -4,7 +4,7 @@
     <div class="sidebar-ledger">
       <a-dropdown :trigger="['click']" placement="bottomLeft">
         <button class="ledger-btn">
-          <FolderOutlined class="ledger-btn-icon" />
+          <BookOutlined class="ledger-btn-icon" />
           <span class="ledger-btn-name">{{ ledgerStore.currentLedgerName || '选择账本' }}</span>
           <DownOutlined class="ledger-btn-arrow" />
         </button>
@@ -71,13 +71,27 @@
         <span class="nav-btn-text">设置</span>
       </button>
     </div>
+
+    <!-- 创建账本弹窗 -->
+    <a-modal v-model:open="showCreateModal" title="创建账本" @ok="handleConfirmCreate" ok-text="创建" cancel-text="取消"
+      centered :width="400">
+      <a-form :model="createForm" layout="vertical">
+        <a-form-item label="名称" name="name">
+          <a-input v-model:value="createForm.name" placeholder="请输入账本名称" :maxlength="20" />
+        </a-form-item>
+        <a-form-item label="描述" name="description">
+          <a-input v-model:value="createForm.description" placeholder="请输入账本描述" :maxlength="50" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  FolderOutlined,
+  BookOutlined,
   DownOutlined,
   PlusOutlined,
   DeleteOutlined,
@@ -105,12 +119,26 @@ const navigate = (path: string) => {
   router.push(path)
 }
 
+const showCreateModal = ref(false)
+const createForm = ref({ name: '', description: '' })
+
 const handleCreateLedger = () => {
-  Modal.info({
-    title: '创建账本',
-    content: '请在设置 > 工作空间中创建新账本',
-    okText: '知道了',
-  })
+  createForm.value = { name: '', description: '' }
+  showCreateModal.value = true
+}
+
+const handleConfirmCreate = async () => {
+  if (!createForm.value.name.trim()) {
+    message.error('请输入账本名称')
+    return
+  }
+  try {
+    await ledgerStore.createLedger(createForm.value.name, createForm.value.description)
+    message.success('账本已创建')
+    showCreateModal.value = false
+  } catch {
+    message.error('创建失败')
+  }
 }
 
 const handleDeleteLedger = (id: string, name: string) => {
@@ -152,7 +180,8 @@ const handleDeleteLedger = (id: string, name: string) => {
   align-items: center;
   gap: var(--billadm-space-sm);
   width: 100%;
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  height: 32px;
+  padding: 0 var(--billadm-space-md);
   border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
   background: var(--billadm-color-major-background);
