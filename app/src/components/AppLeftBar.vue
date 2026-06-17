@@ -143,6 +143,8 @@ const handleDeleteLedger = (id: string, name: string) => {
 /* 账本切换区域 */
 .sidebar-ledger {
   padding: var(--billadm-space-md);
+  padding-bottom: var(--billadm-space-md);
+  border-bottom: 1px solid var(--billadm-color-divider);
 }
 
 .ledger-btn {
