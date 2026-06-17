@@ -134,7 +134,6 @@ const handleConfirmCreate = async () => {
   }
   try {
     await ledgerStore.createLedger(createForm.value.name, createForm.value.description)
-    message.success('账本已创建')
     showCreateModal.value = false
   } catch {
     message.error('创建失败')
@@ -151,7 +150,6 @@ const handleDeleteLedger = (id: string, name: string) => {
     onOk: async () => {
       try {
         await ledgerStore.deleteLedger(id)
-        message.success('删除成功')
       } catch {
         message.error('删除失败')
       }

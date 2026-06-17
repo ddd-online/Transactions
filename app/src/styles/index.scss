@@ -176,7 +176,7 @@ body::before {
     margin-bottom: var(--billadm-space-lg);
   }
 
-  &-item-label > label {
+  &-item-label>label {
     font-family: var(--billadm-font-body);
     font-weight: 500;
     color: var(--billadm-color-text-major);
@@ -248,7 +248,7 @@ body::before {
 .ant-table {
   font-family: var(--billadm-font-body);
 
-  .ant-table-thead > tr > th {
+  .ant-table-thead>tr>th {
     font-family: var(--billadm-font-body);
     font-size: var(--billadm-size-text-caption);
     font-weight: 600;
@@ -260,16 +260,16 @@ body::before {
     padding: var(--billadm-space-md) var(--billadm-space-lg);
   }
 
-  .ant-table-tbody > tr > td {
+  .ant-table-tbody>tr>td {
     border-bottom: 1px solid var(--billadm-color-divider);
     padding: var(--billadm-space-md) var(--billadm-space-lg);
   }
 
-  .ant-table-tbody > tr:hover > td {
+  .ant-table-tbody>tr:hover>td {
     background-color: var(--billadm-color-hover-bg);
   }
 
-  .ant-table-tbody > tr.ant-table-row-selected > td {
+  .ant-table-tbody>tr.ant-table-row-selected>td {
     background-color: var(--billadm-color-active-bg);
   }
 }
@@ -362,6 +362,8 @@ body::before {
 // Message
 .ant-message {
   font-family: var(--billadm-font-body);
+  top: auto !important;
+  bottom: 48px;
 
   &-notice-content {
     border-radius: var(--billadm-radius-lg);
@@ -478,27 +480,34 @@ body::before {
   &-primary {
     color: var(--billadm-color-primary);
   }
+
   &-positive,
   &-income {
     color: var(--billadm-color-income);
   }
+
   &-negative,
   &-expense {
     color: var(--billadm-color-expense);
   }
+
   &-transfer {
     color: var(--billadm-color-transfer);
   }
+
   &-secondary {
     color: var(--billadm-color-text-secondary);
   }
+
   &-success {
     color: var(--billadm-color-success);
   }
+
   &-danger,
   &-error {
     color: var(--billadm-color-negative);
   }
+
   &-warning {
     color: var(--billadm-color-warning);
   }
@@ -509,9 +518,11 @@ body::before {
   &-major {
     background-color: var(--billadm-color-major-background);
   }
+
   &-minor {
     background-color: var(--billadm-color-minor-background);
   }
+
   &-elevated {
     background-color: var(--billadm-color-elevated);
   }
@@ -519,42 +530,139 @@ body::before {
 
 // Spacing utilities
 .m {
-  &-0 { margin: 0; }
-  &-auto { margin: auto; }
-  &t-sm { margin-top: var(--billadm-space-sm); }
-  &b-sm { margin-bottom: var(--billadm-space-sm); }
-  &l-sm { margin-left: var(--billadm-space-sm); }
-  &r-sm { margin-right: var(--billadm-space-sm); }
-  &t-md { margin-top: var(--billadm-space-md); }
-  &b-md { margin-bottom: var(--billadm-space-md); }
-  &l-md { margin-left: var(--billadm-space-md); }
-  &r-md { margin-right: var(--billadm-space-md); }
-  &t-lg { margin-top: var(--billadm-space-lg); }
-  &b-lg { margin-bottom: var(--billadm-space-lg); }
-  &l-lg { margin-left: var(--billadm-space-lg); }
-  &r-lg { margin-right: var(--billadm-space-lg); }
-  &t-xl { margin-top: var(--billadm-space-xl); }
-  &b-xl { margin-bottom: var(--billadm-space-xl); }
+  &-0 {
+    margin: 0;
+  }
+
+  &-auto {
+    margin: auto;
+  }
+
+  &t-sm {
+    margin-top: var(--billadm-space-sm);
+  }
+
+  &b-sm {
+    margin-bottom: var(--billadm-space-sm);
+  }
+
+  &l-sm {
+    margin-left: var(--billadm-space-sm);
+  }
+
+  &r-sm {
+    margin-right: var(--billadm-space-sm);
+  }
+
+  &t-md {
+    margin-top: var(--billadm-space-md);
+  }
+
+  &b-md {
+    margin-bottom: var(--billadm-space-md);
+  }
+
+  &l-md {
+    margin-left: var(--billadm-space-md);
+  }
+
+  &r-md {
+    margin-right: var(--billadm-space-md);
+  }
+
+  &t-lg {
+    margin-top: var(--billadm-space-lg);
+  }
+
+  &b-lg {
+    margin-bottom: var(--billadm-space-lg);
+  }
+
+  &l-lg {
+    margin-left: var(--billadm-space-lg);
+  }
+
+  &r-lg {
+    margin-right: var(--billadm-space-lg);
+  }
+
+  &t-xl {
+    margin-top: var(--billadm-space-xl);
+  }
+
+  &b-xl {
+    margin-bottom: var(--billadm-space-xl);
+  }
 }
 
 .p {
-  &-0 { padding: 0; }
-  &-sm { padding: var(--billadm-space-sm); }
-  &-md { padding: var(--billadm-space-md); }
-  &-lg { padding: var(--billadm-space-lg); }
-  &-xl { padding: var(--billadm-space-xl); }
-  &t-sm { padding-top: var(--billadm-space-sm); }
-  &b-sm { padding-bottom: var(--billadm-space-sm); }
-  &l-sm { padding-left: var(--billadm-space-sm); }
-  &r-sm { padding-right: var(--billadm-space-sm); }
-  &t-md { padding-top: var(--billadm-space-md); }
-  &b-md { padding-bottom: var(--billadm-space-md); }
-  &l-md { padding-left: var(--billadm-space-md); }
-  &r-md { padding-right: var(--billadm-space-md); }
-  &t-lg { padding-top: var(--billadm-space-lg); }
-  &b-lg { padding-bottom: var(--billadm-space-lg); }
-  &l-lg { padding-left: var(--billadm-space-lg); }
-  &r-lg { padding-right: var(--billadm-space-lg); }
+  &-0 {
+    padding: 0;
+  }
+
+  &-sm {
+    padding: var(--billadm-space-sm);
+  }
+
+  &-md {
+    padding: var(--billadm-space-md);
+  }
+
+  &-lg {
+    padding: var(--billadm-space-lg);
+  }
+
+  &-xl {
+    padding: var(--billadm-space-xl);
+  }
+
+  &t-sm {
+    padding-top: var(--billadm-space-sm);
+  }
+
+  &b-sm {
+    padding-bottom: var(--billadm-space-sm);
+  }
+
+  &l-sm {
+    padding-left: var(--billadm-space-sm);
+  }
+
+  &r-sm {
+    padding-right: var(--billadm-space-sm);
+  }
+
+  &t-md {
+    padding-top: var(--billadm-space-md);
+  }
+
+  &b-md {
+    padding-bottom: var(--billadm-space-md);
+  }
+
+  &l-md {
+    padding-left: var(--billadm-space-md);
+  }
+
+  &r-md {
+    padding-right: var(--billadm-space-md);
+  }
+
+  &t-lg {
+    padding-top: var(--billadm-space-lg);
+  }
+
+  &b-lg {
+    padding-bottom: var(--billadm-space-lg);
+  }
+
+  &l-lg {
+    padding-left: var(--billadm-space-lg);
+  }
+
+  &r-lg {
+    padding-right: var(--billadm-space-lg);
+  }
 }
 
 // ============================================
@@ -587,6 +695,7 @@ body::before {
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -598,6 +707,7 @@ body::before {
     opacity: 1;
     transform: translateY(0);
   }
+
   to {
     opacity: 0;
     transform: translateY(4px);
