@@ -15,16 +15,7 @@
       <p class="app-version">版本 {{ appVersion || '...' }}</p>
     </div>
 
-    <div class="about-description">
-      <p>简洁高效的个人财务管理工具</p>
-      <p>多账本 · 分类标签 · 数据分析</p>
-    </div>
-
     <div class="about-links">
-      <div class="link-item">
-        <span class="link-label">技术栈</span>
-        <span class="link-value">Electron + Vue.js + Go</span>
-      </div>
       <div class="link-item">
         <span class="link-label">构建时间</span>
         <span class="link-value">{{ buildTime }}</span>
@@ -95,12 +86,6 @@ onMounted(async () => {
   margin: 0;
 }
 
-.about-description {
-  text-align: center;
-  color: var(--billadm-color-text-secondary);
-  font-size: var(--billadm-size-text-body);
-  line-height: var(--billadm-height-relaxed);
-}
 
 .about-links {
   display: flex;
