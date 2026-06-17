@@ -13,12 +13,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openDialog: async (options) => {
         return await ipcRenderer.invoke('dialog:open', options);
     },
-    saveDialog: async (options) => {
-        return await ipcRenderer.invoke('dialog:save', options);
-    },
-    writeFile: async (filePath, content) => {
-        return await ipcRenderer.invoke('file:write', { filePath, content });
-    },
     setWorkspace: (workspaceDir) => {
         ipcRenderer.send('workspace:set', workspaceDir);
     },

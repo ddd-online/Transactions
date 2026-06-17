@@ -23,30 +23,12 @@
         </button>
         <button
           class="nav-item"
-          :class="{ active: activeComponent === 'data-import-export' }"
-          @click="activeComponent = 'data-import-export'"
-          aria-label="数据导入导出"
-        >
-          <CloudUploadOutlined class="nav-icon"/>
-          <span class="nav-text">数据导入导出</span>
-        </button>
-        <button
-          class="nav-item"
           :class="{ active: activeComponent === 'template' }"
           @click="activeComponent = 'template'"
           aria-label="消费模板"
         >
           <FileTextOutlined class="nav-icon"/>
           <span class="nav-text">消费模板</span>
-        </button>
-        <button
-          class="nav-item"
-          :class="{ active: activeComponent === 'mcp' }"
-          @click="activeComponent = 'mcp'"
-          aria-label="MCP"
-        >
-          <SettingOutlined class="nav-icon"/>
-          <span class="nav-text">MCP</span>
         </button>
         <button
           class="nav-item"
@@ -72,28 +54,22 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import {
-  CloudUploadOutlined,
   FolderOpenOutlined,
   TagOutlined,
   FileTextOutlined,
-  SettingOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons-vue";
 import WorkspaceSetting from './WorkspaceSetting.vue';
 import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
-import McpSetting from './McpSetting.vue';
 import AboutSetting from './AboutSetting.vue';
 import CategoryTagSetting from './BilladmCategoryTagSetting.vue';
-import DataImportExportSetting from './DataImportExportSetting.vue';
 
 const activeComponent = ref('category-tag');
 
 const componentMap = {
   'category-tag': CategoryTagSetting,
   'workspace': WorkspaceSetting,
-  'data-import-export': DataImportExportSetting,
   'template': BilladmTemplateSetting,
-  'mcp': McpSetting,
   'about': AboutSetting,
 };
 

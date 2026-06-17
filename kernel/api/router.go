@@ -89,14 +89,6 @@ func ServeAPI(ginServer *gin.Engine) {
 		{
 			keyEventImages.DELETE("/:id", deleteKeyEventImage)
 		}
-
-		// MCP server control
-		mcpGroup := v1.Group("/mcp")
-		{
-			mcpGroup.POST("/start", startMcpServer)
-			mcpGroup.POST("/stop", stopMcpServer)
-			mcpGroup.GET("/status", getMcpStatus)
-		}
 	}
 }
 

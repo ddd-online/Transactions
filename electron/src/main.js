@@ -127,28 +127,6 @@ const registerCommonHandlers = () => {
         }
     });
 
-    ipcMain.handle('dialog:save', async (event, options) => {
-        try {
-            return await dialog.showSaveDialog({
-                properties: ['showOverwriteConfirmation'], ...options,
-            });
-        } catch (err) {
-            log(`Save Dialog error: ${err.message}`);
-            return { canceled: true, filePath: '', error: err.message };
-        }
-    });
-
-    ipcMain.handle('file:write', async (event, { filePath, content }) => {
-        try {
-            fs.writeFileSync(filePath, content, 'utf8');
-            log(`File written: ${filePath}`);
-            return { success: true };
-        } catch (err) {
-            log(`File write error: ${err.message}`);
-            return { success: false, error: err.message };
-        }
-    });
-
     ipcMain.on('workspace:set', (event, workspaceDir) => {
         transactionsCfg.workspaceDir = workspaceDir;
         saveTransactionsCfg();
