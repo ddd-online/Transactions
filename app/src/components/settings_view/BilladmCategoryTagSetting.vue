@@ -68,7 +68,25 @@
           </div>
         </div>
         <div class="column-empty" v-else>
-          <span>暂无分类</span>
+          <div class="empty-init">
+            <div class="empty-init-icon">
+              <svg viewBox="0 0 48 48" fill="none">
+                <rect x="6" y="8" width="36" height="32" rx="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 16h36" stroke="currentColor" stroke-width="2"/>
+                <path d="M16 4v8M32 4v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M18 26h12M20 32h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="empty-init-text">当前账本暂无分类标签</span>
+            <button
+              class="init-btn"
+              :disabled="!ledgerStore.currentLedgerId || initLoading"
+              @click="handleInitialize"
+            >
+              <span v-if="initLoading">初始化中...</span>
+              <span v-else>初始化分类标签</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -146,7 +164,7 @@ import { useLedgerStore } from '@/stores/ledgerStore';
 import {
   getCategoryByType, getTagsByCategory,
   addCategory, removeCategory, addTag, removeTag,
-  reorderCategory, reorderTag
+  reorderCategory, reorderTag, initializeCategoriesForLedger
 } from '@/backend/functions';
 import { TransactionTypeToColor } from "@/backend/constant.ts";
 import { message } from "ant-design-vue";
@@ -172,6 +190,7 @@ const activeType = ref<TransactionType>('expense');
 const categories = ref<CategoryWithTags[]>([]);
 const selectedCategory = ref<string>('');
 const selectedTags = ref<Tag[]>([]);
+const initLoading = ref(false);
 
 // 添加分类弹窗
 const openCategoryModal = ref(false);
@@ -329,6 +348,20 @@ const selectCategory = (categoryName: string) => {
   selectedCategory.value = categoryName;
   const category = categories.value.find(c => c.name === categoryName);
   selectedTags.value = category ? category.tags : [];
+};
+
+const handleInitialize = async () => {
+  if (!ledgerStore.currentLedgerId) return;
+  initLoading.value = true;
+  try {
+    const result = await initializeCategoriesForLedger(ledgerStore.currentLedgerId);
+    message.success(`已添加 ${result.categories} 个分类、${result.tags} 个标签`);
+    await loadCategories();
+  } catch (error: any) {
+    message.error(error?.message || '初始化失败');
+  } finally {
+    initLoading.value = false;
+  }
 };
 
 watch(
@@ -627,5 +660,57 @@ watch(
 .form-label {
   font-size: var(--billadm-size-text-body);
   color: var(--billadm-color-text-secondary);
+}
+
+/* 初始化空状态 */
+.empty-init {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--billadm-space-md);
+  padding: var(--billadm-space-xl);
+  text-align: center;
+}
+
+.empty-init-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--billadm-color-text-disabled);
+  opacity: 0.4;
+}
+
+.empty-init-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-init-text {
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-secondary);
+}
+
+.init-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  font-size: var(--billadm-size-text-body-sm);
+  font-weight: 500;
+  color: var(--billadm-color-text-inverse);
+  background-color: var(--billadm-color-primary);
+  border: none;
+  border-radius: var(--billadm-radius-md);
+  cursor: pointer;
+  transition: all var(--billadm-transition-fast);
+}
+
+.init-btn:hover:not(:disabled) {
+  background-color: var(--billadm-color-primary-light);
+}
+
+.init-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>
