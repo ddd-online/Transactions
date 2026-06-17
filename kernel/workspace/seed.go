@@ -35,40 +35,52 @@ var defaultData = map[string]map[string][]string{
 	},
 }
 
-func seedData(db *gorm.DB) error {
-	var count int64
-	if err := db.Model(&models.Category{}).Count(&count).Error; err != nil {
-		logrus.Errorf("检查分类数据失败: %v", err)
-		return err
-	}
-	if count > 0 {
-		logrus.Info("数据库已存在数据，跳过预置")
-		return nil
-	}
+// GetDefaultData returns the preset categories and tags map.
+func GetDefaultData() map[string]map[string][]string {
+	return defaultData
+}
+
+// SeedData seeds the given ledger with default categories and tags.
+// Returns (categoryCount, tagCount, error).
+func SeedData(db *gorm.DB, ledgerID string) (int, int, error) {
+	categoryCount := 0
+	tagCount := 0
 
 	for transactionType, categories := range defaultData {
 		for categoryName, tags := range categories {
 			category := models.Category{
+				LedgerID:        ledgerID,
 				Name:            categoryName,
 				TransactionType: transactionType,
 			}
-			if err := db.FirstOrCreate(&category, category).Error; err != nil {
+			if err := db.FirstOrCreate(&category, models.Category{
+				LedgerID:        ledgerID,
+				Name:            categoryName,
+				TransactionType: transactionType,
+			}).Error; err != nil {
 				logrus.Errorf("创建分类失败: %v", err)
-				return err
+				return 0, 0, err
 			}
+			categoryCount++
 
 			categoryTransactionType := categoryName + ":" + transactionType
 			for _, tagName := range tags {
 				tag := models.Tag{
+					LedgerID:                ledgerID,
 					Name:                    tagName,
 					CategoryTransactionType: categoryTransactionType,
 				}
-				if err := db.FirstOrCreate(&tag, tag).Error; err != nil {
+				if err := db.FirstOrCreate(&tag, models.Tag{
+					LedgerID:                ledgerID,
+					Name:                    tagName,
+					CategoryTransactionType: categoryTransactionType,
+				}).Error; err != nil {
 					logrus.Errorf("创建标签失败: %v", err)
-					return err
+					return 0, 0, err
 				}
+				tagCount++
 			}
 		}
 	}
-	return nil
+	return categoryCount, tagCount, nil
 }

@@ -30,11 +30,6 @@ func NewWorkspace(directory string) (*Workspace, error) {
 		return nil, err
 	}
 
-	// Seed default category and tag data
-	if err := seedData(db); err != nil {
-		logrus.Warnf("预置数据失败, 但不影响workspace创建: %v", err)
-	}
-
 	return &Workspace{
 		directory: directory,
 		db:        db,
