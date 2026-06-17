@@ -253,8 +253,9 @@ const handleDeleteLedger = (id: string, name: string) => {
 .sidebar-bottom {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--billadm-space-sm);
+  justify-content: center;
+  height: var(--billadm-size-footer-height);
+  padding: 0 var(--billadm-space-sm);
 }
 
 /* 导航按钮 */
