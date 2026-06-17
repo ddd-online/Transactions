@@ -5,26 +5,20 @@
 
     <!-- 主布局 -->
     <div class="app-shell-body">
-      <!-- 顶部状态栏 -->
-      <header class="app-header">
+      <!-- 侧边栏 -->
+      <aside class="app-sidebar">
+        <app-left-bar />
+      </aside>
+
+      <!-- 内容区域 -->
+      <main class="app-content">
+        <!-- 沉浸式窗口控制按钮 - 浮动在右上角 -->
         <app-top-bar />
-      </header>
-
-      <!-- 主体区域 -->
-      <div class="app-main">
-        <!-- 侧边栏 -->
-        <aside class="app-sidebar">
-          <app-left-bar />
-        </aside>
-
-        <!-- 内容区域 -->
-        <main class="app-content">
-          <router-view class="app-router-view" />
-          <footer v-if="showBottomBar" class="app-footer">
-            <app-bottom-bar />
-          </footer>
-        </main>
-      </div>
+        <router-view class="app-router-view" />
+        <footer v-if="showBottomBar" class="app-footer">
+          <app-bottom-bar />
+        </footer>
+      </main>
     </div>
   </div>
 </template>
@@ -86,43 +80,30 @@ onMounted(initWorkspace);
 
 .app-shell-body {
   display: flex;
-  flex-direction: column;
   flex: 1;
   overflow: hidden;
 }
 
-/* 顶部状态栏 - 最高层次，白色elevated表面 */
-.app-header {
-  height: var(--billadm-size-header-height);
-  background-color: var(--billadm-color-elevated);
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--billadm-color-divider);
-}
-
-/* 主体区域 */
-.app-main {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* 侧边栏 - 导航上下文，稍暗 */
+/* 侧边栏 */
 .app-sidebar {
-  width: var(--billadm-size-sider-width);
-  min-width: var(--billadm-size-sider-width);
+  width: 200px;
+  min-width: 200px;
   height: 100%;
   background-color: var(--billadm-color-minor-background);
   flex-shrink: 0;
   border-right: 1px solid var(--billadm-color-divider);
+  display: flex;
+  flex-direction: column;
 }
 
-/* 内容区域 - 主工作区，温暖的工作桌面 */
+/* 内容区域 */
 .app-content {
   display: flex;
   flex-direction: column;
   flex: 1;
   background-color: var(--billadm-color-major-warm);
   overflow: hidden;
+  position: relative;
 }
 
 .app-router-view {
@@ -130,7 +111,7 @@ onMounted(initWorkspace);
   overflow: auto;
 }
 
-/* 底部状态栏 - 信息汇总 */
+/* 底部状态栏 */
 .app-footer {
   height: var(--billadm-size-footer-height);
   background-color: var(--billadm-color-major-warm);
