@@ -229,15 +229,15 @@ const isLoading = ref(false);
 
 // ========== 颜色配置 ==========
 const EVENT_COLORS = [
-  '#D4756E', '#E57373', '#3E8E50', '#4CAF50',
-  '#6B8FB8', '#64B5F6', '#C9A227', '#9E8770',
-  '#7A5C58', '#5C7A6A',
-  '#9C27B0', '#BA68C8', '#FF9800', '#FFB74D',
-  '#00BCD4', '#4DD0E1', '#795548', '#A1887F',
-  '#607D8B', '#90A4AE'
+  '#D9705A', '#E89280', '#4A8C6F', '#6BAA8C',
+  '#5C8DB5', '#7EABCC', '#C6963A', '#8C7B6E',
+  '#9E8C7E', '#6B9E7E',
+  '#8C6B9E', '#A88CC0', '#C68E30', '#D4A84B',
+  '#5C9EA8', '#7EB8C2', '#B89A80', '#CCB098',
+  '#7E8C94', '#9EAAB0'
 ]
 
-const DEFAULT_COLOR = '#2D5A27'  // --billadm-color-primary
+const DEFAULT_COLOR = '#4A8C6F'  // --billadm-color-primary
 
 const eventColor = ref(DEFAULT_COLOR)
 

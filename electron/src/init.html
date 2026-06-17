@@ -13,29 +13,29 @@
   <script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
   <style>
     :root {
-      --billadm-color-primary: #2D5A27;
-      --billadm-color-primary-light: #4A7A42;
-      --billadm-color-secondary: #8B7355;
-      --billadm-color-accent: #C9A227;
-      --billadm-color-positive: #2D7D46;
-      --billadm-color-negative: #C73E3A;
+      --billadm-color-primary: #4A8C6F;
+      --billadm-color-primary-light: #6BAA8C;
+      --billadm-color-secondary: #8C7B6E;
+      --billadm-color-accent: #C6963A;
+      --billadm-color-positive: #3D8C5E;
+      --billadm-color-negative: #D9705A;
       --billadm-color-major-background: #FFFFFF;
-      --billadm-color-major-warm: #FAFAF8;
-      --billadm-color-minor-background: #F5F5F2;
-      --billadm-color-divider: #E8E8E3;
-      --billadm-color-text-major: #1A1A18;
-      --billadm-color-text-secondary: #6B6B66;
-      --billadm-color-window-border: #E5E5E0;
-      --billadm-shadow-sm: 0 1px 2px rgba(45, 90, 39, 0.06);
-      --billadm-shadow-md: 0 4px 12px rgba(45, 90, 39, 0.10);
-      --billadm-shadow-lg: 0 8px 24px rgba(45, 90, 39, 0.15);
-      --billadm-shadow-xl: 0 16px 48px rgba(45, 90, 39, 0.20);
-      --billadm-radius-md: 6px;
-      --billadm-radius-lg: 10px;
+      --billadm-color-major-warm: #F9F8F6;
+      --billadm-color-minor-background: #F3F1ED;
+      --billadm-color-divider: #EDEBE7;
+      --billadm-color-text-major: #1D1D1B;
+      --billadm-color-text-secondary: #5C5C55;
+      --billadm-color-window-border: #E4E1DB;
+      --billadm-shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --billadm-shadow-md: 0 2px 8px rgba(0,0,0,0.07);
+      --billadm-shadow-lg: 0 4px 16px rgba(0,0,0,0.09);
+      --billadm-shadow-xl: 0 8px 32px rgba(0,0,0,0.12);
+      --billadm-radius-md: 8px;
+      --billadm-radius-lg: 12px;
       --billadm-radius-xl: 16px;
       --billadm-transition-fast: 150ms ease;
       --billadm-transition-normal: 250ms ease;
-      --billadm-color-hover-bg: rgba(45, 90, 39, 0.06);
+      --billadm-color-hover-bg: rgba(74, 140, 111, 0.07);
     }
 
     * {
@@ -63,8 +63,8 @@
       right: 0;
       bottom: 0;
       background:
-        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(45, 90, 39, 0.04) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(139, 115, 85, 0.05) 0%, transparent 50%);
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(74, 140, 111, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(140, 123, 110, 0.04) 0%, transparent 50%);
       pointer-events: none;
       z-index: 0;
     }
@@ -146,7 +146,7 @@
       right: 0;
       bottom: 0;
       background:
-        radial-gradient(ellipse 100% 80% at 50% 0%, rgba(45, 90, 39, 0.03) 0%, transparent 60%);
+        radial-gradient(ellipse 100% 80% at 50% 0%, rgba(74, 140, 111, 0.03) 0%, transparent 60%);
       pointer-events: none;
     }
 
@@ -249,7 +249,7 @@
     .cta-button:hover {
       background: var(--billadm-color-primary-light);
       transform: translateY(-2px);
-      box-shadow: var(--billadm-shadow-lg), 0 0 24px rgba(45, 90, 39, 0.18);
+      box-shadow: var(--billadm-shadow-lg), 0 0 24px rgba(74, 140, 111, 0.15);
     }
 
     .cta-button:active {

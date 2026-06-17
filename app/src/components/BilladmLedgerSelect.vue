@@ -54,6 +54,6 @@ const handleChange = (value: SelectValue, _: DefaultOptionType | DefaultOptionTy
 .ledger-select :deep(.ant-select-focused .ant-select-selector) {
   background-color: var(--billadm-color-primary);
   border-color: var(--billadm-color-primary) !important;
-  box-shadow: 0 0 0 2px rgba(45, 90, 39, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.2) !important;
 }
 </style>

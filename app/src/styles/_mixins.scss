@@ -1,9 +1,9 @@
 // ============================================
-// Billadm Mixins
-// "Warm Editorial Precision" Design System
+// Transactions Mixins
+// "Clean Editorial Light" Design
 // ============================================
 
-// Flexbox utilities
+// Flexbox
 @mixin flex-center {
   display: flex;
   align-items: center;
@@ -48,7 +48,7 @@
   text-overflow: ellipsis;
 }
 
-// Custom scrollbar - warm editorial style
+// Scrollbar
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
     width: 6px;
@@ -69,8 +69,7 @@
   }
 }
 
-
-// Drag region for Electron
+// Electron drag regions
 @mixin drag-region {
   -webkit-app-region: drag;
 }
@@ -79,15 +78,14 @@
   -webkit-app-region: no-drag;
 }
 
-// Card base - warm editorial style
+// Card — clean bordered
 @mixin card-base {
   background-color: var(--billadm-color-major-background);
   border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-lg);
   box-shadow: var(--billadm-shadow-sm);
   transition: box-shadow var(--billadm-transition-normal),
-              border-color var(--billadm-transition-normal),
-              transform var(--billadm-transition-normal);
+              border-color var(--billadm-transition-normal);
 
   &:hover {
     box-shadow: var(--billadm-shadow-md);
@@ -116,11 +114,11 @@
   font-family: inherit;
 }
 
-// Input focus - warm editorial style
+// Input focus
 @mixin input-focus {
   &:focus-within {
     border-color: var(--billadm-color-primary);
-    box-shadow: 0 0 0 2px rgba(45, 90, 39, 0.1);
+    box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.15);
   }
 }
 
@@ -132,12 +130,11 @@
   @include custom-scrollbar;
 }
 
-// Section gap
 @mixin section-gap {
   margin-bottom: var(--billadm-space-xl);
 }
 
-// Icon button - warm editorial
+// Icon button
 @mixin icon-button {
   @include button-reset;
   @include flex-center;
@@ -157,7 +154,7 @@
   }
 }
 
-// Nav button - for sidebar navigation
+// Nav button
 @mixin nav-button {
   @include button-reset;
   @include flex-center;
@@ -184,16 +181,16 @@
   }
 }
 
-// Focus ring - warm editorial
+// Focus ring
 @mixin focus-ring {
   &:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--billadm-color-major-background),
-                0 0 0 4px var(--billadm-color-primary);
+                0 0 0 4px rgba(74, 140, 111, 0.5);
   }
 }
 
-// Noise texture overlay (for atmosphere)
+// Noise texture
 @mixin noise-texture {
   position: relative;
 

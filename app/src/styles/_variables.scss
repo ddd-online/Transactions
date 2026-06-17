@@ -1,82 +1,68 @@
 // ============================================
-// Billadm Theme Variables
-// "Warm Editorial Precision" Design System
+// Transactions Design Tokens
+// "Clean Editorial Light" — crisp, calm, readable
 // ============================================
 @use 'sass:map';
 
 // ============================================
-// Design Tokens - Light Mode
+// Theme Colors
 // ============================================
-
-// Theme colors - Warm Editorial Palette
 $theme-colors: (
-  'primary': #2D5A27,
-  'primary-light': #4A7A42,
-  'secondary': #8B7355,
-  'accent': #C9A227,
-  'positive': #2D7D46,
-  'negative': #C73E3A,
-  'warning': #B8860B,
-  'success': #2D7D46,
+  'primary': #4A8C6F,
+  'primary-light': #6BAA8C,
+  'secondary': #8C7B6E,
+  'accent': #C6963A,
 ) !default;
 
-// Ledger accent palette - warm, editorial colors for ledger card icons
-$ledger-colors: (
-  'forest': #2D5A27,
-  'warm-brown': #8B7355,
-  'amber': #C9A227,
-  'vermillion': #C73E3A,
-  'slate-blue': #5A7FAA,
-  'ochre': #7A5C58,
-  'moss': #5C7A6A,
-  'camel': #8A6B5C,
-) !default;
-
-// Semantic colors for transactions
+// Semantic colors — distinct, colorblind-friendly
 $semantic-colors: (
-  'income': #2D7D46,
-  'expense': #C73E3A,
-  'transfer': #5A7FAA,
-  'outlier': #B8860B,
+  'income': #3D8C5E,
+  'expense': #D9705A,
+  'transfer': #5C8DB5,
+  'outlier': #C68E30,
+  'success': #3D8C5E,
 ) !default;
 
-// Background colors - Warm Editorial Hierarchy
+// Ledger accent palette
+$ledger-colors: (
+  'forest': #4A8C6F,
+  'warm-brown': #8C7B6E,
+  'amber': #C6963A,
+  'vermillion': #D9705A,
+  'slate-blue': #5C8DB5,
+  'ochre': #9E8C7E,
+  'moss': #6B9E7E,
+  'camel': #B89A80,
+) !default;
+
+// Background — clean white hierarchy with subtle warmth
 $background-colors: (
   'major': #FFFFFF,
-  'major-warm': #FAFAF8,
-  'minor': #F0F0EC,
+  'major-warm': #F9F8F6,
+  'minor': #F3F1ED,
   'elevated': #FFFFFF,
-  'window-border': #E5E5E0,
-  'divider': #E8E8E3,
+  'window-border': #E4E1DB,
+  'divider': #EDEBE7,
 ) !default;
 
-// Text colors - Warm neutrals
+// Text — near-black for maximum readability
 $text-colors: (
-  'major': #1A1A18,
-  'secondary': #6B6B66,
-  'disabled': #A8A8A3,
+  'major': #1D1D1B,
+  'secondary': #5C5C55,
+  'disabled': #9E9E96,
   'inverse': #FFFFFF,
 ) !default;
 
-// Icon colors
+// Icons
 $icon-colors: (
-  'default': #6B6B66,
-  'hover': #1A1A18,
-  'active': #2D5A27,
-) !default;
-
-// Shadow palette - Warm and soft
-$shadow-colors: (
-  'sm': rgba(45, 90, 39, 0.06),
-  'md': rgba(45, 90, 39, 0.10),
-  'lg': rgba(45, 90, 39, 0.15),
-  'xl': rgba(45, 90, 39, 0.20),
+  'default': #5C5C55,
+  'hover': #1D1D1B,
+  'active': #4A8C6F,
 ) !default;
 
 // ============================================
-// Typography Scale
+// Typography
 // ============================================
-
 $font-sizes: (
   'display-xl': 36px,
   'display': 28px,
@@ -105,9 +91,8 @@ $line-heights: (
 ) !default;
 
 // ============================================
-// Spacing System (8px base)
+// Spacing (8px base)
 // ============================================
-
 $spacing: (
   '2xs': 2px,
   'xs': 4px,
@@ -120,9 +105,8 @@ $spacing: (
 ) !default;
 
 // ============================================
-// Layout Sizes
+// Layout
 // ============================================
-
 $layout-sizes: (
   'header-height': 48px,
   'sider-width': 56px,
@@ -131,13 +115,12 @@ $layout-sizes: (
 ) !default;
 
 // ============================================
-// Border Radius
+// Border Radius — moderate, clean
 // ============================================
-
 $border-radius: (
-  'sm': 4px,
-  'md': 6px,
-  'lg': 10px,
+  'sm': 6px,
+  'md': 8px,
+  'lg': 12px,
   'xl': 16px,
   'full': 9999px,
 ) !default;
@@ -145,7 +128,6 @@ $border-radius: (
 // ============================================
 // Transitions
 // ============================================
-
 $transitions: (
   'fast': 150ms ease,
   'normal': 200ms ease,
@@ -154,27 +136,34 @@ $transitions: (
 ) !default;
 
 // ============================================
-// CSS Variables (Runtime Theme)
+// Shadows — clean, layered depth
 // ============================================
+$shadow-sm-color: rgba(0, 0, 0, 0.05);
+$shadow-md-color: rgba(0, 0, 0, 0.07);
+$shadow-lg-color: rgba(0, 0, 0, 0.09);
+$shadow-xl-color: rgba(0, 0, 0, 0.12);
 
+// ============================================
+// CSS Custom Properties
+// ============================================
 :root {
-  // Theme colors
+  // Theme
   --billadm-color-primary: #{map.get($theme-colors, 'primary')};
   --billadm-color-primary-light: #{map.get($theme-colors, 'primary-light')};
   --billadm-color-secondary: #{map.get($theme-colors, 'secondary')};
   --billadm-color-accent: #{map.get($theme-colors, 'accent')};
 
-  // Semantic colors
-  --billadm-color-positive: #{map.get($semantic-colors, 'income')};
-  --billadm-color-negative: #{map.get($semantic-colors, 'expense')};
-  --billadm-color-warning: #{map.get($semantic-colors, 'outlier')};
-  --billadm-color-success: #{map.get($semantic-colors, 'success')};
+  // Semantic
   --billadm-color-income: #{map.get($semantic-colors, 'income')};
   --billadm-color-expense: #{map.get($semantic-colors, 'expense')};
   --billadm-color-transfer: #{map.get($semantic-colors, 'transfer')};
   --billadm-color-outlier: #{map.get($semantic-colors, 'outlier')};
+  --billadm-color-success: #{map.get($semantic-colors, 'success')};
+  --billadm-color-warning: #{map.get($semantic-colors, 'outlier')};
+  --billadm-color-positive: #{map.get($semantic-colors, 'income')};
+  --billadm-color-negative: #{map.get($semantic-colors, 'expense')};
 
-  // Backgrounds
+  // Background
   --billadm-color-major-background: #{map.get($background-colors, 'major')};
   --billadm-color-major-warm: #{map.get($background-colors, 'major-warm')};
   --billadm-color-minor-background: #{map.get($background-colors, 'minor')};
@@ -182,22 +171,22 @@ $transitions: (
   --billadm-color-window-border: #{map.get($background-colors, 'window-border')};
   --billadm-color-divider: #{map.get($background-colors, 'divider')};
 
-  // Text colors
+  // Text
   --billadm-color-text-major: #{map.get($text-colors, 'major')};
   --billadm-color-text-secondary: #{map.get($text-colors, 'secondary')};
   --billadm-color-text-disabled: #{map.get($text-colors, 'disabled')};
   --billadm-color-text-inverse: #{map.get($text-colors, 'inverse')};
 
-  // Icon colors
+  // Icons
   --billadm-color-icon: #{map.get($icon-colors, 'default')};
   --billadm-color-icon-hover: #{map.get($icon-colors, 'hover')};
   --billadm-color-icon-active: #{map.get($icon-colors, 'active')};
 
   // Shadows
-  --billadm-shadow-sm: 0 1px 2px #{map.get($shadow-colors, 'sm')};
-  --billadm-shadow-md: 0 4px 12px #{map.get($shadow-colors, 'md')};
-  --billadm-shadow-lg: 0 8px 24px #{map.get($shadow-colors, 'lg')};
-  --billadm-shadow-xl: 0 12px 36px #{map.get($shadow-colors, 'xl')};
+  --billadm-shadow-sm: 0 1px 3px #{$shadow-sm-color};
+  --billadm-shadow-md: 0 2px 8px #{$shadow-md-color};
+  --billadm-shadow-lg: 0 4px 16px #{$shadow-lg-color};
+  --billadm-shadow-xl: 0 8px 32px #{$shadow-xl-color};
 
   // Typography
   --billadm-size-text-display-xl: #{map.get($font-sizes, 'display-xl')};
@@ -250,11 +239,11 @@ $transitions: (
   --billadm-transition-slow: #{map.get($transitions, 'slow')};
   --billadm-transition-smooth: #{map.get($transitions, 'smooth')};
 
-  // Hover backgrounds
-  --billadm-color-hover-bg: rgba(45, 90, 39, 0.06);
-  --billadm-color-active-bg: rgba(45, 90, 39, 0.10);
+  // Hover / active states
+  --billadm-color-hover-bg: rgba(74, 140, 111, 0.07);
+  --billadm-color-active-bg: rgba(74, 140, 111, 0.12);
 
-  // Ledger accent colors
+  // Ledger accents
   --billadm-ledger-forest: #{map.get($ledger-colors, 'forest')};
   --billadm-ledger-warm-brown: #{map.get($ledger-colors, 'warm-brown')};
   --billadm-ledger-amber: #{map.get($ledger-colors, 'amber')};

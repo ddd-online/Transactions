@@ -12,17 +12,17 @@ const locale = ref(zhCN);
 
 const themeConfig = computed(() => ({
   token: {
-    colorPrimary: '#2D5A27',
+    colorPrimary: '#4A8C6F',
     colorBgContainer: '#FFFFFF',
     colorBgElevated: '#FFFFFF',
-    colorBgLayout: '#FAFAF8',
-    colorBorder: '#E5E5E0',
-    colorText: '#1A1A18',
-    colorTextSecondary: '#6B6B66',
-    colorSuccess: '#2D7D46',
-    colorWarning: '#B8860B',
-    colorError: '#C73E3A',
-    borderRadius: 6,
+    colorBgLayout: '#F9F8F6',
+    colorBorder: '#E4E1DB',
+    colorText: '#1D1D1B',
+    colorTextSecondary: '#5C5C55',
+    colorSuccess: '#3D8C5E',
+    colorWarning: '#C68E30',
+    colorError: '#D9705A',
+    borderRadius: 8,
     fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif",
   },
 }));

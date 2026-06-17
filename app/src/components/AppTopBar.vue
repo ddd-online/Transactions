@@ -129,7 +129,7 @@ const onClose = () => {
 }
 
 .close-btn:hover {
-  background-color: rgba(199, 62, 58, 0.1);
+  background-color: rgba(217, 112, 90, 0.10);
   color: var(--billadm-color-expense);
 }
 </style>

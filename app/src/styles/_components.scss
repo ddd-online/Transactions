@@ -1,6 +1,6 @@
 // ============================================
-// Billadm Components
-// "Warm Editorial Precision" Design System
+// Transactions Components
+// "Clean Editorial Light" Design
 // ============================================
 
 @use 'variables' as *;
@@ -23,7 +23,7 @@
 // Close button hover effect
 .close-button {
   &.ant-btn:hover {
-    background-color: rgba(199, 62, 58, 0.1);
+    background-color: rgba(217, 112, 90, 0.10);
     color: var(--billadm-color-expense);
     border-color: var(--billadm-color-expense);
   }
@@ -72,34 +72,34 @@
 // ============================================
 
 .tag {
-  // Income - warm green
+  // Income
   &-income {
-    background-color: rgba(45, 125, 70, 0.1);
+    background-color: rgba(61, 140, 94, 0.10);
     color: var(--billadm-color-income);
     border: none;
     font-weight: 500;
   }
 
-  // Expense - warm red
+  // Expense
   &-expense {
-    background-color: rgba(199, 62, 58, 0.1);
+    background-color: rgba(217, 112, 90, 0.10);
     color: var(--billadm-color-expense);
     border: none;
     font-weight: 500;
   }
 
-  // Transfer - muted blue
+  // Transfer
   &-transfer {
-    background-color: rgba(90, 127, 170, 0.1);
+    background-color: rgba(92, 141, 181, 0.10);
     color: var(--billadm-color-transfer);
     border: none;
     font-weight: 500;
   }
 
-  // Outlier - golden amber
+  // Outlier
   &-outlier {
-    background-color: rgba(184, 134, 11, 0.1);
-    color: var(--billadm-color-warning);
+    background-color: rgba(198, 142, 48, 0.10);
+    color: var(--billadm-color-outlier);
     border: none;
     font-weight: 500;
   }
@@ -165,7 +165,7 @@
     &:focus,
     &.ant-input-focused {
       border-color: var(--billadm-color-primary);
-      box-shadow: 0 0 0 2px rgba(45, 90, 39, 0.1);
+      box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.15);
     }
   }
 }
@@ -205,6 +205,7 @@
   border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-lg);
   background-color: var(--billadm-color-major-background);
+  box-shadow: var(--billadm-shadow-sm);
 
   .ant-card-head {
     font-family: var(--billadm-font-body);

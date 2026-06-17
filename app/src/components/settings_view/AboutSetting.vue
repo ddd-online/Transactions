@@ -3,8 +3,8 @@
     <div class="about-header">
       <div class="app-logo">
         <svg width="1024" height="1024" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-          <!-- Background: Primary green #2D5A27 -->
-          <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" fill="#2D5A27" />
+          <!-- Background: Teal green #4A8C6F -->
+          <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" fill="#4A8C6F" />
           <!-- Letter T: Fills ~75% of icon, centered, Playfair Display font, color #FAFAF8 -->
           <text x="512" y="540" dominant-baseline="central" text-anchor="middle"
             font-family="Playfair Display, Georgia, 'Times New Roman', serif" font-size="820" font-weight="600"
