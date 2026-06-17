@@ -381,9 +381,8 @@ watch(
 .setting-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-shrink: 0;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
+  padding-bottom: var(--billadm-space-md);
   border-bottom: 1px solid var(--billadm-color-divider);
 }
 

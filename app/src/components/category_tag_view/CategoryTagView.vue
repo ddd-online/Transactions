@@ -12,7 +12,7 @@ import BilladmCategoryTagSetting from '@/components/settings_view/BilladmCategor
 .category-tag-view {
   height: 100%;
   overflow-y: auto;
-  padding: var(--billadm-space-lg);
+  padding: var(--billadm-space-md) var(--billadm-space-lg);
   background: var(--billadm-color-major-background);
 }
 </style>
