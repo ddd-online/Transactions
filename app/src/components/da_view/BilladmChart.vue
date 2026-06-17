@@ -129,16 +129,6 @@ onUnmounted(() => {
 watch(() => props.data, () => {
   initChart()
 }, { deep: true })
-
-// 监听主题变化
-const themeObserver = new MutationObserver(() => {
-  initChart()
-})
-themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-
-onUnmounted(() => {
-  themeObserver.disconnect()
-})
 </script>
 
 <style scoped>

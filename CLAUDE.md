@@ -172,11 +172,10 @@ Electron persists window bounds and workspace path to `~/.transactions.json`.
 **Stores** (Pinia):
 - `ledgerStore` — current ledger selection and ledger list
 - `trQueryConditionStore` — transaction filter/sort/page state
-- `themeStore` — light/dark theme toggle, persisted to localStorage
 - `keyEventStore` — key event data cache
 - `appDataStore` — application-level data (categories, tags, templates)
 
-**Theming**: CSS custom properties with `data-theme` attribute on `<html>`. Theme tokens defined in `app/src/styles/`. Components reference `var(--billadm-*)` variables.
+**Theming**: CSS custom properties defined in `app/src/styles/`. Components reference `var(--billadm-*)` variables.
 
 **Component auto-registration**: `unplugin-vue-components` scans `src/components/` and generates `src/types/components.d.ts`. Ant Design Vue components are also auto-imported.
 

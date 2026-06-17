@@ -7,7 +7,6 @@
       <span class="page-title">{{ currentPageTitle }}</span>
     </div>
     <div class="menu-bar-right">
-      <a-switch v-model:checked="isDark" size="small" class="theme-switch" @change="toggleTheme" />
       <a-button type="text" class="window-btn" @click="onMinimize">
         <template #icon>
           <LineOutlined />
@@ -30,23 +29,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BorderOutlined, CloseOutlined, LineOutlined } from "@ant-design/icons-vue";
-import { useThemeStore } from "@/stores/themeStore.ts";
 import { useRoute } from "vue-router";
 
-const themeStore = useThemeStore();
 const route = useRoute();
-
-const isDark = computed(() => themeStore.mode === 'dark');
 
 const currentPageTitle = computed(() => {
   const name = route.name as string | undefined;
   if (!name) return '';
   return name;
 });
-
-const toggleTheme = () => {
-  themeStore.toggleTheme();
-};
 
 const onMinimize = () => {
   window.electronAPI.minimizeWindow();
@@ -122,10 +113,6 @@ const onClose = () => {
   gap: 4px;
   flex: 1;
   justify-content: flex-end;
-}
-
-.theme-switch {
-  margin-right: 8px;
 }
 
 .window-btn {

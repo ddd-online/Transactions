@@ -20,9 +20,6 @@
         :class="{ active: selectedId === 'preset_' + chart.title }"
         @click="selectChart(chart, true)"
       >
-        <div class="chart-list-item-icon">
-          <RiseOutlined />
-        </div>
         <span class="chart-list-item-title">{{ chart.title }}</span>
       </div>
     </div>
@@ -37,9 +34,6 @@
         :class="{ active: selectedId === chart.chartId }"
         @click="selectChart(chart, false)"
       >
-        <div class="chart-list-item-icon">
-          <LineChartOutlined />
-        </div>
         <span class="chart-list-item-title">{{ chart.title }}</span>
         <div class="chart-list-item-actions" @click.stop>
           <a-button type="text" size="small" danger @click="handleDelete(chart)">
@@ -75,7 +69,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RiseOutlined, LineChartOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { ChartConfig } from '@/backend/chart'
 import { KEEP_CHART_CONFIGS } from '@/backend/chart'
@@ -192,16 +186,6 @@ const handleDelete = async (chart: ChartDto) => {
   background-color: var(--billadm-color-hover-bg);
   color: var(--billadm-color-primary);
   font-weight: 500;
-}
-
-.chart-list-item-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  font-size: var(--billadm-size-text-body);
 }
 
 .chart-list-item-title {

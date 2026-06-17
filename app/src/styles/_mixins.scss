@@ -69,18 +69,6 @@
   }
 }
 
-// Dark mode scrollbar
-[data-theme='dark'] {
-  @mixin custom-scrollbar {
-    &::-webkit-scrollbar-thumb {
-      background-color: var(--billadm-color-window-border);
-
-      &:hover {
-        background-color: var(--billadm-color-text-secondary);
-      }
-    }
-  }
-}
 
 // Drag region for Electron
 @mixin drag-region {
