@@ -6,9 +6,6 @@
     <!-- 主要工作空间卡片 -->
     <div class="workspace-hero">
       <div class="hero-content">
-        <div class="hero-icon">
-          <FolderOpenOutlined />
-        </div>
         <div class="hero-text">
           <h2 class="hero-title">当前工作空间</h2>
           <p class="hero-path" :class="{ empty: !workspaceDir }">
@@ -18,12 +15,7 @@
         </div>
       </div>
       <div class="hero-action">
-        <a-button type="primary" size="large" @click="showFileSelect = true">
-          <template #icon>
-            <SwapOutlined />
-          </template>
-          切换工作空间
-        </a-button>
+        <a-button type="primary" size="large" @click="showFileSelect = true">切换</a-button>
       </div>
     </div>
 
@@ -39,10 +31,6 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import {
-  FolderOpenOutlined,
-  SwapOutlined
-} from "@ant-design/icons-vue";
 import { useLedgerStore } from '@/stores/ledgerStore';
 import { openWorkspace } from '@/backend/api/workspace';
 import NotificationUtil from '@/backend/notification';
@@ -90,19 +78,6 @@ const handleSwitchWorkspace = async (newWorkspaceDir: string) => {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-md);
-}
-
-.hero-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background-color: var(--billadm-color-primary);
-  border-radius: var(--billadm-radius-md);
-  color: var(--billadm-color-text-inverse);
-  font-size: 20px;
-  flex-shrink: 0;
 }
 
 .hero-text {

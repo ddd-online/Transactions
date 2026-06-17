@@ -365,7 +365,6 @@ watch(
 
 .da-sidebar {
   flex: 0 0 240px;
-  height: 100%;
   background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg);
   overflow-y: auto;
@@ -374,7 +373,6 @@ watch(
 .da-content {
   flex: 1;
   min-width: 0;
-  height: 100%;
   overflow-y: auto;
   background-color: var(--billadm-color-major-background);
   border-radius: var(--billadm-radius-lg);

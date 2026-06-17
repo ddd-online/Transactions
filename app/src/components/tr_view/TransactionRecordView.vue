@@ -11,16 +11,21 @@
     </template>
 
     <!-- 主内容区 -->
-    <div class="tr-content">
-      <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
+    <div v-if="tableData.length === 0" class="tr-empty">
+      <a-empty description="暂无记录" />
     </div>
+    <template v-else>
+      <div class="tr-content">
+        <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
+      </div>
 
-    <!-- 底部分页 -->
-    <div class="tr-footer">
-      <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
-        :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
-        show-size-changer />
-    </div>
+      <!-- 底部分页 -->
+      <div class="tr-footer">
+        <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
+          :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
+          show-size-changer />
+      </div>
+    </template>
 
     <!-- 悬浮按钮组 -->
     <a-float-button type="primary" class="float-primary" @click="createTr">
@@ -494,6 +499,13 @@ watch(() => ledgerStore.currentLedgerId, () => {
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+}
+
+.tr-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tr-footer {

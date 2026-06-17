@@ -2,7 +2,11 @@
   <div class="template-setting">
     <BilladmPageHeader title="消费模板" />
 
-    <a-table :columns="columns" :data-source="templates" :loading="loading" :pagination="false" row-key="template_id">
+    <div v-if="templates.length === 0 && !loading" class="template-empty">
+      <a-empty description="暂无模板" />
+    </div>
+
+    <a-table v-else :columns="columns" :data-source="templates" :loading="loading" :pagination="false" row-key="template_id">
       <template #bodyCell="{ column, record, index }">
         <template v-if="column.key === 'type'">
           <a-tag :color="getTypeColor(record.transaction_type)">
@@ -45,9 +49,6 @@
             </a-popconfirm>
           </span>
         </template>
-      </template>
-      <template #emptyText>
-        <a-empty description="暂无模板" />
       </template>
     </a-table>
   </div>
@@ -211,5 +212,12 @@ onMounted(() => {
 
 :deep(.ant-table-thead > tr > th:last-child) {
   border-right: none;
+}
+
+.template-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

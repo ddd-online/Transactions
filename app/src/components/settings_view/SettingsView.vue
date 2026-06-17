@@ -140,7 +140,9 @@ const currentComponent = computed(() => {
 }
 
 .content-inner {
-  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   padding: var(--billadm-space-md) var(--billadm-space-lg);
 }
 </style>

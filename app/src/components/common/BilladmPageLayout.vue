@@ -25,10 +25,17 @@
   flex-shrink: 0;
   padding-bottom: var(--billadm-space-md);
   border-bottom: 1px solid var(--billadm-color-divider);
+  -webkit-app-region: drag;
+}
+
+.page-toolbar :deep(*) {
+  -webkit-app-region: no-drag;
 }
 
 .page-content {
   flex: 1;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 </style>
