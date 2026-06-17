@@ -26,8 +26,7 @@ func listTags(c *gin.Context) {
 	categoryTransactionType := c.Query("categoryTransactionType")
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		ret.Code = -1
-		ret.Msg = "缺少 ledgerId 参数"
+		ret.Data = make([]dto.TagDto, 0)
 		return
 	}
 

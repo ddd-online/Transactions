@@ -101,7 +101,10 @@ import type { Category, TrQueryConditionItem } from '@/types/billadm';
 import type { DefaultOptionType } from 'ant-design-vue/es/vc-cascader';
 import { getCategoryByType, getTagsByCategory } from '@/backend/functions';
 import { useTrQueryConditionStore } from '@/stores/trQueryConditionStore';
+import { useLedgerStore } from '@/stores/ledgerStore';
 import { TransactionTypeToLabel } from '@/backend/constant';
+
+const ledgerStore = useLedgerStore();
 
 // 双向绑定 modal 开关
 const open = defineModel<boolean>();
@@ -135,7 +138,7 @@ watch(() => tempTransactionType.value, async (newVal) => {
     tempCategory.value = undefined;
     return;
   }
-  const categoryList: Category[] = await getCategoryByType(newVal);
+  const categoryList: Category[] = await getCategoryByType(newVal, ledgerStore.currentLedgerId!);
   categories.value = categoryList.map((c) => ({ value: c.name }));
 });
 
@@ -148,7 +151,7 @@ watch(() => tempCategory.value, async (newVal) => {
   }
   // 组合分类和交易类型，格式为"分类:交易类型"
   const categoryTransactionType = `${newVal}:${tempTransactionType.value}`;
-  const tagList = await getTagsByCategory(categoryTransactionType);
+  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!);
   tags.value = tagList.map((t) => ({ value: t.name }));
 });
 

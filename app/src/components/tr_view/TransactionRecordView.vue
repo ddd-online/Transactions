@@ -368,8 +368,8 @@ watch(() => [currentPage.value, pageSize.value], async () => {
 });
 
 watch(() => trForm.value.type, async () => {
-  if (trForm.value.type === '') return;
-  const categoryList = await getCategoryByType(trForm.value.type);
+  if (trForm.value.type === '' || !ledgerStore.currentLedgerId) return;
+  const categoryList = await getCategoryByType(trForm.value.type, ledgerStore.currentLedgerId);
   categories.value = categoryList.map(c => ({ value: c.name }));
   const categoryNames = categoryList.map(c => c.name);
   if (categoryNames.length > 0) {
@@ -382,9 +382,9 @@ watch(() => trForm.value.type, async () => {
 });
 
 watch(() => trForm.value.category, async () => {
-  if (trForm.value.category === '' || !trForm.value.type) return;
+  if (trForm.value.category === '' || !trForm.value.type || !ledgerStore.currentLedgerId) return;
   const categoryTransactionType = `${trForm.value.category}:${trForm.value.type}`;
-  const tagList = await getTagsByCategory(categoryTransactionType);
+  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId);
   tags.value = tagList.map(t => ({ value: t.name }));
   const tagNames = tagList.map(t => t.name);
   if (tagNames.length > 0 && trForm.value.tags) {

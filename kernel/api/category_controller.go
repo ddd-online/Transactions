@@ -26,8 +26,7 @@ func listCategories(c *gin.Context) {
 	trType := c.Query("type")
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		ret.Code = -1
-		ret.Msg = "缺少 ledgerId 参数"
+		ret.Data = make([]dto.CategoryDto, 0)
 		return
 	}
 

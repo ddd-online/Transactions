@@ -161,8 +161,11 @@ import BilladmChart from '@/components/da_view/BilladmChart.vue'
 import type { TimeSeriesData, ChartLine } from '@/backend/chart'
 import { TransactionTypeToColor, TransactionTypeToLabel } from '@/backend/constant'
 import { getCategoryByType, getTagsByCategory } from '@/backend/functions'
+import { useLedgerStore } from '@/stores/ledgerStore'
 import type { Category } from '@/types/billadm'
 import type { DefaultOptionType } from 'ant-design-vue/es/vc-cascader'
+
+const ledgerStore = useLedgerStore();
 
 interface Props {
   title: string
@@ -244,7 +247,7 @@ const onTransactionTypeChange = async () => {
     categoryOptions.value = []
     return
   }
-  const categoryList: Category[] = await getCategoryByType(newLineForm.value.transactionType)
+  const categoryList: Category[] = await getCategoryByType(newLineForm.value.transactionType, ledgerStore.currentLedgerId!)
   categoryOptions.value = categoryList.map((c) => ({ value: c.name }))
 }
 
@@ -255,7 +258,7 @@ const onCategoryChange = async () => {
     return
   }
   const categoryTransactionType = `${newLineForm.value.category}:${newLineForm.value.transactionType}`
-  const tagList = await getTagsByCategory(categoryTransactionType)
+  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!)
   tagOptions.value = tagList.map((t) => ({ value: t.name }))
 }
 
