@@ -143,21 +143,17 @@ func (c *categoryServiceImpl) CountRecordsByCategory(ws *workspace.Workspace, le
 func (c *categoryServiceImpl) InitializeCategories(ws *workspace.Workspace, ledgerID string) (int, int, error) {
 	logrus.Infof("start to initialize categories for ledger: %s", ledgerID)
 
-	// Check if categories already exist for this ledger
 	hasCategories, err := c.categoryDao.HasCategories(ws, ledgerID)
 	if err != nil {
 		logrus.Errorf("check has categories failed: %v", err)
 		return 0, 0, err
 	}
 	if hasCategories {
-		return 0, 0, fmt.Errorf("该账本已初始化分类数据")
+		return 0, 0, fmt.Errorf("该账本已有分类，无需初始化")
 	}
 
-	var categoryCount, tagCount int
-	err = ws.Transaction(func(tx *workspace.Workspace) error {
-		categoryCount, tagCount, err = workspace.SeedData(tx.GetDb(), ledgerID)
-		return err
-	})
+	// SeedData 执行 DDL（删表+重建），不能放在事务中
+	categoryCount, tagCount, err := workspace.SeedData(ws.GetDb(), ledgerID)
 	if err != nil {
 		logrus.Errorf("initialize categories failed: %v", err)
 		return 0, 0, err
