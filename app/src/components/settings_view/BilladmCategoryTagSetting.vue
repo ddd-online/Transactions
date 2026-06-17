@@ -1,17 +1,5 @@
 <template>
   <div class="category-tag-setting">
-    <!-- 顶部：交易类型切换 -->
-    <header class="setting-header">
-      <nav class="type-nav">
-        <button v-for="type in transactionTypes" :key="type.value" class="type-pill"
-          :class="{ 'is-active': activeType === type.value }" :style="{ '--c': type.color }"
-          @click="activeType = type.value">
-          <span class="pill-dot"></span>
-          {{ type.label }}
-        </button>
-      </nav>
-    </header>
-
     <!-- 主体：分类列表 + 标签列表 -->
     <div class="setting-main">
       <!-- 分类列 -->
@@ -161,7 +149,6 @@ import {
   addCategory, removeCategory, addTag, removeTag,
   reorderCategory, reorderTag, initializeCategoriesForLedger
 } from '@/backend/functions';
-import { TransactionTypeToColor } from "@/backend/constant.ts";
 import { message } from "ant-design-vue";
 
 interface CategoryWithTags extends Category {
@@ -170,17 +157,14 @@ interface CategoryWithTags extends Category {
 
 const props = defineProps<{
   activeColor?: string;
+  activeType: TransactionType;
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:activeType', value: TransactionType): void;
 }>();
 
 const ledgerStore = useLedgerStore();
-
-const transactionTypes = [
-  { value: 'expense' as TransactionType, label: '支出', color: TransactionTypeToColor.get('expense') || '#C73E3A' },
-  { value: 'income' as TransactionType, label: '收入', color: TransactionTypeToColor.get('income') || '#2D7D46' },
-  { value: 'transfer' as TransactionType, label: '转账', color: TransactionTypeToColor.get('transfer') || '#5A7FAA' },
-];
-
-const activeType = ref<TransactionType>('expense');
 
 const categories = ref<CategoryWithTags[]>([]);
 const selectedCategory = ref<string>('');
@@ -221,7 +205,7 @@ const confirmAddCategory = async () => {
     return;
   }
   try {
-    await addCategory(ledgerStore.currentLedgerId!, name, activeType.value);
+    await addCategory(ledgerStore.currentLedgerId!, name, props.activeType);
     message.success('分类已添加');
     openCategoryModal.value = false;
     await loadCategories();
@@ -236,7 +220,7 @@ const confirmAddTag = async () => {
     message.error('该标签已存在');
     return;
   }
-  const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
+  const categoryTransactionType = `${selectedCategory.value}:${props.activeType}`;
   try {
     await addTag(name, categoryTransactionType);
     message.success('标签已添加');
@@ -267,14 +251,14 @@ const confirmDeleteTag = (name: string) => {
 const executeDelete = async () => {
   try {
     if (deleteTarget.value.type === 'category') {
-      await removeCategory(deleteTarget.value.name, activeType.value, ledgerStore.currentLedgerId!);
+      await removeCategory(deleteTarget.value.name, props.activeType, ledgerStore.currentLedgerId!);
       message.success('分类已删除');
       if (selectedCategory.value === deleteTarget.value.name) {
         selectedCategory.value = '';
         selectedTags.value = [];
       }
     } else {
-      const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
+      const categoryTransactionType = `${selectedCategory.value}:${props.activeType}`;
       await removeTag(deleteTarget.value.name, categoryTransactionType, ledgerStore.currentLedgerId!);
       message.success('标签已删除');
     }
@@ -295,8 +279,8 @@ const moveCategory = async (index: number, direction: number) => {
   const categorySortOrder = category.sortOrder || 0;
   const targetSortOrder = targetCategory.sortOrder || 0;
   try {
-    await reorderCategory(category.name, activeType.value, targetSortOrder);
-    await reorderCategory(targetCategory.name, activeType.value, categorySortOrder);
+    await reorderCategory(category.name, props.activeType, targetSortOrder);
+    await reorderCategory(targetCategory.name, props.activeType, categorySortOrder);
     await loadCategories();
   } catch { /* error handled in backend */ }
 };
@@ -307,7 +291,7 @@ const moveTag = async (index: number, direction: number) => {
   const tag = selectedTags.value[index];
   const targetTag = selectedTags.value[newIndex];
   if (!tag || !targetTag) return;
-  const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
+  const categoryTransactionType = `${selectedCategory.value}:${props.activeType}`;
   const tagSortOrder = tag.sortOrder || 0;
   const targetSortOrder = targetTag.sortOrder || 0;
   try {
@@ -319,7 +303,7 @@ const moveTag = async (index: number, direction: number) => {
 };
 
 const loadCategories = async () => {
-  const categoryList = await getCategoryByType(activeType.value, ledgerStore.currentLedgerId!);
+  const categoryList = await getCategoryByType(props.activeType, ledgerStore.currentLedgerId!);
   categories.value = categoryList.map(c => ({
     name: c.name,
     transactionType: c.transactionType,
@@ -328,7 +312,7 @@ const loadCategories = async () => {
     tags: []
   }));
   for (const category of categories.value) {
-    const categoryTransactionType = `${category.name}:${activeType.value}`;
+    const categoryTransactionType = `${category.name}:${props.activeType}`;
     const tags = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!);
     category.tags = tags.map(t => ({
       name: t.name,
@@ -360,7 +344,7 @@ const handleInitialize = async () => {
 };
 
 watch(
-  () => [ledgerStore.currentLedgerId, activeType.value],
+  () => [ledgerStore.currentLedgerId, props.activeType],
   () => {
     selectedCategory.value = '';
     selectedTags.value = [];
@@ -375,58 +359,6 @@ watch(
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-/* Header */
-.setting-header {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
-}
-
-.type-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--billadm-space-xs);
-}
-
-.type-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  font-size: var(--billadm-size-text-body-sm);
-  font-weight: 500;
-  color: var(--billadm-color-text-secondary);
-  background: transparent;
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-full);
-  cursor: pointer;
-  transition: all var(--billadm-transition-fast);
-}
-
-.type-pill:hover:not(.is-active) {
-  color: var(--billadm-color-text-major);
-  border-color: var(--billadm-color-text-disabled);
-}
-
-.type-pill.is-active {
-  color: var(--c);
-  border-color: var(--c);
-  background-color: color-mix(in srgb, var(--c) 8%, transparent);
-}
-
-.pill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--c);
-}
-
-.type-pill.is-active .pill-dot {
-  opacity: 1;
 }
 
 .add-btn {
