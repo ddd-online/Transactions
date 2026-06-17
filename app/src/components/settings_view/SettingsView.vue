@@ -5,15 +5,6 @@
       <nav class="settings-nav" aria-label="设置导航">
         <button
           class="nav-item"
-          :class="{ active: activeComponent === 'category-tag' }"
-          @click="activeComponent = 'category-tag'"
-          aria-label="分类与标签"
-        >
-          <TagOutlined class="nav-icon"/>
-          <span class="nav-text">分类与标签</span>
-        </button>
-        <button
-          class="nav-item"
           :class="{ active: activeComponent === 'workspace' }"
           @click="activeComponent = 'workspace'"
           aria-label="工作空间"
@@ -55,19 +46,16 @@
 import { ref, computed } from 'vue';
 import {
   FolderOpenOutlined,
-  TagOutlined,
   FileTextOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons-vue";
 import WorkspaceSetting from './WorkspaceSetting.vue';
 import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
 import AboutSetting from './AboutSetting.vue';
-import CategoryTagSetting from './BilladmCategoryTagSetting.vue';
 
-const activeComponent = ref('category-tag');
+const activeComponent = ref('workspace');
 
 const componentMap = {
-  'category-tag': CategoryTagSetting,
   'workspace': WorkspaceSetting,
   'template': BilladmTemplateSetting,
   'about': AboutSetting,
