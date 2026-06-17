@@ -1,5 +1,7 @@
 <template>
   <div class="settings-view">
+    <!-- 拖拽区域（无边框窗口的拖拽手柄，悬浮不占位） -->
+    <div class="settings-drag-bar"></div>
     <!-- 左侧设置导航 -->
     <aside class="settings-sidebar">
       <nav class="settings-nav" aria-label="设置导航">
@@ -71,6 +73,19 @@ const currentComponent = computed(() => {
   height: 100%;
   display: flex;
   background-color: var(--billadm-color-major-warm);
+  position: relative;
+}
+
+/* 拖拽条：悬浮于设置页面顶部，左侧避开 sidebar，右侧避开窗口控制按钮，不挤占原有布局 */
+.settings-drag-bar {
+  position: absolute;
+  top: 0;
+  left: 200px; /* 避开左侧 sidebar 宽度 */
+  right: 0;
+  height: 32px;
+  margin-right: calc(12px + 3 * 32px + 2 * 6px); /* 避开窗口控制按钮: right:12px + 3×32px按钮 + 2×6px间隙 = 120px */
+  -webkit-app-region: drag;
+  z-index: 1;
 }
 
 /* Sidebar */

@@ -48,6 +48,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  height: 100%;
   gap: var(--billadm-space-xl);
   padding: var(--billadm-space-xl) 0;
 }
@@ -116,8 +118,6 @@ onMounted(async () => {
 }
 
 .about-copyright {
-  margin-top: auto;
-  padding-top: var(--billadm-space-xl);
   text-align: center;
   color: var(--billadm-color-text-secondary);
   font-size: var(--billadm-size-text-caption);
