@@ -8,9 +8,9 @@ const routes = [
     children: [
       {path: '', redirect: '/tr_view'},
       {
-        name: '账本管理',
-        path: 'ledger_view',
-        component: () => import('@/components/ledger_view/LedgerView.vue')
+        name: '分类标签',
+        path: 'category_tag_view',
+        component: () => import('@/components/category_tag_view/CategoryTagView.vue')
       },
       {
         name: '消费记录',
