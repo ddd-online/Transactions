@@ -3,3 +3,4 @@ kernel/dist
 kernel/*exe
 kernel/test
 build/target
+.worktrees/
