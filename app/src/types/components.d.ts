@@ -60,6 +60,7 @@ declare module 'vue' {
     BilladmFullScreen: typeof import('./../components/common/BilladmFullScreen.vue')['default']
     BilladmModal: typeof import('./../components/common/BilladmModal.vue')['default']
     BilladmPageHeader: typeof import('./../components/common/BilladmPageHeader.vue')['default']
+    BilladmPageLayout: typeof import('./../components/common/BilladmPageLayout.vue')['default']
     BilladmStatisticsFooter: typeof import('./../components/common/BilladmStatisticsFooter.vue')['default']
     BilladmTemplateSetting: typeof import('./../components/settings_view/BilladmTemplateSetting.vue')['default']
     BilladmTimeRangePicker: typeof import('./../components/common/BilladmTimeRangePicker.vue')['default']

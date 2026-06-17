@@ -1,7 +1,6 @@
 <template>
-  <div class="tr-view">
-    <!-- 工具栏 -->
-    <div class="tr-toolbar">
+  <BilladmPageLayout>
+    <template #toolbar>
       <div class="tr-toolbar-left">
         <BilladmTimeRangePicker v-model:time-range="trQueryConditionStore.timeRange"
           v-model:time-range-type="trQueryConditionStore.timeRangeType" />
@@ -9,7 +8,7 @@
       <div class="tr-toolbar-right">
         <billadm-ledger-select />
       </div>
-    </div>
+    </template>
 
     <!-- 主内容区 -->
     <div class="tr-content">
@@ -153,7 +152,7 @@
         <a-button type="primary" @click="confirmLink">确认关联</a-button>
       </template>
     </a-modal>
-  </div>
+  </BilladmPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -478,23 +477,6 @@ watch(() => ledgerStore.currentLedgerId, () => {
 </script>
 
 <style scoped>
-.tr-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  gap: var(--billadm-space-md);
-}
-
-.tr-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
-}
-
 .tr-toolbar-left {
   display: flex;
   align-items: center;

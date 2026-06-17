@@ -1,7 +1,6 @@
 <template>
-  <div class="da-view">
-    <!-- 工具栏 -->
-    <div class="da-toolbar">
+  <BilladmPageLayout>
+    <template #toolbar>
       <div class="da-toolbar-left">
         <BilladmTimeRangePicker
           v-model:time-range="trQueryConditionStore.timeRange"
@@ -11,7 +10,7 @@
       <div class="da-toolbar-right">
         <billadm-ledger-select />
       </div>
-    </div>
+    </template>
 
     <!-- 主内容区 -->
     <div class="da-main">
@@ -44,7 +43,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </BilladmPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -344,23 +343,6 @@ watch(
 </script>
 
 <style scoped>
-.da-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  gap: var(--billadm-space-md);
-}
-
-.da-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
-}
-
 .da-toolbar-left {
   display: flex;
   align-items: center;

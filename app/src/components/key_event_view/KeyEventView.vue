@@ -1,7 +1,6 @@
 <template>
-  <div class="key-event-view">
-    <!-- 顶部工具栏 -->
-    <div class="key-event-toolbar">
+  <BilladmPageLayout>
+    <template #toolbar>
       <div class="key-event-toolbar-left">
         <a-button type="text" @click="goToPrevYear">
           <template #icon><LeftOutlined /></template>
@@ -13,7 +12,7 @@
       </div>
       <div class="key-event-toolbar-center"></div>
       <div class="key-event-toolbar-right"></div>
-    </div>
+    </template>
 
     <!-- 全年日历 -->
     <div class="calendar-container" :class="{ 'is-loading': isLoading }">
@@ -206,7 +205,7 @@
         <a-button type="primary" :loading="confirmLoading" @click="handleSave">保存</a-button>
       </template>
     </a-modal>
-  </div>
+  </BilladmPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -510,24 +509,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.key-event-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  gap: var(--billadm-space-md);
-}
-
-/* ========== 工具栏 ========== */
-.key-event-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
-}
-
 .key-event-toolbar-left {
   display: flex;
   align-items: center;
