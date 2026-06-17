@@ -44,7 +44,8 @@
             </div>
           </div>
         </div>
-        <div class="column-empty" v-else>
+        <!-- 当前类型无分类，且账本中所有类型都无分类 → 显示初始化按钮 -->
+        <div class="column-empty" v-else-if="!hasAnyCategories">
           <div class="empty-init">
             <div class="empty-init-icon">
               <svg viewBox="0 0 48 48" fill="none">
@@ -64,6 +65,10 @@
               <span v-else>初始化分类标签</span>
             </button>
           </div>
+        </div>
+        <!-- 当前类型无分类，但账本中其他类型已有分类 → 仅显示空提示 -->
+        <div class="column-empty" v-else>
+          <span>暂无分类</span>
         </div>
       </section>
 
@@ -170,6 +175,7 @@ const categories = ref<CategoryWithTags[]>([]);
 const selectedCategory = ref<string>('');
 const selectedTags = ref<Tag[]>([]);
 const initLoading = ref(false);
+const hasAnyCategories = ref(false); // 账本中是否存在任意分类（跨所有交易类型）
 
 // 添加分类弹窗
 const openCategoryModal = ref(false);
@@ -323,6 +329,22 @@ const loadCategories = async () => {
   }
 };
 
+const checkHasAnyCategories = async () => {
+  if (!ledgerStore.currentLedgerId) {
+    hasAnyCategories.value = false;
+    return;
+  }
+  const allTypes: TransactionType[] = ['expense', 'income', 'transfer'];
+  for (const type of allTypes) {
+    const list = await getCategoryByType(type, ledgerStore.currentLedgerId);
+    if (list.length > 0) {
+      hasAnyCategories.value = true;
+      return;
+    }
+  }
+  hasAnyCategories.value = false;
+};
+
 const selectCategory = (categoryName: string) => {
   selectedCategory.value = categoryName;
   const category = categories.value.find(c => c.name === categoryName);
@@ -335,6 +357,7 @@ const handleInitialize = async () => {
   try {
     const result = await initializeCategoriesForLedger(ledgerStore.currentLedgerId);
     message.success(`已添加 ${result.categories} 个分类、${result.tags} 个标签`);
+    hasAnyCategories.value = true;
     await loadCategories();
   } catch (error: any) {
     message.error(error?.message || '初始化失败');
@@ -349,6 +372,7 @@ watch(
     selectedCategory.value = '';
     selectedTags.value = [];
     loadCategories();
+    checkHasAnyCategories();
   },
   { immediate: true }
 );
