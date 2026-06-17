@@ -29,10 +29,10 @@ func GetTagService() TagService {
 }
 
 type TagService interface {
-	QueryTags(ws *workspace.Workspace, categoryTransactionType string) ([]models.Tag, error)
-	CreateTag(ws *workspace.Workspace, name string, categoryTransactionType string) error
+	QueryTags(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) ([]models.Tag, error)
+	CreateTag(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string) error
 	DeleteTag(ws *workspace.Workspace, ledgerId string, name string, categoryTransactionType string) error
-	UpdateTagSort(ws *workspace.Workspace, name string, categoryTransactionType string, sortOrder int) error
+	UpdateTagSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error
 	CountRecordsByTag(ws *workspace.Workspace, ledgerId string, tag string) (int64, error)
 }
 
@@ -42,9 +42,9 @@ type tagServiceImpl struct {
 	tagDao dao.TagDao
 }
 
-func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, categoryTransactionType string) ([]models.Tag, error) {
-	logrus.Info("start to query tag")
-	tags, err := t.tagDao.QueryTags(ws, categoryTransactionType)
+func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) ([]models.Tag, error) {
+	logrus.Infof("start to query tag, ledger: %s, category: %s", ledgerID, categoryTransactionType)
+	tags, err := t.tagDao.QueryTags(ws, ledgerID, categoryTransactionType)
 	if err != nil {
 		return nil, err
 	}
@@ -53,28 +53,29 @@ func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, categoryTransactionT
 	for i, tag := range tags {
 		if tag.SortOrder != i {
 			tag.SortOrder = i
-			if err := t.tagDao.UpdateTagSort(ws, tag.Name, tag.CategoryTransactionType, i); err != nil {
+			if err := t.tagDao.UpdateTagSort(ws, ledgerID, tag.Name, tag.CategoryTransactionType, i); err != nil {
 				logrus.Errorf("reindex tag sort failed: %v", err)
 				return nil, err
 			}
 		}
 	}
 
-	logrus.Infof("query tag success, length: %v", tags)
+	logrus.Infof("query tag success, length: %d", len(tags))
 	return tags, nil
 }
 
-func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, name string, categoryTransactionType string) error {
-	logrus.Infof("start to create tag, name: %s, category: %s", name, categoryTransactionType)
+func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string) error {
+	logrus.Infof("start to create tag, ledger: %s, name: %s, category: %s", ledgerID, name, categoryTransactionType)
 
 	// Get max sort order for this category
-	maxSortOrder, err := t.tagDao.GetMaxSortOrder(ws, categoryTransactionType)
+	maxSortOrder, err := t.tagDao.GetMaxSortOrder(ws, ledgerID, categoryTransactionType)
 	if err != nil {
 		logrus.Errorf("get max sort order failed: %v", err)
 		return err
 	}
 
 	tag := &models.Tag{
+		LedgerID:                ledgerID,
 		Name:                    name,
 		CategoryTransactionType: categoryTransactionType,
 		SortOrder:               maxSortOrder + 1,
@@ -100,7 +101,7 @@ func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, nam
 	}
 
 	// Delete the tag
-	if err := t.tagDao.DeleteTag(ws, name, categoryTransactionType); err != nil {
+	if err := t.tagDao.DeleteTag(ws, ledgerId, name, categoryTransactionType); err != nil {
 		logrus.Errorf("delete tag failed: %v", err)
 		return err
 	}
@@ -109,10 +110,10 @@ func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, nam
 	return nil
 }
 
-func (t *tagServiceImpl) UpdateTagSort(ws *workspace.Workspace, name string, categoryTransactionType string, sortOrder int) error {
+func (t *tagServiceImpl) UpdateTagSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error {
 	logrus.Infof("start to update tag sort, name: %s, category: %s, sortOrder: %d", name, categoryTransactionType, sortOrder)
 
-	if err := t.tagDao.UpdateTagSort(ws, name, categoryTransactionType, sortOrder); err != nil {
+	if err := t.tagDao.UpdateTagSort(ws, ledgerID, name, categoryTransactionType, sortOrder); err != nil {
 		logrus.Errorf("update tag sort failed: %v", err)
 		return err
 	}

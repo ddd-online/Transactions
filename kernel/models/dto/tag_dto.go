@@ -11,6 +11,7 @@ type TagDto struct {
 }
 
 type CreateTagRequest struct {
+	LedgerID               string `json:"ledgerId"`
 	Name                   string `json:"name"`
 	CategoryTransactionType string `json:"categoryTransactionType"`
 	SortOrder              int    `json:"sortOrder"`

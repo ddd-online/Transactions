@@ -49,6 +49,7 @@ func ServeAPI(ginServer *gin.Engine) {
 		// Categories: GET by type query param
 		v1.GET("/categories", listCategories)
 		v1.POST("/categories", createCategory)
+		v1.POST("/categories/initialize", initializeCategories)
 		v1.DELETE("/categories/:name", deleteCategory)
 		v1.PATCH("/categories/:name/sort", updateCategorySort)
 

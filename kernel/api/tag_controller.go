@@ -25,7 +25,13 @@ func listTags(c *gin.Context) {
 
 	categoryTransactionType := c.Query("categoryTransactionType")
 	ledgerId := c.Query("ledgerId")
-	tags, err := service.GetTagService().QueryTags(ws, categoryTransactionType)
+	if ledgerId == "" {
+		ret.Code = -1
+		ret.Msg = "缺少 ledgerId 参数"
+		return
+	}
+
+	tags, err := service.GetTagService().QueryTags(ws, ledgerId, categoryTransactionType)
 	if err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
@@ -36,12 +42,10 @@ func listTags(c *gin.Context) {
 	for _, tag := range tags {
 		tagDto := dto.TagDto{}
 		tagDto.FromTag(&tag)
-		// Count records for this tag if ledgerId is provided
-		if ledgerId != "" {
-			count, err := service.GetTagService().CountRecordsByTag(ws, ledgerId, tag.Name)
-			if err == nil {
-				tagDto.RecordCount = int(count)
-			}
+		// Count records for this tag
+		count, err := service.GetTagService().CountRecordsByTag(ws, ledgerId, tag.Name)
+		if err == nil {
+			tagDto.RecordCount = int(count)
 		}
 		tagDtos = append(tagDtos, tagDto)
 	}
@@ -68,7 +72,7 @@ func createTag(c *gin.Context) {
 		return
 	}
 
-	if err := service.GetTagService().CreateTag(ws, req.Name, req.CategoryTransactionType); err != nil {
+	if err := service.GetTagService().CreateTag(ws, req.LedgerID, req.Name, req.CategoryTransactionType); err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
 		return
@@ -123,7 +127,7 @@ func updateTagSort(c *gin.Context) {
 		return
 	}
 
-	if err := service.GetTagService().UpdateTagSort(ws, name, req.CategoryTransactionType, req.SortOrder); err != nil {
+	if err := service.GetTagService().UpdateTagSort(ws, req.LedgerID, name, req.CategoryTransactionType, req.SortOrder); err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
 		return
