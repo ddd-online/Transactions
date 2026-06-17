@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import type {Category, Tag, TransactionRecord, TrQueryCondition, TrQueryResult} from "@/types/billadm";
 import {createTrForLedger, deleteTrById, queryTrOnCondition, linkTrToKeyEvent, unlinkTrFromKeyEvent, fetchLinkedTransactions} from "@/backend/api/tr.ts";
 import NotificationUtil from "@/backend/notification.ts";
-import {queryCategory, createCategory, deleteCategory, updateCategorySort} from "@/backend/api/category.ts";
+import {queryCategory, createCategory, deleteCategory, updateCategorySort, initializeCategories} from "@/backend/api/category.ts";
 import {queryTags, createTag, deleteTag, updateTagSort} from "@/backend/api/tag.ts";
 import {createTemplate, queryTemplates, deleteTemplate, updateTemplateSort} from "@/backend/api/template.ts";
 import type {TransactionTemplateDto} from "@/backend/api/template.ts";
@@ -177,6 +177,18 @@ export async function removeCategory(name: string, transactionType: string, ledg
         await deleteCategory(name, transactionType, ledgerId);
     } catch (error) {
         NotificationUtil.error('删除分类失败', `${error}`);
+        throw error;
+    }
+}
+
+/**
+ * 初始化分类标签（为指定账本创建默认分类和标签）
+ */
+export async function initializeCategoriesForLedger(ledgerId: string): Promise<{ categories: number; tags: number }> {
+    try {
+        return await initializeCategories(ledgerId);
+    } catch (error) {
+        NotificationUtil.error('初始化分类标签失败', `${error}`);
         throw error;
     }
 }

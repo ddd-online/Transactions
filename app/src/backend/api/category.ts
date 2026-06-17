@@ -20,3 +20,12 @@ export async function deleteCategory(name: string, transactionType: string, ledg
 export async function updateCategorySort(name: string, transactionType: string, sortOrder: number): Promise<void> {
     await api.patch<void>(`/v1/categories/${encodeURIComponent(name)}/sort`, { transactionType, sortOrder }, '更新分类排序');
 }
+
+export interface InitializeCategoriesResponse {
+    categories: number;
+    tags: number;
+}
+
+export async function initializeCategories(ledgerId: string): Promise<InitializeCategoriesResponse> {
+    return api.post<InitializeCategoriesResponse>('/v1/categories/initialize', { ledgerId }, '初始化分类标签');
+}
