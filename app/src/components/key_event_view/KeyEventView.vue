@@ -6,12 +6,7 @@
         <a-button type="text" @click="goToPrevYear">
           <template #icon><LeftOutlined /></template>
         </a-button>
-        <a-date-picker
-          v-model:value="selectedYearDayjs"
-          picker="year"
-          :style="{ width: '120px' }"
-          @change="(val) => onYearChange(val)"
-        />
+        <span class="year-display">{{ selectedYear }}</span>
         <a-button type="text" @click="goToNextYear">
           <template #icon><RightOutlined /></template>
         </a-button>
@@ -264,14 +259,6 @@ const goToPrevYear = () => {
 const goToNextYear = () => {
   selectedYearDayjs.value = selectedYearDayjs.value.year(selectedYearDayjs.value.year() + 1);
   keyEventStore.fetchDatesByYear(selectedYearDayjs.value.year());
-};
-
-const onYearChange = (val: Dayjs | string | null) => {
-  if (val) {
-    const d = typeof val === 'string' ? dayjs(val) : val;
-    selectedYearDayjs.value = d;
-    keyEventStore.fetchDatesByYear(d.year());
-  }
 };
 
 // ========== 工具函数 ==========
@@ -545,6 +532,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.year-display {
+  font-size: var(--billadm-size-text-title);
+  font-weight: 600;
+  color: var(--billadm-color-text-major);
+  min-width: 80px;
+  text-align: center;
 }
 
 .key-event-toolbar-right {

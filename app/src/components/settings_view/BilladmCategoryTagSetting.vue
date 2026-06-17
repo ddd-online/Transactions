@@ -1,32 +1,15 @@
 <template>
   <div class="category-tag-setting">
-    <!-- 顶部：交易类型 + 标题 -->
+    <!-- 顶部：交易类型切换 -->
     <header class="setting-header">
-      <div class="header-left">
-        <h1 class="setting-title">分类与标签</h1>
-        <nav class="type-nav">
-          <button v-for="type in transactionTypes" :key="type.value" class="type-pill"
-            :class="{ 'is-active': activeType === type.value }" :style="{ '--c': type.color }"
-            @click="activeType = type.value">
-            <span class="pill-dot"></span>
-            {{ type.label }}
-          </button>
-        </nav>
-      </div>
-      <div class="header-right">
-        <button v-if="selectedCategory" class="add-btn add-btn--secondary" @click="openAddTagModal">
-          <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
-            <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-          <span>添加标签</span>
+      <nav class="type-nav">
+        <button v-for="type in transactionTypes" :key="type.value" class="type-pill"
+          :class="{ 'is-active': activeType === type.value }" :style="{ '--c': type.color }"
+          @click="activeType = type.value">
+          <span class="pill-dot"></span>
+          {{ type.label }}
         </button>
-        <button class="add-btn add-btn--primary" @click="openAddCategoryModal" :disabled="!ledgerStore.currentLedgerId">
-          <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
-            <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-          <span>添加分类</span>
-        </button>
-      </div>
+      </nav>
     </header>
 
     <!-- 主体：分类列表 + 标签列表 -->
@@ -36,6 +19,12 @@
         <div class="column-header">
           <span class="column-title">分类</span>
           <span class="column-count">{{ categories.length }}</span>
+          <button class="add-btn add-btn--primary" @click="openAddCategoryModal" :disabled="!ledgerStore.currentLedgerId">
+            <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <span>添加分类</span>
+          </button>
         </div>
         <div class="column-body category-list" v-if="categories.length > 0">
           <div v-for="(category, index) in categories" :key="category.name" class="list-item"
@@ -95,6 +84,12 @@
         <div class="column-header">
           <span class="column-title">{{ selectedCategory || '标签' }}</span>
           <span class="column-count">{{ selectedTags.length }}</span>
+          <button v-if="selectedCategory" class="add-btn add-btn--secondary" @click="openAddTagModal">
+            <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <span>添加标签</span>
+          </button>
         </div>
         <div class="column-body tag-list" v-if="selectedTags.length > 0">
           <div v-for="(tag, index) in selectedTags" :key="tag.name" class="list-item">
@@ -392,19 +387,6 @@ watch(
   border-bottom: 1px solid var(--billadm-color-divider);
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--billadm-space-lg);
-}
-
-.setting-title {
-  font-size: var(--billadm-size-text-title);
-  font-weight: 600;
-  color: var(--billadm-color-text-major);
-  margin: 0;
-}
-
 .type-nav {
   display: flex;
   align-items: center;
@@ -446,12 +428,6 @@ watch(
 
 .type-pill.is-active .pill-dot {
   opacity: 1;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--billadm-space-sm);
 }
 
 .add-btn {
@@ -531,6 +507,10 @@ watch(
   padding: var(--billadm-space-sm) var(--billadm-space-md);
   border-bottom: 1px solid var(--billadm-color-divider);
   flex-shrink: 0;
+}
+
+.column-header .add-btn {
+  margin-left: auto;
 }
 
 .column-title {
