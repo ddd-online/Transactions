@@ -137,6 +137,7 @@ const handleDelete = async (chart: ChartDto) => {
 .chart-list {
   display: flex;
   flex-direction: column;
+  height: 100%;
   padding: var(--billadm-space-md);
 }
 
