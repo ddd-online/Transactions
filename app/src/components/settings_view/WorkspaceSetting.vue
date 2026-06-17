@@ -72,7 +72,6 @@ const handleSwitchWorkspace = async (newWorkspaceDir: string) => {
 .workspace-setting {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-lg);
 }
 
 /* Hero Section */

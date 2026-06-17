@@ -19,7 +19,7 @@
         <div class="column-header">
           <span class="column-title">分类</span>
           <span class="column-count">{{ categories.length }}</span>
-          <button class="add-btn add-btn--primary" @click="openAddCategoryModal" :disabled="!ledgerStore.currentLedgerId">
+          <button class="add-btn add-btn--secondary" @click="openAddCategoryModal" :disabled="!ledgerStore.currentLedgerId">
             <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
               <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
@@ -84,7 +84,7 @@
         <div class="column-header">
           <span class="column-title">{{ selectedCategory || '标签' }}</span>
           <span class="column-count">{{ selectedTags.length }}</span>
-          <button v-if="selectedCategory" class="add-btn add-btn--secondary" @click="openAddTagModal">
+          <button class="add-btn add-btn--secondary" @click="openAddTagModal" :disabled="!selectedCategory">
             <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
               <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
