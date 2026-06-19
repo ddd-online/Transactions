@@ -63,7 +63,9 @@ const sortedEvents = computed(() => {
 const formatShortDate = (date: string): string => {
   const parts = date.split('-');
   if (parts.length !== 3) return date;
-  return `${parseInt(parts[1], 10)}-${parseInt(parts[2], 10)}`;
+  const month = parts[1] ?? '1';
+  const day = parts[2] ?? '1';
+  return `${parseInt(month, 10)}-${parseInt(day, 10)}`;
 };
 
 // 截断文本
