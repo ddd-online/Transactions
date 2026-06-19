@@ -418,9 +418,6 @@ const formatAmount = (amount: number) => {
 .chart-lines-section {
   flex-shrink: 0;
   background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
-  box-shadow: var(--billadm-shadow-sm);
   overflow: hidden;
 }
 
