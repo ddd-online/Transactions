@@ -59,22 +59,33 @@
       </a-form>
     </a-modal>
 
-    <!-- 图表内容 -->
-    <div class="chart-view-content">
-      <div class="chart-wrapper">
-        <div class="chart-container">
-          <BilladmChart v-if="data.length > 0" :data="data" x-field="time" y-field="amount" :title="title"
-            :lines="lines" />
-          <a-empty v-else description="暂无数据" />
+    <!-- 中间主体：图表 + 统计面板 -->
+    <div class="chart-body">
+      <!-- 左侧：图表区域 -->
+      <div class="chart-view-main">
+        <div class="chart-view-content">
+          <div class="chart-wrapper">
+            <div class="chart-container">
+              <BilladmChart v-if="data.length > 0" :data="data" x-field="time" y-field="amount" :title="title"
+                :lines="lines" />
+              <a-empty v-else description="暂无数据" />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 曲线求和统计 -->
-    <div v-if="lineSums.length > 0" class="chart-view-footer">
-      <div v-for="item in lineSums" :key="item.label" class="line-sum-item">
-        <a-tag :color="getTypeColor(item.type)">{{ item.label }}</a-tag>
-        <span class="line-sum-value">{{ formatAmount(item.sum) }}</span>
+      <!-- 右侧：统计面板 -->
+      <div v-if="lineSums.length > 0" class="chart-view-stats">
+        <div class="stats-panel">
+          <div class="stats-panel-header">汇总</div>
+          <div class="stats-panel-body">
+            <div v-for="item in lineSums" :key="item.label" class="stat-row">
+              <span class="stat-dot" :style="{ backgroundColor: getTypeColor(item.type) }" />
+              <span class="stat-label">{{ item.label }}</span>
+              <span class="stat-value">{{ formatAmount(item.sum) }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -350,14 +361,22 @@ const formatAmount = (amount: number) => {
   gap: var(--billadm-space-sm);
 }
 
-.conditions-tags {
+/* ========== 中间主体：双栏布局 ========== */
+.chart-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--billadm-space-xs);
+  gap: 0;
+  overflow: hidden;
 }
 
-.text-disabled {
-  color: var(--billadm-color-text-disabled);
+/* 左侧：图表区域 */
+.chart-view-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--billadm-color-major-warm);
 }
 
 .chart-view-content {
@@ -367,7 +386,6 @@ const formatAmount = (amount: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--billadm-color-major-warm);
 }
 
 .chart-wrapper {
@@ -385,69 +403,76 @@ const formatAmount = (amount: number) => {
   height: 100%;
 }
 
-.chart-view-footer {
+/* 右侧：统计面板 */
+.chart-view-stats {
+  flex: 0 0 220px;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--billadm-space-xl);
-  padding: var(--billadm-space-lg) var(--billadm-space-2xl);
-  border-top: 1px solid var(--billadm-color-divider);
-  flex-shrink: 0;
+  flex-direction: column;
+  background-color: var(--billadm-color-major-background);
+  border-left: 1px solid var(--billadm-color-divider);
+  overflow-y: auto;
 }
 
-.line-sum-item {
+.stats-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.stats-panel-header {
+  flex-shrink: 0;
+  padding: var(--billadm-space-lg) var(--billadm-space-xl);
+  font-family: var(--billadm-font-display);
+  font-size: var(--billadm-size-text-section);
+  font-weight: 600;
+  color: var(--billadm-color-text-major);
+  border-bottom: 1px solid var(--billadm-color-divider);
+}
+
+.stats-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-xs);
+  padding: var(--billadm-space-lg);
+  overflow-y: auto;
+}
+
+.stat-row {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
   border-radius: var(--billadm-radius-md);
-  border: 1px solid var(--billadm-color-divider);
-  transition: all var(--billadm-transition-smooth);
+  transition: background-color var(--billadm-transition-fast);
 }
 
-.line-sum-item:hover {
-  border-color: var(--billadm-color-primary);
-  box-shadow: var(--billadm-shadow-sm);
+.stat-row:hover {
+  background-color: var(--billadm-color-minor-background);
 }
 
-.line-sum-value {
-  font-size: var(--billadm-size-text-title-sm);
+.stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--billadm-radius-full);
+  flex-shrink: 0;
+}
+
+.stat-label {
+  flex: 1;
+  font-size: var(--billadm-size-text-body-sm);
+  color: var(--billadm-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value {
+  font-size: var(--billadm-size-text-body);
   font-weight: 600;
   color: var(--billadm-color-text-major);
   font-variant-numeric: tabular-nums;
-}
-
-/* Entrance animation for footer stats */
-@keyframes statSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.line-sum-item {
-  animation: statSlideIn var(--billadm-transition-slow) both;
-}
-
-.line-sum-item:nth-child(1) {
-  animation-delay: 0ms;
-}
-
-.line-sum-item:nth-child(2) {
-  animation-delay: 60ms;
-}
-
-.line-sum-item:nth-child(3) {
-  animation-delay: 120ms;
-}
-
-.line-sum-item:nth-child(4) {
-  animation-delay: 180ms;
+  white-space: nowrap;
 }
 
 /* ========== 曲线详情区域 ========== */
