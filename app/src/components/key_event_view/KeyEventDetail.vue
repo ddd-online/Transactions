@@ -278,9 +278,8 @@ const handleCancel = () => {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-sm);
-  padding-top: var(--billadm-space-md);
+  padding: var(--billadm-space-sm);
   border-top: 1px solid var(--billadm-color-divider);
-  margin-top: var(--billadm-space-md);
   flex-shrink: 0;
 }
 </style>
