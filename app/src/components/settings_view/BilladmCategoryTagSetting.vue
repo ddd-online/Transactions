@@ -311,16 +311,16 @@ watch(
   display: flex;
   align-items: center;
   gap: var(--billadm-space-xs);
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
-  flex-shrink: 0;
+  height: 32px;
 }
 
 .type-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 12px;
   font-size: var(--billadm-size-text-body-sm);
   font-weight: 500;
   color: var(--billadm-color-text-secondary);
