@@ -42,7 +42,7 @@
 
           <!-- 标签行 -->
           <div v-if="tr.tags && tr.tags.length > 0" class="linked-card-tags">
-            <a-tag v-for="tag in tr.tags" :key="tag" class="linked-card-tag">{{ tag }}</a-tag>
+            <a-tag v-for="tag in tr.tags" :key="tag" class="tag-item">{{ tag }}</a-tag>
           </div>
 
           <!-- 描述行 -->
@@ -153,12 +153,11 @@ defineEmits<{
   gap: 3px;
 }
 
-.linked-card-tag {
-  font-size: 10px !important;
-  line-height: 1.4 !important;
-  height: auto !important;
-  padding: 0 5px !important;
-  border-radius: var(--billadm-radius-sm) !important;
+.tag-item {
+  font-size: var(--billadm-size-text-caption);
+  background-color: var(--billadm-color-minor-background);
+  border: none;
+  color: var(--billadm-color-text-secondary);
 }
 
 /* ========== 描述 ========== */
