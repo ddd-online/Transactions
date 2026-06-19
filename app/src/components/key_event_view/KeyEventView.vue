@@ -34,6 +34,7 @@
         @cancel-edit="isEditing = false"
         @add-image="handleAddImage"
         @delete-image="handleDeleteImage"
+        @color-change="handleColorChange"
       />
 
       <!-- 右栏：关联交易 320px -->
@@ -200,10 +201,10 @@ const openAddModal = () => {
   addModalOpen.value = true
 }
 
-const handleAddEvent = async (date: string, title: string, color: string) => {
+const handleAddEvent = async (date: string, title: string) => {
   addModalLoading.value = true
   try {
-    await keyEventStore.saveEvent(date, title, '', color)
+    await keyEventStore.saveEvent(date, title, '', '')
     addModalOpen.value = false
     // 刷新列表并选中新事件
     await keyEventStore.fetchDatesByYear(selectedYear.value)
@@ -212,6 +213,19 @@ const handleAddEvent = async (date: string, title: string, color: string) => {
     /* error handled in store */
   } finally {
     addModalLoading.value = false
+  }
+}
+
+const handleColorChange = async (color: string) => {
+  if (!currentEvent.value) return
+  const title = currentEvent.value.title || ''
+  const content = currentEvent.value.content || ''
+  try {
+    await keyEventStore.saveEvent(selectedDate.value, title, content, color)
+    currentEvent.value = { ...currentEvent.value, color }
+    await keyEventStore.fetchDatesByYear(selectedYear.value)
+  } catch {
+    /* error handled in store */
   }
 }
 
