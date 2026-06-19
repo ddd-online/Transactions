@@ -33,6 +33,13 @@
   -webkit-app-region: no-drag;
 }
 
+/* 工具栏内交互元素统一 32px 高度 */
+.page-toolbar :deep(.ant-btn),
+.page-toolbar :deep(.ant-picker),
+.page-toolbar :deep(.ant-segmented) {
+  height: 32px;
+}
+
 .page-content {
   flex: 1;
   overflow: auto;

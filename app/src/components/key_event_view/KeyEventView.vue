@@ -249,6 +249,7 @@ onMounted(() => {
   color: var(--billadm-color-text-major);
   min-width: 80px;
   text-align: center;
+  line-height: 32px;
 }
 
 /* 三栏主体 */

@@ -121,5 +121,6 @@ const handleTimeRangeChange = (val: [string, string] | [Dayjs, Dayjs], _: [strin
   display: flex;
   align-items: center;
   gap: 8px;
+  height: 32px;
 }
 </style>
