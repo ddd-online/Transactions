@@ -240,7 +240,7 @@ onMounted(() => {
 .key-event-toolbar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--billadm-space-md);
 }
 
 .year-display {

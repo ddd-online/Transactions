@@ -1,7 +1,8 @@
 <template>
-  <div class="category-tag-setting">
-    <!-- 类型切换导航 -->
-    <nav class="type-nav">
+  <BilladmPageLayout>
+    <template #toolbar>
+      <!-- 类型切换导航 -->
+      <nav class="type-nav">
       <button
         v-for="type in transactionTypes"
         :key="type.value"
@@ -14,6 +15,7 @@
         {{ type.label }}
       </button>
     </nav>
+    </template>
 
     <!-- 主体：分类列表 + 标签列表 -->
     <div class="setting-main">
@@ -62,7 +64,7 @@
       @ok="executeDelete" ok-text="删除" ok-type="danger" cancel-text="取消" centered :width="360">
       <p>{{ deleteTarget.message }}</p>
     </a-modal>
-  </div>
+  </BilladmPageLayout>
 </template>
 
 <script lang="ts" setup>
@@ -304,12 +306,6 @@ watch(
 </script>
 
 <style scoped>
-.category-tag-setting {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 /* Type Navigation */
 .type-nav {
   display: flex;
