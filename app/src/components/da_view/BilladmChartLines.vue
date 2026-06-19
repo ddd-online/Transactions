@@ -233,7 +233,7 @@ const resetNewLineForm = () => {
   justify-content: space-between;
   padding: var(--billadm-space-lg) var(--billadm-space-xl);
   border-bottom: 1px solid var(--billadm-color-divider);
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-major-background);
 }
 
 .chart-lines-section-title {
