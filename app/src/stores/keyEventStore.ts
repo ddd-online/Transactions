@@ -21,14 +21,17 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     // 日期 -> 颜色 的缓存
     const colors = ref(new Map<string, string>());
     const images = ref<KeyEventImage[]>([]);
+    // 完整的 KeyEvent 列表，供 KeyEventList 消费
+    const events = ref<KeyEvent[]>([]);
 
     // 获取某年有记录的日期列表
     const fetchDatesByYear = async (year: number) => {
         try {
-            const events = await queryKeyEventsByYear(year);
-            datesWithRecords.value = new Set(events.map(e => e.date));
-            titles.value = new Map(events.map(e => [e.date, e.title]));
-            colors.value = new Map(events.map(e => [e.date, e.color]));
+            const eventList = await queryKeyEventsByYear(year);
+            datesWithRecords.value = new Set(eventList.map(e => e.date));
+            titles.value = new Map(eventList.map(e => [e.date, e.title]));
+            colors.value = new Map(eventList.map(e => [e.date, e.color]));
+            events.value = eventList;
             currentYear.value = year;
         } catch (error) {
             NotificationUtil.error('查询关键事件失败', `${error}`);
@@ -71,6 +74,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             datesWithRecords.value.delete(date);
             titles.value.delete(date);
             colors.value.delete(date);
+            events.value = events.value.filter(e => e.date !== date);
             NotificationUtil.success('删除成功');
         } catch (error) {
             NotificationUtil.error('删除失败', `${error}`);
@@ -144,6 +148,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         getTitle,
         getColor,
         images,
+        events,
         fetchImages,
         addImage,
         removeImage,
