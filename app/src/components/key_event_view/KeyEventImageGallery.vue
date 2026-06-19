@@ -72,7 +72,7 @@ watch(
       return
     }
     if (!imgs.find(i => i.id === selectedId.value)) {
-      selectedId.value = imgs[0].id
+      selectedId.value = imgs[0]!.id
     }
   },
   { immediate: true }
