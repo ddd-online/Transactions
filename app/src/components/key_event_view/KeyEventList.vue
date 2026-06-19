@@ -82,7 +82,7 @@ const truncate = (text: string, max: number): string => {
   height: 100%;
   border-right: 1px solid var(--billadm-color-divider);
   padding: var(--billadm-space-sm);
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--billadm-color-major-warm);
 }
 
 /* ========== 空状态 ========== */
@@ -111,16 +111,26 @@ const truncate = (text: string, max: number): string => {
   flex-direction: row;
   border-radius: var(--billadm-radius-md);
   cursor: pointer;
-  transition: background-color var(--billadm-transition-fast);
+  transition: background-color var(--billadm-transition-smooth),
+              box-shadow var(--billadm-transition-smooth),
+              transform var(--billadm-transition-smooth);
   margin-bottom: var(--billadm-space-2xs);
+  background-color: var(--billadm-color-major-background);
 }
 
 .event-card:hover {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--billadm-color-major-background);
+  box-shadow: var(--billadm-shadow-sm);
+  transform: translateX(2px);
 }
 
 .event-card.is-active {
   background-color: var(--billadm-color-active-bg);
+  box-shadow: var(--billadm-shadow-sm);
+}
+
+.event-card.is-active:hover {
+  box-shadow: var(--billadm-shadow-md);
 }
 
 .event-card-bar {
@@ -129,6 +139,11 @@ const truncate = (text: string, max: number): string => {
   background-color: var(--event-color, var(--billadm-color-primary));
   border-radius: 2px;
   margin: var(--billadm-space-sm) 0;
+  transition: width var(--billadm-transition-smooth);
+}
+
+.event-card.is-active .event-card-bar {
+  width: 6px;
 }
 
 .event-card-body {

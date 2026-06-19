@@ -210,7 +210,7 @@ onMounted(() => {
 }
 
 .year-display {
-  font-size: var(--billadm-size-text-title);
+  font-size: var(--billadm-size-text-display-sm);
   font-weight: 600;
   color: var(--billadm-color-text-major);
   min-width: 80px;

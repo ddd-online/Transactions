@@ -127,7 +127,7 @@ const handleCancel = () => {
   flex-direction: column;
   height: 100%;
   padding: var(--billadm-space-sm);
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--billadm-color-major-warm);
 }
 
 /* ========== 空状态 ========== */
@@ -154,9 +154,10 @@ const handleCancel = () => {
 .description-content {
   flex: 1;
   overflow-y: auto;
-  border: 1px solid var(--billadm-color-divider);
+  border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-sm);
+  background-color: var(--billadm-color-major-background);
 }
 
 .description-text {

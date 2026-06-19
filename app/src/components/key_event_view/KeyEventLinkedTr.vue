@@ -117,7 +117,7 @@ const getLedgerName = (ledgerId: string): string => {
   height: 100%;
   border-left: 1px solid var(--billadm-color-divider);
   padding: var(--billadm-space-sm);
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--billadm-color-major-warm);
 }
 
 /* ========== 空状态 & 加载 ========== */
@@ -147,6 +147,13 @@ const getLedgerName = (ledgerId: string): string => {
   margin-bottom: var(--billadm-space-2xs);
   border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
+  background-color: var(--billadm-color-major-background);
+  box-shadow: var(--billadm-shadow-sm);
+  transition: box-shadow var(--billadm-transition-smooth);
+}
+
+.linked-card:hover {
+  box-shadow: var(--billadm-shadow-md);
 }
 
 .linked-card-body {
@@ -200,7 +207,7 @@ const getLedgerName = (ledgerId: string): string => {
 /* ========== 金额 ========== */
 .linked-card-amount {
   font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--billadm-size-text-title-sm);
   font-weight: var(--billadm-weight-semibold);
   font-variant-numeric: tabular-nums;
 }

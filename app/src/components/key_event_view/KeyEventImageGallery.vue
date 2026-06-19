@@ -99,13 +99,18 @@ const onPreviewChange = (visible: boolean) => {
   border-radius: var(--billadm-radius-md);
   overflow: hidden;
   cursor: pointer;
-  background-color: var(--billadm-color-minor-background);
+  background-color: var(--billadm-color-major-warm);
+  border: 1px dashed var(--billadm-color-window-border);
 }
 
 .gallery-main :deep(.ant-image) {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.gallery-main :deep(.ant-image-img) {
+  object-fit: cover;
 }
 
 /* 右侧缩略图列 */
@@ -128,19 +133,24 @@ const onPreviewChange = (visible: boolean) => {
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color var(--billadm-transition-fast);
+  transition: border-color var(--billadm-transition-smooth),
+              box-shadow var(--billadm-transition-smooth),
+              transform var(--billadm-transition-fast);
 }
 
 .thumb-item.is-selected {
   border-color: var(--billadm-color-primary);
+  box-shadow: var(--billadm-shadow-md);
 }
 
 .thumb-item:hover {
   border-color: var(--billadm-color-primary-light);
+  transform: scale(1.03);
 }
 
 .thumb-item.is-selected:hover {
   border-color: var(--billadm-color-primary);
+  transform: none;
 }
 
 .thumb-img {
