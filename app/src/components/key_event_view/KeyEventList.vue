@@ -13,7 +13,12 @@
         class="event-card"
         :class="{ 'is-active': event.date === selectedDate }"
         :style="{ '--event-color': event.color || 'var(--billadm-color-primary)' }"
+        role="button"
+        tabindex="0"
+        :aria-selected="event.date === selectedDate"
         @click="$emit('select', event.date)"
+        @keydown.enter.prevent="$emit('select', event.date)"
+        @keydown.space.prevent="$emit('select', event.date)"
       >
         <div class="event-card-bar" />
         <div class="event-card-body">
