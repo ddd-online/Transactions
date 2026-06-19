@@ -1,5 +1,20 @@
 <template>
   <div class="category-tag-setting">
+    <!-- 类型切换导航 -->
+    <nav class="type-nav">
+      <button
+        v-for="type in transactionTypes"
+        :key="type.value"
+        class="type-pill"
+        :class="{ 'is-active': activeType === type.value }"
+        :style="{ '--c': type.color }"
+        @click="activeType = type.value"
+      >
+        <span class="pill-dot"></span>
+        {{ type.label }}
+      </button>
+    </nav>
+
     <!-- 主体：分类列表 + 标签列表 -->
     <div class="setting-main">
       <CategoryColumn
@@ -53,6 +68,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import type { TransactionType, Category, Tag } from '@/types/billadm';
+import { TransactionTypeToColor } from '@/backend/constant';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import {
   getCategoryByType, getTagsByCategory,
@@ -68,14 +84,13 @@ interface CategoryWithTags extends Category {
   tags: Tag[];
 }
 
-const props = defineProps<{
-  activeColor?: string;
-  activeType: TransactionType;
-}>();
+const transactionTypes = [
+  { value: 'expense' as TransactionType, label: '支出', color: TransactionTypeToColor.get('expense') || '#D9705A' },
+  { value: 'income' as TransactionType, label: '收入', color: TransactionTypeToColor.get('income') || '#3D8C5E' },
+  { value: 'transfer' as TransactionType, label: '转账', color: TransactionTypeToColor.get('transfer') || '#5C8DB5' },
+]
 
-const emit = defineEmits<{
-  (e: 'update:activeType', value: TransactionType): void;
-}>();
+const activeType = ref<TransactionType>('expense')
 
 const ledgerStore = useLedgerStore();
 
@@ -121,7 +136,7 @@ const confirmAddCategory = async () => {
     return;
   }
   try {
-    await addCategory(ledgerStore.currentLedgerId!, name, props.activeType);
+    await addCategory(ledgerStore.currentLedgerId!, name, activeType.value);
     message.success('分类已添加');
     openCategoryModal.value = false;
     await loadCategories();
@@ -136,7 +151,7 @@ const confirmAddTag = async () => {
     message.error('该标签已存在');
     return;
   }
-  const categoryTransactionType = `${selectedCategory.value}:${props.activeType}`;
+  const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
   try {
     await addTag(name, categoryTransactionType);
     message.success('标签已添加');
@@ -167,14 +182,14 @@ const confirmDeleteTag = (name: string) => {
 const executeDelete = async () => {
   try {
     if (deleteTarget.value.type === 'category') {
-      await removeCategory(deleteTarget.value.name, props.activeType, ledgerStore.currentLedgerId!);
+      await removeCategory(deleteTarget.value.name, activeType.value, ledgerStore.currentLedgerId!);
       message.success('分类已删除');
       if (selectedCategory.value === deleteTarget.value.name) {
         selectedCategory.value = '';
         selectedTags.value = [];
       }
     } else {
-      const categoryTransactionType = `${selectedCategory.value}:${props.activeType}`;
+      const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
       await removeTag(deleteTarget.value.name, categoryTransactionType, ledgerStore.currentLedgerId!);
       message.success('标签已删除');
     }
@@ -195,8 +210,8 @@ const moveCategory = async (index: number, direction: number) => {
   const categorySortOrder = category.sortOrder || 0;
   const targetSortOrder = targetCategory.sortOrder || 0;
   try {
-    await reorderCategory(category.name, props.activeType, targetSortOrder);
-    await reorderCategory(targetCategory.name, props.activeType, categorySortOrder);
+    await reorderCategory(category.name, activeType.value, targetSortOrder);
+    await reorderCategory(targetCategory.name, activeType.value, categorySortOrder);
     await loadCategories();
   } catch { /* error handled in backend */ }
 };
@@ -207,7 +222,7 @@ const moveTag = async (index: number, direction: number) => {
   const tag = selectedTags.value[index];
   const targetTag = selectedTags.value[newIndex];
   if (!tag || !targetTag) return;
-  const categoryTransactionType = `${selectedCategory.value}:${props.activeType}`;
+  const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
   const tagSortOrder = tag.sortOrder || 0;
   const targetSortOrder = targetTag.sortOrder || 0;
   try {
@@ -219,7 +234,7 @@ const moveTag = async (index: number, direction: number) => {
 };
 
 const loadCategories = async () => {
-  const categoryList = await loadCategoryOptions(props.activeType);
+  const categoryList = await loadCategoryOptions(activeType.value);
   categories.value = categoryList.map(c => ({
     name: c.name,
     transactionType: c.transactionType,
@@ -228,7 +243,7 @@ const loadCategories = async () => {
     tags: []
   }));
   for (const category of categories.value) {
-    const categoryTransactionType = `${category.name}:${props.activeType}`;
+    const categoryTransactionType = `${category.name}:${activeType.value}`;
     const tags = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!);
     category.tags = tags.map(t => ({
       name: t.name,
@@ -277,7 +292,7 @@ const handleInitialize = async () => {
 };
 
 watch(
-  () => [ledgerStore.currentLedgerId, props.activeType],
+  () => [ledgerStore.currentLedgerId, activeType.value],
   () => {
     selectedCategory.value = '';
     selectedTags.value = [];
@@ -293,6 +308,49 @@ watch(
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* Type Navigation */
+.type-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-xs);
+  padding-bottom: var(--billadm-space-md);
+  border-bottom: 1px solid var(--billadm-color-divider);
+  flex-shrink: 0;
+}
+
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: var(--billadm-size-text-body-sm);
+  font-weight: 500;
+  color: var(--billadm-color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-full);
+  cursor: pointer;
+  transition: all var(--billadm-transition-fast);
+}
+
+.type-pill:hover:not(.is-active) {
+  color: var(--billadm-color-text-major);
+  border-color: var(--billadm-color-text-disabled);
+}
+
+.type-pill.is-active {
+  color: var(--c);
+  border-color: var(--c);
+  background-color: color-mix(in srgb, var(--c) 8%, transparent);
+}
+
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 /* Main Grid */

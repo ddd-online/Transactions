@@ -10,7 +10,7 @@ const routes = [
       {
         name: '分类标签',
         path: 'category_tag_view',
-        component: () => import('@/components/category_tag_view/CategoryTagView.vue')
+        component: () => import('@/components/settings_view/BilladmCategoryTagSetting.vue')
       },
       {
         name: '消费记录',
