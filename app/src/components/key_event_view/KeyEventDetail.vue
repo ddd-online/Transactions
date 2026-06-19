@@ -7,32 +7,11 @@
 
     <!-- 事件详情 -->
     <template v-else>
-      <!-- 图片网格 -->
-      <div class="detail-images">
-        <div class="image-grid">
-          <div
-            v-for="img in images"
-            :key="img.id"
-            class="image-thumb"
-          >
-            <a-image
-              :src="img.data"
-              :preview="true"
-              width="100%"
-              height="100%"
-              style="object-fit: cover;"
-            />
-            <a-button
-              type="text"
-              size="small"
-              class="image-delete-btn"
-              @click="$emit('delete-image', img.id)"
-            >
-              <template #icon><CloseOutlined /></template>
-            </a-button>
-          </div>
-        </div>
-      </div>
+      <!-- 图片画廊 -->
+      <KeyEventImageGallery
+        :images="images"
+        @delete-image="(id: string) => $emit('delete-image', id)"
+      />
 
       <!-- 描述区域 -->
       <div class="detail-description">
@@ -162,60 +141,6 @@ const handleCancel = () => {
 .panel-empty-text {
   font-size: var(--billadm-size-text-body-sm);
   color: var(--billadm-color-text-disabled);
-}
-
-/* ========== 图片网格 ========== */
-.detail-images {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin-bottom: var(--billadm-space-md);
-}
-
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-}
-
-.image-thumb {
-  position: relative;
-  border-radius: var(--billadm-radius-sm);
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-}
-
-.image-thumb :deep(.ant-image) {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.image-delete-btn {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  min-width: 0;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity var(--billadm-transition-fast);
-  border: none;
-}
-
-.image-thumb:hover .image-delete-btn {
-  opacity: 1;
-}
-
-.image-delete-btn :deep(.anticon) {
-  color: #fff;
-  font-size: 10px;
 }
 
 /* ========== 描述区域 ========== */
