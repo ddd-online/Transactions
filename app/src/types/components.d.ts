@@ -67,6 +67,7 @@ declare module 'vue' {
     DataAnalysisView: typeof import('./../components/da_view/DataAnalysisView.vue')['default']
     KeyEventAddModal: typeof import('./../components/key_event_view/KeyEventAddModal.vue')['default']
     KeyEventDetail: typeof import('./../components/key_event_view/KeyEventDetail.vue')['default']
+    KeyEventImageGallery: typeof import('./../components/key_event_view/KeyEventImageGallery.vue')['default']
     KeyEventLinkedTr: typeof import('./../components/key_event_view/KeyEventLinkedTr.vue')['default']
     KeyEventList: typeof import('./../components/key_event_view/KeyEventList.vue')['default']
     KeyEventView: typeof import('./../components/key_event_view/KeyEventView.vue')['default']

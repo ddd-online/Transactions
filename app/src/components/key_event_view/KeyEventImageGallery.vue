@@ -8,35 +8,19 @@
     <template v-else>
       <!-- 左侧大图 -->
       <div class="gallery-main" @click="triggerPreview">
-        <a-image
-          v-if="selectedImage"
-          :src="selectedImage.data"
-          :preview="true"
-          width="100%"
-          height="100%"
-          style="object-fit: cover;"
-          :preview-visible="previewVisible"
-          @visible-change="onPreviewChange"
-        />
+        <a-image v-if="selectedImage" :src="selectedImage.data" :preview="true" width="100%" height="100%"
+          style="object-fit: cover;" :preview-visible="previewVisible" @visible-change="onPreviewChange" />
       </div>
 
       <!-- 右侧缩略图列 80px -->
       <div class="gallery-thumbs">
-        <div
-          v-for="img in images"
-          :key="img.id"
-          class="thumb-item"
-          :class="{ 'is-selected': selectedId === img.id }"
-          @click="selectedId = img.id"
-        >
+        <div v-for="img in images" :key="img.id" class="thumb-item" :class="{ 'is-selected': selectedId === img.id }"
+          @click="selectedId = img.id">
           <img :src="img.data" class="thumb-img" alt="" />
-          <a-button
-            type="text"
-            size="small"
-            class="thumb-delete-btn"
-            @click.stop="$emit('delete-image', img.id)"
-          >
-            <template #icon><CloseOutlined /></template>
+          <a-button type="text" size="small" class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)">
+            <template #icon>
+              <CloseOutlined />
+            </template>
           </a-button>
         </div>
       </div>
@@ -126,7 +110,7 @@ const onPreviewChange = (visible: boolean) => {
 
 /* 右侧缩略图列 */
 .gallery-thumbs {
-  width: 100px;
+  width: 160px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -138,7 +122,7 @@ const onPreviewChange = (visible: boolean) => {
 .thumb-item {
   position: relative;
   width: 100%;
-  height: 60px;
+  height: 90px;
   flex-shrink: 0;
   border-radius: var(--billadm-radius-sm);
   overflow: hidden;
