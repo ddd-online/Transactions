@@ -147,7 +147,6 @@ const handleCancel = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
   padding: var(--billadm-space-sm);
   background-color: var(--billadm-color-major-background);
 }
@@ -167,6 +166,9 @@ const handleCancel = () => {
 
 /* ========== 图片网格 ========== */
 .detail-images {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   margin-bottom: var(--billadm-space-md);
 }
 
@@ -174,6 +176,7 @@ const handleCancel = () => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  height: 100%;
 }
 
 .image-thumb {
