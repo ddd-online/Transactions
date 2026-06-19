@@ -101,11 +101,11 @@
         </a-form-item>
 
         <a-form-item label="分类" name="category">
-          <a-select v-model:value="trForm.category" :options="categories" />
+          <a-select v-model:value="trForm.category" :options="categoryOptions" />
         </a-form-item>
 
         <a-form-item label="标签" name="tags">
-          <a-select v-model:value="trForm.tags" :options="tags" mode="multiple" placeholder="选择一个或多个标签" />
+          <a-select v-model:value="trForm.tags" :options="tagOptions" mode="multiple" placeholder="选择一个或多个标签" />
         </a-form-item>
 
         <a-form-item label="标记" name="flags">
@@ -168,8 +168,6 @@ import { convertToUnixTimeRange } from "@/backend/timerange.ts";
 import {
   createTransactionRecord,
   deleteTransactionRecord,
-  getCategoryByType,
-  getTagsByCategory,
   getTrOnCondition,
   linkTransactionToKeyEvent,
   unlinkTransactionFromKeyEvent,
@@ -177,6 +175,7 @@ import {
   getTemplatesByLedgerId,
   saveTemplate
 } from "@/backend/functions.ts";
+import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
 import { useTrQueryConditionStore } from "@/stores/trQueryConditionStore.ts";
 import { useAppDataStore } from "@/stores/appDataStore.ts";
@@ -196,6 +195,9 @@ import { message } from "ant-design-vue";
 const ledgerStore = useLedgerStore();
 const trQueryConditionStore = useTrQueryConditionStore();
 const appDataStore = useAppDataStore();
+
+const { categoryOptions, tagOptions, loadCategoryOptions, loadTagOptions } =
+  useCategoryTags(() => ledgerStore.currentLedgerId)
 
 // 表单校验规则
 const rules: Record<string, Rule[]> = {
@@ -226,8 +228,6 @@ const trModalTitle = ref('');
 const trForm = ref<TrForm>({
   id: '', price: '', type: '', category: '', description: '', tags: [], flags: [], time: dayjs()
 });
-const categories = ref<DefaultOptionType[]>([]);
-const tags = ref<DefaultOptionType[]>([]);
 const flagOptions = [{ label: '离群值', value: 'outlier' }];
 
 // 模板相关状态
@@ -371,30 +371,29 @@ watch(() => [currentPage.value, pageSize.value], async () => {
   await refreshTable();
 });
 
-watch(() => trForm.value.type, async () => {
-  if (trForm.value.type === '' || !ledgerStore.currentLedgerId) return;
-  const categoryList = await getCategoryByType(trForm.value.type, ledgerStore.currentLedgerId);
-  categories.value = categoryList.map(c => ({ value: c.name }));
-  const categoryNames = categoryList.map(c => c.name);
+// 交易类型变化 → 加载分类
+watch(() => trForm.value.type, async (newType) => {
+  if (!newType || !ledgerStore.currentLedgerId) return
+  const categoryList = await loadCategoryOptions(newType)
+  const categoryNames = categoryList.map(c => c.name)
   if (categoryNames.length > 0) {
     if (!trForm.value.category || !categoryNames.includes(trForm.value.category)) {
-      trForm.value.category = categoryNames[0] as string;
+      trForm.value.category = categoryNames[0] as string
     }
   } else {
-    trForm.value.category = '';
+    trForm.value.category = ''
   }
-});
+})
 
-watch(() => trForm.value.category, async () => {
-  if (trForm.value.category === '' || !trForm.value.type || !ledgerStore.currentLedgerId) return;
-  const categoryTransactionType = `${trForm.value.category}:${trForm.value.type}`;
-  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId);
-  tags.value = tagList.map(t => ({ value: t.name }));
-  const tagNames = tagList.map(t => t.name);
+// 分类变化 → 加载标签
+watch(() => trForm.value.category, async (newCategory) => {
+  if (!newCategory || !trForm.value.type || !ledgerStore.currentLedgerId) return
+  await loadTagOptions(newCategory, trForm.value.type)
+  const tagNames = tagOptions.value.map(t => t.value as string)
   if (tagNames.length > 0 && trForm.value.tags) {
-    trForm.value.tags = trForm.value.tags.filter(tag => tagNames.includes(tag));
+    trForm.value.tags = trForm.value.tags.filter(tag => tagNames.includes(tag))
   } else {
-    trForm.value.tags = [];
+    trForm.value.tags = []
   }
 });
 
