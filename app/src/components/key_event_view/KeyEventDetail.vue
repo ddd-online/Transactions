@@ -7,6 +7,26 @@
 
     <!-- 事件详情 -->
     <template v-else>
+      <!-- 颜色选择栏 -->
+      <div v-if="event" class="color-toolbar">
+        <div
+          v-for="c in EVENT_COLORS"
+          :key="c"
+          class="color-swatch"
+          :class="{ 'is-selected': event.color === c }"
+          :style="{ backgroundColor: c }"
+          :title="c"
+          @click="$emit('color-change', c)"
+        />
+        <!-- 虚线空白圆：表示不设置颜色 / 使用软件默认颜色 -->
+        <div
+          class="color-swatch color-swatch-empty"
+          :class="{ 'is-selected': !event.color }"
+          title="使用默认颜色"
+          @click="$emit('color-change', '')"
+        />
+      </div>
+
       <!-- 图片画廊 -->
       <KeyEventImageGallery
         :images="images"
@@ -75,12 +95,22 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const EVENT_COLORS = [
+  '#D9705A', '#E89280', '#4A8C6F', '#6BAA8C',
+  '#5C8DB5', '#7EABCC', '#C6963A', '#8C7B6E',
+  '#9E8C7E', '#6B9E7E',
+  '#8C6B9E', '#A88CC0', '#C68E30', '#D4A84B',
+  '#5C9EA8', '#7EB8C2', '#B89A80', '#CCB098',
+  '#7E8C94', '#9EAAB0',
+];
+
 const emit = defineEmits<{
   (e: 'edit'): void;
   (e: 'save', content: string): void;
   (e: 'cancel-edit'): void;
   (e: 'add-image', file: File): void;
   (e: 'delete-image', imageId: string): void;
+  (e: 'color-change', color: string): void;
 }>();
 
 // 本地编辑内容，与 event.content 同步
@@ -122,6 +152,50 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
+/* ========== 颜色工具栏 ========== */
+.color-toolbar {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: var(--billadm-space-sm);
+  border-bottom: 1px solid var(--billadm-color-divider);
+  margin-bottom: var(--billadm-space-sm);
+  flex-shrink: 0;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: box-shadow var(--billadm-transition-fast),
+              border-color var(--billadm-transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.color-swatch:hover {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.color-swatch.is-selected {
+  border-color: #000;
+}
+
+.color-swatch-empty {
+  border: 2px dashed var(--billadm-color-text-disabled);
+  background-color: transparent;
+}
+
+.color-swatch-empty.is-selected {
+  border-style: solid;
+  border-color: #000;
+}
+
 .detail-panel {
   display: flex;
   flex-direction: column;
