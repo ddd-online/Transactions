@@ -9,10 +9,13 @@ import {
     addKeyEventImage,
     deleteKeyEventImage
 } from "@/backend/api/key-event";
+import { useLedgerStore } from '@/stores/ledgerStore'
 import NotificationUtil from "@/backend/notification";
 import type { KeyEvent, KeyEventImage } from "@/types/billadm";
 
 export const useKeyEventStore = defineStore('keyEvent', () => {
+    const getLedgerId = () => useLedgerStore().currentLedgerId
+
     // 某年有记录的日期集合，用于日历高亮
     const datesWithRecords = ref(new Set<string>());
     const currentYear = ref(new Date().getFullYear());
@@ -26,8 +29,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
 
     // 获取某年有记录的日期列表
     const fetchDatesByYear = async (year: number) => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         try {
-            const eventList = await queryKeyEventsByYear(year);
+            const eventList = await queryKeyEventsByYear(year, ledgerId);
             datesWithRecords.value = new Set(eventList.map(e => e.date));
             titles.value = new Map(eventList.map(e => [e.date, e.title]));
             colors.value = new Map(eventList.map(e => [e.date, e.color]));
@@ -40,8 +45,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
 
     // 获取单日详情
     const fetchEventByDate = async (date: string): Promise<KeyEvent | null> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return null
         try {
-            const event = await queryKeyEventByDate(date);
+            const event = await queryKeyEventByDate(date, ledgerId);
             if (event) {
                 titles.value.set(date, event.title);
                 colors.value.set(date, event.color);
@@ -55,8 +62,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
 
     // 保存事件（新建或更新）
     const saveEvent = async (date: string, title: string, content: string, color: string): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         try {
-            await saveKeyEvent(date, title, content, color);
+            await saveKeyEvent(date, title, content, color, ledgerId);
             datesWithRecords.value.add(date);
             titles.value.set(date, title);
             colors.value.set(date, color);
@@ -69,8 +78,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
 
     // 删除事件
     const deleteEvent = async (date: string): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         try {
-            await deleteKeyEvent(date);
+            await deleteKeyEvent(date, ledgerId);
             datesWithRecords.value.delete(date);
             titles.value.delete(date);
             colors.value.delete(date);
@@ -98,8 +109,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     };
 
     const fetchImages = async (date: string): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         try {
-            images.value = await queryKeyEventImages(date);
+            images.value = await queryKeyEventImages(date, ledgerId);
         } catch (error) {
             NotificationUtil.error('加载图片失败', `${error}`);
             images.value = [];
@@ -107,8 +120,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     };
 
     const addImage = async (date: string, data: string, filename: string): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         try {
-            const imageId = await addKeyEventImage(date, data, filename);
+            const imageId = await addKeyEventImage(date, data, filename, ledgerId);
             images.value.push({
                 id: imageId,
                 eventDate: date,

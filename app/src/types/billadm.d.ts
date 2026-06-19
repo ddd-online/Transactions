@@ -153,6 +153,7 @@ export interface KeyEvent {
     color: string;        // 颜色标记（可为空，hex 色值）
     createdAt: number;    // 创建时间戳
     updatedAt: number;     // 更新时间戳
+    ledgerId: string;
 }
 
 /**
