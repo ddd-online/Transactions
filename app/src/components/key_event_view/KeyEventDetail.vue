@@ -31,42 +31,11 @@
               <template #icon><CloseOutlined /></template>
             </a-button>
           </div>
-          <div
-            class="image-add"
-            tabindex="0"
-            role="button"
-            aria-label="添加图片"
-            @click="triggerFileInput"
-            @paste="handlePaste"
-          >
-            <PlusOutlined />
-            <input
-              ref="fileInputRef"
-              type="file"
-              accept="image/*"
-              multiple
-              style="display: none"
-              @change="handleFileSelect"
-            />
-          </div>
         </div>
       </div>
 
       <!-- 描述区域 -->
       <div class="detail-description">
-        <div class="description-header">
-          <span class="description-label">描述</span>
-          <a-button
-            v-if="!isEditing"
-            type="text"
-            size="small"
-            @click="$emit('edit')"
-          >
-            <template #icon><EditOutlined /></template>
-            编辑
-          </a-button>
-        </div>
-
         <!-- 查看模式 -->
         <div v-if="!isEditing" class="description-content">
           <p v-if="event.content" class="description-text">{{ event.content }}</p>
@@ -77,7 +46,6 @@
         <div v-else class="description-edit">
           <a-textarea
             v-model:value="localContent"
-            :rows="5"
             :maxlength="5000"
             show-count
             placeholder="输入描述内容..."
@@ -87,6 +55,31 @@
             <a-button type="primary" size="small" @click="handleSave">保存</a-button>
           </div>
         </div>
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="detail-footer">
+        <a-button type="dashed" size="small" @click="triggerFileInput">
+          <template #icon><PlusOutlined /></template>
+          添加图片
+        </a-button>
+        <a-button
+          v-if="!isEditing"
+          type="text"
+          size="small"
+          @click="$emit('edit')"
+        >
+          <template #icon><EditOutlined /></template>
+          编辑描述
+        </a-button>
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept="image/*"
+          multiple
+          style="display: none"
+          @change="handleFileSelect"
+        />
       </div>
     </template>
   </div>
@@ -137,20 +130,6 @@ const handleFileSelect = (e: Event) => {
     emit('add-image', file);
   }
   input.value = '';
-};
-
-// 粘贴处理
-const handlePaste = (e: ClipboardEvent) => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      const file = item.getAsFile();
-      if (file) {
-        emit('add-image', file);
-      }
-    }
-  }
 };
 
 // 保存/取消
@@ -238,46 +217,20 @@ const handleCancel = () => {
   font-size: 10px;
 }
 
-.image-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 4 / 3;
-  border: 1px dashed var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-sm);
-  color: var(--billadm-color-text-secondary);
-  cursor: pointer;
-  transition: border-color var(--billadm-transition-fast),
-              color var(--billadm-transition-fast);
-}
-
-.image-add:hover {
-  border-color: var(--billadm-color-primary);
-  color: var(--billadm-color-primary);
-}
-
 /* ========== 描述区域 ========== */
 .detail-description {
   display: flex;
   flex-direction: column;
   flex: 1;
-}
-
-.description-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--billadm-space-sm);
-}
-
-.description-label {
-  font-size: var(--billadm-size-text-body-sm);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  min-height: 0;
 }
 
 .description-content {
   flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-md);
+  padding: var(--billadm-space-sm);
 }
 
 .description-text {
@@ -300,6 +253,7 @@ const handleCancel = () => {
   flex-direction: column;
   gap: var(--billadm-space-sm);
   flex: 1;
+  min-height: 0;
 }
 
 .description-edit :deep(.ant-input-textarea) {
@@ -317,5 +271,17 @@ const handleCancel = () => {
   display: flex;
   justify-content: flex-end;
   gap: var(--billadm-space-xs);
+  flex-shrink: 0;
+}
+
+/* ========== 底部操作栏 ========== */
+.detail-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  padding-top: var(--billadm-space-md);
+  border-top: 1px solid var(--billadm-color-divider);
+  margin-top: var(--billadm-space-md);
+  flex-shrink: 0;
 }
 </style>
