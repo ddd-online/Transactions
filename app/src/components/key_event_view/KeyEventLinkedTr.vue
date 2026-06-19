@@ -16,7 +16,7 @@
     </div>
 
     <!-- 关联交易卡片列表 -->
-    <div v-else class="linked-cards">
+    <div v-else ref="cardsRef" class="linked-cards" @scroll="onScroll">
       <div
         v-for="tr in transactions"
         :key="tr.transactionId"
@@ -55,11 +55,19 @@
         </button>
       </div>
     </div>
+
+    <!-- 滚动指示箭头 -->
+    <Transition name="scroll-hint">
+      <div v-if="showScrollHint" class="scroll-hint-arrow">
+        <DownOutlined />
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { DeleteOutlined } from "@ant-design/icons-vue";
+import { ref, watch, nextTick } from 'vue'
+import { DeleteOutlined, DownOutlined } from "@ant-design/icons-vue";
 import { centsToYuan } from "@/backend/functions";
 import type { TransactionRecord } from "@/types/billadm";
 
@@ -69,11 +77,31 @@ interface Props {
   hasSelection: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 defineEmits<{
   (e: 'delete', transactionId: string): void;
 }>();
+
+const cardsRef = ref<HTMLElement | null>(null)
+const showScrollHint = ref(false)
+
+const checkOverflow = () => {
+  const el = cardsRef.value
+  if (!el) return
+  showScrollHint.value = el.scrollHeight > el.clientHeight + 2 && el.scrollTop + el.clientHeight < el.scrollHeight - 4
+}
+
+const onScroll = () => {
+  checkOverflow()
+}
+
+watch(
+  () => props.transactions,
+  () => {
+    nextTick(() => checkOverflow())
+  }
+)
 </script>
 
 <style scoped>
@@ -84,6 +112,7 @@ defineEmits<{
   border-left: 1px solid var(--billadm-color-divider);
   padding: var(--billadm-space-sm);
   background-color: var(--billadm-color-major-warm);
+  position: relative;
 }
 
 /* ========== 空状态 & 加载 ========== */
@@ -105,6 +134,12 @@ defineEmits<{
   flex: 1;
   overflow-y: auto;
   padding: var(--billadm-space-xs);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.linked-cards::-webkit-scrollbar {
+  display: none;
 }
 
 /* ========== 卡片 ========== */
@@ -212,5 +247,35 @@ defineEmits<{
 .linked-card-delete:hover {
   color: var(--billadm-color-expense);
   background-color: rgba(217, 112, 90, 0.08);
+}
+
+/* ========== 滚动指示箭头 ========== */
+.scroll-hint-arrow {
+  position: absolute;
+  bottom: var(--billadm-space-sm);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(74, 140, 111, 0.18);
+  color: var(--billadm-color-primary);
+  font-size: 14px;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+/* 过渡动画 */
+.scroll-hint-enter-active,
+.scroll-hint-leave-active {
+  transition: opacity var(--billadm-transition-smooth);
+}
+
+.scroll-hint-enter-from,
+.scroll-hint-leave-to {
+  opacity: 0;
 }
 </style>
