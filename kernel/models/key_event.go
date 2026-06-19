@@ -8,6 +8,7 @@ type KeyEvent struct {
 	Color     string `gorm:"type:varchar(20);comment:颜色标记" json:"color"`
 	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
+	LedgerID  string `gorm:"index;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
 }
 
 func (k *KeyEvent) TableName() string {
