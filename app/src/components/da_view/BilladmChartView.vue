@@ -77,7 +77,6 @@
       <!-- 右侧：统计面板 -->
       <div v-if="lineSums.length > 0" class="chart-view-stats">
         <div class="stats-panel">
-          <div class="stats-panel-header">汇总</div>
           <div class="stats-panel-body">
             <div v-for="item in lineSums" :key="item.label" class="stat-row">
               <span class="stat-dot" :style="{ backgroundColor: getTypeColor(item.type) }" />
@@ -417,16 +416,6 @@ const formatAmount = (amount: number) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-}
-
-.stats-panel-header {
-  flex-shrink: 0;
-  padding: var(--billadm-space-lg) var(--billadm-space-xl);
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-section);
-  font-weight: 600;
-  color: var(--billadm-color-text-major);
-  border-bottom: 1px solid var(--billadm-color-divider);
 }
 
 .stats-panel-body {
