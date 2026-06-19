@@ -417,7 +417,6 @@ const formatAmount = (amount: number) => {
 /* ========== 曲线详情区域 ========== */
 .chart-lines-section {
   flex-shrink: 0;
-  margin: 0 var(--billadm-space-2xl) var(--billadm-space-xl);
   background-color: var(--billadm-color-major-background);
   border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-lg);
