@@ -13,18 +13,20 @@
       </div>
 
       <!-- 右侧缩略图列 -->
-      <div ref="thumbsRef" class="gallery-thumbs" @scroll="onScroll">
-        <div v-for="img in images" :key="img.id" class="thumb-item" :class="{ 'is-selected': selectedId === img.id }"
-          @click="selectedId = img.id">
-          <img :src="img.data" class="thumb-img" alt="" />
-          <a-button type="text" size="small" class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-          </a-button>
+      <div class="gallery-thumbs-wrap">
+        <div ref="thumbsRef" class="gallery-thumbs" @scroll="onScroll">
+          <div v-for="img in images" :key="img.id" class="thumb-item" :class="{ 'is-selected': selectedId === img.id }"
+            @click="selectedId = img.id">
+            <img :src="img.data" class="thumb-img" alt="" />
+            <a-button type="text" size="small" class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)">
+              <template #icon>
+                <CloseOutlined />
+              </template>
+            </a-button>
+          </div>
         </div>
 
-        <!-- 滚动指示箭头 -->
+        <!-- 滚动指示箭头（在滚动容器外，不跟随滚动） -->
         <Transition name="scroll-hint">
           <div v-if="showScrollHint" class="scroll-hint-arrow">
             <DownOutlined />
@@ -143,9 +145,15 @@ const onPreviewChange = (visible: boolean) => {
 }
 
 /* 右侧缩略图列 */
-.gallery-thumbs {
+.gallery-thumbs-wrap {
   width: 160px;
   flex-shrink: 0;
+  position: relative;
+}
+
+.gallery-thumbs {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -153,7 +161,6 @@ const onPreviewChange = (visible: boolean) => {
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  position: relative;
 }
 
 .gallery-thumbs::-webkit-scrollbar {
