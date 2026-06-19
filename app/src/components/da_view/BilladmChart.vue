@@ -42,17 +42,12 @@ const initChart = () => {
   // 获取时间轴标题
   const xAxisTitle = props.xField === 'time' ? (props.title.includes('月度') ? '月份' : '年份') : props.xField
 
-  // 计算16:9的高度
-  const width = containerRef.value.clientWidth
-  const height = width * 9 / 16
-
   // 获取主题颜色
   const themeColors = getThemeColors()
 
   chart = new Chart({
     container: containerRef.value,
     autoFit: true,
-    height: height,
     data: props.data,
   })
 
@@ -135,5 +130,8 @@ watch(() => props.data, () => {
 .billadm-chart {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
