@@ -126,7 +126,7 @@ const onPreviewChange = (visible: boolean) => {
 
 /* 右侧缩略图列 */
 .gallery-thumbs {
-  width: 80px;
+  width: 100px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
