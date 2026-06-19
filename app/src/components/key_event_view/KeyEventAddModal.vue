@@ -79,6 +79,7 @@ watch(
 );
 
 const handleConfirm = () => {
+  if (!formDate.value) return
   const date = formDate.value.format('YYYY-MM-DD');
   emit('confirm', date, formTitle.value.trim(), formColor.value);
 };
