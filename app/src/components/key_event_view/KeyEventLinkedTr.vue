@@ -116,6 +116,7 @@ const getLedgerName = (ledgerId: string): string => {
   flex-direction: column;
   height: 100%;
   border-left: 1px solid var(--billadm-color-divider);
+  padding: var(--billadm-space-sm);
   background-color: var(--billadm-color-major-background);
 }
 

@@ -81,6 +81,7 @@ const truncate = (text: string, max: number): string => {
   flex-direction: column;
   height: 100%;
   border-right: 1px solid var(--billadm-color-divider);
+  padding: var(--billadm-space-sm);
   background-color: var(--billadm-color-major-background);
 }
 
@@ -165,6 +166,5 @@ const truncate = (text: string, max: number): string => {
 /* ========== 底部 ========== */
 .panel-footer {
   padding: var(--billadm-space-sm);
-  border-top: 1px solid var(--billadm-color-divider);
 }
 </style>

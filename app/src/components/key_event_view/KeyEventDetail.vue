@@ -148,7 +148,7 @@ const handleCancel = () => {
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
-  padding: var(--billadm-space-md);
+  padding: var(--billadm-space-sm);
   background-color: var(--billadm-color-major-background);
 }
 
@@ -279,7 +279,6 @@ const handleCancel = () => {
   align-items: center;
   gap: var(--billadm-space-sm);
   padding: var(--billadm-space-sm);
-  border-top: 1px solid var(--billadm-color-divider);
   flex-shrink: 0;
 }
 </style>
