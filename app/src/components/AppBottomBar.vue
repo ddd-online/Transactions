@@ -14,7 +14,7 @@ import BilladmStatisticsFooter from '@/components/common/BilladmStatisticsFooter
 const route = useRoute()
 
 const showStatistics = computed(() => {
-  return route.path === '/tr_view' || route.path === '/da_view'
+  return route.path === '/tr_view' || route.path === '/da_view' || route.path === '/key_event_view'
 })
 </script>
 
