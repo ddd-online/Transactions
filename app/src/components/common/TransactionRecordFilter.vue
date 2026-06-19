@@ -19,14 +19,14 @@
       <!-- 分类 -->
       <div class="form-item">
         <div class="form-label">分类</div>
-        <a-select v-model:value="tempCategory" placeholder="请选择分类" :options="categories" allow-clear
+        <a-select v-model:value="tempCategory" placeholder="请选择分类" :options="categoryOptions" allow-clear
           @change="onCategoryChange" class="form-select" />
       </div>
 
       <!-- 标签 -->
       <div class="form-item">
         <div class="form-label">标签</div>
-        <a-select v-model:value="tempTags" mode="multiple" placeholder="请选择标签" :options="tags" allow-clear class="form-select" />
+        <a-select v-model:value="tempTags" mode="multiple" placeholder="请选择标签" :options="tagOptions" allow-clear class="form-select" />
       </div>
 
       <!-- 标签匹配策略和取反 -->
@@ -97,14 +97,17 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { Category, TrQueryConditionItem } from '@/types/billadm';
-import type { DefaultOptionType } from 'ant-design-vue/es/vc-cascader';
-import { getCategoryByType, getTagsByCategory } from '@/backend/functions';
+import type { TrQueryConditionItem } from '@/types/billadm';
+
+import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useTrQueryConditionStore } from '@/stores/trQueryConditionStore';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import { TransactionTypeToLabel } from '@/backend/constant';
 
 const ledgerStore = useLedgerStore();
+
+const { categoryOptions, tagOptions, loadCategoryOptions, loadTagOptions } =
+  useCategoryTags(() => ledgerStore.currentLedgerId)
 
 // 双向绑定 modal 开关
 const open = defineModel<boolean>();
@@ -127,32 +130,24 @@ const transactionTypeOptions = [
   { label: '转账', value: 'transfer' },
 ];
 
-// 分类 & 标签选项
-const categories = ref<DefaultOptionType[]>([]);
-const tags = ref<DefaultOptionType[]>([]);
-
 // 交易类型变化 → 刷新分类
 watch(() => tempTransactionType.value, async (newVal) => {
   if (!newVal) {
-    categories.value = [];
-    tempCategory.value = undefined;
-    return;
+    categoryOptions.value = []
+    tempCategory.value = undefined
+    return
   }
-  const categoryList: Category[] = await getCategoryByType(newVal, ledgerStore.currentLedgerId!);
-  categories.value = categoryList.map((c) => ({ value: c.name }));
-});
+  await loadCategoryOptions(newVal)
+})
 
 // 分类变化 → 刷新标签
 watch(() => tempCategory.value, async (newVal) => {
   if (!newVal) {
-    tags.value = [];
-    tempTags.value = [];
-    return;
+    tagOptions.value = []
+    tempTags.value = []
+    return
   }
-  // 组合分类和交易类型，格式为"分类:交易类型"
-  const categoryTransactionType = `${newVal}:${tempTransactionType.value}`;
-  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!);
-  tags.value = tagList.map((t) => ({ value: t.name }));
+  await loadTagOptions(newVal, tempTransactionType.value!)
 });
 
 // 打开时加载 store 中的条件

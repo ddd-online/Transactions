@@ -94,10 +94,13 @@ import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { ChartLine } from '@/backend/chart'
 import { TransactionTypeToColor, TransactionTypeToLabel } from '@/backend/constant'
-import { getCategoryByType, getTagsByCategory } from '@/backend/functions'
+import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from '@/stores/ledgerStore'
 
 const ledgerStore = useLedgerStore()
+
+const { categoryOptions, tagOptions, loadCategoryOptions, loadTagOptions } =
+  useCategoryTags(() => ledgerStore.currentLedgerId)
 
 interface Props {
   lines: ChartLine[]
@@ -117,8 +120,6 @@ const emit = defineEmits<{
 
 const localLines = ref<ChartLine[]>([...props.lines])
 const showAddLineModal = ref(false)
-const categoryOptions = ref<{ value: string }[]>([])
-const tagOptions = ref<{ value: string }[]>([])
 
 interface NewLineForm {
   label: string
@@ -162,8 +163,7 @@ const onTransactionTypeChange = async () => {
     categoryOptions.value = []
     return
   }
-  const categoryList = await getCategoryByType(newLineForm.value.transactionType, ledgerStore.currentLedgerId!)
-  categoryOptions.value = categoryList.map((c) => ({ value: c.name }))
+  await loadCategoryOptions(newLineForm.value.transactionType)
 }
 
 const onCategoryChange = async () => {
@@ -172,9 +172,7 @@ const onCategoryChange = async () => {
     tagOptions.value = []
     return
   }
-  const categoryTransactionType = `${newLineForm.value.category}:${newLineForm.value.transactionType}`
-  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!)
-  tagOptions.value = tagList.map((t) => ({ value: t.name }))
+  await loadTagOptions(newLineForm.value.category, newLineForm.value.transactionType)
 }
 
 const handleAddLine = () => {

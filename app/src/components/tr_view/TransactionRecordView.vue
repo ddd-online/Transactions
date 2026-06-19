@@ -47,29 +47,7 @@
     </a-float-button>
 
     <!-- 排序弹窗 -->
-    <a-modal v-model:open="openSortModal" title="排序" :footer="null" centered width="500px">
-      <div class="sort-list">
-        <div v-for="(item, index) in sortItems" :key="index" class="sort-item">
-          <span class="sort-priority">{{ index + 1 }}</span>
-          <a-select v-model:value="item.field" :options="getAvailableFields(index)" placeholder="选择字段"
-            style="width: 120px" />
-          <a-select v-model:value="item.order" style="width: 100px">
-            <a-select-option value="asc">升序</a-select-option>
-            <a-select-option value="desc">降序</a-select-option>
-          </a-select>
-          <a-button type="text" danger :disabled="sortItems.length <= 1" @click="removeSortItem(index)">
-            <DeleteOutlined />
-          </a-button>
-        </div>
-        <a-button type="link" :disabled="sortItems.length >= 4" @click="addSortItem">
-          <PlusOutlined /> 添加排序条件
-        </a-button>
-      </div>
-      <div class="sort-actions">
-        <a-button @click="resetSort">重置</a-button>
-        <a-button type="primary" @click="applySort">应用</a-button>
-      </div>
-    </a-modal>
+    <TrSortModal v-model="openSortModal" @apply="onSortApply" />
 
     <!-- 筛选弹窗 -->
     <TransactionRecordFilter v-model="openTrFilterModal" />
@@ -101,11 +79,11 @@
         </a-form-item>
 
         <a-form-item label="分类" name="category">
-          <a-select v-model:value="trForm.category" :options="categories" />
+          <a-select v-model:value="trForm.category" :options="categoryOptions" />
         </a-form-item>
 
         <a-form-item label="标签" name="tags">
-          <a-select v-model:value="trForm.tags" :options="tags" mode="multiple" placeholder="选择一个或多个标签" />
+          <a-select v-model:value="trForm.tags" :options="tagOptions" mode="multiple" placeholder="选择一个或多个标签" />
         </a-form-item>
 
         <a-form-item label="标记" name="flags">
@@ -163,13 +141,13 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import TransactionRecordTable from '@/components/tr_view/TransactionRecordTable.vue';
+import TrSortModal from './TrSortModal.vue'
+import type { SortItem } from './TrSortModal.vue'
 import type { TransactionRecord, TrForm, TrQueryCondition, TransactionTemplate } from "@/types/billadm";
 import { convertToUnixTimeRange } from "@/backend/timerange.ts";
 import {
   createTransactionRecord,
   deleteTransactionRecord,
-  getCategoryByType,
-  getTagsByCategory,
   getTrOnCondition,
   linkTransactionToKeyEvent,
   unlinkTransactionFromKeyEvent,
@@ -177,6 +155,7 @@ import {
   getTemplatesByLedgerId,
   saveTemplate
 } from "@/backend/functions.ts";
+import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
 import { useTrQueryConditionStore } from "@/stores/trQueryConditionStore.ts";
 import { useAppDataStore } from "@/stores/appDataStore.ts";
@@ -189,13 +168,15 @@ import {
   PlusOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
-  DeleteOutlined
 } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 
 const ledgerStore = useLedgerStore();
 const trQueryConditionStore = useTrQueryConditionStore();
 const appDataStore = useAppDataStore();
+
+const { categoryOptions, tagOptions, loadCategoryOptions, loadTagOptions } =
+  useCategoryTags(() => ledgerStore.currentLedgerId)
 
 // 表单校验规则
 const rules: Record<string, Rule[]> = {
@@ -226,8 +207,6 @@ const trModalTitle = ref('');
 const trForm = ref<TrForm>({
   id: '', price: '', type: '', category: '', description: '', tags: [], flags: [], time: dayjs()
 });
-const categories = ref<DefaultOptionType[]>([]);
-const tags = ref<DefaultOptionType[]>([]);
 const flagOptions = [{ label: '离群值', value: 'outlier' }];
 
 // 模板相关状态
@@ -243,57 +222,28 @@ const linkingRecord = ref<TransactionRecord | null>(null);
 const linkDate = ref<Dayjs>(dayjs());
 
 // 排序相关状态
-interface SortItem {
-  field: string;
-  order: 'asc' | 'desc';
-}
 
 const openSortModal = ref(false);
-const sortItems = ref<SortItem[]>([
+const sortItemsRef = ref<SortItem[]>([
   { field: 'transactionAt', order: 'desc' }
 ]);
 
-const sortFieldOptions = [
-  { value: 'transactionAt', label: '时间' },
-  { value: 'price', label: '金额' },
-  { value: 'category', label: '分类' },
-  { value: 'transactionType', label: '类型' },
-];
 
 // 判断当前排序是否为升序（用于图标显示）
 const isAscending = computed(() => {
-  const first = sortItems.value[0];
+  const first = sortItemsRef.value[0];
   return !!first && first.order === 'asc';
 });
 
-// 获取可选字段，排除已在前面使用的字段
-const getAvailableFields = (currentIndex: number) => {
-  const usedFields = sortItems.value.slice(0, currentIndex).map(item => item.field);
-  return sortFieldOptions.filter(opt => !usedFields.includes(opt.value));
-};
-
-const addSortItem = () => {
-  if (sortItems.value.length >= 4) return;
-  const usedFields = sortItems.value.map(item => item.field);
-  const availableField = sortFieldOptions.find(opt => !usedFields.includes(opt.value));
-  if (availableField) {
-    sortItems.value.push({ field: availableField.value, order: 'desc' });
-  }
-};
-
-const removeSortItem = (index: number) => {
-  if (sortItems.value.length <= 1) return;
-  sortItems.value.splice(index, 1);
-};
-
-const resetSort = () => {
-  sortItems.value = [{ field: 'transactionAt', order: 'desc' }];
-};
-
-const applySort = () => {
-  openSortModal.value = false;
+const onSortApply = (sortItems: SortItem[]) => {
+  sortItemsRef.value = sortItems;
   refreshTable();
 };
+
+
+
+
+
 
 const createTr = () => {
   trForm.value.type = 'expense';
@@ -341,7 +291,7 @@ const refreshTable = async () => {
     ledgerId: ledgerStore.currentLedgerId,
     offset: pageSize.value * (currentPage.value - 1),
     limit: pageSize.value,
-    sortFields: sortItems.value
+    sortFields: sortItemsRef.value
   };
   if (trQueryConditionStore.timeRange) {
     trCondition.tsRange = convertToUnixTimeRange(trQueryConditionStore.timeRange);
@@ -371,30 +321,29 @@ watch(() => [currentPage.value, pageSize.value], async () => {
   await refreshTable();
 });
 
-watch(() => trForm.value.type, async () => {
-  if (trForm.value.type === '' || !ledgerStore.currentLedgerId) return;
-  const categoryList = await getCategoryByType(trForm.value.type, ledgerStore.currentLedgerId);
-  categories.value = categoryList.map(c => ({ value: c.name }));
-  const categoryNames = categoryList.map(c => c.name);
+// 交易类型变化 → 加载分类
+watch(() => trForm.value.type, async (newType) => {
+  if (!newType || !ledgerStore.currentLedgerId) return
+  const categoryList = await loadCategoryOptions(newType)
+  const categoryNames = categoryList.map(c => c.name)
   if (categoryNames.length > 0) {
     if (!trForm.value.category || !categoryNames.includes(trForm.value.category)) {
-      trForm.value.category = categoryNames[0] as string;
+      trForm.value.category = categoryNames[0] as string
     }
   } else {
-    trForm.value.category = '';
+    trForm.value.category = ''
   }
-});
+})
 
-watch(() => trForm.value.category, async () => {
-  if (trForm.value.category === '' || !trForm.value.type || !ledgerStore.currentLedgerId) return;
-  const categoryTransactionType = `${trForm.value.category}:${trForm.value.type}`;
-  const tagList = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId);
-  tags.value = tagList.map(t => ({ value: t.name }));
-  const tagNames = tagList.map(t => t.name);
+// 分类变化 → 加载标签
+watch(() => trForm.value.category, async (newCategory) => {
+  if (!newCategory || !trForm.value.type || !ledgerStore.currentLedgerId) return
+  await loadTagOptions(newCategory, trForm.value.type)
+  const tagNames = tagOptions.value.map(t => t.value as string)
   if (tagNames.length > 0 && trForm.value.tags) {
-    trForm.value.tags = trForm.value.tags.filter(tag => tagNames.includes(tag));
+    trForm.value.tags = trForm.value.tags.filter(tag => tagNames.includes(tag))
   } else {
-    trForm.value.tags = [];
+    trForm.value.tags = []
   }
 });
 
@@ -528,43 +477,6 @@ watch(() => ledgerStore.currentLedgerId, () => {
 .float-sort {
   right: 160px;
   bottom: 72px;
-}
-
-.sort-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--billadm-space-md);
-  margin-bottom: var(--billadm-space-lg);
-}
-
-.sort-list :deep(.ant-btn-link) {
-  color: var(--billadm-color-primary);
-}
-
-.sort-item {
-  display: flex;
-  align-items: center;
-  gap: var(--billadm-space-sm);
-}
-
-.sort-priority {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--billadm-radius-full);
-  background-color: var(--billadm-color-primary);
-  color: var(--billadm-color-text-inverse);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--billadm-size-text-caption);
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.sort-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--billadm-space-sm);
 }
 
 .template-select-row {
