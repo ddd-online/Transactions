@@ -174,7 +174,7 @@ const handleCancel = () => {
 
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 8px;
 }
 
@@ -279,6 +279,7 @@ const handleCancel = () => {
 .detail-footer {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--billadm-space-sm);
   padding: var(--billadm-space-sm);
   flex-shrink: 0;
