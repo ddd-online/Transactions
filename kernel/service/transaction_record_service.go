@@ -314,6 +314,14 @@ func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, t
 	logrus.Infof("link transaction %s to key event date %s", trId, date)
 
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		tr, err := t.trDao.QueryById(tx, trId)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("transaction not found: %s", trId)
+			}
+			return fmt.Errorf("query transaction: %w", err)
+		}
+
 		if err := t.trDao.UpdateKeyEventDate(tx, trId, date); err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("transaction not found: %s", trId)
@@ -322,12 +330,12 @@ func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, t
 		}
 
 		keyEventSvc := GetKeyEventService()
-		_, keyErr := keyEventSvc.QueryByDate(tx, date)
+		_, keyErr := keyEventSvc.QueryByDate(tx, tr.LedgerID, date)
 		if keyErr != nil && !errors.Is(keyErr, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("check key event: %w", keyErr)
 		}
 		if keyErr != nil && errors.Is(keyErr, gorm.ErrRecordNotFound) {
-			upsertErr := keyEventSvc.UpsertKeyEvent(tx, date, "", "", "")
+			upsertErr := keyEventSvc.UpsertKeyEvent(tx, tr.LedgerID, date, "", "", "")
 			if upsertErr != nil {
 				return fmt.Errorf("auto-create key event: %w", upsertErr)
 			}

@@ -31,6 +31,7 @@ type TransactionRecordDao interface {
 	CreateTr(ws *workspace.Workspace, record *models.TransactionRecord) error
 	ListAllTrByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*models.TransactionRecord, error)
 	QueryTrsOnCondition(ws *workspace.Workspace, condition *dto.TrQueryCondition) ([]*models.TransactionRecord, error)
+	QueryById(ws *workspace.Workspace, trId string) (*models.TransactionRecord, error)
 	DeleteTrById(ws *workspace.Workspace, trId string) error
 	CountTrByLedgerId(ws *workspace.Workspace, ledgerId string) (int64, error)
 	DeleteAllTrByLedgerId(ws *workspace.Workspace, ledgerId string) error
@@ -81,6 +82,16 @@ func (t *transactionRecordDaoImpl) QueryTrsOnCondition(ws *workspace.Workspace, 
 		return nil, err
 	}
 	return trs, nil
+}
+
+func (t *transactionRecordDaoImpl) QueryById(ws *workspace.Workspace, trId string) (*models.TransactionRecord, error) {
+	var tr models.TransactionRecord
+	if err := ws.GetDb().
+		Where("transaction_id = ?", trId).
+		First(&tr).Error; err != nil {
+		return nil, err
+	}
+	return &tr, nil
 }
 
 func (t *transactionRecordDaoImpl) DeleteTrById(ws *workspace.Workspace, trId string) error {
