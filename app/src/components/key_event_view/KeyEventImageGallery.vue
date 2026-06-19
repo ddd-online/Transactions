@@ -12,8 +12,8 @@
           style="object-fit: cover;" :preview-visible="previewVisible" @visible-change="onPreviewChange" />
       </div>
 
-      <!-- 右侧缩略图列 80px -->
-      <div class="gallery-thumbs">
+      <!-- 右侧缩略图列 -->
+      <div ref="thumbsRef" class="gallery-thumbs" @scroll="onScroll">
         <div v-for="img in images" :key="img.id" class="thumb-item" :class="{ 'is-selected': selectedId === img.id }"
           @click="selectedId = img.id">
           <img :src="img.data" class="thumb-img" alt="" />
@@ -24,12 +24,20 @@
           </a-button>
         </div>
       </div>
+
+      <!-- 滚动指示箭头 -->
+      <Transition name="scroll-hint">
+        <div v-if="showScrollHint" class="scroll-hint-arrow">
+          <DownOutlined />
+        </div>
+      </Transition>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+import { DownOutlined } from '@ant-design/icons-vue'
 import type { KeyEventImage } from '@/types/billadm'
 
 const props = defineProps<{
@@ -62,6 +70,27 @@ watch(
   { immediate: true }
 )
 
+// 滚动指示
+const thumbsRef = ref<HTMLElement | null>(null)
+const showScrollHint = ref(false)
+
+const checkOverflow = () => {
+  const el = thumbsRef.value
+  if (!el) return
+  showScrollHint.value = el.scrollHeight > el.clientHeight + 2 && el.scrollTop + el.clientHeight < el.scrollHeight - 4
+}
+
+const onScroll = () => {
+  checkOverflow()
+}
+
+watch(
+  () => props.images,
+  () => {
+    nextTick(() => checkOverflow())
+  }
+)
+
 const triggerPreview = () => {
   if (selectedImage.value) {
     previewVisible.value = true
@@ -80,6 +109,7 @@ const onPreviewChange = (visible: boolean) => {
   flex: 1;
   min-height: 0;
   margin-bottom: var(--billadm-space-md);
+  position: relative;
 }
 
 /* 空状态 */
@@ -122,6 +152,12 @@ const onPreviewChange = (visible: boolean) => {
   gap: 4px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gallery-thumbs::-webkit-scrollbar {
+  display: none;
 }
 
 .thumb-item {
@@ -184,5 +220,33 @@ const onPreviewChange = (visible: boolean) => {
 .thumb-delete-btn :deep(.anticon) {
   color: #fff;
   font-size: 9px;
+}
+
+/* ========== 滚动指示箭头 ========== */
+.scroll-hint-arrow {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(74, 140, 111, 0.18);
+  color: var(--billadm-color-primary);
+  font-size: 12px;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.scroll-hint-enter-active,
+.scroll-hint-leave-active {
+  transition: opacity var(--billadm-transition-smooth);
+}
+
+.scroll-hint-enter-from,
+.scroll-hint-leave-to {
+  opacity: 0;
 }
 </style>
