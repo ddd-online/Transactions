@@ -155,9 +155,9 @@ defineEmits<{
 
 .tag-item {
   font-size: var(--billadm-size-text-caption);
-  background-color: var(--billadm-color-minor-background);
+  background-color: var(--billadm-color-hover-bg);
   border: none;
-  color: var(--billadm-color-text-secondary);
+  color: var(--billadm-color-primary);
 }
 
 /* ========== 描述 ========== */
