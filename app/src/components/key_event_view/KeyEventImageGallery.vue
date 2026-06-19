@@ -132,11 +132,12 @@ const onPreviewChange = (visible: boolean) => {
   flex-direction: column;
   gap: 4px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .thumb-item {
   position: relative;
-  width: 80px;
+  width: 100%;
   height: 60px;
   flex-shrink: 0;
   border-radius: var(--billadm-radius-sm);
