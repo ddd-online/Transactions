@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Transactions is a desktop personal finance application built with Electron + Vue 3 + Go (Gin). It manages transaction records across multiple ledgers with categories, tags, key events, and data analysis charts. Each workspace is an independent SQLite database.
 
+Go module: `github.com/billadm` (Go 1.24). Frontend: Vue 3 + TypeScript with Ant Design Vue, ECharts (vue-echarts), AntV G2, Pinia, and dayjs.
+
 ## Architecture
 
 ```
@@ -41,7 +43,7 @@ electron/        # Electron main process
 | Layer | Responsibility |
 |-------|---------------|
 | `api` | Parse HTTP requests, validate input, call services, write `models.Result` JSON |
-| `service` | Business logic, cross-dao operations, logging via `logger.Logger` interface |
+| `service` | Business logic, cross-dao operations, logging via `logrus` (configured by `logger` package) |
 | `dao` | Pure database CRUD with GORM, receives `*workspace.Workspace` for DB access |
 | `workspace` | Database lifecycle, transaction support via `Workspace.Transaction(fn)` |
 
@@ -138,8 +140,11 @@ cd kernel && go test -cover ./...             # With coverage
 
 **Full production build (Windows):**
 ```powershell
-./build/build.ps1   # Builds Vue → Go → Electron, outputs installer
+./build/clean.ps1   # Clean previous build artifacts first
+./build/build.ps1   # Builds Vue → Go → Electron, outputs installer to electron/out/
 ```
+
+The build script sets `CGO_ENABLED=1`, `GOOS=windows`, `GOARCH=amd64` for the Go build.
 
 ## Development (Hot Reload)
 

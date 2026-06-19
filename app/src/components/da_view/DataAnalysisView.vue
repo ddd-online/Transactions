@@ -376,7 +376,6 @@ watch(
   overflow-y: auto;
   background-color: transparent;
   border-radius: var(--billadm-radius-lg);
-  padding: var(--billadm-space-sm) 0;
 }
 
 .da-empty {

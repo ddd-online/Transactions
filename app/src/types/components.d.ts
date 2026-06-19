@@ -52,6 +52,7 @@ declare module 'vue' {
     BilladmButton: typeof import('./../components/common/BilladmButton.vue')['default']
     BilladmCategoryTagSetting: typeof import('./../components/settings_view/BilladmCategoryTagSetting.vue')['default']
     BilladmChart: typeof import('./../components/da_view/BilladmChart.vue')['default']
+    BilladmChartLines: typeof import('./../components/da_view/BilladmChartLines.vue')['default']
     BilladmChartList: typeof import('./../components/da_view/BilladmChartList.vue')['default']
     BilladmChartView: typeof import('./../components/da_view/BilladmChartView.vue')['default']
     BilladmFileSelect: typeof import('./../components/BilladmFileSelect.vue')['default']
