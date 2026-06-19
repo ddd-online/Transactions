@@ -363,6 +363,7 @@ const formatAmount = (amount: number) => {
   flex: 0 0 220px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--billadm-space-xs);
   padding: var(--billadm-space-lg);
   background-color: var(--billadm-color-major-background);
