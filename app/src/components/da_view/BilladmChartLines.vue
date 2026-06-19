@@ -229,10 +229,7 @@ const resetNewLineForm = () => {
 
 .chart-lines-section {
   background-color: var(--billadm-color-major-background);
-}
-
-.chart-lines-section :deep(.ant-table) {
-  border-radius: 0;
+  overflow: hidden;
 }
 
 .chart-lines-section-header {
