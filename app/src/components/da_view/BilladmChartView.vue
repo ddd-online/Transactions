@@ -4,27 +4,23 @@
     <div class="chart-view-header">
       <h2 class="chart-view-title">{{ title }}</h2>
       <div class="header-controls">
-        <template v-if="!isPreset">
-          <a-select
-            v-model:value="editGranularity"
-            style="width: 100px;"
-            size="small"
-          >
-            <a-select-option value="year">年度</a-select-option>
-            <a-select-option value="month">月度</a-select-option>
-          </a-select>
-        </template>
-        <template v-else>
-          <a-tag :color="granularity === 'year' ? 'blue' : 'green'">
-            {{ granularity === 'year' ? '年度' : '月度' }}
-          </a-tag>
-        </template>
+        <a-select
+          v-if="!isPreset"
+          v-model:value="editGranularity"
+          style="width: 100px;"
+          size="small"
+        >
+          <a-select-option value="year">年度</a-select-option>
+          <a-select-option value="month">月度</a-select-option>
+        </a-select>
+        <a-tag v-else :color="granularity === 'year' ? 'blue' : 'green'">
+          {{ granularity === 'year' ? '年度' : '月度' }}
+        </a-tag>
       </div>
     </div>
 
     <!-- 添加曲线弹窗 -->
-    <a-modal v-model:open="showAddLineModal" title="添加曲线" @ok="handleAddLine" :confirm-loading="addLineLoading"
-      width="500px">
+    <a-modal v-model:open="showAddLineModal" title="添加曲线" @ok="handleAddLine" width="500px">
       <a-form :model="newLineForm" layout="vertical">
         <a-form-item label="曲线名称" name="label">
           <a-input v-model:value="newLineForm.label" placeholder="请输入曲线名称" />
@@ -61,29 +57,15 @@
 
     <!-- 中间主体：图表 + 统计面板 -->
     <div class="chart-body">
-      <!-- 左侧：图表区域 -->
-      <div class="chart-view-main">
-        <div class="chart-view-content">
-          <div class="chart-wrapper">
-            <div class="chart-container">
-              <BilladmChart v-if="data.length > 0" :data="data" x-field="time" y-field="amount" :title="title"
-                :lines="lines" />
-              <a-empty v-else description="暂无数据" />
-            </div>
-          </div>
-        </div>
+      <div class="chart-view-content">
+        <BilladmChart v-if="data.length > 0" class="chart-canvas" :data="data" x-field="time" y-field="amount" :title="title" :lines="lines" />
+        <a-empty v-else class="chart-canvas" description="暂无数据" />
       </div>
-
-      <!-- 右侧：统计面板 -->
       <div v-if="lineSums.length > 0" class="chart-view-stats">
-        <div class="stats-panel">
-          <div class="stats-panel-body">
-            <div v-for="item in lineSums" :key="item.label" class="stat-row">
-              <span class="stat-dot" :style="{ backgroundColor: getTypeColor(item.type) }" />
-              <span class="stat-label">{{ item.label }}</span>
-              <span class="stat-value">{{ formatAmount(item.sum) }}</span>
-            </div>
-          </div>
+        <div v-for="item in lineSums" :key="item.label" class="stat-row">
+          <span class="stat-dot" :style="{ backgroundColor: getTypeColor(item.type) }" />
+          <span class="stat-label">{{ item.label }}</span>
+          <span class="stat-value">{{ formatAmount(item.sum) }}</span>
         </div>
       </div>
     </div>
@@ -102,9 +84,8 @@
           <a-button size="small" @click="handleSave">保存修改</a-button>
         </div>
       </div>
-      <div class="chart-lines-section-body">
-        <a-table :data-source="localLines" :pagination="false" size="small">
-          <a-table-column title="曲线名称" data-index="label" />
+      <a-table :data-source="localLines" :pagination="false" size="small">
+        <a-table-column title="曲线名称" data-index="label" />
           <a-table-column title="交易类型" data-index="transactionType">
             <template #default="{ text }">
               <a-tag :color="getTypeColor(text)">{{ getTypeLabel(text) }}</a-tag>
@@ -145,7 +126,6 @@
             </template>
           </a-table-column>
         </a-table>
-      </div>
     </div>
   </div>
 </template>
@@ -159,8 +139,6 @@ import type { TimeSeriesData, ChartLine } from '@/backend/chart'
 import { TransactionTypeToColor, TransactionTypeToLabel } from '@/backend/constant'
 import { getCategoryByType, getTagsByCategory } from '@/backend/functions'
 import { useLedgerStore } from '@/stores/ledgerStore'
-import type { Category } from '@/types/billadm'
-import type { DefaultOptionType } from 'ant-design-vue/es/vc-cascader'
 
 const ledgerStore = useLedgerStore();
 
@@ -184,13 +162,11 @@ const emit = defineEmits<{
   (e: 'addLine', chartId: string, line: ChartLine): void
 }>()
 
-const editTitle = ref(props.title)
 const editGranularity = ref(props.granularity)
 const localLines = ref<ChartLine[]>([...props.lines])
 const showAddLineModal = ref(false)
-const addLineLoading = ref(false)
-const categoryOptions = ref<DefaultOptionType[]>([])
-const tagOptions = ref<DefaultOptionType[]>([])
+const categoryOptions = ref<{ value: string }[]>([])
+const tagOptions = ref<{ value: string }[]>([])
 
 interface NewLineForm {
   label: string
@@ -212,7 +188,6 @@ const newLineForm = ref<NewLineForm>({
   includeOutlier: true,
 })
 
-watch(() => props.title, (v) => { editTitle.value = v })
 watch(() => props.granularity, (v) => { editGranularity.value = v })
 watch(() => props.lines, (v) => { localLines.value = [...v] }, { deep: true })
 
@@ -227,7 +202,7 @@ const getTypeLabel = (type: string) => {
 const handleSave = () => {
   if (!props.chartId) return
   emit('update', props.chartId, {
-    title: editTitle.value,
+    title: props.title,
     granularity: editGranularity.value,
     lines: localLines.value,
   })
@@ -241,7 +216,7 @@ const onTransactionTypeChange = async () => {
     categoryOptions.value = []
     return
   }
-  const categoryList: Category[] = await getCategoryByType(newLineForm.value.transactionType, ledgerStore.currentLedgerId!)
+  const categoryList = await getCategoryByType(newLineForm.value.transactionType, ledgerStore.currentLedgerId!)
   categoryOptions.value = categoryList.map((c) => ({ value: c.name }))
 }
 
@@ -262,9 +237,8 @@ const handleAddLine = () => {
     return
   }
   if (!props.chartId) return
-  addLineLoading.value = true
 
-  const conditions = []
+  const conditions: ChartLine['conditions'] = []
   if (newLineForm.value.category || newLineForm.value.tags.length > 0 || newLineForm.value.description) {
     conditions.push({
       transactionType: newLineForm.value.transactionType,
@@ -276,14 +250,17 @@ const handleAddLine = () => {
     })
   }
 
-  const line: ChartLine = {
+  emit('addLine', props.chartId, {
     label: newLineForm.value.label,
     transactionType: newLineForm.value.transactionType,
     includeOutlier: newLineForm.value.includeOutlier,
     conditions,
-  }
-  emit('addLine', props.chartId, line)
+  })
   showAddLineModal.value = false
+  resetNewLineForm()
+}
+
+const resetNewLineForm = () => {
   newLineForm.value = {
     label: '',
     transactionType: 'income',
@@ -295,7 +272,6 @@ const handleAddLine = () => {
   }
   categoryOptions.value = []
   tagOptions.value = []
-  addLineLoading.value = false
 }
 
 const handleDeleteLine = (index: number) => {
@@ -332,7 +308,6 @@ const formatAmount = (amount: number) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  position: relative;
 }
 
 .chart-view-header {
@@ -365,41 +340,22 @@ const formatAmount = (amount: number) => {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: 0;
   overflow: hidden;
-}
-
-/* 左侧：图表区域 */
-.chart-view-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--billadm-color-major-background);
 }
 
 .chart-view-content {
   flex: 1;
+  min-width: 0;
   padding: var(--billadm-space-2xl);
-  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--billadm-color-major-background);
 }
 
-.chart-wrapper {
-  position: relative;
+.chart-canvas {
   width: 90%;
   aspect-ratio: 16 / 9;
-  overflow: hidden;
-}
-
-.chart-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
 }
 
 /* 右侧：统计面板 */
@@ -407,23 +363,10 @@ const formatAmount = (amount: number) => {
   flex: 0 0 220px;
   display: flex;
   flex-direction: column;
-  background-color: var(--billadm-color-major-background);
-  border-left: 1px solid var(--billadm-color-divider);
-  overflow-y: auto;
-}
-
-.stats-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.stats-panel-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   gap: var(--billadm-space-xs);
   padding: var(--billadm-space-lg);
+  background-color: var(--billadm-color-major-background);
+  border-left: 1px solid var(--billadm-color-divider);
   overflow-y: auto;
 }
 
@@ -451,9 +394,9 @@ const formatAmount = (amount: number) => {
   flex: 1;
   font-size: var(--billadm-size-text-body-sm);
   color: var(--billadm-color-text-secondary);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stat-value {
@@ -498,7 +441,13 @@ const formatAmount = (amount: number) => {
   gap: var(--billadm-space-sm);
 }
 
-.chart-lines-section-body {
-  padding: 0;
+.conditions-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--billadm-space-xs);
+}
+
+.text-disabled {
+  color: var(--billadm-color-text-disabled);
 }
 </style>
