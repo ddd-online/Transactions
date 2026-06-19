@@ -2,75 +2,18 @@
   <div class="category-tag-setting">
     <!-- 主体：分类列表 + 标签列表 -->
     <div class="setting-main">
-      <!-- 分类列 -->
-      <section class="column column-categories">
-        <div class="column-header">
-          <span class="column-title">分类</span>
-          <span class="column-count">{{ categories.length }}</span>
-          <button class="add-btn add-btn--secondary" @click="openAddCategoryModal" :disabled="!ledgerStore.currentLedgerId">
-            <svg class="add-btn__icon" viewBox="0 0 20 20" fill="none">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
-            <span>添加分类</span>
-          </button>
-        </div>
-        <div class="column-body category-list" v-if="categories.length > 0">
-          <div v-for="(category, index) in categories" :key="category.name" class="list-item"
-            :class="{ 'is-active': selectedCategory === category.name }" @click="selectCategory(category.name)">
-            <div class="item-main">
-              <span class="item-name">{{ category.name }}</span>
-              <span class="item-badge" v-if="category.recordCount">{{ category.recordCount }}</span>
-            </div>
-            <div class="item-actions">
-              <button class="action-icon" @click.stop="moveCategory(index, -1)" :disabled="index === 0" title="上移">
-                <svg class="arrow-icon" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 2L8 14M8 2L4 6M8 2L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </button>
-              <button class="action-icon" @click.stop="moveCategory(index, 1)"
-                :disabled="index === categories.length - 1" title="下移">
-                <svg class="arrow-icon" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 14L8 2M8 14L4 10M8 14L12 10" stroke="currentColor" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-              <button class="action-icon delete" @click.stop="confirmDeleteCategory(category.name)" title="删除">
-                <svg class="delete-icon" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M12 4v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4"
-                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- 当前类型无分类，且账本中所有类型都无分类 → 显示初始化按钮 -->
-        <div class="column-empty" v-else-if="!hasAnyCategories">
-          <div class="empty-init">
-            <div class="empty-init-icon">
-              <svg viewBox="0 0 48 48" fill="none">
-                <rect x="6" y="8" width="36" height="32" rx="3" stroke="currentColor" stroke-width="2"/>
-                <path d="M6 16h36" stroke="currentColor" stroke-width="2"/>
-                <path d="M16 4v8M32 4v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M18 26h12M20 32h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <span class="empty-init-text">当前账本暂无分类标签</span>
-            <button
-              class="init-btn"
-              :disabled="!ledgerStore.currentLedgerId || initLoading"
-              @click="handleInitialize"
-            >
-              <span v-if="initLoading">初始化中...</span>
-              <span v-else>初始化分类标签</span>
-            </button>
-          </div>
-        </div>
-        <!-- 当前类型无分类，但账本中其他类型已有分类 → 仅显示空提示 -->
-        <div class="column-empty" v-else>
-          <span>暂无分类</span>
-        </div>
-      </section>
+      <CategoryColumn
+        :categories="categories"
+        :selected-category="selectedCategory"
+        :has-ledger="!!ledgerStore.currentLedgerId"
+        :has-any-categories="hasAnyCategories"
+        :init-loading="initLoading"
+        @select-category="selectCategory"
+        @add-category="openAddCategoryModal"
+        @move-category="moveCategory"
+        @delete-category="confirmDeleteCategory"
+        @initialize="handleInitialize"
+      />
 
       <!-- 标签列 -->
       <section class="column column-tags">
@@ -156,6 +99,7 @@ import {
 } from '@/backend/functions';
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { message } from "ant-design-vue";
+import CategoryColumn from './CategoryColumn.vue'
 
 interface CategoryWithTags extends Category {
   tags: Tag[];
@@ -600,55 +544,4 @@ watch(
   color: var(--billadm-color-text-secondary);
 }
 
-/* 初始化空状态 */
-.empty-init {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--billadm-space-md);
-  padding: var(--billadm-space-xl);
-  text-align: center;
-}
-
-.empty-init-icon {
-  width: 64px;
-  height: 64px;
-  color: var(--billadm-color-text-disabled);
-  opacity: 0.4;
-}
-
-.empty-init-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.empty-init-text {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
-}
-
-.init-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  font-size: var(--billadm-size-text-body-sm);
-  font-weight: 500;
-  color: var(--billadm-color-text-inverse);
-  background-color: var(--billadm-color-primary);
-  border: none;
-  border-radius: var(--billadm-radius-md);
-  cursor: pointer;
-  transition: all var(--billadm-transition-fast);
-}
-
-.init-btn:hover:not(:disabled) {
-  background-color: var(--billadm-color-primary-light);
-}
-
-.init-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 </style>
