@@ -23,14 +23,14 @@
             </template>
           </a-button>
         </div>
-
-        <!-- 滚动指示箭头 -->
-        <Transition name="scroll-hint">
-          <div v-if="showScrollHint" class="scroll-hint-arrow">
-            <DownOutlined />
-          </div>
-        </Transition>
       </div>
+
+      <!-- 滚动指示箭头 -->
+      <Transition name="scroll-hint">
+        <div v-if="showScrollHint" class="scroll-hint-arrow">
+          <DownOutlined />
+        </div>
+      </Transition>
     </template>
   </div>
 </template>
@@ -109,6 +109,7 @@ const onPreviewChange = (visible: boolean) => {
   flex: 1;
   min-height: 0;
   margin-bottom: var(--billadm-space-md);
+  position: relative;
 }
 
 /* 空状态 */
@@ -153,7 +154,6 @@ const onPreviewChange = (visible: boolean) => {
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  position: relative;
 }
 
 .gallery-thumbs::-webkit-scrollbar {
@@ -231,13 +231,13 @@ const onPreviewChange = (visible: boolean) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-sm);
+  box-shadow: var(--billadm-shadow-md);
   color: var(--billadm-color-primary);
-  font-size: 12px;
+  font-size: 14px;
   pointer-events: none;
 }
 
