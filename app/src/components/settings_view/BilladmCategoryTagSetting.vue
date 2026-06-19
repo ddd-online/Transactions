@@ -154,6 +154,7 @@ import {
   addCategory, removeCategory, addTag, removeTag,
   reorderCategory, reorderTag, initializeCategoriesForLedger
 } from '@/backend/functions';
+import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { message } from "ant-design-vue";
 
 interface CategoryWithTags extends Category {
@@ -170,6 +171,8 @@ const emit = defineEmits<{
 }>();
 
 const ledgerStore = useLedgerStore();
+
+const { loadCategoryOptions } = useCategoryTags(() => ledgerStore.currentLedgerId)
 
 const categories = ref<CategoryWithTags[]>([]);
 const selectedCategory = ref<string>('');
@@ -309,7 +312,7 @@ const moveTag = async (index: number, direction: number) => {
 };
 
 const loadCategories = async () => {
-  const categoryList = await getCategoryByType(props.activeType, ledgerStore.currentLedgerId!);
+  const categoryList = await loadCategoryOptions(props.activeType);
   categories.value = categoryList.map(c => ({
     name: c.name,
     transactionType: c.transactionType,
