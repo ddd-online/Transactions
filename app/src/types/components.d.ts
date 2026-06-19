@@ -67,6 +67,7 @@ declare module 'vue' {
     CategoryTagPanel: typeof import('./../components/settings_view/CategoryTagPanel.vue')['default']
     CategoryTagView: typeof import('./../components/category_tag_view/CategoryTagView.vue')['default']
     DataAnalysisView: typeof import('./../components/da_view/DataAnalysisView.vue')['default']
+    KeyEventList: typeof import('./../components/key_event_view/KeyEventList.vue')['default']
     KeyEventView: typeof import('./../components/key_event_view/KeyEventView.vue')['default']
     Layout: typeof import('./../components/Layout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
