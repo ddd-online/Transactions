@@ -59,14 +59,13 @@
 
       <!-- 底部操作栏 -->
       <div class="detail-footer">
-        <a-button type="primary" size="small" @click="triggerFileInput">
+        <a-button type="primary" @click="triggerFileInput">
           <template #icon><PlusOutlined /></template>
           添加图片
         </a-button>
         <a-button
           v-if="!isEditing"
           type="primary"
-          size="small"
           @click="$emit('edit')"
         >
           <template #icon><EditOutlined /></template>
