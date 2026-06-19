@@ -375,7 +375,7 @@ const formatAmount = (amount: number) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-major-background);
 }
 
 .chart-view-content {
