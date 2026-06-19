@@ -111,7 +111,6 @@ const formatAmount = (amount: number) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: var(--billadm-space-lg);
 }
 
 .chart-view-header {

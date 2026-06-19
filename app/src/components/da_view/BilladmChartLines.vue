@@ -222,6 +222,11 @@ const resetNewLineForm = () => {
 </script>
 
 <style scoped>
+.chart-lines {
+  flex-shrink: 0;
+  margin-top: var(--billadm-space-lg);
+}
+
 .chart-lines-section {
   background-color: var(--billadm-color-major-background);
   overflow: hidden;
