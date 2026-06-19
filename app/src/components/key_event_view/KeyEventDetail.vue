@@ -8,7 +8,7 @@
     <!-- 事件详情 -->
     <template v-else>
       <!-- 图片网格 -->
-      <div v-if="images.length > 0 || true" class="detail-images">
+      <div class="detail-images">
         <div class="image-grid">
           <div
             v-for="img in images"
