@@ -46,15 +46,6 @@
       />
     </div>
 
-    <!-- 底部统计栏 -->
-    <footer class="key-event-footer">
-      <billadm-statistics-footer
-        :income="linkedSummary.income"
-        :expense="linkedSummary.expense"
-        :transfer="linkedSummary.transfer"
-      />
-    </footer>
-
     <!-- 添加事件弹窗 -->
     <KeyEventAddModal
       :open="addModalOpen"
@@ -66,14 +57,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useKeyEventStore } from '@/stores/keyEventStore'
+import { useAppDataStore } from '@/stores/appDataStore'
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
 
 const keyEventStore = useKeyEventStore()
+const appDataStore = useAppDataStore()
 
 // ========== 年份导航 ==========
 const selectedYearDayjs = ref<Dayjs>(dayjs())
@@ -103,6 +96,7 @@ const clearSelection = () => {
   currentEvent.value = null
   isEditing.value = false
   keyEventStore.clearImages()
+  appDataStore.setStatistics({ income: 0, expense: 0, transfer: 0 })
 }
 
 const onSelectEvent = async (date: string) => {
@@ -168,21 +162,18 @@ const loadLinkedTransactions = async (date: string) => {
   linkedLoading.value = true
   try {
     linkedTransactions.value = await getLinkedTransactions(date)
+    // 同步关联交易汇总到全局统计
+    let income = 0, expense = 0, transfer = 0
+    for (const t of linkedTransactions.value) {
+      if (t.transactionType === 'income') income += t.price
+      else if (t.transactionType === 'expense') expense += t.price
+      else if (t.transactionType === 'transfer') transfer += t.price
+    }
+    appDataStore.setStatistics({ income, expense, transfer })
   } finally {
     linkedLoading.value = false
   }
 }
-
-// 关联交易汇总
-const linkedSummary = computed(() => {
-  let income = 0, expense = 0, transfer = 0
-  for (const t of linkedTransactions.value) {
-    if (t.transactionType === 'income') income += t.price
-    else if (t.transactionType === 'expense') expense += t.price
-    else if (t.transactionType === 'transfer') transfer += t.price
-  }
-  return { income, expense, transfer }
-})
 
 const handleUnlinkTr = async (transactionId: string) => {
   const ok = await unlinkTransactionFromKeyEvent(transactionId)
@@ -190,6 +181,14 @@ const handleUnlinkTr = async (transactionId: string) => {
     linkedTransactions.value = linkedTransactions.value.filter(
       t => t.transactionId !== transactionId
     )
+    // 重新计算并同步统计
+    let income = 0, expense = 0, transfer = 0
+    for (const t of linkedTransactions.value) {
+      if (t.transactionType === 'income') income += t.price
+      else if (t.transactionType === 'expense') expense += t.price
+      else if (t.transactionType === 'transfer') transfer += t.price
+    }
+    appDataStore.setStatistics({ income, expense, transfer })
   }
 }
 
@@ -261,14 +260,4 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 底部统计栏 */
-.key-event-footer {
-  height: var(--billadm-size-footer-height);
-  background-color: var(--billadm-color-major-warm);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 0 var(--billadm-space-lg);
-  border-top: 1px solid var(--billadm-color-divider);
-}
 </style>

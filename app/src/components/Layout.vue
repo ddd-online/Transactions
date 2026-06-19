@@ -33,7 +33,7 @@ import NotificationUtil from "@/backend/notification.ts";
 const route = useRoute();
 const ledgerStore = useLedgerStore();
 const showWorkspaceSelect = ref(false);
-const showBottomBar = computed(() => route.path === '/tr_view' || route.path === '/da_view');
+const showBottomBar = computed(() => route.path === '/tr_view' || route.path === '/da_view' || route.path === '/key_event_view');
 
 const handleOpenWorkspace = async (workspaceDir: string) => {
   try {
