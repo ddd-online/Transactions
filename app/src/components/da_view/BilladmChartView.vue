@@ -64,8 +64,10 @@
       <div v-if="lineSums.length > 0" class="chart-view-stats">
         <div v-for="item in lineSums" :key="item.label" class="stat-row">
           <span class="stat-dot" :style="{ backgroundColor: getTypeColor(item.type) }" />
-          <span class="stat-label">{{ item.label }}</span>
-          <span class="stat-value">{{ formatAmount(item.sum) }}</span>
+          <div class="stat-text">
+            <span class="stat-label">{{ item.label }}</span>
+            <span class="stat-value">{{ formatAmount(item.sum) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -373,31 +375,35 @@ const formatAmount = (amount: number) => {
 
 .stat-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--billadm-space-sm);
   padding: var(--billadm-space-sm) var(--billadm-space-md);
   border-radius: var(--billadm-radius-md);
   transition: background-color var(--billadm-transition-fast);
 }
 
-.stat-row:hover {
-  background-color: var(--billadm-color-minor-background);
-}
-
 .stat-dot {
   width: 8px;
   height: 8px;
+  margin-top: 5px;
   border-radius: var(--billadm-radius-full);
   flex-shrink: 0;
 }
 
+.stat-row:hover {
+  background-color: var(--billadm-color-minor-background);
+}
+
+.stat-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .stat-label {
-  flex: 1;
-  font-size: var(--billadm-size-text-body-sm);
+  font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
 }
 
 .stat-value {
@@ -405,7 +411,7 @@ const formatAmount = (amount: number) => {
   font-weight: 600;
   color: var(--billadm-color-text-major);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  line-height: 1.3;
 }
 
 /* ========== 曲线详情区域 ========== */
