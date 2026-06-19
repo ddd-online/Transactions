@@ -3,97 +3,24 @@
     <!-- 图表头部 -->
     <div class="chart-view-header">
       <h2 class="chart-view-title">{{ title }}</h2>
-      <a-button type="text" size="small" @click="drawerVisible = true">
-        <template #icon>
-          <SettingOutlined />
+      <div class="header-controls">
+        <template v-if="!isPreset">
+          <a-select
+            v-model:value="editGranularity"
+            style="width: 100px;"
+            size="small"
+          >
+            <a-select-option value="year">年度</a-select-option>
+            <a-select-option value="month">月度</a-select-option>
+          </a-select>
         </template>
-        配置
-      </a-button>
+        <template v-else>
+          <a-tag :color="granularity === 'year' ? 'blue' : 'green'">
+            {{ granularity === 'year' ? '年度' : '月度' }}
+          </a-tag>
+        </template>
+      </div>
     </div>
-
-    <!-- 配置抽屉 -->
-    <a-drawer v-model:open="drawerVisible" :title="drawerTitle" placement="right" width="600">
-      <template #extra>
-        <div v-if="!isPreset" class="drawer-actions">
-          <a-button type="primary" size="small" @click="showAddLineModal = true">
-            <template #icon>
-              <PlusOutlined />
-            </template>
-            添加曲线
-          </a-button>
-          <a-button type="primary" size="small" class="drawer-save-btn" @click="handleSave">
-            保存修改
-          </a-button>
-        </div>
-      </template>
-      <a-descriptions :column="1" size="small" bordered>
-        <a-descriptions-item label="图表名称">
-          <template v-if="!isPreset">
-            <a-input v-model:value="editTitle" style="width: 200px;" />
-          </template>
-          <template v-else>{{ title }}</template>
-        </a-descriptions-item>
-        <a-descriptions-item label="时间粒度">
-          <template v-if="!isPreset">
-            <a-select v-model:value="editGranularity" style="width: 120px;">
-              <a-select-option value="year">年度</a-select-option>
-              <a-select-option value="month">月度</a-select-option>
-            </a-select>
-          </template>
-          <template v-else>
-            <a-tag :color="granularity === 'year' ? 'blue' : 'green'">
-              {{ granularity === 'year' ? '年度' : '月度' }}
-            </a-tag>
-          </template>
-        </a-descriptions-item>
-        <a-descriptions-item label="曲线数量">{{ lines.length }} 条</a-descriptions-item>
-      </a-descriptions>
-
-      <a-divider orientation="left">曲线详情</a-divider>
-
-      <a-table :data-source="localLines" :pagination="false" size="small">
-        <a-table-column title="曲线名称" data-index="label" />
-        <a-table-column title="交易类型" data-index="transactionType">
-          <template #default="{ text }">
-            <a-tag :color="getTypeColor(text)">{{ getTypeLabel(text) }}</a-tag>
-          </template>
-        </a-table-column>
-        <a-table-column title="包含离群值">
-          <template #default="{ record: r }">
-            <a-tag :color="r.includeOutlier ? 'orange' : 'green'">
-              {{ r.includeOutlier ? '是' : '否' }}
-            </a-tag>
-          </template>
-        </a-table-column>
-        <a-table-column title="筛选条件">
-          <template #default="{ record }">
-            <template v-if="record.conditions && record.conditions.length > 0">
-              <div class="conditions-tags">
-                <a-tag v-for="cond in record.conditions" :key="cond.description" color="purple">
-                  {{ cond.category }}
-                  <template v-if="cond.tags && cond.tags.length > 0">
-                    / {{ cond.tags.join(', ') }}
-                  </template>
-                  <template v-if="cond.description">
-                    / {{ cond.description }}
-                  </template>
-                </a-tag>
-              </div>
-            </template>
-            <span v-else class="text-disabled">无</span>
-          </template>
-        </a-table-column>
-        <a-table-column v-if="!isPreset" title="操作" width="60">
-          <template #default="{ index }">
-            <a-button type="text" size="small" danger @click="handleDeleteLine(index)">
-              <template #icon>
-                <DeleteOutlined />
-              </template>
-            </a-button>
-          </template>
-        </a-table-column>
-      </a-table>
-    </a-drawer>
 
     <!-- 添加曲线弹窗 -->
     <a-modal v-model:open="showAddLineModal" title="添加曲线" @ok="handleAddLine" :confirm-loading="addLineLoading"
@@ -150,12 +77,72 @@
         <span class="line-sum-value">{{ formatAmount(item.sum) }}</span>
       </div>
     </div>
+
+    <!-- 曲线详情 -->
+    <div class="chart-lines-section">
+      <div class="chart-lines-section-header">
+        <span class="chart-lines-section-title">曲线详情</span>
+        <div v-if="!isPreset" class="chart-lines-section-actions">
+          <a-button type="primary" size="small" @click="showAddLineModal = true">
+            <template #icon>
+              <PlusOutlined />
+            </template>
+            添加曲线
+          </a-button>
+          <a-button size="small" @click="handleSave">保存修改</a-button>
+        </div>
+      </div>
+      <div class="chart-lines-section-body">
+        <a-table :data-source="localLines" :pagination="false" size="small">
+          <a-table-column title="曲线名称" data-index="label" />
+          <a-table-column title="交易类型" data-index="transactionType">
+            <template #default="{ text }">
+              <a-tag :color="getTypeColor(text)">{{ getTypeLabel(text) }}</a-tag>
+            </template>
+          </a-table-column>
+          <a-table-column title="包含离群值">
+            <template #default="{ record: r }">
+              <a-tag :color="r.includeOutlier ? 'orange' : 'green'">
+                {{ r.includeOutlier ? '是' : '否' }}
+              </a-tag>
+            </template>
+          </a-table-column>
+          <a-table-column title="筛选条件">
+            <template #default="{ record }">
+              <template v-if="record.conditions && record.conditions.length > 0">
+                <div class="conditions-tags">
+                  <a-tag v-for="cond in record.conditions" :key="cond.description" color="purple">
+                    {{ cond.category }}
+                    <template v-if="cond.tags && cond.tags.length > 0">
+                      / {{ cond.tags.join(', ') }}
+                    </template>
+                    <template v-if="cond.description">
+                      / {{ cond.description }}
+                    </template>
+                  </a-tag>
+                </div>
+              </template>
+              <span v-else class="text-disabled">无</span>
+            </template>
+          </a-table-column>
+          <a-table-column v-if="!isPreset" title="操作" width="60">
+            <template #default="{ index }">
+              <a-button type="text" size="small" danger @click="handleDeleteLine(index)">
+                <template #icon>
+                  <DeleteOutlined />
+                </template>
+              </a-button>
+            </template>
+          </a-table-column>
+        </a-table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { SettingOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import BilladmChart from '@/components/da_view/BilladmChart.vue'
 import type { TimeSeriesData, ChartLine } from '@/backend/chart'
@@ -187,7 +174,6 @@ const emit = defineEmits<{
   (e: 'addLine', chartId: string, line: ChartLine): void
 }>()
 
-const drawerVisible = ref(false)
 const editTitle = ref(props.title)
 const editGranularity = ref(props.granularity)
 const localLines = ref<ChartLine[]>([...props.lines])
@@ -195,7 +181,6 @@ const showAddLineModal = ref(false)
 const addLineLoading = ref(false)
 const categoryOptions = ref<DefaultOptionType[]>([])
 const tagOptions = ref<DefaultOptionType[]>([])
-const drawerTitle = computed(() => props.isPreset ? '图表配置详情' : '图表配置详情')
 
 interface NewLineForm {
   label: string
@@ -236,7 +221,6 @@ const handleSave = () => {
     granularity: editGranularity.value,
     lines: localLines.value,
   })
-  drawerVisible.value = false
 }
 
 const onTransactionTypeChange = async () => {
@@ -345,11 +329,11 @@ const formatAmount = (amount: number) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-xl) var(--billadm-space-2xl);
+  padding: var(--billadm-space-lg) var(--billadm-space-2xl);
   flex-shrink: 0;
   background-color: var(--billadm-color-major-background);
   border-bottom: 1px solid var(--billadm-color-divider);
-  min-height: 72px;
+  min-height: 64px;
 }
 
 .chart-view-title {
@@ -360,20 +344,10 @@ const formatAmount = (amount: number) => {
   color: var(--billadm-color-text-major);
 }
 
-.chart-view-actions {
+.header-controls {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-sm);
-}
-
-.drawer-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--billadm-space-sm);
-}
-
-.drawer-save-btn {
-  margin-left: var(--billadm-space-sm);
 }
 
 .conditions-tags {
@@ -393,7 +367,7 @@ const formatAmount = (amount: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--billadm-color-major-warm);
 }
 
 .chart-wrapper {
@@ -474,5 +448,43 @@ const formatAmount = (amount: number) => {
 
 .line-sum-item:nth-child(4) {
   animation-delay: 180ms;
+}
+
+/* ========== 曲线详情区域 ========== */
+.chart-lines-section {
+  flex-shrink: 0;
+  margin: 0 var(--billadm-space-2xl) var(--billadm-space-xl);
+  background-color: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-window-border);
+  border-radius: var(--billadm-radius-lg);
+  box-shadow: var(--billadm-shadow-sm);
+  overflow: hidden;
+}
+
+.chart-lines-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--billadm-space-lg) var(--billadm-space-xl);
+  border-bottom: 1px solid var(--billadm-color-divider);
+  background-color: var(--billadm-color-major-warm);
+}
+
+.chart-lines-section-title {
+  font-family: var(--billadm-font-display);
+  font-size: var(--billadm-size-text-section);
+  font-weight: 600;
+  color: var(--billadm-color-text-major);
+  margin: 0;
+}
+
+.chart-lines-section-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+}
+
+.chart-lines-section-body {
+  padding: 0;
 }
 </style>
