@@ -374,7 +374,7 @@ watch(
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background-color: var(--billadm-color-major-background);
+  background-color: transparent;
   border-radius: var(--billadm-radius-lg);
   padding: var(--billadm-space-sm) 0;
 }
