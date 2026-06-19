@@ -47,7 +47,7 @@
     </a-float-button>
 
     <!-- 排序弹窗 -->
-    <TrSortModal ref="sortModalRef" v-model="openSortModal" @apply="onSortApply" />
+    <TrSortModal v-model="openSortModal" @apply="onSortApply" />
 
     <!-- 筛选弹窗 -->
     <TransactionRecordFilter v-model="openTrFilterModal" />
@@ -222,7 +222,7 @@ const linkingRecord = ref<TransactionRecord | null>(null);
 const linkDate = ref<Dayjs>(dayjs());
 
 // 排序相关状态
-const sortModalRef = ref<InstanceType<typeof TrSortModal> | null>(null)
+
 const openSortModal = ref(false);
 const sortItemsRef = ref<SortItem[]>([
   { field: 'transactionAt', order: 'desc' }
