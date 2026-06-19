@@ -96,12 +96,11 @@ interface Props {
 const props = defineProps<Props>();
 
 const EVENT_COLORS = [
-  '#D9705A', '#E89280', '#4A8C6F', '#6BAA8C',
-  '#5C8DB5', '#7EABCC', '#C6963A', '#8C7B6E',
-  '#9E8C7E', '#6B9E7E',
-  '#8C6B9E', '#A88CC0', '#C68E30', '#D4A84B',
-  '#5C9EA8', '#7EB8C2', '#B89A80', '#CCB098',
-  '#7E8C94', '#9EAAB0',
+  '#D9705A', '#C25460', '#D07048', '#D48838',
+  '#C6963A', '#A09040', '#5C9858', '#4A8C6F',
+  '#5C9E7C', '#3D8878', '#389098', '#4A78A0',
+  '#5C8DB5', '#6070A0', '#7868A0', '#8C6B9E',
+  '#A06088', '#B06078', '#8C7B6E', '#7E8890',
 ];
 
 const emit = defineEmits<{
