@@ -81,7 +81,6 @@ const truncate = (text: string, max: number): string => {
   flex-direction: column;
   height: 100%;
   border-right: 1px solid var(--billadm-color-divider);
-  padding: var(--billadm-space-sm);
   background-color: var(--billadm-color-major-warm);
 }
 

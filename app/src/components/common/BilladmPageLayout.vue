@@ -15,7 +15,6 @@
   flex-direction: column;
   height: 100%;
   padding: var(--billadm-space-md) var(--billadm-space-lg);
-  gap: var(--billadm-space-md);
 }
 
 .page-toolbar {
@@ -26,7 +25,6 @@
   padding: 0 0 var(--billadm-space-md) 0;
   margin-right: calc(3 * 32px + 2 * 6px);
   /* 为窗口控制按钮 (3个32px按钮 + 2个6px间隙 = 108px) 留出空间，避免拖拽区域覆盖按钮 */
-  border-bottom: 1px solid var(--billadm-color-divider);
   -webkit-app-region: drag;
 }
 
