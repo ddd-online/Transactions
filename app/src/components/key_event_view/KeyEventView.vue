@@ -222,8 +222,9 @@ const handleColorChange = async (color: string) => {
   const content = currentEvent.value.content || ''
   try {
     await keyEventStore.saveEvent(selectedDate.value, title, content, color)
-    currentEvent.value = { ...currentEvent.value, color }
     await keyEventStore.fetchDatesByYear(selectedYear.value)
+    const updated = await keyEventStore.fetchEventByDate(selectedDate.value)
+    currentEvent.value = updated
   } catch {
     /* error handled in store */
   }
