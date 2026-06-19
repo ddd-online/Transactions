@@ -3,31 +3,46 @@
     <div class="statistics-footer-item">
       <span class="statistics-footer-item-label">收入</span>
       <span class="statistics-footer-item-value income">
-        {{ centsToYuan(appDataStore.income) }}
+        {{ centsToYuan(income) }}
       </span>
     </div>
     <div class="statistics-footer-divider"></div>
     <div class="statistics-footer-item">
       <span class="statistics-footer-item-label">支出</span>
       <span class="statistics-footer-item-value expense">
-        {{ centsToYuan(appDataStore.expense) }}
+        {{ centsToYuan(expense) }}
       </span>
     </div>
     <div class="statistics-footer-divider"></div>
     <div class="statistics-footer-item">
       <span class="statistics-footer-item-label">转账</span>
       <span class="statistics-footer-item-value transfer">
-        {{ centsToYuan(appDataStore.transfer) }}
+        {{ centsToYuan(transfer) }}
       </span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {centsToYuan} from "@/backend/functions.ts";
 import {useAppDataStore} from "@/stores/appDataStore.ts";
 
 const appDataStore = useAppDataStore();
+
+interface Props {
+  income?: number
+  expense?: number
+  transfer?: number
+}
+
+const props = defineProps<Props>()
+
+const hasProps = computed(() => props.income !== undefined || props.expense !== undefined || props.transfer !== undefined)
+
+const income = computed(() => hasProps.value ? (props.income ?? 0) : appDataStore.income)
+const expense = computed(() => hasProps.value ? (props.expense ?? 0) : appDataStore.expense)
+const transfer = computed(() => hasProps.value ? (props.transfer ?? 0) : appDataStore.transfer)
 </script>
 
 <style scoped>

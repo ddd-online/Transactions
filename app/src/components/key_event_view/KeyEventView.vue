@@ -46,6 +46,15 @@
       />
     </div>
 
+    <!-- 底部统计栏 -->
+    <footer class="key-event-footer">
+      <billadm-statistics-footer
+        :income="linkedSummary.income"
+        :expense="linkedSummary.expense"
+        :transfer="linkedSummary.transfer"
+      />
+    </footer>
+
     <!-- 添加事件弹窗 -->
     <KeyEventAddModal
       :open="addModalOpen"
@@ -57,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useKeyEventStore } from '@/stores/keyEventStore'
@@ -164,6 +173,17 @@ const loadLinkedTransactions = async (date: string) => {
   }
 }
 
+// 关联交易汇总
+const linkedSummary = computed(() => {
+  let income = 0, expense = 0, transfer = 0
+  for (const t of linkedTransactions.value) {
+    if (t.transactionType === 'income') income += t.price
+    else if (t.transactionType === 'expense') expense += t.price
+    else if (t.transactionType === 'transfer') transfer += t.price
+  }
+  return { income, expense, transfer }
+})
+
 const handleUnlinkTr = async (transactionId: string) => {
   const ok = await unlinkTransactionFromKeyEvent(transactionId)
   if (ok) {
@@ -239,5 +259,16 @@ onMounted(() => {
 .panel-right {
   height: 100%;
   overflow: hidden;
+}
+
+/* 底部统计栏 */
+.key-event-footer {
+  height: var(--billadm-size-footer-height);
+  background-color: var(--billadm-color-major-warm);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--billadm-space-lg);
+  border-top: 1px solid var(--billadm-color-divider);
 }
 </style>
