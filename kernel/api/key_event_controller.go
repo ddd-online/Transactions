@@ -29,7 +29,14 @@ func listKeyEventsByYear(c *gin.Context) {
 		return
 	}
 
-	events, err := service.GetKeyEventService().QueryByYear(ws, year)
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
+		return
+	}
+
+	events, err := service.GetKeyEventService().QueryByYear(ws, ledgerID, year)
 	if err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
@@ -58,7 +65,14 @@ func listKeyEventDates(c *gin.Context) {
 		return
 	}
 
-	dates, err := service.GetKeyEventService().QueryDatesByYear(ws, year)
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
+		return
+	}
+
+	dates, err := service.GetKeyEventService().QueryDatesByYear(ws, ledgerID, year)
 	if err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
@@ -87,7 +101,14 @@ func getKeyEvent(c *gin.Context) {
 		return
 	}
 
-	event, err := service.GetKeyEventService().QueryByDate(ws, date)
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
+		return
+	}
+
+	event, err := service.GetKeyEventService().QueryByDate(ws, ledgerID, date)
 	if err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
@@ -114,6 +135,13 @@ func upsertKeyEvent(c *gin.Context) {
 		return
 	}
 
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
+		return
+	}
+
 	date, ok := arg["date"].(string)
 	if !ok {
 		ret.Code = -1
@@ -125,7 +153,7 @@ func upsertKeyEvent(c *gin.Context) {
 	content, _ := arg["content"].(string)
 	color, _ := arg["color"].(string)
 
-	if err := service.GetKeyEventService().UpsertKeyEvent(ws, date, title, content, color); err != nil {
+	if err := service.GetKeyEventService().UpsertKeyEvent(ws, ledgerID, date, title, content, color); err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
 		return
@@ -153,7 +181,14 @@ func deleteKeyEvent(c *gin.Context) {
 		return
 	}
 
-	if err := service.GetKeyEventService().DeleteByDate(ws, date); err != nil {
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
+		return
+	}
+
+	if err := service.GetKeyEventService().DeleteByDate(ws, ledgerID, date); err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()
 		return
@@ -176,6 +211,13 @@ func listKeyEventImages(c *gin.Context) {
 	if date == "" {
 		ret.Code = -1
 		ret.Msg = "missing date parameter"
+		return
+	}
+
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
 		return
 	}
 
@@ -210,6 +252,13 @@ func addKeyEventImage(c *gin.Context) {
 
 	arg, ok := JsonArg(c, ret)
 	if !ok {
+		return
+	}
+
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
 		return
 	}
 
@@ -248,6 +297,13 @@ func deleteKeyEventImage(c *gin.Context) {
 	if imageId == "" {
 		ret.Code = -1
 		ret.Msg = "missing image id parameter"
+		return
+	}
+
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		ret.Code = -1
+		ret.Msg = "ledger_id is required"
 		return
 	}
 
