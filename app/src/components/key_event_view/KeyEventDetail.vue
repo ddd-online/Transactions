@@ -168,15 +168,14 @@ const handleCancel = () => {
 .detail-images {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
   margin-bottom: var(--billadm-space-md);
 }
 
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 8px;
-  height: 100%;
 }
 
 .image-thumb {
