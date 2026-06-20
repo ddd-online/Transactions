@@ -108,6 +108,9 @@ const truncate = (text: string, max: number): string => {
 .event-cards {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-sm);
 }
 
 /* ========== 事件卡片 ========== */
@@ -120,7 +123,6 @@ const truncate = (text: string, max: number): string => {
   transition: background-color var(--billadm-transition-smooth),
               box-shadow var(--billadm-transition-smooth),
               transform var(--billadm-transition-smooth);
-  margin-bottom: var(--billadm-space-2xs);
   background-color: var(--billadm-color-major-background);
 }
 
