@@ -144,6 +144,7 @@ watch(
 
 /* ========== 卡片 ========== */
 .linked-card {
+  position: relative;
   display: flex;
   align-items: flex-start;
   padding: var(--billadm-space-xs) var(--billadm-space-sm);
@@ -227,26 +228,34 @@ watch(
 
 /* ========== 删除按钮 ========== */
 .linked-card-delete {
-  flex-shrink: 0;
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border: none;
-  background: none;
-  color: var(--billadm-color-text-disabled);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--billadm-color-text-secondary);
   cursor: pointer;
-  border-radius: var(--billadm-radius-sm);
+  border-radius: var(--billadm-radius-full);
   transition: color var(--billadm-transition-fast),
-              background-color var(--billadm-transition-fast);
-  font-size: 12px;
-  margin-left: var(--billadm-space-xs);
+              background-color var(--billadm-transition-fast),
+              transform var(--billadm-transition-fast);
+  font-size: 11px;
+  opacity: 0;
+}
+
+.linked-card:hover .linked-card-delete {
+  opacity: 1;
 }
 
 .linked-card-delete:hover {
   color: var(--billadm-color-expense);
-  background-color: rgba(217, 112, 90, 0.08);
+  background: #fff;
+  transform: scale(1.1);
 }
 
 /* ========== 滚动指示箭头 ========== */
