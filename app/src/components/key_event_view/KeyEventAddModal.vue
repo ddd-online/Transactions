@@ -50,7 +50,7 @@ const formTitle = ref('');
 
 const formState = reactive({ date: '', title: '' });
 const formRules = {
-  date: [{ required: true, message: '请选择日期', trigger: 'blur' }],
+  date: [{ required: true, message: '请选择日期' }],
 };
 
 watch(
