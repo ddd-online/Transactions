@@ -26,9 +26,17 @@
           <div class="event-card-date">{{ formatShortDate(event.date) }}</div>
           <div v-if="event.content" class="event-card-desc">{{ truncate(event.content, 30) }}</div>
         </div>
-        <button class="event-card-delete" @click.stop="$emit('delete', event.date)" aria-label="删除事件">
-          <CloseOutlined />
-        </button>
+        <a-popconfirm
+          title="确定删除此事件？"
+          ok-text="删除"
+          cancel-text="取消"
+          placement="left"
+          @confirm="$emit('delete', event.date)"
+        >
+          <button class="event-card-delete" @click.stop aria-label="删除事件">
+            <CloseOutlined />
+          </button>
+        </a-popconfirm>
       </div>
     </div>
 

@@ -50,9 +50,17 @@
         </div>
 
         <!-- 操作 -->
-        <button class="linked-card-delete" @click="$emit('delete', tr.transactionId)" title="删除">
-          <DeleteOutlined />
-        </button>
+        <a-popconfirm
+          title="确定删除此关联交易？"
+          ok-text="删除"
+          cancel-text="取消"
+          placement="left"
+          @confirm="$emit('delete', tr.transactionId)"
+        >
+          <button class="linked-card-delete" @click.stop aria-label="删除交易">
+            <DeleteOutlined />
+          </button>
+        </a-popconfirm>
       </div>
     </div>
 
