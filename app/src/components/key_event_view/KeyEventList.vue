@@ -149,6 +149,12 @@ const truncate = (text: string, max: number): string => {
   box-shadow: var(--billadm-shadow-md);
 }
 
+.event-card:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--billadm-shadow-md);
+}
+
 .event-card-bar {
   width: 4px;
   flex-shrink: 0;

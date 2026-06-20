@@ -11,7 +11,8 @@
       </button>
     </div>
     <div class="column-body category-list" v-if="categories.length > 0">
-      <div v-for="(category, index) in categories" :key="category.name" class="list-item"
+      <TransitionGroup name="list-fade">
+        <div v-for="(category, index) in categories" :key="category.name" class="list-item"
         :class="{ 'is-active': selectedCategory === category.name }" @click="$emit('select-category', category.name)">
         <div class="item-main">
           <span class="item-name">{{ category.name }}</span>
@@ -39,6 +40,7 @@
           </button>
         </div>
       </div>
+      </TransitionGroup>
     </div>
     <!-- 当前类型无分类，且账本中所有类型都无分类 → 显示初始化按钮 -->
     <div class="column-empty" v-else-if="!hasAnyCategories">
@@ -323,4 +325,21 @@ defineEmits<{
   opacity: 0.4;
   cursor: not-allowed;
 }
+/* 列表过渡 */
+.list-fade-enter-active,
+.list-fade-leave-active {
+  transition: all 200ms ease;
+}
+.list-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.list-fade-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.list-fade-move {
+  transition: transform 200ms ease;
+}
+
 </style>

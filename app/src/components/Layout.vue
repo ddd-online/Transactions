@@ -14,7 +14,13 @@
       <main class="app-content">
         <!-- 沉浸式窗口控制按钮 - 浮动在右上角 -->
         <app-top-bar />
-        <router-view class="app-router-view" />
+        <router-view v-slot="{ Component }">
+          <Transition name="page-fade" mode="out-in">
+            <div class="app-router-view" :key="$route.path">
+              <component :is="Component" />
+            </div>
+          </Transition>
+        </router-view>
         <footer v-if="showBottomBar" class="app-footer">
           <app-bottom-bar />
         </footer>
@@ -109,6 +115,17 @@ onMounted(initWorkspace);
 .app-router-view {
   flex: 1;
   overflow: auto;
+}
+
+/* 页面过渡 */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 180ms ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
 }
 
 /* 底部状态栏 */

@@ -23,8 +23,10 @@
     <!-- 中间主体：图表 + 统计面板 -->
     <div class="chart-body">
       <div class="chart-view-content">
-        <BilladmChart v-if="data.length > 0" class="chart-canvas" :data="data" x-field="time" y-field="amount" :title="title" :lines="lines" />
-        <a-empty v-else class="chart-canvas" description="暂无数据" />
+        <Transition name="chart-fade" mode="out-in">
+          <BilladmChart v-if="data.length > 0" key="chart" class="chart-canvas" :data="data" x-field="time" y-field="amount" :title="title" :lines="lines" />
+          <a-empty v-else key="empty" class="chart-canvas" description="暂无数据" />
+        </Transition>
       </div>
       <div v-if="lineSums.length > 0" class="chart-view-stats">
         <div v-for="item in lineSums" :key="item.label" class="stat-row">
@@ -213,6 +215,16 @@ const formatAmount = (amount: number) => {
   color: var(--billadm-color-text-major);
   font-variant-numeric: tabular-nums;
   line-height: 1.3;
+}
+
+/* 图表过渡 */
+.chart-fade-enter-active,
+.chart-fade-leave-active {
+  transition: opacity 200ms ease;
+}
+.chart-fade-enter-from,
+.chart-fade-leave-to {
+  opacity: 0;
 }
 
 </style>
