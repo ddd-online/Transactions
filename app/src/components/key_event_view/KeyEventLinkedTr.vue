@@ -234,8 +234,8 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border: none;
   background: rgba(255, 255, 255, 0.85);
   color: var(--billadm-color-text-secondary);
@@ -244,7 +244,7 @@ watch(
   transition: color var(--billadm-transition-fast),
               background-color var(--billadm-transition-fast),
               transform var(--billadm-transition-fast);
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0;
 }
 
@@ -254,7 +254,7 @@ watch(
 
 .linked-card-delete:hover {
   color: var(--billadm-color-expense);
-  background: #fff;
+  background: rgba(217, 112, 90, 0.12);
   transform: scale(1.1);
 }
 
