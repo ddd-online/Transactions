@@ -139,8 +139,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     };
 
     const removeImage = async (imageId: string): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         try {
-            await deleteKeyEventImage(imageId);
+            await deleteKeyEventImage(imageId, ledgerId);
             images.value = images.value.filter(img => img.id !== imageId);
         } catch (error) {
             NotificationUtil.error('删除图片失败', `${error}`);

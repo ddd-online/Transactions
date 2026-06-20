@@ -25,6 +25,6 @@ export async function addKeyEventImage(date: string, data: string, filename: str
     return api.post<string>(`/v1/key-events/${date}/images`, { data, filename, ledger_id: ledgerId }, '添加关键事件图片');
 }
 
-export async function deleteKeyEventImage(imageId: string): Promise<void> {
-    return api.delete<void>(`/v1/key-event-images/${imageId}`, '删除关键事件图片');
+export async function deleteKeyEventImage(imageId: string, ledgerId: string): Promise<void> {
+    return api.delete<void>(`/v1/key-event-images/${imageId}?ledger_id=${ledgerId}`, '删除关键事件图片');
 }
