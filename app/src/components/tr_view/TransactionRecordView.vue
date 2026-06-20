@@ -16,15 +16,14 @@
     </div>
     <template v-else>
       <div class="tr-body">
-        <a-spin :spinning="tableLoading" class="tr-spin">
-          <div class="tr-content">
+        <div class="tr-content">
+          <a-spin :spinning="tableLoading">
             <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
-          </div>
-        </a-spin>
-      </div>
+          </a-spin>
+        </div>
 
-      <!-- 底部分页 -->
-      <div class="tr-footer">
+        <!-- 底部分页 -->
+        <div class="tr-footer">
         <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
           :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
           show-size-changer />
@@ -499,13 +498,11 @@ watch(() => ledgerStore.currentLedgerId, () => {
   flex: 1;
 }
 
-/* 包裹 a-spin 使其填充 flex 空间，tr-footer 始终位于底部 */
+/* tr-body 作为 page-content 的 flex 子项，确保 tr-footer 始终在底部 */
 .tr-body {
   flex: 1;
   min-height: 0;
-}
-
-.tr-spin {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>
