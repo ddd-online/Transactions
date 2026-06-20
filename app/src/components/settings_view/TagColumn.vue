@@ -11,8 +11,7 @@
       </button>
     </div>
     <div class="column-body tag-list" v-if="tags.length > 0">
-      <TransitionGroup name="list-fade">
-        <div v-for="(tag, index) in tags" :key="tag.name" class="list-item">
+      <div v-for="(tag, index) in tags" :key="tag.name" class="list-item">
         <div class="item-main">
           <span class="item-name">{{ tag.name }}</span>
           <span class="item-badge" v-if="tag.recordCount">{{ tag.recordCount }}</span>
@@ -39,7 +38,6 @@
           </button>
         </div>
       </div>
-      </TransitionGroup>
     </div>
     <div class="column-empty" v-else>
       <span>{{ selectedCategory ? '暂无标签' : '选择分类查看标签' }}</span>
@@ -233,21 +231,4 @@ defineEmits<{
   opacity: 0.3;
   cursor: not-allowed;
 }
-/* 列表过渡 */
-.list-fade-enter-active,
-.list-fade-leave-active {
-  transition: all 200ms ease;
-}
-.list-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-.list-fade-leave-to {
-  opacity: 0;
-  transform: translateY(4px);
-}
-.list-fade-move {
-  transition: transform 200ms ease;
-}
-
 </style>
