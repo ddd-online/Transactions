@@ -199,8 +199,10 @@ const handleCancel = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--billadm-space-sm);
-  background-color: transparent;
+  padding: var(--billadm-space-md);
+  background-color: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-lg);
+  overflow: hidden;
 }
 
 /* ========== 空状态 ========== */
