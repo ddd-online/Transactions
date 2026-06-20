@@ -27,6 +27,7 @@
         <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
           :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
           show-size-changer />
+        </div>
       </div>
     </template>
 
