@@ -20,6 +20,7 @@
         :events="keyEventStore.events"
         :selected-date="selectedDate"
         @select="onSelectEvent"
+        @delete="handleDeleteEvent"
         @add-event="openAddModal"
       />
 
@@ -130,6 +131,16 @@ const handleSaveContent = async (content: string) => {
 const extractTitle = (content: string): string => {
   const firstLine = content.split('\n')[0]?.trim() ?? ''
   return firstLine.length > 200 ? firstLine.slice(0, 200) : firstLine
+}
+
+// ========== 删除事件 ==========
+const handleDeleteEvent = async (date: string) => {
+  try {
+    await keyEventStore.deleteEvent(date)
+    if (selectedDate.value === date) {
+      clearSelection()
+    }
+  } catch { /* error handled in store */ }
 }
 
 // ========== 图片管理 ==========

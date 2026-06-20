@@ -26,6 +26,9 @@
           <div class="event-card-date">{{ formatShortDate(event.date) }}</div>
           <div v-if="event.content" class="event-card-desc">{{ truncate(event.content, 30) }}</div>
         </div>
+        <button class="event-card-delete" @click.stop="$emit('delete', event.date)" aria-label="删除事件">
+          <CloseOutlined />
+        </button>
       </div>
     </div>
 
@@ -40,6 +43,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { CloseOutlined } from '@ant-design/icons-vue';
 import type { KeyEvent } from '@/types/billadm';
 
 interface Props {
@@ -51,6 +55,7 @@ const props = defineProps<Props>();
 
 defineEmits<{
   (e: 'select', date: string): void;
+  (e: 'delete', date: string): void;
   (e: 'add-event'): void;
 }>();
 
@@ -106,6 +111,7 @@ const truncate = (text: string, max: number): string => {
 
 /* ========== 事件卡片 ========== */
 .event-card {
+  position: relative;
   display: flex;
   flex-direction: row;
   border-radius: var(--billadm-radius-md);
@@ -175,6 +181,39 @@ const truncate = (text: string, max: number): string => {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 2px;
+}
+
+/* ========== 删除按钮 ========== */
+.event-card-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--billadm-color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--billadm-radius-full);
+  transition: color var(--billadm-transition-fast),
+              background-color var(--billadm-transition-fast),
+              transform var(--billadm-transition-fast);
+  font-size: 12px;
+  opacity: 0;
+}
+
+.event-card:hover .event-card-delete,
+.event-card.is-active .event-card-delete {
+  opacity: 1;
+}
+
+.event-card-delete:hover {
+  color: var(--billadm-color-expense);
+  background: rgba(217, 112, 90, 0.12);
+  transform: scale(1.1);
 }
 
 /* ========== 底部 ========== */
