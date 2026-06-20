@@ -65,6 +65,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useKeyEventStore } from '@/stores/keyEventStore'
 import { useAppDataStore } from '@/stores/appDataStore'
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
+import { message } from 'ant-design-vue'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
 
 const keyEventStore = useKeyEventStore()
@@ -125,6 +126,7 @@ const handleSaveContent = async (content: string) => {
     isEditing.value = false
     const updated = await keyEventStore.fetchEventByDate(selectedDate.value)
     currentEvent.value = updated
+    message.success('保存成功')
   } catch { /* error handled in store */ }
 }
 
@@ -220,6 +222,7 @@ const handleAddEvent = async (date: string, title: string) => {
     // 刷新列表并选中新事件
     await keyEventStore.fetchDatesByYear(selectedYear.value)
     onSelectEvent(date)
+    message.success('添加成功')
   } catch {
     /* error handled in store */
   } finally {

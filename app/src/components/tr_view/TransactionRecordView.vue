@@ -15,9 +15,11 @@
       <a-empty description="暂无记录" />
     </div>
     <template v-else>
-      <div class="tr-content">
-        <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
-      </div>
+      <a-spin :spinning="tableLoading">
+        <div class="tr-content">
+          <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
+        </div>
+      </a-spin>
 
       <!-- 底部分页 -->
       <div class="tr-footer">
@@ -198,6 +200,7 @@ const rules: Record<string, Rule[]> = {
 
 // 状态
 const openTrFilterModal = ref<boolean>();
+const tableLoading = ref(false);
 const tableData = ref<TransactionRecord[]>([]);
 const currentPage = ref<number>(1);
 const pageSize = ref<number>(15);
@@ -287,23 +290,28 @@ const confirmTrModal = async () => {
 
 const refreshTable = async () => {
   if (!ledgerStore.currentLedgerId) return;
-  const trCondition: TrQueryCondition = {
-    ledgerId: ledgerStore.currentLedgerId,
-    offset: pageSize.value * (currentPage.value - 1),
-    limit: pageSize.value,
-    sortFields: sortItemsRef.value
-  };
-  if (trQueryConditionStore.timeRange) {
-    trCondition.tsRange = convertToUnixTimeRange(trQueryConditionStore.timeRange);
-  }
-  if (trQueryConditionStore.trQueryConditionItems) {
-    trCondition.items = trQueryConditionStore.trQueryConditionItems;
-  }
-  const trQueryResult = await getTrOnCondition(trCondition);
+  tableLoading.value = true;
+  try {
+    const trCondition: TrQueryCondition = {
+      ledgerId: ledgerStore.currentLedgerId,
+      offset: pageSize.value * (currentPage.value - 1),
+      limit: pageSize.value,
+      sortFields: sortItemsRef.value
+    };
+    if (trQueryConditionStore.timeRange) {
+      trCondition.tsRange = convertToUnixTimeRange(trQueryConditionStore.timeRange);
+    }
+    if (trQueryConditionStore.trQueryConditionItems) {
+      trCondition.items = trQueryConditionStore.trQueryConditionItems;
+    }
+    const trQueryResult = await getTrOnCondition(trCondition);
 
-  tableData.value = trQueryResult.items;
-  trTotal.value = trQueryResult.total;
-  appDataStore.setStatistics(trQueryResult.trStatistics);
+    tableData.value = trQueryResult.items;
+    trTotal.value = trQueryResult.total;
+    appDataStore.setStatistics(trQueryResult.trStatistics);
+  } finally {
+    tableLoading.value = false;
+  }
 };
 
 watch(() => [ledgerStore.currentLedgerId, trQueryConditionStore.timeRange, trQueryConditionStore.trQueryConditionItems],

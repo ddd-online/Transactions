@@ -10,20 +10,27 @@
     @ok="handleConfirm"
     @cancel="$emit('close')"
   >
-    <div class="add-event-form">
-      <label class="form-label">日期</label>
-      <a-date-picker v-model:value="formDate" style="width: 100%" size="large" />
-
-      <label class="form-label">名称</label>
-      <a-input v-model:value="formTitle" placeholder="事件名称（可选）" :maxlength="200" size="large" />
-    </div>
+    <a-form
+      ref="formRef"
+      :model="formState"
+      :rules="formRules"
+      layout="vertical"
+    >
+      <a-form-item label="日期" name="date">
+        <a-date-picker v-model:value="formDate" style="width: 100%" size="large" />
+      </a-form-item>
+      <a-form-item label="名称" name="title">
+        <a-input v-model:value="formTitle" placeholder="事件名称（可选）" :maxlength="200" size="large" />
+      </a-form-item>
+    </a-form>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
+import type { FormInstance } from 'ant-design-vue';
 
 interface Props {
   open: boolean;
@@ -37,8 +44,14 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
+const formRef = ref<FormInstance>();
 const formDate = ref<Dayjs>(dayjs());
 const formTitle = ref('');
+
+const formState = reactive({ date: '', title: '' });
+const formRules = {
+  date: [{ required: true, message: '请选择日期', trigger: 'blur' }],
+};
 
 watch(
   () => props.open,
@@ -50,28 +63,17 @@ watch(
   },
 );
 
-const handleConfirm = () => {
-  if (!formDate.value) return
+const handleConfirm = async () => {
+  try {
+    await formRef.value?.validate();
+  } catch {
+    return;
+  }
+  if (!formDate.value) return;
   const date = formDate.value.format('YYYY-MM-DD');
   emit('confirm', date, formTitle.value.trim());
 };
 </script>
 
 <style scoped>
-.add-event-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--billadm-space-sm);
-}
-
-.form-label {
-  font-size: var(--billadm-size-text-body);
-  font-weight: 500;
-  color: var(--billadm-color-text-major);
-  margin-top: var(--billadm-space-sm);
-}
-
-.form-label:first-child {
-  margin-top: 0;
-}
 </style>
