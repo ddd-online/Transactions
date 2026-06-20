@@ -268,6 +268,7 @@ onMounted(() => {
   flex: 1;
   display: grid;
   grid-template-columns: 280px 1fr 320px;
+  gap: var(--billadm-space-md);
   min-height: 0;
   overflow: hidden;
 }

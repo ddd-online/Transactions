@@ -109,9 +109,10 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-  border-left: 1px solid var(--billadm-color-divider);
   padding: var(--billadm-space-sm);
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-lg);
+  overflow: hidden;
   position: relative;
 }
 

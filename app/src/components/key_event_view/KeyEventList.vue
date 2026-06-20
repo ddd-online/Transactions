@@ -85,8 +85,9 @@ const truncate = (text: string, max: number): string => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  border-right: 1px solid var(--billadm-color-divider);
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-lg);
+  overflow: hidden;
 }
 
 /* ========== 空状态 ========== */
