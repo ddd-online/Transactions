@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
-import { DownOutlined } from '@ant-design/icons-vue'
+import { DownOutlined, CloseOutlined } from '@ant-design/icons-vue'
 import type { KeyEventImage } from '@/types/billadm'
 
 const props = defineProps<{
