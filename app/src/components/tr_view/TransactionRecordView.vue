@@ -14,8 +14,8 @@
     <div v-if="tableData.length === 0" class="tr-empty">
       <a-empty description="暂无记录" />
     </div>
-    <template v-else>
-      <a-spin :spinning="tableLoading">
+    <div v-else class="tr-body">
+      <a-spin :spinning="tableLoading" class="tr-spin">
         <div class="tr-content">
           <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
         </div>
@@ -27,7 +27,7 @@
           :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
           show-size-changer />
       </div>
-    </template>
+    </div>
 
     <!-- 悬浮按钮组 -->
     <a-float-button type="primary" class="float-primary" @click="createTr">
@@ -495,5 +495,19 @@ watch(() => ledgerStore.currentLedgerId, () => {
 
 .template-select {
   flex: 1;
+}
+
+.tr-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tr-spin {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 </style>
