@@ -18,11 +18,9 @@
           <div v-for="img in images" :key="img.id" class="thumb-item" :class="{ 'is-selected': selectedId === img.id }"
             @click="selectedId = img.id">
             <img :src="img.data" class="thumb-img" alt="" />
-            <a-button type="text" size="small" class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)">
-              <template #icon>
-                <CloseOutlined />
-              </template>
-            </a-button>
+            <button class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)" aria-label="删除图片">
+              <CloseOutlined />
+            </button>
           </div>
         </div>
 
@@ -191,6 +189,10 @@ const onPreviewChange = (visible: boolean) => {
   transform: scale(1.03);
 }
 
+.thumb-item:hover .thumb-delete-btn {
+  opacity: 1;
+}
+
 .thumb-item.is-selected:hover {
   border-color: var(--billadm-color-primary);
   transform: none;
@@ -204,29 +206,41 @@ const onPreviewChange = (visible: boolean) => {
 
 .thumb-delete-btn {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 16px;
-  height: 16px;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
   padding: 0;
-  min-width: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(255, 255, 255, 0.88);
   border-radius: 50%;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   opacity: 0;
-  transition: opacity var(--billadm-transition-fast);
-  border: none;
+  transition: opacity var(--billadm-transition-fast),
+              transform var(--billadm-transition-fast);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06),
+              0 1px 3px rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 11px;
+  line-height: 1;
+  z-index: 1;
 }
 
-.thumb-item:hover .thumb-delete-btn {
-  opacity: 1;
+.thumb-delete-btn:hover {
+  background: #fff;
+  color: rgba(0, 0, 0, 0.85);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08),
+              0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .thumb-delete-btn :deep(.anticon) {
-  color: #fff;
-  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ========== 滚动指示箭头 ========== */
