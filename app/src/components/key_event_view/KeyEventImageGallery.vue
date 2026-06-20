@@ -223,15 +223,12 @@ const onPreviewChange = (visible: boolean) => {
               transform var(--billadm-transition-fast);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06),
               0 1px 3px rgba(0, 0, 0, 0.12);
-  color: rgba(0, 0, 0, 0.65);
-  font-size: 11px;
   line-height: 1;
   z-index: 1;
 }
 
 .thumb-delete-btn:hover {
   background: #fff;
-  color: rgba(0, 0, 0, 0.85);
   transform: scale(1.1);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08),
               0 2px 6px rgba(0, 0, 0, 0.18);
@@ -241,6 +238,12 @@ const onPreviewChange = (visible: boolean) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.thumb-delete-btn:hover :deep(.anticon) {
+  color: rgba(0, 0, 0, 0.85);
 }
 
 /* ========== 滚动指示箭头 ========== */
