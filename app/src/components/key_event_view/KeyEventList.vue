@@ -85,6 +85,7 @@ const truncate = (text: string, max: number): string => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding: var(--billadm-space-md);
   background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg);
   overflow: hidden;
@@ -107,7 +108,6 @@ const truncate = (text: string, max: number): string => {
 .event-cards {
   flex: 1;
   overflow-y: auto;
-  padding: var(--billadm-space-xs);
 }
 
 /* ========== 事件卡片 ========== */
@@ -219,6 +219,6 @@ const truncate = (text: string, max: number): string => {
 
 /* ========== 底部 ========== */
 .panel-footer {
-  padding: var(--billadm-space-sm);
+  flex-shrink: 0;
 }
 </style>
