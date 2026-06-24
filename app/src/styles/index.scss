@@ -82,29 +82,45 @@ body::before {
   background-color: var(--billadm-color-major-background);
 }
 
-// Buttons
+// Buttons — unified button system
+// Variants: primary → secondary → text → text-danger → primary-danger
+// Sizes: small (28px) → default (36px) → large (44px)
 .ant-btn {
   font-family: var(--billadm-font-body);
   font-weight: 500;
   border-radius: var(--billadm-radius-md);
   box-shadow: none;
   transition: all var(--billadm-transition-fast);
+  height: var(--billadm-btn-height-md);
+  min-width: var(--billadm-btn-min-width);
+  padding: 0 var(--billadm-btn-padding-h-md);
+  font-size: var(--billadm-btn-font-size-md);
+  line-height: 1;
 
-  &-text {
-    &:hover {
-      background-color: var(--billadm-color-hover-bg);
-      color: var(--billadm-color-primary);
-    }
+  // ========== Size variants ==========
+  &-sm {
+    height: var(--billadm-btn-height-sm);
+    padding: 0 var(--billadm-btn-padding-h-sm);
+    font-size: var(--billadm-btn-font-size-sm);
+    min-width: auto;
   }
 
+  &-lg {
+    height: var(--billadm-btn-height-lg);
+    padding: 0 var(--billadm-btn-padding-h-lg);
+    font-size: var(--billadm-btn-font-size-lg);
+  }
+
+  // ========== Primary (实心主按钮) ==========
   &-primary {
     background-color: var(--billadm-color-primary);
     border-color: var(--billadm-color-primary);
-    color: #fff;
+    color: var(--billadm-color-text-inverse);
 
     &:hover {
       background-color: var(--billadm-color-primary-light);
       border-color: var(--billadm-color-primary-light);
+      color: var(--billadm-color-text-inverse);
     }
 
     &:active {
@@ -113,15 +129,100 @@ body::before {
     }
   }
 
-  // Secondary/outline button
+  // ========== Secondary / Default (描边次要按钮) ==========
   &-default {
     border-color: var(--billadm-color-window-border);
     color: var(--billadm-color-text-major);
+    background-color: transparent;
 
     &:hover {
       border-color: var(--billadm-color-primary);
       color: var(--billadm-color-primary);
     }
+
+    &:active {
+      border-color: var(--billadm-color-primary);
+      color: var(--billadm-color-primary);
+    }
+  }
+
+  // ========== Text button (纯文字按钮) ==========
+  &-text {
+    min-width: auto;
+    color: var(--billadm-color-text-secondary);
+
+    &:hover {
+      background-color: var(--billadm-color-hover-bg);
+      color: var(--billadm-color-primary);
+    }
+
+    // Text danger (文字危险按钮，如行内删除)
+    &.ant-btn-dangerous {
+      color: var(--billadm-color-expense);
+
+      &:hover {
+        background-color: var(--billadm-color-danger-hover-bg);
+        color: var(--billadm-color-expense);
+      }
+    }
+  }
+
+  // ========== Link button (链接按钮) — treated as text variant ==========
+  &-link {
+    min-width: auto;
+    color: var(--billadm-color-primary);
+    padding: 0;
+
+    &:hover {
+      color: var(--billadm-color-primary-light);
+    }
+  }
+
+  // ========== Primary danger (实心危险按钮) ==========
+  &.ant-btn-dangerous.ant-btn-primary {
+    background-color: var(--billadm-color-expense);
+    border-color: var(--billadm-color-expense);
+    color: var(--billadm-color-text-inverse);
+
+    &:hover {
+      background-color: rgba(217, 112, 90, 0.85);
+      border-color: rgba(217, 112, 90, 0.85);
+      color: var(--billadm-color-text-inverse);
+    }
+  }
+
+  // ========== Dashed (虚线按钮) — mapped to secondary style ==========
+  &-dashed {
+    border-color: var(--billadm-color-window-border);
+    color: var(--billadm-color-text-secondary);
+    background-color: transparent;
+
+    &:hover {
+      border-color: var(--billadm-color-primary);
+      color: var(--billadm-color-primary);
+    }
+  }
+
+  // ========== Icon-only button (图标按钮) ==========
+  &.btn-icon-only {
+    min-width: auto;
+    padding: 0;
+    width: var(--billadm-btn-height-md);
+    justify-content: center;
+
+    &.ant-btn-sm {
+      width: var(--billadm-btn-height-sm);
+    }
+
+    &.ant-btn-lg {
+      width: var(--billadm-btn-height-lg);
+    }
+  }
+
+  // ========== Focus ring ==========
+  &:focus-visible {
+    outline: 2px solid var(--billadm-color-primary);
+    outline-offset: 2px;
   }
 }
 

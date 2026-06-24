@@ -242,6 +242,19 @@ $shadow-xl-color: rgba(0, 0, 0, 0.12);
   // Hover / active states
   --billadm-color-hover-bg: rgba(74, 140, 111, 0.07);
   --billadm-color-active-bg: rgba(74, 140, 111, 0.12);
+  --billadm-color-danger-hover-bg: rgba(217, 112, 90, 0.10);
+
+  // Button
+  --billadm-btn-height-sm: 28px;
+  --billadm-btn-height-md: 36px;
+  --billadm-btn-height-lg: 44px;
+  --billadm-btn-min-width: 72px;
+  --billadm-btn-padding-h-sm: 12px;
+  --billadm-btn-padding-h-md: 16px;
+  --billadm-btn-padding-h-lg: 24px;
+  --billadm-btn-font-size-sm: 13px;
+  --billadm-btn-font-size-md: 14px;
+  --billadm-btn-font-size-lg: 16px;
 
   // Ledger accents
   --billadm-ledger-forest: #{map.get($ledger-colors, 'forest')};

@@ -58,7 +58,7 @@
 
       <!-- 底部操作栏 -->
       <div class="detail-footer">
-        <a-button type="primary" @click="triggerFileInput">
+        <a-button @click="triggerFileInput">
           <template #icon><PlusOutlined /></template>
           添加图片
         </a-button>

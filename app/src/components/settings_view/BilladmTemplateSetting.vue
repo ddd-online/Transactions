@@ -55,7 +55,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import type { TransactionTemplate } from '@/types/billadm';
 import { getTemplatesByLedgerId, removeTemplate, reorderTemplate } from '@/backend/functions.ts';
@@ -153,6 +153,11 @@ const getTypeColor = (type: string) => {
 };
 
 onMounted(() => {
+  loadTemplates();
+});
+
+// 切换账本时刷新模板
+watch(() => ledgerStore.currentLedgerId, () => {
   loadTemplates();
 });
 </script>

@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Vue Dev Server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "app",
+      "port": 31945
+    },
+    {
+      "name": "Go Backend",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["run", "."],
+      "cwd": "kernel",
+      "port": 28080
+    },
+    {
+      "name": "Electron",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "cwd": "electron",
+      "port": 0
+    }
+  ]
+}

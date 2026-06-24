@@ -8,22 +8,14 @@
 
 // ============================================
 // Button Styles
+// Unified button system — see index.scss for base overrides
+// These are supplementary component-level classes
 // ============================================
 
-// Primary action button
-.btn-primary {
-  color: var(--billadm-color-primary);
-}
-
-// Danger action button
-.btn-danger {
-  color: var(--billadm-color-expense);
-}
-
-// Close button hover effect
+// Close button with danger hover
 .close-button {
   &.ant-btn:hover {
-    background-color: rgba(217, 112, 90, 0.10);
+    background-color: var(--billadm-color-danger-hover-bg);
     color: var(--billadm-color-expense);
     border-color: var(--billadm-color-expense);
   }

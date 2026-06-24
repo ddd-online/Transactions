@@ -85,9 +85,6 @@ defineExpose({ setItems: (v: SortItem[]) => { items.value = [...v] } })
   gap: var(--billadm-space-md);
   margin-bottom: var(--billadm-space-lg);
 }
-.sort-list :deep(.ant-btn-link) {
-  color: var(--billadm-color-primary);
-}
 .sort-item {
   display: flex;
   align-items: center;

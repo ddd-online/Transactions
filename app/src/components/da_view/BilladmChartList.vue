@@ -145,12 +145,6 @@ const handleDelete = async (chart: ChartDto) => {
   margin-bottom: var(--billadm-space-md);
 }
 
-.chart-list-add :deep(.ant-btn) {
-  height: 40px;
-  font-weight: 500;
-  border-radius: var(--billadm-radius-md);
-}
-
 .chart-list-section {
   margin-top: var(--billadm-space-lg);
 }
@@ -206,7 +200,4 @@ const handleDelete = async (chart: ChartDto) => {
   display: flex;
 }
 
-.chart-list-item.active .chart-list-item-actions :deep(.ant-btn) {
-  color: var(--billadm-color-expense);
-}
 </style>

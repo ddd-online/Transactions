@@ -59,9 +59,15 @@ watch(
     if (val) {
       formDate.value = dayjs();
       formTitle.value = '';
+      formState.date = formDate.value.format('YYYY-MM-DD');
     }
   },
 );
+
+// 选择日期后同步到 formState，否则表单验证会报"请选择日期"
+watch(formDate, (val) => {
+  formState.date = val ? val.format('YYYY-MM-DD') : '';
+});
 
 const handleConfirm = async () => {
   try {

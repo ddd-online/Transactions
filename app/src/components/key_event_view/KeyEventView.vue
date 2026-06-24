@@ -222,7 +222,6 @@ const handleAddEvent = async (date: string, title: string) => {
     // 刷新列表并选中新事件
     await keyEventStore.fetchDatesByYear(selectedYear.value)
     onSelectEvent(date)
-    message.success('添加成功')
   } catch {
     /* error handled in store */
   } finally {

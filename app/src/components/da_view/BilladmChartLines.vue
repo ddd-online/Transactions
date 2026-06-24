@@ -38,16 +38,6 @@
 
     <!-- 曲线详情 -->
     <div class="chart-lines-section">
-      <div class="chart-lines-section-header">
-        <span class="chart-lines-section-title">曲线详情</span>
-        <div v-if="!isPreset" class="chart-lines-section-actions">
-          <a-button type="primary" size="small" @click="showAddLineModal = true">
-            <template #icon><PlusOutlined /></template>
-            添加曲线
-          </a-button>
-          <a-button size="small" @click="handleSave">保存修改</a-button>
-        </div>
-      </div>
       <a-table :data-source="localLines" :pagination="false" size="small">
         <a-table-column title="曲线名称" data-index="label" />
         <a-table-column title="交易类型" data-index="transactionType">
@@ -84,6 +74,13 @@
           </template>
         </a-table-column>
       </a-table>
+      <div v-if="!isPreset" class="chart-lines-section-toolbar">
+        <a-button type="primary" @click="showAddLineModal = true">
+          <template #icon><PlusOutlined /></template>
+          添加曲线
+        </a-button>
+        <a-button @click="handleSave">保存修改</a-button>
+      </div>
     </div>
   </div>
 </template>
@@ -230,27 +227,14 @@ const resetNewLineForm = () => {
   overflow: hidden;
 }
 
-.chart-lines-section-header {
+.chart-lines-section-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--billadm-space-lg) var(--billadm-space-xl);
-  border-bottom: 1px solid var(--billadm-color-divider);
-  background-color: var(--billadm-color-major-background);
-}
-
-.chart-lines-section-title {
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-section);
-  font-weight: 600;
-  color: var(--billadm-color-text-major);
-  margin: 0;
-}
-
-.chart-lines-section-actions {
-  display: flex;
-  align-items: center;
+  justify-content: flex-end;
   gap: var(--billadm-space-sm);
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  border-top: 1px solid var(--billadm-color-divider);
+  background-color: var(--billadm-color-major-background);
 }
 
 .conditions-tags {

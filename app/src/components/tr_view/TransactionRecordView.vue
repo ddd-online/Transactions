@@ -436,6 +436,7 @@ const handleUnlink = async () => {
 
 // 监听账本变化，加载模板
 watch(() => ledgerStore.currentLedgerId, () => {
+  selectedTemplateId.value = undefined;
   loadTemplates();
 }, { immediate: true });
 </script>

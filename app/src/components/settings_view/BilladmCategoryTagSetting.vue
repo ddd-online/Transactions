@@ -3,18 +3,18 @@
     <template #toolbar>
       <!-- 类型切换导航 -->
       <nav class="type-nav">
-      <button
-        v-for="type in transactionTypes"
-        :key="type.value"
-        class="type-pill"
-        :class="{ 'is-active': activeType === type.value }"
-        :style="{ '--c': type.color }"
-        @click="activeType = type.value"
-      >
-        <span class="pill-dot"></span>
-        {{ type.label }}
-      </button>
-    </nav>
+        <button
+          v-for="type in transactionTypes"
+          :key="type.value"
+          class="type-card"
+          :class="{ 'is-active': activeType === type.value }"
+          :style="{ '--c': type.color }"
+          @click="activeType = type.value"
+        >
+          <span class="type-card-bar"></span>
+          <span class="type-card-label">{{ type.label }}</span>
+        </button>
+      </nav>
     </template>
 
     <!-- 主体：分类列表 + 标签列表 -->
@@ -306,47 +306,70 @@ watch(
 </script>
 
 <style scoped>
-/* Type Navigation */
+/* ========== Type Navigation — card-style with left color bar ========== */
 .type-nav {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-xs);
-  height: 32px;
 }
 
-.type-pill {
-  display: inline-flex;
+.type-card {
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  box-sizing: border-box;
-  padding: 0 12px;
+  height: 36px;
+  padding: 0 var(--billadm-space-md) 0 calc(var(--billadm-space-md) + 4px);
+  font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-body-sm);
   font-weight: 500;
   color: var(--billadm-color-text-secondary);
-  background: transparent;
+  background: var(--billadm-color-major-background);
   border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--billadm-radius-md);
   cursor: pointer;
-  transition: all var(--billadm-transition-fast);
+  user-select: none;
+  transition: background-color var(--billadm-transition-smooth),
+              box-shadow var(--billadm-transition-smooth),
+              color var(--billadm-transition-fast);
 }
 
-.type-pill:hover:not(.is-active) {
+.type-card-bar {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--billadm-color-divider);
+  transition: width var(--billadm-transition-smooth),
+              background-color var(--billadm-transition-smooth);
+}
+
+.type-card:hover:not(.is-active) {
   color: var(--billadm-color-text-major);
-  border-color: var(--billadm-color-text-disabled);
+  box-shadow: var(--billadm-shadow-sm);
 }
 
-.type-pill.is-active {
+.type-card:hover:not(.is-active) .type-card-bar {
+  background-color: var(--c);
+  opacity: 0.5;
+}
+
+.type-card.is-active {
   color: var(--c);
-  border-color: var(--c);
-  background-color: color-mix(in srgb, var(--c) 8%, transparent);
+  background-color: color-mix(in srgb, var(--c) 8%, var(--billadm-color-major-background));
+  border-color: color-mix(in srgb, var(--c) 20%, transparent);
+  box-shadow: var(--billadm-shadow-sm);
 }
 
-.pill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
+.type-card.is-active .type-card-bar {
+  width: 4px;
+  background-color: var(--c);
+}
+
+.type-card-label {
+  position: relative;
+  z-index: 1;
 }
 
 /* Main Grid */

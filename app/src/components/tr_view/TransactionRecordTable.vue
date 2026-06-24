@@ -52,15 +52,15 @@
 
       <template v-else-if="column.dataIndex === 'action'">
         <div class="cell-actions">
-          <a-button type="text" class="action-btn" @click="handleEdit(record as TransactionRecord)">
+          <a-button type="text" size="small" @click="handleEdit(record as TransactionRecord)">
             <EditOutlined /> 编辑
           </a-button>
           <a-tooltip v-if="(record as TransactionRecord).keyEventDate" :title="'已关联至 ' + (record as TransactionRecord).keyEventDate">
-            <a-button type="text" class="action-btn" @click="handleLink(record as TransactionRecord)">
+            <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
               <LinkOutlined /> 已关联
             </a-button>
           </a-tooltip>
-          <a-button v-else type="text" class="action-btn" @click="handleLink(record as TransactionRecord)">
+          <a-button v-else type="text" size="small" @click="handleLink(record as TransactionRecord)">
             <LinkOutlined /> 关联
           </a-button>
           <a-popconfirm
@@ -69,7 +69,7 @@
             @confirm="handleDelete(record as TransactionRecord)"
             :showCancel="false"
           >
-            <a-button type="text" class="action-btn danger">
+            <a-button type="text" size="small" danger>
               <DeleteOutlined /> 删除
             </a-button>
           </a-popconfirm>
@@ -276,27 +276,5 @@ const handleLink = (record: TransactionRecord) => {
   display: flex;
   gap: 4px;
   justify-content: center;
-}
-
-.action-btn {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
-  border-radius: var(--billadm-radius-md);
-  min-width: 32px;
-  min-height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-}
-
-.action-btn:hover {
-  color: var(--billadm-color-primary);
-  background-color: var(--billadm-color-hover-bg);
-}
-
-.action-btn.danger:hover {
-  color: var(--billadm-color-expense);
-  background-color: rgba(199, 62, 58, 0.1);
 }
 </style>
