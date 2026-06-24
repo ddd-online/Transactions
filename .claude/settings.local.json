@@ -19,7 +19,8 @@
       "Bash(bash *)",
       "Bash(go vet *)",
       "Bash(git *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(git log *)"
     ]
   }
 }
