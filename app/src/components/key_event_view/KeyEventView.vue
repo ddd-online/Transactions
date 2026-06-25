@@ -257,7 +257,7 @@ const uploadCurrentFile = async () => {
         uploadProgress.value.currentPercent = percent
       }
     )
-    uploadProgress.value.completed = currentFileIndex + 1
+    uploadProgress.value.completed++
     currentFileIndex++
     await uploadCurrentFile()
   } catch (err) {

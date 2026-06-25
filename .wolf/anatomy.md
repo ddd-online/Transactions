@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-25T17:42:33.117Z
-> Files: 14 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-06-25T17:46:22.064Z
+> Files: 15 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -17,12 +17,13 @@
 
 ## .superpowers/sdd/
 
-- `progress.md` — SDD Progress Ledger (~35 tok)
+- `progress.md` — SDD Progress Ledger (~128 tok)
 - `task-1-report.md` — Task 1 报告: api-client.ts post 方法增加 config 参数透传 (~149 tok)
 - `task-2-report.md` — 状态 (~52 tok)
 - `task-3-report.md` — 状态 (~89 tok)
 - `task-4-report.md` — 状态 (~161 tok)
 - `task-5-report.md` — 状态 (~244 tok)
+- `task-6-report.md` — 状态 (~66 tok)
 
 ## app/
 
@@ -51,7 +52,7 @@
 ## app/src/components/key_event_view/
 
 - `KeyEventDetail.vue` — Vue: setup (~2003 tok)
-- `KeyEventView.vue` — Vue: setup (~3135 tok)
+- `KeyEventView.vue` — Vue: setup (~3130 tok)
 - `UploadProgressBar.vue` — 图片上传进度条，显示文件级进度和单文件百分比，支持上传中/完成/出错三种状态 (~766 tok)
 
 ## app/src/components/settings_view/
