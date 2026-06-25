@@ -20,4 +20,4 @@
 
 1. `kernel`目录下执行`go run main.go`，启动`go`服务
 2. `app`目录下执行`npm run dev`，启动`vue`服务
-3. `electron`目录下执行`npm run start`，启动`electron`服务
+3. `electron`目录下执行`npm run dev`，启动`electron`服务
