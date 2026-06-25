@@ -49,10 +49,6 @@
             show-count
             placeholder="输入描述内容..."
           />
-          <div class="description-actions">
-            <a-button size="small" @click="handleCancel">取消</a-button>
-            <a-button type="primary" size="small" @click="handleSave">保存</a-button>
-          </div>
         </div>
       </div>
 
@@ -65,20 +61,24 @@
           @retry="$emit('retry-upload')"
           @skip="$emit('skip-upload')"
         />
-        <!-- 空闲：显示添加图片按钮 -->
+        <!-- 空闲 -->
         <template v-else>
-          <a-button @click="triggerFileInput">
-            <template #icon><PlusOutlined /></template>
-            添加图片
-          </a-button>
-          <a-button
-            v-if="!isEditing"
-            type="primary"
-            @click="$emit('edit')"
-          >
-            <template #icon><EditOutlined /></template>
-            编辑描述
-          </a-button>
+          <!-- 编辑模式：取消 + 保存 -->
+          <template v-if="isEditing">
+            <a-button @click="handleCancel">取消</a-button>
+            <a-button type="primary" @click="handleSave">保存</a-button>
+          </template>
+          <!-- 查看模式：添加图片 + 编辑描述 -->
+          <template v-else>
+            <a-button @click="triggerFileInput">
+              <template #icon><PlusOutlined /></template>
+              添加图片
+            </a-button>
+            <a-button type="primary" @click="$emit('edit')">
+              <template #icon><EditOutlined /></template>
+              编辑描述
+            </a-button>
+          </template>
         </template>
         <input
           ref="fileInputRef"
@@ -280,13 +280,6 @@ const handleCancel = () => {
 .description-edit :deep(.ant-input-textarea textarea) {
   flex: 1;
   resize: none;
-}
-
-.description-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--billadm-space-xs);
-  flex-shrink: 0;
 }
 
 /* ========== 底部操作栏 ========== */
