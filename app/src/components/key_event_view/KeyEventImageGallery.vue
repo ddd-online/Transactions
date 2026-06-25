@@ -17,7 +17,7 @@
         <div ref="thumbsRef" class="gallery-thumbs" @scroll="onScroll">
           <div v-for="(img, index) in images" :key="img.id" class="thumb-item"
             :class="{ 'is-selected': selectedId === img.id, 'thumb-enter': true }"
-            :style="{ transitionDelay: `${Math.min(index * 50, 300)}ms` }" @click="selectedId = img.id">
+            :style="{ animationDelay: `${Math.min(index * 50, 300)}ms` }" @click="selectedId = img.id">
             <img :src="img.data" class="thumb-img" alt="" />
             <button class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)" aria-label="删除图片">
               <CloseOutlined />

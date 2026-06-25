@@ -117,6 +117,7 @@ const clearSelection = () => {
 }
 
 const onSelectEvent = async (date: string) => {
+  const callId = ++eventCallId
   // 立即清空旧数据
   selectedDate.value = date
   isEditing.value = false
@@ -130,6 +131,7 @@ const onSelectEvent = async (date: string) => {
   try {
     // 第1步：获取事件内容
     const event = await keyEventStore.fetchEventByDate(date)
+    if (callId !== eventCallId) return  // 竞态检查
     currentEvent.value = event
 
     // 第2步：获取图片
@@ -137,13 +139,18 @@ const onSelectEvent = async (date: string) => {
       trsLoading.value = true
       imagesLoading.value = true
       await keyEventStore.fetchImages(date)
+      if (callId !== eventCallId) return  // 竞态检查
       imagesLoading.value = false
 
       // 第3步：获取关联交易
       await loadLinkedTransactions(date)
+      if (callId !== eventCallId) return  // 竞态检查
       trsLoading.value = false
+    } else {
+      imagesLoading.value = false  // 修复 imagesLoading 泄漏
     }
   } catch {
+    if (callId !== eventCallId) return  // 竞态检查
     currentEvent.value = null
     imagesLoading.value = false
     trsLoading.value = false
@@ -401,6 +408,9 @@ const handleColorChange = async (color: string) => {
     /* error handled in store */
   }
 }
+
+// ========== 竞态保护 ==========
+let eventCallId = 0
 
 // ========== 初始化 ==========
 onMounted(() => {

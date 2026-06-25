@@ -7,7 +7,7 @@
 
     <!-- 事件详情 -->
     <template v-else>
-      <Transition name="panel" mode="out-in">
+      <Transition name="panel" mode="out-in" appear>
         <div v-if="!loading && event" key="content" class="panel-body">
           <!-- 颜色选择栏 -->
           <div class="color-toolbar">
