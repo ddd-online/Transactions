@@ -30,13 +30,15 @@
         :event="currentEvent"
         :images="keyEventStore.images"
         :is-editing="isEditing"
-        :uploading="imageUploading"
+        :progress="uploadProgress"
         @edit="isEditing = true"
         @save="handleSaveContent"
         @cancel-edit="isEditing = false"
-        @add-image="handleAddImage"
+        @add-images="handleAddImages"
         @delete-image="handleDeleteImage"
         @color-change="handleColorChange"
+        @retry-upload="handleRetryUpload"
+        @skip-upload="handleSkipUpload"
       />
 
       <!-- 右栏：关联交易 320px -->
@@ -72,6 +74,7 @@ import { useAppDataStore } from '@/stores/appDataStore'
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
 import { message } from 'ant-design-vue'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
+import type { UploadProgress } from './UploadProgressBar.vue'
 
 const keyEventStore = useKeyEventStore()
 const appDataStore = useAppDataStore()
@@ -151,7 +154,17 @@ const handleDeleteEvent = async (date: string) => {
 }
 
 // ========== 图片管理 ==========
-const imageUploading = ref(false)
+const uploadProgress = ref<UploadProgress>({
+  total: 0,
+  completed: 0,
+  currentFile: '',
+  currentPercent: 0,
+  status: 'idle',
+})
+
+// 暂存待上传文件列表，供重试/跳过使用
+const pendingFiles = ref<File[]>([])
+let currentFileIndex = 0
 
 const fileToBase64 = async (file: File): Promise<string> => {
   const isHeic = HEIC_EXTENSIONS.some(ext =>
@@ -189,16 +202,70 @@ const fileToBase64 = async (file: File): Promise<string> => {
   }
 }
 
-const handleAddImage = async (file: File) => {
-  imageUploading.value = true
+const handleAddImages = async (files: File[]) => {
+  if (files.length === 0) return
+
+  pendingFiles.value = files
+  currentFileIndex = 0
+
+  uploadProgress.value = {
+    total: files.length,
+    completed: 0,
+    currentFile: files[0]!.name,
+    currentPercent: 0,
+    status: 'uploading',
+  }
+
+  await uploadCurrentFile()
+}
+
+// 上传 currentFileIndex 指向的文件
+const uploadCurrentFile = async () => {
+  const files = pendingFiles.value
+  if (currentFileIndex >= files.length) {
+    // 全部完成
+    uploadProgress.value.status = 'done'
+    setTimeout(() => {
+      uploadProgress.value.status = 'idle'
+      pendingFiles.value = []
+    }, 2000)
+    return
+  }
+
+  const file = files[currentFileIndex]!
+  uploadProgress.value.currentFile = file.name
+  uploadProgress.value.currentPercent = 0
+
   try {
     const data = await fileToBase64(file)
-    await keyEventStore.addImage(selectedDate.value, data, file.name)
+    await keyEventStore.addImage(
+      selectedDate.value,
+      data,
+      file.name,
+      (percent: number) => {
+        uploadProgress.value.currentPercent = percent
+      }
+    )
+    uploadProgress.value.completed = currentFileIndex + 1
+    currentFileIndex++
+    await uploadCurrentFile()
   } catch (err) {
-    message.error((err as Error)?.message || '图片上传失败')
-  } finally {
-    imageUploading.value = false
+    uploadProgress.value.status = 'error'
+    uploadProgress.value.errorMessage =
+      (err as Error)?.message || '图片上传失败'
   }
+}
+
+const handleRetryUpload = async () => {
+  uploadProgress.value.status = 'uploading'
+  uploadProgress.value.currentPercent = 0
+  await uploadCurrentFile()
+}
+
+const handleSkipUpload = async () => {
+  currentFileIndex++
+  uploadProgress.value.status = 'uploading'
+  await uploadCurrentFile()
 }
 
 const handleDeleteImage = async (imageId: string) => {

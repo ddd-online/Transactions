@@ -119,11 +119,11 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         }
     };
 
-    const addImage = async (date: string, data: string, filename: string): Promise<void> => {
+    const addImage = async (date: string, data: string, filename: string, onProgress?: (percent: number) => void): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
         try {
-            const imageId = await addKeyEventImage(date, data, filename, ledgerId);
+            const imageId = await addKeyEventImage(date, data, filename, ledgerId, onProgress);
             images.value.push({
                 id: imageId,
                 eventDate: date,
