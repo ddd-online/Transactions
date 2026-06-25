@@ -2,12 +2,12 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 101567,
-    "total_reads": 115,
-    "total_writes": 161,
-    "total_sessions": 3,
+    "total_tokens_estimated": 108477,
+    "total_reads": 116,
+    "total_writes": 164,
+    "total_sessions": 4,
     "anatomy_hits": 57,
-    "anatomy_misses": 58,
+    "anatomy_misses": 59,
     "repeated_reads_blocked": 86,
     "estimated_savings_vs_bare_cli": 100236
   },
@@ -1674,6 +1674,60 @@
         "writes_count": 25,
         "repeated_reads_blocked": 13,
         "anatomy_lookups": 7
+      }
+    },
+    {
+      "id": "session-2026-06-25-0118",
+      "started": "2026-06-25T17:18:09.950Z",
+      "ended": "2026-06-25T17:29:29.083Z",
+      "reads": [],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-26-image-upload-progress-design.md",
+          "tokens_estimated": 1577,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 1577,
+        "reads_count": 0,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-25-0118",
+      "started": "2026-06-25T17:18:09.950Z",
+      "ended": "2026-06-25T17:30:59.109Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-26-image-upload-progress-design.md",
+          "tokens_estimated": 1577,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-26-image-upload-progress.md",
+          "tokens_estimated": 3756,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 5333,
+        "reads_count": 1,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
       }
     }
   ],

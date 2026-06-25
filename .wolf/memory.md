@@ -3,6 +3,8 @@
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
 
+| 16:02 | task-2: addKeyEventImage 增加 onProgress 回调支持 | app/src/backend/api/key-event.ts | DONE | ~50 |
+
 ## Session: 2026-06-25 00:18
 
 | Time | Action | File(s) | Outcome | ~Tokens |
@@ -55,3 +57,43 @@
 | 01:10 | Edited app/vite.config.ts | 14→13 lines | ~80 |
 | 01:11 | Edited app/src/components/key_event_view/KeyEventView.vue | heic2any() → heicTo() | ~69 |
 | 01:11 | Session end: 25 writes across 9 files (2026-06-26-heic-image-support-design.md, 2026-06-26-heic-image-support-plan.md, progress.md, KeyEventView.vue, task-1-report.md) | 15 reads | ~13812 tok |
+
+## Session: 2026-06-25 01:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 01:29 | Created docs/superpowers/specs/2026-06-26-image-upload-progress-design.md | — | ~1472 |
+| 01:29 | Session end: 1 writes across 1 files (2026-06-26-image-upload-progress-design.md) | 0 reads | ~1577 tok |
+| 01:30 | Created docs/superpowers/plans/2026-06-26-image-upload-progress.md | — | ~3506 |
+| 01:30 | Session end: 2 writes across 2 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md) | 1 reads | ~5333 tok |
+| 01:31 | Created .superpowers/sdd/progress.md | — | ~38 |
+| 01:32 | Edited app/src/backend/api/api-client.ts | modified catch() | ~166 |
+| 01:32 | Created .superpowers/sdd/task-1-report.md | — | ~159 |
+| 01:33 | Edited app/src/backend/api/key-event.ts | added optional chaining | ~167 |
+| 01:33 | Created .superpowers/sdd/task-2-report.md | — | ~55 |
+| 01:35 | Created app/src/components/key_event_view/UploadProgressBar.vue | — | ~766 |
+
+## Session: 2026-06-26 (current)
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 01:35 | Task 3: 创建 UploadProgressBar.vue + 类型检查 + 提交 | app/src/components/key_event_view/UploadProgressBar.vue | vue-tsc ✅, 1b0c2da | ~150 |
+| 01:35 | Created .superpowers/sdd/task-3-report.md | — | ~95 |
+| 01:36 | Edited app/src/components/key_event_view/KeyEventDetail.vue | added 2 import(s) | ~58 |
+| 01:36 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 6→6 lines | ~33 |
+| 01:36 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: files | ~83 |
+| 01:36 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 9→7 lines | ~60 |
+| 01:36 | Edited app/src/components/key_event_view/KeyEventDetail.vue | expanded (+10 lines) | ~249 |
+| 01:37 | Created .superpowers/sdd/task-4-report.md | — | ~171 |
+| 01:38 | Edited app/src/stores/keyEventStore.ts | 5→5 lines | ~90 |
+| 01:38 | Edited app/src/components/key_event_view/KeyEventView.vue | added 1 import(s) | ~46 |
+| 01:38 | Edited app/src/components/key_event_view/KeyEventView.vue | expanded (+10 lines) | ~67 |
+| 01:38 | Edited app/src/components/key_event_view/KeyEventView.vue | added 2 condition(s) | ~418 |
+| 01:38 | Edited app/src/components/key_event_view/KeyEventView.vue | 13→15 lines | ~136 |
+| 01:39 | Created .superpowers/sdd/task-5-report.md | — | ~141 |
+| 01:39 | Task 5: KeyEventView 批量上传 + UploadProgress 状态管理 + store onProgress | KeyEventView.vue, keyEventStore.ts | vue-tsc ✅, 8cf0835 | ~200 |
+| 01:41 | Edited app/src/components/key_event_view/KeyEventView.vue | 7→10 lines | ~98 |
+| 01:41 | Edited app/src/components/key_event_view/KeyEventView.vue | added 1 condition(s) | ~62 |
+| 01:41 | Edited app/src/components/key_event_view/KeyEventView.vue | 3→5 lines | ~36 |
+| 01:41 | Edited app/src/components/key_event_view/KeyEventView.vue | 4→6 lines | ~40 |
+| 01:42 | Edited app/src/components/key_event_view/KeyEventView.vue | inline fix | ~5 |

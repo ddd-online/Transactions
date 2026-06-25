@@ -33,6 +33,7 @@ declare module 'vue' {
     AppBottomBar: typeof import('./../components/AppBottomBar.vue')['default']
     AppLeftBar: typeof import('./../components/AppLeftBar.vue')['default']
     AppTopBar: typeof import('./../components/AppTopBar.vue')['default']
+    AProgress: typeof import('ant-design-vue/es')['Progress']
     ARadioButton: typeof import('ant-design-vue/es')['RadioButton']
     ARadioGroup: typeof import('ant-design-vue/es')['RadioGroup']
     ARangePicker: typeof import('ant-design-vue/es')['RangePicker']
@@ -74,6 +75,7 @@ declare module 'vue' {
     TransactionRecordTable: typeof import('./../components/tr_view/TransactionRecordTable.vue')['default']
     TransactionRecordView: typeof import('./../components/tr_view/TransactionRecordView.vue')['default']
     TrSortModal: typeof import('./../components/tr_view/TrSortModal.vue')['default']
+    UploadProgressBar: typeof import('./../components/key_event_view/UploadProgressBar.vue')['default']
     WorkspaceSetting: typeof import('./../components/settings_view/WorkspaceSetting.vue')['default']
   }
 }

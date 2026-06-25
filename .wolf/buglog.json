@@ -194,6 +194,86 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-06-26"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-06-25T17:33:38.611Z",
+      "error_message": "Null/undefined access in ",
+      "file": "app/src/backend/api/key-event.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:33:38.611Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-06-25T17:36:49.719Z",
+      "error_message": "CSS fix: e",
+      "file": "app/src/components/key_event_view/KeyEventDetail.vue",
+      "root_cause": "e: 'color-change', color: string): void → 'skip-upload'): void",
+      "fix": "Changed e: 'color-change', color: string): void → 'skip-upload'): void",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:36:49.719Z"
+    },
+    {
+      "id": "bug-014",
+      "timestamp": "2026-06-25T17:38:52.587Z",
+      "error_message": "Missing guard clause",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "No early return/throw for edge case: files.length === 0",
+      "fix": "Added guard clause: if (files.length === 0)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:38:52.587Z"
+    },
+    {
+      "id": "bug-015",
+      "timestamp": "2026-06-25T17:41:51.244Z",
+      "error_message": "Wrong return value",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Was returning: pendingFiles.value = files",
+      "fix": "Now returns: targetDate = selectedDate.value",
+      "tags": [
+        "auto-detected",
+        "return-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:41:51.244Z"
+    },
+    {
+      "id": "bug-016",
+      "timestamp": "2026-06-25T17:42:16.864Z",
+      "error_message": "Wrong reference: selectedDate should be targetDate",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Used \"selectedDate\" instead of \"targetDate\"",
+      "fix": "Changed selectedDate → targetDate",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:42:16.864Z"
     }
   ]
 }

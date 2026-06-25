@@ -108,6 +108,9 @@ const clearSelection = () => {
   isEditing.value = false
   keyEventStore.clearImages()
   appDataStore.setStatistics({ income: 0, expense: 0, transfer: 0 })
+  uploadProgress.value = { total: 0, completed: 0, currentFile: '', currentPercent: 0, status: 'idle' }
+  pendingFiles.value = []
+  currentFileIndex = 0
 }
 
 const onSelectEvent = async (date: string) => {
@@ -165,6 +168,8 @@ const uploadProgress = ref<UploadProgress>({
 // 暂存待上传文件列表，供重试/跳过使用
 const pendingFiles = ref<File[]>([])
 let currentFileIndex = 0
+// 批量上传时快照选中的日期，防止上传过程中日期被切换
+let targetDate = ''
 
 const fileToBase64 = async (file: File): Promise<string> => {
   const isHeic = HEIC_EXTENSIONS.some(ext =>
@@ -205,6 +210,8 @@ const fileToBase64 = async (file: File): Promise<string> => {
 const handleAddImages = async (files: File[]) => {
   if (files.length === 0) return
 
+  targetDate = selectedDate.value
+
   pendingFiles.value = files
   currentFileIndex = 0
 
@@ -224,6 +231,10 @@ const uploadCurrentFile = async () => {
   const files = pendingFiles.value
   if (currentFileIndex >= files.length) {
     // 全部完成
+    // 修正：如果有跳过的文件，total 调整为实际完成数
+    if (uploadProgress.value.completed < uploadProgress.value.total) {
+      uploadProgress.value.total = uploadProgress.value.completed
+    }
     uploadProgress.value.status = 'done'
     setTimeout(() => {
       uploadProgress.value.status = 'idle'
@@ -239,7 +250,7 @@ const uploadCurrentFile = async () => {
   try {
     const data = await fileToBase64(file)
     await keyEventStore.addImage(
-      selectedDate.value,
+      targetDate,
       data,
       file.name,
       (percent: number) => {
