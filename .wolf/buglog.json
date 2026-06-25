@@ -83,6 +83,43 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-06-26"
+    },
+    {
+      "id": "bug-006",
+      "timestamp": "2026-06-25T17:05:36.148Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Had 'heic2any'",
+      "fix": "Changed to '@/types/billadm'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:05:36.148Z"
+    },
+    {
+      "id": "bug-006",
+      "timestamp": "2026-06-26T11:00:00.000Z",
+      "error_message": "SyntaxError: The requested module does not provide an export named default — 点击关键事件页面报错，无法切换",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "optimizeDeps.exclude 导致 Vite dev mode 下 heic2any UMD 模块以 ESM 方式提供时缺少 default 导出，静态 import heic2any from \"heic2any\" 在模块解析阶段即失败",
+      "fix": "改为动态 import(\"heic2any\") + CJS/ESM 互操作: (m as any).default || m",
+      "tags": [
+        "heic",
+        "vite",
+        "umd",
+        "cjs-esm-interop",
+        "import",
+        "runtime-error"
+      ],
+      "related_bugs": [
+        "bug-005"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-06-26"
     }
   ]
 }
