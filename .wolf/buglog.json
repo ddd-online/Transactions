@@ -157,6 +157,43 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-06-26"
+    },
+    {
+      "id": "bug-010",
+      "timestamp": "2026-06-25T17:11:01.912Z",
+      "error_message": "Missing import: heic-to/csp",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Module(s) not imported: heic-to/csp",
+      "fix": "Added import(s) for heic-to/csp",
+      "tags": [
+        "auto-detected",
+        "missing-import",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:11:01.912Z"
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-06-26T12:00:00.000Z",
+      "error_message": "HEIC 转换失败: ERR_LIBHEIF format not supported",
+      "file": "app/package.json (heic2any → heic-to)",
+      "root_cause": "heic2any@0.0.4 内嵌的 libheif WASM 版本过老（约2019年），不支持新版 iPhone（iPhone 13+）生成的 HEIC 变体格式。libheif 格式检测失败返回 ERR_LIBHEIF format not supported",
+      "fix": "替换为 heic-to@1.5.2 (libheif 1.22.2)，该库持续跟进 libheif 上游发布，支持最新 HEIC 格式；同时使用 /csp 路径避免 Electron CSP 限制",
+      "tags": [
+        "heic",
+        "libheif",
+        "wasm",
+        "version-mismatch",
+        "format-not-supported"
+      ],
+      "related_bugs": [
+        "bug-005",
+        "bug-007"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-06-26"
     }
   ]
 }

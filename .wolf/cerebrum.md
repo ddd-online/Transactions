@@ -12,12 +12,13 @@
 
 - **Project:** Transactions
 - **Description:** 一款桌面端记账工具
-- **HEIC/浏览器兼容性:** Chromium 和所有主流浏览器均不支持 HEIC 原生渲染（专利格式）。要在 Electron 应用中显示 HEIC 图片，必须在客户端用 `heic2any` 解码转换，或在服务端用 libheif 转换。本项目采用前端方案（`heic2any`），避免 Go 后端引入 CGO 依赖。
-- **heic2any × Vite 兼容性:** `heic2any` 是 UMD 模块（内嵌 WASM + Web Worker）。正确加载方式：① `optimizeDeps.include: ['heic2any']` 让 Vite/esbuild 正常预构建（esbuild 不会破坏字符串字面量或 Worker 代码）；② 使用**动态 import**：`const heic2any = (await import('heic2any')).default`（避免静态 import 的模块解析时机问题）；③ 生产构建 `manualChunks` 隔离。**错误认知已纠正：** `optimizeDeps.exclude` 是错误方案——它阻止了 CJS→ESM 互操作，导致 `.default` 为 undefined。
+- **HEIC/浏览器兼容性:** Chromium 和所有主流浏览器均不支持 HEIC 原生渲染（专利格式）。要在 Electron 应用中显示 HEIC 图片，必须在客户端用 HEIC 解码库转换。**最终方案：`heic-to`（libheif 1.22.2）**，持续跟进 libheif 上游，支持最新 iPhone HEIC 格式。旧方案 `heic2any@0.0.4` 的 libheif 过老，不支持新版 iPhone 的 HEIC 变体（ERR_LIBHEIF format not supported）。
+- **`heic-to` × Vite 使用方式:** `heic-to` 是纯 ESM 模块（有 CSP 安全变体 `heic-to/csp`）。加载方式：① `optimizeDeps.include: ['heic-to']`；② 动态 import：`const { heicTo } = await import('heic-to/csp')`；③ 生产 `manualChunks: { 'vendor-heic': ['heic-to'] }`。API：`heicTo({ blob: file, type: 'image/jpeg', quality: 0.92 })` 返回 `Promise<Blob>`（始终单张，无 `multiple` 选项）。
 
 ## Do-Not-Repeat
 
-<!-- Mistakes made and corrected. Each entry prevents the same mistake recurring. -->
+- [2026-06-26] **不要用 `heic2any`（v0.0.4）**——内嵌 libheif 太老，不支持新版 iPhone HEIC，报 `ERR_LIBHEIF format not supported`。用 `heic-to`（libheif 1.22.2+）。
+- [2026-06-26] **Vite 中 UMD 模块不要用 `optimizeDeps.exclude`**——会阻止 CJS→ESM 互操作，导致 `default` 导出为 undefined。正确做法是正常预构建 + 动态 import。
 <!-- Format: [YYYY-MM-DD] Description of what went wrong and what to do instead. -->
 
 ## Decision Log
