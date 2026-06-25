@@ -43,12 +43,14 @@
 
         <!-- 编辑模式 -->
         <div v-else class="description-edit">
-          <a-textarea
-            v-model:value="localContent"
-            :maxlength="5000"
-            show-count
-            placeholder="输入描述内容..."
-          />
+          <div class="description-textarea-wrap">
+            <a-textarea
+              v-model:value="localContent"
+              :maxlength="5000"
+              placeholder="输入描述内容..."
+            />
+            <span class="description-char-count">{{ localContent.length }}/5000</span>
+          </div>
         </div>
       </div>
 
@@ -266,20 +268,37 @@ const handleCancel = () => {
 .description-edit {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-sm);
   flex: 1;
   min-height: 0;
 }
 
-.description-edit :deep(.ant-input-textarea) {
+.description-textarea-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.description-textarea-wrap :deep(.ant-input-textarea) {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.description-edit :deep(.ant-input-textarea textarea) {
+.description-textarea-wrap :deep(.ant-input-textarea textarea) {
   flex: 1;
   resize: none;
+}
+
+.description-char-count {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-size: var(--billadm-size-text-small, 11px);
+  color: var(--billadm-color-text-disabled, #9E9E96);
+  background: linear-gradient(to right, transparent, var(--billadm-color-major-background, #FFF) 40%);
+  padding-left: 16px;
+  pointer-events: none;
+  line-height: 1;
 }
 
 /* ========== 底部操作栏 ========== */
