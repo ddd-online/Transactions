@@ -11,7 +11,7 @@ import {
 } from "@/backend/api/key-event";
 import { useLedgerStore } from '@/stores/ledgerStore'
 import NotificationUtil from "@/backend/notification";
-import type { KeyEvent, KeyEventImage } from "@/types/billadm";
+import type { KeyEvent, KeyEventImage, TransactionRecord } from "@/types/billadm";
 
 export const useKeyEventStore = defineStore('keyEvent', () => {
     const getLedgerId = () => useLedgerStore().currentLedgerId
@@ -24,6 +24,8 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     // 日期 -> 颜色 的缓存
     const colors = ref(new Map<string, string>());
     const images = ref<KeyEventImage[]>([]);
+    const imageCache = ref(new Map<string, KeyEventImage[]>());
+    const trCache = ref(new Map<string, TransactionRecord[]>());
     // 完整的 KeyEvent 列表，供 KeyEventList 消费
     const events = ref<KeyEvent[]>([]);
 
@@ -67,6 +69,22 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         try {
             await saveKeyEvent(date, title, content, color, ledgerId);
             datesWithRecords.value.add(date);
+            // 更新 events 缓存
+            const idx = events.value.findIndex(e => e.date === date);
+            if (idx >= 0) {
+                events.value[idx] = { ...events.value[idx]!, title, content, color };
+            } else {
+                events.value.push({
+                    id: '',
+                    date,
+                    title,
+                    content,
+                    color,
+                    createdAt: Math.floor(Date.now() / 1000),
+                    updatedAt: Math.floor(Date.now() / 1000),
+                    ledgerId,
+                });
+            }
             titles.value.set(date, title);
             colors.value.set(date, color);
             NotificationUtil.success('保存成功');
@@ -86,6 +104,8 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             titles.value.delete(date);
             colors.value.delete(date);
             events.value = events.value.filter(e => e.date !== date);
+            imageCache.value.delete(date);
+            trCache.value.delete(date);
             NotificationUtil.success('删除成功');
         } catch (error) {
             NotificationUtil.error('删除失败', `${error}`);
@@ -108,14 +128,64 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         return colors.value.get(date) || '';
     };
 
+    // 从 events 数组同步读取（不发起网络请求）
+    const getEventByDate = (date: string): KeyEvent | null => {
+        return events.value.find(e => e.date === date) ?? null;
+    };
+
     const fetchImages = async (date: string): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
+        // 已有缓存则直接用
+        if (imageCache.value.has(date)) {
+            images.value = imageCache.value.get(date)!
+            return
+        }
         try {
-            images.value = await queryKeyEventImages(date, ledgerId);
+            const result = await queryKeyEventImages(date, ledgerId);
+            imageCache.value.set(date, result);
+            images.value = result;
         } catch (error) {
             NotificationUtil.error('加载图片失败', `${error}`);
             images.value = [];
+        }
+    };
+
+    const cacheLinkedTransactions = (date: string, trs: TransactionRecord[]): void => {
+        trCache.value.set(date, trs);
+    };
+
+    // 预加载某年全部关键事件数据（事件列表 + 图片 + 关联交易）
+    const preloadYearData = async (year: number): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
+        try {
+            const eventList = await queryKeyEventsByYear(year, ledgerId);
+            datesWithRecords.value = new Set(eventList.map(e => e.date));
+            titles.value = new Map(eventList.map(e => [e.date, e.title]));
+            colors.value = new Map(eventList.map(e => [e.date, e.color]));
+            events.value = eventList;
+            currentYear.value = year;
+
+            // 并行预加载图片和关联交易
+            if (eventList.length === 0) return;
+            const { getLinkedTransactions } = await import('@/backend/functions');
+            await Promise.all([
+                ...eventList.map(async (e) => {
+                    try {
+                        const imgs = await queryKeyEventImages(e.date, ledgerId);
+                        imageCache.value.set(e.date, imgs);
+                    } catch { /* 静默忽略单个失败 */ }
+                }),
+                ...eventList.map(async (e) => {
+                    try {
+                        const trs = await getLinkedTransactions(e.date);
+                        trCache.value.set(e.date, trs);
+                    } catch { /* 静默忽略单个失败 */ }
+                }),
+            ]);
+        } catch (error) {
+            NotificationUtil.error('预加载关键事件失败', `${error}`);
         }
     };
 
@@ -132,6 +202,18 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                 sortOrder: images.value.length + 1,
                 createdAt: Math.floor(Date.now() / 1000),
             });
+            // 更新缓存
+            const cached = imageCache.value.get(date);
+            if (cached) {
+                cached.push({
+                    id: imageId,
+                    eventDate: date,
+                    data,
+                    filename,
+                    sortOrder: cached.length + 1,
+                    createdAt: Math.floor(Date.now() / 1000),
+                });
+            }
         } catch (error) {
             NotificationUtil.error('添加图片失败', `${error}`);
             throw error;
@@ -142,8 +224,16 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
         try {
+            const target = images.value.find(img => img.id === imageId);
             await deleteKeyEventImage(imageId, ledgerId);
             images.value = images.value.filter(img => img.id !== imageId);
+            if (target) {
+                const cached = imageCache.value.get(target.eventDate);
+                if (cached) {
+                    const idx = cached.findIndex(img => img.id === imageId);
+                    if (idx >= 0) cached.splice(idx, 1);
+                }
+            }
         } catch (error) {
             NotificationUtil.error('删除图片失败', `${error}`);
             throw error;
@@ -164,11 +254,16 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         hasRecord,
         getTitle,
         getColor,
+        getEventByDate,
         images,
+        imageCache,
+        trCache,
         events,
         fetchImages,
         addImage,
         removeImage,
         clearImages,
+        preloadYearData,
+        cacheLinkedTransactions,
     };
 });
