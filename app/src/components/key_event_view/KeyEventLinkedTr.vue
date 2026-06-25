@@ -40,13 +40,13 @@
             </span>
           </div>
 
-          <!-- 标签行 -->
-          <div v-if="tr.tags && tr.tags.length > 0" class="linked-card-tags">
-            <a-tag v-for="tag in tr.tags" :key="tag" class="tag-item">{{ tag }}</a-tag>
+          <!-- 第二行：标签 + 描述同行 -->
+          <div v-if="(tr.tags && tr.tags.length > 0) || tr.description" class="linked-card-row linked-card-row--meta">
+            <div v-if="tr.tags && tr.tags.length > 0" class="linked-card-tags">
+              <a-tag v-for="tag in tr.tags" :key="tag" class="tag-item">{{ tag }}</a-tag>
+            </div>
+            <span v-if="tr.description" class="linked-card-desc">{{ tr.description }}</span>
           </div>
-
-          <!-- 描述行 -->
-          <div v-if="tr.description" class="linked-card-desc">{{ tr.description }}</div>
         </div>
 
         <!-- 操作 -->
@@ -163,6 +163,8 @@ watch(
   background-color: var(--billadm-color-major-background);
   box-shadow: var(--billadm-shadow-sm);
   transition: box-shadow var(--billadm-transition-smooth);
+  min-height: 68px;
+  box-sizing: border-box;
 }
 
 .linked-card:hover {
@@ -174,7 +176,7 @@ watch(
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
 /* ========== 主行：分类 + 金额 ========== */
@@ -183,6 +185,14 @@ watch(
   justify-content: space-between;
   align-items: baseline;
   gap: var(--billadm-space-sm);
+}
+
+/* ========== 副行：标签 + 描述 ========== */
+.linked-card-row--meta {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  min-height: 20px;
 }
 
 .linked-card-value {
@@ -194,8 +204,9 @@ watch(
 /* ========== 标签 ========== */
 .linked-card-tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 3px;
+  flex-shrink: 0;
 }
 
 .tag-item {
@@ -212,6 +223,8 @@ watch(
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ========== 金额 ========== */
