@@ -30,6 +30,7 @@
         :event="currentEvent"
         :images="keyEventStore.images"
         :is-editing="isEditing"
+        :uploading="imageUploading"
         @edit="isEditing = true"
         @save="handleSaveContent"
         @cancel-edit="isEditing = false"

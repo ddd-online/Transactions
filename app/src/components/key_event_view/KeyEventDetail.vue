@@ -58,7 +58,7 @@
 
       <!-- 底部操作栏 -->
       <div class="detail-footer">
-        <a-button @click="triggerFileInput">
+        <a-button :disabled="uploading" @click="triggerFileInput">
           <template #icon><PlusOutlined /></template>
           添加图片
         </a-button>
@@ -91,6 +91,7 @@ interface Props {
   event: KeyEvent | null;
   images: KeyEventImage[];
   isEditing: boolean;
+  uploading?: boolean;
 }
 
 const props = defineProps<Props>();
