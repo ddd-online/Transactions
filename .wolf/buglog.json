@@ -48,6 +48,41 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-06-25T16:55:23.370Z"
+    },
+    {
+      "id": "bug-004",
+      "timestamp": "2026-06-25T17:01:51.525Z",
+      "error_message": "Null/undefined access in ",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:01:51.525Z"
+    },
+    {
+      "id": "bug-005",
+      "timestamp": "2026-06-26T10:00:00.000Z",
+      "error_message": "用户报错: HEIC 转换失败 (heic2any 在 Vite 中运行时抛出异常)",
+      "file": "app/vite.config.ts, app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Vite 的 esbuild 预构建 (optimizeDeps) 破坏了 heic2any 内嵌的 WASM 二进制和 Web Worker 字符串，导致运行时 heic2any() 抛出异常",
+      "fix": "vite.config.ts: 添加 optimizeDeps.exclude 排除 heic2any + build.manualChunks 隔离 vendor-heic; KeyEventView.vue: catch 块保留原始错误信息",
+      "tags": [
+        "heic",
+        "vite",
+        "esbuild",
+        "web-worker",
+        "wasm",
+        "runtime-error"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-26"
     }
   ]
 }
