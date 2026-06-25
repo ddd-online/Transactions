@@ -31,7 +31,6 @@
         :images="keyEventStore.images"
         :is-editing="isEditing"
         :progress="uploadProgress"
-        :loading="imagesLoading"
         @edit="isEditing = true"
         @save="handleSaveContent"
         @cancel-edit="isEditing = false"
@@ -46,7 +45,7 @@
       <KeyEventLinkedTr
         class="panel-right"
         :transactions="linkedTransactions"
-        :loading="trsLoading"
+        :loading="false"
         :has-selection="!!selectedDate"
         @delete="handleUnlinkTr"
       />
@@ -83,27 +82,24 @@ const appDataStore = useAppDataStore()
 const selectedYearDayjs = ref<Dayjs>(dayjs())
 const selectedYear = ref(selectedYearDayjs.value.year())
 
-const goToPrevYear = () => {
+const goToPrevYear = async () => {
   selectedYearDayjs.value = selectedYearDayjs.value.year(selectedYearDayjs.value.year() - 1)
   selectedYear.value = selectedYearDayjs.value.year()
   clearSelection()
-  keyEventStore.fetchDatesByYear(selectedYear.value)
+  await keyEventStore.preloadYearData(selectedYear.value)
 }
 
-const goToNextYear = () => {
+const goToNextYear = async () => {
   selectedYearDayjs.value = selectedYearDayjs.value.year(selectedYearDayjs.value.year() + 1)
   selectedYear.value = selectedYearDayjs.value.year()
   clearSelection()
-  keyEventStore.fetchDatesByYear(selectedYear.value)
+  await keyEventStore.preloadYearData(selectedYear.value)
 }
 
 // ========== 选中事件 ==========
 const selectedDate = ref('')
 const currentEvent = ref<KeyEvent | null>(null)
 const isEditing = ref(false)
-
-const imagesLoading = ref(false)
-const trsLoading = ref(false)
 
 const clearSelection = () => {
   selectedDate.value = ''
@@ -117,43 +113,33 @@ const clearSelection = () => {
 }
 
 const onSelectEvent = async (date: string) => {
-  const callId = ++eventCallId
-  // 立即清空旧数据
   selectedDate.value = date
   isEditing.value = false
-  currentEvent.value = null
-  keyEventStore.clearImages()
-  linkedTransactions.value = []
-  appDataStore.setStatistics({ income: 0, expense: 0, transfer: 0 })
-  imagesLoading.value = true
-  trsLoading.value = false
 
-  try {
-    // 第1步：获取事件内容
-    const event = await keyEventStore.fetchEventByDate(date)
-    if (callId !== eventCallId) return  // 竞态检查
-    currentEvent.value = event
+  // 从 events 缓存取事件内容
+  const event = keyEventStore.getEventByDate(date)
+  currentEvent.value = event ?? null
 
-    // 第2步：获取图片
-    if (event) {
-      trsLoading.value = true
-      imagesLoading.value = true
-      await keyEventStore.fetchImages(date)
-      if (callId !== eventCallId) return  // 竞态检查
-      imagesLoading.value = false
+  if (!event) return
 
-      // 第3步：获取关联交易
-      await loadLinkedTransactions(date)
-      if (callId !== eventCallId) return  // 竞态检查
-      trsLoading.value = false
-    } else {
-      imagesLoading.value = false  // 修复 imagesLoading 泄漏
+  // 从 imageCache 取图片（调用 fetchImages 会自动走缓存）
+  await keyEventStore.fetchImages(date)
+
+  // 从 trCache 取关联交易
+  const cachedTrs = keyEventStore.trCache.get(date)
+  if (cachedTrs !== undefined) {
+    linkedTransactions.value = cachedTrs
+    let income = 0, expense = 0, transfer = 0
+    for (const t of cachedTrs) {
+      if (t.transactionType === 'income') income += t.price
+      else if (t.transactionType === 'expense') expense += t.price
+      else if (t.transactionType === 'transfer') transfer += t.price
     }
-  } catch {
-    if (callId !== eventCallId) return  // 竞态检查
-    currentEvent.value = null
-    imagesLoading.value = false
-    trsLoading.value = false
+    appDataStore.setStatistics({ income, expense, transfer })
+  } else {
+    // 缓存未命中则走原路径
+    await loadLinkedTransactions(date)
+    keyEventStore.cacheLinkedTransactions(date, linkedTransactions.value)
   }
 }
 
@@ -163,11 +149,10 @@ const handleSaveContent = async (content: string) => {
   const title = currentEvent.value.title || extractTitle(content)
   try {
     await keyEventStore.saveEvent(selectedDate.value, title, content, currentEvent.value.color)
-    // 刷新列表以更新 title/content
     await keyEventStore.fetchDatesByYear(selectedYear.value)
     isEditing.value = false
-    const updated = await keyEventStore.fetchEventByDate(selectedDate.value)
-    currentEvent.value = updated
+    // 直接从缓存取（saveEvent 已更新 events 数组）
+    currentEvent.value = keyEventStore.getEventByDate(selectedDate.value)
   } catch { /* error handled in store */ }
 }
 
@@ -361,6 +346,10 @@ const handleUnlinkTr = async (transactionId: string) => {
     linkedTransactions.value = linkedTransactions.value.filter(
       t => t.transactionId !== transactionId
     )
+    // 同步 trCache
+    if (selectedDate.value) {
+      keyEventStore.trCache.set(selectedDate.value, [...linkedTransactions.value])
+    }
     // 重新计算并同步统计
     let income = 0, expense = 0, transfer = 0
     for (const t of linkedTransactions.value) {
@@ -402,19 +391,16 @@ const handleColorChange = async (color: string) => {
   try {
     await keyEventStore.saveEvent(selectedDate.value, title, content, color)
     await keyEventStore.fetchDatesByYear(selectedYear.value)
-    const updated = await keyEventStore.fetchEventByDate(selectedDate.value)
-    currentEvent.value = updated
+    currentEvent.value = keyEventStore.getEventByDate(selectedDate.value)
   } catch {
     /* error handled in store */
   }
 }
 
-// ========== 竞态保护 ==========
-let eventCallId = 0
-
 // ========== 初始化 ==========
-onMounted(() => {
-  keyEventStore.fetchDatesByYear(selectedYear.value)
+onMounted(async () => {
+  await keyEventStore.preloadYearData(selectedYear.value)
+  selectedDate.value = ''
 })
 </script>
 
