@@ -66,6 +66,7 @@ import { useKeyEventStore } from '@/stores/keyEventStore'
 import { useAppDataStore } from '@/stores/appDataStore'
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
 import { message } from 'ant-design-vue'
+import heic2any from 'heic2any'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
 
 const keyEventStore = useKeyEventStore()
@@ -146,13 +147,38 @@ const handleDeleteEvent = async (date: string) => {
 }
 
 // ========== 图片管理 ==========
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = () => reject(new Error('读取文件失败'))
-    reader.readAsDataURL(file)
-  })
+const HEIC_EXTENSIONS = ['.heic', '.heif']
+
+const fileToBase64 = async (file: File): Promise<string> => {
+  const isHeic = HEIC_EXTENSIONS.some(ext =>
+    file.name.toLowerCase().endsWith(ext)
+  )
+
+  if (!isHeic) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(new Error('读取文件失败'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  try {
+    const jpegBlob = await heic2any({
+      blob: file,
+      toType: 'image/jpeg',
+      quality: 0.92,
+    }) as Blob
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(new Error('HEIC 转换失败'))
+      reader.readAsDataURL(jpegBlob)
+    })
+  } catch {
+    throw new Error('HEIC 转换失败')
+  }
 }
 
 const handleAddImage = async (file: File) => {
