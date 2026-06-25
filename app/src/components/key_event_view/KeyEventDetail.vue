@@ -58,18 +58,28 @@
 
       <!-- 底部操作栏 -->
       <div class="detail-footer">
-        <a-button :disabled="uploading" @click="triggerFileInput">
-          <template #icon><PlusOutlined /></template>
-          添加图片
-        </a-button>
-        <a-button
-          v-if="!isEditing"
-          type="primary"
-          @click="$emit('edit')"
-        >
-          <template #icon><EditOutlined /></template>
-          编辑描述
-        </a-button>
+        <!-- 上传中/完成/出错：显示进度条 -->
+        <UploadProgressBar
+          v-if="progress && progress.status !== 'idle'"
+          :progress="progress"
+          @retry="$emit('retry-upload')"
+          @skip="$emit('skip-upload')"
+        />
+        <!-- 空闲：显示添加图片按钮 -->
+        <template v-else>
+          <a-button @click="triggerFileInput">
+            <template #icon><PlusOutlined /></template>
+            添加图片
+          </a-button>
+          <a-button
+            v-if="!isEditing"
+            type="primary"
+            @click="$emit('edit')"
+          >
+            <template #icon><EditOutlined /></template>
+            编辑描述
+          </a-button>
+        </template>
         <input
           ref="fileInputRef"
           type="file"
@@ -86,12 +96,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import type { KeyEvent, KeyEventImage } from '@/types/billadm';
+import type { UploadProgress } from './UploadProgressBar.vue';
+import UploadProgressBar from './UploadProgressBar.vue';
 
 interface Props {
   event: KeyEvent | null;
   images: KeyEventImage[];
   isEditing: boolean;
-  uploading?: boolean;
+  progress?: UploadProgress;
 }
 
 const props = defineProps<Props>();
@@ -108,9 +120,11 @@ const emit = defineEmits<{
   (e: 'edit'): void;
   (e: 'save', content: string): void;
   (e: 'cancel-edit'): void;
-  (e: 'add-image', file: File): void;
+  (e: 'add-images', files: File[]): void;
   (e: 'delete-image', imageId: string): void;
   (e: 'color-change', color: string): void;
+  (e: 'retry-upload'): void;
+  (e: 'skip-upload'): void;
 }>();
 
 // 本地编辑内容，与 event.content 同步
@@ -134,9 +148,7 @@ const handleFileSelect = (e: Event) => {
   const input = e.target as HTMLInputElement;
   const files = input.files;
   if (!files || files.length === 0) return;
-  for (const file of files) {
-    emit('add-image', file);
-  }
+  emit('add-images', Array.from(files));
   input.value = '';
 };
 
