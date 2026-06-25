@@ -182,8 +182,8 @@ const fileToBase64 = async (file: File): Promise<string> => {
       reader.onerror = () => reject(new Error('HEIC 转换失败'))
       reader.readAsDataURL(jpegBlob)
     })
-  } catch {
-    throw new Error('HEIC 转换失败')
+  } catch (e) {
+    throw new Error('HEIC 转换失败: ' + ((e as Error)?.message || String(e)))
   }
 }
 

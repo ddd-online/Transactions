@@ -29,5 +29,18 @@ export default defineConfig({
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url))
         }
-    }
+    },
+    optimizeDeps: {
+        exclude: ['heic2any'],  // heic2any 内嵌 WASM + Worker，esbuild 预构建会破坏
+    },
+    build: {
+        modulePreload: false,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vendor-heic': ['heic2any'],
+                },
+            },
+        },
+    },
 })
