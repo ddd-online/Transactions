@@ -119,11 +119,10 @@ const formatAmount = (amount: number) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-lg) var(--billadm-space-2xl);
+  padding: var(--billadm-space-md) var(--billadm-space-2xl);
   flex-shrink: 0;
   background-color: var(--billadm-color-major-background);
   border-bottom: 1px solid var(--billadm-color-divider);
-  min-height: 64px;
 }
 
 .chart-view-title {
@@ -146,6 +145,7 @@ const formatAmount = (amount: number) => {
   min-height: 0;
   display: flex;
   overflow: hidden;
+  border-radius: 0 0 var(--billadm-radius-lg) var(--billadm-radius-lg);
 }
 
 .chart-view-content {

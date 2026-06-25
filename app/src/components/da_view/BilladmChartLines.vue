@@ -224,6 +224,7 @@ const resetNewLineForm = () => {
 
 .chart-lines-section {
   background-color: var(--billadm-color-major-background);
+  border-radius: var(--billadm-radius-lg);
   overflow: hidden;
 }
 
