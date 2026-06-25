@@ -54,10 +54,10 @@ const api = {
         }
     },
 
-    async post<T = any>(url: string, data: object = {}, errorPrefix?: string): Promise<T> {
+    async post<T = any>(url: string, data: object = {}, errorPrefix?: string, config?: Record<string, unknown>): Promise<T> {
         try {
             const client = await getApiClient();
-            const response: AxiosResponse<Result<T>> = await client.post(url, data);
+            const response: AxiosResponse<Result<T>> = await client.post(url, data, config);
             checkSuccess(response.data, errorPrefix);
             return response.data.data;
         } catch (error) {
