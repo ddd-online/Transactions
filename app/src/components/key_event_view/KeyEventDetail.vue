@@ -287,6 +287,7 @@ const handleCancel = () => {
 .description-textarea-wrap :deep(.ant-input-textarea textarea) {
   flex: 1;
   resize: none;
+  overflow-y: auto;
 }
 
 .description-char-count {
