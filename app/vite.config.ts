@@ -31,7 +31,8 @@ export default defineConfig({
         }
     },
     optimizeDeps: {
-        exclude: ['heic2any'],  // heic2any 内嵌 WASM + Worker，esbuild 预构建会破坏
+        // heic2any 通过动态 import() 加载，Vite 预构建后提供正确的 ESM default 导出
+        include: ['heic2any'],
     },
     build: {
         modulePreload: false,
