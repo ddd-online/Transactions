@@ -18,9 +18,10 @@
     <!-- 关联交易卡片列表 -->
     <div v-else ref="cardsRef" class="linked-cards" @scroll="onScroll">
       <div
-        v-for="tr in transactions"
+        v-for="(tr, index) in transactions"
         :key="tr.transactionId"
-        class="linked-card"
+        class="linked-card card-enter"
+        :style="{ animationDelay: `${Math.min(index * 40, 280)}ms` }"
       >
         <div class="linked-card-body">
           <!-- 第一行：分类 + 金额 -->
@@ -169,6 +170,22 @@ watch(
 
 .linked-card:hover {
   box-shadow: var(--billadm-shadow-md);
+}
+
+/* ========== 卡片 staggered 入场 ========== */
+.card-enter {
+  animation: card-fade-up 300ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes card-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .linked-card-body {
