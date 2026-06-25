@@ -236,6 +236,7 @@ const handleCancel = () => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .description-content {
@@ -267,6 +268,7 @@ const handleCancel = () => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .description-edit :deep(.ant-input-textarea) {
