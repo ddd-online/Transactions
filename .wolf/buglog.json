@@ -1,4 +1,53 @@
 {
   "version": 1,
-  "bugs": []
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-06-25T16:48:04.984Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T16:48:04.984Z"
+    },
+    {
+      "id": "bug-002",
+      "timestamp": "2026-06-25T16:53:27.463Z",
+      "error_message": "Null/undefined access in ",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T16:53:27.463Z"
+    },
+    {
+      "id": "bug-003",
+      "timestamp": "2026-06-25T16:55:23.370Z",
+      "error_message": "Wrong reference: d34e183 should be 7281366",
+      "file": ".superpowers/sdd/progress.md",
+      "root_cause": "Used \"d34e183\" instead of \"7281366\"",
+      "fix": "Changed d34e183 → 7281366",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T16:55:23.370Z"
+    }
+  ]
 }

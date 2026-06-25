@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-25T16:17:52.135Z
-> Files: 193 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-06-25T16:55:23.351Z
+> Files: 199 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -24,6 +24,13 @@
 
 - `.gitignore` — Git ignore rules (~61 tok)
 - `daemon.log` (~67 tok)
+
+## .superpowers/sdd/
+
+- `progress.md` — SDD Progress Ledger (~56 tok)
+- `task-1-fix-report.md` — SDD Task 1 Fix Report — HEIC Image Support Review Findings (~345 tok)
+- `task-1-fix2-report.md` — Fix: wire imageUploading to disable upload button during HEIC conversion (~169 tok)
+- `task-1-report.md` — Task 1 报告: HEIC 格式支持 (~218 tok)
 
 ## app/
 
@@ -89,11 +96,11 @@
 ## app/src/components/key_event_view/
 
 - `KeyEventAddModal.vue` — Vue: setup, TS, emits (~527 tok)
-- `KeyEventDetail.vue` — Vue: setup, TS, emits (~1860 tok)
+- `KeyEventDetail.vue` — Vue: setup (~1872 tok)
 - `KeyEventImageGallery.vue` — Vue: setup, TS, 1 props, emits (~1633 tok)
 - `KeyEventLinkedTr.vue` — Vue: setup, TS, emits (~1931 tok)
 - `KeyEventList.vue` — Vue: setup, TS, emits (~1615 tok)
-- `KeyEventView.vue` — Vue: setup, TS (~2312 tok)
+- `KeyEventView.vue` — Vue: setup (~2554 tok)
 
 ## app/src/components/settings_view/
 
@@ -166,6 +173,7 @@
 - `2026-06-19-key-event-ledger-scope-plan.md` — 关键事件关联账本 — 实现计划 (~1930 tok)
 - `2026-06-19-key-event-three-column-plan.md` — 关键记录页面三栏布局重构 实现计划 (~7177 tok)
 - `2026-06-20-ixd-optimization-plan.md` — 交互设计优化实施计划 (~2342 tok)
+- `2026-06-26-heic-image-support-plan.md` — HEIC 图片格式支持 — 实现计划 (~1018 tok)
 
 ## docs/superpowers/specs/
 
@@ -187,6 +195,7 @@
 - `2026-06-19-key-event-image-gallery-design.md` — KeyEventImageGallery 图片画廊组件设计 (~385 tok)
 - `2026-06-19-key-event-ledger-scope-design.md` — 关键事件关联账本 — 设计文档 (~537 tok)
 - `2026-06-19-key-event-three-column-design.md` — 关键记录页面三栏布局重构设计 (~1172 tok)
+- `2026-06-26-heic-image-support-design.md` — HEIC 图片格式支持 — 设计文档 (~746 tok)
 
 ## electron/
 
