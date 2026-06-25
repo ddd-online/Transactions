@@ -15,8 +15,9 @@
       <!-- 右侧缩略图列 -->
       <div class="gallery-thumbs-wrap">
         <div ref="thumbsRef" class="gallery-thumbs" @scroll="onScroll">
-          <div v-for="img in images" :key="img.id" class="thumb-item" :class="{ 'is-selected': selectedId === img.id }"
-            @click="selectedId = img.id">
+          <div v-for="(img, index) in images" :key="img.id" class="thumb-item"
+            :class="{ 'is-selected': selectedId === img.id, 'thumb-enter': true }"
+            :style="{ transitionDelay: `${Math.min(index * 50, 300)}ms` }" @click="selectedId = img.id">
             <img :src="img.data" class="thumb-img" alt="" />
             <button class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)" aria-label="删除图片">
               <CloseOutlined />
@@ -61,6 +62,7 @@ watch(
   (imgs) => {
     if (imgs.length === 0) {
       selectedId.value = ''
+      previewVisible.value = false
       return
     }
     if (!imgs.find(i => i.id === selectedId.value)) {
@@ -140,6 +142,12 @@ const onPreviewChange = (visible: boolean) => {
 
 .gallery-main :deep(.ant-image-img) {
   object-fit: cover;
+  animation: main-fade-in 400ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes main-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* 右侧缩略图列 */
@@ -176,7 +184,24 @@ const onPreviewChange = (visible: boolean) => {
   border: 2px solid transparent;
   transition: border-color var(--billadm-transition-smooth),
               box-shadow var(--billadm-transition-smooth),
-              transform var(--billadm-transition-fast);
+              transform var(--billadm-transition-fast),
+              opacity 300ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* 入场初始态 */
+.thumb-enter {
+  animation: thumb-fade-in 350ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes thumb-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .thumb-item.is-selected {
