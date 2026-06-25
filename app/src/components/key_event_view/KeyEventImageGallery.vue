@@ -67,7 +67,7 @@ watch(
       selectedId.value = imgs[0]!.id
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 // 滚动指示
