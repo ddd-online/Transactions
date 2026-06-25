@@ -71,7 +71,6 @@ import { useKeyEventStore } from '@/stores/keyEventStore'
 import { useAppDataStore } from '@/stores/appDataStore'
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
 import { message } from 'ant-design-vue'
-import heic2any from 'heic2any'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
 
 const keyEventStore = useKeyEventStore()
@@ -169,6 +168,10 @@ const fileToBase64 = async (file: File): Promise<string> => {
   }
 
   try {
+    // heic2any 是 UMD 模块，在 Vite dev mode 下须动态 import + 互操作
+    const heic2anyModule = await import('heic2any')
+    const heic2any = (heic2anyModule as any).default || heic2anyModule
+
     const jpegBlob = await heic2any({
       blob: file,
       toType: 'image/jpeg',
