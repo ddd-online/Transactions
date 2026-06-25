@@ -31,15 +31,14 @@ export default defineConfig({
         }
     },
     optimizeDeps: {
-        // heic2any 通过动态 import() 加载，Vite 预构建后提供正确的 ESM default 导出
-        include: ['heic2any'],
+        include: ['heic-to'],
     },
     build: {
         modulePreload: false,
         rollupOptions: {
             output: {
                 manualChunks: {
-                    'vendor-heic': ['heic2any'],
+                    'vendor-heic': ['heic-to'],
                 },
             },
         },

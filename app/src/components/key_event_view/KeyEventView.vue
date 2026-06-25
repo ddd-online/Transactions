@@ -168,14 +168,15 @@ const fileToBase64 = async (file: File): Promise<string> => {
   }
 
   try {
-    const heic2any = (await import('heic2any')).default
+    // heic-to 使用 libheif 1.22.2，支持最新 iPhone HEIC 格式
+    // 使用 /csp 路径避免 Electron 的 CSP 限制
+    const { heicTo } = await import('heic-to/csp')
 
-    const jpegBlob = await heic2any({
+    const jpegBlob = await heicTo({
       blob: file,
-      toType: 'image/jpeg',
+      type: 'image/jpeg',
       quality: 0.92,
-      multiple: false,
-    }) as Blob
+    })
 
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
