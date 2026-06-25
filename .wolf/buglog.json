@@ -120,6 +120,43 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-06-26"
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-06-25T17:08:11.508Z",
+      "error_message": "Significant refactor of ",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 6→4 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:08:11.508Z"
+    },
+    {
+      "id": "bug-007",
+      "timestamp": "2026-06-26T11:30:00.000Z",
+      "error_message": "HEIC 转换失败: heic2any is not a function",
+      "file": "app/vite.config.ts, app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "optimizeDeps.exclude 导致 Vite dev mode 不对 heic2any UMD 模块做 CJS→ESM 互操作，import() 返回的模块命名空间中 default 为 undefined，|| 回退到模块对象本身（非函数）",
+      "fix": "改用 optimizeDeps.include 正常预构建 + 动态 import(\"heic2any\").default",
+      "tags": [
+        "heic",
+        "vite",
+        "umd",
+        "cjs-esm-interop",
+        "optimizeDeps"
+      ],
+      "related_bugs": [
+        "bug-005",
+        "bug-006"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-06-26"
     }
   ]
 }
