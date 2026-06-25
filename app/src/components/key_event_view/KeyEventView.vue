@@ -31,6 +31,7 @@
         :images="keyEventStore.images"
         :is-editing="isEditing"
         :progress="uploadProgress"
+        :loading="imagesLoading"
         @edit="isEditing = true"
         @save="handleSaveContent"
         @cancel-edit="isEditing = false"
@@ -45,7 +46,7 @@
       <KeyEventLinkedTr
         class="panel-right"
         :transactions="linkedTransactions"
-        :loading="linkedLoading"
+        :loading="trsLoading"
         :has-selection="!!selectedDate"
         @delete="handleUnlinkTr"
       />
@@ -101,6 +102,9 @@ const selectedDate = ref('')
 const currentEvent = ref<KeyEvent | null>(null)
 const isEditing = ref(false)
 
+const imagesLoading = ref(false)
+const trsLoading = ref(false)
+
 const clearSelection = () => {
   selectedDate.value = ''
   currentEvent.value = null
@@ -113,15 +117,36 @@ const clearSelection = () => {
 }
 
 const onSelectEvent = async (date: string) => {
+  // 立即清空旧数据
   selectedDate.value = date
   isEditing.value = false
+  currentEvent.value = null
+  keyEventStore.clearImages()
+  linkedTransactions.value = []
+  appDataStore.setStatistics({ income: 0, expense: 0, transfer: 0 })
+  imagesLoading.value = true
+  trsLoading.value = false
+
   try {
+    // 第1步：获取事件内容
     const event = await keyEventStore.fetchEventByDate(date)
     currentEvent.value = event
-    keyEventStore.fetchImages(date)
-    loadLinkedTransactions(date)
+
+    // 第2步：获取图片
+    if (event) {
+      trsLoading.value = true
+      imagesLoading.value = true
+      await keyEventStore.fetchImages(date)
+      imagesLoading.value = false
+
+      // 第3步：获取关联交易
+      await loadLinkedTransactions(date)
+      trsLoading.value = false
+    }
   } catch {
     currentEvent.value = null
+    imagesLoading.value = false
+    trsLoading.value = false
   }
 }
 
@@ -306,10 +331,8 @@ const handleDeleteImage = async (imageId: string) => {
 
 // ========== 关联交易 ==========
 const linkedTransactions = ref<TransactionRecord[]>([])
-const linkedLoading = ref(false)
 
 const loadLinkedTransactions = async (date: string) => {
-  linkedLoading.value = true
   try {
     linkedTransactions.value = await getLinkedTransactions(date)
     // 同步关联交易汇总到全局统计
@@ -320,8 +343,8 @@ const loadLinkedTransactions = async (date: string) => {
       else if (t.transactionType === 'transfer') transfer += t.price
     }
     appDataStore.setStatistics({ income, expense, transfer })
-  } finally {
-    linkedLoading.value = false
+  } catch {
+    linkedTransactions.value = []
   }
 }
 
