@@ -274,6 +274,54 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-06-25T17:42:16.864Z"
+    },
+    {
+      "id": "bug-017",
+      "timestamp": "2026-06-25T17:53:56.354Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Had ', currentPercent: 0, status: '",
+      "fix": "Changed to 'idle'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:53:56.354Z"
+    },
+    {
+      "id": "bug-018",
+      "timestamp": "2026-06-25T17:54:01.148Z",
+      "error_message": "Significant refactor of ",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 14→24 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:54:01.148Z"
+    },
+    {
+      "id": "bug-019",
+      "timestamp": "2026-06-25T17:54:10.891Z",
+      "error_message": "CSS fix: files, status, percent",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "files: File[]) => { → files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const; status: 'uploading', → 'pending',; percent: number) => { → 0,",
+      "fix": "Changed files: File[]) => { → files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const; status: 'uploading', → 'pending',; percent: number) => { → 0,",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-25T17:54:10.891Z"
     }
   ]
 }

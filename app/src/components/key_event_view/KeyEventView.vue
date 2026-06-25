@@ -108,7 +108,7 @@ const clearSelection = () => {
   isEditing.value = false
   keyEventStore.clearImages()
   appDataStore.setStatistics({ income: 0, expense: 0, transfer: 0 })
-  uploadProgress.value = { total: 0, completed: 0, currentFile: '', currentPercent: 0, status: 'idle' }
+  uploadProgress.value = { files: [], total: 0, completed: 0, status: 'idle' }
   pendingFiles.value = []
   currentFileIndex = 0
 }
@@ -158,10 +158,9 @@ const handleDeleteEvent = async (date: string) => {
 
 // ========== 图片管理 ==========
 const uploadProgress = ref<UploadProgress>({
+  files: [],
   total: 0,
   completed: 0,
-  currentFile: '',
-  currentPercent: 0,
   status: 'idle',
 })
 
@@ -211,15 +210,13 @@ const handleAddImages = async (files: File[]) => {
   if (files.length === 0) return
 
   targetDate = selectedDate.value
-
   pendingFiles.value = files
   currentFileIndex = 0
 
   uploadProgress.value = {
+    files: files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const })),
     total: files.length,
     completed: 0,
-    currentFile: files[0]!.name,
-    currentPercent: 0,
     status: 'uploading',
   }
 
@@ -231,10 +228,9 @@ const uploadCurrentFile = async () => {
   const files = pendingFiles.value
   if (currentFileIndex >= files.length) {
     // 全部完成
-    // 修正：如果有跳过的文件，total 调整为实际完成数
-    if (uploadProgress.value.completed < uploadProgress.value.total) {
-      uploadProgress.value.total = uploadProgress.value.completed
-    }
+    const doneCount = uploadProgress.value.files.filter(f => f.status === 'done').length
+    uploadProgress.value.completed = doneCount
+    uploadProgress.value.total = doneCount
     uploadProgress.value.status = 'done'
     setTimeout(() => {
       uploadProgress.value.status = 'idle'
@@ -244,8 +240,12 @@ const uploadCurrentFile = async () => {
   }
 
   const file = files[currentFileIndex]!
-  uploadProgress.value.currentFile = file.name
-  uploadProgress.value.currentPercent = 0
+  // 标记当前文件为上传中
+  uploadProgress.value.files[currentFileIndex] = {
+    name: file.name,
+    percent: 0,
+    status: 'uploading',
+  }
 
   try {
     const data = await fileToBase64(file)
@@ -254,13 +254,28 @@ const uploadCurrentFile = async () => {
       data,
       file.name,
       (percent: number) => {
-        uploadProgress.value.currentPercent = percent
+        const entry = uploadProgress.value.files[currentFileIndex]
+        if (entry) {
+          entry.percent = percent
+        }
       }
     )
+    // 标记完成
+    uploadProgress.value.files[currentFileIndex] = {
+      name: file.name,
+      percent: 100,
+      status: 'done',
+    }
     uploadProgress.value.completed++
     currentFileIndex++
     await uploadCurrentFile()
   } catch (err) {
+    uploadProgress.value.files[currentFileIndex] = {
+      name: file.name,
+      percent: 0,
+      status: 'error',
+      errorMessage: (err as Error)?.message || '图片上传失败',
+    }
     uploadProgress.value.status = 'error'
     uploadProgress.value.errorMessage =
       (err as Error)?.message || '图片上传失败'
@@ -268,12 +283,18 @@ const uploadCurrentFile = async () => {
 }
 
 const handleRetryUpload = async () => {
+  // 将当前失败文件重置为 pending，继续上传
+  uploadProgress.value.files[currentFileIndex] = {
+    name: pendingFiles.value[currentFileIndex]!.name,
+    percent: 0,
+    status: 'pending',
+  }
   uploadProgress.value.status = 'uploading'
-  uploadProgress.value.currentPercent = 0
   await uploadCurrentFile()
 }
 
 const handleSkipUpload = async () => {
+  // 跳过当前文件（保持 error 状态），继续下一个
   currentFileIndex++
   uploadProgress.value.status = 'uploading'
   await uploadCurrentFile()
