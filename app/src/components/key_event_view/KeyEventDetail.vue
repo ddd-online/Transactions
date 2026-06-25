@@ -271,13 +271,14 @@ const handleCancel = () => {
   overflow: hidden;
 }
 
-.description-edit :deep(.ant-input-textarea) {
-  flex: 1;
+.description-edit :deep(.ant-input-textarea),
+.description-edit :deep(.ant-input-textarea-affix-wrapper) {
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.description-edit :deep(.ant-input-textarea textarea) {
+.description-edit :deep(textarea) {
   flex: 1;
   resize: none;
   overflow-y: auto;
