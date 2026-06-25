@@ -58,6 +58,10 @@
   </BilladmPageLayout>
 </template>
 
+<script lang="ts">
+const HEIC_EXTENSIONS = ['.heic', '.heif']
+</script>
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -147,7 +151,7 @@ const handleDeleteEvent = async (date: string) => {
 }
 
 // ========== 图片管理 ==========
-const HEIC_EXTENSIONS = ['.heic', '.heif']
+const imageUploading = ref(false)
 
 const fileToBase64 = async (file: File): Promise<string> => {
   const isHeic = HEIC_EXTENSIONS.some(ext =>
@@ -168,6 +172,7 @@ const fileToBase64 = async (file: File): Promise<string> => {
       blob: file,
       toType: 'image/jpeg',
       quality: 0.92,
+      multiple: false,
     }) as Blob
 
     return new Promise((resolve, reject) => {
@@ -182,10 +187,15 @@ const fileToBase64 = async (file: File): Promise<string> => {
 }
 
 const handleAddImage = async (file: File) => {
+  imageUploading.value = true
   try {
     const data = await fileToBase64(file)
     await keyEventStore.addImage(selectedDate.value, data, file.name)
-  } catch { /* error handled in store */ }
+  } catch (err) {
+    message.error((err as Error)?.message || '图片上传失败')
+  } finally {
+    imageUploading.value = false
+  }
 }
 
 const handleDeleteImage = async (imageId: string) => {
