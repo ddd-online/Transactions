@@ -72,7 +72,6 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useKeyEventStore } from '@/stores/keyEventStore'
 import { useAppDataStore } from '@/stores/appDataStore'
 import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
-import { message } from 'ant-design-vue'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
 import type { UploadProgress } from './UploadProgressBar.vue'
 
@@ -137,7 +136,6 @@ const handleSaveContent = async (content: string) => {
     isEditing.value = false
     const updated = await keyEventStore.fetchEventByDate(selectedDate.value)
     currentEvent.value = updated
-    message.success('保存成功')
   } catch { /* error handled in store */ }
 }
 
