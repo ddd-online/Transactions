@@ -11,6 +11,7 @@ import {
 } from "@/backend/api/key-event";
 import { useLedgerStore } from '@/stores/ledgerStore'
 import NotificationUtil from "@/backend/notification";
+import { createImageUrls, revokeImageUrls, type ImageUrls } from '@/backend/imageOptimizer'
 import type { KeyEvent, KeyEventImage, TransactionRecord } from "@/types/billadm";
 
 export const useKeyEventStore = defineStore('keyEvent', () => {
@@ -26,6 +27,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     const images = ref<KeyEventImage[]>([]);
     const imageCache = ref(new Map<string, KeyEventImage[]>());
     const trCache = ref(new Map<string, TransactionRecord[]>());
+    const imageUrlCache = ref(new Map<string, ImageUrls>());
     // 完整的 KeyEvent 列表，供 KeyEventList 消费
     const events = ref<KeyEvent[]>([]);
 
@@ -104,6 +106,17 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             titles.value.delete(date);
             colors.value.delete(date);
             events.value = events.value.filter(e => e.date !== date);
+            // revoke 该日期图片的 blob URLs
+            const cachedImgs = imageCache.value.get(date)
+            if (cachedImgs) {
+                for (const img of cachedImgs) {
+                    const urls = imageUrlCache.value.get(img.id)
+                    if (urls) {
+                        revokeImageUrls(urls)
+                        imageUrlCache.value.delete(img.id)
+                    }
+                }
+            }
             imageCache.value.delete(date);
             trCache.value.delete(date);
             NotificationUtil.success('删除成功');
@@ -145,6 +158,14 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             const result = await queryKeyEventImages(date, ledgerId);
             imageCache.value.set(date, result);
             images.value = result;
+            // 异步生成 blob URLs（不阻塞渲染）
+            for (const img of result) {
+                if (!imageUrlCache.value.has(img.id)) {
+                    createImageUrls(img.data).then(urls => {
+                        imageUrlCache.value.set(img.id, urls)
+                    }).catch(() => { /* 静默忽略，组件 fallback 到 base64 */ })
+                }
+            }
         } catch (error) {
             NotificationUtil.error('加载图片失败', `${error}`);
             images.value = [];
@@ -175,6 +196,14 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                     try {
                         const imgs = await queryKeyEventImages(e.date, ledgerId);
                         imageCache.value.set(e.date, imgs);
+                        // 生成 blob URLs
+                        for (const img of imgs) {
+                            if (!imageUrlCache.value.has(img.id)) {
+                                createImageUrls(img.data).then(urls => {
+                                    imageUrlCache.value.set(img.id, urls)
+                                }).catch(() => {})
+                            }
+                        }
                     } catch { /* 静默忽略单个失败 */ }
                 }),
                 ...eventList.map(async (e) => {
@@ -202,6 +231,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                 sortOrder: images.value.length + 1,
                 createdAt: Math.floor(Date.now() / 1000),
             });
+            // 为新图片生成 blob URLs
+            createImageUrls(data).then(urls => {
+                imageUrlCache.value.set(imageId, urls)
+            }).catch(() => {})
             // 更新缓存
             const cached = imageCache.value.get(date);
             if (cached) {
@@ -227,6 +260,12 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             const target = images.value.find(img => img.id === imageId);
             await deleteKeyEventImage(imageId, ledgerId);
             images.value = images.value.filter(img => img.id !== imageId);
+            // revoke blob URL
+            const urls = imageUrlCache.value.get(imageId)
+            if (urls) {
+                revokeImageUrls(urls)
+                imageUrlCache.value.delete(imageId)
+            }
             if (target) {
                 const cached = imageCache.value.get(target.eventDate);
                 if (cached) {
@@ -241,6 +280,11 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     };
 
     const clearImages = (): void => {
+        // revoke 所有 blob URLs
+        for (const urls of imageUrlCache.value.values()) {
+            revokeImageUrls(urls)
+        }
+        imageUrlCache.value.clear()
         images.value = [];
     };
 
@@ -257,6 +301,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         getEventByDate,
         images,
         imageCache,
+        imageUrlCache,
         trCache,
         events,
         fetchImages,
