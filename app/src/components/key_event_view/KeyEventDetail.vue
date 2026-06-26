@@ -32,6 +32,7 @@
           <!-- 图片画廊 -->
           <KeyEventImageGallery
             :images="images"
+            :url-cache="urlCache"
             @delete-image="(id: string) => $emit('delete-image', id)"
           />
 
@@ -111,11 +112,13 @@
 import { ref, watch } from 'vue';
 import type { KeyEvent, KeyEventImage } from '@/types/billadm';
 import type { UploadProgress } from './UploadProgressBar.vue';
+import type { ImageUrls } from '@/backend/imageOptimizer';
 import UploadProgressBar from './UploadProgressBar.vue';
 
 interface Props {
   event: KeyEvent | null;
   images: KeyEventImage[];
+  urlCache?: Map<string, ImageUrls>;
   isEditing: boolean;
   loading?: boolean;
   progress?: UploadProgress;

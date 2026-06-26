@@ -29,6 +29,7 @@
         class="panel-center"
         :event="currentEvent"
         :images="keyEventStore.images"
+        :url-cache="keyEventStore.imageUrlCache"
         :is-editing="isEditing"
         :progress="uploadProgress"
         @edit="isEditing = true"
