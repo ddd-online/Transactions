@@ -3,203 +3,25 @@
   "bugs": [
     {
       "id": "bug-001",
-      "timestamp": "2026-06-25T16:48:04.984Z",
-      "error_message": "Missing error handling in unknown",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
-      "fix": "Added try/catch block",
+      "timestamp": "2026-06-25T18:52:58.673Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/superpowers/plans/2026-06-26-key-event-preload.md",
+      "root_cause": "8 lines replaced/restructured",
+      "fix": "Rewrote 37→24 lines (8 removed)",
       "tags": [
         "auto-detected",
-        "error-handling",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T16:48:04.984Z"
-    },
-    {
-      "id": "bug-002",
-      "timestamp": "2026-06-25T16:53:27.463Z",
-      "error_message": "Null/undefined access in ",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Property access on potentially null/undefined value",
-      "fix": "Added null safety (optional chaining or null check)",
-      "tags": [
-        "auto-detected",
-        "null-safety",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T16:53:27.463Z"
-    },
-    {
-      "id": "bug-003",
-      "timestamp": "2026-06-25T16:55:23.370Z",
-      "error_message": "Wrong reference: d34e183 should be 7281366",
-      "file": ".superpowers/sdd/progress.md",
-      "root_cause": "Used \"d34e183\" instead of \"7281366\"",
-      "fix": "Changed d34e183 → 7281366",
-      "tags": [
-        "auto-detected",
-        "wrong-reference",
+        "refactor",
         "md"
       ],
       "related_bugs": [],
       "occurrences": 1,
-      "last_seen": "2026-06-25T16:55:23.370Z"
+      "last_seen": "2026-06-25T18:52:58.673Z"
     },
     {
-      "id": "bug-004",
-      "timestamp": "2026-06-25T17:01:51.525Z",
+      "id": "bug-002",
+      "timestamp": "2026-06-25T18:54:25.551Z",
       "error_message": "Null/undefined access in ",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Property access on potentially null/undefined value",
-      "fix": "Added null safety (optional chaining or null check)",
-      "tags": [
-        "auto-detected",
-        "null-safety",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:01:51.525Z"
-    },
-    {
-      "id": "bug-005",
-      "timestamp": "2026-06-26T10:00:00.000Z",
-      "error_message": "用户报错: HEIC 转换失败 (heic2any 在 Vite 中运行时抛出异常)",
-      "file": "app/vite.config.ts, app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Vite 的 esbuild 预构建 (optimizeDeps) 破坏了 heic2any 内嵌的 WASM 二进制和 Web Worker 字符串，导致运行时 heic2any() 抛出异常",
-      "fix": "vite.config.ts: 添加 optimizeDeps.exclude 排除 heic2any + build.manualChunks 隔离 vendor-heic; KeyEventView.vue: catch 块保留原始错误信息",
-      "tags": [
-        "heic",
-        "vite",
-        "esbuild",
-        "web-worker",
-        "wasm",
-        "runtime-error"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-26"
-    },
-    {
-      "id": "bug-006",
-      "timestamp": "2026-06-25T17:05:36.148Z",
-      "error_message": "Incorrect value in code",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Had 'heic2any'",
-      "fix": "Changed to '@/types/billadm'",
-      "tags": [
-        "auto-detected",
-        "wrong-value",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:05:36.148Z"
-    },
-    {
-      "id": "bug-006",
-      "timestamp": "2026-06-26T11:00:00.000Z",
-      "error_message": "SyntaxError: The requested module does not provide an export named default — 点击关键事件页面报错，无法切换",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "optimizeDeps.exclude 导致 Vite dev mode 下 heic2any UMD 模块以 ESM 方式提供时缺少 default 导出，静态 import heic2any from \"heic2any\" 在模块解析阶段即失败",
-      "fix": "改为动态 import(\"heic2any\") + CJS/ESM 互操作: (m as any).default || m",
-      "tags": [
-        "heic",
-        "vite",
-        "umd",
-        "cjs-esm-interop",
-        "import",
-        "runtime-error"
-      ],
-      "related_bugs": [
-        "bug-005"
-      ],
-      "occurrences": 1,
-      "last_seen": "2026-06-26"
-    },
-    {
-      "id": "bug-008",
-      "timestamp": "2026-06-25T17:08:11.508Z",
-      "error_message": "Significant refactor of ",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 6→4 lines (3 removed)",
-      "tags": [
-        "auto-detected",
-        "refactor",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:08:11.508Z"
-    },
-    {
-      "id": "bug-007",
-      "timestamp": "2026-06-26T11:30:00.000Z",
-      "error_message": "HEIC 转换失败: heic2any is not a function",
-      "file": "app/vite.config.ts, app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "optimizeDeps.exclude 导致 Vite dev mode 不对 heic2any UMD 模块做 CJS→ESM 互操作，import() 返回的模块命名空间中 default 为 undefined，|| 回退到模块对象本身（非函数）",
-      "fix": "改用 optimizeDeps.include 正常预构建 + 动态 import(\"heic2any\").default",
-      "tags": [
-        "heic",
-        "vite",
-        "umd",
-        "cjs-esm-interop",
-        "optimizeDeps"
-      ],
-      "related_bugs": [
-        "bug-005",
-        "bug-006"
-      ],
-      "occurrences": 1,
-      "last_seen": "2026-06-26"
-    },
-    {
-      "id": "bug-010",
-      "timestamp": "2026-06-25T17:11:01.912Z",
-      "error_message": "Missing import: heic-to/csp",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Module(s) not imported: heic-to/csp",
-      "fix": "Added import(s) for heic-to/csp",
-      "tags": [
-        "auto-detected",
-        "missing-import",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:11:01.912Z"
-    },
-    {
-      "id": "bug-008",
-      "timestamp": "2026-06-26T12:00:00.000Z",
-      "error_message": "HEIC 转换失败: ERR_LIBHEIF format not supported",
-      "file": "app/package.json (heic2any → heic-to)",
-      "root_cause": "heic2any@0.0.4 内嵌的 libheif WASM 版本过老（约2019年），不支持新版 iPhone（iPhone 13+）生成的 HEIC 变体格式。libheif 格式检测失败返回 ERR_LIBHEIF format not supported",
-      "fix": "替换为 heic-to@1.5.2 (libheif 1.22.2)，该库持续跟进 libheif 上游发布，支持最新 HEIC 格式；同时使用 /csp 路径避免 Electron CSP 限制",
-      "tags": [
-        "heic",
-        "libheif",
-        "wasm",
-        "version-mismatch",
-        "format-not-supported"
-      ],
-      "related_bugs": [
-        "bug-005",
-        "bug-007"
-      ],
-      "occurrences": 1,
-      "last_seen": "2026-06-26"
-    },
-    {
-      "id": "bug-012",
-      "timestamp": "2026-06-25T17:33:38.611Z",
-      "error_message": "Null/undefined access in ",
-      "file": "app/src/backend/api/key-event.ts",
+      "file": "app/src/stores/keyEventStore.ts",
       "root_cause": "Property access on potentially null/undefined value",
       "fix": "Added null safety (optional chaining or null check)",
       "tags": [
@@ -209,119 +31,71 @@
       ],
       "related_bugs": [],
       "occurrences": 1,
-      "last_seen": "2026-06-25T17:33:38.611Z"
+      "last_seen": "2026-06-25T18:54:25.552Z"
     },
     {
-      "id": "bug-013",
-      "timestamp": "2026-06-25T17:36:49.719Z",
-      "error_message": "CSS fix: e",
-      "file": "app/src/components/key_event_view/KeyEventDetail.vue",
-      "root_cause": "e: 'color-change', color: string): void → 'skip-upload'): void",
-      "fix": "Changed e: 'color-change', color: string): void → 'skip-upload'): void",
+      "id": "bug-003",
+      "timestamp": "2026-06-25T18:54:40.103Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "app/src/stores/keyEventStore.ts",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
-        "style-fix",
-        "vue"
+        "error-handling",
+        "ts"
       ],
       "related_bugs": [],
       "occurrences": 1,
-      "last_seen": "2026-06-25T17:36:49.719Z"
+      "last_seen": "2026-06-25T18:54:40.103Z"
     },
     {
-      "id": "bug-014",
-      "timestamp": "2026-06-25T17:38:52.587Z",
-      "error_message": "Missing guard clause",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "No early return/throw for edge case: files.length === 0",
-      "fix": "Added guard clause: if (files.length === 0)",
-      "tags": [
-        "auto-detected",
-        "guard-clause",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:38:52.587Z"
-    },
-    {
-      "id": "bug-015",
-      "timestamp": "2026-06-25T17:41:51.244Z",
-      "error_message": "Wrong return value",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Was returning: pendingFiles.value = files",
-      "fix": "Now returns: targetDate = selectedDate.value",
-      "tags": [
-        "auto-detected",
-        "return-value",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:41:51.244Z"
-    },
-    {
-      "id": "bug-016",
-      "timestamp": "2026-06-25T17:42:16.864Z",
-      "error_message": "Wrong reference: selectedDate should be targetDate",
-      "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Used \"selectedDate\" instead of \"targetDate\"",
-      "fix": "Changed selectedDate → targetDate",
-      "tags": [
-        "auto-detected",
-        "wrong-reference",
-        "vue"
-      ],
-      "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:42:16.864Z"
-    },
-    {
-      "id": "bug-017",
-      "timestamp": "2026-06-25T17:53:56.354Z",
+      "id": "bug-004",
+      "timestamp": "2026-06-25T18:58:03.225Z",
       "error_message": "Incorrect value in code",
       "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "Had ', currentPercent: 0, status: '",
-      "fix": "Changed to 'idle'",
+      "root_cause": "Had \"imagesLoading\"",
+      "fix": "Changed to \"isEditing = true\"",
       "tags": [
         "auto-detected",
         "wrong-value",
         "vue"
       ],
       "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:53:56.354Z"
+      "occurrences": 2,
+      "last_seen": "2026-06-25T18:58:05.427Z"
     },
     {
-      "id": "bug-018",
-      "timestamp": "2026-06-25T17:54:01.148Z",
-      "error_message": "Significant refactor of ",
+      "id": "bug-005",
+      "timestamp": "2026-06-25T18:58:13.678Z",
+      "error_message": "Null/undefined access in ",
       "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 14→24 lines (2 removed)",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
       "tags": [
         "auto-detected",
-        "refactor",
+        "null-safety",
         "vue"
       ],
       "related_bugs": [],
       "occurrences": 1,
-      "last_seen": "2026-06-25T17:54:01.148Z"
+      "last_seen": "2026-06-25T18:58:13.678Z"
     },
     {
-      "id": "bug-019",
-      "timestamp": "2026-06-25T17:54:10.891Z",
-      "error_message": "CSS fix: files, status, percent",
+      "id": "bug-006",
+      "timestamp": "2026-06-25T18:58:17.227Z",
+      "error_message": "Missing await",
       "file": "app/src/components/key_event_view/KeyEventView.vue",
-      "root_cause": "files: File[]) => { → files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const; status: 'uploading', → 'pending',; percent: number) => { → 0,",
-      "fix": "Changed files: File[]) => { → files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const; status: 'uploading', → 'pending',; percent: number) => { → 0,",
+      "root_cause": "Async call without await — returned Promise instead of value",
+      "fix": "Added await to async call | Also: onMounted(async () => {; await keyEventStore.preloadYearData(selectedYear.value)",
       "tags": [
         "auto-detected",
-        "style-fix",
+        "async-fix",
         "vue"
       ],
       "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-06-25T17:54:10.891Z"
+      "occurrences": 2,
+      "last_seen": "2026-06-25T18:58:31.826Z"
     }
   ]
 }

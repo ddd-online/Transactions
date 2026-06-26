@@ -115,3 +115,110 @@
 | 01:54 | Edited app/src/components/key_event_view/KeyEventView.vue | modified if() | ~636 |
 | 01:54 | Edited app/src/components/key_event_view/KeyEventView.vue | removed 12 lines | ~6 |
 | 01:54 | Edited app/src/components/key_event_view/KeyEventView.vue | inline fix | ~17 |
+| 01:55 | Session end: 39 writes across 15 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 31 reads | ~22017 tok |
+| 02:00 | Edited app/src/components/key_event_view/KeyEventImageGallery.vue | CSS: deep | ~10 |
+| 02:01 | Session end: 40 writes across 16 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 31 reads | ~22188 tok |
+| 02:03 | Edited app/src/components/key_event_view/KeyEventView.vue | 7→6 lines | ~87 |
+| 02:03 | Edited app/src/components/key_event_view/KeyEventView.vue | 2→1 lines | ~18 |
+| 02:03 | Session end: 42 writes across 16 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 31 reads | ~22300 tok |
+| 02:04 | Edited app/src/components/key_event_view/KeyEventLinkedTr.vue | 26→26 lines | ~318 |
+| 02:04 | Edited app/src/components/key_event_view/KeyEventLinkedTr.vue | CSS: min-height, box-sizing | ~139 |
+| 02:04 | Edited app/src/components/key_event_view/KeyEventLinkedTr.vue | CSS: min-height, flex-shrink | ~185 |
+| 02:04 | Edited app/src/components/key_event_view/KeyEventLinkedTr.vue | CSS: flex, min-width | ~65 |
+| 02:05 | Session end: 46 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~23057 tok |
+| 02:06 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 12→8 lines | ~60 |
+| 02:06 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 33→37 lines | ~316 |
+| 02:06 | Edited app/src/components/key_event_view/KeyEventDetail.vue | reduced (-7 lines) | ~9 |
+| 02:07 | Session end: 49 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~23479 tok |
+| 02:08 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 8→10 lines | ~98 |
+| 02:09 | Edited app/src/components/key_event_view/KeyEventDetail.vue | modified deep() | ~196 |
+| 02:09 | Session end: 51 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~23760 tok |
+| 02:12 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: overflow-y | ~61 |
+| 02:13 | Session end: 52 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~23979 tok |
+| 02:14 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: minRows, maxRows | ~96 |
+| 02:14 | Edited app/src/components/key_event_view/KeyEventDetail.vue | modified deep() | ~22 |
+| 02:16 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 8→5 lines | ~38 |
+| 02:16 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: description-edit, description-edit | ~56 |
+| 02:17 | Session end: 56 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24207 tok |
+| 02:18 | Session end: 56 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24043 tok |
+| 02:20 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: overflow | ~30 |
+| 02:20 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: overflow | ~31 |
+| 02:21 | Session end: 58 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24119 tok |
+| 02:21 | Edited app/src/components/key_event_view/KeyEventDetail.vue | CSS: height | ~68 |
+| 02:22 | Session end: 59 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24192 tok |
+| 02:25 | Session end: 59 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24192 tok |
+| 02:27 | Session end: 59 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24192 tok |
+| 02:28 | Session end: 59 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24192 tok |
+| 02:28 | Session end: 59 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24192 tok |
+| 02:29 | Session end: 59 writes across 17 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~24192 tok |
+| 02:29 | Created docs/superpowers/specs/2026-06-26-key-event-transition-design.md | — | ~919 |
+| 02:29 | Session end: 60 writes across 18 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~25177 tok |
+| 02:30 | Created docs/superpowers/plans/2026-06-26-key-event-transition.md | — | ~2967 |
+| 02:30 | Session end: 61 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 32 reads | ~28356 tok |
+| 02:31 | Created .superpowers/sdd/progress.md | — | ~38 |
+| 02:32 | Edited app/src/components/key_event_view/KeyEventView.vue | 3→6 lines | ~31 |
+| 02:32 | Edited app/src/components/key_event_view/KeyEventView.vue | CSS: income, expense, transfer | ~222 |
+| 02:32 | Edited app/src/components/key_event_view/KeyEventView.vue | 15→16 lines | ~144 |
+| 02:32 | Edited app/src/components/key_event_view/KeyEventView.vue | "linkedLoading" → "trsLoading" | ~8 |
+| 02:32 | Edited app/src/components/key_event_view/KeyEventView.vue | added error handling | ~173 |
+| 02:32 | Created .superpowers/sdd/task-1-report.md | — | ~68 |
+| | Task 1: onSelectEvent await 改造 + imagesLoading/trsLoading 新增 + linkedLoading 删除 | KeyEventView.vue | c8d0e67, vue-tsc ✅ | ~300 |
+| 02:34 | Edited app/src/components/key_event_view/KeyEventDetail.vue | 6→7 lines | ~39 |
+| 02:34 | Edited app/src/components/key_event_view/KeyEventDetail.vue | expanded (+15 lines) | ~912 |
+| 02:34 | Edited app/src/components/key_event_view/KeyEventDetail.vue | expanded (+81 lines) | ~470 |
+| 02:35 | Task 2: KeyEventDetail Transition + 骨架屏 | KeyEventDetail.vue | vue-tsc pass, committed 8474de8 | ~0 |
+| 02:36 | Edited app/src/components/key_event_view/KeyEventImageGallery.vue | modified if() | ~30 |
+| 02:36 | Edited app/src/components/key_event_view/KeyEventImageGallery.vue | CSS: transitionDelay | ~71 |
+| 02:36 | Edited app/src/components/key_event_view/KeyEventImageGallery.vue | expanded (+17 lines) | ~136 |
+| 02:36 | Edited app/src/components/key_event_view/KeyEventImageGallery.vue | CSS: animation, opacity, opacity | ~54 |
+| | Task 3: KeyEventImageGallery 切换时清空预览 + staggered 缩略图入场 + 大图 fade | KeyEventImageGallery.vue | vue-tsc ✅, 57bb5a4 | ~200 |
+| 02:38 | Edited app/src/components/key_event_view/KeyEventLinkedTr.vue | CSS: animationDelay | ~55 |
+| 02:38 | Edited app/src/components/key_event_view/KeyEventLinkedTr.vue | expanded (+16 lines) | ~96 |
+| 02:38 | Created .superpowers/sdd/task-4-report.md | — | ~151 |
+| | Task 4: KeyEventLinkedTr 卡片 staggered fade-up 入场 | KeyEventLinkedTr.vue | vue-tsc ✅, 75eb2fa | ~200 |
+| 02:39 | Edited .superpowers/sdd/progress.md | expanded (+6 lines) | ~105 |
+| 02:42 | Edited app/src/components/key_event_view/KeyEventImageGallery.vue | "{ transitionDelay: " → "{ animationDelay: " | ~20 |
+| 02:42 | Edited app/src/components/key_event_view/KeyEventView.vue | 4→7 lines | ~41 |
+| 02:42 | Edited app/src/components/key_event_view/KeyEventView.vue | added 4 condition(s) | ~302 |
+| 02:42 | Edited app/src/components/key_event_view/KeyEventDetail.vue | inline fix | ~14 |
+| 02:42 | Edited .superpowers/sdd/task-5-report.md | expanded (+14 lines) | ~103 |
+| 12:00 | 最终审查修复4个过渡动效问题 | KeyEventImageGallery/KeyEventView/KeyEventDetail | c08ee30: transitionDelay→animationDelay, callId竞态, appear, imagesLoading泄漏 | ~450 |
+| 02:43 | Edited .superpowers/sdd/progress.md | 2→3 lines | ~34 |
+| 02:43 | Session end: 85 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~37483 tok |
+| 02:45 | Session end: 85 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~37483 tok |
+| 02:46 | Session end: 85 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~37483 tok |
+| 02:48 | Session end: 85 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~37483 tok |
+| 02:49 | Session end: 85 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~37483 tok |
+| 02:50 | Session end: 85 writes across 19 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~37483 tok |
+| 02:51 | Created docs/superpowers/specs/2026-06-26-key-event-preload-design.md | — | ~699 |
+| 02:51 | Session end: 86 writes across 20 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 38 reads | ~38232 tok |
+| 02:52 | Created docs/superpowers/plans/2026-06-26-key-event-preload.md | — | ~3408 |
+| 02:52 | Edited docs/superpowers/plans/2026-06-26-key-event-preload.md | modified async() | ~216 |
+| 02:53 | Session end: 88 writes across 21 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 39 reads | ~45311 tok |
+| 02:53 | Created .superpowers/sdd/progress.md | — | ~37 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | inline fix | ~24 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | 3→5 lines | ~73 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | added nullish coalescing | ~100 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | added 1 condition(s) | ~166 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | modified catch() | ~115 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | added error handling | ~486 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | added 1 condition(s) | ~241 |
+| 02:54 | Edited app/src/stores/keyEventStore.ts | 6→8 lines | ~108 |
+| 02:55 | Edited app/src/stores/keyEventStore.ts | added 1 condition(s) | ~248 |
+| 02:55 | Edited app/src/stores/keyEventStore.ts | added 3 condition(s) | ~222 |
+| 02:55 | Edited app/src/stores/keyEventStore.ts | 17→22 lines | ~128 |
+| 02:55 | Created .superpowers/sdd/task-1-report.md | — | ~184 |
+| 02:55 | Task 1: keyEventStore 缓存层 + preloadYearData 实现完成 | app/src/stores/keyEventStore.ts | 10 steps 全部完成，vue-tsc 通过 | ~2500 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | 2→1 lines | ~9 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | "trsLoading" → "false" | ~7 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | 4→1 lines | ~6 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | added nullish coalescing | ~256 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | 13→13 lines | ~140 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | added 1 condition(s) | ~205 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | fetchEventByDate() → getEventByDate() | ~135 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | fetchEventByDate() → getEventByDate() | ~122 |
+| 02:58 | Edited app/src/components/key_event_view/KeyEventView.vue | 7→5 lines | ~38 |
+| 02:58 | Created .superpowers/sdd/task-2-report.md | — | ~73 |
+| 02:58 | Task 2: KeyEventView preload + cache read | KeyEventView.vue | 10 edits, vue-tsc pass, committed 07e9a0c | ~600 |
+| 03:01 | Edited .superpowers/sdd/progress.md | 6→10 lines | ~75 |
+| 03:01 | Session end: 112 writes across 21 files (2026-06-26-image-upload-progress-design.md, 2026-06-26-image-upload-progress.md, progress.md, api-client.ts, task-1-report.md) | 43 reads | ~51863 tok |

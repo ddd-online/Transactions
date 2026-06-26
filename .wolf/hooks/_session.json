@@ -3,8 +3,8 @@
   "started": "2026-06-25T17:18:09.950Z",
   "files_read": {
     "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue": {
-      "count": 5,
-      "tokens": 2003,
+      "count": 24,
+      "tokens": 2675,
       "first_read": "2026-06-25T17:30:13.984Z"
     },
     "D:/github/Transactions/.superpowers/sdd/progress.md": {
@@ -18,7 +18,7 @@
       "first_read": "2026-06-25T17:31:58.020Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-1-brief.md": {
-      "count": 2,
+      "count": 6,
       "tokens": 0,
       "first_read": "2026-06-25T17:32:14.877Z"
     },
@@ -28,8 +28,8 @@
       "first_read": "2026-06-25T17:32:17.561Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-1-report.md": {
-      "count": 2,
-      "tokens": 149,
+      "count": 6,
+      "tokens": 172,
       "first_read": "2026-06-25T17:32:34.627Z"
     },
     "D:/github/Transactions/.superpowers/sdd/review-82b2cfe..318dd5a.diff": {
@@ -38,18 +38,18 @@
       "first_read": "2026-06-25T17:32:55.122Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-2-brief.md": {
-      "count": 2,
+      "count": 6,
       "tokens": 0,
       "first_read": "2026-06-25T17:33:32.101Z"
     },
     "D:/github/Transactions/app/src/backend/api/key-event.ts": {
-      "count": 3,
+      "count": 4,
       "tokens": 545,
       "first_read": "2026-06-25T17:33:32.434Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-2-report.md": {
-      "count": 1,
-      "tokens": 52,
+      "count": 4,
+      "tokens": 68,
       "first_read": "2026-06-25T17:34:05.023Z"
     },
     "D:/github/Transactions/.superpowers/sdd/review-318dd5a..ba8a86c.diff": {
@@ -58,12 +58,12 @@
       "first_read": "2026-06-25T17:34:05.401Z"
     },
     "D:/github/Transactions/app/src/stores/keyEventStore.ts": {
-      "count": 4,
-      "tokens": 0,
+      "count": 17,
+      "tokens": 3100,
       "first_read": "2026-06-25T17:34:41.998Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-3-brief.md": {
-      "count": 2,
+      "count": 4,
       "tokens": 0,
       "first_read": "2026-06-25T17:35:02.184Z"
     },
@@ -73,12 +73,12 @@
       "first_read": "2026-06-25T17:35:08.330Z"
     },
     "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue": {
-      "count": 1,
-      "tokens": 0,
+      "count": 8,
+      "tokens": 1793,
       "first_read": "2026-06-25T17:35:10.474Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-3-report.md": {
-      "count": 1,
+      "count": 2,
       "tokens": 89,
       "first_read": "2026-06-25T17:35:53.987Z"
     },
@@ -88,7 +88,7 @@
       "first_read": "2026-06-25T17:35:54.344Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-4-brief.md": {
-      "count": 2,
+      "count": 4,
       "tokens": 0,
       "first_read": "2026-06-25T17:36:33.011Z"
     },
@@ -98,8 +98,8 @@
       "first_read": "2026-06-25T17:36:37.176Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-4-report.md": {
-      "count": 1,
-      "tokens": 161,
+      "count": 3,
+      "tokens": 142,
       "first_read": "2026-06-25T17:37:21.486Z"
     },
     "D:/github/Transactions/.superpowers/sdd/review-1b0c2da..f568d2e.diff": {
@@ -113,13 +113,13 @@
       "first_read": "2026-06-25T17:38:01.936Z"
     },
     "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue": {
-      "count": 20,
-      "tokens": 3130,
+      "count": 29,
+      "tokens": 3465,
       "first_read": "2026-06-25T17:38:12.201Z"
     },
     "D:/github/Transactions/.superpowers/sdd/task-5-report.md": {
-      "count": 5,
-      "tokens": 244,
+      "count": 7,
+      "tokens": 308,
       "first_read": "2026-06-25T17:40:02.954Z"
     },
     "D:/github/Transactions/.superpowers/sdd/review-f568d2e..8cf0835.diff": {
@@ -156,6 +156,66 @@
       "count": 1,
       "tokens": 0,
       "first_read": "2026-06-25T17:52:32.485Z"
+    },
+    "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue": {
+      "count": 3,
+      "tokens": 2131,
+      "first_read": "2026-06-25T18:04:12.288Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-35d0194..c8d0e67.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:33:13.890Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-c8d0e67..8474de8.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:35:23.621Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-8474de8..57bb5a4.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:37:19.965Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-57bb5a4..75eb2fa.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:38:42.326Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-35d0194..75eb2fa.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:39:43.966Z"
+    },
+    "D:/github/Transactions/docs/superpowers/specs/2026-06-26-key-event-transition-design.md": {
+      "count": 1,
+      "tokens": 862,
+      "first_read": "2026-06-25T18:39:49.474Z"
+    },
+    "D:/github/Transactions/docs/superpowers/plans/2026-06-26-key-event-preload.md": {
+      "count": 2,
+      "tokens": 3195,
+      "first_read": "2026-06-25T18:52:47.654Z"
+    },
+    "D:/github/Transactions/app/src/backend/functions.ts": {
+      "count": 2,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:54:14.782Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-b40dd4e..c7fb867.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:56:00.643Z"
+    },
+    "D:/github/Transactions/app/src/types/billadm.d.ts": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:56:33.825Z"
+    },
+    "D:/github/Transactions/.superpowers/sdd/review-c7fb867..07e9a0c.diff": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-25T18:59:10.431Z"
     }
   },
   "files_written": [
@@ -392,28 +452,472 @@
       "action": "edit",
       "tokens": 18,
       "at": "2026-06-25T17:54:39.779Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "action": "edit",
+      "tokens": 10,
+      "at": "2026-06-25T18:00:55.082Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 93,
+      "at": "2026-06-25T18:03:03.854Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 19,
+      "at": "2026-06-25T18:03:11.592Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue",
+      "action": "edit",
+      "tokens": 340,
+      "at": "2026-06-25T18:04:23.282Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue",
+      "action": "edit",
+      "tokens": 149,
+      "at": "2026-06-25T18:04:28.591Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue",
+      "action": "edit",
+      "tokens": 198,
+      "at": "2026-06-25T18:04:34.654Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue",
+      "action": "edit",
+      "tokens": 70,
+      "at": "2026-06-25T18:04:38.555Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 65,
+      "at": "2026-06-25T18:06:20.333Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 338,
+      "at": "2026-06-25T18:06:26.423Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 10,
+      "at": "2026-06-25T18:06:43.066Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 105,
+      "at": "2026-06-25T18:08:59.882Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 210,
+      "at": "2026-06-25T18:09:05.383Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 65,
+      "at": "2026-06-25T18:12:49.879Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 103,
+      "at": "2026-06-25T18:14:42.148Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 24,
+      "at": "2026-06-25T18:14:46.225Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 41,
+      "at": "2026-06-25T18:16:42.266Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 60,
+      "at": "2026-06-25T18:16:47.412Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 32,
+      "at": "2026-06-25T18:20:18.552Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 33,
+      "at": "2026-06-25T18:20:22.249Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 73,
+      "at": "2026-06-25T18:21:30.121Z"
+    },
+    {
+      "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-26-key-event-transition-design.md",
+      "action": "create",
+      "tokens": 985,
+      "at": "2026-06-25T18:29:42.544Z"
+    },
+    {
+      "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-26-key-event-transition.md",
+      "action": "create",
+      "tokens": 3179,
+      "at": "2026-06-25T18:30:32.162Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/progress.md",
+      "action": "create",
+      "tokens": 40,
+      "at": "2026-06-25T18:31:30.509Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 33,
+      "at": "2026-06-25T18:32:16.641Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 238,
+      "at": "2026-06-25T18:32:22.249Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 155,
+      "at": "2026-06-25T18:32:28.123Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 9,
+      "at": "2026-06-25T18:32:30.937Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 185,
+      "at": "2026-06-25T18:32:38.776Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/task-1-report.md",
+      "action": "create",
+      "tokens": 73,
+      "at": "2026-06-25T18:32:53.590Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 42,
+      "at": "2026-06-25T18:34:23.750Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 977,
+      "at": "2026-06-25T18:34:40.028Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 504,
+      "at": "2026-06-25T18:34:46.860Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "action": "edit",
+      "tokens": 32,
+      "at": "2026-06-25T18:36:34.434Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "action": "edit",
+      "tokens": 76,
+      "at": "2026-06-25T18:36:37.627Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "action": "edit",
+      "tokens": 146,
+      "at": "2026-06-25T18:36:41.860Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "action": "edit",
+      "tokens": 58,
+      "at": "2026-06-25T18:36:44.513Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue",
+      "action": "edit",
+      "tokens": 58,
+      "at": "2026-06-25T18:38:02.360Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventLinkedTr.vue",
+      "action": "edit",
+      "tokens": 103,
+      "at": "2026-06-25T18:38:05.093Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/task-4-report.md",
+      "action": "create",
+      "tokens": 162,
+      "at": "2026-06-25T18:38:24.461Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/progress.md",
+      "action": "edit",
+      "tokens": 112,
+      "at": "2026-06-25T18:39:32.064Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "action": "edit",
+      "tokens": 21,
+      "at": "2026-06-25T18:42:05.103Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 44,
+      "at": "2026-06-25T18:42:09.819Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 323,
+      "at": "2026-06-25T18:42:16.329Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventDetail.vue",
+      "action": "edit",
+      "tokens": 15,
+      "at": "2026-06-25T18:42:19.209Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/task-5-report.md",
+      "action": "edit",
+      "tokens": 111,
+      "at": "2026-06-25T18:42:37.883Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/progress.md",
+      "action": "edit",
+      "tokens": 36,
+      "at": "2026-06-25T18:43:49.389Z"
+    },
+    {
+      "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-26-key-event-preload-design.md",
+      "action": "create",
+      "tokens": 749,
+      "at": "2026-06-25T18:51:37.510Z"
+    },
+    {
+      "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-26-key-event-preload.md",
+      "action": "create",
+      "tokens": 3652,
+      "at": "2026-06-25T18:52:35.397Z"
+    },
+    {
+      "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-26-key-event-preload.md",
+      "action": "edit",
+      "tokens": 232,
+      "at": "2026-06-25T18:52:58.669Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/progress.md",
+      "action": "create",
+      "tokens": 39,
+      "at": "2026-06-25T18:53:53.121Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 24,
+      "at": "2026-06-25T18:54:19.551Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 73,
+      "at": "2026-06-25T18:54:22.354Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 100,
+      "at": "2026-06-25T18:54:25.548Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 166,
+      "at": "2026-06-25T18:54:29.016Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 115,
+      "at": "2026-06-25T18:54:31.995Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 486,
+      "at": "2026-06-25T18:54:40.099Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 241,
+      "at": "2026-06-25T18:54:46.570Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 108,
+      "at": "2026-06-25T18:54:51.691Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 248,
+      "at": "2026-06-25T18:55:00.080Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 222,
+      "at": "2026-06-25T18:55:05.825Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+      "action": "edit",
+      "tokens": 128,
+      "at": "2026-06-25T18:55:11.288Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/task-1-report.md",
+      "action": "create",
+      "tokens": 197,
+      "at": "2026-06-25T18:55:35.968Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 10,
+      "at": "2026-06-25T18:58:03.221Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 7,
+      "at": "2026-06-25T18:58:05.423Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 6,
+      "at": "2026-06-25T18:58:07.764Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 274,
+      "at": "2026-06-25T18:58:13.675Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 150,
+      "at": "2026-06-25T18:58:17.223Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 219,
+      "at": "2026-06-25T18:58:21.784Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 145,
+      "at": "2026-06-25T18:58:25.487Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 130,
+      "at": "2026-06-25T18:58:28.905Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 40,
+      "at": "2026-06-25T18:58:31.820Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/task-2-report.md",
+      "action": "create",
+      "tokens": 78,
+      "at": "2026-06-25T18:58:51.406Z"
+    },
+    {
+      "file": "D:/github/Transactions/.superpowers/sdd/progress.md",
+      "action": "edit",
+      "tokens": 80,
+      "at": "2026-06-25T19:01:03.699Z"
     }
   ],
   "edit_counts": {
     "docs/superpowers/specs/2026-06-26-image-upload-progress-design.md": 1,
     "docs/superpowers/plans/2026-06-26-image-upload-progress.md": 1,
-    ".superpowers/sdd/progress.md": 3,
+    ".superpowers/sdd/progress.md": 8,
     "app/src/backend/api/api-client.ts": 1,
-    ".superpowers/sdd/task-1-report.md": 1,
+    ".superpowers/sdd/task-1-report.md": 3,
     "app/src/backend/api/key-event.ts": 1,
-    ".superpowers/sdd/task-2-report.md": 1,
+    ".superpowers/sdd/task-2-report.md": 2,
     "app/src/components/key_event_view/UploadProgressBar.vue": 2,
     ".superpowers/sdd/task-3-report.md": 1,
-    "app/src/components/key_event_view/KeyEventDetail.vue": 5,
-    ".superpowers/sdd/task-4-report.md": 1,
-    "app/src/stores/keyEventStore.ts": 1,
-    "app/src/components/key_event_view/KeyEventView.vue": 16,
-    ".superpowers/sdd/task-5-report.md": 3,
-    ".superpowers/sdd/task-6-report.md": 1
+    "app/src/components/key_event_view/KeyEventDetail.vue": 22,
+    ".superpowers/sdd/task-4-report.md": 2,
+    "app/src/stores/keyEventStore.ts": 12,
+    "app/src/components/key_event_view/KeyEventView.vue": 34,
+    ".superpowers/sdd/task-5-report.md": 4,
+    ".superpowers/sdd/task-6-report.md": 1,
+    "app/src/components/key_event_view/KeyEventImageGallery.vue": 6,
+    "app/src/components/key_event_view/KeyEventLinkedTr.vue": 6,
+    "docs/superpowers/specs/2026-06-26-key-event-transition-design.md": 1,
+    "docs/superpowers/plans/2026-06-26-key-event-transition.md": 1,
+    "docs/superpowers/specs/2026-06-26-key-event-preload-design.md": 1,
+    "docs/superpowers/plans/2026-06-26-key-event-preload.md": 2
   },
-  "anatomy_hits": 7,
-  "anatomy_misses": 24,
-  "repeated_reads_warned": 45,
+  "anatomy_hits": 9,
+  "anatomy_misses": 34,
+  "repeated_reads_warned": 122,
   "cerebrum_warnings": 0,
-  "stop_count": 12
+  "stop_count": 39
 }
