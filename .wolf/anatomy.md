@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-25T19:01:03.685Z
-> Files: 22 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-06-26T15:23:41.358Z
+> Files: 25 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -17,10 +17,10 @@
 
 ## .superpowers/sdd/
 
-- `progress.md` — SDD Progress Ledger (~76 tok)
-- `task-1-report.md` — 状态 (~172 tok)
-- `task-2-report.md` — 状态 (~68 tok)
-- `task-3-report.md` — 状态 (~89 tok)
+- `progress.md` — SDD Progress Ledger (~90 tok)
+- `task-1-report.md` — 状态 (~82 tok)
+- `task-2-report.md` — 状态 (~158 tok)
+- `task-3-report.md` — 状态 (~98 tok)
 - `task-4-report.md` — 状态 (~142 tok)
 - `task-5-report.md` — 状态 (~384 tok)
 - `task-6-report.md` — 状态 (~66 tok)
@@ -34,6 +34,7 @@
 
 ## app/src/backend/
 
+- `imageOptimizer.ts` — 将 base64 data URI 转成 Blob (~614 tok)
 
 ## app/src/backend/api/
 
@@ -51,10 +52,10 @@
 
 ## app/src/components/key_event_view/
 
-- `KeyEventDetail.vue` — Vue: setup (~2677 tok)
-- `KeyEventImageGallery.vue` — Vue: setup (~1792 tok)
+- `KeyEventDetail.vue` — Vue: setup (~2712 tok)
+- `KeyEventImageGallery.vue` — Vue: setup (~1840 tok)
 - `KeyEventLinkedTr.vue` — Vue: setup (~2131 tok)
-- `KeyEventView.vue` — Vue: setup (~3465 tok)
+- `KeyEventView.vue` — Vue: setup (~3478 tok)
 - `UploadProgressBar.vue` — Vue: setup (~2069 tok)
 
 ## app/src/components/settings_view/
@@ -71,7 +72,7 @@
 
 ## app/src/stores/
 
-- `keyEventStore.ts` — Exports useKeyEventStore with imageCache/trCache/preloadYearData (~3100 tok)
+- `keyEventStore.ts` — Exports useKeyEventStore (~3182 tok)
 
 ## app/src/styles/
 
@@ -84,12 +85,14 @@
 
 ## docs/superpowers/plans/
 
+- `2026-06-26-image-performance-optimization.md` — 图片加载性能优化（Blob + Canvas 缩略图） 实施计划 (~2278 tok)
 - `2026-06-26-image-upload-progress.md` — 图片上传进度条 实施计划 (~3287 tok)
 - `2026-06-26-key-event-preload.md` — 关键事件数据预加载与缓存 实施计划 (~3100 tok)
 - `2026-06-26-key-event-transition.md` — 关键事件切换过渡动效 实施计划 (~2781 tok)
 
 ## docs/superpowers/specs/
 
+- `2026-06-26-image-performance-optimization-design.md` — 关键事件图片加载性能优化设计 (~645 tok)
 - `2026-06-26-image-upload-progress-design.md` — 图片上传进度条设计 (~1380 tok)
 - `2026-06-26-key-event-preload-design.md` — 关键事件数据预加载与缓存设计 (~655 tok)
 - `2026-06-26-key-event-transition-design.md` — 关键事件切换过渡动效设计 (~862 tok)

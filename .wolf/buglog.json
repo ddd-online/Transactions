@@ -96,6 +96,70 @@
       "related_bugs": [],
       "occurrences": 2,
       "last_seen": "2026-06-25T18:58:31.826Z"
+    },
+    {
+      "id": "bug-007",
+      "timestamp": "2026-06-26T15:17:46.553Z",
+      "error_message": "Significant refactor of ",
+      "file": ".superpowers/sdd/task-1-report.md",
+      "root_cause": "13 lines replaced/restructured",
+      "fix": "Rewrote 23→23 lines (13 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-26T15:17:46.553Z"
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-06-26T15:19:10.474Z",
+      "error_message": "Wrong condition in logic",
+      "file": "app/src/stores/keyEventStore.ts",
+      "root_cause": "Condition was: if (target)",
+      "fix": "Changed to: if (urls)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-26T15:19:10.475Z"
+    },
+    {
+      "id": "bug-009",
+      "timestamp": "2026-06-26T15:19:14.153Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "app/src/stores/keyEventStore.ts",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-26T15:19:14.153Z"
+    },
+    {
+      "id": "bug-010",
+      "timestamp": "2026-06-26T15:21:40.253Z",
+      "error_message": "Null/undefined access in ",
+      "file": "app/src/components/key_event_view/KeyEventImageGallery.vue",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check) | Also: <img :src=\"props.urlCache?.get(img.id)?.thumb ?? img.data\" c",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-06-26T15:21:40.930Z"
     }
   ]
 }
