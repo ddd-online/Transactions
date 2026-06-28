@@ -80,7 +80,7 @@ const keyEventStore = useKeyEventStore()
 const appDataStore = useAppDataStore()
 
 // ========== 年份导航 ==========
-const selectedYearDayjs = ref<Dayjs>(dayjs())
+const selectedYearDayjs = ref<Dayjs>(dayjs().year(keyEventStore.currentYear))
 const selectedYear = ref(selectedYearDayjs.value.year())
 
 const goToPrevYear = async () => {
