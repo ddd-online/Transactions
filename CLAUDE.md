@@ -1,13 +1,8 @@
-# OpenWolf
-
-@.wolf/OPENWOLF.md
-
-This project uses OpenWolf for context management. Read and follow .wolf/OPENWOLF.md every session. Check .wolf/cerebrum.md before generating code. Check .wolf/anatomy.md before reading files.
-
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+> **OpenWolf**: This project uses OpenWolf for context management. Follow `.wolf/OPENWOLF.md` every session, check `.wolf/cerebrum.md` before generating code, and check `.wolf/anatomy.md` before reading files.
 
 ## Project Overview
 
@@ -143,24 +138,36 @@ cd electron && npm run package # Package with electron-builder
 cd kernel && go test ./...                    # All tests
 cd kernel && go test -race ./...              # With race detection
 cd kernel && go test -cover ./...             # With coverage
+cd kernel && go test -run ^TestName$ ./path/to/package -v  # Single test
+cd kernel && go vet ./...                     # Static analysis
+```
+
+**Frontend checks (no tests yet — vitest is configured but no test files exist):**
+```bash
+cd app && npx vue-tsc -b                      # Type-check only (no emit)
+cd app && npx vitest run                      # Run frontend tests (when added)
 ```
 
 **Full production build (Windows):**
 ```powershell
 ./build/clean.ps1   # Clean previous build artifacts first
-./build/build.ps1   # Builds Vue → Go → Electron, outputs installer to electron/out/
+./build/build.ps1   # Builds Vue → Go → Electron, packages with electron-builder
 ```
 
 The build script sets `CGO_ENABLED=1`, `GOOS=windows`, `GOARCH=amd64` for the Go build.
+Electron packaging config: `electron/electron-builder.yml` (NSIS installer, asar disabled).
 
 ## Development (Hot Reload)
 
-Three processes run simultaneously:
-1. **Go backend**: Run `kernel/main.go` in IDE, or `go run .` in `kernel/`
-2. **Vue dev server**: `npm run dev` in `app/` (port 31945, proxies to backend)
-3. **Electron**: `npm start` in `electron/`
+Three processes run simultaneously (open three terminals):
 
-In dev mode (`--mode debug`), the kernel listens on port 28080. The Vue dev server runs on 31945. Electron in dev mode points to `http://localhost:31945/static` for the renderer and `http://127.0.0.1:28080` for the API.
+| # | Directory | Command | Role | Port |
+|---|-----------|---------|------|------|
+| 1 | `kernel/` | `go run main.go` | Go API server | 28080 (dev) |
+| 2 | `app/` | `npm run dev` | Vite dev server (serves Vue SPA) | 31945 |
+| 3 | `electron/` | `npm start` | Electron window | — |
+
+**Connection topology:** In dev mode, Electron loads `http://localhost:31945/static` for the renderer (Vite HMR). API calls from the renderer go directly to `http://127.0.0.1:28080` (Go backend) — there is no Vite proxy; the `electronAPI.getApiServer()` bridge provides the API base URL to the renderer at runtime.
 
 ## Configuration
 
