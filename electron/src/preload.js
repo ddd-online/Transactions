@@ -28,4 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getApiServer: async () => {
         return await ipcRenderer.invoke('app', 'apiServer');
     },
+    toggleDevTools: (enabled) => {
+        ipcRenderer.send('devtools:toggle', enabled);
+    },
 });

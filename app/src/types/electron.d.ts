@@ -13,6 +13,7 @@ declare global {
             getWorkspace: () => Promise<string>;
             getAppInfo: (field: string) => Promise<any>;
             getApiServer: () => Promise<string>;
+            toggleDevTools: (enabled: boolean) => void;
         };
     }
 }

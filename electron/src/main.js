@@ -148,6 +148,16 @@ const registerCommonHandlers = () => {
                 return '';
         }
     });
+
+    ipcMain.on('devtools:toggle', (event, enabled) => {
+        if (mainWindow) {
+            if (enabled) {
+                mainWindow.webContents.openDevTools({ mode: 'right' });
+            } else {
+                mainWindow.webContents.closeDevTools();
+            }
+        }
+    });
 };
 
 app.on('second-instance', () => {
