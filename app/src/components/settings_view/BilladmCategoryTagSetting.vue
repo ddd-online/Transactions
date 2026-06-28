@@ -27,7 +27,7 @@
         :init-loading="initLoading"
         @select-category="selectCategory"
         @add-category="openAddCategoryModal"
-        @move-category="moveCategory"
+        @reorder-category="reorderCategories"
         @delete-category="confirmDeleteCategory"
         @initialize="handleInitialize"
       />
@@ -36,7 +36,7 @@
         :tags="selectedTags"
         :selected-category="selectedCategory"
         @add-tag="openAddTagModal"
-        @move-tag="moveTag"
+        @reorder-tag="reorderTags"
         @delete-tag="confirmDeleteTag"
       />
     </div>
@@ -203,36 +203,39 @@ const executeDelete = async () => {
   } catch { /* error handled in backend */ }
 };
 
-const moveCategory = async (index: number, direction: number) => {
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= categories.value.length) return;
-  const category = categories.value[index];
-  const targetCategory = categories.value[newIndex];
-  if (!category || !targetCategory) return;
-  const categorySortOrder = category.sortOrder || 0;
-  const targetSortOrder = targetCategory.sortOrder || 0;
-  try {
-    await reorderCategory(category.name, activeType.value, targetSortOrder);
-    await reorderCategory(targetCategory.name, activeType.value, categorySortOrder);
-    await loadCategories();
-  } catch { /* error handled in backend */ }
+const reorderCategories = async (oldIndex: number, newIndex: number) => {
+  const list = [...categories.value]
+  const [moved] = list.splice(oldIndex, 1)
+  list.splice(newIndex, 0, moved!)
+  // 全量重排：按新顺序重新分配 sortOrder
+  for (let i = 0; i < list.length; i++) {
+    const category = list[i]!
+    if (category.sortOrder !== i) {
+      category.sortOrder = i
+      try {
+        await reorderCategory(category.name, activeType.value, i)
+      } catch { /* error handled in backend */ }
+    }
+  }
+  categories.value = list
 };
 
-const moveTag = async (index: number, direction: number) => {
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= selectedTags.value.length) return;
-  const tag = selectedTags.value[index];
-  const targetTag = selectedTags.value[newIndex];
-  if (!tag || !targetTag) return;
-  const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
-  const tagSortOrder = tag.sortOrder || 0;
-  const targetSortOrder = targetTag.sortOrder || 0;
-  try {
-    await reorderTag(tag.name, categoryTransactionType, targetSortOrder);
-    await reorderTag(targetTag.name, categoryTransactionType, tagSortOrder);
-    await loadCategories();
-    selectCategory(selectedCategory.value);
-  } catch { /* error handled in backend */ }
+const reorderTags = async (oldIndex: number, newIndex: number) => {
+  const list = [...selectedTags.value]
+  const [moved] = list.splice(oldIndex, 1)
+  list.splice(newIndex, 0, moved!)
+  const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`
+  // 全量重排：按新顺序重新分配 sortOrder
+  for (let i = 0; i < list.length; i++) {
+    const tag = list[i]!
+    if (tag.sortOrder !== i) {
+      tag.sortOrder = i
+      try {
+        await reorderTag(tag.name, categoryTransactionType, i)
+      } catch { /* error handled in backend */ }
+    }
+  }
+  selectedTags.value = list
 };
 
 const loadCategories = async () => {

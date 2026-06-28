@@ -10,26 +10,27 @@
         <span>添加标签</span>
       </button>
     </div>
-    <div class="column-body tag-list" v-if="tags.length > 0">
-      <div v-for="(tag, index) in tags" :key="tag.name" class="list-item">
+    <div
+      ref="listRef"
+      class="column-body tag-list"
+      v-if="tags.length > 0"
+    >
+      <div v-for="tag in tags" :key="tag.name" class="list-item">
+        <span class="drag-handle" title="拖动排序">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <circle cx="5" cy="3" r="1.5" />
+            <circle cx="11" cy="3" r="1.5" />
+            <circle cx="5" cy="8" r="1.5" />
+            <circle cx="11" cy="8" r="1.5" />
+            <circle cx="5" cy="13" r="1.5" />
+            <circle cx="11" cy="13" r="1.5" />
+          </svg>
+        </span>
         <div class="item-main">
           <span class="item-name">{{ tag.name }}</span>
           <span class="item-badge" v-if="tag.recordCount">{{ tag.recordCount }}</span>
         </div>
         <div class="item-actions">
-          <button class="action-icon" @click="$emit('move-tag', index, -1)" :disabled="index === 0" title="上移">
-            <svg class="arrow-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L8 14M8 2L4 6M8 2L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </button>
-          <button class="action-icon" @click="$emit('move-tag', index, 1)" :disabled="index === tags.length - 1"
-            title="下移">
-            <svg class="arrow-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M8 14L8 2M8 14L4 10M8 14L12 10" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </button>
           <button class="action-icon delete" @click="$emit('delete-tag', tag.name)" title="删除">
             <svg class="delete-icon" viewBox="0 0 16 16" fill="none">
               <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M12 4v8a2 2 0 01-2 2H6a2 2 0 01-2-2V4"
@@ -46,18 +47,31 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed } from 'vue'
 import type { Tag } from '@/types/billadm'
+import { useListDragSort } from '@/hooks/useListDragSort'
 
-defineProps<{
+const props = defineProps<{
   tags: Tag[]
   selectedCategory: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'add-tag'): void
-  (e: 'move-tag', index: number, direction: number): void
+  (e: 'reorder-tag', oldIndex: number, newIndex: number): void
   (e: 'delete-tag', name: string): void
 }>()
+
+const listRef = ref<HTMLElement>()
+const dragEnabled = computed(() => props.tags.length > 1)
+
+useListDragSort(listRef, dragEnabled, {
+  handle: '.drag-handle',
+  animation: 200,
+  onReorder(oldIndex, newIndex) {
+    emit('reorder-tag', oldIndex, newIndex)
+  },
+})
 </script>
 
 <style scoped>
@@ -150,11 +164,36 @@ defineEmits<{
   color: var(--billadm-color-text-disabled);
 }
 
+/* Drag Handle — 始终可见 */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--billadm-color-text-disabled);
+  cursor: grab;
+  transition: color var(--billadm-transition-fast);
+  margin-right: 2px;
+}
+
+.drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.drag-handle:hover {
+  color: var(--billadm-color-primary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 /* List Item */
 .list-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: var(--billadm-space-sm) var(--billadm-space-sm);
   border-radius: var(--billadm-radius-md);
   cursor: pointer;
@@ -170,6 +209,7 @@ defineEmits<{
   align-items: center;
   gap: var(--billadm-space-xs);
   min-width: 0;
+  flex: 1;
 }
 
 .item-name {
@@ -191,6 +231,8 @@ defineEmits<{
 
 .item-actions {
   display: none;
+  flex-shrink: 0;
+  margin-left: 4px;
 }
 
 .list-item:hover .item-actions {
@@ -211,15 +253,9 @@ defineEmits<{
   transition: all var(--billadm-transition-fast);
 }
 
-.action-icon .arrow-icon,
 .action-icon .delete-icon {
   width: 14px;
   height: 14px;
-}
-
-.action-icon:hover:not(:disabled) {
-  color: var(--billadm-color-text-major);
-  background-color: var(--billadm-color-hover-bg);
 }
 
 .action-icon.delete:hover:not(:disabled) {
@@ -230,5 +266,20 @@ defineEmits<{
 .action-icon:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* SortableJS 拖拽状态 */
+.sortable-ghost {
+  opacity: 0.3;
+  background-color: var(--billadm-color-hover-bg);
+}
+
+.sortable-chosen {
+  background-color: var(--billadm-color-active-bg);
+  box-shadow: var(--billadm-shadow-md);
+}
+
+.sortable-drag {
+  opacity: 0;
 }
 </style>
