@@ -1,10 +1,11 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-26T15:23:41.358Z
-> Files: 25 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-06-28T15:11:42.410Z
+> Files: 26 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
+- `CLAUDE.md` — CLAUDE.md (~2430 tok)
 
 ## .claude/
 

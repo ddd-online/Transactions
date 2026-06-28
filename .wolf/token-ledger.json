@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 1318769,
-    "total_reads": 1404,
-    "total_writes": 2821,
-    "total_sessions": 4,
-    "anatomy_hits": 336,
-    "anatomy_misses": 1066,
-    "repeated_reads_blocked": 3037,
-    "estimated_savings_vs_bare_cli": 5549899
+    "total_tokens_estimated": 1325445,
+    "total_reads": 1426,
+    "total_writes": 2827,
+    "total_sessions": 5,
+    "anatomy_hits": 338,
+    "anatomy_misses": 1086,
+    "repeated_reads_blocked": 3039,
+    "estimated_savings_vs_bare_cli": 5555159
   },
   "sessions": [
     {
@@ -23353,6 +23353,202 @@
         "writes_count": 135,
         "repeated_reads_blocked": 147,
         "anatomy_lookups": 10
+      }
+    },
+    {
+      "id": "session-2026-06-28-2309",
+      "started": "2026-06-28T15:09:48.023Z",
+      "ended": "2026-06-28T15:11:58.050Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/build.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/clean.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/go.mod",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/vite.config.ts",
+          "tokens_estimated": 338,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/main.go",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/electron-builder.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 2430,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 94,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 280,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 196,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2768,
+        "output_tokens_estimated": 570,
+        "reads_count": 11,
+        "writes_count": 3,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-06-28-2309",
+      "started": "2026-06-28T15:09:48.023Z",
+      "ended": "2026-06-28T15:12:33.172Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/build.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/clean.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/go.mod",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/vite.config.ts",
+          "tokens_estimated": 338,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/main.go",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/electron-builder.yml",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 2430,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 94,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 280,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 196,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2768,
+        "output_tokens_estimated": 570,
+        "reads_count": 11,
+        "writes_count": 3,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 1
       }
     }
   ],
