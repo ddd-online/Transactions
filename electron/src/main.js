@@ -150,6 +150,14 @@ const registerCommonHandlers = () => {
     });
 };
 
+app.on('second-instance', () => {
+    const win = mainWindow || initWindow;
+    if (win) {
+        if (win.isMinimized()) win.restore();
+        win.focus();
+    }
+});
+
 let mainWindow = null;
 
 const createMainWindow = () => {
@@ -220,6 +228,14 @@ const createInitWindow = () => {
         createMainWindow();
     });
 };
+
+// 单实例锁：确保同一台电脑只能运行一个程序实例
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+    app.quit();
+    return;
+}
 
 app.whenReady().then(() => {
     readTransactionsCfg();
