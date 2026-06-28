@@ -409,7 +409,7 @@ const confirmSaveTemplate = async () => {
 // 关联关键事件
 const handleLink = (record: TransactionRecord) => {
   linkingRecord.value = record;
-  linkDate.value = record.keyEventDate ? dayjs(record.keyEventDate) : dayjs();
+  linkDate.value = record.keyEventDate ? dayjs(record.keyEventDate) : dayjs.unix(record.transactionAt);
   openLinkModal.value = true;
 };
 
