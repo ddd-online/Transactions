@@ -24,16 +24,10 @@
 import { ref } from 'vue'
 import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 
-const isElectron = typeof window !== 'undefined' && !!window.electronAPI
-
 const devToolsEnabled = ref(false)
 
 const onDevToolsToggle = (checked: boolean | string | number) => {
-  const enabled = Boolean(checked)
-  if (isElectron && window.electronAPI?.toggleDevTools) {
-    window.electronAPI.toggleDevTools(enabled)
-  }
-  devToolsEnabled.value = enabled
+  window.electronAPI?.toggleDevTools(Boolean(checked))
 }
 </script>
 
