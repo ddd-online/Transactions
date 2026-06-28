@@ -282,3 +282,54 @@
 | 23:56 | Session end: 5 writes across 4 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue) | 4 reads | ~3678 tok |
 | 00:05 | Edited app/src/components/key_event_view/KeyEventView.vue | 3→3 lines | ~44 |
 | 00:05 | Session end: 6 writes across 5 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 6 reads | ~10385 tok |
+| 00:30 | Session end: 6 writes across 5 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 10 reads | ~10385 tok |
+| 00:33 | Created app/src/hooks/useListDragSort.ts | — | ~408 |
+| 00:33 | Created app/src/components/settings_view/CategoryColumn.vue | — | ~2503 |
+| 00:33 | Created app/src/components/settings_view/TagColumn.vue | — | ~1816 |
+| 00:34 | Created app/src/components/settings_view/BilladmTemplateSetting.vue | — | ~2043 |
+| 00:34 | Edited app/src/components/settings_view/BilladmCategoryTagSetting.vue | 20→20 lines | ~181 |
+| 00:34 | Edited app/src/components/settings_view/BilladmCategoryTagSetting.vue | modified for() | ~295 |
+| 00:35 | Edited app/src/components/settings_view/CategoryColumn.vue | "(category, index) in cate" → "category in categories" | ~22 |
+| 00:35 | Edited app/src/components/settings_view/TagColumn.vue | "(tag, index) in tags" → "tag in tags" | ~18 |
+| 00:35 | Edited app/src/components/settings_view/BilladmTemplateSetting.vue | "{ column, record, index }" → "{ column, record }" | ~14 |
+| 00:35 | Session end: 15 writes across 10 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 11 reads | ~18176 tok |
+| 00:37 | Created app/src/hooks/useListDragSort.ts | — | ~460 |
+| 00:37 | Edited app/src/components/settings_view/CategoryColumn.vue | CSS: touch-action | ~70 |
+| 00:37 | Edited app/src/components/settings_view/TagColumn.vue | CSS: touch-action | ~70 |
+| 00:37 | Edited app/src/components/settings_view/BilladmTemplateSetting.vue | CSS: touch-action | ~76 |
+| 00:38 | Created app/src/hooks/useListDragSort.ts | — | ~477 |
+| 00:38 | Edited app/src/components/settings_view/BilladmTemplateSetting.vue | modified for() | ~151 |
+| 00:38 | Session end: 21 writes across 10 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 12 reads | ~21960 tok |
+| 00:42 | Edited app/src/backend/api/category.ts | modified updateCategorySort() | ~76 |
+| 00:42 | Edited app/src/backend/api/tag.ts | modified updateTagSort() | ~78 |
+| 00:42 | Edited app/src/backend/functions.ts | modified reorderCategory() | ~190 |
+| 00:42 | Edited app/src/components/settings_view/BilladmCategoryTagSetting.vue | modified for() | ~326 |
+| 00:43 | Session end: 25 writes across 13 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 15 reads | ~22653 tok |
+| 00:47 | Session end: 25 writes across 13 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 15 reads | ~22653 tok |
+| 00:49 | Session end: 25 writes across 13 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 16 reads | ~22653 tok |
+| 00:50 | Session end: 25 writes across 13 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 16 reads | ~22653 tok |
+| 00:51 | Created docs/superpowers/specs/2026-06-29-general-setting-design.md | — | ~404 |
+| 00:51 | Session end: 26 writes across 14 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 16 reads | ~23085 tok |
+| 00:52 | Created docs/superpowers/plans/2026-06-29-general-setting.md | — | ~1906 |
+| 00:52 | Session end: 27 writes across 15 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 16 reads | ~25127 tok |
+| 00:53 | Edited electron/src/main.js | added 2 condition(s) | ~181 |
+| 00:53 | Edited electron/src/preload.js | 4→7 lines | ~57 |
+| 00:53 | Edited app/src/types/electron.d.ts | 2→3 lines | ~33 |
+| 00:53 | Created .superpowers/sdd/task-1-report.md | — | ~67 |
+| 00:54 | Created app/src/components/settings_view/GeneralSetting.vue | — | ~544 |
+| 00:54 | Edited app/src/components/settings_view/GeneralSetting.vue | CSS: checked | ~66 |
+| 00:55 | Created .superpowers/sdd/task-2-report.md | — | ~190 |
+| 00:55 | Edited app/src/components/settings_view/SettingsView.vue | 5→6 lines | ~33 |
+| 00:56 | Edited app/src/components/settings_view/SettingsView.vue | added 1 import(s) | ~44 |
+| 00:56 | Edited app/src/components/settings_view/SettingsView.vue | 5→6 lines | ~40 |
+| 00:56 | Edited app/src/components/settings_view/SettingsView.vue | expanded (+9 lines) | ~157 |
+| 00:58 | Session end: 38 writes across 21 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 31 reads | ~31452 tok |
+| 00:58 | Session end: 38 writes across 21 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 31 reads | ~31452 tok |
+| 01:01 | Edited app/src/components/settings_view/GeneralSetting.vue | reduced (-6 lines) | ~43 |
+| 01:01 | Session end: 39 writes across 21 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 39 reads | ~33788 tok |
+| 01:03 | Edited app/src/components/settings_view/SettingsView.vue | 27→27 lines | ~240 |
+| 01:03 | Edited app/src/components/settings_view/SettingsView.vue | "workspace" → "general" | ~11 |
+| 01:04 | Edited app/src/components/settings_view/SettingsView.vue | 6→6 lines | ~40 |
+| 01:04 | Session end: 42 writes across 21 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 39 reads | ~34100 tok |
+| 01:07 | Edited electron/src/main.js | "right" → "bottom" | ~16 |
+| 01:07 | Session end: 43 writes across 21 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 39 reads | ~34116 tok |

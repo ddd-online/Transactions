@@ -59,6 +59,7 @@ declare module 'vue' {
     BilladmTimeRangePicker: typeof import('./../components/common/BilladmTimeRangePicker.vue')['default']
     CategoryColumn: typeof import('./../components/settings_view/CategoryColumn.vue')['default']
     DataAnalysisView: typeof import('./../components/da_view/DataAnalysisView.vue')['default']
+    GeneralSetting: typeof import('./../components/settings_view/GeneralSetting.vue')['default']
     KeyEventAddModal: typeof import('./../components/key_event_view/KeyEventAddModal.vue')['default']
     KeyEventDetail: typeof import('./../components/key_event_view/KeyEventDetail.vue')['default']
     KeyEventImageGallery: typeof import('./../components/key_event_view/KeyEventImageGallery.vue')['default']

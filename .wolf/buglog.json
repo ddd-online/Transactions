@@ -176,6 +176,150 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-06-28T15:11:42.428Z"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-06-28T16:34:47.024Z",
+      "error_message": "Wrong operator: >= should be !==",
+      "file": "app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "root_cause": "Used \">=\" instead of \"!==\"",
+      "fix": "Changed operator >= → !==",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T16:34:47.024Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-06-28T16:35:03.675Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/settings_view/CategoryColumn.vue",
+      "root_cause": "Had \"(category, index) in categories\"",
+      "fix": "Changed to \"category in categories\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T16:35:03.675Z"
+    },
+    {
+      "id": "bug-014",
+      "timestamp": "2026-06-28T16:35:04.706Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/settings_view/TagColumn.vue",
+      "root_cause": "Had \"(tag, index) in tags\"",
+      "fix": "Changed to \"tag in tags\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T16:35:04.706Z"
+    },
+    {
+      "id": "bug-015",
+      "timestamp": "2026-06-28T16:35:05.647Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/settings_view/BilladmTemplateSetting.vue",
+      "root_cause": "Had \"{ column, record, index }\"",
+      "fix": "Changed to \"{ column, record }\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T16:35:05.647Z"
+    },
+    {
+      "id": "bug-016",
+      "timestamp": "2026-06-28T16:56:02.052Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/settings_view/SettingsView.vue",
+      "root_cause": "Had './AboutSetting.vue'",
+      "fix": "Changed to './GeneralSetting.vue'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T16:56:02.052Z"
+    },
+    {
+      "id": "bug-017",
+      "timestamp": "2026-06-28T17:01:09.207Z",
+      "error_message": "Significant refactor of ",
+      "file": "app/src/components/settings_view/GeneralSetting.vue",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 11→5 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T17:01:09.207Z"
+    },
+    {
+      "id": "bug-018",
+      "timestamp": "2026-06-28T17:03:55.212Z",
+      "error_message": "CSS fix: active",
+      "file": "app/src/components/settings_view/SettingsView.vue",
+      "root_cause": "active: activeComponent === 'general' → activeComponent === 'template'",
+      "fix": "Changed active: activeComponent === 'general' → activeComponent === 'template'",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T17:03:55.212Z"
+    },
+    {
+      "id": "bug-019",
+      "timestamp": "2026-06-28T17:03:59.396Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/settings_view/SettingsView.vue",
+      "root_cause": "Had 'workspace'",
+      "fix": "Changed to 'general'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T17:03:59.396Z"
+    },
+    {
+      "id": "bug-020",
+      "timestamp": "2026-06-28T17:07:32.075Z",
+      "error_message": "Incorrect value in code",
+      "file": "electron/src/main.js",
+      "root_cause": "Had 'right'",
+      "fix": "Changed to 'bottom'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T17:07:32.075Z"
     }
   ]
 }

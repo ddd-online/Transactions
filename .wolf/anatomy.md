@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-28T16:05:28.912Z
-> Files: 30 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-06-28T17:07:32.056Z
+> Files: 44 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -19,8 +19,8 @@
 ## .superpowers/sdd/
 
 - `progress.md` — SDD Progress Ledger (~90 tok)
-- `task-1-report.md` — 状态 (~82 tok)
-- `task-2-report.md` — 状态 (~158 tok)
+- `task-1-report.md` — 状态 (~63 tok)
+- `task-2-report.md` — Task 2 完成报告 (~178 tok)
 - `task-3-report.md` — 状态 (~98 tok)
 - `task-4-report.md` — 状态 (~142 tok)
 - `task-5-report.md` — 状态 (~384 tok)
@@ -35,12 +35,15 @@
 
 ## app/src/backend/
 
+- `functions.ts` — 将秒级时间戳转换为格式化时间字符串 (~2280 tok)
 - `imageOptimizer.ts` — 将 base64 data URI 转成 Blob (~614 tok)
 
 ## app/src/backend/api/
 
 - `api-client.ts` — Check if the response indicates an error (code !== 0). (~973 tok)
+- `category.ts` — Exports queryCategory, createCategory, deleteCategory, updateCategorySort + 2 more (~421 tok)
 - `key-event.ts` — Exports queryKeyEventsByYear, queryKeyEventByDate, saveKeyEvent, deleteKeyEvent + 3 more (~545 tok)
+- `tag.ts` — Exports queryTags, createTag, deleteTag, updateTagSort (~342 tok)
 
 ## app/src/components/
 
@@ -61,6 +64,12 @@
 
 ## app/src/components/settings_view/
 
+- `BilladmCategoryTagSetting.vue` — Vue component (~3173 tok)
+- `BilladmTemplateSetting.vue` — Vue component (~2057 tok)
+- `CategoryColumn.vue` — Vue component (~2507 tok)
+- `GeneralSetting.vue` — Vue component (~505 tok)
+- `SettingsView.vue` — Vue: setup (~1198 tok)
+- `TagColumn.vue` — Vue component (~1820 tok)
 
 ## app/src/components/tr_view/
 
@@ -68,6 +77,7 @@
 
 ## app/src/hooks/
 
+- `useListDragSort.ts` — CSS 选择器，指定拖拽手柄元素（如 '.drag-handle'） (~477 tok)
 
 ## app/src/router/
 
@@ -81,6 +91,7 @@
 
 ## app/src/types/
 
+- `electron.d.ts` — Declares __BUILD_TIME__ (~168 tok)
 
 ## docs/
 
@@ -92,6 +103,7 @@
 - `2026-06-26-key-event-preload.md` — 关键事件数据预加载与缓存 实施计划 (~3100 tok)
 - `2026-06-26-key-event-transition.md` — 关键事件切换过渡动效 实施计划 (~2781 tok)
 - `2026-06-28-single-instance-lock.md` — 单实例锁 实现计划 (~740 tok)
+- `2026-06-29-general-setting.md` — 通用设置页 + DevTools 开关 实现计划 (~1786 tok)
 
 ## docs/superpowers/specs/
 
@@ -100,6 +112,7 @@
 - `2026-06-26-key-event-preload-design.md` — 关键事件数据预加载与缓存设计 (~655 tok)
 - `2026-06-26-key-event-transition-design.md` — 关键事件切换过渡动效设计 (~862 tok)
 - `2026-06-28-single-instance-lock-design.md` — 单实例锁 设计规格 (~412 tok)
+- `2026-06-29-general-setting-design.md` — 通用设置页 + DevTools 开关 设计规格 (~378 tok)
 
 ## electron/
 
@@ -109,7 +122,8 @@
 
 ## electron/src/
 
-- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~2230 tok)
+- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~2316 tok)
+- `preload.js` (~320 tok)
 
 ## kernel/
 
