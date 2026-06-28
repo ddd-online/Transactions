@@ -3,6 +3,19 @@
     <BilladmPageHeader title="通用" />
 
     <div class="setting-list">
+      <!-- 工作空间 -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-title">工作空间</span>
+          <span class="setting-desc" :class="{ empty: !workspaceDir }">
+            {{ workspaceDir || '未设置工作空间' }}
+          </span>
+        </div>
+        <div class="setting-action">
+          <a-button @click="showFileSelect = true">切换</a-button>
+        </div>
+      </div>
+
       <!-- DevTools 开关 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -17,13 +30,47 @@
         </div>
       </div>
     </div>
+
+    <!-- 工作空间选择弹窗 -->
+    <billadm-file-select
+      v-model="showFileSelect"
+      title="选择工作目录"
+      placeholder="请输入或选择工作目录路径"
+      @confirm="handleSwitchWorkspace"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
+import { useLedgerStore } from '@/stores/ledgerStore'
+import { openWorkspace } from '@/backend/api/workspace'
+import NotificationUtil from '@/backend/notification'
 
+const ledgerStore = useLedgerStore()
+
+// ---- 工作空间 ----
+const showFileSelect = ref(false)
+const workspaceDir = ref('')
+
+onMounted(async () => {
+  workspaceDir.value = await window.electronAPI?.getWorkspace() || ''
+})
+
+const handleSwitchWorkspace = async (newWorkspaceDir: string) => {
+  try {
+    await openWorkspace(newWorkspaceDir)
+    window.electronAPI.setWorkspace(newWorkspaceDir)
+    workspaceDir.value = newWorkspaceDir
+    await ledgerStore.init()
+    NotificationUtil.success('切换工作空间成功')
+  } catch (error) {
+    NotificationUtil.error('切换工作空间失败', `${error}`)
+  }
+}
+
+// ---- DevTools ----
 const devToolsEnabled = ref(false)
 
 const onDevToolsToggle = (checked: boolean | string | number) => {
@@ -63,6 +110,7 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .setting-title {
@@ -73,7 +121,17 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
 
 .setting-desc {
   font-size: var(--billadm-size-text-caption);
+  font-family: var(--billadm-font-mono);
   color: var(--billadm-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setting-desc.empty {
+  color: var(--billadm-color-text-disabled);
+  font-style: italic;
+  font-family: var(--billadm-font-body);
 }
 
 .setting-action {

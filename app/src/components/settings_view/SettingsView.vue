@@ -16,15 +16,6 @@
         </button>
         <button
           class="nav-item"
-          :class="{ active: activeComponent === 'workspace' }"
-          @click="activeComponent = 'workspace'"
-          aria-label="工作空间"
-        >
-          <FolderOpenOutlined class="nav-icon"/>
-          <span class="nav-text">工作空间</span>
-        </button>
-        <button
-          class="nav-item"
           :class="{ active: activeComponent === 'template' }"
           @click="activeComponent = 'template'"
           aria-label="消费模板"
@@ -56,12 +47,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import {
-  FolderOpenOutlined,
   FileTextOutlined,
   SettingOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons-vue";
-import WorkspaceSetting from './WorkspaceSetting.vue';
 import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
@@ -70,7 +59,6 @@ const activeComponent = ref('general');
 
 const componentMap = {
   'general': GeneralSetting,
-  'workspace': WorkspaceSetting,
   'template': BilladmTemplateSetting,
   'about': AboutSetting,
 };
