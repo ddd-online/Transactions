@@ -152,7 +152,7 @@ const registerCommonHandlers = () => {
     ipcMain.on('devtools:toggle', (event, enabled) => {
         if (mainWindow) {
             if (enabled) {
-                mainWindow.webContents.openDevTools({ mode: 'right' });
+                mainWindow.webContents.openDevTools({ mode: 'bottom' });
             } else {
                 mainWindow.webContents.closeDevTools();
             }
