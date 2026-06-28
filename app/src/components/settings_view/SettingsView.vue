@@ -25,6 +25,15 @@
         </button>
         <button
           class="nav-item"
+          :class="{ active: activeComponent === 'general' }"
+          @click="activeComponent = 'general'"
+          aria-label="通用"
+        >
+          <SettingOutlined class="nav-icon"/>
+          <span class="nav-text">通用</span>
+        </button>
+        <button
+          class="nav-item"
           :class="{ active: activeComponent === 'about' }"
           @click="activeComponent = 'about'"
           aria-label="关于"
@@ -49,10 +58,12 @@ import { ref, computed } from 'vue';
 import {
   FolderOpenOutlined,
   FileTextOutlined,
+  SettingOutlined,
   InfoCircleOutlined
 } from "@ant-design/icons-vue";
 import WorkspaceSetting from './WorkspaceSetting.vue';
 import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
+import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
 
 const activeComponent = ref('workspace');
@@ -60,6 +71,7 @@ const activeComponent = ref('workspace');
 const componentMap = {
   'workspace': WorkspaceSetting,
   'template': BilladmTemplateSetting,
+  'general': GeneralSetting,
   'about': AboutSetting,
 };
 
