@@ -207,13 +207,14 @@ const reorderCategories = async (oldIndex: number, newIndex: number) => {
   const list = [...categories.value]
   const [moved] = list.splice(oldIndex, 1)
   list.splice(newIndex, 0, moved!)
+  const ledgerId = ledgerStore.currentLedgerId!
   // 全量重排：按新顺序重新分配 sortOrder
   for (let i = 0; i < list.length; i++) {
     const category = list[i]!
     if (category.sortOrder !== i) {
       category.sortOrder = i
       try {
-        await reorderCategory(category.name, activeType.value, i)
+        await reorderCategory(category.name, activeType.value, i, ledgerId)
       } catch { /* error handled in backend */ }
     }
   }
@@ -225,13 +226,14 @@ const reorderTags = async (oldIndex: number, newIndex: number) => {
   const [moved] = list.splice(oldIndex, 1)
   list.splice(newIndex, 0, moved!)
   const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`
+  const ledgerId = ledgerStore.currentLedgerId!
   // 全量重排：按新顺序重新分配 sortOrder
   for (let i = 0; i < list.length; i++) {
     const tag = list[i]!
     if (tag.sortOrder !== i) {
       tag.sortOrder = i
       try {
-        await reorderTag(tag.name, categoryTransactionType, i)
+        await reorderTag(tag.name, categoryTransactionType, i, ledgerId)
       } catch { /* error handled in backend */ }
     }
   }

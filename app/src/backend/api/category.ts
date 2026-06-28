@@ -17,8 +17,8 @@ export async function deleteCategory(name: string, transactionType: string, ledg
     await api.delete<void>(`/v1/categories/${encodeURIComponent(name)}?type=${encodeURIComponent(transactionType)}&ledgerId=${encodeURIComponent(ledgerId)}`, '删除分类');
 }
 
-export async function updateCategorySort(name: string, transactionType: string, sortOrder: number): Promise<void> {
-    await api.patch<void>(`/v1/categories/${encodeURIComponent(name)}/sort`, { transactionType, sortOrder }, '更新分类排序');
+export async function updateCategorySort(name: string, transactionType: string, sortOrder: number, ledgerId: string): Promise<void> {
+    await api.patch<void>(`/v1/categories/${encodeURIComponent(name)}/sort`, { ledgerId, transactionType, sortOrder }, '更新分类排序');
 }
 
 export interface InitializeCategoriesResponse {

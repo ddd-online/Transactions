@@ -220,9 +220,9 @@ export async function removeTag(name: string, categoryTransactionType: string, l
 /**
  * 更新分类排序
  */
-export async function reorderCategory(name: string, transactionType: string, sortOrder: number) {
+export async function reorderCategory(name: string, transactionType: string, sortOrder: number, ledgerId: string) {
     try {
-        await updateCategorySort(name, transactionType, sortOrder);
+        await updateCategorySort(name, transactionType, sortOrder, ledgerId);
     } catch (error) {
         NotificationUtil.error('更新分类排序失败', `${error}`);
         throw error;
@@ -232,9 +232,9 @@ export async function reorderCategory(name: string, transactionType: string, sor
 /**
  * 更新标签排序
  */
-export async function reorderTag(name: string, categoryTransactionType: string, sortOrder: number) {
+export async function reorderTag(name: string, categoryTransactionType: string, sortOrder: number, ledgerId: string) {
     try {
-        await updateTagSort(name, categoryTransactionType, sortOrder);
+        await updateTagSort(name, categoryTransactionType, sortOrder, ledgerId);
     } catch (error) {
         NotificationUtil.error('更新标签排序失败', `${error}`);
         throw error;
