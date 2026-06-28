@@ -7,6 +7,15 @@
       <nav class="settings-nav" aria-label="设置导航">
         <button
           class="nav-item"
+          :class="{ active: activeComponent === 'general' }"
+          @click="activeComponent = 'general'"
+          aria-label="通用"
+        >
+          <SettingOutlined class="nav-icon"/>
+          <span class="nav-text">通用</span>
+        </button>
+        <button
+          class="nav-item"
           :class="{ active: activeComponent === 'workspace' }"
           @click="activeComponent = 'workspace'"
           aria-label="工作空间"
@@ -22,15 +31,6 @@
         >
           <FileTextOutlined class="nav-icon"/>
           <span class="nav-text">消费模板</span>
-        </button>
-        <button
-          class="nav-item"
-          :class="{ active: activeComponent === 'general' }"
-          @click="activeComponent = 'general'"
-          aria-label="通用"
-        >
-          <SettingOutlined class="nav-icon"/>
-          <span class="nav-text">通用</span>
         </button>
         <button
           class="nav-item"
@@ -66,12 +66,12 @@ import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
 
-const activeComponent = ref('workspace');
+const activeComponent = ref('general');
 
 const componentMap = {
+  'general': GeneralSetting,
   'workspace': WorkspaceSetting,
   'template': BilladmTemplateSetting,
-  'general': GeneralSetting,
   'about': AboutSetting,
 };
 
