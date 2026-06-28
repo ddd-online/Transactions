@@ -180,6 +180,8 @@ const handleReorder = async (oldIndex: number, newIndex: number) => {
     }
   }
   templates.value = list
+  await nextTick()
+  initSortable()
 }
 
 const loadTemplates = async () => {
@@ -247,6 +249,7 @@ watch(() => ledgerStore.currentLedgerId, () => {
   cursor: grab;
   transition: color var(--billadm-transition-fast);
   vertical-align: middle;
+  touch-action: none;
 }
 
 .drag-handle svg {

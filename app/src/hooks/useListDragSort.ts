@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, type Ref } from 'vue'
+import { watch, onMounted, onUnmounted, nextTick, type Ref } from 'vue'
 import Sortable from 'sortablejs'
 
 export interface DragSortOptions {
@@ -13,6 +13,7 @@ export interface DragSortOptions {
 /**
  * 为列表容器绑定 SortableJS 拖拽排序。
  * 组件挂载时初始化，卸载时自动销毁。
+ * 当 enabled 从 false 变为 true 时自动重新初始化（处理异步数据加载）。
  *
  * @param containerRef - 列表容器 DOM 元素的 template ref
  * @param enabled - 响应式开关，为 false 时禁用拖拽
@@ -51,8 +52,19 @@ export function useListDragSort(
     }
   }
 
+  // 挂载时尝试初始化
   onMounted(() => {
     init()
+  })
+
+  // 数据就绪后初始化（nextTick 确保 DOM 已更新）
+  watch(enabled, async (val) => {
+    if (val) {
+      await nextTick()
+      init()
+    } else {
+      destroy()
+    }
   })
 
   onUnmounted(() => {

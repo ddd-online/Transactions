@@ -209,6 +209,7 @@ useListDragSort(listRef, dragEnabled, {
   cursor: grab;
   transition: color var(--billadm-transition-fast);
   margin-right: 2px;
+  touch-action: none;
 }
 
 .drag-handle svg {
