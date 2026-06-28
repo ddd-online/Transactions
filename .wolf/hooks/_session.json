@@ -1,89 +1,86 @@
 {
-  "session_id": "session-2026-06-28-2309",
-  "started": "2026-06-28T15:09:48.023Z",
+  "session_id": "session-2026-06-28-2318",
+  "started": "2026-06-28T15:18:18.971Z",
   "files_read": {
-    "D:/github/Transactions/README.md": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:19.166Z"
-    },
-    "D:/github/Transactions/build/build.ps1": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:19.879Z"
-    },
-    "D:/github/Transactions/build/clean.ps1": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:20.219Z"
-    },
-    "D:/github/Transactions/app/package.json": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:27.231Z"
-    },
-    "D:/github/Transactions/electron/package.json": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:27.648Z"
-    },
-    "D:/github/Transactions/kernel/go.mod": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:35.656Z"
-    },
-    "D:/github/Transactions/app/vite.config.ts": {
-      "count": 1,
-      "tokens": 338,
-      "first_read": "2026-06-28T15:10:35.981Z"
-    },
     "D:/github/Transactions/electron/src/main.js": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:37.293Z"
-    },
-    "D:/github/Transactions/kernel/main.go": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:46.836Z"
-    },
-    "D:/github/Transactions/electron/electron-builder.yml": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-06-28T15:10:49.031Z"
-    },
-    "D:/github/Transactions/CLAUDE.md": {
       "count": 2,
-      "tokens": 2430,
-      "first_read": "2026-06-28T15:11:09.550Z"
+      "tokens": 2230,
+      "first_read": "2026-06-28T15:46:46.602Z"
+    },
+    "D:/github/Transactions/electron/src/preload.js": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-28T15:46:46.932Z"
+    },
+    "D:/github/Transactions/app/src/components/tr_view/TransactionRecordTable.vue": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-28T15:56:21.455Z"
+    },
+    "D:/github/Transactions/app/src/components/tr_view/TransactionRecordView.vue": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-06-28T15:56:21.855Z"
+    },
+    "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue": {
+      "count": 2,
+      "tokens": 3478,
+      "first_read": "2026-06-28T16:05:07.720Z"
+    },
+    "D:/github/Transactions/app/src/stores/keyEventStore.ts": {
+      "count": 1,
+      "tokens": 3182,
+      "first_read": "2026-06-28T16:05:12.564Z"
     }
   },
   "files_written": [
     {
-      "file": "D:/github/Transactions/CLAUDE.md",
-      "action": "edit",
-      "tokens": 94,
-      "at": "2026-06-28T15:11:25.468Z"
+      "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+      "action": "create",
+      "tokens": 471,
+      "at": "2026-06-28T15:48:58.990Z"
     },
     {
-      "file": "D:/github/Transactions/CLAUDE.md",
-      "action": "edit",
-      "tokens": 280,
-      "at": "2026-06-28T15:11:32.617Z"
+      "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-28-single-instance-lock.md",
+      "action": "create",
+      "tokens": 846,
+      "at": "2026-06-28T15:49:52.894Z"
     },
     {
-      "file": "D:/github/Transactions/CLAUDE.md",
+      "file": "D:/github/Transactions/electron/src/main.js",
       "action": "edit",
-      "tokens": 196,
-      "at": "2026-06-28T15:11:42.425Z"
+      "tokens": 45,
+      "at": "2026-06-28T15:50:35.411Z"
+    },
+    {
+      "file": "D:/github/Transactions/electron/src/main.js",
+      "action": "edit",
+      "tokens": 56,
+      "at": "2026-06-28T15:50:39.540Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordView.vue",
+      "action": "edit",
+      "tokens": 30,
+      "at": "2026-06-28T15:56:38.431Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+      "action": "edit",
+      "tokens": 47,
+      "at": "2026-06-28T16:05:28.927Z"
     }
   ],
   "edit_counts": {
-    "CLAUDE.md": 3
+    "docs/superpowers/specs/2026-06-28-single-instance-lock-design.md": 1,
+    "docs/superpowers/plans/2026-06-28-single-instance-lock.md": 1,
+    "electron/src/main.js": 2,
+    "app/src/components/tr_view/TransactionRecordView.vue": 1,
+    "app/src/components/key_event_view/KeyEventView.vue": 1
   },
-  "anatomy_hits": 1,
-  "anatomy_misses": 10,
-  "repeated_reads_warned": 1,
+  "anatomy_hits": 2,
+  "anatomy_misses": 4,
+  "repeated_reads_warned": 2,
   "cerebrum_warnings": 0,
-  "stop_count": 2
+  "stop_count": 9
 }

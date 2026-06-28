@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 1325445,
-    "total_reads": 1426,
-    "total_writes": 2827,
-    "total_sessions": 5,
-    "anatomy_hits": 338,
-    "anatomy_misses": 1086,
-    "repeated_reads_blocked": 3039,
-    "estimated_savings_vs_bare_cli": 5555159
+    "total_tokens_estimated": 1348592,
+    "total_reads": 1448,
+    "total_writes": 2849,
+    "total_sessions": 6,
+    "anatomy_hits": 340,
+    "anatomy_misses": 1106,
+    "repeated_reads_blocked": 3044,
+    "estimated_savings_vs_bare_cli": 5567957
   },
   "sessions": [
     {
@@ -23549,6 +23549,382 @@
         "writes_count": 3,
         "repeated_reads_blocked": 1,
         "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:47:14.582Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 2,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:48:05.569Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 0,
+        "reads_count": 2,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:49:05.771Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+          "tokens_estimated": 471,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 471,
+        "reads_count": 2,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:50:02.427Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+          "tokens_estimated": 471,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-28-single-instance-lock.md",
+          "tokens_estimated": 846,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 0,
+        "output_tokens_estimated": 1317,
+        "reads_count": 2,
+        "writes_count": 2,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:51:17.514Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 2230,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+          "tokens_estimated": 471,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-28-single-instance-lock.md",
+          "tokens_estimated": 846,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 45,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 56,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2230,
+        "output_tokens_estimated": 1418,
+        "reads_count": 2,
+        "writes_count": 4,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:52:40.497Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 2230,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+          "tokens_estimated": 471,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-28-single-instance-lock.md",
+          "tokens_estimated": 846,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 45,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 56,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2230,
+        "output_tokens_estimated": 1418,
+        "reads_count": 2,
+        "writes_count": 4,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T15:56:56.474Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 2230,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordTable.vue",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordView.vue",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+          "tokens_estimated": 471,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-28-single-instance-lock.md",
+          "tokens_estimated": 846,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 45,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 56,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordView.vue",
+          "tokens_estimated": 30,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 2230,
+        "output_tokens_estimated": 1448,
+        "reads_count": 4,
+        "writes_count": 5,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 0
+      }
+    },
+    {
+      "id": "session-2026-06-28-2318",
+      "started": "2026-06-28T15:18:18.971Z",
+      "ended": "2026-06-28T16:05:45.602Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 2230,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/preload.js",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordTable.vue",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordView.vue",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+          "tokens_estimated": 3478,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/stores/keyEventStore.ts",
+          "tokens_estimated": 3182,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-06-28-single-instance-lock-design.md",
+          "tokens_estimated": 471,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/plans/2026-06-28-single-instance-lock.md",
+          "tokens_estimated": 846,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 45,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 56,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/tr_view/TransactionRecordView.vue",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/key_event_view/KeyEventView.vue",
+          "tokens_estimated": 47,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 8890,
+        "output_tokens_estimated": 1495,
+        "reads_count": 6,
+        "writes_count": 6,
+        "repeated_reads_blocked": 2,
+        "anatomy_lookups": 2
       }
     }
   ],

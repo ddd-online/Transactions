@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-28T15:11:42.410Z
-> Files: 26 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-06-28T16:05:28.912Z
+> Files: 30 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -56,7 +56,7 @@
 - `KeyEventDetail.vue` — Vue: setup (~2712 tok)
 - `KeyEventImageGallery.vue` — Vue: setup (~1840 tok)
 - `KeyEventLinkedTr.vue` — Vue: setup (~2131 tok)
-- `KeyEventView.vue` — Vue: setup (~3478 tok)
+- `KeyEventView.vue` — Vue: setup (~3487 tok)
 - `UploadProgressBar.vue` — Vue: setup (~2069 tok)
 
 ## app/src/components/settings_view/
@@ -64,6 +64,7 @@
 
 ## app/src/components/tr_view/
 
+- `TransactionRecordView.vue` — Vue: setup (~4149 tok)
 
 ## app/src/hooks/
 
@@ -90,6 +91,7 @@
 - `2026-06-26-image-upload-progress.md` — 图片上传进度条 实施计划 (~3287 tok)
 - `2026-06-26-key-event-preload.md` — 关键事件数据预加载与缓存 实施计划 (~3100 tok)
 - `2026-06-26-key-event-transition.md` — 关键事件切换过渡动效 实施计划 (~2781 tok)
+- `2026-06-28-single-instance-lock.md` — 单实例锁 实现计划 (~740 tok)
 
 ## docs/superpowers/specs/
 
@@ -97,6 +99,7 @@
 - `2026-06-26-image-upload-progress-design.md` — 图片上传进度条设计 (~1380 tok)
 - `2026-06-26-key-event-preload-design.md` — 关键事件数据预加载与缓存设计 (~655 tok)
 - `2026-06-26-key-event-transition-design.md` — 关键事件切换过渡动效设计 (~862 tok)
+- `2026-06-28-single-instance-lock-design.md` — 单实例锁 设计规格 (~412 tok)
 
 ## electron/
 
@@ -106,6 +109,7 @@
 
 ## electron/src/
 
+- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~2230 tok)
 
 ## kernel/
 

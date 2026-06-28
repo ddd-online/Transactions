@@ -265,3 +265,20 @@
 | 23:11 | 改进 CLAUDE.md — 修复标题结构、添加单测/vue-tsc/vitest 命令、澄清开发模式连接拓扑、添加 electron-builder 配置引用 | CLAUDE.md | 完成 | ~0 |
 | 23:11 | Session end: 3 writes across 1 files (CLAUDE.md) | 11 reads | ~3338 tok |
 | 23:12 | Session end: 3 writes across 1 files (CLAUDE.md) | 11 reads | ~3338 tok |
+
+## Session: 2026-06-28 23:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:48 | Created docs/superpowers/specs/2026-06-28-single-instance-lock-design.md | — | ~440 |
+| 23:49 | Session end: 1 writes across 1 files (2026-06-28-single-instance-lock-design.md) | 2 reads | ~471 tok |
+| 23:49 | Created docs/superpowers/plans/2026-06-28-single-instance-lock.md | — | ~790 |
+| 23:50 | Session end: 2 writes across 2 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md) | 2 reads | ~1317 tok |
+| 23:50 | Edited electron/src/main.js | added 1 condition(s) | ~45 |
+| 23:50 | Edited electron/src/main.js | added 2 condition(s) | ~56 |
+| 23:51 | Session end: 4 writes across 3 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js) | 2 reads | ~3648 tok |
+| 23:52 | Session end: 4 writes across 3 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js) | 2 reads | ~3648 tok |
+| 23:56 | Edited app/src/components/tr_view/TransactionRecordView.vue | inline fix | ~28 |
+| 23:56 | Session end: 5 writes across 4 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue) | 4 reads | ~3678 tok |
+| 00:05 | Edited app/src/components/key_event_view/KeyEventView.vue | 3→3 lines | ~44 |
+| 00:05 | Session end: 6 writes across 5 files (2026-06-28-single-instance-lock-design.md, 2026-06-28-single-instance-lock.md, main.js, TransactionRecordView.vue, KeyEventView.vue) | 6 reads | ~10385 tok |
