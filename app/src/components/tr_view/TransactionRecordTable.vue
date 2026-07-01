@@ -52,27 +52,60 @@
 
       <template v-else-if="column.dataIndex === 'action'">
         <div class="cell-actions">
-          <a-button type="text" size="small" @click="handleEdit(record as TransactionRecord)">
-            <EditOutlined /> 编辑
-          </a-button>
-          <a-tooltip v-if="(record as TransactionRecord).keyEventDate" :title="'已关联至 ' + (record as TransactionRecord).keyEventDate">
-            <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
-              <LinkOutlined /> 已关联
+          <a-tooltip title="编辑">
+            <a-button type="text" size="small" @click="handleEdit(record as TransactionRecord)">
+              <EditOutlined />
             </a-button>
           </a-tooltip>
-          <a-button v-else type="text" size="small" @click="handleLink(record as TransactionRecord)">
-            <LinkOutlined /> 关联
-          </a-button>
+          <a-tooltip v-if="(record as TransactionRecord).keyEventDate" :title="'已关联至 ' + (record as TransactionRecord).keyEventDate">
+            <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
+              <LinkOutlined />
+            </a-button>
+          </a-tooltip>
+          <a-tooltip v-else title="关联">
+            <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
+              <LinkOutlined />
+            </a-button>
+          </a-tooltip>
           <a-popconfirm
             title="确认删除此条记录？"
             ok-text="确认"
             @confirm="handleDelete(record as TransactionRecord)"
             :showCancel="false"
           >
-            <a-button type="text" size="small" danger>
-              <DeleteOutlined /> 删除
-            </a-button>
+            <a-tooltip title="删除">
+              <a-button type="text" size="small" danger>
+                <DeleteOutlined />
+              </a-button>
+            </a-tooltip>
           </a-popconfirm>
+          <a-popover
+            :open="syncPopoverTarget === (record as TransactionRecord).transactionId"
+            @update:open="(val) => { syncPopoverTarget = val ? (record as TransactionRecord).transactionId : null }"
+            trigger="click"
+            placement="bottomRight"
+          >
+            <template #content>
+              <div class="sync-popover-content">
+                <div
+                  v-for="ledger in ledgers.filter(l => l.id !== currentLedgerId)"
+                  :key="ledger.id"
+                  class="sync-ledger-item"
+                  @click="handleSyncTarget(record as TransactionRecord, ledger.id)"
+                >
+                  {{ ledger.name }}
+                </div>
+                <div v-if="ledgers.filter(l => l.id !== currentLedgerId).length === 0" class="sync-empty">
+                  无可用账本
+                </div>
+              </div>
+            </template>
+            <a-tooltip title="同步到其他账本">
+              <a-button type="text" size="small">
+                <SyncOutlined />
+              </a-button>
+            </a-tooltip>
+          </a-popover>
         </div>
       </template>
     </template>
@@ -80,11 +113,12 @@
 </template>
 
 <script setup lang="ts">
-import type {TransactionRecord} from '@/types/billadm';
+import {ref} from 'vue';
+import type {TransactionRecord, Ledger} from '@/types/billadm';
 import {centsToYuan, formatTimestamp} from "@/backend/functions";
 import {TransactionTypeToLabel} from "@/backend/constant";
 import type {ColumnsType} from "ant-design-vue/es/table";
-import {EditOutlined, DeleteOutlined, LinkOutlined} from "@ant-design/icons-vue";
+import {EditOutlined, DeleteOutlined, LinkOutlined, SyncOutlined} from "@ant-design/icons-vue";
 
 const columns: ColumnsType = [
   {
@@ -130,13 +164,15 @@ const columns: ColumnsType = [
   {
     title: '操作',
     dataIndex: 'action',
-    width: 200,
+    width: 160,
     align: 'center'
   }
 ];
 
 interface Props {
-  items: TransactionRecord[]
+  items: TransactionRecord[];
+  ledgers: Ledger[];
+  currentLedgerId: string;
 }
 
 defineProps<Props>()
@@ -145,7 +181,10 @@ const emit = defineEmits<{
   (e: 'edit', record: TransactionRecord): void;
   (e: 'delete', record: TransactionRecord): void;
   (e: 'link', record: TransactionRecord): void;
+  (e: 'sync', record: TransactionRecord, targetLedgerId: string): void;
 }>();
+
+const syncPopoverTarget = ref<string | null>(null);
 
 const handleEdit = (record: TransactionRecord) => {
   emit('edit', record);
@@ -157,6 +196,11 @@ const handleDelete = (record: TransactionRecord) => {
 
 const handleLink = (record: TransactionRecord) => {
   emit('link', record);
+};
+
+const handleSyncTarget = (record: TransactionRecord, targetLedgerId: string) => {
+  syncPopoverTarget.value = null;
+  emit('sync', record, targetLedgerId);
 };
 </script>
 
@@ -276,5 +320,28 @@ const handleLink = (record: TransactionRecord) => {
   display: flex;
   gap: 4px;
   justify-content: center;
+}
+
+.sync-popover-content {
+  min-width: 120px;
+}
+
+.sync-ledger-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-major);
+  transition: background-color 0.2s;
+}
+
+.sync-ledger-item:hover {
+  background-color: var(--billadm-color-hover-bg);
+}
+
+.sync-empty {
+  padding: 6px 12px;
+  color: var(--billadm-color-text-secondary);
+  font-size: var(--billadm-size-text-caption);
 }
 </style>

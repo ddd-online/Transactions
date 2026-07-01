@@ -18,7 +18,7 @@
       <div class="tr-body">
         <div class="tr-content">
           <a-spin :spinning="tableLoading">
-            <transaction-record-table :items="tableData" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
+            <transaction-record-table :items="tableData" :ledgers="ledgerStore.ledgers" :currentLedgerId="ledgerStore.currentLedgerId" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
           </a-spin>
         </div>
 
