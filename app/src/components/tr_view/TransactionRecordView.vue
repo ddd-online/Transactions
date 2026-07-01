@@ -18,7 +18,7 @@
       <div class="tr-body">
         <div class="tr-content">
           <a-spin :spinning="tableLoading">
-            <transaction-record-table :items="tableData" :ledgers="ledgerStore.ledgers" :currentLedgerId="ledgerStore.currentLedgerId" @edit="updateTr" @delete="deleteTr" @link="handleLink" @sync="handleSync" />
+            <transaction-record-table :items="tableData" :ledgers="ledgerStore.ledgers" :currentLedgerId="ledgerStore.currentLedgerId" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
           </a-spin>
         </div>
 
@@ -159,7 +159,6 @@ import {
   getTemplatesByLedgerId,
   saveTemplate
 } from "@/backend/functions.ts";
-import { createTrForLedger } from "@/backend/api/tr.ts";
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
 import { useTrQueryConditionStore } from "@/stores/trQueryConditionStore.ts";
@@ -412,21 +411,6 @@ const handleLink = (record: TransactionRecord) => {
   linkingRecord.value = record;
   linkDate.value = record.keyEventDate ? dayjs(record.keyEventDate) : dayjs.unix(record.transactionAt);
   openLinkModal.value = true;
-};
-
-const handleSync = async (record: TransactionRecord, targetLedgerId: string) => {
-  try {
-    const syncRecord = {
-      ...record,
-      ledgerId: targetLedgerId,
-      transactionId: '', // 清空ID让后端生成新UUID
-    } as TransactionRecord;
-    await createTrForLedger(syncRecord);
-    message.success('同步成功');
-  } catch (error) {
-    message.error('同步失败');
-    console.error('sync transaction failed:', error);
-  }
 };
 
 const confirmLink = async () => {

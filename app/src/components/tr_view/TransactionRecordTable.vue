@@ -81,7 +81,7 @@
           </a-popconfirm>
           <a-popover
             :open="syncPopoverTarget === (record as TransactionRecord).transactionId"
-            @update:open="(val) => { syncPopoverTarget = val ? (record as TransactionRecord).transactionId : null }"
+            @update:open="(val) => { if (syncingTransactionId === (record as TransactionRecord).transactionId) return; syncPopoverTarget = val ? (record as TransactionRecord).transactionId : null }"
             trigger="click"
             placement="bottomRight"
           >
@@ -101,8 +101,8 @@
               </div>
             </template>
             <a-tooltip title="同步到其他账本">
-              <a-button type="text" size="small">
-                <SyncOutlined />
+              <a-button type="text" size="small" :disabled="syncingTransactionId === (record as TransactionRecord).transactionId">
+                <SyncOutlined :spin="syncingTransactionId === (record as TransactionRecord).transactionId" />
               </a-button>
             </a-tooltip>
           </a-popover>
@@ -119,6 +119,8 @@ import {centsToYuan, formatTimestamp} from "@/backend/functions";
 import {TransactionTypeToLabel} from "@/backend/constant";
 import type {ColumnsType} from "ant-design-vue/es/table";
 import {EditOutlined, DeleteOutlined, LinkOutlined, SyncOutlined} from "@ant-design/icons-vue";
+import {createTrForLedger} from "@/backend/api/tr";
+import {message} from "ant-design-vue";
 
 const columns: ColumnsType = [
   {
@@ -181,10 +183,10 @@ const emit = defineEmits<{
   (e: 'edit', record: TransactionRecord): void;
   (e: 'delete', record: TransactionRecord): void;
   (e: 'link', record: TransactionRecord): void;
-  (e: 'sync', record: TransactionRecord, targetLedgerId: string): void;
 }>();
 
 const syncPopoverTarget = ref<string | null>(null);
+const syncingTransactionId = ref<string | null>(null);
 
 const handleEdit = (record: TransactionRecord) => {
   emit('edit', record);
@@ -198,9 +200,23 @@ const handleLink = (record: TransactionRecord) => {
   emit('link', record);
 };
 
-const handleSyncTarget = (record: TransactionRecord, targetLedgerId: string) => {
-  syncPopoverTarget.value = null;
-  emit('sync', record, targetLedgerId);
+const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: string) => {
+  syncingTransactionId.value = record.transactionId;
+  try {
+    const syncRecord = {
+      ...record,
+      ledgerId: targetLedgerId,
+      transactionId: '', // 清空ID让后端生成新UUID
+    } as TransactionRecord;
+    await createTrForLedger(syncRecord);
+    syncPopoverTarget.value = null;
+    message.success('同步成功');
+  } catch (error) {
+    message.error('同步失败');
+    console.error('sync transaction failed:', error);
+  } finally {
+    syncingTransactionId.value = null;
+  }
 };
 </script>
 
