@@ -155,7 +155,7 @@ const confirmAddTag = async () => {
   }
   const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
   try {
-    await addTag(name, categoryTransactionType);
+    await addTag(ledgerStore.currentLedgerId!, name, categoryTransactionType);
     message.success('标签已添加');
     openTagModal.value = false;
     await loadCategories();

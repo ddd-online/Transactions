@@ -196,9 +196,9 @@ export async function initializeCategoriesForLedger(ledgerId: string): Promise<{
 /**
  * 创建标签
  */
-export async function addTag(name: string, categoryTransactionType: string) {
+export async function addTag(ledgerId: string, name: string, categoryTransactionType: string) {
     try {
-        await createTag(name, categoryTransactionType);
+        await createTag(ledgerId, name, categoryTransactionType);
     } catch (error) {
         NotificationUtil.error('创建标签失败', `${error}`);
         throw error;

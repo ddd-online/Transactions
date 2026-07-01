@@ -309,6 +309,9 @@ const onChartUpdate = async (chartId: string, request: { title?: string; granula
       chartType: chart.chartType,
       sortOrder: chart.sortOrder,
     })
+    // 强制刷新图表数据（失效缓存，确保 loadAllChartData 重新加载）
+    cachedLedgerId = null
+    cachedTimeRange = undefined
     await loadAllChartData()
     message.success('更新成功')
   } catch (error) {

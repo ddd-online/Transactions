@@ -150,6 +150,10 @@ const handleSave = () => {
 
 const handleDeleteLine = (index: number) => {
   localLines.value.splice(index, 1)
+  // 删除后立即保存，与 handleAddLine 行为一致
+  if (props.chartId) {
+    emit('update', props.chartId, [...localLines.value])
+  }
 }
 
 const onTransactionTypeChange = async () => {

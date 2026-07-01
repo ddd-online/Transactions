@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-06-28T17:07:32.056Z
-> Files: 44 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-01T17:52:02.349Z
+> Files: 49 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -19,8 +19,8 @@
 ## .superpowers/sdd/
 
 - `progress.md` — SDD Progress Ledger (~90 tok)
-- `task-1-report.md` — 状态 (~63 tok)
-- `task-2-report.md` — Task 2 完成报告 (~178 tok)
+- `task-1-report.md` — Task 1 Report: TransactionRecordTable.vue — 操作列改为图标+tooltip + 新增同步按钮 (~392 tok)
+- `task-2-report.md` — Task 2 Report: TransactionRecordView.vue — handleSync (~275 tok)
 - `task-3-report.md` — 状态 (~98 tok)
 - `task-4-report.md` — 状态 (~142 tok)
 - `task-5-report.md` — 状态 (~384 tok)
@@ -35,7 +35,7 @@
 
 ## app/src/backend/
 
-- `functions.ts` — 将秒级时间戳转换为格式化时间字符串 (~2280 tok)
+- `functions.ts` — 将秒级时间戳转换为格式化时间字符串 (~2288 tok)
 - `imageOptimizer.ts` — 将 base64 data URI 转成 Blob (~614 tok)
 
 ## app/src/backend/api/
@@ -43,7 +43,7 @@
 - `api-client.ts` — Check if the response indicates an error (code !== 0). (~973 tok)
 - `category.ts` — Exports queryCategory, createCategory, deleteCategory, updateCategorySort + 2 more (~421 tok)
 - `key-event.ts` — Exports queryKeyEventsByYear, queryKeyEventByDate, saveKeyEvent, deleteKeyEvent + 3 more (~545 tok)
-- `tag.ts` — Exports queryTags, createTag, deleteTag, updateTagSort (~342 tok)
+- `tag.ts` — Exports queryTags, createTag, deleteTag, updateTagSort (~350 tok)
 
 ## app/src/components/
 
@@ -53,6 +53,8 @@
 
 ## app/src/components/da_view/
 
+- `BilladmChartLines.vue` — Vue: setup (~2260 tok)
+- `DataAnalysisView.vue` — Vue: setup (~3038 tok)
 
 ## app/src/components/key_event_view/
 
@@ -64,16 +66,17 @@
 
 ## app/src/components/settings_view/
 
-- `BilladmCategoryTagSetting.vue` — Vue component (~3173 tok)
+- `BilladmCategoryTagSetting.vue` — Vue component (~3181 tok)
 - `BilladmTemplateSetting.vue` — Vue component (~2057 tok)
 - `CategoryColumn.vue` — Vue component (~2507 tok)
-- `GeneralSetting.vue` — Vue component (~505 tok)
-- `SettingsView.vue` — Vue: setup (~1198 tok)
+- `GeneralSetting.vue` — Vue component (~940 tok)
+- `SettingsView.vue` — Vue: setup (~1084 tok)
 - `TagColumn.vue` — Vue component (~1820 tok)
 
 ## app/src/components/tr_view/
 
-- `TransactionRecordView.vue` — Vue: setup (~4149 tok)
+- `TransactionRecordTable.vue` — Vue: setup (~2559 tok)
+- `TransactionRecordView.vue` — Vue: setup (~4304 tok)
 
 ## app/src/hooks/
 
@@ -104,6 +107,7 @@
 - `2026-06-26-key-event-transition.md` — 关键事件切换过渡动效 实施计划 (~2781 tok)
 - `2026-06-28-single-instance-lock.md` — 单实例锁 实现计划 (~740 tok)
 - `2026-06-29-general-setting.md` — 通用设置页 + DevTools 开关 实现计划 (~1786 tok)
+- `2026-07-02-transaction-sync.md` — 消费记录同步 — 实施计划 (~1824 tok)
 
 ## docs/superpowers/specs/
 
@@ -113,6 +117,7 @@
 - `2026-06-26-key-event-transition-design.md` — 关键事件切换过渡动效设计 (~862 tok)
 - `2026-06-28-single-instance-lock-design.md` — 单实例锁 设计规格 (~412 tok)
 - `2026-06-29-general-setting-design.md` — 通用设置页 + DevTools 开关 设计规格 (~378 tok)
+- `2026-07-02-transaction-sync-design.md` — 消费记录同步 — 设计规格 (~358 tok)
 
 ## electron/
 

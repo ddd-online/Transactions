@@ -320,6 +320,183 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-06-28T17:07:32.075Z"
+    },
+    {
+      "id": "bug-021",
+      "timestamp": "2026-06-28T17:12:34.366Z",
+      "error_message": "CSS fix: active",
+      "file": "app/src/components/settings_view/SettingsView.vue",
+      "root_cause": "active: activeComponent === 'workspace' → activeComponent === 'general'",
+      "fix": "Changed active: activeComponent === 'workspace' → activeComponent === 'general'",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-06-28T17:12:34.366Z"
+    },
+    {
+      "id": "bug-022",
+      "timestamp": "2026-07-02T00:00:00.000Z",
+      "error_message": "创建标签时未传账本id，标签以空 ledger_id 写入数据库",
+      "file": "app/src/backend/api/tag.ts, app/src/backend/functions.ts, app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "root_cause": "前端三层 createTag → addTag → confirmAddTag 全部漏传 ledgerId 参数，后端 CreateTagRequest.LedgerID 收到空值",
+      "fix": "tag.ts: createTag 新增 ledgerId 参数并写入请求体；functions.ts: addTag 新增 ledgerId 参数并透传；BilladmCategoryTagSetting.vue: confirmAddTag 传入 ledgerStore.currentLedgerId!",
+      "tags": [
+        "missing-parameter",
+        "data-integrity",
+        "vue",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T00:00:00.000Z"
+    },
+    {
+      "id": "bug-023",
+      "timestamp": "2026-07-02T00:00:00.000Z",
+      "error_message": "删除数据分析图表中的曲线后未持久化到后端，切换页面后删除的曲线重新出现",
+      "file": "app/src/components/da_view/DataAnalysisView.vue, app/src/components/da_view/BilladmChartLines.vue",
+      "root_cause": "两处问题：(1) handleDeleteLine 仅 splice 本地数组，不发射保存事件；handleAddLine 则立即 emit('addLine') 触发保存。删除依赖用户手动点「保存修改」按钮，但 handleSave 的 emit('update') 事件链可能因组件层级过深未被正确触发。(2) onChartUpdate 调用 loadAllChartData() 前未失效缓存，导致 UI 不刷新",
+      "fix": "(1) BilladmChartLines.vue: handleDeleteLine 改为删除后立即 emit('update', chartId, [...localLines.value])，与 handleAddLine 保持一致；(2) DataAnalysisView.vue: onChartUpdate 中 loadAllChartData() 前失效缓存",
+      "tags": [
+        "cache-bug",
+        "ui-refresh",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-02T00:00:00.000Z"
+    },
+    {
+      "id": "bug-024",
+      "timestamp": "2026-07-01T17:46:27.256Z",
+      "error_message": "Wrong operator: ?? should be ===",
+      "file": "docs/superpowers/plans/2026-07-02-transaction-sync.md",
+      "root_cause": "Used \"??\" instead of \"===\"",
+      "fix": "Changed operator ?? → ===",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:46:27.256Z"
+    },
+    {
+      "id": "bug-025",
+      "timestamp": "2026-07-01T17:48:46.218Z",
+      "error_message": "Wrong reference: 200 should be 160",
+      "file": "app/src/components/tr_view/TransactionRecordTable.vue",
+      "root_cause": "Used \"200\" instead of \"160\"",
+      "fix": "Changed 200 → 160",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:48:46.218Z"
+    },
+    {
+      "id": "bug-026",
+      "timestamp": "2026-07-01T17:48:53.511Z",
+      "error_message": "CSS fix: e, record",
+      "file": "app/src/components/tr_view/TransactionRecordTable.vue",
+      "root_cause": "e: 'link', record: TransactionRecord): void → 'sync', record: TransactionRecord, targetLedgerId: string): void; record: TransactionRecord) => { → TransactionRecord, targetLedgerId: string) => {",
+      "fix": "Changed e: 'link', record: TransactionRecord): void → 'sync', record: TransactionRecord, targetLedgerId: string): void; record: TransactionRecord) => { → TransactionRecord, targetLedgerId: string) => {",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:48:53.511Z"
+    },
+    {
+      "id": "bug-027",
+      "timestamp": "2026-07-01T17:49:09.451Z",
+      "error_message": "Significant refactor of ",
+      "file": "app/src/components/tr_view/TransactionRecordTable.vue",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 25→58 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:49:09.451Z"
+    },
+    {
+      "id": "bug-028",
+      "timestamp": "2026-07-01T17:49:35.243Z",
+      "error_message": "Incorrect value in code",
+      "file": "app/src/components/tr_view/TransactionRecordView.vue",
+      "root_cause": "Had \"updateTr\"",
+      "fix": "Changed to \"ledgerStore.ledgers\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-01T17:51:39.727Z"
+    },
+    {
+      "id": "bug-029",
+      "timestamp": "2026-07-01T17:50:16.612Z",
+      "error_message": "Incorrect value in code",
+      "file": ".superpowers/sdd/task-1-report.md",
+      "root_cause": "Had `3654fd1b5c488fa9d5c84201d26d3894ddc9896c`",
+      "fix": "Changed to `8114bdc550a831912ac33248b34020f0c5f853e8`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:50:16.612Z"
+    },
+    {
+      "id": "bug-030",
+      "timestamp": "2026-07-01T17:51:37.176Z",
+      "error_message": "CSS fix: transaction-record-table",
+      "file": "app/src/components/tr_view/TransactionRecordView.vue",
+      "root_cause": "transaction-record-table: items=\"tableData\" :ledgers=\"ledgerStore.ledgers\" :currentLedgerId=\"ledgerStore.currentLedgerId\" @edit=\"updateTr\" @delete=\"deleteTr\" @link=\"handleLink\" /> → items=\"tableData\" :ledgers=\"ledgerStore.ledgers\" :currentLedgerId=\"ledgerStore.currentLedgerId\" @edit=\"updateTr\" @delete=\"deleteTr\" @link=\"handleLink\" @sync=\"handleSync\" />",
+      "fix": "Changed transaction-record-table: items=\"tableData\" :ledgers=\"ledgerStore.ledgers\" :currentLedgerId=\"ledgerStore.currentLedgerId\" @edit=\"updateTr\" @delete=\"deleteTr\" @link=\"handleLink\" /> → items=\"tableData\" :ledgers=\"ledgerStore.ledgers\" :currentLedgerId=\"ledgerStore.currentLedgerId\" @edit=\"updateTr\" @delete=\"deleteTr\" @link=\"handleLink\" @sync=\"handleSync\" />",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:51:37.176Z"
+    },
+    {
+      "id": "bug-031",
+      "timestamp": "2026-07-01T17:51:43.299Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "app/src/components/tr_view/TransactionRecordView.vue",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:51:43.299Z"
     }
   ]
 }

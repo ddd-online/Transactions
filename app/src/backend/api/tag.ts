@@ -9,8 +9,8 @@ export async function queryTags(categoryTransactionType: string, ledgerId?: stri
     return api.get<Tag[]>(url, '查询标签');
 }
 
-export async function createTag(name: string, categoryTransactionType: string): Promise<void> {
-    await api.post<void>('/v1/tags', { name, categoryTransactionType }, '创建标签');
+export async function createTag(ledgerId: string, name: string, categoryTransactionType: string): Promise<void> {
+    await api.post<void>('/v1/tags', { ledgerId, name, categoryTransactionType }, '创建标签');
 }
 
 export async function deleteTag(name: string, categoryTransactionType: string, ledgerId: string): Promise<void> {

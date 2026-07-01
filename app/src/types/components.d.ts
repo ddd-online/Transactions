@@ -30,6 +30,7 @@ declare module 'vue' {
     AModal: typeof import('ant-design-vue/es')['Modal']
     APagination: typeof import('ant-design-vue/es')['Pagination']
     APopconfirm: typeof import('ant-design-vue/es')['Popconfirm']
+    APopover: typeof import('ant-design-vue/es')['Popover']
     AppBottomBar: typeof import('./../components/AppBottomBar.vue')['default']
     AppLeftBar: typeof import('./../components/AppLeftBar.vue')['default']
     AppTopBar: typeof import('./../components/AppTopBar.vue')['default']
@@ -76,6 +77,5 @@ declare module 'vue' {
     TransactionRecordView: typeof import('./../components/tr_view/TransactionRecordView.vue')['default']
     TrSortModal: typeof import('./../components/tr_view/TrSortModal.vue')['default']
     UploadProgressBar: typeof import('./../components/key_event_view/UploadProgressBar.vue')['default']
-    WorkspaceSetting: typeof import('./../components/settings_view/WorkspaceSetting.vue')['default']
   }
 }
