@@ -8,7 +8,6 @@
         />
       </div>
       <div class="da-toolbar-right">
-        <billadm-ledger-select />
       </div>
     </template>
 
@@ -367,7 +366,7 @@ watch(
 }
 
 .da-sidebar {
-  flex: 0 0 240px;
+  flex: 0 0 200px;
   background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg);
   overflow-y: auto;

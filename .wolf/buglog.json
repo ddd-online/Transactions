@@ -447,8 +447,8 @@
         "vue"
       ],
       "related_bugs": [],
-      "occurrences": 2,
-      "last_seen": "2026-07-01T17:51:39.727Z"
+      "occurrences": 3,
+      "last_seen": "2026-07-01T17:56:37.176Z"
     },
     {
       "id": "bug-029",
@@ -479,8 +479,8 @@
         "vue"
       ],
       "related_bugs": [],
-      "occurrences": 1,
-      "last_seen": "2026-07-01T17:51:37.176Z"
+      "occurrences": 2,
+      "last_seen": "2026-07-01T17:56:33.892Z"
     },
     {
       "id": "bug-031",
@@ -497,6 +497,118 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-01T17:51:43.299Z"
+    },
+    {
+      "id": "bug-032",
+      "timestamp": "2026-07-01T17:56:17.004Z",
+      "error_message": "CSS fix: e",
+      "file": "app/src/components/tr_view/TransactionRecordTable.vue",
+      "root_cause": "e: 'sync', record: TransactionRecord, targetLedgerId: string): void → 'link', record: TransactionRecord): void",
+      "fix": "Changed e: 'sync', record: TransactionRecord, targetLedgerId: string): void → 'link', record: TransactionRecord): void",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-01T17:56:29.566Z"
+    },
+    {
+      "id": "bug-033",
+      "timestamp": "2026-07-01T17:56:21.423Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "app/src/components/tr_view/TransactionRecordTable.vue",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T17:56:21.423Z"
+    },
+    {
+      "id": "bug-034",
+      "timestamp": "2026-07-01T18:01:23.926Z",
+      "error_message": "Wrong reference: 320px should be 280px",
+      "file": "app/src/components/key_event_view/KeyEventView.vue",
+      "root_cause": "Used \"320px\" instead of \"280px\"",
+      "fix": "Changed 320px → 280px",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T18:01:23.926Z"
+    },
+    {
+      "id": "bug-035",
+      "timestamp": "2026-07-01T18:04:58.819Z",
+      "error_message": "Wrong reference: 220px should be 180px",
+      "file": "app/src/components/da_view/BilladmChartView.vue",
+      "root_cause": "Used \"220px\" instead of \"180px\"",
+      "fix": "Changed 220px → 180px",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T18:04:58.819Z"
+    },
+    {
+      "id": "bug-036",
+      "timestamp": "2026-07-01T18:05:35.620Z",
+      "error_message": "Wrong reference: 240px should be 200px",
+      "file": "app/src/components/da_view/DataAnalysisView.vue",
+      "root_cause": "Used \"240px\" instead of \"200px\"",
+      "fix": "Changed 240px → 200px",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-01T18:09:57.326Z"
+    },
+    {
+      "id": "bug-037",
+      "timestamp": "2026-07-01T18:10:07.241Z",
+      "error_message": "Wrong reference: billadm should be div",
+      "file": "app/src/components/tr_view/TransactionRecordView.vue",
+      "root_cause": "Used \"billadm\" instead of \"div\"",
+      "fix": "Changed billadm → div",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-01T18:10:07.241Z"
+    },
+    {
+      "id": "bug-038",
+      "timestamp": "2026-07-03T17:54:29.421Z",
+      "error_message": "Incorrect value in code",
+      "file": "CLAUDE.md",
+      "root_cause": "Had `npm start`",
+      "fix": "Changed to `npm run dev`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-03T17:54:29.421Z"
     }
   ]
 }

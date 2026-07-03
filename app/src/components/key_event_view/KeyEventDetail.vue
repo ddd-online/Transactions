@@ -110,6 +110,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { PlusOutlined, EditOutlined } from '@ant-design/icons-vue';
 import type { KeyEvent, KeyEventImage } from '@/types/billadm';
 import type { UploadProgress } from './UploadProgressBar.vue';
 import type { ImageUrls } from '@/backend/imageOptimizer';

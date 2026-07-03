@@ -165,7 +165,7 @@ const formatAmount = (amount: number) => {
 
 /* 右侧：统计面板 */
 .chart-view-stats {
-  flex: 0 0 220px;
+  flex: 0 0 180px;
   display: flex;
   flex-direction: column;
   justify-content: center;

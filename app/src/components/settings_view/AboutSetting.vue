@@ -15,13 +15,6 @@
       <p class="app-version">版本 {{ appVersion || '...' }}</p>
     </div>
 
-    <div class="about-links">
-      <div class="link-item">
-        <span class="link-label">构建时间</span>
-        <span class="link-value">{{ buildTime }}</span>
-      </div>
-    </div>
-
     <div class="about-copyright">
       <p>© {{ new Date().getFullYear() }} Transactions. All rights reserved.</p>
     </div>
@@ -32,7 +25,6 @@
 import { ref, onMounted } from 'vue';
 
 const appVersion = ref('');
-const buildTime = ref(__BUILD_TIME__);
 
 onMounted(async () => {
   try {
@@ -88,34 +80,6 @@ onMounted(async () => {
   margin: 0;
 }
 
-
-.about-links {
-  display: flex;
-  flex-direction: column;
-  gap: var(--billadm-space-md);
-  width: 100%;
-  max-width: 320px;
-  padding: var(--billadm-space-lg);
-  background: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-md);
-}
-
-.link-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.link-label {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
-}
-
-.link-value {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
-  font-weight: 500;
-}
 
 .about-copyright {
   text-align: center;

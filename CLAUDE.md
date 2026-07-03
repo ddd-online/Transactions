@@ -129,7 +129,7 @@ cd app && npm run build        # Type-check + production build to dist/
 
 **Electron:**
 ```bash
-cd electron && npm start       # Launches Electron window
+cd electron && npm run dev     # Launches Electron window (uses electron ./src/main.js)
 cd electron && npm run package # Package with electron-builder
 ```
 
@@ -165,7 +165,7 @@ Three processes run simultaneously (open three terminals):
 |---|-----------|---------|------|------|
 | 1 | `kernel/` | `go run main.go` | Go API server | 28080 (dev) |
 | 2 | `app/` | `npm run dev` | Vite dev server (serves Vue SPA) | 31945 |
-| 3 | `electron/` | `npm start` | Electron window | — |
+| 3 | `electron/` | `npm run dev` | Electron window | — |
 
 **Connection topology:** In dev mode, Electron loads `http://localhost:31945/static` for the renderer (Vite HMR). API calls from the renderer go directly to `http://127.0.0.1:28080` (Go backend) — there is no Vite proxy; the `electronAPI.getApiServer()` bridge provides the API base URL to the renderer at runtime.
 
@@ -208,3 +208,44 @@ The preload script exposes `window.electronAPI` with:
 - `getApiServer()` — returns the API base URL
 
 Main process handles: kernel lifecycle (spawn/kill `Billadm-Kernel.exe`), first-run workspace selection via `init.html`, window state persistence.
+
+## Frontend API Client
+
+The frontend communicates with the Go backend through a lazy-initialized Axios client (`app/src/backend/api/api-client.ts`):
+
+- **Lazy init**: On first API call, the client detects whether it's running in Electron (`window.electronAPI.getApiServer()`) or browser dev mode (falls back to `http://127.0.0.1:28080`).
+- **Response envelope**: All responses use `{"code": 0, "msg": "", "data": ...}`. The client's `checkSuccess()` throws on non-zero code.
+- **Per-domain modules**: `app/src/backend/api/*.ts` — each domain (transactions, ledgers, categories, tags, templates, charts, key-events, workspace) wraps API calls. These are called by `app/src/backend/functions.ts` which adds error handling via `NotificationUtil`.
+- **Path alias**: `@/` maps to `app/src/` (configured in `vite.config.ts`).
+
+## Money Handling
+
+- **Storage**: All monetary values are stored as **integer cents** (e.g., ¥12.50 → `1250`).
+- **Display**: Use `centsToYuan(cents)` to convert to a display string with 2 decimal places.
+- **Input**: Use `yuanToCents(yuanStr)` to parse user input back to cents.
+- **Transaction update**: There is no update endpoint — `updateTransactionRecord()` performs a **delete + create** to modify a transaction.
+
+## Workspace Lifecycle
+
+- **First run**: If no workspace is configured, Electron shows `init.html` (a small frameless window) for workspace selection. After selection, it closes and the main window opens.
+- **Single instance**: `app.requestSingleInstanceLock()` ensures only one instance runs per machine.
+- **Switching**: Use the workspace setting in the settings view, or restart with a different `--workspace` flag. Each workspace is an independent SQLite file.
+- **Persistence**: Workspace path and window bounds are persisted to `~/.transactions.json` (not used in dev mode).
+
+## OpenWolf Context Management
+
+This project uses OpenWolf (`.wolf/`) for cross-session context. Key rules:
+
+- **Before reading files**: Check `.wolf/anatomy.md` for file descriptions to avoid unnecessary reads.
+- **Before generating code**: Check `.wolf/cerebrum.md` for user preferences, learned conventions, and the Do-Not-Repeat list.
+- **After actions**: Append to `.wolf/memory.md` and update `.wolf/anatomy.md` if files changed.
+- **Bug logging**: After any fix, log to `.wolf/buglog.json` with error, root cause, and fix.
+- **Do-Not-Repeat**: Never use `heic2any` (outdated) — use `heic-to` for HEIC image decoding. Never `optimizeDeps.exclude` for UMD modules in Vite.
+
+## Important Conventions
+
+- **Go backend has no hot reload** — restart `go run main.go` after changes.
+- **`__BUILD_TIME__`** is a compile-time global injected by Vite (`define` in `vite.config.ts`).
+- **Component auto-import**: Both Ant Design Vue components and custom components in `src/components/` are auto-imported via `unplugin-vue-components` — no manual imports needed.
+- **`electronAPI`** is only available inside Electron; code that runs in the browser must handle its absence (the API client does this via the fallback URL).
+- **Transaction update** is delete + create, not a PATCH — be aware of potential race conditions.

@@ -67,18 +67,6 @@
               <LinkOutlined />
             </a-button>
           </a-tooltip>
-          <a-popconfirm
-            title="确认删除此条记录？"
-            ok-text="确认"
-            @confirm="handleDelete(record as TransactionRecord)"
-            :showCancel="false"
-          >
-            <a-tooltip title="删除">
-              <a-button type="text" size="small" danger>
-                <DeleteOutlined />
-              </a-button>
-            </a-tooltip>
-          </a-popconfirm>
           <a-popover
             :open="syncPopoverTarget === (record as TransactionRecord).transactionId"
             @update:open="(val) => { if (syncingTransactionId === (record as TransactionRecord).transactionId) return; syncPopoverTarget = val ? (record as TransactionRecord).transactionId : null }"
@@ -106,6 +94,18 @@
               </a-button>
             </a-tooltip>
           </a-popover>
+          <a-popconfirm
+            title="确认删除此条记录？"
+            ok-text="确认"
+            @confirm="handleDelete(record as TransactionRecord)"
+            :showCancel="false"
+          >
+            <a-tooltip title="删除">
+              <a-button type="text" size="small" danger>
+                <DeleteOutlined />
+              </a-button>
+            </a-tooltip>
+          </a-popconfirm>
         </div>
       </template>
     </template>

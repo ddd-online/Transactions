@@ -6,7 +6,6 @@
           v-model:time-range-type="trQueryConditionStore.timeRangeType" />
       </div>
       <div class="tr-toolbar-right">
-        <billadm-ledger-select />
       </div>
     </template>
 

@@ -1,11 +1,11 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-01T17:52:02.349Z
-> Files: 49 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-03T17:54:46.096Z
+> Files: 52 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
-- `CLAUDE.md` — CLAUDE.md (~2430 tok)
+- `CLAUDE.md` — CLAUDE.md (~3222 tok)
 
 ## .claude/
 
@@ -20,7 +20,8 @@
 
 - `progress.md` — SDD Progress Ledger (~90 tok)
 - `task-1-report.md` — Task 1 Report: TransactionRecordTable.vue — 操作列改为图标+tooltip + 新增同步按钮 (~392 tok)
-- `task-2-report.md` — Task 2 Report: TransactionRecordView.vue — handleSync (~275 tok)
+- `task-2-fix-report.md` — Task 2 Fix Report: 同步按钮加载状态 + Popover 在同步期间保持打开 (~258 tok)
+- `task-2-report.md` — Task 2 Report: TransactionRecordView.vue — handleSync (~270 tok)
 - `task-3-report.md` — 状态 (~98 tok)
 - `task-4-report.md` — 状态 (~142 tok)
 - `task-5-report.md` — 状态 (~384 tok)
@@ -54,11 +55,12 @@
 ## app/src/components/da_view/
 
 - `BilladmChartLines.vue` — Vue: setup (~2260 tok)
-- `DataAnalysisView.vue` — Vue: setup (~3038 tok)
+- `BilladmChartView.vue` — Vue: setup (~1679 tok)
+- `DataAnalysisView.vue` — Vue: setup (~3029 tok)
 
 ## app/src/components/key_event_view/
 
-- `KeyEventDetail.vue` — Vue: setup (~2712 tok)
+- `KeyEventDetail.vue` — Vue: setup (~2731 tok)
 - `KeyEventImageGallery.vue` — Vue: setup (~1840 tok)
 - `KeyEventLinkedTr.vue` — Vue: setup (~2131 tok)
 - `KeyEventView.vue` — Vue: setup (~3487 tok)
@@ -66,6 +68,7 @@
 
 ## app/src/components/settings_view/
 
+- `AboutSetting.vue` — Vue component (~611 tok)
 - `BilladmCategoryTagSetting.vue` — Vue component (~3181 tok)
 - `BilladmTemplateSetting.vue` — Vue component (~2057 tok)
 - `CategoryColumn.vue` — Vue component (~2507 tok)
@@ -75,8 +78,8 @@
 
 ## app/src/components/tr_view/
 
-- `TransactionRecordTable.vue` — Vue: setup (~2559 tok)
-- `TransactionRecordView.vue` — Vue: setup (~4304 tok)
+- `TransactionRecordTable.vue` — Vue: setup (~2755 tok)
+- `TransactionRecordView.vue` — Vue: setup (~4160 tok)
 
 ## app/src/hooks/
 
