@@ -1,99 +1,12 @@
 {
-  "session_id": "session-2026-07-03-0153",
-  "started": "2026-07-03T17:53:17.905Z",
-  "files_read": {
-    "D:/github/Transactions/CLAUDE.md": {
-      "count": 2,
-      "tokens": 3222,
-      "first_read": "2026-07-03T17:53:31.726Z"
-    },
-    "D:/github/Transactions/README.md": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:32.042Z"
-    },
-    "D:/github/Transactions/app/package.json": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:38.106Z"
-    },
-    "D:/github/Transactions/kernel/go.mod": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:38.493Z"
-    },
-    "D:/github/Transactions/electron/package.json": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:43.584Z"
-    },
-    "D:/github/Transactions/app/vite.config.ts": {
-      "count": 1,
-      "tokens": 338,
-      "first_read": "2026-07-03T17:53:47.273Z"
-    },
-    "D:/github/Transactions/electron/src/main.js": {
-      "count": 1,
-      "tokens": 2316,
-      "first_read": "2026-07-03T17:53:47.652Z"
-    },
-    "D:/github/Transactions/kernel/api/router.go": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:51.421Z"
-    },
-    "D:/github/Transactions/app/src/router/router.ts": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:54.702Z"
-    },
-    "D:/github/Transactions/app/src/types/billadm.d.ts": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:53:55.136Z"
-    },
-    "D:/github/Transactions/app/src/backend/functions.ts": {
-      "count": 1,
-      "tokens": 2288,
-      "first_read": "2026-07-03T17:53:58.191Z"
-    },
-    "D:/github/Transactions/app/src/backend/api/api-client.ts": {
-      "count": 1,
-      "tokens": 973,
-      "first_read": "2026-07-03T17:54:00.680Z"
-    },
-    "D:/github/Transactions/kernel/models/result.go": {
-      "count": 1,
-      "tokens": 0,
-      "first_read": "2026-07-03T17:54:01.110Z"
-    }
-  },
-  "files_written": [
-    {
-      "file": "D:/github/Transactions/CLAUDE.md",
-      "action": "edit",
-      "tokens": 51,
-      "at": "2026-07-03T17:54:25.508Z"
-    },
-    {
-      "file": "D:/github/Transactions/CLAUDE.md",
-      "action": "edit",
-      "tokens": 17,
-      "at": "2026-07-03T17:54:29.418Z"
-    },
-    {
-      "file": "D:/github/Transactions/CLAUDE.md",
-      "action": "edit",
-      "tokens": 939,
-      "at": "2026-07-03T17:54:46.114Z"
-    }
-  ],
-  "edit_counts": {
-    "CLAUDE.md": 3
-  },
-  "anatomy_hits": 5,
-  "anatomy_misses": 8,
-  "repeated_reads_warned": 1,
+  "session_id": "session-2026-07-04-2350",
+  "started": "2026-07-04T15:50:29.555Z",
+  "files_read": {},
+  "files_written": [],
+  "edit_counts": {},
+  "anatomy_hits": 0,
+  "anatomy_misses": 0,
+  "repeated_reads_warned": 0,
   "cerebrum_warnings": 0,
-  "stop_count": 1
+  "stop_count": 0
 }

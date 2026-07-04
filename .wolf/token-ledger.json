@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 2175667,
-    "total_reads": 2097,
-    "total_writes": 3677,
-    "total_sessions": 8,
-    "anatomy_hits": 568,
-    "anatomy_misses": 1527,
-    "repeated_reads_blocked": 3539,
-    "estimated_savings_vs_bare_cli": 6461860
+    "total_tokens_estimated": 2185811,
+    "total_reads": 2110,
+    "total_writes": 3680,
+    "total_sessions": 9,
+    "anatomy_hits": 573,
+    "anatomy_misses": 1535,
+    "repeated_reads_blocked": 3540,
+    "estimated_savings_vs_bare_cli": 6466082
   },
   "sessions": [
     {
@@ -32484,6 +32484,116 @@
       "id": "session-2026-07-03-0153",
       "started": "2026-07-03T17:53:17.905Z",
       "ended": "2026-07-03T17:54:58.170Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 3222,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/go.mod",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/package.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/vite.config.ts",
+          "tokens_estimated": 338,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 2316,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/api/router.go",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/router/router.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/types/billadm.d.ts",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/backend/functions.ts",
+          "tokens_estimated": 2288,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/backend/api/api-client.ts",
+          "tokens_estimated": 973,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/kernel/models/result.go",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 51,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 17,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 939,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 9137,
+        "output_tokens_estimated": 1007,
+        "reads_count": 13,
+        "writes_count": 3,
+        "repeated_reads_blocked": 1,
+        "anatomy_lookups": 5
+      }
+    },
+    {
+      "id": "session-2026-07-03-0153",
+      "started": "2026-07-03T17:53:17.905Z",
+      "ended": "2026-07-03T17:56:52.433Z",
       "reads": [
         {
           "file": "D:/github/Transactions/CLAUDE.md",
