@@ -62,10 +62,6 @@
   </BilladmPageLayout>
 </template>
 
-<script lang="ts">
-const HEIC_EXTENSIONS = ['.heic', '.heif']
-</script>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -75,11 +71,13 @@ import { useAppDataStore } from '@/stores/appDataStore'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { fetchLinkedTransactions, unlinkTrFromKeyEvent } from '@/backend/api/tr'
 import NotificationUtil from '@/backend/notification'
+import { useTransactionStats } from '@/hooks/useTransactionStats'
+import { useImageUpload } from '@/hooks/useImageUpload'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
-import type { UploadProgress } from './UploadProgressBar.vue'
 
 const keyEventStore = useKeyEventStore()
 const appDataStore = useAppDataStore()
+const { computeFrom } = useTransactionStats()
 
 // ========== 年份导航 ==========
 const selectedYearDayjs = ref<Dayjs>(dayjs().year(keyEventStore.currentYear))
@@ -110,9 +108,7 @@ const clearSelection = () => {
   isEditing.value = false
   keyEventStore.clearImages()
   appDataStore.setStatistics({ income: 0, expense: 0, transfer: 0 })
-  uploadProgress.value = { files: [], total: 0, completed: 0, status: 'idle' }
-  pendingFiles.value = []
-  currentFileIndex = 0
+  resetUpload()
 }
 
 const onSelectEvent = async (date: string) => {
@@ -132,13 +128,7 @@ const onSelectEvent = async (date: string) => {
   const cachedTrs = keyEventStore.trCache.get(date)
   if (cachedTrs !== undefined) {
     linkedTransactions.value = cachedTrs
-    let income = 0, expense = 0, transfer = 0
-    for (const t of cachedTrs) {
-      if (t.transactionType === 'income') income += t.price
-      else if (t.transactionType === 'expense') expense += t.price
-      else if (t.transactionType === 'transfer') transfer += t.price
-    }
-    appDataStore.setStatistics({ income, expense, transfer })
+    appDataStore.setStatistics(computeFrom(cachedTrs))
   } else {
     // 缓存未命中则走原路径
     await loadLinkedTransactions(date)
@@ -175,147 +165,20 @@ const handleDeleteEvent = async (date: string) => {
 }
 
 // ========== 图片管理 ==========
-const uploadProgress = ref<UploadProgress>({
-  files: [],
-  total: 0,
-  completed: 0,
-  status: 'idle',
-})
-
-// 暂存待上传文件列表，供重试/跳过使用
-const pendingFiles = ref<File[]>([])
-let currentFileIndex = 0
-// 批量上传时快照选中的日期，防止上传过程中日期被切换
-let targetDate = ''
-
-const fileToBase64 = async (file: File): Promise<string> => {
-  const isHeic = HEIC_EXTENSIONS.some(ext =>
-    file.name.toLowerCase().endsWith(ext)
-  )
-
-  if (!isHeic) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = () => reject(new Error('读取文件失败'))
-      reader.readAsDataURL(file)
-    })
-  }
-
-  try {
-    // heic-to 使用 libheif 1.22.2，支持最新 iPhone HEIC 格式
-    // 使用 /csp 路径避免 Electron 的 CSP 限制
-    const { heicTo } = await import('heic-to/csp')
-
-    const jpegBlob = await heicTo({
-      blob: file,
-      type: 'image/jpeg',
-      quality: 0.92,
-    })
-
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = () => reject(new Error('HEIC 转换失败'))
-      reader.readAsDataURL(jpegBlob)
-    })
-  } catch (e) {
-    throw new Error('HEIC 转换失败: ' + ((e as Error)?.message || String(e)))
-  }
-}
+const { progress: uploadProgress, addFiles, retry, skip, reset: resetUpload } = useImageUpload(
+  (date, data, filename, onProgress) => keyEventStore.addImage(date, data, filename, onProgress)
+)
 
 const handleAddImages = async (files: File[]) => {
-  if (files.length === 0) return
-
-  targetDate = selectedDate.value
-  pendingFiles.value = files
-  currentFileIndex = 0
-
-  uploadProgress.value = {
-    files: files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const })),
-    total: files.length,
-    completed: 0,
-    status: 'uploading',
-  }
-
-  await uploadCurrentFile()
-}
-
-// 上传 currentFileIndex 指向的文件
-const uploadCurrentFile = async () => {
-  const files = pendingFiles.value
-  if (currentFileIndex >= files.length) {
-    // 全部完成
-    const doneCount = uploadProgress.value.files.filter(f => f.status === 'done').length
-    uploadProgress.value.completed = doneCount
-    uploadProgress.value.total = doneCount
-    uploadProgress.value.status = 'done'
-    setTimeout(() => {
-      uploadProgress.value.status = 'idle'
-      pendingFiles.value = []
-    }, 2000)
-    return
-  }
-
-  const file = files[currentFileIndex]!
-  // 标记当前文件为上传中
-  uploadProgress.value.files[currentFileIndex] = {
-    name: file.name,
-    percent: 0,
-    status: 'uploading',
-  }
-
-  try {
-    const data = await fileToBase64(file)
-    await keyEventStore.addImage(
-      targetDate,
-      data,
-      file.name,
-      (percent: number) => {
-        const entry = uploadProgress.value.files[currentFileIndex]
-        if (entry) {
-          entry.percent = percent
-        }
-      }
-    )
-    // 标记完成
-    uploadProgress.value.files[currentFileIndex] = {
-      name: file.name,
-      percent: 100,
-      status: 'done',
-    }
-    uploadProgress.value.completed++
-    currentFileIndex++
-    await uploadCurrentFile()
-  } catch (err) {
-    uploadProgress.value.files[currentFileIndex] = {
-      name: file.name,
-      percent: 0,
-      status: 'error',
-      errorMessage: (err as Error)?.message || '图片上传失败',
-    }
-    uploadProgress.value.status = 'error'
-    uploadProgress.value.errorMessage =
-      (err as Error)?.message || '图片上传失败'
-  }
+  await addFiles(selectedDate.value, files)
 }
 
 const handleRetryUpload = async () => {
-  // 将当前失败文件重置为 pending，继续上传
-  uploadProgress.value.files[currentFileIndex] = {
-    name: pendingFiles.value[currentFileIndex]!.name,
-    percent: 0,
-    status: 'pending',
-  }
-  uploadProgress.value.status = 'uploading'
-  await uploadCurrentFile()
+  await retry()
 }
 
 const handleSkipUpload = async () => {
-  // 跳过当前文件（保持 error 状态），继续下一个
-  currentFileIndex++
-  uploadProgress.value.status = 'uploading'
-  await uploadCurrentFile()
+  await skip()
 }
 
 const handleDeleteImage = async (imageId: string) => {
@@ -334,13 +197,7 @@ const loadLinkedTransactions = async (date: string) => {
       { errorPrefix: '查询关联交易失败', fallback: [] as TransactionRecord[] }
     )
     // 同步关联交易汇总到全局统计
-    let income = 0, expense = 0, transfer = 0
-    for (const t of linkedTransactions.value) {
-      if (t.transactionType === 'income') income += t.price
-      else if (t.transactionType === 'expense') expense += t.price
-      else if (t.transactionType === 'transfer') transfer += t.price
-    }
-    appDataStore.setStatistics({ income, expense, transfer })
+    appDataStore.setStatistics(computeFrom(linkedTransactions.value))
   } catch {
     linkedTransactions.value = []
   }
@@ -361,13 +218,7 @@ const handleUnlinkTr = async (transactionId: string) => {
       keyEventStore.trCache.set(selectedDate.value, [...linkedTransactions.value])
     }
     // 重新计算并同步统计
-    let income = 0, expense = 0, transfer = 0
-    for (const t of linkedTransactions.value) {
-      if (t.transactionType === 'income') income += t.price
-      else if (t.transactionType === 'expense') expense += t.price
-      else if (t.transactionType === 'transfer') transfer += t.price
-    }
-    appDataStore.setStatistics({ income, expense, transfer })
+    appDataStore.setStatistics(computeFrom(linkedTransactions.value))
   } catch {
     // 错误已在 withErrorHandling 中通知
   }

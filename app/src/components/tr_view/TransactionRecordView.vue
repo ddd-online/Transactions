@@ -142,25 +142,25 @@
 </template>
 
 <script setup lang="ts">
+import { createTemplate } from "@/backend/api/template"
 import { ref, watch, computed } from 'vue';
 import TransactionRecordTable from '@/components/tr_view/TransactionRecordTable.vue';
 import TrSortModal from './TrSortModal.vue'
 import type { SortItem } from './TrSortModal.vue'
-import type { TransactionRecord, TrForm, TrQueryCondition, TransactionTemplate } from "@/types/billadm";
-import { convertToUnixTimeRange } from "@/backend/timerange.ts";
+import type { TransactionRecord, TrForm } from "@/types/billadm";
 import { withErrorHandling } from "@/backend/errorHandler"
 import {
-  createTrForLedger, deleteTrById, queryTrOnCondition,
+  createTrForLedger, deleteTrById,
   linkTrToKeyEvent, unlinkTrFromKeyEvent
 } from "@/backend/api/tr"
-import { queryTemplates, createTemplate } from "@/backend/api/template"
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
 import { useTrQueryConditionStore } from "@/stores/trQueryConditionStore.ts";
 import { useAppDataStore } from "@/stores/appDataStore.ts";
+import { useTransactionStore } from "@/stores/transactionStore";
+import { storeToRefs } from "pinia"
 import dayjs, { type Dayjs } from "dayjs";
 import { trDtoToTrForm, trFormToTrDto } from "@/backend/dto-utils.ts";
-import type { DefaultOptionType } from "ant-design-vue/es/vc-cascader";
 import type { Rule } from "ant-design-vue/es/form";
 import {
   FilterOutlined,
@@ -173,6 +173,7 @@ import { message } from "ant-design-vue";
 const ledgerStore = useLedgerStore();
 const trQueryConditionStore = useTrQueryConditionStore();
 const appDataStore = useAppDataStore();
+const transactionStore = useTransactionStore();
 
 const { categoryOptions, tagOptions, loadCategoryOptions, loadTagOptions } =
   useCategoryTags(() => ledgerStore.currentLedgerId)
@@ -197,11 +198,8 @@ const rules: Record<string, Rule[]> = {
 
 // 状态
 const openTrFilterModal = ref<boolean>();
-const tableLoading = ref(false);
-const tableData = ref<TransactionRecord[]>([]);
-const currentPage = ref<number>(1);
-const pageSize = ref<number>(15);
-const trTotal = ref<number>(0);
+const { tableData, trTotal, currentPage, pageSize, tableLoading, sortItems: sortItemsRef, templates, templateOptions } = storeToRefs(transactionStore)
+const { fetchTransactions, loadTemplates } = transactionStore
 const openTrModal = ref(false);
 const trModalTitle = ref('');
 const trForm = ref<TrForm>({
@@ -210,9 +208,7 @@ const trForm = ref<TrForm>({
 const flagOptions = [{ label: '离群值', value: 'outlier' }];
 
 // 模板相关状态
-const templates = ref<TransactionTemplate[]>([]);
-const templateOptions = ref<DefaultOptionType[]>([]);
-const selectedTemplateId = ref<string | undefined>();
+  const selectedTemplateId = ref<string | undefined>();
 const openSaveTemplateModal = ref(false);
 const templateName = ref('');
 
@@ -224,11 +220,6 @@ const linkDate = ref<Dayjs>(dayjs());
 // 排序相关状态
 
 const openSortModal = ref(false);
-const sortItemsRef = ref<SortItem[]>([
-  { field: 'transactionAt', order: 'desc' }
-]);
-
-
 // 判断当前排序是否为升序（用于图标显示）
 const isAscending = computed(() => {
   const first = sortItemsRef.value[0];
@@ -239,12 +230,6 @@ const onSortApply = (sortItems: SortItem[]) => {
   sortItemsRef.value = sortItems;
   refreshTable();
 };
-
-
-
-
-
-
 const createTr = () => {
   trForm.value.type = 'expense';
   if (trQueryConditionStore.timeRange) {
@@ -301,37 +286,10 @@ const confirmTrModal = async () => {
   } catch { /* 错误已在 withErrorHandling 中通知 */ }
 };
 
-const refreshTable = async () => {
-  if (!ledgerStore.currentLedgerId) return;
-  tableLoading.value = true;
-  try {
-    const trCondition: TrQueryCondition = {
-      ledgerId: ledgerStore.currentLedgerId,
-      offset: pageSize.value * (currentPage.value - 1),
-      limit: pageSize.value,
-      sortFields: sortItemsRef.value
-    };
-    if (trQueryConditionStore.timeRange) {
-      trCondition.tsRange = convertToUnixTimeRange(trQueryConditionStore.timeRange);
-    }
-    if (trQueryConditionStore.trQueryConditionItems) {
-      trCondition.items = trQueryConditionStore.trQueryConditionItems;
-    }
-    const trQueryResult = await withErrorHandling(
-      () => queryTrOnCondition(trCondition),
-      {
-        errorPrefix: '查询消费记录失败',
-        fallback: { items: [], total: 0, trStatistics: { income: 0, expense: 0, transfer: 0 } }
-      }
-    );
-
-    tableData.value = trQueryResult.items;
-    trTotal.value = trQueryResult.total;
-    appDataStore.setStatistics(trQueryResult.trStatistics);
-  } finally {
-    tableLoading.value = false;
-  }
-};
+	const refreshTable = async () => {
+	  const stats = await fetchTransactions();
+	  if (stats) appDataStore.setStatistics(stats);
+	};
 
 watch(() => [ledgerStore.currentLedgerId, trQueryConditionStore.timeRange, trQueryConditionStore.trQueryConditionItems],
   async () => {
@@ -344,7 +302,7 @@ watch(() => [ledgerStore.currentLedgerId, trQueryConditionStore.timeRange, trQue
   { immediate: true }
 );
 
-watch(() => [currentPage.value, pageSize.value], async () => {
+watch(() => [currentPage, pageSize], async () => {
   await refreshTable();
 });
 
@@ -375,17 +333,6 @@ watch(() => trForm.value.category, async (newCategory) => {
 });
 
 // 加载模板列表
-const loadTemplates = async () => {
-  if (!ledgerStore.currentLedgerId) return;
-  templates.value = await withErrorHandling(
-    () => queryTemplates(ledgerStore.currentLedgerId),
-    { errorPrefix: '查询模板失败', fallback: [] as TransactionTemplate[] }
-  );
-  templateOptions.value = templates.value.map(t => ({
-    value: t.template_id,
-    label: t.template_name
-  }));
-};
 
 // 模板选择监听 - 应用模板到表单
 watch(selectedTemplateId, (newId) => {

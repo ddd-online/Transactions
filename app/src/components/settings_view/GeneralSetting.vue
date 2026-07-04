@@ -45,7 +45,6 @@
 import { ref, onMounted } from 'vue'
 import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
-import { openWorkspace } from '@/backend/api/workspace'
 import NotificationUtil from '@/backend/notification'
 
 const ledgerStore = useLedgerStore()
@@ -60,13 +59,11 @@ onMounted(async () => {
 
 const handleSwitchWorkspace = async (newWorkspaceDir: string) => {
   try {
-    await openWorkspace(newWorkspaceDir)
-    window.electronAPI.setWorkspace(newWorkspaceDir)
+    await ledgerStore.switchWorkspace(newWorkspaceDir)
     workspaceDir.value = newWorkspaceDir
-    await ledgerStore.init()
     NotificationUtil.success('切换工作空间成功')
-  } catch (error) {
-    NotificationUtil.error('切换工作空间失败', `${error}`)
+  } catch {
+    // 错误已在 store 中通知
   }
 }
 

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { createLedger, deleteLedgerById, modifyLedger, queryAllLedgers } from "@/backend/api/ledger.ts"
+import { openWorkspace } from "@/backend/api/workspace.ts"
 import NotificationUtil from "@/backend/notification"
 import type { Ledger } from "@/types/billadm"
 
@@ -93,6 +94,19 @@ export const useLedgerStore = defineStore('ledger', () => {
         }
     }
 
+    // 切换工作空间
+    const switchWorkspace = async (dir: string) => {
+        try {
+            await openWorkspace(dir)
+            window.electronAPI.setWorkspace(dir)
+            await init()
+            return true
+        } catch (error) {
+            NotificationUtil.error('切换工作空间失败', `${error}`)
+            throw error
+        }
+    }
+
     return {
         ledgers,
         currentLedger,
@@ -104,5 +118,6 @@ export const useLedgerStore = defineStore('ledger', () => {
         deleteLedger,
         modifyLedger: modifyLedgerAction,
         setCurrentLedger,
+        switchWorkspace,
     }
 })

@@ -55,19 +55,6 @@ func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, cat
 		return nil, err
 	}
 
-	// Reassign sort_order from 0 based on current order
-	for i, tag := range tags {
-		if tag.SortOrder != i {
-			tag.SortOrder = i
-			if err := ws.GetDb().Model(&models.Tag{}).
-				Where("ledger_id = ? AND name = ? AND category_transaction_type = ?", ledgerID, tag.Name, tag.CategoryTransactionType).
-				Update("sort_order", i).Error; err != nil {
-				logrus.Errorf("reindex tag sort failed: %v", err)
-				return nil, err
-			}
-		}
-	}
-
 	logrus.Infof("query tag success, length: %d", len(tags))
 	return tags, nil
 }

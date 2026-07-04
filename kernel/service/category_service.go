@@ -56,19 +56,6 @@ func (c *categoryServiceImpl) QueryCategory(ws *workspace.Workspace, ledgerID st
 		return nil, err
 	}
 
-	// Reassign sort_order from 0 based on current order
-	for i, cat := range categories {
-		if cat.SortOrder != i {
-			cat.SortOrder = i
-			if err := ws.GetDb().Model(&models.Category{}).
-				Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerID, cat.Name, cat.TransactionType).
-				Update("sort_order", i).Error; err != nil {
-				logrus.Errorf("reindex category sort failed: %v", err)
-				return nil, err
-			}
-		}
-	}
-
 	logrus.Infof("query category success, length: %v", len(categories))
 	return categories, nil
 }

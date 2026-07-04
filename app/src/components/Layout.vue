@@ -33,8 +33,6 @@
 import { onMounted, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
-import { openWorkspace } from "@/backend/api/workspace.ts";
-import NotificationUtil from "@/backend/notification.ts";
 
 const route = useRoute();
 const ledgerStore = useLedgerStore();
@@ -43,12 +41,9 @@ const showBottomBar = computed(() => route.path === '/tr_view' || route.path ===
 
 const handleOpenWorkspace = async (workspaceDir: string) => {
   try {
-    await openWorkspace(workspaceDir);
-    window.electronAPI.setWorkspace(workspaceDir);
-    await ledgerStore.init();
+    await ledgerStore.switchWorkspace(workspaceDir);
     showWorkspaceSelect.value = false;
-  } catch (error) {
-    NotificationUtil.error('打开工作空间失败', `${error}`);
+  } catch {
     showWorkspaceSelect.value = true;
   }
 }
@@ -60,11 +55,9 @@ const initWorkspace = async () => {
     return;
   }
   try {
-    await openWorkspace(workspaceDir);
+    await ledgerStore.switchWorkspace(workspaceDir);
     showWorkspaceSelect.value = false;
-    await ledgerStore.init();
-  } catch (error) {
-    NotificationUtil.error('打开工作空间失败', `${error}`);
+  } catch {
     showWorkspaceSelect.value = true;
   }
 }

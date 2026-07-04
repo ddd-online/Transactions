@@ -91,20 +91,6 @@ func (t *transactionTemplateServiceImpl) ListByLedgerId(ws *workspace.Workspace,
 		return nil, err
 	}
 
-	// Reassign sort_order from 0 based on current order
-	for i, template := range templates {
-		if template.SortOrder != i {
-			template.SortOrder = i
-			if err := ws.GetDb().
-				Model(&models.TransactionTemplate{}).
-				Where("template_id = ?", template.TemplateID).
-				Update("sort_order", i).Error; err != nil {
-				logrus.Errorf("reindex template sort failed: %v", err)
-				return nil, err
-			}
-		}
-	}
-
 	dtos := make([]*dto.TransactionTemplateDto, 0, len(templates))
 	for _, template := range templates {
 		dto := &dto.TransactionTemplateDto{}
