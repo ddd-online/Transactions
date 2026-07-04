@@ -10,32 +10,22 @@
       </a-button>
     </div>
 
-    <!-- 预设图表 -->
+    <!-- 图表列表 -->
     <div class="chart-list-section">
-      <div class="chart-list-section-title">预设图表</div>
       <div
-        v-for="chart in presetCharts"
-        :key="chart.title"
-        class="chart-list-item"
-        :class="{ active: selectedId === 'preset_' + chart.title }"
-        @click="selectChart(chart, true)"
-      >
-        <span class="chart-list-item-title">{{ chart.title }}</span>
-      </div>
-    </div>
-
-    <!-- 自定义图表 -->
-    <div v-if="customCharts.length > 0" class="chart-list-section">
-      <div class="chart-list-section-title">自定义图表</div>
-      <div
-        v-for="chart in customCharts"
+        v-for="chart in allCharts"
         :key="chart.chartId"
         class="chart-list-item"
         :class="{ active: selectedId === chart.chartId }"
-        @click="selectChart(chart, false)"
+        @click="selectChart(chart)"
       >
         <span class="chart-list-item-title">{{ chart.title }}</span>
         <div class="chart-list-item-actions" @click.stop>
+          <a-button type="text" size="small" @click="emit('edit', chart)">
+            <template #icon>
+              <EditOutlined />
+            </template>
+          </a-button>
           <a-button type="text" size="small" danger @click="handleDelete(chart)">
             <template #icon>
               <DeleteOutlined />
@@ -69,27 +59,25 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import type { ChartConfig } from '@/backend/chart'
-import { KEEP_CHART_CONFIGS } from '@/backend/chart'
 import type { ChartDto } from '@/backend/api/chart'
 import { deleteChart as deleteChartApi } from '@/backend/api/chart'
 
 interface Props {
-  customCharts: ChartDto[]
+  allCharts: ChartDto[]
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: 'select', config: ChartConfig | ChartDto, isPreset: boolean): void
+  (e: 'select', chart: ChartDto): void
   (e: 'create', request: { title: string; granularity: 'year' | 'month' }): void
+  (e: 'edit', chart: ChartDto): void
   (e: 'delete', chartId: string): void
   (e: 'refresh'): void
 }>()
 
-const presetCharts = KEEP_CHART_CONFIGS
 const selectedId = ref<string>('')
 const showCreateModal = ref(false)
 const createLoading = ref(false)
@@ -98,13 +86,9 @@ const createForm = ref<{ title: string; granularity: 'year' | 'month' }>({
   granularity: 'year'
 })
 
-const selectChart = (config: ChartConfig | ChartDto, isPreset: boolean) => {
-  if (isPreset) {
-    selectedId.value = 'preset_' + config.title
-  } else {
-    selectedId.value = (config as ChartDto).chartId
-  }
-  emit('select', config, isPreset)
+const selectChart = (chart: ChartDto) => {
+  selectedId.value = chart.chartId
+  emit('select', chart)
 }
 
 const handleCreate = async () => {
@@ -146,18 +130,7 @@ const handleDelete = async (chart: ChartDto) => {
 }
 
 .chart-list-section {
-  margin-top: var(--billadm-space-lg);
-}
-
-.chart-list-section-title {
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-caption);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--billadm-color-text-secondary);
-  padding: 0 var(--billadm-space-xs);
-  margin-bottom: var(--billadm-space-sm);
+  margin-top: 0;
 }
 
 .chart-list-item {
@@ -199,5 +172,4 @@ const handleDelete = async (chart: ChartDto) => {
 .chart-list-item.active .chart-list-item-actions {
   display: flex;
 }
-
 </style>

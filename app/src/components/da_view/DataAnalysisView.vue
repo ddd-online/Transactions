@@ -16,11 +16,12 @@
       <!-- 左侧图表列表 -->
       <div class="da-sidebar">
         <billadm-chart-list
-          :custom-charts="customCharts"
+          :all-charts="allCharts"
           @select="onChartSelect"
           @create="onChartCreate"
+          @edit="onChartEdit"
           @delete="onChartDelete"
-          @refresh="loadCustomCharts"
+          @refresh="loadAllCharts"
         />
       </div>
 
@@ -32,7 +33,7 @@
           :data="selectedChart.data"
           :lines="selectedChart.lines"
           :granularity="selectedChart.granularity"
-          :is-preset="selectedIsPreset"
+          :is-preset="false"
           :chart-id="selectedChartId"
           @update="onChartUpdate"
           @add-line="onChartAddLine"
@@ -58,7 +59,7 @@ import { convertToUnixTimeRange } from '@/backend/timerange.ts'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { queryChartData, queryTrOnCondition as queryTrOnConditionRaw } from '@/backend/api/tr.ts'
 import { queryCharts, createChart as createChartApi, updateChart as updateChartApi, type ChartDto } from '@/backend/api/chart'
-import { KEEP_CHART_CONFIGS, buildLineChartData, type ChartLine, type ChartConfig, type TimeSeriesData } from '@/backend/chart'
+import { buildLineChartData, type ChartLine, type TimeSeriesData } from '@/backend/chart'
 import type { TrStatistics } from '@/types/billadm'
 
 const ledgerStore = useLedgerStore()
@@ -70,34 +71,36 @@ interface ChartInstance {
   granularity: 'year' | 'month'
   data: TimeSeriesData[]
   lines: ChartLine[]
-  isPreset: boolean
-  chartId?: string
+  chartId: string
 }
 
 const selectedChart = ref<ChartInstance | null>(null)
-const selectedIsPreset = ref(false)
 const selectedChartId = ref<string | null>(null)
-const customCharts = ref<ChartDto[]>([])
+const allCharts = ref<ChartDto[]>([])
 
 // 缓存图表数据
 const chartDataCache = ref<Map<string, ChartInstance>>(new Map())
 
-// 缓存key，用于判断是否需要重新查询
 let cachedLedgerId: string | null = null
-let cachedTimeRange: typeof trQueryConditionStore.timeRange = undefined
+let cachedTimeKey: string | null = null
+
+function makeTimeKey(): string {
+  const tr = trQueryConditionStore.timeRange
+  if (!tr) return 'all'
+  return `${tr[0]?.unix() ?? 0}_${tr[1]?.unix() ?? 0}`
+}
 
 // 查询底部统计数据
 const queryStatistics = async (): Promise<TrStatistics | null> => {
   if (!ledgerStore.currentLedgerId) return null
-  const trCondition = {
-    ledgerId: ledgerStore.currentLedgerId,
-    tsRange: trQueryConditionStore.timeRange
-      ? convertToUnixTimeRange(trQueryConditionStore.timeRange)
-      : undefined,
-    items: [],
-  }
   const result = await withErrorHandling(
-    () => queryTrOnConditionRaw(trCondition),
+    () => queryTrOnConditionRaw({
+      ledgerId: ledgerStore.currentLedgerId,
+      tsRange: trQueryConditionStore.timeRange
+        ? convertToUnixTimeRange(trQueryConditionStore.timeRange)
+        : undefined,
+      items: [],
+    }),
     {
       errorPrefix: '查询消费记录失败',
       fallback: { items: [], total: 0, trStatistics: { income: 0, expense: 0, transfer: 0 } }
@@ -106,135 +109,87 @@ const queryStatistics = async (): Promise<TrStatistics | null> => {
   return result.trStatistics || null
 }
 
-// 加载自定义图表
-const loadCustomCharts = async () => {
-  if (!ledgerStore.currentLedgerId) return
-  try {
-    const charts = await queryCharts(ledgerStore.currentLedgerId)
-    customCharts.value = charts
-  } catch (error) {
-    console.error('load custom charts failed:', error)
-  }
-}
-
-// 查询图表数据
-const loadChartData = async (config: ChartConfig | ChartDto, isPreset: boolean): Promise<ChartInstance | null> => {
-  const currentLedgerId = ledgerStore.currentLedgerId
-  const tsRange = trQueryConditionStore.timeRange
-    ? convertToUnixTimeRange(trQueryConditionStore.timeRange)
-    : undefined
-
-  const lines = config.lines
-  const granularity = config.granularity
-
+// 加载图表数据
+const loadChartData = async (chart: ChartDto): Promise<ChartInstance | null> => {
   const response = await queryChartData({
-    ledgerId: currentLedgerId || '',
-    tsRange,
-    granularity,
-    lines,
+    ledgerId: chart.ledgerId,
+    tsRange: trQueryConditionStore.timeRange
+      ? convertToUnixTimeRange(trQueryConditionStore.timeRange)
+      : undefined,
+    granularity: chart.granularity,
+    lines: chart.lines,
   })
 
-  // 转换API响应为TimeSeriesData格式（前端完成时间聚合）
   const lineRecords = response.lines.map((line) => ({
     label: line.label,
     type: line.type,
     items: line.items,
   }))
-  const data = buildLineChartData(lineRecords, granularity)
+  const data = buildLineChartData(lineRecords, chart.granularity)
 
   return {
-    title: config.title,
-    granularity,
+    title: chart.title,
+    granularity: chart.granularity,
     data,
-    lines,
-    isPreset,
-    chartId: 'chartId' in config ? config.chartId : undefined,
+    lines: chart.lines,
+    chartId: chart.chartId,
   }
 }
 
-// 加载所有图表数据
-const loadAllChartData = async () => {
+// 加载所有图表
+const loadAllCharts = async () => {
   const currentLedgerId = ledgerStore.currentLedgerId
-  const currentTimeRange = trQueryConditionStore.timeRange
+  const timeKey = makeTimeKey()
 
-  // 检查是否需要重新查询（时间范围需要深度比较）
-  const timeRangeChanged = JSON.stringify(cachedTimeRange) !== JSON.stringify(currentTimeRange)
-  const needRefetch = cachedLedgerId !== currentLedgerId || timeRangeChanged
-
-  if (!needRefetch) {
-    return
-  }
+  if (cachedLedgerId === currentLedgerId && cachedTimeKey === timeKey) return
 
   cachedLedgerId = currentLedgerId
-  cachedTimeRange = currentTimeRange ? { ...currentTimeRange } : undefined
+  cachedTimeKey = timeKey
 
-  // 加载自定义图表
-  await loadCustomCharts()
+  if (!currentLedgerId) return
 
-  // 加载预设图表数据
-  const presetResults = await Promise.all(
-    KEEP_CHART_CONFIGS.map(async (config) => {
-      const instance = await loadChartData(config, true)
-      return { title: config.title, instance, isPreset: true }
+  // 加载图表列表（懒播种会在后端 ListByLedgerId 中触发）
+  try {
+    allCharts.value = await queryCharts(currentLedgerId)
+  } catch (error) {
+    console.error('load charts failed:', error)
+    allCharts.value = []
+  }
+
+  // 并行加载所有图表数据
+  const results = await Promise.all(
+    allCharts.value.map(async (chart) => {
+      const instance = await loadChartData(chart)
+      return { chartId: chart.chartId, instance }
     })
   )
 
-  // 加载自定义图表数据
-  const customResults = await Promise.all(
-    customCharts.value.map(async (chart) => {
-      const instance = await loadChartData(chart, false)
-      return { id: chart.chartId, title: chart.title, instance, isPreset: false }
-    })
-  )
-
-  // 更新缓存
-  chartDataCache.value.clear()
-  presetResults.forEach((result) => {
-    if (result.instance) chartDataCache.value.set('preset_' + result.title, result.instance)
-  })
-  customResults.forEach((result) => {
-    if (result.instance) chartDataCache.value.set(result.id, result.instance)
+  chartDataCache.value = new Map()
+  results.forEach(({ chartId, instance }) => {
+    if (instance) chartDataCache.value.set(chartId, instance)
   })
 
-  // 更新底部统计信息
+  // 更新底部统计
   const statistics = await queryStatistics()
-  if (statistics) {
-    appDataStore.setStatistics(statistics)
+  if (statistics) appDataStore.setStatistics(statistics)
+
+  // 保持当前选中
+  if (selectedChartId.value) {
+    selectedChart.value = chartDataCache.value.get(selectedChartId.value) || null
   }
 
-  // 如果当前有选中图表，刷新选中图表的数据
-  if (selectedChart.value) {
-    if (selectedIsPreset.value) {
-      const cacheKey = 'preset_' + selectedChart.value.title
-      selectedChart.value = chartDataCache.value.get(cacheKey) || null
-    } else if (selectedChartId.value) {
-      selectedChart.value = chartDataCache.value.get(selectedChartId.value) || null
-    }
-  }
-
-  // 初始化选中第一个预设图表（仅当没有选中时）
-  if (!selectedChart.value && KEEP_CHART_CONFIGS.length > 0) {
-    const firstConfig = KEEP_CHART_CONFIGS[0]!
-    const cacheKey = 'preset_' + firstConfig.title
-    selectedChart.value = chartDataCache.value.get(cacheKey) || null
-    selectedIsPreset.value = true
-    selectedChartId.value = null
+  // 初始化选中第一个
+  if (!selectedChart.value && allCharts.value.length > 0) {
+    const first = allCharts.value[0]!
+    selectedChart.value = chartDataCache.value.get(first.chartId) || null
+    selectedChartId.value = first.chartId
   }
 }
 
 // 图表选择
-const onChartSelect = (config: ChartConfig | ChartDto, isPreset: boolean) => {
-  if (isPreset) {
-    const cacheKey = 'preset_' + (config as ChartConfig).title
-    selectedChart.value = chartDataCache.value.get(cacheKey) || null
-    selectedIsPreset.value = true
-    selectedChartId.value = null
-  } else {
-    const chartId = (config as ChartDto).chartId
-    selectedChart.value = chartDataCache.value.get(chartId) || null
-    selectedIsPreset.value = false
-    selectedChartId.value = chartId
-  }
+const onChartSelect = (chart: ChartDto) => {
+  selectedChart.value = chartDataCache.value.get(chart.chartId) || null
+  selectedChartId.value = chart.chartId
 }
 
 // 创建图表
@@ -251,58 +206,50 @@ const onChartCreate = async (request: { title: string; granularity: 'year' | 'mo
       lines: [],
       chartType: 'line',
     })
-    customCharts.value.push(newChart)
+    allCharts.value.push(newChart)
 
-    // 加载新图表数据
-    const instance = await loadChartData(newChart, false)
+    const instance = await loadChartData(newChart)
     if (instance) {
-      chartDataCache.value.set(newChart.chartId, { ...instance, isPreset: false, chartId: newChart.chartId })
+      chartDataCache.value.set(newChart.chartId, instance)
     }
 
-    // 选中新图表
-    selectedChart.value = chartDataCache.value.get(newChart.chartId) || null
-    selectedIsPreset.value = false
+    selectedChart.value = instance
     selectedChartId.value = newChart.chartId
-
     message.success('创建成功')
   } catch (error) {
     message.error('创建失败')
-    console.error('create chart failed:', error)
   }
+}
+
+// 编辑图表
+const onChartEdit = async (chart: ChartDto) => {
+  // 打开编辑弹窗 — 使用 updateChart 接口
+  // 编辑功能由 BilladmChartView 的 @update 事件处理
+  // 这里只是选中图表，编辑按钮在图表视图中
+  selectedChart.value = chartDataCache.value.get(chart.chartId) || null
+  selectedChartId.value = chart.chartId
 }
 
 // 删除图表
 const onChartDelete = async (chartId: string) => {
-  // 如果删除的是当前选中的图表，重置选中状态
   if (selectedChartId.value === chartId) {
     selectedChart.value = null
     selectedChartId.value = null
-    selectedIsPreset.value = false
   }
-
-  // 强制刷新图表数据
   cachedLedgerId = null
-  cachedTimeRange = undefined
+  cachedTimeKey = null
+  await loadAllCharts()
 
-  try {
-    await loadAllChartData()
-
-    // 如果重置后没有选中图表，自动选中第一个预设图表
-    if (!selectedChart.value && KEEP_CHART_CONFIGS.length > 0) {
-      const firstConfig = KEEP_CHART_CONFIGS[0]!
-      const cacheKey = 'preset_' + firstConfig.title
-      selectedChart.value = chartDataCache.value.get(cacheKey) || null
-      selectedIsPreset.value = true
-      selectedChartId.value = null
-    }
-  } catch (error) {
-    console.error('refresh after delete failed:', error)
+  if (!selectedChart.value && allCharts.value.length > 0) {
+    const first = allCharts.value[0]!
+    selectedChart.value = chartDataCache.value.get(first.chartId) || null
+    selectedChartId.value = first.chartId
   }
 }
 
 // 更新图表
 const onChartUpdate = async (chartId: string, request: { title?: string; granularity?: 'year' | 'month'; lines?: ChartLine[] }) => {
-  const chart = customCharts.value.find(c => c.chartId === chartId)
+  const chart = allCharts.value.find(c => c.chartId === chartId)
   if (!chart) return
 
   try {
@@ -314,40 +261,27 @@ const onChartUpdate = async (chartId: string, request: { title?: string; granula
       chartType: chart.chartType,
       sortOrder: chart.sortOrder,
     })
-    // 强制刷新图表数据（失效缓存，确保 loadAllChartData 重新加载）
     cachedLedgerId = null
-    cachedTimeRange = undefined
-    await loadAllChartData()
+    cachedTimeKey = null
+    await loadAllCharts()
     message.success('更新成功')
   } catch (error) {
     message.error('更新失败')
-    console.error('update chart failed:', error)
   }
 }
 
 // 添加曲线
 const onChartAddLine = async (chartId: string, line: ChartLine) => {
-  const chart = customCharts.value.find(c => c.chartId === chartId)
+  const chart = allCharts.value.find(c => c.chartId === chartId)
   if (!chart) return
-
   const newLines = [...chart.lines, line]
   await onChartUpdate(chartId, { lines: newLines })
 }
 
-onMounted(() => {
-  loadAllChartData()
-})
+onMounted(() => loadAllCharts())
 
-// 监听查询条件或账本变化，重新加载
-watch(
-  () => ledgerStore.currentLedgerId,
-  () => loadAllChartData()
-)
-watch(
-  () => trQueryConditionStore.timeRange,
-  () => loadAllChartData(),
-  { deep: true }
-)
+watch(() => ledgerStore.currentLedgerId, () => loadAllCharts())
+watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true })
 </script>
 
 <style scoped>

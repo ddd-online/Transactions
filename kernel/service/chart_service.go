@@ -31,10 +31,92 @@ var _ ChartService = &chartServiceImpl{}
 
 type chartServiceImpl struct{}
 
+func defaultChartLines() []models.ChartLine {
+	return []models.ChartLine{
+		{Label: "支出", TransactionType: "expense", IncludeOutlier: false, Conditions: []models.QueryConditionItem{}},
+		{Label: "收入", TransactionType: "income", IncludeOutlier: false, Conditions: []models.QueryConditionItem{}},
+		{Label: "转账", TransactionType: "transfer", IncludeOutlier: false, Conditions: []models.QueryConditionItem{}},
+	}
+}
+
+// seedDefaultCharts inserts the 3 preset trend charts for a ledger if none exist.
+func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID string) error {
+	var count int64
+	if err := ws.GetDb().Model(&models.Chart{}).Where("ledger_id = ?", ledgerID).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	monthlyLines := defaultChartLines()
+
+	yearlyLines := []models.ChartLine{
+		{Label: "支出", TransactionType: "expense", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+		{Label: "收入", TransactionType: "income", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+		{Label: "转账", TransactionType: "transfer", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+	}
+
+	incomeLines := []models.ChartLine{
+		{Label: "年度总收入", TransactionType: "income", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+		{
+			Label: "年度工资收入", TransactionType: "income", IncludeOutlier: true,
+			Conditions: []models.QueryConditionItem{
+				{TransactionType: "income", Category: "工资奖金", Tags: []string{"工资"}, TagPolicy: "all"},
+			},
+		},
+		{
+			Label: "年度奖金收入", TransactionType: "income", IncludeOutlier: true,
+			Conditions: []models.QueryConditionItem{
+				{TransactionType: "income", Category: "工资奖金", Tags: []string{"奖金"}, TagPolicy: "all", Description: "年奖金"},
+			},
+		},
+		{
+			Label: "年度分红收入", TransactionType: "income", IncludeOutlier: true,
+			Conditions: []models.QueryConditionItem{
+				{TransactionType: "income", Category: "投资理财", Tags: []string{}, TagPolicy: "all", Description: "年分红"},
+			},
+		},
+	}
+
+	presets := []struct {
+		title       string
+		granularity string
+		chartType   string
+		lines       []models.ChartLine
+	}{
+		{"月度消费趋势", "month", "line", monthlyLines},
+		{"年度消费趋势", "year", "line", yearlyLines},
+		{"年度收入趋势", "year", "line", incomeLines},
+	}
+
+	for i, p := range presets {
+		linesJSON, err := json.Marshal(p.lines)
+		if err != nil {
+			return fmt.Errorf("marshal preset chart lines: %w", err)
+		}
+		chart := &models.Chart{
+			ChartID:     util.GetUUID(),
+			LedgerID:    ledgerID,
+			Title:       p.title,
+			Granularity: p.granularity,
+			ChartLines:  string(linesJSON),
+			ChartType:   p.chartType,
+			IsPreset:    true,
+			SortOrder:   i,
+		}
+		if err := ws.GetDb().Create(chart).Error; err != nil {
+			return fmt.Errorf("seed preset chart %q: %w", p.title, err)
+		}
+	}
+
+	logrus.Infof("seeded %d default charts for ledger %s", len(presets), ledgerID)
+	return nil
+}
+
 func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartRequest) (*dto.ChartDto, error) {
 	chartID := util.GetUUID()
 
-	// Get max sort order
 	var maxSortOrder int
 	if err := ws.GetDb().Model(&models.Chart{}).
 		Where("ledger_id = ?", req.LedgerID).
@@ -43,7 +125,6 @@ func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartR
 		return nil, err
 	}
 
-	// Marshal lines to JSON
 	linesJSON, err := json.Marshal(req.Lines)
 	if err != nil {
 		return nil, fmt.Errorf("marshal chart lines failed: %w", err)
@@ -70,16 +151,6 @@ func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartR
 }
 
 func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) error {
-	// Check if preset chart
-	chart, err := t.getById(ws, chartId)
-	if err != nil {
-		return fmt.Errorf("get chart failed: %w", err)
-	}
-
-	if chart.IsPreset {
-		return fmt.Errorf("preset chart cannot be deleted")
-	}
-
 	if err := ws.GetDb().
 		Where("chart_id = ?", chartId).
 		Delete(&models.Chart{}).Error; err != nil {
@@ -91,6 +162,11 @@ func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) e
 }
 
 func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*dto.ChartDto, error) {
+	// Lazy seed default charts for new ledgers
+	if err := t.seedDefaultCharts(ws, ledgerId); err != nil {
+		logrus.Errorf("seed default charts failed: %v", err)
+	}
+
 	charts := make([]*models.Chart, 0)
 	if err := ws.GetDb().
 		Where("ledger_id = ?", ledgerId).
@@ -112,17 +188,11 @@ func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId stri
 }
 
 func (t *chartServiceImpl) Update(ws *workspace.Workspace, req *dto.UpdateChartRequest) (*dto.ChartDto, error) {
-	// Check if preset chart
 	chart, err := t.getById(ws, req.ChartID)
 	if err != nil {
 		return nil, fmt.Errorf("get chart failed: %w", err)
 	}
 
-	if chart.IsPreset {
-		return nil, fmt.Errorf("preset chart cannot be updated")
-	}
-
-	// Marshal lines to JSON
 	linesJSON, err := json.Marshal(req.Lines)
 	if err != nil {
 		return nil, fmt.Errorf("marshal chart lines failed: %w", err)
