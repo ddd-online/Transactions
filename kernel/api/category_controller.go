@@ -8,7 +8,6 @@ import (
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
-	"github.com/billadm/workspace"
 )
 
 // GET /categories?type=all|income|expense|transfer&ledgerId=xxx
@@ -16,12 +15,7 @@ func listCategories(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	trType := c.Query("type")
 	ledgerId := c.Query("ledgerId")
@@ -57,12 +51,7 @@ func createCategory(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	var req dto.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -83,12 +72,7 @@ func deleteCategory(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	name := c.Param("name")
 	transactionType := c.Query("type")
@@ -111,12 +95,7 @@ func updateCategorySort(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	name := c.Param("name")
 	var req dto.UpdateCategorySortRequest
@@ -138,12 +117,7 @@ func initializeCategories(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	var req struct {
 		LedgerID string `json:"ledgerId"`

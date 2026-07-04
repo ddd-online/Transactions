@@ -29,6 +29,8 @@ func main() {
 	logrus.Info("--------- 启动Billadm ---------")
 	gin.SetMode(util.Config.Mode)
 	ginServer := server.NewGinServer()
+	// 初始化依赖注入
+	server.InitServices()
 	// 注册接口
 	api.ServeAPI(ginServer)
 	if err := ginServer.Run("127.0.0.1:" + util.Config.Port); err != nil {

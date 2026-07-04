@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/billadm/dao"
 	"github.com/billadm/models"
@@ -15,24 +14,16 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	trService     TransactionRecordService
-	trServiceOnce sync.Once
-)
+var trSvc TransactionRecordService
 
-func GetTrService() TransactionRecordService {
-	if trService != nil {
-		return trService
+func SetTrService(svc TransactionRecordService) { trSvc = svc }
+func GetTrService() TransactionRecordService      { return trSvc }
+
+func NewTrService(trDao dao.TransactionRecordDao, trTagDao dao.TrTagDao) TransactionRecordService {
+	return &transactionRecordServiceImpl{
+		trDao:    trDao,
+		trTagDao: trTagDao,
 	}
-
-	trServiceOnce.Do(func() {
-		trService = &transactionRecordServiceImpl{
-			trDao:    dao.GetTrDao(),
-			trTagDao: dao.GetTrTagDao(),
-		}
-	})
-
-	return trService
 }
 
 type TransactionRecordService interface {

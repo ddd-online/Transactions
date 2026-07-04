@@ -9,7 +9,6 @@ import (
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
-	"github.com/billadm/workspace"
 )
 
 // POST /templates
@@ -17,12 +16,7 @@ func createTemplate(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	templateDto, ok := dto.JsonTransactionTemplateDto(c, ret)
 	if !ok {
@@ -50,12 +44,7 @@ func listTemplates(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
@@ -79,12 +68,7 @@ func deleteTemplate(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -106,12 +90,7 @@ func updateTemplateSort(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	id := c.Param("id")
 	var req struct {

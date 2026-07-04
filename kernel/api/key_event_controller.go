@@ -7,7 +7,6 @@ import (
 
 	"github.com/billadm/models"
 	"github.com/billadm/service"
-	"github.com/billadm/workspace"
 )
 
 // GET /api/v1/key-events/year/:year
@@ -15,12 +14,7 @@ func listKeyEventsByYear(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	year := c.Param("year")
 	if year == "" {
@@ -51,12 +45,7 @@ func listKeyEventDates(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	year := c.Param("year")
 	if year == "" {
@@ -87,12 +76,7 @@ func getKeyEvent(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
@@ -123,12 +107,7 @@ func upsertKeyEvent(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	arg, ok := JsonArg(c, ret)
 	if !ok {
@@ -167,12 +146,7 @@ func deleteKeyEvent(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
@@ -200,12 +174,7 @@ func listKeyEventImages(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
@@ -236,12 +205,7 @@ func addKeyEventImage(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
@@ -286,12 +250,7 @@ func deleteKeyEventImage(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	imageId := c.Param("id")
 	if imageId == "" {

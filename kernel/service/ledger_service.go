@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/billadm/dao"
 	"github.com/billadm/models"
@@ -11,24 +10,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	ledgerService     LedgerService
-	ledgerServiceOnce sync.Once
-)
+var ledgerSvc LedgerService
 
-func GetLedgerService() LedgerService {
-	if ledgerService != nil {
-		return ledgerService
+func SetLedgerService(svc LedgerService) { ledgerSvc = svc }
+func GetLedgerService() LedgerService      { return ledgerSvc }
+
+func NewLedgerService(trDao dao.TransactionRecordDao, trTagDao dao.TrTagDao) LedgerService {
+	return &ledgerServiceImpl{
+		trDao:    trDao,
+		trTagDao: trTagDao,
 	}
-
-	ledgerServiceOnce.Do(func() {
-		ledgerService = &ledgerServiceImpl{
-			trDao:    dao.GetTrDao(),
-			trTagDao: dao.GetTrTagDao(),
-		}
-	})
-
-	return ledgerService
 }
 
 type LedgerService interface {

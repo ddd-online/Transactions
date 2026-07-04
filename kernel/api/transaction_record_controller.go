@@ -10,7 +10,6 @@ import (
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
-	"github.com/billadm/workspace"
 )
 
 // POST /transactions/query
@@ -18,12 +17,7 @@ func queryTransactions(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	queryCondition, ok := dto.JsonQueryCondition(c, ret)
 	if !ok {
@@ -46,12 +40,7 @@ func createTransaction(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	trDto, ok := dto.JsonTransactionRecordDto(c, ret)
 	if !ok {
@@ -79,12 +68,7 @@ func batchCreateTransactions(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	dtos, ok := dto.JsonTransactionRecordDtoBatch(c, ret)
 	if !ok {
@@ -117,12 +101,7 @@ func deleteTransaction(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -144,12 +123,7 @@ func queryChartData(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	req, ok := dto.JsonChartQuery(c, ret)
 	if !ok {
@@ -172,12 +146,7 @@ func linkTransactionToKeyEvent(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	arg, ok := JsonArg(c, ret)
 	if !ok {
@@ -207,12 +176,7 @@ func unlinkTransactionFromKeyEvent(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	arg, ok := JsonArg(c, ret)
 	if !ok {
@@ -240,12 +204,7 @@ func listLinkedTransactions(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {

@@ -10,6 +10,7 @@ import (
 
 func ServeAPI(ginServer *gin.Engine) {
 	v1 := ginServer.Group("/api/v1")
+	v1.Use(RequireWorkspace())
 	{
 		// App control
 		v1.POST("/app/exit", exitApp)

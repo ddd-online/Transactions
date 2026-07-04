@@ -8,7 +8,6 @@ import (
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
-	"github.com/billadm/workspace"
 )
 
 // GET /tags?categoryTransactionType=xxx&ledgerId=xxx
@@ -16,12 +15,7 @@ func listTags(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	categoryTransactionType := c.Query("categoryTransactionType")
 	ledgerId := c.Query("ledgerId")
@@ -57,12 +51,7 @@ func createTag(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	var req dto.CreateTagRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -83,12 +72,7 @@ func deleteTag(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	name := c.Param("name")
 	categoryTransactionType := c.Query("categoryTransactionType")
@@ -111,12 +95,7 @@ func updateTagSort(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	name := c.Param("name")
 	var req dto.UpdateTagSortRequest

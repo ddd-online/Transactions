@@ -1,27 +1,12 @@
 package dao
 
 import (
-	"sync"
-
 	"github.com/billadm/models"
 	"github.com/billadm/workspace"
 )
 
-var (
-	trTagDao     TrTagDao
-	trTagDaoOnce sync.Once
-)
-
-func GetTrTagDao() TrTagDao {
-	if trTagDao != nil {
-		return trTagDao
-	}
-
-	trTagDaoOnce.Do(func() {
-		trTagDao = &trTagDaoImpl{}
-	})
-
-	return trTagDao
+func NewTrTagDao() TrTagDao {
+	return &trTagDaoImpl{}
 }
 
 type TrTagDao interface {

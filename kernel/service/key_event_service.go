@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/billadm/models"
 	"github.com/billadm/util"
@@ -11,21 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	keyEventService     KeyEventService
-	keyEventServiceOnce sync.Once
-)
+var keyEventSvc KeyEventService
 
-func GetKeyEventService() KeyEventService {
-	if keyEventService != nil {
-		return keyEventService
+func SetKeyEventService(svc KeyEventService) { keyEventSvc = svc }
+func GetKeyEventService() KeyEventService      { return keyEventSvc }
+
+func NewKeyEventService(imageService KeyEventImageService) KeyEventService {
+	return &keyEventServiceImpl{
+		imageService: imageService,
 	}
-	keyEventServiceOnce.Do(func() {
-		keyEventService = &keyEventServiceImpl{
-			imageService: GetKeyEventImageService(),
-		}
-	})
-	return keyEventService
 }
 
 type KeyEventService interface {

@@ -11,7 +11,6 @@ import (
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
-	"github.com/billadm/workspace"
 )
 
 // GET /ledgers?id=all or id=uuid1,uuid2
@@ -20,12 +19,7 @@ func listLedgers(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	ledgerId := c.Query("id")
 	if ledgerId == "" {
@@ -73,12 +67,7 @@ func createLedger(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	arg, ok := JsonArg(c, ret)
 	if !ok {
@@ -109,12 +98,7 @@ func getLedger(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -140,12 +124,7 @@ func updateLedger(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -181,12 +160,7 @@ func deleteLedger(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	ws := workspace.Manager.OpenedWorkspace()
-	if ws == nil {
-		ret.Code = -1
-		ret.Msg = workspace.ErrOpenedWorkspaceNotFound
-		return
-	}
+	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {

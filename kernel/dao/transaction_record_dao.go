@@ -2,7 +2,6 @@ package dao
 
 import (
 	"github.com/billadm/util/set"
-	"sync"
 
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
@@ -10,21 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	trDao     TransactionRecordDao
-	trDaoOnce sync.Once
-)
-
-func GetTrDao() TransactionRecordDao {
-	if trDao != nil {
-		return trDao
-	}
-
-	trDaoOnce.Do(func() {
-		trDao = &transactionRecordDaoImpl{}
-	})
-
-	return trDao
+func NewTransactionRecordDao() TransactionRecordDao {
+	return &transactionRecordDaoImpl{}
 }
 
 type TransactionRecordDao interface {

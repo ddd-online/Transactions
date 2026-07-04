@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
@@ -12,21 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	chartService     ChartService
-	chartServiceOnce sync.Once
-)
+var chartSvc ChartService
 
-func GetChartService() ChartService {
-	if chartService != nil {
-		return chartService
-	}
+func SetChartService(svc ChartService) { chartSvc = svc }
+func GetChartService() ChartService      { return chartSvc }
 
-	chartServiceOnce.Do(func() {
-		chartService = &chartServiceImpl{}
-	})
-
-	return chartService
+func NewChartService() ChartService {
+	return &chartServiceImpl{}
 }
 
 type ChartService interface {

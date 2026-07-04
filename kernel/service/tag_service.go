@@ -1,8 +1,6 @@
 package service
 
 import (
-	"sync"
-
 	"github.com/billadm/constant"
 	"github.com/billadm/dao"
 	"github.com/billadm/models"
@@ -10,23 +8,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	tagService     TagService
-	tagServiceOnce sync.Once
-)
+var tagSvc TagService
 
-func GetTagService() TagService {
-	if tagService != nil {
-		return tagService
+func SetTagService(svc TagService) { tagSvc = svc }
+func GetTagService() TagService      { return tagSvc }
+
+func NewTagService(trTagDao dao.TrTagDao) TagService {
+	return &tagServiceImpl{
+		trTagDao: trTagDao,
 	}
-
-	tagServiceOnce.Do(func() {
-		tagService = &tagServiceImpl{
-			trTagDao: dao.GetTrTagDao(),
-		}
-	})
-
-	return tagService
 }
 
 type TagService interface {

@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/billadm/constant"
 	"github.com/billadm/models"
@@ -10,23 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	categoryService     CategoryService
-	categoryServiceOnce sync.Once
-)
+var categorySvc CategoryService
 
-func GetCategoryService() CategoryService {
-	if categoryService != nil {
-		return categoryService
+func SetCategoryService(svc CategoryService) { categorySvc = svc }
+func GetCategoryService() CategoryService      { return categorySvc }
+
+func NewCategoryService(tagService TagService) CategoryService {
+	return &categoryServiceImpl{
+		tagService: tagService,
 	}
-
-	categoryServiceOnce.Do(func() {
-		categoryService = &categoryServiceImpl{
-			tagService: GetTagService(),
-		}
-	})
-
-	return categoryService
 }
 
 type CategoryService interface {

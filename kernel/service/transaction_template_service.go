@@ -1,8 +1,6 @@
 package service
 
 import (
-	"sync"
-
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/util"
@@ -10,21 +8,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	trTemplateService     TransactionTemplateService
-	trTemplateServiceOnce sync.Once
-)
+var tmplSvc TransactionTemplateService
 
-func GetTrTemplateService() TransactionTemplateService {
-	if trTemplateService != nil {
-		return trTemplateService
-	}
+func SetTrTemplateService(svc TransactionTemplateService) { tmplSvc = svc }
+func GetTrTemplateService() TransactionTemplateService      { return tmplSvc }
 
-	trTemplateServiceOnce.Do(func() {
-		trTemplateService = &transactionTemplateServiceImpl{}
-	})
-
-	return trTemplateService
+func NewTrTemplateService() TransactionTemplateService {
+	return &transactionTemplateServiceImpl{}
 }
 
 type TransactionTemplateService interface {

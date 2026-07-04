@@ -1,26 +1,18 @@
 package service
 
 import (
-	"sync"
-
 	"github.com/billadm/models"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
 )
 
-var (
-	keyEventImageService     KeyEventImageService
-	keyEventImageServiceOnce sync.Once
-)
+var keyEventImgSvc KeyEventImageService
 
-func GetKeyEventImageService() KeyEventImageService {
-	if keyEventImageService != nil {
-		return keyEventImageService
-	}
-	keyEventImageServiceOnce.Do(func() {
-		keyEventImageService = &keyEventImageServiceImpl{}
-	})
-	return keyEventImageService
+func SetKeyEventImageService(svc KeyEventImageService) { keyEventImgSvc = svc }
+func GetKeyEventImageService() KeyEventImageService      { return keyEventImgSvc }
+
+func NewKeyEventImageService() KeyEventImageService {
+	return &keyEventImageServiceImpl{}
 }
 
 type KeyEventImageService interface {
