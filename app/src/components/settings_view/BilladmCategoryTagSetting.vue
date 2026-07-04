@@ -72,11 +72,11 @@ import { ref, watch } from 'vue';
 import type { TransactionType, Category, Tag } from '@/types/billadm';
 import { TransactionTypeToColor } from '@/backend/constant';
 import { useLedgerStore } from '@/stores/ledgerStore';
+import { withErrorHandling } from '@/backend/errorHandler'
 import {
-  getCategoryByType, getTagsByCategory,
-  addCategory, removeCategory, addTag, removeTag,
-  reorderCategory, reorderTag, initializeCategoriesForLedger
-} from '@/backend/functions';
+  queryCategory, createCategory, deleteCategory, updateCategorySort, initializeCategories
+} from '@/backend/api/category'
+import { queryTags, createTag, deleteTag, updateTagSort } from '@/backend/api/tag'
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { message } from "ant-design-vue";
 import CategoryColumn from './CategoryColumn.vue'
@@ -138,7 +138,10 @@ const confirmAddCategory = async () => {
     return;
   }
   try {
-    await addCategory(ledgerStore.currentLedgerId!, name, activeType.value);
+    await withErrorHandling(
+      () => createCategory(ledgerStore.currentLedgerId!, name, activeType.value),
+      { errorPrefix: '创建分类失败', rethrow: true }
+    );
     message.success('分类已添加');
     openCategoryModal.value = false;
     await loadCategories();
@@ -155,7 +158,10 @@ const confirmAddTag = async () => {
   }
   const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
   try {
-    await addTag(ledgerStore.currentLedgerId!, name, categoryTransactionType);
+    await withErrorHandling(
+      () => createTag(ledgerStore.currentLedgerId!, name, categoryTransactionType),
+      { errorPrefix: '创建标签失败', rethrow: true }
+    );
     message.success('标签已添加');
     openTagModal.value = false;
     await loadCategories();
@@ -184,7 +190,10 @@ const confirmDeleteTag = (name: string) => {
 const executeDelete = async () => {
   try {
     if (deleteTarget.value.type === 'category') {
-      await removeCategory(deleteTarget.value.name, activeType.value, ledgerStore.currentLedgerId!);
+      await withErrorHandling(
+        () => deleteCategory(deleteTarget.value.name, activeType.value, ledgerStore.currentLedgerId!),
+        { errorPrefix: '删除分类失败', rethrow: true }
+      );
       message.success('分类已删除');
       if (selectedCategory.value === deleteTarget.value.name) {
         selectedCategory.value = '';
@@ -192,7 +201,10 @@ const executeDelete = async () => {
       }
     } else {
       const categoryTransactionType = `${selectedCategory.value}:${activeType.value}`;
-      await removeTag(deleteTarget.value.name, categoryTransactionType, ledgerStore.currentLedgerId!);
+      await withErrorHandling(
+        () => deleteTag(deleteTarget.value.name, categoryTransactionType, ledgerStore.currentLedgerId!),
+        { errorPrefix: '删除标签失败', rethrow: true }
+      );
       message.success('标签已删除');
     }
     openDeleteModal.value = false;
@@ -214,7 +226,10 @@ const reorderCategories = async (oldIndex: number, newIndex: number) => {
     if (category.sortOrder !== i) {
       category.sortOrder = i
       try {
-        await reorderCategory(category.name, activeType.value, i, ledgerId)
+        await withErrorHandling(
+          () => updateCategorySort(category.name, activeType.value, i, ledgerId),
+          { errorPrefix: '更新分类排序失败', rethrow: true }
+        )
       } catch { /* error handled in backend */ }
     }
   }
@@ -233,7 +248,10 @@ const reorderTags = async (oldIndex: number, newIndex: number) => {
     if (tag.sortOrder !== i) {
       tag.sortOrder = i
       try {
-        await reorderTag(tag.name, categoryTransactionType, i, ledgerId)
+        await withErrorHandling(
+          () => updateTagSort(tag.name, categoryTransactionType, i, ledgerId),
+          { errorPrefix: '更新标签排序失败', rethrow: true }
+        )
       } catch { /* error handled in backend */ }
     }
   }
@@ -251,7 +269,10 @@ const loadCategories = async () => {
   }));
   for (const category of categories.value) {
     const categoryTransactionType = `${category.name}:${activeType.value}`;
-    const tags = await getTagsByCategory(categoryTransactionType, ledgerStore.currentLedgerId!);
+    const tags = await withErrorHandling(
+      () => queryTags(categoryTransactionType, ledgerStore.currentLedgerId!),
+      { errorPrefix: `查询 ${categoryTransactionType} 消费标签失败`, fallback: [] as Tag[] }
+    );
     category.tags = tags.map(t => ({
       name: t.name,
       categoryTransactionType: t.categoryTransactionType,
@@ -268,7 +289,10 @@ const checkHasAnyCategories = async () => {
   }
   const allTypes: TransactionType[] = ['expense', 'income', 'transfer'];
   for (const type of allTypes) {
-    const list = await getCategoryByType(type, ledgerStore.currentLedgerId);
+    const list = await withErrorHandling(
+      () => queryCategory(type, ledgerStore.currentLedgerId),
+      { errorPrefix: `查询 ${type} 消费类型失败`, fallback: [] as Category[] }
+    );
     if (list.length > 0) {
       hasAnyCategories.value = true;
       return;
@@ -287,7 +311,10 @@ const handleInitialize = async () => {
   if (!ledgerStore.currentLedgerId) return;
   initLoading.value = true;
   try {
-    const result = await initializeCategoriesForLedger(ledgerStore.currentLedgerId);
+    const result = await withErrorHandling(
+      () => initializeCategories(ledgerStore.currentLedgerId),
+      { errorPrefix: '初始化分类标签失败', rethrow: true }
+    );
     message.success(`已添加 ${result.categories} 个分类、${result.tags} 个标签`);
     hasAnyCategories.value = true;
     await loadCategories();

@@ -9,6 +9,8 @@ import {
     addKeyEventImage,
     deleteKeyEventImage
 } from "@/backend/api/key-event";
+import { fetchLinkedTransactions } from "@/backend/api/tr";
+import { withErrorHandling } from "@/backend/errorHandler";
 import { useLedgerStore } from '@/stores/ledgerStore'
 import NotificationUtil from "@/backend/notification";
 import { createImageUrls, revokeImageUrls, type ImageUrls } from '@/backend/imageOptimizer'
@@ -190,7 +192,6 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
 
             // 并行预加载图片和关联交易
             if (eventList.length === 0) return;
-            const { getLinkedTransactions } = await import('@/backend/functions');
             await Promise.all([
                 ...eventList.map(async (e) => {
                     try {
@@ -208,7 +209,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                 }),
                 ...eventList.map(async (e) => {
                     try {
-                        const trs = await getLinkedTransactions(e.date);
+                        const trs = await withErrorHandling(
+                            () => fetchLinkedTransactions(e.date),
+                            { errorPrefix: '查询关联交易失败', fallback: [] }
+                        );
                         trCache.value.set(e.date, trs);
                     } catch { /* 静默忽略单个失败 */ }
                 }),

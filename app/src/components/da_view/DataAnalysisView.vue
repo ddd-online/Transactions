@@ -55,8 +55,8 @@ import { useLedgerStore } from '@/stores/ledgerStore.ts'
 import { useTrQueryConditionStore } from '@/stores/trQueryConditionStore.ts'
 import { useAppDataStore } from '@/stores/appDataStore.ts'
 import { convertToUnixTimeRange } from '@/backend/timerange.ts'
-import { getTrOnCondition } from '@/backend/functions.ts'
-import { queryChartData } from '@/backend/api/tr.ts'
+import { withErrorHandling } from '@/backend/errorHandler'
+import { queryChartData, queryTrOnCondition as queryTrOnConditionRaw } from '@/backend/api/tr.ts'
 import { queryCharts, createChart as createChartApi, updateChart as updateChartApi, type ChartDto } from '@/backend/api/chart'
 import { KEEP_CHART_CONFIGS, buildLineChartData, type ChartLine, type ChartConfig, type TimeSeriesData } from '@/backend/chart'
 import type { TrStatistics } from '@/types/billadm'
@@ -96,7 +96,13 @@ const queryStatistics = async (): Promise<TrStatistics | null> => {
       : undefined,
     items: [],
   }
-  const result = await getTrOnCondition(trCondition)
+  const result = await withErrorHandling(
+    () => queryTrOnConditionRaw(trCondition),
+    {
+      errorPrefix: '查询消费记录失败',
+      fallback: { items: [], total: 0, trStatistics: { income: 0, expense: 0, transfer: 0 } }
+    }
+  )
   return result.trStatistics || null
 }
 

@@ -148,16 +148,12 @@ import TrSortModal from './TrSortModal.vue'
 import type { SortItem } from './TrSortModal.vue'
 import type { TransactionRecord, TrForm, TrQueryCondition, TransactionTemplate } from "@/types/billadm";
 import { convertToUnixTimeRange } from "@/backend/timerange.ts";
+import { withErrorHandling } from "@/backend/errorHandler"
 import {
-  createTransactionRecord,
-  deleteTransactionRecord,
-  getTrOnCondition,
-  linkTransactionToKeyEvent,
-  unlinkTransactionFromKeyEvent,
-  updateTransactionRecord,
-  getTemplatesByLedgerId,
-  saveTemplate
-} from "@/backend/functions.ts";
+  createTrForLedger, deleteTrById, queryTrOnCondition,
+  linkTrToKeyEvent, unlinkTrFromKeyEvent
+} from "@/backend/api/tr"
+import { queryTemplates, createTemplate } from "@/backend/api/template"
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
 import { useTrQueryConditionStore } from "@/stores/trQueryConditionStore.ts";
@@ -267,8 +263,13 @@ const updateTr = (tr: TransactionRecord) => {
 };
 
 const deleteTr = async (tr: TransactionRecord) => {
-  await deleteTransactionRecord(tr.transactionId);
-  await refreshTable();
+  try {
+    await withErrorHandling(
+      () => deleteTrById(tr.transactionId),
+      { errorPrefix: '删除消费记录失败', rethrow: true }
+    );
+    await refreshTable();
+  } catch { /* 错误已在 withErrorHandling 中通知 */ }
 };
 
 const closeTrModal = () => {
@@ -279,14 +280,25 @@ const closeTrModal = () => {
 const confirmTrModal = async () => {
   trForm.value.time = trForm.value.time.hour(12).minute(0).second(0);
   const tr = trFormToTrDto(trForm.value, ledgerStore.currentLedgerId);
-  if (tr.transactionId === '') {
-    if (!tr.description) tr.description = '-';
-    await createTransactionRecord(tr);
-  } else {
-    await updateTransactionRecord(tr);
-  }
-  await refreshTable();
-  closeTrModal();
+  try {
+    if (tr.transactionId === '') {
+      if (!tr.description) tr.description = '-';
+      await withErrorHandling(
+        () => createTrForLedger(tr),
+        { errorPrefix: '创建消费记录失败', rethrow: true }
+      );
+    } else {
+      await withErrorHandling(
+        async () => {
+          await deleteTrById(tr.transactionId);
+          await createTrForLedger(tr);
+        },
+        { errorPrefix: '更新消费记录失败', rethrow: true }
+      );
+    }
+    await refreshTable();
+    closeTrModal();
+  } catch { /* 错误已在 withErrorHandling 中通知 */ }
 };
 
 const refreshTable = async () => {
@@ -305,7 +317,13 @@ const refreshTable = async () => {
     if (trQueryConditionStore.trQueryConditionItems) {
       trCondition.items = trQueryConditionStore.trQueryConditionItems;
     }
-    const trQueryResult = await getTrOnCondition(trCondition);
+    const trQueryResult = await withErrorHandling(
+      () => queryTrOnCondition(trCondition),
+      {
+        errorPrefix: '查询消费记录失败',
+        fallback: { items: [], total: 0, trStatistics: { income: 0, expense: 0, transfer: 0 } }
+      }
+    );
 
     tableData.value = trQueryResult.items;
     trTotal.value = trQueryResult.total;
@@ -359,7 +377,10 @@ watch(() => trForm.value.category, async (newCategory) => {
 // 加载模板列表
 const loadTemplates = async () => {
   if (!ledgerStore.currentLedgerId) return;
-  templates.value = await getTemplatesByLedgerId(ledgerStore.currentLedgerId);
+  templates.value = await withErrorHandling(
+    () => queryTemplates(ledgerStore.currentLedgerId),
+    { errorPrefix: '查询模板失败', fallback: [] as TransactionTemplate[] }
+  );
   templateOptions.value = templates.value.map(t => ({
     value: t.template_id,
     label: t.template_name
@@ -397,12 +418,15 @@ const confirmSaveTemplate = async () => {
     flags: trForm.value.flags.join(','),
     description: trForm.value.description,
   };
-  const result = await saveTemplate(data);
-  if (result) {
+  try {
+    await withErrorHandling(
+      () => createTemplate(data),
+      { errorPrefix: '保存模板失败', rethrow: true }
+    );
     message.success('保存模板成功');
     openSaveTemplateModal.value = false;
     await loadTemplates();
-  }
+  } catch { /* 错误已在 withErrorHandling 中通知 */ }
 };
 
 // 关联关键事件
@@ -415,22 +439,30 @@ const handleLink = (record: TransactionRecord) => {
 const confirmLink = async () => {
   if (!linkingRecord.value || !linkDate.value) return;
   const date = linkDate.value.format('YYYY-MM-DD');
-  const ok = await linkTransactionToKeyEvent(linkingRecord.value.transactionId, date);
-  if (ok) {
+  try {
+    await withErrorHandling(
+      () => linkTrToKeyEvent(linkingRecord.value!.transactionId, date),
+      { errorPrefix: '关联失败', rethrow: true }
+    );
+    message.success('关联成功');
     openLinkModal.value = false;
     linkingRecord.value = null;
     await refreshTable();
-  }
+  } catch { /* 错误已在 withErrorHandling 中通知 */ }
 };
 
 const handleUnlink = async () => {
   if (!linkingRecord.value) return;
-  const ok = await unlinkTransactionFromKeyEvent(linkingRecord.value.transactionId);
-  if (ok) {
+  try {
+    await withErrorHandling(
+      () => unlinkTrFromKeyEvent(linkingRecord.value!.transactionId),
+      { errorPrefix: '解除关联失败', rethrow: true }
+    );
+    message.success('已解除关联');
     openLinkModal.value = false;
     linkingRecord.value = null;
     await refreshTable();
-  }
+  } catch { /* 错误已在 withErrorHandling 中通知 */ }
 };
 
 // 监听账本变化，加载模板

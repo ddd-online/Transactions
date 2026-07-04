@@ -74,7 +74,8 @@
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import type { TransactionTemplate } from '@/types/billadm'
-import { getTemplatesByLedgerId, removeTemplate, reorderTemplate } from '@/backend/functions.ts'
+import { withErrorHandling } from '@/backend/errorHandler'
+import { queryTemplates, deleteTemplate, updateTemplateSort } from '@/backend/api/template'
 import { useLedgerStore } from '@/stores/ledgerStore.ts'
 import { TransactionTypeToLabel, TransactionTypeToColor } from '@/backend/constant.ts'
 import Sortable from 'sortablejs'
@@ -175,7 +176,10 @@ const handleReorder = async (oldIndex: number, newIndex: number) => {
     if (item.sort_order !== i) {
       item.sort_order = i
       try {
-        await reorderTemplate(item.template_id!, ledgerStore.currentLedgerId!, i)
+        await withErrorHandling(
+          () => updateTemplateSort(item.template_id!, ledgerStore.currentLedgerId!, i),
+          { errorPrefix: '更新模板排序失败', rethrow: true }
+        )
       } catch { /* error handled in reorderTemplate */ }
     }
   }
@@ -191,7 +195,10 @@ const loadTemplates = async () => {
   }
   loading.value = true
   try {
-    templates.value = await getTemplatesByLedgerId(ledgerStore.currentLedgerId)
+    templates.value = await withErrorHandling(
+      () => queryTemplates(ledgerStore.currentLedgerId),
+      { errorPrefix: '查询模板失败', fallback: [] as TransactionTemplate[] }
+    )
     initSortable()
   } finally {
     loading.value = false
@@ -199,9 +206,14 @@ const loadTemplates = async () => {
 }
 
 const handleDelete = async (templateId: string) => {
-  await removeTemplate(templateId)
-  message.success('删除模板成功')
-  await loadTemplates()
+  try {
+    await withErrorHandling(
+      () => deleteTemplate(templateId),
+      { errorPrefix: '删除模板失败', rethrow: true }
+    )
+    message.success('删除模板成功')
+    await loadTemplates()
+  } catch { /* 错误已在 withErrorHandling 中通知 */ }
 }
 
 const getTypeLabel = (type: string) => {

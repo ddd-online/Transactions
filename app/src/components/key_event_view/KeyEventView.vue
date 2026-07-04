@@ -72,7 +72,9 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useKeyEventStore } from '@/stores/keyEventStore'
 import { useAppDataStore } from '@/stores/appDataStore'
-import { getLinkedTransactions, unlinkTransactionFromKeyEvent } from '@/backend/functions'
+import { withErrorHandling } from '@/backend/errorHandler'
+import { fetchLinkedTransactions, unlinkTrFromKeyEvent } from '@/backend/api/tr'
+import NotificationUtil from '@/backend/notification'
 import type { KeyEvent, TransactionRecord } from '@/types/billadm'
 import type { UploadProgress } from './UploadProgressBar.vue'
 
@@ -327,7 +329,10 @@ const linkedTransactions = ref<TransactionRecord[]>([])
 
 const loadLinkedTransactions = async (date: string) => {
   try {
-    linkedTransactions.value = await getLinkedTransactions(date)
+    linkedTransactions.value = await withErrorHandling(
+      () => fetchLinkedTransactions(date),
+      { errorPrefix: '查询关联交易失败', fallback: [] as TransactionRecord[] }
+    )
     // 同步关联交易汇总到全局统计
     let income = 0, expense = 0, transfer = 0
     for (const t of linkedTransactions.value) {
@@ -342,8 +347,12 @@ const loadLinkedTransactions = async (date: string) => {
 }
 
 const handleUnlinkTr = async (transactionId: string) => {
-  const ok = await unlinkTransactionFromKeyEvent(transactionId)
-  if (ok) {
+  try {
+    await withErrorHandling(
+      () => unlinkTrFromKeyEvent(transactionId),
+      { errorPrefix: '解除关联失败', rethrow: true }
+    )
+    NotificationUtil.success('已解除关联')
     linkedTransactions.value = linkedTransactions.value.filter(
       t => t.transactionId !== transactionId
     )
@@ -359,6 +368,8 @@ const handleUnlinkTr = async (transactionId: string) => {
       else if (t.transactionType === 'transfer') transfer += t.price
     }
     appDataStore.setStatistics({ income, expense, transfer })
+  } catch {
+    // 错误已在 withErrorHandling 中通知
   }
 }
 

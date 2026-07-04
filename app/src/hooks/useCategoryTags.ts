@@ -1,7 +1,9 @@
 // src/hooks/useCategoryTags.ts
 import { ref } from 'vue'
 import type { DefaultOptionType } from 'ant-design-vue/es/vc-cascader'
-import { getCategoryByType, getTagsByCategory } from '@/backend/functions'
+import { withErrorHandling } from '@/backend/errorHandler'
+import { queryCategory } from '@/backend/api/category'
+import { queryTags } from '@/backend/api/tag'
 import type { Category, Tag } from '@/types/billadm'
 
 export function useCategoryTags(getLedgerId: () => string | undefined | null) {
@@ -14,7 +16,10 @@ export function useCategoryTags(getLedgerId: () => string | undefined | null) {
       categoryOptions.value = []
       return []
     }
-    const list = await getCategoryByType(transactionType, ledgerId)
+    const list = await withErrorHandling(
+      () => queryCategory(transactionType, ledgerId),
+      { errorPrefix: `查询 ${transactionType} 消费类型失败`, fallback: [] as Category[] }
+    )
     categoryOptions.value = list.map((c: Category) => ({ value: c.name }))
     return list
   }
@@ -26,7 +31,10 @@ export function useCategoryTags(getLedgerId: () => string | undefined | null) {
       return []
     }
     const categoryTxType = `${category}:${transactionType}`
-    const list = await getTagsByCategory(categoryTxType, ledgerId)
+    const list = await withErrorHandling(
+      () => queryTags(categoryTxType, ledgerId),
+      { errorPrefix: `查询 ${categoryTxType} 消费标签失败`, fallback: [] as Tag[] }
+    )
     tagOptions.value = list.map((t: Tag) => ({ value: t.name }))
     return list
   }
