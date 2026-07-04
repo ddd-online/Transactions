@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/billadm/dao"
+	"github.com/billadm/constant"
 	"github.com/billadm/models"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
@@ -22,7 +22,7 @@ func GetCategoryService() CategoryService {
 
 	categoryServiceOnce.Do(func() {
 		categoryService = &categoryServiceImpl{
-			categoryDao: dao.GetCategoryDao(),
+			tagService: GetTagService(),
 		}
 	})
 
@@ -41,13 +41,18 @@ type CategoryService interface {
 var _ CategoryService = &categoryServiceImpl{}
 
 type categoryServiceImpl struct {
-	categoryDao dao.CategoryDao
+	tagService TagService
 }
 
 func (c *categoryServiceImpl) QueryCategory(ws *workspace.Workspace, ledgerID string, trType string) ([]models.Category, error) {
 	logrus.Infof("start to query category by %s, ledger: %s", trType, ledgerID)
-	categories, err := c.categoryDao.QueryCategory(ws, ledgerID, trType)
-	if err != nil {
+
+	categories := make([]models.Category, 0)
+	db := ws.GetDb().Where("ledger_id = ?", ledgerID)
+	if trType != constant.All {
+		db = db.Where("transaction_type = ?", trType)
+	}
+	if err := db.Order("sort_order ASC, name DESC").Find(&categories).Error; err != nil {
 		return nil, err
 	}
 
@@ -55,7 +60,9 @@ func (c *categoryServiceImpl) QueryCategory(ws *workspace.Workspace, ledgerID st
 	for i, cat := range categories {
 		if cat.SortOrder != i {
 			cat.SortOrder = i
-			if err := c.categoryDao.UpdateCategorySort(ws, ledgerID, cat.Name, cat.TransactionType, i); err != nil {
+			if err := ws.GetDb().Model(&models.Category{}).
+				Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerID, cat.Name, cat.TransactionType).
+				Update("sort_order", i).Error; err != nil {
 				logrus.Errorf("reindex category sort failed: %v", err)
 				return nil, err
 			}
@@ -70,8 +77,11 @@ func (c *categoryServiceImpl) CreateCategory(ws *workspace.Workspace, ledgerId s
 	logrus.Infof("start to create category, ledger id: %s, name: %s, type: %s", ledgerId, name, transactionType)
 
 	// Get max sort order for this transaction type
-	maxSortOrder, err := c.categoryDao.GetMaxSortOrder(ws, ledgerId, transactionType)
-	if err != nil {
+	var maxSortOrder int
+	if err := ws.GetDb().Model(&models.Category{}).
+		Where("ledger_id = ? AND transaction_type = ?", ledgerId, transactionType).
+		Select("COALESCE(MAX(sort_order), 0)").
+		Scan(&maxSortOrder).Error; err != nil {
 		logrus.Errorf("get max sort order failed: %v", err)
 		return err
 	}
@@ -83,7 +93,7 @@ func (c *categoryServiceImpl) CreateCategory(ws *workspace.Workspace, ledgerId s
 		SortOrder:       maxSortOrder + 1,
 	}
 
-	if err := c.categoryDao.CreateCategory(ws, category); err != nil {
+	if err := ws.GetDb().Create(category).Error; err != nil {
 		logrus.Errorf("create category failed: %v", err)
 		return err
 	}
@@ -96,26 +106,29 @@ func (c *categoryServiceImpl) DeleteCategory(ws *workspace.Workspace, ledgerId s
 	logrus.Infof("start to delete category, ledger id: %s, name: %s", ledgerId, name)
 
 	// Check if category is in use
-	inUse, err := c.categoryDao.IsCategoryInUse(ws, ledgerId, name)
-	if err != nil {
+	var count int64
+	if err := ws.GetDb().Model(&models.TransactionRecord{}).
+		Where("ledger_id = ? AND category = ?", ledgerId, name).
+		Count(&count).Error; err != nil {
 		logrus.Errorf("check category usage failed: %v", err)
 		return err
 	}
-	if inUse {
+	if count > 0 {
 		logrus.Warnf("category is in use, cannot delete: %s", name)
 		return fmt.Errorf("分类已被使用，无法删除")
 	}
 
 	// Delete all tags under this category
 	categoryTransactionType := fmt.Sprintf("%s:%s", name, transactionType)
-	tagDao := dao.GetTagDao()
-	if err := tagDao.DeleteTagsByCategory(ws, ledgerId, categoryTransactionType); err != nil {
+	if err := c.tagService.DeleteTagsByCategory(ws, ledgerId, categoryTransactionType); err != nil {
 		logrus.Errorf("delete category tags failed: %v", err)
 		return err
 	}
 
 	// Delete the category
-	if err := c.categoryDao.DeleteCategory(ws, ledgerId, name, transactionType); err != nil {
+	if err := ws.GetDb().
+		Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerId, name, transactionType).
+		Delete(&models.Category{}).Error; err != nil {
 		logrus.Errorf("delete category failed: %v", err)
 		return err
 	}
@@ -127,7 +140,10 @@ func (c *categoryServiceImpl) DeleteCategory(ws *workspace.Workspace, ledgerId s
 func (c *categoryServiceImpl) UpdateCategorySort(ws *workspace.Workspace, ledgerID string, name string, transactionType string, sortOrder int) error {
 	logrus.Infof("start to update category sort, name: %s, type: %s, sortOrder: %d", name, transactionType, sortOrder)
 
-	if err := c.categoryDao.UpdateCategorySort(ws, ledgerID, name, transactionType, sortOrder); err != nil {
+	if err := ws.GetDb().
+		Model(&models.Category{}).
+		Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerID, name, transactionType).
+		Update("sort_order", sortOrder).Error; err != nil {
 		logrus.Errorf("update category sort failed: %v", err)
 		return err
 	}
@@ -137,18 +153,24 @@ func (c *categoryServiceImpl) UpdateCategorySort(ws *workspace.Workspace, ledger
 }
 
 func (c *categoryServiceImpl) CountRecordsByCategory(ws *workspace.Workspace, ledgerId string, category string) (int64, error) {
-	return c.categoryDao.CountRecordsByCategory(ws, ledgerId, category)
+	var count int64
+	err := ws.GetDb().Model(&models.TransactionRecord{}).
+		Where("ledger_id = ? AND category = ?", ledgerId, category).
+		Count(&count).Error
+	return count, err
 }
 
 func (c *categoryServiceImpl) InitializeCategories(ws *workspace.Workspace, ledgerID string) (int, int, error) {
 	logrus.Infof("start to initialize categories for ledger: %s", ledgerID)
 
-	hasCategories, err := c.categoryDao.HasCategories(ws, ledgerID)
-	if err != nil {
+	var count int64
+	if err := ws.GetDb().Model(&models.Category{}).
+		Where("ledger_id = ?", ledgerID).
+		Count(&count).Error; err != nil {
 		logrus.Errorf("check has categories failed: %v", err)
 		return 0, 0, err
 	}
-	if hasCategories {
+	if count > 0 {
 		return 0, 0, fmt.Errorf("该账本已有分类，无需初始化")
 	}
 

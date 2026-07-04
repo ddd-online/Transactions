@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/util"
@@ -24,9 +23,7 @@ func GetChartService() ChartService {
 	}
 
 	chartServiceOnce.Do(func() {
-		chartService = &chartServiceImpl{
-			chartDao: dao.GetChartDao(),
-		}
+		chartService = &chartServiceImpl{}
 	})
 
 	return chartService
@@ -41,16 +38,17 @@ type ChartService interface {
 
 var _ ChartService = &chartServiceImpl{}
 
-type chartServiceImpl struct {
-	chartDao dao.ChartDao
-}
+type chartServiceImpl struct{}
 
 func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartRequest) (*dto.ChartDto, error) {
 	chartID := util.GetUUID()
 
 	// Get max sort order
-	maxSortOrder, err := t.chartDao.GetMaxSortOrder(ws, req.LedgerID)
-	if err != nil {
+	var maxSortOrder int
+	if err := ws.GetDb().Model(&models.Chart{}).
+		Where("ledger_id = ?", req.LedgerID).
+		Select("COALESCE(MAX(sort_order), 0)").
+		Scan(&maxSortOrder).Error; err != nil {
 		return nil, err
 	}
 
@@ -71,7 +69,7 @@ func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartR
 		SortOrder:   maxSortOrder + 1,
 	}
 
-	if err := t.chartDao.Create(ws, chart); err != nil {
+	if err := ws.GetDb().Create(chart).Error; err != nil {
 		return nil, fmt.Errorf("create chart failed: %w", err)
 	}
 
@@ -82,7 +80,7 @@ func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartR
 
 func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) error {
 	// Check if preset chart
-	chart, err := t.chartDao.GetById(ws, chartId)
+	chart, err := t.getById(ws, chartId)
 	if err != nil {
 		return fmt.Errorf("get chart failed: %w", err)
 	}
@@ -91,7 +89,9 @@ func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) e
 		return fmt.Errorf("preset chart cannot be deleted")
 	}
 
-	if err := t.chartDao.DeleteById(ws, chartId); err != nil {
+	if err := ws.GetDb().
+		Where("chart_id = ?", chartId).
+		Delete(&models.Chart{}).Error; err != nil {
 		return fmt.Errorf("delete chart failed: %w", err)
 	}
 
@@ -100,8 +100,11 @@ func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) e
 }
 
 func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*dto.ChartDto, error) {
-	charts, err := t.chartDao.ListByLedgerId(ws, ledgerId)
-	if err != nil {
+	charts := make([]*models.Chart, 0)
+	if err := ws.GetDb().
+		Where("ledger_id = ?", ledgerId).
+		Order("is_preset DESC, sort_order ASC, created_at DESC").
+		Find(&charts).Error; err != nil {
 		return nil, err
 	}
 
@@ -119,7 +122,7 @@ func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId stri
 
 func (t *chartServiceImpl) Update(ws *workspace.Workspace, req *dto.UpdateChartRequest) (*dto.ChartDto, error) {
 	// Check if preset chart
-	chart, err := t.chartDao.GetById(ws, req.ChartID)
+	chart, err := t.getById(ws, req.ChartID)
 	if err != nil {
 		return nil, fmt.Errorf("get chart failed: %w", err)
 	}
@@ -140,13 +143,19 @@ func (t *chartServiceImpl) Update(ws *workspace.Workspace, req *dto.UpdateChartR
 	chart.ChartType = req.ChartType
 	chart.SortOrder = req.SortOrder
 
-	if err := t.chartDao.Update(ws, chart); err != nil {
+	if err := ws.GetDb().Save(chart).Error; err != nil {
 		return nil, fmt.Errorf("update chart failed: %w", err)
 	}
 
 	logrus.Infof("update chart success, chart id: %s", req.ChartID)
 
 	return t.toDto(chart)
+}
+
+func (t *chartServiceImpl) getById(ws *workspace.Workspace, chartId string) (*models.Chart, error) {
+	var chart models.Chart
+	err := ws.GetDb().Where("chart_id = ?", chartId).First(&chart).Error
+	return &chart, err
 }
 
 func (t *chartServiceImpl) toDto(chart *models.Chart) (*dto.ChartDto, error) {

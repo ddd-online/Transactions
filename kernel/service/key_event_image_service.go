@@ -3,7 +3,6 @@ package service
 import (
 	"sync"
 
-	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
@@ -19,9 +18,7 @@ func GetKeyEventImageService() KeyEventImageService {
 		return keyEventImageService
 	}
 	keyEventImageServiceOnce.Do(func() {
-		keyEventImageService = &keyEventImageServiceImpl{
-			imageDao: dao.GetKeyEventImageDao(),
-		}
+		keyEventImageService = &keyEventImageServiceImpl{}
 	})
 	return keyEventImageService
 }
@@ -35,13 +32,11 @@ type KeyEventImageService interface {
 
 var _ KeyEventImageService = &keyEventImageServiceImpl{}
 
-type keyEventImageServiceImpl struct {
-	imageDao dao.KeyEventImageDao
-}
+type keyEventImageServiceImpl struct{}
 
 func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string, data string, filename string) (*models.KeyEventImage, error) {
-	images, err := s.imageDao.QueryImagesByEventDate(ws, date)
-	if err != nil {
+	var images []models.KeyEventImage
+	if err := ws.GetDb().Where("event_date = ?", date).Order("sort_order ASC").Find(&images).Error; err != nil {
 		return nil, err
 	}
 	maxOrder := 0
@@ -58,20 +53,22 @@ func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string
 		Filename:  filename,
 		SortOrder: sortOrder,
 	}
-	if err := s.imageDao.InsertImage(ws, image); err != nil {
+	if err := ws.GetDb().Create(image).Error; err != nil {
 		return nil, err
 	}
 	return image, nil
 }
 
 func (s *keyEventImageServiceImpl) GetImagesByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error) {
-	return s.imageDao.QueryImagesByEventDate(ws, date)
+	var images []models.KeyEventImage
+	err := ws.GetDb().Where("event_date = ?", date).Order("sort_order ASC").Find(&images).Error
+	return images, err
 }
 
 func (s *keyEventImageServiceImpl) DeleteImage(ws *workspace.Workspace, imageId string) error {
-	return s.imageDao.DeleteImage(ws, imageId)
+	return ws.GetDb().Where("id = ?", imageId).Delete(&models.KeyEventImage{}).Error
 }
 
 func (s *keyEventImageServiceImpl) DeleteImagesByEventDate(ws *workspace.Workspace, date string) error {
-	return s.imageDao.DeleteImagesByEventDate(ws, date)
+	return ws.GetDb().Where("event_date = ?", date).Delete(&models.KeyEventImage{}).Error
 }

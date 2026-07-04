@@ -3,6 +3,7 @@ package service
 import (
 	"sync"
 
+	"github.com/billadm/constant"
 	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/workspace"
@@ -21,7 +22,7 @@ func GetTagService() TagService {
 
 	tagServiceOnce.Do(func() {
 		tagService = &tagServiceImpl{
-			tagDao: dao.GetTagDao(),
+			trTagDao: dao.GetTrTagDao(),
 		}
 	})
 
@@ -32,6 +33,7 @@ type TagService interface {
 	QueryTags(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) ([]models.Tag, error)
 	CreateTag(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string) error
 	DeleteTag(ws *workspace.Workspace, ledgerId string, name string, categoryTransactionType string) error
+	DeleteTagsByCategory(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) error
 	UpdateTagSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error
 	CountRecordsByTag(ws *workspace.Workspace, ledgerId string, tag string) (int64, error)
 }
@@ -39,13 +41,17 @@ type TagService interface {
 var _ TagService = &tagServiceImpl{}
 
 type tagServiceImpl struct {
-	tagDao dao.TagDao
+	trTagDao dao.TrTagDao
 }
 
 func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) ([]models.Tag, error) {
 	logrus.Infof("start to query tag, ledger: %s, category: %s", ledgerID, categoryTransactionType)
-	tags, err := t.tagDao.QueryTags(ws, ledgerID, categoryTransactionType)
-	if err != nil {
+	tags := make([]models.Tag, 0)
+	db := ws.GetDb().Where("ledger_id = ?", ledgerID)
+	if categoryTransactionType != constant.All {
+		db = db.Where("category_transaction_type = ?", categoryTransactionType)
+	}
+	if err := db.Order("sort_order ASC, name DESC").Find(&tags).Error; err != nil {
 		return nil, err
 	}
 
@@ -53,7 +59,9 @@ func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, cat
 	for i, tag := range tags {
 		if tag.SortOrder != i {
 			tag.SortOrder = i
-			if err := t.tagDao.UpdateTagSort(ws, ledgerID, tag.Name, tag.CategoryTransactionType, i); err != nil {
+			if err := ws.GetDb().Model(&models.Tag{}).
+				Where("ledger_id = ? AND name = ? AND category_transaction_type = ?", ledgerID, tag.Name, tag.CategoryTransactionType).
+				Update("sort_order", i).Error; err != nil {
 				logrus.Errorf("reindex tag sort failed: %v", err)
 				return nil, err
 			}
@@ -68,8 +76,11 @@ func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, nam
 	logrus.Infof("start to create tag, ledger: %s, name: %s, category: %s", ledgerID, name, categoryTransactionType)
 
 	// Get max sort order for this category
-	maxSortOrder, err := t.tagDao.GetMaxSortOrder(ws, ledgerID, categoryTransactionType)
-	if err != nil {
+	var maxSortOrder int
+	if err := ws.GetDb().Model(&models.Tag{}).
+		Where("ledger_id = ? AND category_transaction_type = ?", ledgerID, categoryTransactionType).
+		Select("COALESCE(MAX(sort_order), 0)").
+		Scan(&maxSortOrder).Error; err != nil {
 		logrus.Errorf("get max sort order failed: %v", err)
 		return err
 	}
@@ -81,7 +92,7 @@ func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, nam
 		SortOrder:               maxSortOrder + 1,
 	}
 
-	if err := t.tagDao.CreateTag(ws, tag); err != nil {
+	if err := ws.GetDb().Create(tag).Error; err != nil {
 		logrus.Errorf("create tag failed: %v", err)
 		return err
 	}
@@ -90,18 +101,25 @@ func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, nam
 	return nil
 }
 
+func (t *tagServiceImpl) DeleteTagsByCategory(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) error {
+	return ws.GetDb().
+		Where("ledger_id = ? AND category_transaction_type = ?", ledgerID, categoryTransactionType).
+		Delete(&models.Tag{}).Error
+}
+
 func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, name string, categoryTransactionType string) error {
 	logrus.Infof("start to delete tag, ledger id: %s, name: %s", ledgerId, name)
 
 	// Delete TrTag entries that use this tag
-	trTagDao := dao.GetTrTagDao()
-	if err := trTagDao.DeleteTrTagByTag(ws, ledgerId, name); err != nil {
+	if err := t.trTagDao.DeleteTrTagByTag(ws, ledgerId, name); err != nil {
 		logrus.Errorf("delete tr tags failed: %v", err)
 		return err
 	}
 
 	// Delete the tag
-	if err := t.tagDao.DeleteTag(ws, ledgerId, name, categoryTransactionType); err != nil {
+	if err := ws.GetDb().
+		Where("ledger_id = ? AND name = ? AND category_transaction_type = ?", ledgerId, name, categoryTransactionType).
+		Delete(&models.Tag{}).Error; err != nil {
 		logrus.Errorf("delete tag failed: %v", err)
 		return err
 	}
@@ -113,7 +131,10 @@ func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, nam
 func (t *tagServiceImpl) UpdateTagSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error {
 	logrus.Infof("start to update tag sort, name: %s, category: %s, sortOrder: %d", name, categoryTransactionType, sortOrder)
 
-	if err := t.tagDao.UpdateTagSort(ws, ledgerID, name, categoryTransactionType, sortOrder); err != nil {
+	if err := ws.GetDb().
+		Model(&models.Tag{}).
+		Where("ledger_id = ? AND name = ? AND category_transaction_type = ?", ledgerID, name, categoryTransactionType).
+		Update("sort_order", sortOrder).Error; err != nil {
 		logrus.Errorf("update tag sort failed: %v", err)
 		return err
 	}
@@ -123,5 +144,12 @@ func (t *tagServiceImpl) UpdateTagSort(ws *workspace.Workspace, ledgerID string,
 }
 
 func (t *tagServiceImpl) CountRecordsByTag(ws *workspace.Workspace, ledgerId string, tag string) (int64, error) {
-	return t.tagDao.CountRecordsByTag(ws, ledgerId, tag)
+	var count int64
+	err := ws.GetDb().Model(&models.TrTag{}).
+		Where("ledger_id = ? AND tag = ?", ledgerId, tag).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

@@ -23,9 +23,8 @@ func GetLedgerService() LedgerService {
 
 	ledgerServiceOnce.Do(func() {
 		ledgerService = &ledgerServiceImpl{
-			ledgerDao: dao.GetLedgerDao(),
-			trDao:     dao.GetTrDao(),
-			trTagDao:  dao.GetTrTagDao(),
+			trDao:    dao.GetTrDao(),
+			trTagDao: dao.GetTrTagDao(),
 		}
 	})
 
@@ -43,9 +42,8 @@ type LedgerService interface {
 var _ LedgerService = &ledgerServiceImpl{}
 
 type ledgerServiceImpl struct {
-	ledgerDao dao.LedgerDao
-	trDao     dao.TransactionRecordDao
-	trTagDao  dao.TrTagDao
+	trDao    dao.TransactionRecordDao
+	trTagDao dao.TrTagDao
 }
 
 // CreateLedger 创建成功返回创建账本id
@@ -57,7 +55,7 @@ func (l *ledgerServiceImpl) CreateLedger(ws *workspace.Workspace, ledgerName str
 		Description: description,
 	}
 
-	if err := l.ledgerDao.CreateLedger(ws, ledger); err != nil {
+	if err := ws.GetDb().Create(ledger).Error; err != nil {
 		logrus.Errorf("create ledger failed, name: %s, err: %v", ledgerName, err)
 		return "", err
 	}
@@ -76,7 +74,12 @@ func (l *ledgerServiceImpl) ModifyLedger(ws *workspace.Workspace, ledgerId, ledg
 		Description: description,
 	}
 
-	if err := l.ledgerDao.ModifyLedger(ws, ledger); err != nil {
+	if err := ws.GetDb().Model(ledger).
+		Where("id = ?", ledger.ID).
+		Updates(map[string]interface{}{
+			"name":        ledger.Name,
+			"description": ledger.Description,
+		}).Error; err != nil {
 		logrus.Errorf("modify ledger failed, id: %s, err: %v", ledgerId, err)
 		return err
 	}
@@ -89,8 +92,8 @@ func (l *ledgerServiceImpl) ModifyLedger(ws *workspace.Workspace, ledgerId, ledg
 func (l *ledgerServiceImpl) ListAllLedger(ws *workspace.Workspace) ([]models.Ledger, error) {
 	logrus.Infof("start to list all ledgers")
 
-	ledgers, err := l.ledgerDao.ListAllLedger(ws)
-	if err != nil {
+	ledgers := make([]models.Ledger, 0)
+	if err := ws.GetDb().Find(&ledgers).Error; err != nil {
 		logrus.Errorf("list all ledgers failed, err: %v", err)
 		return nil, err
 	}
@@ -103,14 +106,14 @@ func (l *ledgerServiceImpl) ListAllLedger(ws *workspace.Workspace) ([]models.Led
 func (l *ledgerServiceImpl) QueryLedgerById(ws *workspace.Workspace, ledgerId string) (*models.Ledger, error) {
 	logrus.Infof("start to query ledger by id, id: %s", ledgerId)
 
-	ledger, err := l.ledgerDao.QueryLedgerById(ws, ledgerId)
-	if err != nil {
+	var ledger models.Ledger
+	if err := ws.GetDb().Where("id = ?", ledgerId).First(&ledger).Error; err != nil {
 		logrus.Errorf("query ledger by id failed, id: %s, err: %v", ledgerId, err)
 		return nil, err
 	}
 
 	logrus.Infof("end to query ledger by id, id: %s", ledgerId)
-	return ledger, nil
+	return &ledger, nil
 }
 
 // DeleteLedgerById deletes a ledger and all its associated transaction records and tags in a transaction.
@@ -135,7 +138,7 @@ func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId s
 		}
 
 		// Delete the ledger
-		if err := l.ledgerDao.DeleteLedgerById(tx, ledgerId); err != nil {
+		if err := tx.GetDb().Where("id = ?", ledgerId).Delete(&models.Ledger{}).Error; err != nil {
 			return fmt.Errorf("delete ledger: %w", err)
 		}
 		return nil

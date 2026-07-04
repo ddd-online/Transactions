@@ -3,7 +3,7 @@ package service
 import (
 	"sync"
 
-	"github.com/billadm/dao"
+	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
@@ -21,9 +21,7 @@ func GetTrTemplateService() TransactionTemplateService {
 	}
 
 	trTemplateServiceOnce.Do(func() {
-		trTemplateService = &transactionTemplateServiceImpl{
-			trTemplateDao: dao.GetTrTemplateDao(),
-		}
+		trTemplateService = &transactionTemplateServiceImpl{}
 	})
 
 	return trTemplateService
@@ -38,9 +36,7 @@ type TransactionTemplateService interface {
 
 var _ TransactionTemplateService = &transactionTemplateServiceImpl{}
 
-type transactionTemplateServiceImpl struct {
-	trTemplateDao dao.TransactionTemplateDao
-}
+type transactionTemplateServiceImpl struct{}
 
 func (t *transactionTemplateServiceImpl) Create(ws *workspace.Workspace, dto *dto.TransactionTemplateDto) (string, error) {
 	logrus.Infof("start to create transaction template, ledger id: %s, name: %s", dto.LedgerID, dto.TemplateName)
@@ -48,8 +44,11 @@ func (t *transactionTemplateServiceImpl) Create(ws *workspace.Workspace, dto *dt
 	templateID := util.GetUUID()
 
 	// Get max sort order for this ledger
-	maxSortOrder, err := t.trTemplateDao.GetMaxSortOrder(ws, dto.LedgerID)
-	if err != nil {
+	var maxSortOrder int
+	if err := ws.GetDb().Model(&models.TransactionTemplate{}).
+		Where("ledger_id = ?", dto.LedgerID).
+		Select("COALESCE(MAX(sort_order), 0)").
+		Scan(&maxSortOrder).Error; err != nil {
 		logrus.Errorf("get max sort order failed: %v", err)
 		return "", err
 	}
@@ -58,7 +57,7 @@ func (t *transactionTemplateServiceImpl) Create(ws *workspace.Workspace, dto *dt
 	record.TemplateID = templateID
 	record.SortOrder = maxSortOrder + 1
 
-	if err := t.trTemplateDao.Create(ws, record); err != nil {
+	if err := ws.GetDb().Create(record).Error; err != nil {
 		logrus.Errorf("create transaction template failed: %v", err)
 		return "", err
 	}
@@ -70,7 +69,9 @@ func (t *transactionTemplateServiceImpl) Create(ws *workspace.Workspace, dto *dt
 func (t *transactionTemplateServiceImpl) DeleteById(ws *workspace.Workspace, templateId string) error {
 	logrus.Infof("start to delete transaction template, id: %s", templateId)
 
-	if err := t.trTemplateDao.DeleteById(ws, templateId); err != nil {
+	if err := ws.GetDb().
+		Where("template_id = ?", templateId).
+		Delete(&models.TransactionTemplate{}).Error; err != nil {
 		logrus.Errorf("delete transaction template failed: %v", err)
 		return err
 	}
@@ -82,8 +83,11 @@ func (t *transactionTemplateServiceImpl) DeleteById(ws *workspace.Workspace, tem
 func (t *transactionTemplateServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*dto.TransactionTemplateDto, error) {
 	logrus.Infof("start to list transaction templates, ledger id: %s", ledgerId)
 
-	templates, err := t.trTemplateDao.ListByLedgerId(ws, ledgerId)
-	if err != nil {
+	templates := make([]*models.TransactionTemplate, 0)
+	if err := ws.GetDb().
+		Where("ledger_id = ?", ledgerId).
+		Order("sort_order ASC, created_at DESC").
+		Find(&templates).Error; err != nil {
 		return nil, err
 	}
 
@@ -91,9 +95,12 @@ func (t *transactionTemplateServiceImpl) ListByLedgerId(ws *workspace.Workspace,
 	for i, template := range templates {
 		if template.SortOrder != i {
 			template.SortOrder = i
-			if err := t.trTemplateDao.UpdateSortOrder(ws, template.TemplateID, i); err != nil {
+			if err := ws.GetDb().
+				Model(&models.TransactionTemplate{}).
+				Where("template_id = ?", template.TemplateID).
+				Update("sort_order", i).Error; err != nil {
 				logrus.Errorf("reindex template sort failed: %v", err)
-				return nil,err
+				return nil, err
 			}
 		}
 	}
@@ -112,7 +119,10 @@ func (t *transactionTemplateServiceImpl) ListByLedgerId(ws *workspace.Workspace,
 func (t *transactionTemplateServiceImpl) UpdateSortOrder(ws *workspace.Workspace, templateId string, ledgerId string, sortOrder int) error {
 	logrus.Infof("start to update template sort, templateId: %s, sortOrder: %d", templateId, sortOrder)
 
-	if err := t.trTemplateDao.UpdateSortOrder(ws, templateId, sortOrder); err != nil {
+	if err := ws.GetDb().
+		Model(&models.TransactionTemplate{}).
+		Where("template_id = ?", templateId).
+		Update("sort_order", sortOrder).Error; err != nil {
 		logrus.Errorf("update template sort failed: %v", err)
 		return err
 	}
