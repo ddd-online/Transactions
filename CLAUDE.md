@@ -249,3 +249,17 @@ This project uses OpenWolf (`.wolf/`) for cross-session context. Key rules:
 - **Component auto-import**: Both Ant Design Vue components and custom components in `src/components/` are auto-imported via `unplugin-vue-components` — no manual imports needed.
 - **`electronAPI`** is only available inside Electron; code that runs in the browser must handle its absence (the API client does this via the fallback URL).
 - **Transaction update** is delete + create, not a PATCH — be aware of potential race conditions.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as local markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the five canonical triage roles with default label names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` at repo root + `docs/adr/` for architectural decisions. Created lazily by `/domain-modeling`. See `docs/agents/domain.md`.

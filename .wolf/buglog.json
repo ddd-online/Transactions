@@ -897,6 +897,214 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-04T17:07:02.573Z"
+    },
+    {
+      "id": "bug-057",
+      "timestamp": "2026-07-04T17:12:47.905Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/dao/transaction_record_dao.go",
+      "root_cause": "11 lines replaced/restructured",
+      "fix": "Rewrote 28→14 lines (11 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:12:47.905Z"
+    },
+    {
+      "id": "bug-058",
+      "timestamp": "2026-07-04T17:12:49.625Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/dao/transaction_record_tag_dao.go",
+      "root_cause": "11 lines replaced/restructured",
+      "fix": "Rewrote 25→10 lines (11 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:12:49.625Z"
+    },
+    {
+      "id": "bug-059",
+      "timestamp": "2026-07-04T17:13:08.720Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/ledger_service.go",
+      "root_cause": "13 lines replaced/restructured",
+      "fix": "Rewrote 32→18 lines (13 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:08.720Z"
+    },
+    {
+      "id": "bug-060",
+      "timestamp": "2026-07-04T17:13:17.787Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/transaction_record_service.go",
+      "root_cause": "13 lines replaced/restructured",
+      "fix": "Rewrote 21→8 lines (13 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:17.787Z"
+    },
+    {
+      "id": "bug-061",
+      "timestamp": "2026-07-04T17:13:22.930Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/tag_service.go",
+      "root_cause": "12 lines replaced/restructured",
+      "fix": "Rewrote 30→15 lines (12 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:22.930Z"
+    },
+    {
+      "id": "bug-062",
+      "timestamp": "2026-07-04T17:13:28.491Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/category_service.go",
+      "root_cause": "12 lines replaced/restructured",
+      "fix": "Rewrote 30→16 lines (12 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:28.491Z"
+    },
+    {
+      "id": "bug-063",
+      "timestamp": "2026-07-04T17:13:37.840Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/key_event_service.go",
+      "root_cause": "12 lines replaced/restructured",
+      "fix": "Rewrote 27→15 lines (12 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:37.840Z"
+    },
+    {
+      "id": "bug-064",
+      "timestamp": "2026-07-04T17:13:39.666Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/key_event_image_service.go",
+      "root_cause": "11 lines replaced/restructured",
+      "fix": "Rewrote 22→9 lines (11 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:39.666Z"
+    },
+    {
+      "id": "bug-065",
+      "timestamp": "2026-07-04T17:13:41.674Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/chart_service.go",
+      "root_cause": "11 lines replaced/restructured",
+      "fix": "Rewrote 28→14 lines (11 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:41.674Z"
+    },
+    {
+      "id": "bug-066",
+      "timestamp": "2026-07-04T17:13:43.840Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/transaction_template_service.go",
+      "root_cause": "11 lines replaced/restructured",
+      "fix": "Rewrote 26→11 lines (11 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:13:43.840Z"
+    },
+    {
+      "id": "bug-067",
+      "timestamp": "2026-07-04T17:19:57.240Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/api/router.go",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 9→12 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:19:57.240Z"
+    },
+    {
+      "id": "bug-068",
+      "timestamp": "2026-07-04T17:47:00.523Z",
+      "error_message": "Significant refactor of ",
+      "file": "kernel/service/chart_service.go",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 11→27 lines (6 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "go"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:47:00.523Z"
+    },
+    {
+      "id": "bug-069",
+      "timestamp": "2026-07-04T17:53:23.350Z",
+      "error_message": "Significant refactor of ",
+      "file": "app/src/components/da_view/BilladmChartList.vue",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 12→7 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-04T17:53:23.350Z"
     }
   ]
 }

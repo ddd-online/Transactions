@@ -1,11 +1,11 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-04T17:12:15.730Z
-> Files: 70 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-04T17:53:33.628Z
+> Files: 83 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
-- `CLAUDE.md` — CLAUDE.md (~3222 tok)
+- `CLAUDE.md` — CLAUDE.md (~3352 tok)
 
 ## .claude/
 
@@ -45,6 +45,7 @@
 
 ## app/src/backend/
 
+- `chart.ts` — 按时间聚合的交易记录数据 (~1039 tok)
 - `errorHandler.ts` — 查询模式：错误时通知并返回 fallback 值，不抛出。 (~216 tok)
 - `functions.ts` — 将秒级时间戳转换为格式化时间字符串 (~360 tok)
 - `imageOptimizer.ts` — 将 base64 data URI 转成 Blob (~614 tok)
@@ -66,8 +67,9 @@
 ## app/src/components/da_view/
 
 - `BilladmChartLines.vue` — Vue: setup (~2260 tok)
+- `BilladmChartList.vue` — Vue: setup (~1151 tok)
 - `BilladmChartView.vue` — Vue: setup (~1679 tok)
-- `DataAnalysisView.vue` — Vue: setup (~3090 tok)
+- `DataAnalysisView.vue` — Vue: setup (~2437 tok)
 
 ## app/src/components/key_event_view/
 
@@ -119,6 +121,12 @@
 ## docs/
 
 
+## docs/agents/
+
+- `domain.md` — Domain Docs (~340 tok)
+- `issue-tracker.md` — Issue tracker: Local Markdown (~437 tok)
+- `triage-labels.md` — Triage Labels (~243 tok)
+
 ## docs/superpowers/plans/
 
 - `2026-06-26-image-performance-optimization.md` — 图片加载性能优化（Blob + Canvas 缩略图） 实施计划 (~2278 tok)
@@ -152,15 +160,20 @@
 
 ## kernel/
 
+- `main.go` (~224 tok)
 
 ## kernel/api/
 
+- `handler.go` — Handle, RequireWorkspace (~326 tok)
+- `router.go` — ServeAPI, JsonArg (~785 tok)
 
 ## kernel/constant/
 
 
 ## kernel/dao/
 
+- `transaction_record_dao.go` — Interface: TransactionRecordDao (~1167 tok)
+- `transaction_record_tag_dao.go` — Interface: TrTagDao (~680 tok)
 
 ## kernel/logger/
 
@@ -176,16 +189,18 @@
 
 ## kernel/server/
 
+- `wire.go` — InitServices (~330 tok)
 
 ## kernel/service/
 
-- `category_service.go` — Interface: CategoryService (~1550 tok)
-- `chart_service.go` — Interface: ChartService (~1215 tok)
-- `key_event_image_service.go` — Interface: KeyEventImageService (~611 tok)
-- `key_event_service.go` — Interface: KeyEventService (~936 tok)
-- `ledger_service.go` — Interface: LedgerService (~1207 tok)
-- `tag_service.go` — Interface: TagService (~1269 tok)
-- `transaction_template_service.go` — Interface: TransactionTemplateService (~1014 tok)
+- `category_service.go` — Interface: CategoryService (~1541 tok)
+- `chart_service.go` — Interface: ChartService (~2189 tok)
+- `key_event_image_service.go` — Interface: KeyEventImageService (~597 tok)
+- `key_event_service.go` — Interface: KeyEventService (~930 tok)
+- `ledger_service.go` — Interface: LedgerService (~1203 tok)
+- `tag_service.go` — Interface: TagService (~1259 tok)
+- `transaction_record_service.go` — Interface: TransactionRecordService (~3288 tok)
+- `transaction_template_service.go` — Interface: TransactionTemplateService (~1001 tok)
 
 ## kernel/util/
 
@@ -195,3 +210,4 @@
 
 ## kernel/workspace/
 
+- `seed.go` — GetDefaultData, SeedData (~677 tok)

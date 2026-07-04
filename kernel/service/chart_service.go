@@ -39,78 +39,84 @@ func defaultChartLines() []models.ChartLine {
 	}
 }
 
-// seedDefaultCharts inserts the 3 preset trend charts for a ledger if none exist.
+// presetTitles are the titles of charts that should always exist for every ledger.
+var presetTitles = []string{"月度消费趋势", "年度消费趋势", "年度收入趋势"}
+
+// seedDefaultCharts inserts preset trend charts that don't yet exist for this ledger.
 func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID string) error {
-	var count int64
-	if err := ws.GetDb().Model(&models.Chart{}).Where("ledger_id = ?", ledgerID).Count(&count).Error; err != nil {
+	var existingTitles []string
+	if err := ws.GetDb().Model(&models.Chart{}).
+		Where("ledger_id = ? AND title IN ?", ledgerID, presetTitles).
+		Pluck("title", &existingTitles).Error; err != nil {
+		logrus.Warnf("seedDefaultCharts: query existing titles failed: %v", err)
 		return err
 	}
-	if count > 0 {
+	existingSet := make(map[string]bool, len(existingTitles))
+	for _, t := range existingTitles {
+		existingSet[t] = true
+	}
+
+	missing := 0
+	for _, t := range presetTitles {
+		if !existingSet[t] {
+			missing++
+		}
+	}
+	if missing == 0 {
 		return nil
 	}
+	logrus.Infof("seedDefaultCharts: ledger=%s, missing %d preset charts", ledgerID, missing)
 
-	monthlyLines := defaultChartLines()
-
-	yearlyLines := []models.ChartLine{
-		{Label: "支出", TransactionType: "expense", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
-		{Label: "收入", TransactionType: "income", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
-		{Label: "转账", TransactionType: "transfer", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
-	}
-
-	incomeLines := []models.ChartLine{
-		{Label: "年度总收入", TransactionType: "income", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
-		{
-			Label: "年度工资收入", TransactionType: "income", IncludeOutlier: true,
-			Conditions: []models.QueryConditionItem{
-				{TransactionType: "income", Category: "工资奖金", Tags: []string{"工资"}, TagPolicy: "all"},
-			},
-		},
-		{
-			Label: "年度奖金收入", TransactionType: "income", IncludeOutlier: true,
-			Conditions: []models.QueryConditionItem{
-				{TransactionType: "income", Category: "工资奖金", Tags: []string{"奖金"}, TagPolicy: "all", Description: "年奖金"},
-			},
-		},
-		{
-			Label: "年度分红收入", TransactionType: "income", IncludeOutlier: true,
-			Conditions: []models.QueryConditionItem{
-				{TransactionType: "income", Category: "投资理财", Tags: []string{}, TagPolicy: "all", Description: "年分红"},
-			},
-		},
-	}
-
-	presets := []struct {
-		title       string
-		granularity string
-		chartType   string
-		lines       []models.ChartLine
-	}{
-		{"月度消费趋势", "month", "line", monthlyLines},
-		{"年度消费趋势", "year", "line", yearlyLines},
-		{"年度收入趋势", "year", "line", incomeLines},
-	}
-
-	for i, p := range presets {
-		linesJSON, err := json.Marshal(p.lines)
-		if err != nil {
-			return fmt.Errorf("marshal preset chart lines: %w", err)
+	// Only create charts that are actually missing
+	if !existingSet["月度消费趋势"] {
+		monthlyLines := defaultChartLines()
+		linesJSON, _ := json.Marshal(monthlyLines)
+		if err := ws.GetDb().Create(&models.Chart{
+			ChartID: util.GetUUID(), LedgerID: ledgerID, Title: "月度消费趋势",
+			Granularity: "month", ChartLines: string(linesJSON), ChartType: "line",
+			IsPreset: true, SortOrder: 0,
+		}).Error; err != nil {
+			return fmt.Errorf("seed 月度消费趋势: %w", err)
 		}
-		chart := &models.Chart{
-			ChartID:     util.GetUUID(),
-			LedgerID:    ledgerID,
-			Title:       p.title,
-			Granularity: p.granularity,
-			ChartLines:  string(linesJSON),
-			ChartType:   p.chartType,
-			IsPreset:    true,
-			SortOrder:   i,
+		logrus.Infof("seeded 月度消费趋势 for ledger %s", ledgerID)
+	}
+	if !existingSet["年度消费趋势"] {
+		yearlyLines := []models.ChartLine{
+			{Label: "支出", TransactionType: "expense", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+			{Label: "收入", TransactionType: "income", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+			{Label: "转账", TransactionType: "transfer", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
 		}
-		if err := ws.GetDb().Create(chart).Error; err != nil {
-			return fmt.Errorf("seed preset chart %q: %w", p.title, err)
+		linesJSON, _ := json.Marshal(yearlyLines)
+		if err := ws.GetDb().Create(&models.Chart{
+			ChartID: util.GetUUID(), LedgerID: ledgerID, Title: "年度消费趋势",
+			Granularity: "year", ChartLines: string(linesJSON), ChartType: "line",
+			IsPreset: true, SortOrder: 1,
+		}).Error; err != nil {
+			return fmt.Errorf("seed 年度消费趋势: %w", err)
 		}
+		logrus.Infof("seeded 年度消费趋势 for ledger %s", ledgerID)
+	}
+	if !existingSet["年度收入趋势"] {
+		incomeLines := []models.ChartLine{
+			{Label: "年度总收入", TransactionType: "income", IncludeOutlier: true, Conditions: []models.QueryConditionItem{}},
+			{Label: "年度工资收入", TransactionType: "income", IncludeOutlier: true,
+				Conditions: []models.QueryConditionItem{{TransactionType: "income", Category: "工资奖金", Tags: []string{"工资"}, TagPolicy: "all"}}},
+			{Label: "年度奖金收入", TransactionType: "income", IncludeOutlier: true,
+				Conditions: []models.QueryConditionItem{{TransactionType: "income", Category: "工资奖金", Tags: []string{"奖金"}, TagPolicy: "all", Description: "年奖金"}}},
+			{Label: "年度分红收入", TransactionType: "income", IncludeOutlier: true,
+				Conditions: []models.QueryConditionItem{{TransactionType: "income", Category: "投资理财", Tags: []string{}, TagPolicy: "all", Description: "年分红"}}},
+		}
+		linesJSON, _ := json.Marshal(incomeLines)
+		if err := ws.GetDb().Create(&models.Chart{
+			ChartID: util.GetUUID(), LedgerID: ledgerID, Title: "年度收入趋势",
+			Granularity: "year", ChartLines: string(linesJSON), ChartType: "line",
+			IsPreset: true, SortOrder: 2,
+		}).Error; err != nil {
+			return fmt.Errorf("seed 年度收入趋势: %w", err)
+		}
+		logrus.Infof("seeded 年度收入趋势 for ledger %s", ledgerID)
 	}
 
-	logrus.Infof("seeded %d default charts for ledger %s", len(presets), ledgerID)
 	return nil
 }
 
@@ -164,7 +170,7 @@ func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) e
 func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*dto.ChartDto, error) {
 	// Lazy seed default charts for new ledgers
 	if err := t.seedDefaultCharts(ws, ledgerId); err != nil {
-		logrus.Errorf("seed default charts failed: %v", err)
+		logrus.Warnf("seed default charts failed for ledger %s: %v", ledgerId, err)
 	}
 
 	charts := make([]*models.Chart, 0)

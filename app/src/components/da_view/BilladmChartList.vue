@@ -21,11 +21,6 @@
       >
         <span class="chart-list-item-title">{{ chart.title }}</span>
         <div class="chart-list-item-actions" @click.stop>
-          <a-button type="text" size="small" @click="emit('edit', chart)">
-            <template #icon>
-              <EditOutlined />
-            </template>
-          </a-button>
           <a-button type="text" size="small" danger @click="handleDelete(chart)">
             <template #icon>
               <DeleteOutlined />
@@ -59,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { ChartDto } from '@/backend/api/chart'
 import { deleteChart as deleteChartApi } from '@/backend/api/chart'
@@ -73,7 +68,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'select', chart: ChartDto): void
   (e: 'create', request: { title: string; granularity: 'year' | 'month' }): void
-  (e: 'edit', chart: ChartDto): void
   (e: 'delete', chartId: string): void
   (e: 'refresh'): void
 }>()
