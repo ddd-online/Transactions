@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-03T17:54:46.096Z
-> Files: 52 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-04T17:12:15.730Z
+> Files: 70 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -27,6 +27,15 @@
 - `task-5-report.md` — 状态 (~384 tok)
 - `task-6-report.md` — 状态 (~66 tok)
 
+## C:/Users/ljw/.claude/plans/
+
+- `tender-chasing-aho.md` — Go 后端 DI 重构 + Handler 包装器 (~435 tok)
+
+## C:/Users/ljw/AppData/Local/Temp/
+
+- `architecture-review-20260705-2.html` — 架构审查 — Transactions 个人财务应用 (~8855 tok)
+- `architecture-review-20260705.html` — 架构审查 — Transactions (~8876 tok)
+
 ## app/
 
 - `vite.config.ts` (~338 tok)
@@ -36,7 +45,8 @@
 
 ## app/src/backend/
 
-- `functions.ts` — 将秒级时间戳转换为格式化时间字符串 (~2288 tok)
+- `errorHandler.ts` — 查询模式：错误时通知并返回 fallback 值，不抛出。 (~216 tok)
+- `functions.ts` — 将秒级时间戳转换为格式化时间字符串 (~360 tok)
 - `imageOptimizer.ts` — 将 base64 data URI 转成 Blob (~614 tok)
 
 ## app/src/backend/api/
@@ -48,6 +58,7 @@
 
 ## app/src/components/
 
+- `Layout.vue` — Vue: setup (~802 tok)
 
 ## app/src/components/common/
 
@@ -56,41 +67,47 @@
 
 - `BilladmChartLines.vue` — Vue: setup (~2260 tok)
 - `BilladmChartView.vue` — Vue: setup (~1679 tok)
-- `DataAnalysisView.vue` — Vue: setup (~3029 tok)
+- `DataAnalysisView.vue` — Vue: setup (~3090 tok)
 
 ## app/src/components/key_event_view/
 
 - `KeyEventDetail.vue` — Vue: setup (~2731 tok)
 - `KeyEventImageGallery.vue` — Vue: setup (~1840 tok)
 - `KeyEventLinkedTr.vue` — Vue: setup (~2131 tok)
-- `KeyEventView.vue` — Vue: setup (~3487 tok)
+- `KeyEventView.vue` — Vue: setup (~2347 tok)
 - `UploadProgressBar.vue` — Vue: setup (~2069 tok)
 
 ## app/src/components/settings_view/
 
 - `AboutSetting.vue` — Vue component (~611 tok)
-- `BilladmCategoryTagSetting.vue` — Vue component (~3181 tok)
-- `BilladmTemplateSetting.vue` — Vue component (~2057 tok)
+- `BilladmCategoryTagSetting.vue` — Vue component (~3433 tok)
+- `BilladmTemplateSetting.vue` — Vue component (~2164 tok)
 - `CategoryColumn.vue` — Vue component (~2507 tok)
-- `GeneralSetting.vue` — Vue component (~940 tok)
+- `GeneralSetting.vue` — Vue component (~897 tok)
 - `SettingsView.vue` — Vue: setup (~1084 tok)
 - `TagColumn.vue` — Vue component (~1820 tok)
 
 ## app/src/components/tr_view/
 
 - `TransactionRecordTable.vue` — Vue: setup (~2755 tok)
-- `TransactionRecordView.vue` — Vue: setup (~4160 tok)
+- `TransactionRecordView.vue` — Vue: setup (~3918 tok)
 
 ## app/src/hooks/
 
+- `useCategoryTags.ts` — src/hooks/useCategoryTags.ts (~520 tok)
+- `useImageUpload.ts` — Exports UploadFileProgress, UploadProgress, UploadHandler, useImageUpload (~1214 tok)
 - `useListDragSort.ts` — CSS 选择器，指定拖拽手柄元素（如 '.drag-handle'） (~477 tok)
+- `useTransactionStats.ts` — Exports TransactionStats, useTransactionStats (~256 tok)
 
 ## app/src/router/
 
 
 ## app/src/stores/
 
-- `keyEventStore.ts` — Exports useKeyEventStore (~3182 tok)
+- `chartStore.ts` — Exports ChartInstance, useChartStore (~1418 tok)
+- `keyEventStore.ts` — Exports useKeyEventStore (~3236 tok)
+- `ledgerStore.ts` — Exports useLedgerStore (~1116 tok)
+- `transactionStore.ts` — Exports SortItem, useTransactionStore (~804 tok)
 
 ## app/src/styles/
 
@@ -162,6 +179,13 @@
 
 ## kernel/service/
 
+- `category_service.go` — Interface: CategoryService (~1550 tok)
+- `chart_service.go` — Interface: ChartService (~1215 tok)
+- `key_event_image_service.go` — Interface: KeyEventImageService (~611 tok)
+- `key_event_service.go` — Interface: KeyEventService (~936 tok)
+- `ledger_service.go` — Interface: LedgerService (~1207 tok)
+- `tag_service.go` — Interface: TagService (~1269 tok)
+- `transaction_template_service.go` — Interface: TransactionTemplateService (~1014 tok)
 
 ## kernel/util/
 
