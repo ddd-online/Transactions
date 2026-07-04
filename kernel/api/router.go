@@ -9,12 +9,15 @@ import (
 )
 
 func ServeAPI(ginServer *gin.Engine) {
+	// Endpoints that don't require an open workspace
+	{
+		ginServer.POST("/api/v1/workspace", openWorkspace)
+		ginServer.POST("/api/v1/app/exit", exitApp)
+	}
+
 	v1 := ginServer.Group("/api/v1")
 	v1.Use(RequireWorkspace())
 	{
-		// App control
-		v1.POST("/app/exit", exitApp)
-
 		// Ledgers: RESTful CRUD
 		ledgers := v1.Group("/ledgers")
 		{
@@ -59,12 +62,6 @@ func ServeAPI(ginServer *gin.Engine) {
 		v1.POST("/tags", createTag)
 		v1.DELETE("/tags/:name", deleteTag)
 		v1.PATCH("/tags/:name/sort", updateTagSort)
-
-		// Workspace
-		workspace := v1.Group("/workspace")
-		{
-			workspace.POST("", openWorkspace)
-		}
 
 		// Charts
 		charts := v1.Group("/charts")
