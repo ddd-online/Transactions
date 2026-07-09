@@ -8,11 +8,24 @@
 
 # 调试
 
-### 自行打包
+### 构建脚本
 
-下载项目后，进入`build`目录，先执行ps1脚本`clean.ps1`，再执行ps1脚本`build.ps1`
+项目在 `build/` 目录下提供三个 PowerShell 脚本，按顺序使用：
 
-在`electron`目录下会生成`out`目录，其中存在打包后的安装程序
+| 脚本 | 用途 | 产物 |
+|------|------|------|
+| `.\build\clean.ps1` | 清理所有构建产物和临时文件 | — |
+| `.\build\build.ps1` | 一键构建：Vue 前端 → Go 后端 → Electron 打包 | `build\target\Transactions Setup {version}.exe` |
+| `.\build\release.ps1` | 将打包产物发布到 GitHub Release | 创建 Git tag + GitHub Release |
+
+**典型工作流：**
+```powershell
+.\build\clean.ps1    # 清理旧的构建产物
+.\build\build.ps1    # 构建 + 打包（Vue + Go + Electron）
+.\build\release.ps1  # 发布到 GitHub Release（需先安装 gh CLI 并登录）
+```
+
+> `release.ps1` 不负责构建，只发布已存在的产物。如果产物不存在，脚本会提示先运行 `build.ps1`。
 
 ### 热更新调试
 

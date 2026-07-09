@@ -148,11 +148,22 @@ cd app && npx vue-tsc -b                      # Type-check only (no emit)
 cd app && npx vitest run                      # Run frontend tests (when added)
 ```
 
-**Full production build (Windows):**
+**Build & Release Scripts (build/):**
+
+| Script | Purpose |
+|--------|---------|
+| `./build/clean.ps1` | Clean all build artifacts and temp files |
+| `./build/build.ps1` | One-shot build: Vue → Go → Electron, outputs NSIS installer to `build/target/` |
+| `./build/release.ps1` | Publish the packaged exe to GitHub Release via `gh` CLI — reads version from `electron/package.json`, creates a `v{version}` tag, uploads the installer |
+
+Typical workflow:
 ```powershell
-./build/clean.ps1   # Clean previous build artifacts first
-./build/build.ps1   # Builds Vue → Go → Electron, packages with electron-builder
+./build/clean.ps1    # Clean old artifacts
+./build/build.ps1    # Full build + package
+./build/release.ps1  # Publish to GitHub Release
 ```
+
+`release.ps1` does NOT build — it expects the exe already in `build/target/`. Requires `gh` CLI installed and authenticated.
 
 The build script sets `CGO_ENABLED=1`, `GOOS=windows`, `GOARCH=amd64` for the Go build.
 Electron packaging config: `electron/electron-builder.yml` (NSIS installer, asar disabled).

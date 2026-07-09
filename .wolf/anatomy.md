@@ -1,11 +1,12 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-04T17:53:33.628Z
-> Files: 83 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T15:41:57.703Z
+> Files: 85 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
-- `CLAUDE.md` — CLAUDE.md (~3352 tok)
+- `CLAUDE.md` — CLAUDE.md (~3486 tok)
+- `README.md` — Project documentation (~208 tok)
 
 ## .claude/
 
@@ -118,6 +119,10 @@
 
 - `electron.d.ts` — Declares __BUILD_TIME__ (~168 tok)
 
+## build/
+
+- `release.ps1` — release.ps1 - 一键将打包产物发布到 GitHub Release (~1303 tok)
+
 ## docs/
 
 
@@ -194,7 +199,7 @@
 ## kernel/service/
 
 - `category_service.go` — Interface: CategoryService (~1541 tok)
-- `chart_service.go` — Interface: ChartService (~2189 tok)
+- `chart_service.go` — Interface: ChartService (~1938 tok)
 - `key_event_image_service.go` — Interface: KeyEventImageService (~597 tok)
 - `key_event_service.go` — Interface: KeyEventService (~930 tok)
 - `ledger_service.go` — Interface: LedgerService (~1203 tok)

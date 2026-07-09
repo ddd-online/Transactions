@@ -1105,6 +1105,38 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-04T17:53:23.350Z"
+    },
+    {
+      "id": "bug-070",
+      "timestamp": "2026-07-09T15:41:50.461Z",
+      "error_message": "Significant refactor of ",
+      "file": "README.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 5→18 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T15:41:50.461Z"
+    },
+    {
+      "id": "bug-071",
+      "timestamp": "2026-07-09T15:41:57.721Z",
+      "error_message": "Significant refactor of ",
+      "file": "CLAUDE.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 5→16 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T15:41:57.721Z"
     }
   ]
 }

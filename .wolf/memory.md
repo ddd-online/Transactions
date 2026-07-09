@@ -600,3 +600,23 @@
 | 01:53 | Edited app/src/components/da_view/BilladmChartList.vue | inline fix | ~19 |
 | 01:53 | Edited app/src/components/da_view/BilladmChartList.vue | modified void() | ~57 |
 | 01:53 | Session end: 94 writes across 33 files (architecture-review-20260705-2.html, tender-chasing-aho.md, tag_service.go, category_service.go, key_event_image_service.go) | 132 reads | ~117205 tok |
+| 02:04 | Edited kernel/service/chart_service.go | reduced (-24 lines) | ~682 |
+| 02:04 | Session end: 95 writes across 33 files (architecture-review-20260705-2.html, tender-chasing-aho.md, tag_service.go, category_service.go, key_event_image_service.go) | 132 reads | ~118046 tok |
+| 02:08 | Session end: 95 writes across 33 files (architecture-review-20260705-2.html, tender-chasing-aho.md, tag_service.go, category_service.go, key_event_image_service.go) | 132 reads | ~118046 tok |
+
+## Session: 2026-07-09 23:24
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-07-09 23:25
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:40 | Created build/release.ps1 | — | ~1303 |
+| 23:45 | build/release.ps1: 一键发布 GitHub Release — 读版本号 → 定位 exe → 检查 gh CLI → 生成 changelog → 确认 → gh release create | build/release.ps1 | 待首次实际发布验证 | ~200 |
+| 23:40 | Session end: 1 writes across 1 files (release.ps1) | 3 reads | ~1396 tok |
+| 23:41 | Edited README.md | expanded (+13 lines) | ~151 |
+| 23:41 | Edited CLAUDE.md | build() → Scripts() | ~195 |
+| 23:50 | 三个 build 脚本 (clean/build/release) 用法文档已写入 README.md 和 CLAUDE.md | README.md, CLAUDE.md | 完成 | ~100 |
+| 23:42 | Session end: 3 writes across 3 files (release.ps1, README.md, CLAUDE.md) | 5 reads | ~5119 tok |
