@@ -1329,6 +1329,118 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-09T16:26:45.363Z"
+    },
+    {
+      "id": "bug-084",
+      "timestamp": "2026-07-09T16:40:28.071Z",
+      "error_message": "CSS fix: background-color",
+      "file": "app/src/components/settings_view/SettingsView.vue",
+      "root_cause": "background-color: var(--billadm-color-major-warm) → var(--billadm-color-minor-background)",
+      "fix": "Changed background-color: var(--billadm-color-major-warm) → var(--billadm-color-minor-background)",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:40:28.071Z"
+    },
+    {
+      "id": "bug-085",
+      "timestamp": "2026-07-09T16:47:08.119Z",
+      "error_message": "Wrong reference: warm should be background",
+      "file": "app/src/components/settings_view/SettingsView.vue",
+      "root_cause": "Used \"warm\" instead of \"background\"",
+      "fix": "Changed warm → background",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:47:08.119Z"
+    },
+    {
+      "id": "bug-086",
+      "timestamp": "2026-07-09T16:47:43.769Z",
+      "error_message": "Incorrect value in code",
+      "file": "electron/package.json",
+      "root_cause": "Had \"0.2.0\"",
+      "fix": "Changed to \"0.2.1\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "json"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:47:43.769Z"
+    },
+    {
+      "id": "bug-087",
+      "timestamp": "2026-07-09T16:51:56.171Z",
+      "error_message": "Null/undefined access in ",
+      "file": "app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:51:56.171Z"
+    },
+    {
+      "id": "bug-088",
+      "timestamp": "2026-07-09T16:54:48.786Z",
+      "error_message": "CSS fix: background-color",
+      "file": "app/src/components/settings_view/CategoryColumn.vue",
+      "root_cause": "background-color: var(--billadm-color-major-background) → color-mix(in srgb, var(--c, #D9705A) 3%, var(--billadm-color-major-background))",
+      "fix": "Changed background-color: var(--billadm-color-major-background) → color-mix(in srgb, var(--c, #D9705A) 3%, var(--billadm-color-major-background))",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-09T16:56:29.240Z"
+    },
+    {
+      "id": "bug-089",
+      "timestamp": "2026-07-09T16:54:50.446Z",
+      "error_message": "CSS fix: background-color",
+      "file": "app/src/components/settings_view/TagColumn.vue",
+      "root_cause": "background-color: var(--billadm-color-major-background) → color-mix(in srgb, var(--c, #D9705A) 3%, var(--billadm-color-major-background))",
+      "fix": "Changed background-color: var(--billadm-color-major-background) → color-mix(in srgb, var(--c, #D9705A) 3%, var(--billadm-color-major-background))",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-09T16:56:30.517Z"
+    },
+    {
+      "id": "bug-090",
+      "timestamp": "2026-07-09T16:56:27.803Z",
+      "error_message": "CSS fix: background-color",
+      "file": "app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "root_cause": "background-color: color-mix(in srgb, var(--c) 3%, var(--billadm-color-major-warm)) → color-mix(in srgb, var(--c) 8%, var(--billadm-color-major-warm))",
+      "fix": "Changed background-color: color-mix(in srgb, var(--c) 3%, var(--billadm-color-major-warm)) → color-mix(in srgb, var(--c) 8%, var(--billadm-color-major-warm))",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:56:27.803Z"
     }
   ]
 }

@@ -188,9 +188,44 @@
       "first_read": "2026-07-09T16:21:46.248Z"
     },
     "D:/github/Transactions/electron/package.json": {
+      "count": 2,
+      "tokens": 100,
+      "first_read": "2026-07-09T16:26:41.702Z"
+    },
+    "D:/github/Transactions/app/src/styles/_variables.scss": {
+      "count": 4,
+      "tokens": 0,
+      "first_read": "2026-07-09T16:39:28.621Z"
+    },
+    "D:/github/Transactions/app/src/styles/_components.scss": {
       "count": 1,
       "tokens": 0,
-      "first_read": "2026-07-09T16:26:41.702Z"
+      "first_read": "2026-07-09T16:39:29.046Z"
+    },
+    "D:/github/Transactions/app/src/styles/_layout.scss": {
+      "count": 1,
+      "tokens": 0,
+      "first_read": "2026-07-09T16:39:29.436Z"
+    },
+    "D:/github/Transactions/app/src/components/settings_view/BilladmCategoryTagSetting.vue": {
+      "count": 4,
+      "tokens": 3433,
+      "first_read": "2026-07-09T16:39:48.287Z"
+    },
+    "D:/github/Transactions/app/src/components/settings_view/CategoryColumn.vue": {
+      "count": 2,
+      "tokens": 2522,
+      "first_read": "2026-07-09T16:39:48.678Z"
+    },
+    "D:/github/Transactions/app/src/components/settings_view/TagColumn.vue": {
+      "count": 2,
+      "tokens": 1834,
+      "first_read": "2026-07-09T16:39:49.153Z"
+    },
+    "D:/github/Transactions/app/src/components/settings_view/SettingsView.vue": {
+      "count": 1,
+      "tokens": 1084,
+      "first_read": "2026-07-09T16:40:19.505Z"
     }
   },
   "files_written": [
@@ -421,6 +456,90 @@
       "action": "edit",
       "tokens": 6,
       "at": "2026-07-09T16:26:45.359Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/CategoryColumn.vue",
+      "action": "edit",
+      "tokens": 50,
+      "at": "2026-07-09T16:40:14.233Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/TagColumn.vue",
+      "action": "edit",
+      "tokens": 41,
+      "at": "2026-07-09T16:40:15.630Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/SettingsView.vue",
+      "action": "edit",
+      "tokens": 48,
+      "at": "2026-07-09T16:40:28.066Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/SettingsView.vue",
+      "action": "edit",
+      "tokens": 33,
+      "at": "2026-07-09T16:47:08.112Z"
+    },
+    {
+      "file": "D:/github/Transactions/electron/package.json",
+      "action": "edit",
+      "tokens": 6,
+      "at": "2026-07-09T16:47:43.765Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "action": "edit",
+      "tokens": 49,
+      "at": "2026-07-09T16:51:56.165Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "action": "edit",
+      "tokens": 13,
+      "at": "2026-07-09T16:52:00.533Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "action": "edit",
+      "tokens": 19,
+      "at": "2026-07-09T16:52:01.546Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "action": "edit",
+      "tokens": 59,
+      "at": "2026-07-09T16:52:03.660Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/CategoryColumn.vue",
+      "action": "edit",
+      "tokens": 50,
+      "at": "2026-07-09T16:54:48.780Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/TagColumn.vue",
+      "action": "edit",
+      "tokens": 48,
+      "at": "2026-07-09T16:54:50.437Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/BilladmCategoryTagSetting.vue",
+      "action": "edit",
+      "tokens": 25,
+      "at": "2026-07-09T16:56:27.796Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/CategoryColumn.vue",
+      "action": "edit",
+      "tokens": 29,
+      "at": "2026-07-09T16:56:29.232Z"
+    },
+    {
+      "file": "D:/github/Transactions/app/src/components/settings_view/TagColumn.vue",
+      "action": "edit",
+      "tokens": 29,
+      "at": "2026-07-09T16:56:30.511Z"
     }
   ],
   "edit_counts": {
@@ -443,11 +562,15 @@
     ".superpowers/sdd/task-4-report.md": 1,
     ".superpowers/sdd/task-5-report.md": 1,
     ".superpowers/sdd/task-6-report.md": 1,
-    "electron/package.json": 1
+    "electron/package.json": 2,
+    "app/src/components/settings_view/CategoryColumn.vue": 3,
+    "app/src/components/settings_view/TagColumn.vue": 3,
+    "app/src/components/settings_view/SettingsView.vue": 2,
+    "app/src/components/settings_view/BilladmCategoryTagSetting.vue": 5
   },
-  "anatomy_hits": 16,
-  "anatomy_misses": 21,
-  "repeated_reads_warned": 37,
+  "anatomy_hits": 20,
+  "anatomy_misses": 24,
+  "repeated_reads_warned": 46,
   "cerebrum_warnings": 0,
-  "stop_count": 50
+  "stop_count": 59
 }

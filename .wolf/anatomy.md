@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T16:26:45.346Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T16:56:30.496Z
 > Files: 91 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
@@ -84,12 +84,12 @@
 ## app/src/components/settings_view/
 
 - `AboutSetting.vue` — Vue component (~1500 tok)
-- `BilladmCategoryTagSetting.vue` — Vue component (~3433 tok)
+- `BilladmCategoryTagSetting.vue` — Vue component (~3500 tok)
 - `BilladmTemplateSetting.vue` — Vue component (~2164 tok)
-- `CategoryColumn.vue` — Vue component (~2507 tok)
+- `CategoryColumn.vue` — Vue component (~2518 tok)
 - `GeneralSetting.vue` — Vue component (~897 tok)
-- `SettingsView.vue` — Vue: setup (~1084 tok)
-- `TagColumn.vue` — Vue component (~1820 tok)
+- `SettingsView.vue` — Vue: setup (~1085 tok)
+- `TagColumn.vue` — Vue component (~1831 tok)
 
 ## app/src/components/tr_view/
 
