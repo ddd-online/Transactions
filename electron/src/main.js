@@ -247,7 +247,6 @@ const registerCommonHandlers = () => {
 
             // If file already exists from a previous completed download, reuse it
             if (fs.existsSync(downloadFilePath)) {
-                const stats = fs.statSync(downloadFilePath);
                 mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
                 return { success: true };
             }
