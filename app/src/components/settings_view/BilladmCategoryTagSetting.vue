@@ -18,7 +18,7 @@
     </template>
 
     <!-- 主体：分类列表 + 标签列表 -->
-    <div class="setting-main">
+    <div class="setting-main" :style="{ '--c': activeTypeColor }">
       <CategoryColumn
         :categories="categories"
         :selected-category="selectedCategory"
@@ -68,7 +68,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { TransactionType, Category, Tag } from '@/types/billadm';
 import { TransactionTypeToColor } from '@/backend/constant';
 import { useLedgerStore } from '@/stores/ledgerStore';
@@ -93,6 +93,9 @@ const transactionTypes = [
 ]
 
 const activeType = ref<TransactionType>('expense')
+const activeTypeColor = computed(() =>
+  transactionTypes.find(t => t.value === activeType.value)?.color || '#D9705A'
+)
 
 const ledgerStore = useLedgerStore();
 
@@ -411,6 +414,7 @@ watch(
   grid-template-columns: 240px 1fr;
   overflow: hidden;
   min-height: 0;
+  background-color: color-mix(in srgb, var(--c) 3%, var(--billadm-color-major-warm));
 }
 
 /* Modal Form */
