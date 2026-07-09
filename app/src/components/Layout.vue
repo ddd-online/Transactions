@@ -33,11 +33,16 @@
 import { onMounted, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
+import { useUpdateStore } from "@/stores/updateStore";
 
 const route = useRoute();
 const ledgerStore = useLedgerStore();
 const showWorkspaceSelect = ref(false);
-const showBottomBar = computed(() => route.path === '/tr_view' || route.path === '/da_view' || route.path === '/key_event_view');
+const updateStore = useUpdateStore();
+const showBottomBar = computed(() =>
+    route.path === '/tr_view' || route.path === '/da_view' || route.path === '/key_event_view'
+    || updateStore.status === 'downloading'
+);
 
 const handleOpenWorkspace = async (workspaceDir: string) => {
   try {
