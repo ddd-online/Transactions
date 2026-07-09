@@ -147,12 +147,11 @@ useListDragSort(listRef, dragEnabled, {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--billadm-color-major-background);
+  background-color: color-mix(in srgb, var(--c, #D9705A) 3%, var(--billadm-color-major-background));
   border: 1px solid var(--billadm-color-divider);
 }
 
 .column-categories {
-  background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg) 0 0 var(--billadm-radius-lg);
   border-right: none;
 }
