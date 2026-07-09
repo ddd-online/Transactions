@@ -118,6 +118,7 @@ export const useUpdateStore = defineStore('updateStore', () => {
         downloadSpeed,
         errorMessage,
         filePath,
+        downloadUrl,
         releaseBody,
         checkForUpdate,
         downloadUpdate,
