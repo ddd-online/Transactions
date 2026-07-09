@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 5729819,
-    "total_reads": 7396,
-    "total_writes": 5447,
+    "total_tokens_estimated": 5742914,
+    "total_reads": 7408,
+    "total_writes": 5461,
     "total_sessions": 13,
-    "anatomy_hits": 1777,
-    "anatomy_misses": 5494,
-    "repeated_reads_blocked": 5939,
-    "estimated_savings_vs_bare_cli": 9437766
+    "anatomy_hits": 1781,
+    "anatomy_misses": 5502,
+    "repeated_reads_blocked": 5943,
+    "estimated_savings_vs_bare_cli": 9445270
   },
   "sessions": [
     {
@@ -74206,6 +74206,182 @@
         "writes_count": 3,
         "repeated_reads_blocked": 1,
         "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-07-09-2325",
+      "started": "2026-07-09T15:25:32.881Z",
+      "ended": "2026-07-09T15:50:26.837Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/electron-builder.yml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/build.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/clean.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 3352,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 1303,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 1396,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 162,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 209,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/electron-builder.yml",
+          "tokens_estimated": 28,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 14,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 15,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 4655,
+        "output_tokens_estimated": 1824,
+        "reads_count": 6,
+        "writes_count": 6,
+        "repeated_reads_blocked": 2,
+        "anatomy_lookups": 2
+      }
+    },
+    {
+      "id": "session-2026-07-09-2325",
+      "started": "2026-07-09T15:25:32.881Z",
+      "ended": "2026-07-09T15:52:53.506Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/electron-builder.yml",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/build.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/clean.ps1",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 3352,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 1303,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 1396,
+          "action": "create"
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 162,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/CLAUDE.md",
+          "tokens_estimated": 209,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/electron-builder.yml",
+          "tokens_estimated": 28,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 14,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 15,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/build/release.ps1",
+          "tokens_estimated": 124,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/README.md",
+          "tokens_estimated": 13,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 4655,
+        "output_tokens_estimated": 1961,
+        "reads_count": 6,
+        "writes_count": 8,
+        "repeated_reads_blocked": 2,
+        "anatomy_lookups": 2
       }
     }
   ],

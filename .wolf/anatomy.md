@@ -1,12 +1,12 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T15:41:57.703Z
-> Files: 85 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T15:52:49.127Z
+> Files: 86 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
 - `CLAUDE.md` — CLAUDE.md (~3486 tok)
-- `README.md` — Project documentation (~208 tok)
+- `README.md` — Project documentation (~207 tok)
 
 ## .claude/
 
@@ -121,7 +121,7 @@
 
 ## build/
 
-- `release.ps1` — release.ps1 - 一键将打包产物发布到 GitHub Release (~1303 tok)
+- `release.ps1` — release.ps1 - 一键将打包产物发布到 GitHub Release (~1345 tok)
 
 ## docs/
 
@@ -154,6 +154,7 @@
 
 ## electron/
 
+- `electron-builder.yml` — - node_modules/** (~260 tok)
 
 ## electron/logs/
 

@@ -15,7 +15,7 @@
 | 脚本 | 用途 | 产物 |
 |------|------|------|
 | `.\build\clean.ps1` | 清理所有构建产物和临时文件 | — |
-| `.\build\build.ps1` | 一键构建：Vue 前端 → Go 后端 → Electron 打包 | `build\target\Transactions Setup {version}.exe` |
+| `.\build\build.ps1` | 一键构建：Vue 前端 → Go 后端 → Electron 打包 | `build\target\Transactions-*-v{version}.exe` |
 | `.\build\release.ps1` | 将打包产物发布到 GitHub Release | 创建 Git tag + GitHub Release |
 
 **典型工作流：**

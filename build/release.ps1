@@ -49,14 +49,17 @@ try {
     # ==============================
     Write-Step "定位构建产物..."
 
-    $exeName = "Transactions Setup $version.exe"
-    $exePath = Join-Path $buildTargetDir $exeName
+    $exePattern = "Transactions-*-v$version.exe"
+    $exePath = Get-ChildItem -Path $buildTargetDir -Filter $exePattern -ErrorAction SilentlyContinue | Select-Object -First 1
 
-    if (-not (Test-Path $exePath)) {
-        Write-ErrorCustom "构建产物不存在: $exePath"
+    if (-not $exePath) {
+        Write-ErrorCustom "构建产物不存在: $buildTargetDir\$exePattern"
         Write-Host "   请先运行 .\build.ps1 完成构建" -ForegroundColor DarkGray
         exit 1
     }
+
+    $exePath = $exePath.FullName
+    $exeName = Split-Path $exePath -Leaf
 
     $fileSize = [math]::Round((Get-Item $exePath).Length / 1MB, 1)
     Write-Success "找到产物: $exeName ($fileSize MB)"

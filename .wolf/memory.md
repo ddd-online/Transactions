@@ -621,3 +621,10 @@
 | 23:50 | 三个 build 脚本 (clean/build/release) 用法文档已写入 README.md 和 CLAUDE.md | README.md, CLAUDE.md | 完成 | ~100 |
 | 23:42 | Session end: 3 writes across 3 files (release.ps1, README.md, CLAUDE.md) | 5 reads | ~5119 tok |
 | 23:43 | Session end: 3 writes across 3 files (release.ps1, README.md, CLAUDE.md) | 5 reads | ~5119 tok |
+| 23:50 | Edited electron/electron-builder.yml | 2→3 lines | ~28 |
+| 23:50 | Edited build/release.ps1 | "Transactions Setup $versi" → "Transactions-win-x64-v$ve" | ~13 |
+| 23:50 | Edited README.md | "build\target\Transactions" → "build\target\Transactions" | ~14 |
+| 23:50 | Session end: 6 writes across 4 files (release.ps1, README.md, CLAUDE.md, electron-builder.yml) | 6 reads | ~6479 tok |
+| 23:52 | Edited build/release.ps1 | modified if() | ~116 |
+| 23:52 | Edited README.md | "build\target\Transactions" → "build\target\Transactions" | ~12 |
+| 23:52 | Session end: 8 writes across 4 files (release.ps1, README.md, CLAUDE.md, electron-builder.yml) | 6 reads | ~6616 tok |
