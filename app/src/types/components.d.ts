@@ -34,6 +34,7 @@ declare module 'vue' {
     AppBottomBar: typeof import('./../components/AppBottomBar.vue')['default']
     AppLeftBar: typeof import('./../components/AppLeftBar.vue')['default']
     AppTopBar: typeof import('./../components/AppTopBar.vue')['default']
+    AProgress: typeof import('ant-design-vue/es')['Progress']
     ARadioButton: typeof import('ant-design-vue/es')['RadioButton']
     ARadioGroup: typeof import('ant-design-vue/es')['RadioGroup']
     ARangePicker: typeof import('ant-design-vue/es')['RangePicker']
