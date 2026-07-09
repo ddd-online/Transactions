@@ -92,7 +92,7 @@ const currentComponent = computed(() => {
 .settings-sidebar {
   width: 200px;
   flex-shrink: 0;
-  background-color: var(--billadm-color-minor-background);
+  background-color: var(--billadm-color-major-background);
   border-right: 1px solid var(--billadm-color-divider);
   display: flex;
   flex-direction: column;
