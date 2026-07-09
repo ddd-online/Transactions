@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T16:24:35.636Z
-> Files: 90 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T16:26:45.346Z
+> Files: 91 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -159,6 +159,7 @@
 ## electron/
 
 - `electron-builder.yml` — - node_modules/** (~260 tok)
+- `package.json` — Node.js package manifest (~100 tok)
 
 ## electron/logs/
 
