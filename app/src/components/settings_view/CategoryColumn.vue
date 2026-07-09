@@ -152,6 +152,7 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .column-categories {
+  background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg) 0 0 var(--billadm-radius-lg);
   border-right: none;
 }

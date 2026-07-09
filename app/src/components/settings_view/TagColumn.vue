@@ -119,6 +119,7 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .column-tags {
+  background-color: var(--billadm-color-major-warm);
   border-radius: 0 var(--billadm-radius-lg) var(--billadm-radius-lg) 0;
 }
 
