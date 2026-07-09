@@ -31,4 +31,33 @@ contextBridge.exposeInMainWorld('electronAPI', {
     toggleDevTools: (enabled) => {
         ipcRenderer.send('devtools:toggle', enabled);
     },
+
+    // ── 更新 ──
+    checkUpdate: async () => {
+        return await ipcRenderer.invoke('update:check');
+    },
+    downloadUpdate: async (url) => {
+        return await ipcRenderer.invoke('update:download', url);
+    },
+    cancelDownload: () => {
+        ipcRenderer.send('update:cancel');
+    },
+    installUpdate: async () => {
+        return await ipcRenderer.invoke('update:install');
+    },
+    onDownloadProgress: (cb) => {
+        const handler = (_event, data) => cb(data);
+        ipcRenderer.on('update:download-progress', handler);
+        return () => ipcRenderer.removeListener('update:download-progress', handler);
+    },
+    onDownloadComplete: (cb) => {
+        const handler = (_event, data) => cb(data);
+        ipcRenderer.on('update:download-complete', handler);
+        return () => ipcRenderer.removeListener('update:download-complete', handler);
+    },
+    onDownloadError: (cb) => {
+        const handler = (_event, data) => cb(data);
+        ipcRenderer.on('update:download-error', handler);
+        return () => ipcRenderer.removeListener('update:download-error', handler);
+    },
 });
