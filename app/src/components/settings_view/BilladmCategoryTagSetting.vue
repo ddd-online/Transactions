@@ -414,7 +414,7 @@ watch(
   grid-template-columns: 240px 1fr;
   overflow: hidden;
   min-height: 0;
-  background-color: color-mix(in srgb, var(--c) 3%, var(--billadm-color-major-warm));
+  background-color: color-mix(in srgb, var(--c) 8%, var(--billadm-color-major-warm));
 }
 
 /* Modal Form */
