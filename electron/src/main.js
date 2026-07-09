@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const https = require('https');
+const { shell } = require('electron');
 
 process.noAsar = false;
 
@@ -115,6 +117,12 @@ const startKernel = () => {
 };
 
 // 通用 IPC 处理器
+const formatSpeed = (bytesPerSec) => {
+    if (bytesPerSec >= 1048576) return (bytesPerSec / 1048576).toFixed(1) + ' MB/s';
+    if (bytesPerSec >= 1024) return (bytesPerSec / 1024).toFixed(1) + ' KB/s';
+    return Math.round(bytesPerSec) + ' B/s';
+};
+
 const registerCommonHandlers = () => {
     ipcMain.handle('dialog:open', async (event, options) => {
         try {
@@ -156,6 +164,186 @@ const registerCommonHandlers = () => {
             } else {
                 mainWindow.webContents.closeDevTools();
             }
+        }
+    });
+
+    // ── 更新 ──
+    let downloadAbortController = null;
+    let downloadFilePath = null;
+
+    ipcMain.handle('update:check', async () => {
+        try {
+            const data = await new Promise((resolve, reject) => {
+                const url = 'https://api.github.com/repos/ddd-online/Transactions/releases/latest';
+                const req = https.get(url, {
+                    headers: {
+                        'User-Agent': 'Transactions-App',
+                        'Accept': 'application/vnd.github+json',
+                    },
+                }, (res) => {
+                    let body = '';
+                    res.on('data', chunk => body += chunk);
+                    res.on('end', () => {
+                        try {
+                            resolve(JSON.parse(body));
+                        } catch (e) {
+                            reject(new Error('Invalid JSON response'));
+                        }
+                    });
+                });
+                req.on('error', reject);
+                req.setTimeout(15000, () => {
+                    req.destroy();
+                    reject(new Error('Request timeout'));
+                });
+            });
+
+            if (data.prerelease) {
+                return { hasUpdate: false, latestVersion: '', downloadUrl: '', body: '' };
+            }
+
+            const latestVersion = (data.tag_name || '').replace(/^v/, '');
+            const currentVersion = app.getVersion().replace(/^v/, '');
+
+            const partsLatest = latestVersion.split('.').map(Number);
+            const partsCurrent = currentVersion.split('.').map(Number);
+            let hasUpdate = false;
+            for (let i = 0; i < Math.max(partsLatest.length, partsCurrent.length); i++) {
+                const a = partsLatest[i] || 0;
+                const b = partsCurrent[i] || 0;
+                if (a > b) { hasUpdate = true; break; }
+                if (a < b) { break; }
+            }
+
+            if (!hasUpdate) {
+                return { hasUpdate: false, latestVersion: '', downloadUrl: '', body: '' };
+            }
+
+            const asset = data.assets?.find(a => a.browser_download_url?.endsWith('.exe'));
+            const downloadUrl = asset?.browser_download_url || '';
+            return {
+                hasUpdate: true,
+                latestVersion,
+                downloadUrl,
+                body: data.body || '',
+            };
+        } catch (e) {
+            log(`update:check error: ${e.message}`);
+            return { hasUpdate: false, latestVersion: '', downloadUrl: '', body: '', error: e.message };
+        }
+    });
+
+    ipcMain.handle('update:download', async (event, downloadUrl) => {
+        try {
+            // Cancel any existing download
+            if (downloadAbortController) {
+                downloadAbortController.abort();
+            }
+            downloadAbortController = new AbortController();
+
+            const urlObj = new URL(downloadUrl);
+            const fileName = path.basename(urlObj.pathname);
+            downloadFilePath = path.join(os.tmpdir(), fileName);
+
+            // If file already exists from a previous completed download, reuse it
+            if (fs.existsSync(downloadFilePath)) {
+                const stats = fs.statSync(downloadFilePath);
+                mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
+                return { success: true };
+            }
+
+            await new Promise((resolve, reject) => {
+                const req = https.get(downloadUrl, { signal: downloadAbortController.signal }, (res) => {
+                    // Handle redirect
+                    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                        reject(new Error('Redirect not supported; use direct URL'));
+                        return;
+                    }
+
+                    const total = parseInt(res.headers['content-length'] || '0', 10);
+                    let downloaded = 0;
+                    const startTime = Date.now();
+                    const chunks = [];
+
+                    res.on('data', (chunk) => {
+                        chunks.push(chunk);
+                        downloaded += chunk.length;
+                        const percent = total > 0 ? Math.round((downloaded / total) * 100) : 0;
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        const speed = elapsed > 0 ? formatSpeed(downloaded / elapsed) : '0 B/s';
+
+                        mainWindow.webContents.send('update:download-progress', {
+                            percent,
+                            downloaded,
+                            total,
+                            speed,
+                        });
+                    });
+
+                    res.on('end', () => {
+                        const buffer = Buffer.concat(chunks);
+                        try {
+                            fs.writeFileSync(downloadFilePath, buffer);
+                            downloadAbortController = null;
+                            mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
+                            resolve();
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+
+                    res.on('error', reject);
+                });
+
+                req.on('error', (e) => {
+                    if (e.name === 'AbortError') {
+                        resolve(); // Cancelled silently
+                    } else {
+                        reject(e);
+                    }
+                });
+
+                downloadAbortController.signal.addEventListener('abort', () => {
+                    req.destroy();
+                    resolve();
+                });
+            });
+
+            return { success: true };
+        } catch (e) {
+            log(`update:download error: ${e.message}`);
+            if (downloadFilePath && fs.existsSync(downloadFilePath)) {
+                try { fs.unlinkSync(downloadFilePath); } catch {}
+            }
+            downloadFilePath = null;
+            downloadAbortController = null;
+            mainWindow.webContents.send('update:download-error', { message: e.message });
+            return { success: false, error: e.message };
+        }
+    });
+
+    ipcMain.on('update:cancel', () => {
+        if (downloadAbortController) {
+            downloadAbortController.abort();
+            downloadAbortController = null;
+        }
+        if (downloadFilePath && fs.existsSync(downloadFilePath)) {
+            try { fs.unlinkSync(downloadFilePath); } catch {}
+        }
+        downloadFilePath = null;
+    });
+
+    ipcMain.handle('update:install', async () => {
+        if (!downloadFilePath || !fs.existsSync(downloadFilePath)) {
+            return { success: false, error: '安装文件不存在' };
+        }
+        try {
+            await shell.openPath(downloadFilePath);
+            setImmediate(() => app.quit());
+            return { success: true };
+        } catch (e) {
+            log(`update:install error: ${e.message}`);
+            return { success: false, error: e.message };
         }
     });
 };
