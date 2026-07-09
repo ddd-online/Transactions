@@ -1185,6 +1185,134 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-09T15:52:41.594Z"
+    },
+    {
+      "id": "bug-075",
+      "timestamp": "2026-07-09T16:07:41.613Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/superpowers/specs/2026-07-10-auto-update-design.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→3 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:07:41.613Z"
+    },
+    {
+      "id": "bug-076",
+      "timestamp": "2026-07-09T16:11:51.759Z",
+      "error_message": "Missing import: https, electron",
+      "file": "electron/src/main.js",
+      "root_cause": "Module(s) not imported: https, electron",
+      "fix": "Added import(s) for https, electron",
+      "tags": [
+        "auto-detected",
+        "missing-import",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:11:51.759Z"
+    },
+    {
+      "id": "bug-077",
+      "timestamp": "2026-07-09T16:11:54.284Z",
+      "error_message": "Missing guard clause",
+      "file": "electron/src/main.js",
+      "root_cause": "No early return/throw for edge case: bytesPerSec >= 1048576",
+      "fix": "Added guard clause: if (bytesPerSec >= 1048576)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:11:54.284Z"
+    },
+    {
+      "id": "bug-078",
+      "timestamp": "2026-07-09T16:12:12.420Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "electron/src/main.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:12:12.420Z"
+    },
+    {
+      "id": "bug-079",
+      "timestamp": "2026-07-09T16:14:44.589Z",
+      "error_message": "Missing await",
+      "file": "electron/src/preload.js",
+      "root_cause": "Async call without await — returned Promise instead of value",
+      "fix": "Added await to async call",
+      "tags": [
+        "auto-detected",
+        "async-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:14:44.589Z"
+    },
+    {
+      "id": "bug-080",
+      "timestamp": "2026-07-09T16:16:30.711Z",
+      "error_message": "Wrong reference: error should be as",
+      "file": "app/src/stores/updateStore.ts",
+      "root_cause": "Used \"error\" instead of \"as\"",
+      "fix": "Changed error → as",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-07-09T16:18:17.829Z"
+    },
+    {
+      "id": "bug-081",
+      "timestamp": "2026-07-09T16:19:29.184Z",
+      "error_message": "CSS fix: justify-content",
+      "file": "app/src/components/AppBottomBar.vue",
+      "root_cause": "justify-content: flex-end → space-between",
+      "fix": "Changed justify-content: flex-end → space-between",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "vue"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:19:29.184Z"
+    },
+    {
+      "id": "bug-082",
+      "timestamp": "2026-07-09T16:24:35.659Z",
+      "error_message": "Missing guard clause",
+      "file": "app/src/stores/updateStore.ts",
+      "root_cause": "No early return/throw for edge case: status.value === 'downloading' || status.value === 'download",
+      "fix": "Added guard clause: if (status.value === 'downloading' || status)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-09T16:24:35.659Z"
     }
   ]
 }

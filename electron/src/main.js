@@ -184,6 +184,10 @@ const registerCommonHandlers = () => {
                     let body = '';
                     res.on('data', chunk => body += chunk);
                     res.on('end', () => {
+                        if (res.statusCode >= 400) {
+                            reject(new Error(`GitHub API returned status ${res.statusCode}: ${body.slice(0, 200)}`));
+                            return;
+                        }
                         try {
                             resolve(JSON.parse(body));
                         } catch (e) {

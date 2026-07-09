@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T15:52:49.127Z
-> Files: 86 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T16:24:35.636Z
+> Files: 90 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
 
@@ -20,13 +20,13 @@
 ## .superpowers/sdd/
 
 - `progress.md` — SDD Progress Ledger (~90 tok)
-- `task-1-report.md` — Task 1 Report: TransactionRecordTable.vue — 操作列改为图标+tooltip + 新增同步按钮 (~392 tok)
+- `task-1-report.md` — Task 1 Report: 主进程 IPC handlers (~527 tok)
 - `task-2-fix-report.md` — Task 2 Fix Report: 同步按钮加载状态 + Popover 在同步期间保持打开 (~258 tok)
-- `task-2-report.md` — Task 2 Report: TransactionRecordView.vue — handleSync (~270 tok)
-- `task-3-report.md` — 状态 (~98 tok)
-- `task-4-report.md` — 状态 (~142 tok)
-- `task-5-report.md` — 状态 (~384 tok)
-- `task-6-report.md` — 状态 (~66 tok)
+- `task-2-report.md` — Task 2 Report: Preload 扩展 + TypeScript 类型声明 (~282 tok)
+- `task-3-report.md` — Task 3 Report: Pinia updateStore (~331 tok)
+- `task-4-report.md` — Task 4 Report: Layout.vue — 下载中全局显示底部状态栏 (~144 tok)
+- `task-5-report.md` — 状态 (~516 tok)
+- `task-6-report.md` — Task 6 Report: AboutSetting.vue — 更新区域 UI (6 states) (~242 tok)
 
 ## C:/Users/ljw/.claude/plans/
 
@@ -60,7 +60,8 @@
 
 ## app/src/components/
 
-- `Layout.vue` — Vue: setup (~802 tok)
+- `AppBottomBar.vue` — Vue: setup (~503 tok)
+- `Layout.vue` — Vue: setup (~840 tok)
 
 ## app/src/components/common/
 
@@ -82,7 +83,7 @@
 
 ## app/src/components/settings_view/
 
-- `AboutSetting.vue` — Vue component (~611 tok)
+- `AboutSetting.vue` — Vue component (~1500 tok)
 - `BilladmCategoryTagSetting.vue` — Vue component (~3433 tok)
 - `BilladmTemplateSetting.vue` — Vue component (~2164 tok)
 - `CategoryColumn.vue` — Vue component (~2507 tok)
@@ -111,13 +112,14 @@
 - `keyEventStore.ts` — Exports useKeyEventStore (~3236 tok)
 - `ledgerStore.ts` — Exports useLedgerStore (~1116 tok)
 - `transactionStore.ts` — Exports SortItem, useTransactionStore (~804 tok)
+- `updateStore.ts` — Exports UpdateStatus, useUpdateStore (~1093 tok)
 
 ## app/src/styles/
 
 
 ## app/src/types/
 
-- `electron.d.ts` — Declares __BUILD_TIME__ (~168 tok)
+- `electron.d.ts` — Declares __BUILD_TIME__ (~420 tok)
 
 ## build/
 
@@ -141,6 +143,7 @@
 - `2026-06-28-single-instance-lock.md` — 单实例锁 实现计划 (~740 tok)
 - `2026-06-29-general-setting.md` — 通用设置页 + DevTools 开关 实现计划 (~1786 tok)
 - `2026-07-02-transaction-sync.md` — 消费记录同步 — 实施计划 (~1824 tok)
+- `2026-07-10-auto-update.md` — 版本检查与自动更新 — 实施计划 (~6819 tok)
 
 ## docs/superpowers/specs/
 
@@ -151,6 +154,7 @@
 - `2026-06-28-single-instance-lock-design.md` — 单实例锁 设计规格 (~412 tok)
 - `2026-06-29-general-setting-design.md` — 通用设置页 + DevTools 开关 设计规格 (~378 tok)
 - `2026-07-02-transaction-sync-design.md` — 消费记录同步 — 设计规格 (~358 tok)
+- `2026-07-10-auto-update-design.md` — 版本检查与自动更新 — 设计规格 (~1339 tok)
 
 ## electron/
 
@@ -161,8 +165,8 @@
 
 ## electron/src/
 
-- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~2316 tok)
-- `preload.js` (~320 tok)
+- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~4570 tok)
+- `preload.js` — Declares handler (~645 tok)
 
 ## kernel/
 

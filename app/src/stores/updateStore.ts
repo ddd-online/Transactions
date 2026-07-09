@@ -34,6 +34,7 @@ export const useUpdateStore = defineStore('updateStore', () => {
     }
 
     const checkForUpdate = async () => {
+        if (status.value === 'downloading' || status.value === 'downloaded') return
         status.value = 'checking'
         errorMessage.value = ''
         try {
