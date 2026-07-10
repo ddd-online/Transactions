@@ -24,3 +24,4 @@
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
+- [2026-07-10] **Electron 中网络请求走代理：用 `net` 模块，不要用 `https`。** Node.js `https` 模块绕过系统代理，导致 VPN/系统代理无法加速 GitHub 下载。Electron `net.request()` 基于 Chromium 网络栈，自动跟随系统代理设置（HTTP/SOCKS/TUN 均生效）。API 差异：`https.get(url, opts, cb)` → `net.request({ method, url })` + `req.on('response', cb)` + `req.end()`。取消方式：`AbortController` → 直接存 `req` 引用，`req.destroy()`。

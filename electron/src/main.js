@@ -2,7 +2,6 @@ const { app, BrowserWindow, ipcMain, dialog, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const https = require('https');
 const { shell } = require('electron');
 
 process.noAsar = false;
@@ -168,19 +167,21 @@ const registerCommonHandlers = () => {
     });
 
     // ── 更新 ──
-    let downloadAbortController = null;
+    let downloadRequest = null;
     let downloadFilePath = null;
 
     ipcMain.handle('update:check', async () => {
         try {
             const data = await new Promise((resolve, reject) => {
                 const url = 'https://api.github.com/repos/ddd-online/Transactions/releases/latest';
-                const req = https.get(url, {
-                    headers: {
-                        'User-Agent': 'Transactions-App',
-                        'Accept': 'application/vnd.github+json',
-                    },
-                }, (res) => {
+                const req = net.request({
+                    method: 'GET',
+                    url,
+                });
+                req.setHeader('User-Agent', 'Transactions-App');
+                req.setHeader('Accept', 'application/vnd.github+json');
+
+                req.on('response', (res) => {
                     let body = '';
                     res.on('data', chunk => body += chunk);
                     res.on('end', () => {
@@ -194,12 +195,14 @@ const registerCommonHandlers = () => {
                             reject(new Error('Invalid JSON response'));
                         }
                     });
+                    res.on('error', reject);
                 });
                 req.on('error', reject);
                 req.setTimeout(15000, () => {
                     req.destroy();
                     reject(new Error('Request timeout'));
                 });
+                req.end();
             });
 
             if (data.prerelease) {
@@ -240,10 +243,10 @@ const registerCommonHandlers = () => {
     ipcMain.handle('update:download', async (event, downloadUrl) => {
         try {
             // Cancel any existing download
-            if (downloadAbortController) {
-                downloadAbortController.abort();
+            if (downloadRequest) {
+                downloadRequest.destroy();
+                downloadRequest = null;
             }
-            downloadAbortController = new AbortController();
 
             const urlObj = new URL(downloadUrl);
             const fileName = path.basename(urlObj.pathname);
@@ -256,7 +259,13 @@ const registerCommonHandlers = () => {
             }
 
             await new Promise((resolve, reject) => {
-                const req = https.get(downloadUrl, { signal: downloadAbortController.signal }, (res) => {
+                const req = net.request({
+                    method: 'GET',
+                    url: downloadUrl,
+                });
+                downloadRequest = req;
+
+                req.on('response', (res) => {
                     // Handle redirect
                     if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                         reject(new Error('Redirect not supported; use direct URL'));
@@ -287,7 +296,7 @@ const registerCommonHandlers = () => {
                         const buffer = Buffer.concat(chunks);
                         try {
                             fs.writeFileSync(downloadFilePath, buffer);
-                            downloadAbortController = null;
+                            downloadRequest = null;
                             mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
                             resolve();
                         } catch (e) {
@@ -299,17 +308,14 @@ const registerCommonHandlers = () => {
                 });
 
                 req.on('error', (e) => {
-                    if (e.name === 'AbortError') {
+                    if (downloadRequest === null) {
                         resolve(); // Cancelled silently
                     } else {
                         reject(e);
                     }
                 });
 
-                downloadAbortController.signal.addEventListener('abort', () => {
-                    req.destroy();
-                    resolve();
-                });
+                req.end();
             });
 
             return { success: true };
@@ -319,16 +325,16 @@ const registerCommonHandlers = () => {
                 try { fs.unlinkSync(downloadFilePath); } catch {}
             }
             downloadFilePath = null;
-            downloadAbortController = null;
+            downloadRequest = null;
             mainWindow.webContents.send('update:download-error', { message: e.message });
             return { success: false, error: e.message };
         }
     });
 
     ipcMain.on('update:cancel', () => {
-        if (downloadAbortController) {
-            downloadAbortController.abort();
-            downloadAbortController = null;
+        if (downloadRequest) {
+            downloadRequest.destroy();
+            downloadRequest = null;
         }
         if (downloadFilePath && fs.existsSync(downloadFilePath)) {
             try { fs.unlinkSync(downloadFilePath); } catch {}

@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-07-09T16:56:30.496Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-07-10T14:03:02.538Z
 > Files: 91 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ./
@@ -154,7 +154,7 @@
 - `2026-06-28-single-instance-lock-design.md` — 单实例锁 设计规格 (~412 tok)
 - `2026-06-29-general-setting-design.md` — 通用设置页 + DevTools 开关 设计规格 (~378 tok)
 - `2026-07-02-transaction-sync-design.md` — 消费记录同步 — 设计规格 (~358 tok)
-- `2026-07-10-auto-update-design.md` — 版本检查与自动更新 — 设计规格 (~1339 tok)
+- `2026-07-10-auto-update-design.md` — 版本检查与自动更新 — 设计规格 (~1350 tok)
 
 ## electron/
 
@@ -166,7 +166,7 @@
 
 ## electron/src/
 
-- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~4570 tok)
+- `main.js` — path: readTransactionsCfg, saveTransactionsCfg (~4568 tok)
 - `preload.js` — Declares handler (~645 tok)
 
 ## kernel/

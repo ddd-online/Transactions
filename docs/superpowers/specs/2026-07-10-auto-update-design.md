@@ -90,9 +90,9 @@ GET https://api.github.com/repos/ddd-online/Transactions/releases/latest
 ## 下载与存储
 
 - 下载路径：`os.tmpdir()/Transactions-v{version}.exe`
-- 使用 Node.js `https` 模块下载
+- 使用 Electron `net` 模块下载（基于 Chromium 网络栈，**自动跟随系统代理设置**，VPN/代理可加速）
 - 每收到 data chunk 计算百分比和速度，通过 `mainWindow.webContents.send()` 推送到渲染进程
-- 支持取消：主进程持有 `AbortController` 引用，`update:cancel` 触发 abort + 清理临时文件
+- 支持取消：主进程持有 `ClientRequest` 引用，`update:cancel` 触发 `destroy()` + 清理临时文件
 
 ## 安装触发
 

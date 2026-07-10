@@ -2,6 +2,13 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+
+## 2026-07-10
+
+- **更新下载改用 Electron `net` 模块**：`electron/src/main.js` 的 `update:check` 和 `update:download` 从 Node.js `https` 改为 Electron `net.request()`，自动跟随系统代理。移除 `https` 引入，`AbortController` 改为直接持有 `ClientRequest` 引用。
+  - 影响：`update:check`（GitHub API）、`update:download`（exe 下载）
+  - 设计文档已同步更新
+  - cerebrum.md 已记录决策
 | 15:30 | Task 3: KeyEventImageGallery 渲染 blob URL + 透传 urlCache 三层 | KeyEventImageGallery.vue, KeyEventDetail.vue, KeyEventView.vue | vue-tsc 通过, 已 commit | ~80 tok |
 | 01:00 | Task 3: 创建 updateStore Pinia store（6态状态机） | app/src/stores/updateStore.ts | vue-tsc 通过, 已 commit | ~1300 |
 
@@ -697,3 +704,14 @@
 | 00:47 | Session end: 42 writes across 23 files (release.ps1, README.md, CLAUDE.md, electron-builder.yml, 2026-07-10-auto-update-design.md) | 45 reads | ~47274 tok |
 | 00:47 | Edited electron/package.json | inline fix | ~6 |
 | 00:47 | Session end: 43 writes across 23 files (release.ps1, README.md, CLAUDE.md, electron-builder.yml, 2026-07-10-auto-update-design.md) | 45 reads | ~47380 tok |
+
+## Session: 2026-07-10 21:29
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:02 | Edited electron/src/main.js | 2→1 lines | ~11 |
+| 22:02 | Edited electron/src/main.js | modified if() | ~440 |
+| 22:02 | Edited electron/src/main.js | modified if() | ~1030 |
+| 22:02 | Edited electron/src/main.js | abort() → destroy() | ~96 |
+| 22:03 | Edited docs/superpowers/specs/2026-07-10-auto-update-design.md | 6→6 lines | ~71 |
+| 22:03 | Session end: 5 writes across 2 files (main.js, 2026-07-10-auto-update-design.md) | 5 reads | ~10253 tok |

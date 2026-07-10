@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 6858333,
-    "total_reads": 8411,
-    "total_writes": 6468,
-    "total_sessions": 13,
-    "anatomy_hits": 2229,
+    "total_tokens_estimated": 6877088,
+    "total_reads": 8420,
+    "total_writes": 6473,
+    "total_sessions": 14,
+    "anatomy_hits": 2238,
     "anatomy_misses": 6041,
-    "repeated_reads_blocked": 6712,
-    "estimated_savings_vs_bare_cli": 10504503
+    "repeated_reads_blocked": 6716,
+    "estimated_savings_vs_bare_cli": 10524575
   },
   "sessions": [
     {
@@ -86132,6 +86132,118 @@
         "writes_count": 52,
         "repeated_reads_blocked": 46,
         "anatomy_lookups": 20
+      }
+    },
+    {
+      "id": "session-2026-07-10-2129",
+      "started": "2026-07-10T13:29:22.240Z",
+      "ended": "2026-07-10T13:30:48.738Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-07-10-auto-update-design.md",
+          "tokens_estimated": 1339,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/stores/updateStore.ts",
+          "tokens_estimated": 1093,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/settings_view/AboutSetting.vue",
+          "tokens_estimated": 1500,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 4570,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [],
+      "totals": {
+        "input_tokens_estimated": 8502,
+        "output_tokens_estimated": 0,
+        "reads_count": 4,
+        "writes_count": 0,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 4
+      }
+    },
+    {
+      "id": "session-2026-07-10-2129",
+      "started": "2026-07-10T13:29:22.240Z",
+      "ended": "2026-07-10T14:03:32.966Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-07-10-auto-update-design.md",
+          "tokens_estimated": 1339,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/stores/updateStore.ts",
+          "tokens_estimated": 1093,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/app/src/components/settings_view/AboutSetting.vue",
+          "tokens_estimated": 1500,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 4568,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "D:/github/Transactions/electron/package.json",
+          "tokens_estimated": 100,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 11,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 440,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 1030,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/electron/src/main.js",
+          "tokens_estimated": 96,
+          "action": "edit"
+        },
+        {
+          "file": "D:/github/Transactions/docs/superpowers/specs/2026-07-10-auto-update-design.md",
+          "tokens_estimated": 76,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 8600,
+        "output_tokens_estimated": 1653,
+        "reads_count": 5,
+        "writes_count": 5,
+        "repeated_reads_blocked": 4,
+        "anatomy_lookups": 5
       }
     }
   ],
