@@ -88,6 +88,10 @@ try {
     # ==============================
     Write-Step "生成 Release Notes..."
 
+    # 先拉取远程 tag，确保本地有最新的 tag 列表
+    Write-Info "拉取远程 tag..."
+    git -C $projectRoot fetch --tags origin 2>$null
+
     $tagName = "v$version"
     $prevTag = git -C $projectRoot describe --tags --abbrev=0 2>$null
 
