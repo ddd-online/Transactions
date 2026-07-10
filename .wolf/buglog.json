@@ -1457,6 +1457,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-07-10T14:02:20.145Z"
+    },
+    {
+      "id": "bug-092",
+      "timestamp": "2026-07-10T14:15:54.087Z",
+      "error_message": "Incorrect value in code",
+      "file": "electron/package.json",
+      "root_cause": "Had \"0.2.1\"",
+      "fix": "Changed to \"0.2.2\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "json"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-07-10T14:15:54.087Z"
     }
   ]
 }

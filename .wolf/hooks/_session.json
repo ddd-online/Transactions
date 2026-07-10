@@ -1,72 +1,27 @@
 {
-  "session_id": "session-2026-07-10-2129",
-  "started": "2026-07-10T13:29:22.240Z",
+  "session_id": "session-2026-07-10-2214",
+  "started": "2026-07-10T14:14:37.987Z",
   "files_read": {
-    "D:/github/Transactions/docs/superpowers/specs/2026-07-10-auto-update-design.md": {
-      "count": 1,
-      "tokens": 1339,
-      "first_read": "2026-07-10T13:30:11.921Z"
-    },
-    "D:/github/Transactions/app/src/stores/updateStore.ts": {
-      "count": 1,
-      "tokens": 1093,
-      "first_read": "2026-07-10T13:30:12.353Z"
-    },
-    "D:/github/Transactions/app/src/components/settings_view/AboutSetting.vue": {
-      "count": 1,
-      "tokens": 1500,
-      "first_read": "2026-07-10T13:30:12.784Z"
-    },
-    "D:/github/Transactions/electron/src/main.js": {
-      "count": 5,
-      "tokens": 4568,
-      "first_read": "2026-07-10T13:30:20.055Z"
-    },
     "D:/github/Transactions/electron/package.json": {
       "count": 1,
       "tokens": 100,
-      "first_read": "2026-07-10T14:02:06.113Z"
+      "first_read": "2026-07-10T14:15:20.120Z"
     }
   },
   "files_written": [
     {
-      "file": "D:/github/Transactions/electron/src/main.js",
+      "file": "D:/github/Transactions/electron/package.json",
       "action": "edit",
-      "tokens": 11,
-      "at": "2026-07-10T14:02:20.141Z"
-    },
-    {
-      "file": "D:/github/Transactions/electron/src/main.js",
-      "action": "edit",
-      "tokens": 440,
-      "at": "2026-07-10T14:02:32.273Z"
-    },
-    {
-      "file": "D:/github/Transactions/electron/src/main.js",
-      "action": "edit",
-      "tokens": 1030,
-      "at": "2026-07-10T14:02:46.066Z"
-    },
-    {
-      "file": "D:/github/Transactions/electron/src/main.js",
-      "action": "edit",
-      "tokens": 96,
-      "at": "2026-07-10T14:02:50.909Z"
-    },
-    {
-      "file": "D:/github/Transactions/docs/superpowers/specs/2026-07-10-auto-update-design.md",
-      "action": "edit",
-      "tokens": 76,
-      "at": "2026-07-10T14:03:02.552Z"
+      "tokens": 6,
+      "at": "2026-07-10T14:15:54.084Z"
     }
   ],
   "edit_counts": {
-    "electron/src/main.js": 4,
-    "docs/superpowers/specs/2026-07-10-auto-update-design.md": 1
+    "electron/package.json": 1
   },
-  "anatomy_hits": 5,
+  "anatomy_hits": 1,
   "anatomy_misses": 0,
-  "repeated_reads_warned": 4,
+  "repeated_reads_warned": 0,
   "cerebrum_warnings": 0,
-  "stop_count": 2
+  "stop_count": 1
 }

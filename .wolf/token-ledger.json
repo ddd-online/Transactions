@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-06-25T16:17:52.040Z",
   "lifetime": {
-    "total_tokens_estimated": 6877088,
-    "total_reads": 8420,
-    "total_writes": 6473,
-    "total_sessions": 14,
-    "anatomy_hits": 2238,
+    "total_tokens_estimated": 6877194,
+    "total_reads": 8421,
+    "total_writes": 6474,
+    "total_sessions": 15,
+    "anatomy_hits": 2239,
     "anatomy_misses": 6041,
     "repeated_reads_blocked": 6716,
-    "estimated_savings_vs_bare_cli": 10524575
+    "estimated_savings_vs_bare_cli": 10524775
   },
   "sessions": [
     {
@@ -86244,6 +86244,34 @@
         "writes_count": 5,
         "repeated_reads_blocked": 4,
         "anatomy_lookups": 5
+      }
+    },
+    {
+      "id": "session-2026-07-10-2214",
+      "started": "2026-07-10T14:14:37.987Z",
+      "ended": "2026-07-10T14:16:00.514Z",
+      "reads": [
+        {
+          "file": "D:/github/Transactions/electron/package.json",
+          "tokens_estimated": 100,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "D:/github/Transactions/electron/package.json",
+          "tokens_estimated": 6,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 100,
+        "output_tokens_estimated": 6,
+        "reads_count": 1,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
       }
     }
   ],
