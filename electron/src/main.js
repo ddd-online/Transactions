@@ -181,7 +181,13 @@ const registerCommonHandlers = () => {
                 req.setHeader('User-Agent', 'Transactions-App');
                 req.setHeader('Accept', 'application/vnd.github+json');
 
+                const timeout = setTimeout(() => {
+                    req.destroy();
+                    reject(new Error('Request timeout'));
+                }, 15000);
+
                 req.on('response', (res) => {
+                    clearTimeout(timeout);
                     let body = '';
                     res.on('data', chunk => body += chunk);
                     res.on('end', () => {
@@ -197,10 +203,9 @@ const registerCommonHandlers = () => {
                     });
                     res.on('error', reject);
                 });
-                req.on('error', reject);
-                req.setTimeout(15000, () => {
-                    req.destroy();
-                    reject(new Error('Request timeout'));
+                req.on('error', (e) => {
+                    clearTimeout(timeout);
+                    reject(e);
                 });
                 req.end();
             });
