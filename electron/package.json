@@ -1,7 +1,7 @@
 {
   "name": "transactions",
   "productName": "Transactions",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "main": "./src/main.js",
   "scripts": {
     "dev": "electron ./src/main.js",
