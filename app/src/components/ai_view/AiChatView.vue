@@ -49,10 +49,8 @@
 
           <!-- AI Text Message -->
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant">
-            <div class="msg-assistant-content">
-              {{ msg.content }}
-              <span v-if="msg.streaming" class="streaming-cursor">|</span>
-            </div>
+            <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
+            <span v-if="msg.streaming" class="streaming-cursor">|</span>
             <div class="msg-assistant-meta">
               <span>{{ formatTime(msg.timestamp) }}</span>
               <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
@@ -135,6 +133,7 @@ import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { DeleteOutlined, SendOutlined, PauseOutlined, CopyOutlined } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { aiApi, type AiMessage as AiMessageApi } from '@/backend/api/ai'
+import { renderMarkdown } from '@/utils/markdown'
 import { message } from 'ant-design-vue'
 
 // ----------------------------------------------------------------
@@ -743,10 +742,96 @@ onUnmounted(() => {
   font-size: var(--billadm-size-text-body);
   color: var(--billadm-color-text-major);
   line-height: var(--billadm-height-relaxed);
-  white-space: pre-wrap;
-  word-break: break-word;
   user-select: text;
   -webkit-user-select: text;
+}
+
+.msg-assistant-content :deep(p) {
+  margin: 0 0 var(--billadm-space-sm) 0;
+}
+.msg-assistant-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.msg-assistant-content :deep(code) {
+  font-family: var(--billadm-font-mono);
+  font-size: 0.9em;
+  background: var(--billadm-color-minor-background);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.msg-assistant-content :deep(pre) {
+  margin: var(--billadm-space-sm) 0;
+  padding: var(--billadm-space-md);
+  background: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-sm);
+  overflow-x: auto;
+}
+.msg-assistant-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  font-size: var(--billadm-size-text-body-sm);
+  line-height: var(--billadm-height-normal);
+}
+
+.msg-assistant-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--billadm-space-sm) 0;
+  font-size: var(--billadm-size-text-body-sm);
+}
+.msg-assistant-content :deep(th),
+.msg-assistant-content :deep(td) {
+  border: 1px solid var(--billadm-color-divider);
+  padding: var(--billadm-space-xs) var(--billadm-space-sm);
+  text-align: left;
+}
+.msg-assistant-content :deep(th) {
+  background: var(--billadm-color-minor-background);
+  font-weight: 600;
+}
+
+.msg-assistant-content :deep(ul),
+.msg-assistant-content :deep(ol) {
+  margin: var(--billadm-space-sm) 0;
+  padding-left: var(--billadm-space-xl);
+}
+
+.msg-assistant-content :deep(blockquote) {
+  margin: var(--billadm-space-sm) 0;
+  padding: var(--billadm-space-xs) var(--billadm-space-md);
+  border-left: 3px solid var(--billadm-color-divider);
+  color: var(--billadm-color-text-secondary);
+}
+
+.msg-assistant-content :deep(a) {
+  color: var(--billadm-color-primary);
+}
+
+.msg-assistant-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--billadm-color-divider);
+  margin: var(--billadm-space-md) 0;
+}
+
+.msg-assistant-content :deep(strong) {
+  font-weight: 600;
+}
+
+.msg-assistant-content :deep(h1),
+.msg-assistant-content :deep(h2),
+.msg-assistant-content :deep(h3) {
+  font-family: var(--billadm-font-display);
+  margin: var(--billadm-space-md) 0 var(--billadm-space-sm) 0;
+  font-weight: 600;
+}
+.msg-assistant-content :deep(h1) { font-size: 1.3em; }
+.msg-assistant-content :deep(h2) { font-size: 1.15em; }
+.msg-assistant-content :deep(h3) { font-size: 1.05em; }
+
+.msg-assistant-content :deep(input[type="checkbox"]) {
+  margin-right: var(--billadm-space-xs);
 }
 
 .msg-assistant-meta {

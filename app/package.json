@@ -15,8 +15,11 @@
     "ant-design-vue": "^4.2.6",
     "axios": "^1.13.2",
     "dayjs": "^1.11.19",
+    "dompurify": "^3.4.11",
     "echarts": "^6.0.0",
     "heic-to": "^1.5.2",
+    "highlight.js": "^11.11.1",
+    "marked": "^18.0.6",
     "normalize.css": "^8.0.1",
     "pinia": "^3.0.4",
     "sortablejs": "^1.15.7",
@@ -25,6 +28,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^25.0.3",
     "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.3",
