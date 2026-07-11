@@ -1,6 +1,7 @@
 package server
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -20,6 +21,24 @@ func NewGinServer() *gin.Engine {
 		AllowCredentials: true,                                                         // 是否允许发送Cookie
 		MaxAge:           12 * time.Hour,                                               // 预检请求的有效期
 	}))
-	server.Static("/static", util.GetDistDir())
+
+	// 静态文件缓存控制：index.html 禁止缓存，带 hash 的 assets 长期缓存
+	distDir := util.GetDistDir()
+	server.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
+			path := c.Request.URL.Path
+			if strings.HasSuffix(path, ".html") {
+				// HTML 入口文件禁止缓存，确保升级后前端立即生效
+				c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+				c.Header("Pragma", "no-cache")
+				c.Header("Expires", "0")
+			} else if strings.Contains(path, "/assets/") {
+				// 带 hash 的资源文件可以长期缓存
+				c.Header("Cache-Control", "public, max-age=31536000, immutable")
+			}
+		}
+		c.Next()
+	})
+	server.Static("/static", distDir)
 	return server
 }
