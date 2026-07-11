@@ -36,9 +36,7 @@
         >
           <!-- User Message -->
           <div v-if="msg.role === 'user'" class="msg-user-row">
-            <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
-            <div class="msg-user">
-              <div class="msg-user-content">{{ msg.content }}</div>
+            <div class="msg-meta-col">
               <button
                 class="msg-copy-btn"
                 @click.stop="copyMessage(msg.content)"
@@ -46,6 +44,10 @@
               >
                 <CopyOutlined />
               </button>
+              <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
+            </div>
+            <div class="msg-user">
+              <div class="msg-user-content">{{ msg.content }}</div>
             </div>
           </div>
 
@@ -54,6 +56,8 @@
             <div class="msg-assistant">
               <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
               <span v-if="msg.streaming" class="streaming-cursor">|</span>
+            </div>
+            <div class="msg-meta-col">
               <button
                 class="msg-copy-btn"
                 @click.stop="copyMessage(msg.content)"
@@ -61,10 +65,10 @@
               >
                 <CopyOutlined />
               </button>
-            </div>
-            <div class="msg-assistant-meta">
-              <span>{{ formatTime(msg.timestamp) }}</span>
-              <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
+              <div class="msg-assistant-meta">
+                <span>{{ formatTime(msg.timestamp) }}</span>
+                <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
+              </div>
             </div>
           </div>
 
@@ -110,7 +114,7 @@
             v-model="inputText"
             class="chat-textarea"
             :disabled="streaming"
-            placeholder="输入你的问题..."
+            placeholder="输入你的问题...  (Enter 发送 / Shift+Enter 换行)"
             rows="1"
             @keydown="onKeydown"
             @input="autoResize"
@@ -126,7 +130,6 @@
             <SendOutlined v-else />
           </button>
         </div>
-        <div class="chat-input-hint">Enter 发送 · Shift+Enter 换行</div>
       </div>
     </div>
   </div>
@@ -701,14 +704,14 @@ onUnmounted(() => {
 
 .msg-user-row {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   justify-content: flex-end;
-  gap: var(--billadm-space-sm);
+  gap: var(--billadm-space-xs);
 }
 
 .msg-user {
   position: relative;
-  max-width: 70%;
+  max-width: 90%;
   background: var(--billadm-color-primary);
   color: var(--billadm-color-text-inverse);
   border-radius: var(--billadm-radius-md);
@@ -725,6 +728,14 @@ onUnmounted(() => {
   -webkit-user-select: text;
 }
 
+.msg-meta-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
 .msg-user-time {
   font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-disabled);
@@ -738,22 +749,18 @@ onUnmounted(() => {
 
 .msg-assistant-row {
   display: flex;
-  align-items: flex-end;
-  gap: var(--billadm-space-sm);
+  align-items: stretch;
+  gap: var(--billadm-space-xs);
 }
 
 .msg-assistant {
   position: relative;
-  max-width: 80%;
+  max-width: 90%;
   background: rgba(74, 140, 111, 0.06);
   border: 1px solid var(--billadm-color-divider);
   border-left: 3px solid var(--billadm-color-primary);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-md);
-}
-
-.msg-assistant .msg-copy-btn {
-  color: var(--billadm-color-text-disabled);
 }
 
 .msg-assistant-content {
@@ -865,9 +872,6 @@ onUnmounted(() => {
    ======================================== */
 
 .msg-copy-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -876,24 +880,19 @@ onUnmounted(() => {
   border: none;
   border-radius: var(--billadm-radius-sm);
   background: transparent;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--billadm-color-text-disabled);
   cursor: pointer;
+  font-size: 13px;
+  flex-shrink: 0;
   opacity: 0;
   transition: opacity var(--billadm-transition-fast);
-  font-size: 13px;
 }
 
-.msg-user:hover .msg-copy-btn,
-.msg-assistant:hover .msg-copy-btn {
+.chat-message:hover .msg-copy-btn {
   opacity: 1;
 }
 
 .msg-copy-btn:hover {
-  background: rgba(0, 0, 0, 0.12);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.msg-assistant .msg-copy-btn:hover {
   background: var(--billadm-color-hover-bg);
   color: var(--billadm-color-text-major);
 }
@@ -919,7 +918,7 @@ onUnmounted(() => {
    ======================================== */
 
 .msg-tool {
-  max-width: 80%;
+  max-width: 90%;
   background: transparent;
   border-left: 3px solid var(--billadm-color-accent);
   padding: var(--billadm-space-xs) var(--billadm-space-md);
@@ -1088,14 +1087,6 @@ onUnmounted(() => {
   background: #c4624e;
 }
 
-/* Hint */
-
-.chat-input-hint {
-  font-size: var(--billadm-size-text-small);
-  color: var(--billadm-color-text-disabled);
-  margin-top: var(--billadm-space-xs);
-  margin-left: var(--billadm-space-sm);
-}
 
 /* ========================================
    Message Entrance Animations

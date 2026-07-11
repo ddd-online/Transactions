@@ -1,4 +1,9 @@
 # release.ps1 - 一键将打包产物发布到 GitHub Release
+# 用法: .\release.ps1 [-Body "发布说明"]
+
+param(
+    [string]$Body
+)
 
 # 设置输出编码为 UTF-8（防止中文乱码）
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -88,25 +93,32 @@ try {
     # ==============================
     Write-Step "生成 Release Notes..."
 
-    # 先拉取远程 tag，确保本地有最新的 tag 列表
-    Write-Info "拉取远程 tag..."
-    git -C $projectRoot fetch --tags origin 2>$null
-
     $tagName = "v$version"
-    $prevTag = git -C $projectRoot describe --tags --abbrev=0 2>$null
 
-    if ($prevTag) {
-        $commitLog = git -C $projectRoot log --oneline "$prevTag..HEAD" 2>$null
-        if ($commitLog) {
-            $body = "## Changes since $prevTag`n`n$commitLog"
-            Write-Success "从上一条 tag ($prevTag) 生成了 changelog"
-        } else {
-            $body = "Transactions $tagName"
-            Write-Info "与上一条 tag 无差异，使用默认 body"
-        }
+    if ($Body) {
+        # 使用传入的 body
+        $releaseBody = $Body
+        Write-Success "使用传入的发布说明"
     } else {
-        $body = "Transactions $tagName"
-        Write-Info "未找到上一条 tag，使用默认 body"
+        # 先拉取远程 tag，确保本地有最新的 tag 列表
+        Write-Info "拉取远程 tag..."
+        git -C $projectRoot fetch --tags origin 2>$null
+
+        $prevTag = git -C $projectRoot describe --tags --abbrev=0 2>$null
+
+        if ($prevTag) {
+            $commitLog = git -C $projectRoot log --oneline "$prevTag..HEAD" 2>$null
+            if ($commitLog) {
+                $releaseBody = "## Changes since $prevTag`n`n$commitLog"
+                Write-Success "从上一条 tag ($prevTag) 生成了 changelog"
+            } else {
+                $releaseBody = "Transactions $tagName"
+                Write-Info "与上一条 tag 无差异，使用默认 body"
+            }
+        } else {
+            $releaseBody = "Transactions $tagName"
+            Write-Info "未找到上一条 tag，使用默认 body"
+        }
     }
 
     # ==============================
@@ -126,7 +138,7 @@ try {
     Write-Host "----------------------------------------" -ForegroundColor Cyan
     Write-Host "  Body 预览:" -ForegroundColor White
     Write-Host "----------------------------------------" -ForegroundColor Cyan
-    Write-Host $body -ForegroundColor DarkGray
+    Write-Host $releaseBody -ForegroundColor DarkGray
     Write-Host "========================================" -ForegroundColor Cyan
 
     $confirmation = Read-Host "`n确认发布？[Y/N]"
@@ -144,7 +156,7 @@ try {
 
     gh release create $tagName $exePath `
         --title "Transactions $tagName" `
-        --notes $body
+        --notes $releaseBody
 
     if ($LASTEXITCODE -ne 0) {
         Write-ErrorCustom "创建 GitHub Release 失败，退出码: $LASTEXITCODE"
