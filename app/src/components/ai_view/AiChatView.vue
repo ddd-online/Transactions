@@ -54,8 +54,23 @@
           <!-- AI Text Message -->
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
             <div class="msg-assistant">
+              <!-- Thinking process (collapsible) -->
+              <div v-if="msg.thinking || msg.thinkingActive" class="thinking-block">
+                <button
+                  class="thinking-toggle"
+                  @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
+                >
+                  <span class="thinking-dot" :class="{ 'thinking-dot--active': msg.thinkingActive }"></span>
+                  <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
+                  <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed && !msg.thinkingActive }">▾</span>
+                </button>
+                <div
+                  v-if="msg.thinking && (!msg.thinkingCollapsed || msg.thinkingActive)"
+                  class="thinking-content"
+                >{{ msg.thinking }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span></div>
+              </div>
               <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
-              <span v-if="msg.streaming" class="streaming-cursor">|</span>
+              <span v-if="msg.streaming && !msg.thinkingActive" class="streaming-cursor">|</span>
             </div>
             <div class="msg-meta-col">
               <button
@@ -148,7 +163,7 @@ import { message } from 'ant-design-vue'
 // ----------------------------------------------------------------
 
 interface SSEEvent {
-  type: 'text_delta' | 'tool_call' | 'tool_result' | 'done' | 'error'
+  type: 'text_delta' | 'thinking_start' | 'thinking_delta' | 'thinking_done' | 'tool_call' | 'tool_result' | 'done' | 'error'
   delta?: string
   tool?: string
   args?: Record<string, any>
@@ -171,6 +186,9 @@ interface ChatMessage {
   timestamp: number
   tokens?: number
   streaming?: boolean
+  thinking?: string
+  thinkingActive?: boolean
+  thinkingCollapsed?: boolean
 }
 
 // ----------------------------------------------------------------
@@ -359,6 +377,26 @@ function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage
   }
 
   switch (event.type) {
+    case 'thinking_start':
+      ensureAssistant()
+      break
+
+    case 'thinking_delta': {
+      const msg = ensureAssistant()
+      msg.thinkingActive = true
+      msg.thinking = (msg.thinking || '') + (event.delta || '')
+      msg.thinkingCollapsed = false
+      scrollToBottom()
+      break
+    }
+
+    case 'thinking_done':
+      if (assistantMsgRef.current) {
+        assistantMsgRef.current.thinkingActive = false
+        assistantMsgRef.current.thinkingCollapsed = true
+      }
+      break
+
     case 'text_delta': {
       const msg = ensureAssistant()
       msg.content += event.delta || ''
@@ -1203,5 +1241,69 @@ onUnmounted(() => {
   .msg-tool-indicator {
     animation: none;
   }
+}
+
+/* ========================================
+   Thinking Block
+   ======================================== */
+
+.thinking-block {
+  margin-bottom: var(--billadm-space-sm);
+  border-radius: var(--billadm-radius-sm);
+  overflow: hidden;
+}
+
+.thinking-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-xs);
+  border: none;
+  background: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-disabled);
+  width: 100%;
+  text-align: left;
+}
+
+.thinking-toggle:hover {
+  color: var(--billadm-color-text-secondary);
+}
+
+.thinking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--billadm-color-text-disabled);
+  flex-shrink: 0;
+}
+
+.thinking-dot--active {
+  background: var(--billadm-color-accent);
+  animation: pulse-scale 1s ease-in-out infinite;
+}
+
+.thinking-arrow {
+  margin-left: auto;
+  transition: transform var(--billadm-transition-fast);
+}
+
+.thinking-arrow--open {
+  transform: rotate(180deg);
+}
+
+.thinking-content {
+  margin-top: var(--billadm-space-xs);
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  background: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-sm);
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body-sm);
+  color: var(--billadm-color-text-secondary);
+  line-height: var(--billadm-height-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

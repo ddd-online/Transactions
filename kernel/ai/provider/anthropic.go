@@ -57,6 +57,12 @@ type anthropicRequest struct {
 	Messages  []anthropicMessage `json:"messages"`
 	Tools     []anthropicToolDef `json:"tools,omitempty"`
 	Stream    bool               `json:"stream"`
+	Thinking  *anthropicThinking `json:"thinking,omitempty"`
+}
+
+type anthropicThinking struct {
+	Type         string `json:"type"`
+	BudgetTokens int    `json:"budget_tokens"`
 }
 
 // anthropicStreamEvent SSE 行 JSON 结构
@@ -66,6 +72,7 @@ type anthropicStreamEvent struct {
 		Type        string `json:"type"`
 		Text        string `json:"text"`
 		PartialJSON string `json:"partial_json"`
+		Thinking    string `json:"thinking"`
 	} `json:"delta,omitempty"`
 	ContentBlock struct {
 		Type  string          `json:"type"`
@@ -144,6 +151,10 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 		Messages:  messages,
 		Tools:     tools,
 		Stream:    true,
+		Thinking: &anthropicThinking{
+			Type:         "enabled",
+			BudgetTokens: 4000,
+		},
 	}
 
 	jsonBody, err := json.Marshal(body)
@@ -207,14 +218,21 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 					currentToolID = event.ContentBlock.ID
 					currentToolName = event.ContentBlock.Name
 					toolArgsAccum = nil
+				} else if event.ContentBlock.Type == "thinking" {
+					ch <- ChatEvent{Type: "thinking_start"}
 				}
 			case "content_block_delta":
 				if event.Delta.Type == "text_delta" {
 					ch <- ChatEvent{Type: "text_delta", Delta: event.Delta.Text}
 				} else if event.Delta.Type == "input_json_delta" {
 					toolArgsAccum = append(toolArgsAccum, event.Delta.PartialJSON...)
+				} else if event.Delta.Type == "thinking_delta" {
+					ch <- ChatEvent{Type: "thinking_delta", Delta: event.Delta.Thinking}
 				}
 			case "content_block_stop":
+				if event.ContentBlock.Type == "thinking" {
+					ch <- ChatEvent{Type: "thinking_done"}
+				}
 				if currentToolID != "" {
 					var args map[string]any
 					json.Unmarshal(toolArgsAccum, &args)
