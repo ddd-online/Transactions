@@ -297,12 +297,6 @@ func summarizeResult(toolName, result string) string {
 			return truncateString(result)
 		}
 		return fmt.Sprintf("共 %d 个标签", len(arr))
-	case "query_chart_data":
-		var arr []any
-		if err := json.Unmarshal([]byte(result), &arr); err != nil {
-			return truncateString(result)
-		}
-		return fmt.Sprintf("共 %d 条统计数据", len(arr))
 	case "get_key_events":
 		var arr []any
 		if err := json.Unmarshal([]byte(result), &arr); err != nil {
