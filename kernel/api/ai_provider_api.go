@@ -21,26 +21,23 @@ func (h *Handlers) fetchProvider(c *gin.Context) (any, error) {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// 确定 API Key：优先使用前端传入的，否则从 DB 读取
+	// 确定 API Key 和 Provider：优先使用前端传入的，否则从 DB 一次性读取
 	apiKey := req.APIKey
-	if apiKey == "" {
+	provider := req.Provider
+	if apiKey == "" || provider == "" {
 		config, err := h.AiConfigDao.Get(ws(c))
 		if err != nil {
 			return nil, fmt.Errorf("未找到 AI 配置，请先保存配置")
 		}
-		apiKey = config.APIKey
+		if apiKey == "" {
+			apiKey = config.APIKey
+		}
+		if provider == "" {
+			provider = config.Provider
+		}
 	}
 	if apiKey == "" {
 		return nil, fmt.Errorf("API Key 未设置")
-	}
-
-	// 确定 Provider：优先使用前端传入的，否则从 DB 读取
-	provider := req.Provider
-	if provider == "" {
-		config, err := h.AiConfigDao.Get(ws(c))
-		if err == nil {
-			provider = config.Provider
-		}
 	}
 
 	switch provider {
