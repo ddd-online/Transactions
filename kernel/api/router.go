@@ -88,6 +88,16 @@ func ServeAPI(ginServer *gin.Engine) {
 		{
 			keyEventImages.DELETE("/:id", deleteKeyEventImage)
 		}
+
+		// AI Chat (requires workspace)
+		ai := v1.Group("/ai")
+		{
+			ai.POST("/chat", aiChat)
+			ai.GET("/config", getAiConfig)
+			ai.PUT("/config", updateAiConfig)
+			ai.POST("/config/test", testAiConnection)
+			ai.DELETE("/messages", clearAiMessages)
+		}
 	}
 }
 

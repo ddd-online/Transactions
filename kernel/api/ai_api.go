@@ -1,0 +1,65 @@
+package api
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+
+	"github.com/billadm/ai"
+)
+
+var chatService *ai.ChatService
+
+// SetChatService is called by wire.go during initialization.
+func SetChatService(svc *ai.ChatService) {
+	chatService = svc
+}
+
+// POST /api/v1/ai/chat
+func aiChat(c *gin.Context) {
+	if chatService == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "chat service not initialized"})
+		return
+	}
+
+	var req struct {
+		Message  string `json:"message"`
+		LedgerID string `json:"ledger_id"`
+	}
+	if err := c.BindJSON(&req); err != nil || req.Message == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
+		return
+	}
+	if len(req.Message) > 4000 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "消息过长，最多 4000 字符"})
+		return
+	}
+
+	ws := ws(c)
+
+	// SSE
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.WriteHeader(http.StatusOK)
+
+	eventCh, err := chatService.Chat(c.Request.Context(), ws, req.LedgerID, req.Message)
+	if err != nil {
+		data, _ := json.Marshal(ai.SSEEvent{Type: "error", Message: err.Error()})
+		c.Writer.Write([]byte("data: " + string(data) + "\n\n"))
+		c.Writer.Flush()
+		return
+	}
+
+	for event := range eventCh {
+		data, _ := json.Marshal(event)
+		if _, err := io.WriteString(c.Writer, "data: "+string(data)+"\n\n"); err != nil {
+			logrus.Warnf("SSE write error: %v", err)
+			return
+		}
+		c.Writer.Flush()
+	}
+}

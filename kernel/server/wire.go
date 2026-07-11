@@ -1,6 +1,9 @@
 package server
 
 import (
+	"github.com/billadm/ai"
+	"github.com/billadm/ai/tool"
+	"github.com/billadm/api"
 	"github.com/billadm/dao"
 	"github.com/billadm/service"
 )
@@ -36,4 +39,23 @@ func InitServices() {
 	service.SetKeyEventService(keyEventSvc)
 	service.SetKeyEventImageService(keyEventImageSvc)
 	service.SetTrTemplateService(trTemplateSvc)
+
+	// ---- AI module ----
+	aiConfigDao := dao.NewAiConfigDao()
+	aiMessageDao := dao.NewAiMessageDao()
+	aiToolRegistry := tool.NewToolRegistry()
+
+	// Register 6 read-only tools
+	aiToolRegistry.Register(tool.NewQueryTransactionsTool())
+	aiToolRegistry.Register(tool.NewListLedgersTool())
+	aiToolRegistry.Register(tool.NewListCategoriesTool())
+	aiToolRegistry.Register(tool.NewListTagsTool())
+	aiToolRegistry.Register(tool.NewQueryChartDataTool())
+	aiToolRegistry.Register(tool.NewGetKeyEventsTool())
+
+	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry)
+
+	// Wire into API package
+	api.SetChatService(aiChatService)
+	api.SetAiConfigDao(aiConfigDao)
 }
