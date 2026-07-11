@@ -58,7 +58,7 @@
                 class="thinking-toggle"
                 @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
               >
-                <span class="thinking-dot" :class="{ 'thinking-dot--active': msg.thinkingActive }"></span>
+                <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
                 <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
                 <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed && !msg.thinkingActive }">▾</span>
               </button>
@@ -1362,17 +1362,24 @@ onUnmounted(() => {
   color: var(--billadm-color-text-secondary);
 }
 
-.thinking-dot {
-  width: 8px;
-  height: 8px;
+.thinking-indicator {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--billadm-color-text-disabled);
   flex-shrink: 0;
+  transition: all var(--billadm-transition-fast);
 }
 
-.thinking-dot--active {
-  background: var(--billadm-color-accent);
-  animation: pulse-scale 1s ease-in-out infinite;
+.thinking-indicator--active {
+  background: transparent;
+  border: 2px solid var(--billadm-color-divider);
+  border-top-color: var(--billadm-color-accent);
+  animation: thinking-spin 0.8s linear infinite;
+}
+
+@keyframes thinking-spin {
+  to { transform: rotate(360deg); }
 }
 
 .thinking-arrow {
