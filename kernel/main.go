@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
@@ -13,7 +11,6 @@ import (
 )
 
 func main() {
-	logrus.Warnf("Args: %v", os.Args)
 	var err error
 	// 解析命令行选项
 	err = util.NewBilladmConfigFromFlags()

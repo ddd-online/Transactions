@@ -31,7 +31,6 @@ type categoryServiceImpl struct {
 }
 
 func (c *categoryServiceImpl) QueryCategory(ws *workspace.Workspace, ledgerID string, trType string) ([]models.Category, error) {
-	logrus.Infof("start to query category by %s, ledger: %s", trType, ledgerID)
 
 	categories := make([]models.Category, 0)
 	db := ws.GetDb().Where("ledger_id = ?", ledgerID)
@@ -42,12 +41,10 @@ func (c *categoryServiceImpl) QueryCategory(ws *workspace.Workspace, ledgerID st
 		return nil, err
 	}
 
-	logrus.Infof("query category success, length: %v", len(categories))
 	return categories, nil
 }
 
 func (c *categoryServiceImpl) CreateCategory(ws *workspace.Workspace, ledgerId string, name string, transactionType string) error {
-	logrus.Infof("start to create category, ledger id: %s, name: %s, type: %s", ledgerId, name, transactionType)
 
 	// Get max sort order for this transaction type
 	var maxSortOrder int
@@ -55,7 +52,7 @@ func (c *categoryServiceImpl) CreateCategory(ws *workspace.Workspace, ledgerId s
 		Where("ledger_id = ? AND transaction_type = ?", ledgerId, transactionType).
 		Select("COALESCE(MAX(sort_order), 0)").
 		Scan(&maxSortOrder).Error; err != nil {
-		logrus.Errorf("get max sort order failed: %v", err)
+		logrus.Errorf("获取最大排序号失败: %v", err)
 		return err
 	}
 
@@ -67,34 +64,31 @@ func (c *categoryServiceImpl) CreateCategory(ws *workspace.Workspace, ledgerId s
 	}
 
 	if err := ws.GetDb().Create(category).Error; err != nil {
-		logrus.Errorf("create category failed: %v", err)
+		logrus.Errorf("创建分类失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("create category success, ledger id: %s, name: %s", ledgerId, name)
 	return nil
 }
 
 func (c *categoryServiceImpl) DeleteCategory(ws *workspace.Workspace, ledgerId string, name string, transactionType string) error {
-	logrus.Infof("start to delete category, ledger id: %s, name: %s", ledgerId, name)
 
 	// Check if category is in use
 	var count int64
 	if err := ws.GetDb().Model(&models.TransactionRecord{}).
 		Where("ledger_id = ? AND category = ?", ledgerId, name).
 		Count(&count).Error; err != nil {
-		logrus.Errorf("check category usage failed: %v", err)
+		logrus.Errorf("检查分类使用情况失败: %v", err)
 		return err
 	}
 	if count > 0 {
-		logrus.Warnf("category is in use, cannot delete: %s", name)
 		return fmt.Errorf("分类已被使用，无法删除")
 	}
 
 	// Delete all tags under this category
 	categoryTransactionType := fmt.Sprintf("%s:%s", name, transactionType)
 	if err := c.tagService.DeleteTagsByCategory(ws, ledgerId, categoryTransactionType); err != nil {
-		logrus.Errorf("delete category tags failed: %v", err)
+		logrus.Errorf("删除分类下标签失败: %v", err)
 		return err
 	}
 
@@ -102,26 +96,23 @@ func (c *categoryServiceImpl) DeleteCategory(ws *workspace.Workspace, ledgerId s
 	if err := ws.GetDb().
 		Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerId, name, transactionType).
 		Delete(&models.Category{}).Error; err != nil {
-		logrus.Errorf("delete category failed: %v", err)
+		logrus.Errorf("删除分类失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("delete category success, ledger id: %s, name: %s", ledgerId, name)
 	return nil
 }
 
 func (c *categoryServiceImpl) UpdateCategorySort(ws *workspace.Workspace, ledgerID string, name string, transactionType string, sortOrder int) error {
-	logrus.Infof("start to update category sort, name: %s, type: %s, sortOrder: %d", name, transactionType, sortOrder)
 
 	if err := ws.GetDb().
 		Model(&models.Category{}).
 		Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerID, name, transactionType).
 		Update("sort_order", sortOrder).Error; err != nil {
-		logrus.Errorf("update category sort failed: %v", err)
+		logrus.Errorf("更新分类排序失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("update category sort success, name: %s", name)
 	return nil
 }
 
@@ -134,13 +125,13 @@ func (c *categoryServiceImpl) CountRecordsByCategory(ws *workspace.Workspace, le
 }
 
 func (c *categoryServiceImpl) InitializeCategories(ws *workspace.Workspace, ledgerID string) (int, int, error) {
-	logrus.Infof("start to initialize categories for ledger: %s", ledgerID)
+	logrus.Infof("开始初始化账本 %s 的分类", ledgerID)
 
 	var count int64
 	if err := ws.GetDb().Model(&models.Category{}).
 		Where("ledger_id = ?", ledgerID).
 		Count(&count).Error; err != nil {
-		logrus.Errorf("check has categories failed: %v", err)
+		logrus.Errorf("检查分类是否存在失败: %v", err)
 		return 0, 0, err
 	}
 	if count > 0 {
@@ -150,10 +141,10 @@ func (c *categoryServiceImpl) InitializeCategories(ws *workspace.Workspace, ledg
 	// SeedData 执行 DDL（删表+重建），不能放在事务中
 	categoryCount, tagCount, err := workspace.SeedData(ws.GetDb(), ledgerID)
 	if err != nil {
-		logrus.Errorf("initialize categories failed: %v", err)
+		logrus.Errorf("初始化分类失败: %v", err)
 		return 0, 0, err
 	}
 
-	logrus.Infof("initialize categories success, ledger: %s, categories: %d, tags: %d", ledgerID, categoryCount, tagCount)
+	logrus.Infof("初始化分类成功, 账本: %s, 分类: %d, 标签: %d", ledgerID, categoryCount, tagCount)
 	return categoryCount, tagCount, nil
 }

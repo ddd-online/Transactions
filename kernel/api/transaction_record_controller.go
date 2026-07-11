@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 
 	"github.com/billadm/models/dto"
 )
@@ -17,8 +16,6 @@ func (h *Handlers) queryTransactions(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("parses request failed")
 	}
-	logrus.Debugf("query condition: %v", queryCondition)
-
 	return h.TrSvc.QueryTrsOnCondition(ws, queryCondition)
 }
 
@@ -30,8 +27,6 @@ func (h *Handlers) createTransaction(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("parses request failed")
 	}
-	logrus.Debugf("tr dto: %v", trDto)
-
 	if err := trDto.Validate(); err != nil {
 		return nil, err
 	}
@@ -47,8 +42,6 @@ func (h *Handlers) batchCreateTransactions(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("parses request failed")
 	}
-	logrus.Debugf("batch create %d transaction records", len(dtos))
-
 	for i, trDto := range dtos {
 		if err := trDto.Validate(); err != nil {
 			return nil, fmt.Errorf("record %d: %w", i+1, err)
@@ -81,8 +74,6 @@ func (h *Handlers) queryChartData(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("parses request failed")
 	}
-	logrus.Debugf("chart query request: %v", req)
-
 	return h.TrSvc.QueryTrsForChart(ws, req)
 }
 

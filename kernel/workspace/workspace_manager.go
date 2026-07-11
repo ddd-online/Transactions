@@ -30,7 +30,7 @@ func (wm *WsManager) OpenWorkspace(directory string) error {
 
 	ws, err := NewWorkspace(directory)
 	if err != nil {
-		logrus.Infof("打开工作空间失败 %v", err)
+		logrus.Errorf("打开工作空间失败 %v", err)
 		return err
 	}
 

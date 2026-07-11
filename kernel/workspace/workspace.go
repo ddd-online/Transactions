@@ -69,10 +69,10 @@ func (w *Workspace) Transaction(fn func(tx *Workspace) error) error {
 func (w *Workspace) Close() {
 	sqlDb, err := w.db.DB()
 	if err != nil {
-		logrus.Error(err)
+		logrus.Errorf("获取 sql.DB 失败: %v", err)
 	}
 	err = sqlDb.Close()
 	if err != nil {
-		logrus.Error(err)
+		logrus.Errorf("关闭数据库连接失败: %v", err)
 	}
 }

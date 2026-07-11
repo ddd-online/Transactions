@@ -405,30 +405,58 @@ func (t *getKeyEventsTool) Execute(ctx context.Context, args map[string]any) (st
 	return string(b), nil
 }
 
-// ---- 6. get_current_time ----
+// ---- 6. get_time ----
 
-type getCurrentTimeTool struct{}
+type getTimeTool struct{}
 
-func NewGetCurrentTimeTool() Tool {
-	return &getCurrentTimeTool{}
+func NewGetTimeTool() Tool {
+	return &getTimeTool{}
 }
 
-func (t *getCurrentTimeTool) Name() string        { return "get_current_time" }
-func (t *getCurrentTimeTool) Description() string {
-	return "获取当前日期和时间，返回 YYYY-MM-DD HH:MM:SS 格式的字符串。例如：{\"datetime\": \"2026-07-11 14:30:34\"}。无参数。"
+func (t *getTimeTool) Name() string { return "get_time" }
+func (t *getTimeTool) Description() string {
+	return "获取时间。不传参数时返回当前时间；传入 timestamp（Unix 时间戳，自动识别秒或毫秒）时解析为 YYYY-MM-DD HH:MM:SS 格式。"
 }
 
-func (t *getCurrentTimeTool) InputSchema() map[string]any {
+func (t *getTimeTool) InputSchema() map[string]any {
 	return map[string]any{
-		"type":       "object",
-		"properties": map[string]any{},
+		"type": "object",
+		"properties": map[string]any{
+			"timestamp": map[string]any{
+				"type":        "number",
+				"description": "Unix 时间戳（秒或毫秒），可选。不传则返回当前时间。",
+			},
+		},
 	}
 }
 
-func (t *getCurrentTimeTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	now := time.Now()
+func (t *getTimeTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	var datetime string
+
+	ts := getFloatArg(args, "timestamp")
+	if ts == 0 {
+		// 无参数：返回当前本地时间
+		datetime = time.Now().Format("2006-01-02 15:04:05")
+	} else {
+		// 传时间戳：自动识别秒或毫秒
+		var sec int64
+		if ts >= 1e12 {
+			sec = int64(ts) / 1000
+		} else {
+			sec = int64(ts)
+		}
+
+		// 校验时间戳合法性
+		if sec < 0 {
+			return "", fmt.Errorf("无效的时间戳: %v，时间戳不能为负数", ts)
+		}
+
+		t := time.Unix(sec, 0).Local()
+		datetime = t.Format("2006-01-02 15:04:05")
+	}
+
 	result := map[string]any{
-		"datetime": now.Format("2006-01-02 15:04:05"),
+		"datetime": datetime,
 	}
 	b, _ := json.Marshal(result)
 	return string(b), nil

@@ -25,7 +25,6 @@ var _ TagService = &tagServiceImpl{}
 type tagServiceImpl struct{}
 
 func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) ([]models.Tag, error) {
-	logrus.Infof("start to query tag, ledger: %s, category: %s", ledgerID, categoryTransactionType)
 	tags := make([]models.Tag, 0)
 	db := ws.GetDb().Where("ledger_id = ?", ledgerID)
 	if categoryTransactionType != constant.All {
@@ -35,12 +34,10 @@ func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, cat
 		return nil, err
 	}
 
-	logrus.Infof("query tag success, length: %d", len(tags))
 	return tags, nil
 }
 
 func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string) error {
-	logrus.Infof("start to create tag, ledger: %s, name: %s, category: %s", ledgerID, name, categoryTransactionType)
 
 	// Get max sort order for this category
 	var maxSortOrder int
@@ -48,7 +45,7 @@ func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, nam
 		Where("ledger_id = ? AND category_transaction_type = ?", ledgerID, categoryTransactionType).
 		Select("COALESCE(MAX(sort_order), 0)").
 		Scan(&maxSortOrder).Error; err != nil {
-		logrus.Errorf("get max sort order failed: %v", err)
+		logrus.Errorf("获取最大排序号失败: %v", err)
 		return err
 	}
 
@@ -60,11 +57,10 @@ func (t *tagServiceImpl) CreateTag(ws *workspace.Workspace, ledgerID string, nam
 	}
 
 	if err := ws.GetDb().Create(tag).Error; err != nil {
-		logrus.Errorf("create tag failed: %v", err)
+		logrus.Errorf("创建标签失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("create tag success, name: %s", name)
 	return nil
 }
 
@@ -75,11 +71,10 @@ func (t *tagServiceImpl) DeleteTagsByCategory(ws *workspace.Workspace, ledgerID 
 }
 
 func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, name string, categoryTransactionType string) error {
-	logrus.Infof("start to delete tag, ledger id: %s, name: %s", ledgerId, name)
 
 	// Delete TrTag entries that use this tag
 	if err := deleteTrTagByTag(ws, ledgerId, name); err != nil {
-		logrus.Errorf("delete tr tags failed: %v", err)
+		logrus.Errorf("删除关联 TrTag 失败: %v", err)
 		return err
 	}
 
@@ -87,26 +82,23 @@ func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, nam
 	if err := ws.GetDb().
 		Where("ledger_id = ? AND name = ? AND category_transaction_type = ?", ledgerId, name, categoryTransactionType).
 		Delete(&models.Tag{}).Error; err != nil {
-		logrus.Errorf("delete tag failed: %v", err)
+		logrus.Errorf("删除标签失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("delete tag success, ledger id: %s, name: %s", ledgerId, name)
 	return nil
 }
 
 func (t *tagServiceImpl) UpdateTagSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error {
-	logrus.Infof("start to update tag sort, name: %s, category: %s, sortOrder: %d", name, categoryTransactionType, sortOrder)
 
 	if err := ws.GetDb().
 		Model(&models.Tag{}).
 		Where("ledger_id = ? AND name = ? AND category_transaction_type = ?", ledgerID, name, categoryTransactionType).
 		Update("sort_order", sortOrder).Error; err != nil {
-		logrus.Errorf("update tag sort failed: %v", err)
+		logrus.Errorf("更新标签排序失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("update tag sort success, name: %s", name)
 	return nil
 }
 

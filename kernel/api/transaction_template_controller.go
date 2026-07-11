@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 
 	"github.com/billadm/models/dto"
 )
@@ -17,8 +16,6 @@ func (h *Handlers) createTemplate(c *gin.Context) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("parses request failed")
 	}
-	logrus.Debugf("template dto: %v", templateDto)
-
 	if err := templateDto.Validate(); err != nil {
 		return nil, err
 	}

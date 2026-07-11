@@ -27,7 +27,6 @@ var _ LedgerService = &ledgerServiceImpl{}
 type ledgerServiceImpl struct{}
 
 func (l *ledgerServiceImpl) CreateLedger(ws *workspace.Workspace, ledgerName string, description string) (string, error) {
-	logrus.Infof("start to create ledger, name: %s", ledgerName)
 	ledger := &models.Ledger{
 		ID:          util.GetUUID(),
 		Name:        ledgerName,
@@ -35,16 +34,14 @@ func (l *ledgerServiceImpl) CreateLedger(ws *workspace.Workspace, ledgerName str
 	}
 
 	if err := ws.GetDb().Create(ledger).Error; err != nil {
-		logrus.Errorf("create ledger failed, name: %s, err: %v", ledgerName, err)
+		logrus.Errorf("创建账本失败, name: %s, err: %v", ledgerName, err)
 		return "", err
 	}
 
-	logrus.Infof("create ledger success, name: %s", ledgerName)
 	return ledger.ID, nil
 }
 
 func (l *ledgerServiceImpl) ModifyLedger(ws *workspace.Workspace, ledgerId, ledgerName, description string) error {
-	logrus.Infof("start to modify ledger, id: %s, new name: %s, description: %s", ledgerId, ledgerName, description)
 
 	ledger := &models.Ledger{
 		ID:          ledgerId,
@@ -58,55 +55,47 @@ func (l *ledgerServiceImpl) ModifyLedger(ws *workspace.Workspace, ledgerId, ledg
 			"name":        ledger.Name,
 			"description": ledger.Description,
 		}).Error; err != nil {
-		logrus.Errorf("modify ledger failed, id: %s, err: %v", ledgerId, err)
+		logrus.Errorf("修改账本失败, id: %s, err: %v", ledgerId, err)
 		return err
 	}
 
-	logrus.Infof("modify ledger success")
 	return nil
 }
 
 func (l *ledgerServiceImpl) ListAllLedger(ws *workspace.Workspace) ([]models.Ledger, error) {
-	logrus.Infof("start to list all ledgers")
 
 	ledgers := make([]models.Ledger, 0)
 	if err := ws.GetDb().Find(&ledgers).Error; err != nil {
-		logrus.Errorf("list all ledgers failed, err: %v", err)
+		logrus.Errorf("列出账本失败, err: %v", err)
 		return nil, err
 	}
 
-	logrus.Infof("end to list all ledgers, len: %d", len(ledgers))
 	return ledgers, nil
 }
 
 func (l *ledgerServiceImpl) QueryLedgerById(ws *workspace.Workspace, ledgerId string) (*models.Ledger, error) {
-	logrus.Infof("start to query ledger by id, id: %s", ledgerId)
 
 	var ledger models.Ledger
 	if err := ws.GetDb().Where("id = ?", ledgerId).First(&ledger).Error; err != nil {
-		logrus.Errorf("query ledger by id failed, id: %s, err: %v", ledgerId, err)
+		logrus.Errorf("按 ID 查询账本失败, id: %s, err: %v", ledgerId, err)
 		return nil, err
 	}
 
-	logrus.Infof("end to query ledger by id, id: %s", ledgerId)
 	return &ledger, nil
 }
 
 func (l *ledgerServiceImpl) QueryLedgerByName(ws *workspace.Workspace, ledgerName string) (*models.Ledger, error) {
-	logrus.Infof("start to query ledger by name, name: %s", ledgerName)
 
 	var ledger models.Ledger
 	if err := ws.GetDb().Where("name = ?", ledgerName).First(&ledger).Error; err != nil {
-		logrus.Errorf("query ledger by name failed, name: %s, err: %v", ledgerName, err)
+		logrus.Errorf("按名称查询账本失败, name: %s, err: %v", ledgerName, err)
 		return nil, err
 	}
 
-	logrus.Infof("end to query ledger by name, name: %s, id: %s", ledgerName, ledger.ID)
 	return &ledger, nil
 }
 
 func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId string) error {
-	logrus.Infof("start to delete ledger by id, id: %s", ledgerId)
 
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
 		if err := deleteTrTagByLedgerId(tx, ledgerId); err != nil {
@@ -117,7 +106,7 @@ func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId s
 		if err != nil {
 			return fmt.Errorf("count trs: %w", err)
 		}
-		logrus.Infof("will delete trs by ledger id: %s, count: %d", ledgerId, cnt)
+		logrus.Infof("将删除账本 %s 下的 %d 条交易记录", ledgerId, cnt)
 
 		if err := deleteAllTrByLedgerId(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete trs: %w", err)
@@ -130,10 +119,9 @@ func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId s
 	})
 
 	if err != nil {
-		logrus.Errorf("delete ledger by id failed, id: %s, err: %v", ledgerId, err)
+		logrus.Errorf("删除账本失败, id: %s, err: %v", ledgerId, err)
 		return err
 	}
 
-	logrus.Infof("end to delete ledger by id, id: %s", ledgerId)
 	return nil
 }

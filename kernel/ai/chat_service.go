@@ -242,7 +242,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 
 				result, err := t.Execute(toolCtx, tc.Arguments)
 				if err != nil {
-					logrus.Errorf("tool %s execute error: %v", tc.Name, err)
+					logrus.Errorf("工具 %s 执行失败: %v", tc.Name, err)
 					result = fmt.Sprintf("工具执行出错: %v", err)
 				}
 
@@ -277,7 +277,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 
 func (s *ChatService) saveMessage(ws *workspace.Workspace, msg *models.AiMessage) {
 	if err := s.messageDao.Save(ws, msg); err != nil {
-		logrus.Errorf("save AI message: %v", err)
+		logrus.Errorf("保存 AI 消息失败: %v", err)
 	}
 }
 

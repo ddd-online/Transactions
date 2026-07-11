@@ -39,13 +39,13 @@ func defaultChartLines() []models.ChartLine {
 func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID string) error {
 	var count int64
 	if err := ws.GetDb().Model(&models.Chart{}).Where("ledger_id = ?", ledgerID).Count(&count).Error; err != nil {
-		logrus.Warnf("seedDefaultCharts: count failed: %v", err)
+		logrus.Warnf("统计图表数量失败: %v", err)
 		return err
 	}
 	if count > 0 {
 		return nil
 	}
-	logrus.Infof("seedDefaultCharts: ledger=%s has 0 charts, seeding presets", ledgerID)
+	logrus.Infof("账本 %s 无图表，创建预设图表", ledgerID)
 
 	monthlyLines := defaultChartLines()
 	yearlyLines := []models.ChartLine{
@@ -87,7 +87,7 @@ func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID s
 		}
 	}
 
-	logrus.Infof("seeded 3 default charts for ledger %s", ledgerID)
+	logrus.Infof("已为账本 %s 创建 3 个预设图表", ledgerID)
 	return nil
 }
 
@@ -122,7 +122,6 @@ func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartR
 		return nil, fmt.Errorf("create chart failed: %w", err)
 	}
 
-	logrus.Infof("create chart success, chart id: %s", chartID)
 
 	return t.toDto(chart)
 }
@@ -134,14 +133,13 @@ func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) e
 		return fmt.Errorf("delete chart failed: %w", err)
 	}
 
-	logrus.Infof("delete chart success, chart id: %s", chartId)
 	return nil
 }
 
 func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*dto.ChartDto, error) {
 	// Lazy seed default charts for new ledgers
 	if err := t.seedDefaultCharts(ws, ledgerId); err != nil {
-		logrus.Warnf("seed default charts failed for ledger %s: %v", ledgerId, err)
+		logrus.Warnf("为账本 %s 创建预设图表失败: %v", ledgerId, err)
 	}
 
 	charts := make([]*models.Chart, 0)
@@ -185,7 +183,6 @@ func (t *chartServiceImpl) Update(ws *workspace.Workspace, req *dto.UpdateChartR
 		return nil, fmt.Errorf("update chart failed: %w", err)
 	}
 
-	logrus.Infof("update chart success, chart id: %s", req.ChartID)
 
 	return t.toDto(chart)
 }

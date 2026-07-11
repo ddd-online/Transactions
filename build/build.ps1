@@ -85,12 +85,12 @@ try {
     }
 
     Set-Location $kernelDir
-    Write-Host "`n   设置 GOOS=windows, GOARCH=amd64, CGO_ENABLED=1" -ForegroundColor DarkGray
+    Write-Host "`n   设置 GOOS=windows, GOARCH=amd64, CGO_ENABLED=0" -ForegroundColor DarkGray
     $env:GOOS = "windows"
     $env:GOARCH = "amd64"
-    $env:CGO_ENABLED = "1"
+    $env:CGO_ENABLED = "0"
 
-    & go build -ldflags '-s -w -extldflags "-static"' -o $kernelExe
+    & go build -ldflags '-s -w' -o $kernelExe
     if ($LASTEXITCODE -ne 0) {
         Write-ErrorCustom "Go 编译失败，退出码: $LASTEXITCODE"
         exit $LASTEXITCODE

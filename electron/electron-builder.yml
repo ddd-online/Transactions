@@ -14,6 +14,9 @@ win:
   icon: "Transactions.ico"
   requestedExecutionLevel: "asInvoker"
   target: nsis
+  compression: "maximum"
+  electronLanguages:
+    - "zh-CN"
 nsis:
   artifactName: "${productName}-${arch}-v${version}.${ext}"
   oneClick: false

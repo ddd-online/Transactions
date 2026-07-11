@@ -179,8 +179,6 @@ func queryTrTagsByTrIds(ws *workspace.Workspace, trIds []string) (map[string][]*
 
 // CreateTr creates a transaction record and its tags in a single transaction.
 func (t *transactionRecordServiceImpl) CreateTr(ws *workspace.Workspace, trDto *dto.TransactionRecordDto) (string, error) {
-	logrus.Infof("start to create transaction record, ledger id: %s, description: %s", trDto.LedgerID, trDto.Description)
-
 	transactionID := util.GetUUID()
 
 	record := trDto.ToTransactionRecord()
@@ -207,17 +205,16 @@ func (t *transactionRecordServiceImpl) CreateTr(ws *workspace.Workspace, trDto *
 	})
 
 	if err != nil {
-		logrus.Errorf("create transaction record failed: %v", err)
+		logrus.Errorf("创建交易记录失败: %v", err)
 		return "", err
 	}
 
-	logrus.Infof("create transaction record success, ledger id: %s, description: %s", trDto.LedgerID, trDto.Description)
 	return transactionID, nil
 }
 
 // BatchCreateTr creates multiple transaction records in a single transaction.
 func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dtos []*dto.TransactionRecordDto) (int, error) {
-	logrus.Infof("start to batch create %d transaction records", len(dtos))
+	logrus.Infof("开始批量创建 %d 条交易记录", len(dtos))
 
 	if len(dtos) == 0 {
 		return 0, nil
@@ -233,7 +230,7 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 			record.TransactionID = transactionID
 
 			if err := createTrRecord(tx, record); err != nil {
-				logrus.Errorf("batch create: create transaction record failed: %v", err)
+				logrus.Errorf("批量创建: 创建交易记录失败: %v", err)
 				return fmt.Errorf("create transaction record: %w", err)
 			}
 
@@ -247,7 +244,7 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 				trTags = append(trTags, trTag)
 			}
 			if err := createTrTags(tx, trTags); err != nil {
-				logrus.Errorf("batch create: create tr tags failed: %v", err)
+				logrus.Errorf("批量创建: 创建标签关联失败: %v", err)
 				return fmt.Errorf("create tr tags: %w", err)
 			}
 
@@ -257,11 +254,11 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 	})
 
 	if err != nil {
-		logrus.Errorf("batch create transaction records failed: %v", err)
+		logrus.Errorf("批量创建交易记录失败: %v", err)
 		return successCount, err
 	}
 
-	logrus.Infof("batch create transaction records success, count: %d", successCount)
+	logrus.Infof("批量创建交易记录成功, 数量: %d", successCount)
 	return successCount, nil
 }
 
@@ -286,8 +283,6 @@ func convertSortFields(dtoSortFields []dto.QueryConditionSortField) []operator.S
 }
 
 func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspace, condition *dto.TrQueryCondition) (*dto.TrQueryResult, error) {
-	logrus.Infof("start to query trs, condition: %#v", condition)
-
 	trs, err := queryTrsOnConditionRaw(ws, condition)
 	if err != nil {
 		return nil, err
@@ -322,13 +317,10 @@ func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspa
 		Page(condition.Offset, condition.Limit).
 		Summary()
 
-	logrus.Infof("query trs by page success, len: %d", len(summary.Items))
 	return summary, nil
 }
 
 func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace, req *dto.ChartQueryRequest) (*dto.ChartQueryResponse, error) {
-	logrus.Infof("start to query trs for chart, granularity: %s, lines: %d", req.Granularity, len(req.Lines))
-
 	ttSet := make(map[string]bool)
 	for _, line := range req.Lines {
 		ttSet[line.TransactionType] = true
@@ -392,13 +384,10 @@ func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace,
 		})
 	}
 
-	logrus.Infof("query trs for chart success, lines: %d", len(response.Lines))
 	return response, nil
 }
 
 func (t *transactionRecordServiceImpl) DeleteTrById(ws *workspace.Workspace, trId string) error {
-	logrus.Infof("start to delete transaction record, tr id: %s", trId)
-
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
 		if err := deleteTrTagByTrId(tx, trId); err != nil {
 			return fmt.Errorf("delete tr tags: %w", err)
@@ -410,17 +399,14 @@ func (t *transactionRecordServiceImpl) DeleteTrById(ws *workspace.Workspace, trI
 	})
 
 	if err != nil {
-		logrus.Errorf("delete transaction record failed: %v", err)
+		logrus.Errorf("删除交易记录失败: %v", err)
 		return err
 	}
 
-	logrus.Infof("delete transaction record success, tr id: %s", trId)
 	return nil
 }
 
 func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, trId string, date string) error {
-	logrus.Infof("link transaction %s to key event date %s", trId, date)
-
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
 		tr, err := queryTrById(tx, trId)
 		if err != nil {
@@ -447,23 +433,20 @@ func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, t
 			if upsertErr != nil {
 				return fmt.Errorf("auto-create key event: %w", upsertErr)
 			}
-			logrus.Infof("auto-created empty key event for date %s", date)
+			logrus.Infof("自动创建空关键事件, 日期: %s", date)
 		}
 		return nil
 	})
 
 	if err != nil {
-		logrus.Errorf("link transaction %s to key event date %s failed: %v", trId, date, err)
+		logrus.Errorf("关联交易 %s 到关键事件 %s 失败: %v", trId, date, err)
 		return err
 	}
 
-	logrus.Infof("linked transaction %s to key event date %s", trId, date)
 	return nil
 }
 
 func (t *transactionRecordServiceImpl) UnlinkFromKeyEvent(ws *workspace.Workspace, trId string) error {
-	logrus.Infof("unlink transaction %s from key event", trId)
-
 	if err := updateKeyEventDate(ws, trId, ""); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("transaction not found: %s", trId)
@@ -471,13 +454,10 @@ func (t *transactionRecordServiceImpl) UnlinkFromKeyEvent(ws *workspace.Workspac
 		return fmt.Errorf("unlink key event date: %w", err)
 	}
 
-	logrus.Infof("unlinked transaction %s from key event", trId)
 	return nil
 }
 
 func (t *transactionRecordServiceImpl) QueryLinkedByDate(ws *workspace.Workspace, date string) ([]*dto.TransactionRecordDto, error) {
-	logrus.Infof("query linked transactions for date %s", date)
-
 	trs, err := queryByKeyEventDate(ws, date)
 	if err != nil {
 		return nil, fmt.Errorf("query by key event date: %w", err)
@@ -504,6 +484,5 @@ func (t *transactionRecordServiceImpl) QueryLinkedByDate(ws *workspace.Workspace
 		dtos = append(dtos, trDto)
 	}
 
-	logrus.Infof("query linked transactions for date %s, count: %d", date, len(dtos))
 	return dtos, nil
 }

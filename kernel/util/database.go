@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/billadm/models"
@@ -34,6 +34,6 @@ func NewDbInstance(dbPath string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("数据库自动迁移失败: %w", err)
 	}
 
-	logrus.Warnf("连接数据库成功, db path: %s", dbPath)
+	logrus.Infof("连接数据库成功, db path: %s", dbPath)
 	return db, nil
 }

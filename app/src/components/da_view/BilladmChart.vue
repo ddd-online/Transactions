@@ -1,12 +1,18 @@
 <template>
-  <div ref="containerRef" class="billadm-chart"></div>
+  <v-chart
+    v-if="option"
+    :option="option"
+    :autoresize="true"
+    class="billadm-chart"
+  />
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
-import { Chart } from '@antv/g2'
+import { computed } from 'vue'
 import type { TimeSeriesData, ChartLine } from '@/backend/chart'
 import { TransactionTypeToColor } from '@/backend/constant'
+
+import type { EChartsOption } from 'echarts'
 
 interface Props {
   lines: ChartLine[]
@@ -18,120 +24,132 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const containerRef = ref<HTMLDivElement | null>(null)
-let chart: Chart | null = null
-
-// Get theme colors from design system CSS custom properties
 const getThemeColors = () => {
   const styles = getComputedStyle(document.documentElement)
   return {
     labelFill: styles.getPropertyValue('--billadm-color-text-major').trim() || '#1A1A18',
     titleFill: styles.getPropertyValue('--billadm-color-text-major').trim() || '#1A1A18',
+    bgColor: styles.getPropertyValue('--billadm-color-major-background').trim() || '#FFFFFF',
   }
 }
 
-const initChart = () => {
-  if (!containerRef.value || !props.data.length) return
+const option = computed<EChartsOption | null>(() => {
+  if (!props.data.length) return null
 
-  // 销毁旧图表
-  if (chart) {
-    chart.destroy()
-    chart = null
-  }
-
-  // 获取时间轴标题
-  const xAxisTitle = props.xField === 'time' ? (props.title.includes('月度') ? '月份' : '年份') : props.xField
-
-  // 获取主题颜色
   const themeColors = getThemeColors()
 
-  chart = new Chart({
-    container: containerRef.value,
-    autoFit: true,
-    data: props.data,
+  // 提取唯一的标签和构建series
+  const labels = [...new Set(props.data.map(d => d.label))]
+  const times = [...new Set(props.data.map(d => d.time))].sort()
+
+  // 构建 label → type 映射
+  const labelTypeMap = new Map<string, string>()
+  props.data.forEach(d => {
+    if (!labelTypeMap.has(d.label)) {
+      labelTypeMap.set(d.label, d.type)
+    }
   })
 
-  // 如果存在相同交易类型则让图表随机使用颜色以区分显示
-  let tts = props.lines.map(l => l.transactionType);
-  if (new Set(tts).size == tts.length) {
-    chart.scale('color', {
-      domain: props.lines.map(l => l.label),
-      range: props.lines.map(l => TransactionTypeToColor.get(l.transactionType)!),
+  // 检查是否所有曲线类型都不同（用于颜色映射）
+  const tts = props.lines.map(l => l.transactionType)
+  const allTypesUnique = new Set(tts).size === tts.length
+
+  const xAxisTitle = props.xField === 'time'
+    ? (props.title.includes('月度') ? '月份' : '年份')
+    : props.xField
+
+  const series = labels.map(label => {
+    const seriesData = times.map(t => {
+      const point = props.data.find(d => d.time === t && d.label === label)
+      return point ? point.amount : null
     })
+
+    const lineType = labelTypeMap.get(label) || ''
+    const color = allTypesUnique
+      ? TransactionTypeToColor.get(lineType) || undefined
+      : undefined
+
+    return {
+      name: label,
+      type: 'line' as const,
+      data: seriesData,
+      smooth: false,
+      lineStyle: { width: 2 },
+      symbol: 'circle',
+      symbolSize: 6,
+      itemStyle: {
+        color,
+        borderColor: themeColors.bgColor,
+        borderWidth: 1,
+      },
+    }
+  })
+
+  return {
+    title: {
+      // title is handled externally by the parent component
+      show: false,
+    },
+    tooltip: {
+      trigger: 'axis',
+      valueFormatter: (value: unknown) => {
+        if (typeof value === 'number') {
+          return `¥${value.toFixed(2)}`
+        }
+        return String(value ?? '')
+      },
+    },
+    legend: {
+      data: labels,
+      bottom: 0,
+      textStyle: {
+        color: themeColors.labelFill,
+        fontSize: 13,
+      },
+    },
+    grid: {
+      left: 60,
+      right: 30,
+      top: 20,
+      bottom: 40,
+    },
+    xAxis: {
+      type: 'category',
+      data: times,
+      name: xAxisTitle,
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: {
+        color: themeColors.titleFill,
+        fontSize: 14,
+      },
+      axisLabel: {
+        color: themeColors.labelFill,
+        fontSize: 12,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: '金额（元）',
+      nameTextStyle: {
+        color: themeColors.titleFill,
+        fontSize: 14,
+      },
+      axisLabel: {
+        color: themeColors.labelFill,
+        fontSize: 12,
+        formatter: (value: number) => `¥${value}`,
+      },
+      min: 0,
+    },
+    series,
   }
-
-  // 设置图例显示label名称
-  chart.scale('label', {
-    domain: props.data.map(d => d.label),
-    range: props.data.map(d => TransactionTypeToColor.get(d.type)!),
-  })
-
-  chart.scale('y', {
-    domainMin: 0,
-    nice: true
-  })
-
-  chart.axis('x', {
-    title: xAxisTitle,
-    titleFill: themeColors.titleFill,
-    labelFontSize: 15,
-    titleFontSize: 16
-  })
-  chart.axis('y', {
-    title: '金额（元）',
-    titleFill: themeColors.titleFill,
-    labelFontSize: 15,
-    titleFontSize: 16
-  })
-
-  // 图例配置
-  chart.legend('color', {
-    itemLabelFill: themeColors.labelFill,
-  })
-
-  chart
-    .line()
-    .encode('x', props.xField)
-    .encode('y', props.yField)
-    .encode('color', 'label')
-    .style('lineWidth', 2)
-
-  chart
-    .point()
-    .encode('x', props.xField)
-    .encode('y', props.yField)
-    .encode('color', 'label')
-    .style('size', 4)
-    .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--billadm-color-major-background').trim() || '#FFFFFF')
-    .style('lineWidth', 1)
-    .tooltip(false)
-
-  chart.render()
-}
-
-onMounted(async () => {
-  await nextTick()
-  initChart()
 })
-
-onUnmounted(() => {
-  if (chart) {
-    chart.destroy()
-    chart = null
-  }
-})
-
-watch(() => props.data, () => {
-  initChart()
-}, { deep: true })
 </script>
 
 <style scoped>
 .billadm-chart {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 </style>

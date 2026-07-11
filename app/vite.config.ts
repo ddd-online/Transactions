@@ -35,12 +35,5 @@ export default defineConfig({
     },
     build: {
         modulePreload: false,
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    'vendor-heic': ['heic-to'],
-                },
-            },
-        },
     },
 })

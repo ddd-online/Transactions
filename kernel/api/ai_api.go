@@ -50,7 +50,7 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	for event := range eventCh {
 		data, _ := json.Marshal(event)
 		if _, err := io.WriteString(c.Writer, "data: "+string(data)+"\n\n"); err != nil {
-			logrus.Warnf("SSE write error: %v", err)
+			logrus.Warnf("SSE 写入失败: %v", err)
 			return
 		}
 		c.Writer.Flush()
