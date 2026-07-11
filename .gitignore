@@ -6,3 +6,4 @@ kernel/test
 build/target
 .worktrees/
 .codegraph/
+.claude/settings.local.json
