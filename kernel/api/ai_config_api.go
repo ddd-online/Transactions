@@ -58,8 +58,16 @@ func updateAiConfig(c *gin.Context) {
 	config := &models.AiConfig{
 		BaseURL:  req.BaseURL,
 		Endpoint: req.Endpoint,
-		APIKey:   req.APIKey,
 		Model:    req.Model,
+	}
+	if req.APIKey != "" {
+		config.APIKey = req.APIKey
+	} else {
+		// Preserve existing key when not provided
+		existing, err := aiConfigDao.Get(ws(c))
+		if err == nil {
+			config.APIKey = existing.APIKey
+		}
 	}
 
 	if err := aiConfigDao.Save(ws(c), config); err != nil {

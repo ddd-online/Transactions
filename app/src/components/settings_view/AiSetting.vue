@@ -38,13 +38,14 @@
       <div class="setting-card">
         <div class="setting-info">
           <span class="setting-title">API Key</span>
-          <span class="setting-desc">{{ form.has_key ? '已设置 (不会显示已保存的密钥)' : 'API 访问密钥' }}</span>
+          <span class="setting-desc">{{ form.has_key ? '已设置' : 'API 访问密钥' }}</span>
         </div>
         <div class="setting-action">
           <a-input-password
             v-model:value="form.api_key"
-            placeholder="请输入 API Key"
+            :placeholder="keyPlaceholder ? '••••••••' : '请输入 API Key'"
             style="width: 360px"
+            @focus="onKeyFieldFocus"
           />
         </div>
       </div>
@@ -106,6 +107,14 @@ const form = reactive<FormState>({
 
 const testing = ref(false)
 const saving = ref(false)
+const keyPlaceholder = ref(false)
+
+function onKeyFieldFocus() {
+  if (keyPlaceholder.value) {
+    form.api_key = ''
+    keyPlaceholder.value = false
+  }
+}
 
 function onEndpointChange(value: unknown) {
   switch (value) {
@@ -127,6 +136,10 @@ async function loadConfig() {
     form.endpoint = config.endpoint || '/v1/messages'
     form.model = config.model || ''
     form.has_key = config.has_key
+    if (config.has_key) {
+      form.api_key = '••••••••'
+      keyPlaceholder.value = true
+    }
     onEndpointChange(form.endpoint)
   } catch {
     // 加载失败时保持默认值
@@ -153,13 +166,21 @@ async function handleTestConnection() {
 async function handleSave() {
   saving.value = true
   try {
+    const keyToSave = keyPlaceholder.value ? '' : form.api_key
     await aiApi.updateConfig({
       base_url: form.base_url,
       endpoint: form.endpoint,
-      api_key: form.api_key,
+      api_key: keyToSave,
       model: form.model,
     })
-    form.has_key = form.api_key ? true : form.has_key
+    if (keyToSave) {
+      form.has_key = true
+      keyPlaceholder.value = false
+    } else if (!keyPlaceholder.value) {
+      // 用户主动清空了密钥
+      form.has_key = false
+    }
+    // keyPlaceholder 为 true 时 has_key 不变
     NotificationUtil.success('AI 配置已保存')
   } catch (e: any) {
     NotificationUtil.error('保存失败', e.message)
