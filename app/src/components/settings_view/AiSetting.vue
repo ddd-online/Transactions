@@ -3,6 +3,22 @@
     <BilladmPageHeader title="AI 助手" />
 
     <div class="setting-list">
+      <!-- 供应商 -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-title">供应商</span>
+          <span class="setting-desc">选择 AI 服务供应商</span>
+        </div>
+        <div class="setting-action">
+          <a-select
+            v-model:value="form.provider"
+            :options="providerOptions"
+            style="width: 360px"
+            @change="onProviderChange"
+          />
+        </div>
+      </div>
+
       <!-- 端点 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -57,7 +73,19 @@
           <span class="setting-desc">使用的模型名称</span>
         </div>
         <div class="setting-action">
+          <!-- DeepSeek: 下拉框 -->
+          <a-select
+            v-if="form.provider === 'deepseek'"
+            v-model:value="form.model"
+            :loading="modelsLoading"
+            :options="modelOptions"
+            :placeholder="modelsError ? '加载失败，请重试' : '请选择模型'"
+            style="width: 360px"
+            :not-found-content="modelsError ? modelsError : undefined"
+          />
+          <!-- 自定义: 文本输入框 -->
           <a-input
+            v-else
             v-model:value="form.model"
             placeholder="例如: claude-sonnet-4-20250514"
             style="width: 360px"
@@ -84,6 +112,36 @@
         </div>
       </div>
 
+      <!-- 余额 (仅 DeepSeek) -->
+      <div v-if="form.provider === 'deepseek'" class="setting-card setting-card-vertical">
+        <div class="setting-info">
+          <span class="setting-title">账户余额</span>
+          <span class="setting-desc">DeepSeek API 账户余额信息</span>
+        </div>
+        <div class="setting-action setting-action-full">
+          <div v-if="!form.has_key" class="balance-hint">请先设置 API Key</div>
+          <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
+          <div v-else-if="balanceError" class="balance-hint balance-error">
+            {{ balanceError }}
+            <a-button type="link" size="small" @click="fetchBalance">重试</a-button>
+          </div>
+          <div v-else-if="balance" class="balance-info">
+            <div class="balance-status">
+              <span class="balance-dot" :class="balance.is_available ? 'dot-available' : 'dot-unavailable'" />
+              <span>{{ balance.is_available ? '可用' : '不可用' }}</span>
+            </div>
+            <div v-for="info in balance.balance_infos" :key="info.currency" class="balance-row">
+              <span class="balance-currency">{{ info.currency }}</span>
+              <span class="balance-value">
+                总额 {{ info.total_balance }}
+                <span class="balance-sub">赠金 {{ info.granted_balance }}</span>
+                <span class="balance-sub">充值 {{ info.topped_up_balance }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -102,8 +160,13 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue'
 import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
-import { aiApi, type AiConfig } from '@/backend/api/ai'
+import { aiApi, type AiConfig, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
 import NotificationUtil from '@/backend/notification'
+
+const providerOptions = [
+  { label: 'DeepSeek', value: 'deepseek' },
+  { label: '自定义', value: '' },
+]
 
 const endpointOptions = [
   { label: 'Anthropic (/v1/messages)', value: '/v1/messages' },
@@ -117,6 +180,7 @@ interface FormState extends AiConfig {
 }
 
 const form = reactive<FormState>({
+  provider: '',
   base_url: '',
   endpoint: '/v1/messages',
   api_key: '',
@@ -128,6 +192,21 @@ const form = reactive<FormState>({
 const testing = ref(false)
 const saving = ref(false)
 const keyPlaceholder = ref(false)
+
+// 模型下拉框状态
+const modelsLoading = ref(false)
+const modelsError = ref('')
+const modelOptions = ref<{ label: string; value: string }[]>([])
+
+// 余额状态
+const balanceLoading = ref(false)
+const balanceError = ref('')
+const balance = ref<BalanceResponse | null>(null)
+
+// 获取当前有效的 API Key（用户输入或使用存储的）
+function getEffectiveApiKey(): string {
+  return keyPlaceholder.value ? '' : form.api_key
+}
 
 function onKeyFieldFocus() {
   if (keyPlaceholder.value) {
@@ -149,9 +228,63 @@ function onEndpointChange(value: unknown) {
   }
 }
 
+function onProviderChange(value: unknown) {
+  const provider = (value as string) || ''
+  switch (provider) {
+    case 'deepseek':
+      baseUrlPlaceholder.value = 'https://api.deepseek.com/anthropic'
+      form.endpoint = '/v1/messages'
+      break
+    default:
+      baseUrlPlaceholder.value = ''
+      break
+  }
+  // 切换后触发查询
+  fetchDeepSeekResources()
+}
+
+async function fetchModels() {
+  modelsLoading.value = true
+  modelsError.value = ''
+  try {
+    const res = await aiApi.fetchProvider('models', getEffectiveApiKey(), form.provider) as ModelsResponse
+    modelOptions.value = res.models.map(m => ({ label: m.id, value: m.id }))
+  } catch (e: any) {
+    modelsError.value = e.message || '加载失败'
+  } finally {
+    modelsLoading.value = false
+  }
+}
+
+async function fetchBalance() {
+  balanceLoading.value = true
+  balanceError.value = ''
+  try {
+    balance.value = await aiApi.fetchProvider('balance', getEffectiveApiKey(), form.provider) as BalanceResponse
+  } catch (e: any) {
+    balance.value = null
+    balanceError.value = e.message || '加载失败'
+  } finally {
+    balanceLoading.value = false
+  }
+}
+
+function fetchDeepSeekResources() {
+  if (form.provider !== 'deepseek' || !form.has_key) {
+    balance.value = null
+    balanceError.value = ''
+    modelOptions.value = []
+    modelsError.value = ''
+    return
+  }
+  fetchModels()
+  fetchBalance()
+}
+
 async function loadConfig() {
   try {
     const config = await aiApi.getConfig()
+    form.provider = config.provider || ''
     form.base_url = config.base_url || ''
     form.endpoint = config.endpoint || '/v1/messages'
     form.model = config.model || ''
@@ -162,6 +295,7 @@ async function loadConfig() {
       keyPlaceholder.value = true
     }
     onEndpointChange(form.endpoint)
+    onProviderChange(form.provider)
   } catch {
     // 加载失败时保持默认值
   }
@@ -171,6 +305,7 @@ async function handleTestConnection() {
   testing.value = true
   try {
     await aiApi.testConnection({
+      provider: form.provider,
       base_url: form.base_url,
       endpoint: form.endpoint,
       api_key: keyPlaceholder.value ? '' : form.api_key,
@@ -190,6 +325,7 @@ async function handleSave() {
   try {
     const keyToSave = keyPlaceholder.value ? '' : form.api_key
     await aiApi.updateConfig({
+      provider: form.provider,
       base_url: form.base_url,
       endpoint: form.endpoint,
       api_key: keyToSave,
@@ -200,11 +336,11 @@ async function handleSave() {
       form.has_key = true
       keyPlaceholder.value = false
     } else if (!keyPlaceholder.value) {
-      // 用户主动清空了密钥
       form.has_key = false
     }
-    // keyPlaceholder 为 true 时 has_key 不变
     NotificationUtil.success('AI 配置已保存')
+    // 保存后重新查询 DeepSeek 资源（可能有新的 API Key）
+    fetchDeepSeekResources()
   } catch (e: any) {
     NotificationUtil.error('保存失败', e.message)
   } finally {
@@ -289,5 +425,64 @@ onMounted(() => {
   margin-left: 0;
   margin-top: var(--billadm-space-md);
   width: 100%;
+}
+
+.balance-hint {
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+}
+
+.balance-error {
+  color: var(--billadm-color-error, #D9705A);
+}
+
+.balance-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-xs);
+}
+
+.balance-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-major);
+}
+
+.balance-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-available {
+  background-color: var(--billadm-color-success, #3D8C5E);
+}
+
+.dot-unavailable {
+  background-color: var(--billadm-color-error, #D9705A);
+}
+
+.balance-row {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+}
+
+.balance-currency {
+  font-weight: 600;
+  min-width: 36px;
+}
+
+.balance-value {
+  display: flex;
+  gap: var(--billadm-space-sm);
+}
+
+.balance-sub {
+  color: var(--billadm-color-text-tertiary, #9B9B92);
 }
 </style>
