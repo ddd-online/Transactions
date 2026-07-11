@@ -378,9 +378,12 @@ async function sendMessage() {
 }
 
 function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage | null }, thinkingMsgRef: { current: ChatMessage | null }) {
-  const ensureThinking = (): ChatMessage => {
-    if (!thinkingMsgRef.current) {
-      const msg: ChatMessage = {
+  const getOrCreateThinking = (): ChatMessage => {
+    let msg = thinkingMsgRef.current
+      ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
+      : undefined
+    if (!msg) {
+      msg = {
         id: nextMsgId(),
         role: 'thinking',
         content: '',
@@ -390,15 +393,17 @@ function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage
         thinkingCollapsed: false,
       }
       messages.value.push(msg)
-      // Must read back from reactive array — the raw object is not reactive
-      thinkingMsgRef.current = messages.value[messages.value.length - 1]!
+      thinkingMsgRef.current = msg
     }
-    return thinkingMsgRef.current
+    return msg
   }
 
   const ensureAssistant = (): ChatMessage => {
-    if (!assistantMsgRef.current) {
-      const msg: ChatMessage = {
+    let msg = assistantMsgRef.current
+      ? messages.value.find(m => m.id === assistantMsgRef.current!.id)
+      : undefined
+    if (!msg) {
+      msg = {
         id: nextMsgId(),
         role: 'assistant',
         content: '',
@@ -406,19 +411,18 @@ function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage
         streaming: true,
       }
       messages.value.push(msg)
-      // Must read back from reactive array — the raw object is not reactive
-      assistantMsgRef.current = messages.value[messages.value.length - 1]!
+      assistantMsgRef.current = msg
     }
-    return assistantMsgRef.current
+    return msg
   }
 
   switch (event.type) {
     case 'thinking_start':
-      ensureThinking()
+      getOrCreateThinking()
       break
 
     case 'thinking_delta': {
-      const msg = ensureThinking()
+      const msg = getOrCreateThinking()
       msg.thinkingActive = true
       msg.content += event.delta || ''
       msg.thinkingCollapsed = false
@@ -426,13 +430,18 @@ function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage
       break
     }
 
-    case 'thinking_done':
-      if (thinkingMsgRef.current) {
-        thinkingMsgRef.current.thinkingActive = false
-        thinkingMsgRef.current.thinkingCollapsed = true
-        thinkingMsgRef.current.streaming = false
+    case 'thinking_done': {
+      // Look up from reactive array so mutations trigger re-render
+      const msg = thinkingMsgRef.current
+        ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
+        : undefined
+      if (msg) {
+        msg.thinkingActive = false
+        msg.thinkingCollapsed = true
+        msg.streaming = false
       }
       break
+    }
 
     case 'text_delta': {
       const msg = ensureAssistant()
