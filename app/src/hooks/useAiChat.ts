@@ -102,16 +102,19 @@ export function useAiChat() {
     const assistantMsgRef: { current: ChatMessage | null } = { current: null }
     const thinkingMsgRef: { current: ChatMessage | null } = { current: null }
 
-    // Insert a message right before the assistant message so that
+    // Insert a message right before the current turn's assistant so that
     // tool cards and thinking blocks always appear above it.
-    // If no assistant message exists yet, append to the end.
+    // If the current turn's assistant hasn't been created yet, append to the end
+    // (after the user message that was just pushed).
     const insertBeforeAssistant = (msg: ChatMessage) => {
-      const asstIdx = messages.value.findIndex(m => m.role === 'assistant')
-      if (asstIdx >= 0) {
-        messages.value.splice(asstIdx, 0, msg)
-      } else {
-        messages.value.push(msg)
+      if (assistantMsgRef.current) {
+        const asstIdx = messages.value.findIndex(m => m.id === assistantMsgRef.current!.id)
+        if (asstIdx >= 0) {
+          messages.value.splice(asstIdx, 0, msg)
+          return
+        }
       }
+      messages.value.push(msg)
     }
 
     const getOrCreateThinking = (): ChatMessage => {

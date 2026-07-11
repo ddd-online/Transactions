@@ -88,6 +88,14 @@
         <div ref="scrollAnchorRef"></div>
       </div>
 
+      <!-- Streaming Status Bar -->
+      <Transition name="streaming-bar-fade">
+        <div v-if="streaming" class="chat-streaming-bar">
+          <span class="chat-streaming-ring"></span>
+          <span class="chat-streaming-text">AI 正在回复...</span>
+        </div>
+      </Transition>
+
       <!-- Input Area -->
       <div class="chat-input-area">
         <div class="chat-divider"></div>
@@ -576,6 +584,37 @@ onUnmounted(() => {
   white-space: pre;
 }
 
+/* Streaming Status Bar */
+.chat-streaming-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  height: 28px;
+  padding: 0 var(--billadm-space-xl);
+  flex-shrink: 0;
+}
+
+.chat-streaming-ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--billadm-color-divider);
+  border-top-color: var(--billadm-color-accent);
+  animation: thinking-spin 0.8s linear infinite;
+}
+
+.chat-streaming-text {
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+}
+
+.streaming-bar-fade-enter-active { transition: opacity 200ms ease; }
+.streaming-bar-fade-leave-active { transition: opacity 200ms ease; }
+.streaming-bar-fade-enter-from,
+.streaming-bar-fade-leave-to { opacity: 0; }
+
 /* Input Area */
 .chat-input-area { padding: 0 var(--billadm-space-xl) var(--billadm-space-md); flex-shrink: 0; }
 .chat-divider { height: 1px; background: var(--billadm-color-divider); margin-bottom: var(--billadm-space-md); }
@@ -648,6 +687,9 @@ onUnmounted(() => {
   .chat-message { animation: none; }
   .msg-assistant { animation: none; }
   .msg-tool-indicator { animation: none; }
+  .chat-streaming-ring { animation: none; border-top-color: var(--billadm-color-accent); }
+  .streaming-bar-fade-enter-active,
+  .streaming-bar-fade-leave-active { transition: opacity 0ms; }
 }
 
 /* Thinking Block */
