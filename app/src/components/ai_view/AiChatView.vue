@@ -991,4 +991,100 @@ onUnmounted(() => {
   margin-top: var(--billadm-space-xs);
   margin-left: var(--billadm-space-sm);
 }
+
+/* ========================================
+   Message Entrance Animations
+   ======================================== */
+
+@keyframes msg-user-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+@keyframes msg-assistant-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes msg-assistant-border-glow {
+  0% {
+    border-left-color: var(--billadm-color-primary-light);
+    box-shadow: inset 3px 0 8px rgba(74, 140, 111, 0.15);
+  }
+  100% {
+    border-left-color: var(--billadm-color-primary);
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+
+@keyframes msg-tool-enter {
+  0% {
+    opacity: 0;
+    border-left-color: transparent;
+  }
+  100% {
+    opacity: 1;
+    border-left-color: var(--billadm-color-accent);
+  }
+}
+
+@keyframes msg-tool-dot-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.chat-message {
+  animation-duration: 200ms;
+  animation-fill-mode: both;
+  animation-timing-function: ease-out;
+}
+
+.chat-message--user {
+  animation-name: msg-user-enter;
+  animation-duration: 150ms;
+}
+
+.chat-message--assistant {
+  animation-name: msg-assistant-enter;
+  animation-duration: 300ms;
+}
+
+.chat-message--assistant .msg-assistant {
+  animation: msg-assistant-border-glow 400ms ease-out both;
+}
+
+.chat-message--tool {
+  animation-name: msg-tool-enter;
+  animation-duration: 200ms;
+}
+
+.chat-message--tool .msg-tool-indicator {
+  animation: msg-tool-dot-pop 300ms ease-out both;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .chat-message {
+    animation: none;
+  }
+  .msg-assistant {
+    animation: none;
+  }
+  .msg-tool-indicator {
+    animation: none;
+  }
+}
 </style>
