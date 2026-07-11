@@ -38,8 +38,6 @@
       </a-dropdown>
     </div>
 
-    <a-divider style="margin: 0" />
-
     <!-- 中间：导航 -->
     <nav class="sidebar-nav">
       <button
@@ -57,12 +55,10 @@
 
     <div class="sidebar-spacer"></div>
 
-    <a-divider style="margin: 0" />
-
     <!-- 底部：设置 -->
     <div class="sidebar-bottom">
       <button
-        class="nav-btn"
+        class="nav-btn nav-btn-secondary"
         :class="{ active: route.path === '/settings_view' }"
         @click="navigate('settings_view')"
         aria-label="设置"
@@ -168,11 +164,10 @@ const handleDeleteLedger = (id: string, name: string) => {
   width: 100%;
 }
 
-/* 账本切换区域 */
+/* 账本切换区域 — 顶部锚点，充裕呼吸空间 */
 .sidebar-ledger {
-  padding: var(--billadm-space-md);
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
+  padding: var(--billadm-space-lg);
+  padding-bottom: var(--billadm-space-lg);
 }
 
 .ledger-btn {
@@ -269,12 +264,13 @@ const handleDeleteLedger = (id: string, name: string) => {
   opacity: 1;
 }
 
-/* 导航 */
+/* 导航 — 紧凑核心区域，底部留呼吸空间 */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--billadm-space-sm);
+  gap: var(--billadm-space-2xs);
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  padding-bottom: var(--billadm-space-md);
 }
 
 .sidebar-spacer {
@@ -286,7 +282,8 @@ const handleDeleteLedger = (id: string, name: string) => {
   flex-direction: column;
   justify-content: center;
   height: var(--billadm-size-footer-height);
-  padding: 0 var(--billadm-space-sm);
+  padding: 0 var(--billadm-space-md);
+  border-top: 1px solid var(--billadm-color-divider);
 }
 
 /* 导航按钮 */
@@ -305,6 +302,7 @@ const handleDeleteLedger = (id: string, name: string) => {
   color: var(--billadm-color-text-secondary);
   text-align: left;
   transition: all var(--billadm-transition-fast);
+  position: relative;
 }
 
 .nav-btn:hover {
@@ -316,6 +314,35 @@ const handleDeleteLedger = (id: string, name: string) => {
   background-color: var(--billadm-color-active-bg);
   color: var(--billadm-color-primary);
   font-weight: 500;
+}
+
+.nav-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--billadm-color-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+/* 次级导航按钮 — 设置等工具项，视觉降权 */
+.nav-btn-secondary {
+  font-size: var(--billadm-size-text-caption);
+}
+
+.nav-btn-secondary .nav-btn-icon {
+  font-size: 16px;
+}
+
+.nav-btn-secondary .nav-btn-text {
+  color: var(--billadm-color-text-disabled);
+}
+
+.nav-btn-secondary:hover .nav-btn-text,
+.nav-btn-secondary.active .nav-btn-text {
+  color: inherit;
 }
 
 .nav-btn-icon {
