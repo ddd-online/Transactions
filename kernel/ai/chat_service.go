@@ -138,8 +138,14 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 			default:
 			}
 
+			// Use stored system prompt if configured, otherwise fall back to default
+			prompt := config.SystemPrompt
+			if prompt == "" {
+				prompt = DefaultSystemPrompt
+			}
+
 			req := provider.ChatRequest{
-				SystemPrompt: DefaultSystemPrompt,
+				SystemPrompt: prompt,
 				Messages:     messages,
 				Tools:        s.registry.ToDefs(),
 			}

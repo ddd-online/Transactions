@@ -38,5 +38,5 @@ func (d *aiConfigDaoImpl) Save(ws *workspace.Workspace, config *models.AiConfig)
 	}
 	// 存在，更新
 	config.ID = existing.ID
-	return ws.GetDb().Model(&existing).Select("base_url", "endpoint", "api_key", "model").Updates(config).Error
+	return ws.GetDb().Model(&existing).Select("base_url", "endpoint", "api_key", "model", "system_prompt").Updates(config).Error
 }

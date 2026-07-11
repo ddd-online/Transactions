@@ -65,6 +65,25 @@
         </div>
       </div>
 
+      <!-- 系统提示词 -->
+      <div class="setting-card setting-card-vertical">
+        <div class="setting-info">
+          <span class="setting-title">系统提示词</span>
+          <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
+        </div>
+        <div class="setting-action setting-action-full">
+          <a-textarea
+            v-model:value="form.system_prompt"
+            :rows="6"
+            :maxlength="4000"
+            show-count
+            placeholder="留空使用默认提示词"
+            style="width: 100%; font-family: var(--billadm-font-mono); font-size: var(--billadm-size-text-body-sm)"
+          />
+          <a-button size="small" style="margin-top: 8px" @click="resetSystemPrompt">恢复默认</a-button>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -102,6 +121,7 @@ const form = reactive<FormState>({
   endpoint: '/v1/messages',
   api_key: '',
   model: '',
+  system_prompt: '',
   has_key: false,
 })
 
@@ -135,6 +155,7 @@ async function loadConfig() {
     form.base_url = config.base_url || ''
     form.endpoint = config.endpoint || '/v1/messages'
     form.model = config.model || ''
+    form.system_prompt = config.system_prompt || ''
     form.has_key = config.has_key
     if (config.has_key) {
       form.api_key = '••••••••'
@@ -154,6 +175,7 @@ async function handleTestConnection() {
       endpoint: form.endpoint,
       api_key: keyPlaceholder.value ? '' : form.api_key,
       model: form.model,
+      system_prompt: form.system_prompt,
     })
     NotificationUtil.success('连接成功')
   } catch (e: any) {
@@ -172,6 +194,7 @@ async function handleSave() {
       endpoint: form.endpoint,
       api_key: keyToSave,
       model: form.model,
+      system_prompt: form.system_prompt,
     })
     if (keyToSave) {
       form.has_key = true
@@ -187,6 +210,10 @@ async function handleSave() {
   } finally {
     saving.value = false
   }
+}
+
+function resetSystemPrompt() {
+  form.system_prompt = ''
 }
 
 onMounted(() => {
@@ -251,5 +278,16 @@ onMounted(() => {
 .setting-action-row {
   display: flex;
   gap: var(--billadm-space-sm);
+}
+
+.setting-card-vertical {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.setting-action-full {
+  margin-left: 0;
+  margin-top: var(--billadm-space-md);
+  width: 100%;
 }
 </style>

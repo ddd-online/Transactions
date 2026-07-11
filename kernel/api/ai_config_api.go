@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/billadm/ai"
 	"github.com/billadm/ai/provider"
 	"github.com/billadm/models"
 )
@@ -17,30 +18,37 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 	if err != nil {
 		config = &models.AiConfig{}
 	}
+	systemPrompt := config.SystemPrompt
+	if systemPrompt == "" {
+		systemPrompt = ai.DefaultSystemPrompt
+	}
 	return gin.H{
-		"base_url": config.BaseURL,
-		"endpoint": config.Endpoint,
-		"model":    config.Model,
-		"has_key":  config.APIKey != "",
+		"base_url":      config.BaseURL,
+		"endpoint":      config.Endpoint,
+		"model":         config.Model,
+		"has_key":       config.APIKey != "",
+		"system_prompt": systemPrompt,
 	}, nil
 }
 
 // PUT /api/v1/ai/config
 func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	var req struct {
-		BaseURL  string `json:"base_url"`
-		Endpoint string `json:"endpoint"`
-		APIKey   string `json:"api_key"`
-		Model    string `json:"model"`
+		BaseURL      string `json:"base_url"`
+		Endpoint     string `json:"endpoint"`
+		APIKey       string `json:"api_key"`
+		Model        string `json:"model"`
+		SystemPrompt string `json:"system_prompt"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	config := &models.AiConfig{
-		BaseURL:  req.BaseURL,
-		Endpoint: req.Endpoint,
-		Model:    req.Model,
+		BaseURL:      req.BaseURL,
+		Endpoint:     req.Endpoint,
+		Model:        req.Model,
+		SystemPrompt: req.SystemPrompt,
 	}
 	if req.APIKey != "" {
 		config.APIKey = req.APIKey

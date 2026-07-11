@@ -5,10 +5,19 @@ export interface AiConfig {
   endpoint: string;
   api_key: string;
   model: string;
+  system_prompt: string;
+}
+
+export interface AiConfigResponse {
+  base_url: string;
+  endpoint: string;
+  model: string;
+  has_key: boolean;
+  system_prompt: string;
 }
 
 export const aiApi = {
-  async getConfig(): Promise<{ base_url: string; endpoint: string; model: string; has_key: boolean }> {
+  async getConfig(): Promise<AiConfigResponse> {
     return api.get('/v1/ai/config', '获取AI配置');
   },
 

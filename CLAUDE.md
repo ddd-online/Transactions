@@ -274,3 +274,11 @@ Uses the five canonical triage roles with default label names: `needs-triage`, `
 ### Domain docs
 
 Single-context layout: `CONTEXT.md` at repo root + `docs/adr/` for architectural decisions. Created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
+
+## Design Context
+
+> These files guide UI/UX decisions. Load them when working on frontend design.
+
+- **`PRODUCT.md`** — Product register: product/web (Electron desktop). Personal finance tool, local-first privacy, calm/restrained/precise brand. 5 design principles centered on quiet professionalism.
+- **Design system**: "Clean Editorial Light" — primary `#4A8C6F` (sage green), display font Playfair Display, body font Source Serif 4, mono JetBrains Mono. Full token system in `app/src/styles/_variables.scss` (CSS custom properties `--billadm-*`). Ant Design Vue with global overrides in `app/src/styles/index.scss`.
+- **Live mode**: `.impeccable/live/config.json` configured. Run `/impeccable live` for in-browser visual iteration.
