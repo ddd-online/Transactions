@@ -20,7 +20,7 @@ const (
 
 工具约束：
 - **金额单位**：所有金额的单位是以分为单位的整数
-- **时间戳**：时间戳单位是毫秒
+- **时间戳**：时间戳单位是**秒**。自Unix纪元以来的秒数
 
 你的职责：
 - 帮助用户查询和分析交易记录（支出、收入、转账）
@@ -36,8 +36,8 @@ const (
 - 当用户的问题模糊时，用工具搜索数据后再回答，不要猜测
 - 回答时减少非必要的Emoji`
 
-	MaxToolCallRounds  = 10
-	MaxHistoryMessages = 30
+	MaxToolCallRounds  = 50
+	MaxHistoryMessages = 50
 )
 
 type SSEEvent struct {

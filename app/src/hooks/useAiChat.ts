@@ -29,6 +29,7 @@ export interface ChatMessage {
   timestamp: number
   tokens?: number
   streaming?: boolean
+  thinkingContent?: string
   thinkingActive?: boolean
   thinkingCollapsed?: boolean
 }
@@ -100,12 +101,9 @@ export function useAiChat() {
 
   function createEventRouter(onChange: () => void) {
     const assistantMsgRef: { current: ChatMessage | null } = { current: null }
-    const thinkingMsgRef: { current: ChatMessage | null } = { current: null }
 
-    // Insert a message right before the current turn's assistant so that
-    // tool cards and thinking blocks always appear above it.
-    // If the current turn's assistant hasn't been created yet, append to the end
-    // (after the user message that was just pushed).
+    // Insert tool cards right before the current turn's assistant.
+    // If the current turn's assistant hasn't been created yet, append to the end.
     const insertBeforeAssistant = (msg: ChatMessage) => {
       if (assistantMsgRef.current) {
         const asstIdx = messages.value.findIndex(m => m.id === assistantMsgRef.current!.id)
@@ -115,26 +113,6 @@ export function useAiChat() {
         }
       }
       messages.value.push(msg)
-    }
-
-    const getOrCreateThinking = (): ChatMessage => {
-      let msg = thinkingMsgRef.current
-        ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
-        : undefined
-      if (!msg) {
-        msg = {
-          id: nextMsgId(),
-          role: 'thinking',
-          content: '',
-          timestamp: Date.now(),
-          streaming: true,
-          thinkingActive: true,
-          thinkingCollapsed: false,
-        }
-        insertBeforeAssistant(msg)
-        thinkingMsgRef.current = msg
-      }
-      return msg
     }
 
     const ensureAssistant = (): ChatMessage => {
@@ -148,6 +126,7 @@ export function useAiChat() {
           content: '',
           timestamp: Date.now(),
           streaming: true,
+          thinkingCollapsed: false,
         }
         // Assistant always goes at the end
         messages.value.push(msg)
@@ -169,7 +148,7 @@ export function useAiChat() {
     const handleEvent = (event: SSEEvent) => {
       switch (event.type) {
         case 'thinking_start': {
-          const msg = getOrCreateThinking()
+          const msg = ensureAssistant()
           msg.thinkingActive = true
           msg.thinkingCollapsed = false
           onChange()
@@ -177,24 +156,20 @@ export function useAiChat() {
         }
 
         case 'thinking_delta': {
-          const msg = getOrCreateThinking()
+          const msg = ensureAssistant()
           msg.thinkingActive = true
-          msg.content += event.delta || ''
+          msg.thinkingContent = (msg.thinkingContent || '') + (event.delta || '')
           msg.thinkingCollapsed = false
           onChange()
           break
         }
 
         case 'thinking_done': {
-          // Don't collapse yet — the model may start another thinking round
-          // (e.g. after tool calls). Only stop the spinner for now.
-          // Collapse happens in finalize() when the entire call completes.
-          const msg = thinkingMsgRef.current
-            ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
+          const msg = assistantMsgRef.current
+            ? messages.value.find(m => m.id === assistantMsgRef.current!.id)
             : undefined
           if (msg) {
             msg.thinkingActive = false
-            msg.thinkingCollapsed = false
           }
           break
         }
@@ -255,14 +230,8 @@ export function useAiChat() {
         : undefined
       if (assistantMsg) {
         assistantMsg.streaming = false
-      }
-      if (thinkingMsgRef.current) {
-        const msg = messages.value.find(m => m.id === thinkingMsgRef.current!.id)
-        if (msg) {
-          msg.streaming = false
-          msg.thinkingActive = false
-          msg.thinkingCollapsed = true
-        }
+        assistantMsg.thinkingActive = false
+        assistantMsg.thinkingCollapsed = true
       }
     }
 

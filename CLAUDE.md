@@ -112,6 +112,10 @@ All endpoints under `/api/v1`:
 | DELETE | `/key-events/:date` | Delete key event |
 | GET/POST | `/key-events/:date/images` | List/add key event images |
 | DELETE | `/key-event-images/:id` | Delete key event image |
+| POST | `/ai/chat` | AI chat (SSE stream) |
+| GET | `/ai/messages` | List AI chat history |
+| DELETE | `/ai/messages` | Clear AI chat history |
+| GET/PUT | `/ai/config` | Get/update AI provider config |
 
 ## Key Commands
 
@@ -192,18 +196,28 @@ Electron persists window bounds and workspace path to `~/.transactions.json`.
 
 ## Frontend Architecture
 
-**Routing** (memory history, 5 views):
-- `/ledger_view` — 账本管理 (Ledger management)
+**Routing** (memory history, 6 views):
 - `/tr_view` — 消费记录 (Transaction records, default route)
 - `/da_view` — 数据分析 (Data analysis with charts)
 - `/key_event_view` — 关键事件 (Key events calendar + detail)
+- `/ai_view` — AI 助手 (AI chat assistant)
 - `/settings_view` — 应用设置 (Settings: categories/tags, workspace, templates, about)
+- `/category_tag_view` — 分类标签管理 (Category & tag management)
 
 **Stores** (Pinia):
 - `ledgerStore` — current ledger selection and ledger list
 - `trQueryConditionStore` — transaction filter/sort/page state
 - `keyEventStore` — key event data cache
 - `appDataStore` — application-level data (categories, tags, templates)
+- `chartStore` — saved chart configurations
+- `updateStore` — auto-update download status
+
+**Hooks** (Vue composables in `app/src/hooks/`):
+- `useAiChat` — deep module: SSE stream parsing, event routing, message state management (~350 lines behind 5 public methods)
+- `useCategoryTags` — category/tag data loading
+- `useImageUpload` — HEIC → JPEG conversion + upload progress tracking
+- `useListDragSort` — SortableJS drag-sort for list items
+- `useTransactionStats` — transaction summary statistics computation
 
 **Theming**: CSS custom properties defined in `app/src/styles/`. Components reference `var(--billadm-*)` variables.
 
@@ -261,7 +275,41 @@ This project uses OpenWolf (`.wolf/`) for cross-session context. Key rules:
 - **`electronAPI`** is only available inside Electron; code that runs in the browser must handle its absence (the API client does this via the fallback URL).
 - **Transaction update** is delete + create, not a PATCH — be aware of potential race conditions.
 
+## AI Chat Module
+
+The AI assistant feature spans both backend and frontend with a streaming SSE architecture:
+
+**Backend (`kernel/ai/`):**
+- `chat_service.go` — Orchestrates multi-turn tool-calling loop: manages conversation history, dispatches to LLM, routes tool calls → tool results → back to LLM, streams SSE events (`thinking_start/delta/done`, `tool_call`, `tool_result`, `text_delta`, `done`, `error`)
+- `provider/provider.go` — `LLMProvider` interface (single `Chat(messages, tools, ch chan<- SSEEvent)` method)
+- `provider/anthropic.go` — Anthropic Messages API with extended thinking support
+- `provider/openai.go` — OpenAI Chat Completions API adapter
+- `tool/registry.go` — Tool registry with `Tool` interface (Name, Description, Parameters as JSON Schema, Execute)
+- `tool/tools.go` — 6 read-only workspace tools: query ledger, transactions, categories, tags, key events, and compute statistics
+- `kernel/api/ai_api.go` — `POST /api/v1/ai/chat` (SSE stream), `GET /api/v1/ai/messages` (history)
+- `kernel/api/ai_config_api.go` — CRUD for AI provider config (API key, model, base URL)
+- `kernel/models/ai_config.go`, `kernel/models/ai_message.go` — Domain models
+- `kernel/dao/ai_config_dao.go`, `kernel/dao/ai_message_dao.go` — Persistence layer
+
+**Frontend (`app/src/components/ai_view/` and `app/src/hooks/`):**
+- `AiChatView.vue` — Full chat UI: message list (user/assistant/thinking/tool roles), collapsible thinking blocks, tool call cards with expandable detail, Markdown rendering, streaming cursor, entrance animations
+- `useAiChat.ts` — Composable deep module: SSE `parseSSEStream()` → `createEventRouter()` dispatches events to per-role message factories (`getOrCreateThinking`, `ensureAssistant`, `findLastUndoneTool`). `insertBeforeAssistant` places tool/thinking cards above the current turn's assistant bubble. Public API: `send`, `stop`, `loadHistory`, `clear`, `cleanup`
+- `app/src/backend/api/ai.ts` — Axios wrappers for AI config CRUD + message history
+- `app/src/components/settings_view/AiSetting.vue` — Provider/model configuration UI
+
+**Streaming flow:** User message → `send()` pushes user msg → POST `/ai/chat` → SSE reader loop → `parseSSEStream` → `handleEvent` routes by type → reactive `messages` array mutation → Vue re-render. `AbortController` for stop. Messages persisted server-side per workspace in `tbl_billadm_ai_message`.
+
+## Release Flow
+
+Release is scripted via a Claude Code skill at `.claude/skills/release.md`. Invoke with `/release`.
+
+`build/release.ps1` accepts `-Body "release notes"` for custom release notes; when omitted, auto-generates from `git log` since last tag. Version is read from `electron/package.json` (sole version source).
+
 ## Agent skills
+
+### Release
+
+`.claude/skills/release.md` — orchestrated release flow: version bump → clean → build → summarize changes → publish to GitHub Release. Invoke with `/release`.
 
 ### Issue tracker
 

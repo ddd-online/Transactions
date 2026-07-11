@@ -20,8 +20,13 @@
       <!-- Messages Area -->
       <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
         <div v-if="messages.length === 0 && !streaming" class="chat-empty">
-          <p class="chat-empty-greeting">下午好</p>
+          <p class="chat-empty-greeting">{{ greeting }}</p>
           <p class="chat-empty-hint">询问你的财务数据</p>
+          <div class="chat-empty-chips">
+            <button class="chat-empty-chip" @click="fillAndSend('本月支出汇总')">本月支出汇总</button>
+            <button class="chat-empty-chip" @click="fillAndSend('和上月相比支出变化')">环比支出变化</button>
+            <button class="chat-empty-chip" @click="fillAndSend('餐饮类消费趋势')">餐饮消费趋势</button>
+          </div>
         </div>
 
         <div v-for="msg in messages" :key="msg.id" class="chat-message" :class="`chat-message--${msg.role}`">
@@ -34,23 +39,24 @@
             <div class="msg-user"><div class="msg-user-content">{{ msg.content }}</div></div>
           </div>
 
-          <!-- Thinking Block -->
-          <div v-else-if="msg.role === 'thinking'" class="msg-thinking-row">
-            <div class="msg-thinking">
-              <button class="thinking-toggle" @click="msg.thinkingCollapsed = !msg.thinkingCollapsed">
-                <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
-                <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
-                <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed && !msg.thinkingActive }">▾</span>
-              </button>
-              <div v-if="msg.content && (!msg.thinkingCollapsed || msg.thinkingActive)" class="thinking-content">
-                {{ msg.content }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span>
-              </div>
-            </div>
-          </div>
-
           <!-- AI Text Message -->
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
             <div class="msg-assistant">
+              <!-- Inline Thinking -->
+              <div v-if="msg.thinkingContent" class="assistant-thinking">
+                <button
+                  class="assistant-thinking-toggle"
+                  @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
+                  :aria-expanded="!msg.thinkingCollapsed || msg.thinkingActive"
+                >
+                  <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
+                  <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
+                  <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed || msg.thinkingActive }">▾</span>
+                </button>
+                <div v-if="!msg.thinkingCollapsed || msg.thinkingActive" class="assistant-thinking-content">
+                  {{ msg.thinkingContent }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span>
+                </div>
+              </div>
               <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
               <span v-if="msg.streaming" class="streaming-cursor">|</span>
             </div>
@@ -117,7 +123,7 @@
             @click="streaming ? stopGeneration() : sendMessage()"
             :title="streaming ? '停止生成' : '发送'"
           >
-            <PauseOutlined v-if="streaming" />
+            <StopOutlined v-if="streaming" />
             <SendOutlined v-else />
           </button>
         </div>
@@ -127,8 +133,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { DeleteOutlined, SendOutlined, PauseOutlined, CopyOutlined } from '@ant-design/icons-vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { renderMarkdown } from '@/utils/markdown'
 import { message } from 'ant-design-vue'
@@ -147,6 +153,15 @@ const expandedToolDetails = ref<Set<string>>(new Set())
 
 let userScrolledUp = false
 
+// ---- Time-aware greeting ----
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了'
+  if (hour < 12) return '早上好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+})
+
 // ---- API base URL (reuse api-client pattern) ----
 async function getApiBaseUrl(): Promise<string> {
   if (window.electronAPI?.getApiServer) {
@@ -155,6 +170,12 @@ async function getApiBaseUrl(): Promise<string> {
     } catch { /* fall through */ }
   }
   return 'http://127.0.0.1:28080'
+}
+
+// ---- Fill and send (for example chips) ----
+async function fillAndSend(text: string) {
+  inputText.value = text
+  await sendMessage()
 }
 
 // ---- Send message ----
@@ -207,8 +228,8 @@ function copyMessage(text: string) {
 }
 
 // ---- Scroll management ----
-function scrollToBottom() {
-  if (userScrolledUp) return
+function scrollToBottom(force = false) {
+  if (!force && userScrolledUp) return
   nextTick(() => {
     scrollAnchorRef.value?.scrollIntoView({ behavior: 'smooth' })
   })
@@ -262,10 +283,21 @@ function formatArgValue(val: any): string {
   return JSON.stringify(val)
 }
 
-// ---- Auto-scroll on new messages ----
+// ---- Auto-scroll on new messages and when streaming ends ----
 watch(
   () => messages.value.length,
   () => { nextTick(() => scrollToBottom()) }
+)
+
+watch(
+  () => streaming.value,
+  (newVal, oldVal) => {
+    if (oldVal && !newVal) {
+      // Assistant just finished — always scroll to the bottom
+      userScrolledUp = false
+      nextTick(() => scrollToBottom(true))
+    }
+  }
 )
 
 // ---- Lifecycle ----
@@ -358,7 +390,32 @@ onUnmounted(() => {
   font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-body);
   color: var(--billadm-color-text-disabled);
-  margin: 0;
+  margin: 0 0 var(--billadm-space-xl) 0;
+}
+
+.chat-empty-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--billadm-space-sm);
+  justify-content: center;
+}
+
+.chat-empty-chip {
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body-sm);
+  color: var(--billadm-color-text-secondary);
+  background: var(--billadm-color-minor-background);
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-full);
+  padding: var(--billadm-space-xs) var(--billadm-space-lg);
+  cursor: pointer;
+  transition: all var(--billadm-transition-fast);
+}
+
+.chat-empty-chip:hover {
+  color: var(--billadm-color-primary);
+  border-color: var(--billadm-color-primary);
+  background: var(--billadm-color-hover-bg);
 }
 
 .chat-message {
@@ -673,7 +730,6 @@ onUnmounted(() => {
 @keyframes msg-assistant-border-glow { 0% { border-left-color: var(--billadm-color-primary-light); box-shadow: inset 3px 0 8px rgba(74, 140, 111, 0.15); } 100% { border-left-color: var(--billadm-color-primary); box-shadow: inset 3px 0 0 transparent; } }
 @keyframes msg-tool-enter { 0% { opacity: 0; border-left-color: transparent; } 100% { opacity: 1; border-left-color: var(--billadm-color-accent); } }
 @keyframes msg-tool-dot-pop { 0% { transform: scale(0); } 60% { transform: scale(1.4); } 100% { transform: scale(1); } }
-@keyframes msg-thinking-enter { 0% { opacity: 0; border-left-color: transparent; } 100% { opacity: 1; border-left-color: var(--billadm-color-divider); } }
 
 .chat-message { animation-duration: 200ms; animation-fill-mode: both; animation-timing-function: ease-out; }
 .chat-message--user { animation-name: msg-user-enter; animation-duration: 150ms; }
@@ -681,7 +737,6 @@ onUnmounted(() => {
 .chat-message--assistant .msg-assistant { animation: msg-assistant-border-glow 400ms ease-out both; }
 .chat-message--tool { animation-name: msg-tool-enter; animation-duration: 200ms; }
 .chat-message--tool .msg-tool-indicator { animation: msg-tool-dot-pop 300ms ease-out both; }
-.chat-message--thinking { animation-name: msg-thinking-enter; animation-duration: 200ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .chat-message { animation: none; }
@@ -692,17 +747,20 @@ onUnmounted(() => {
   .streaming-bar-fade-leave-active { transition: opacity 0ms; }
 }
 
-/* Thinking Block */
-.msg-thinking-row { display: flex; align-items: stretch; gap: var(--billadm-space-xs); }
-.msg-thinking { max-width: 90%; background: transparent; border-left: 3px solid var(--billadm-color-divider); border-radius: var(--billadm-radius-sm); padding: var(--billadm-space-xs) var(--billadm-space-md); overflow: hidden; }
+/* Inline Thinking (inside assistant bubble) */
+.assistant-thinking {
+  margin-bottom: var(--billadm-space-md);
+  padding-bottom: var(--billadm-space-md);
+  border-bottom: 1px solid var(--billadm-color-divider);
+}
 
-.thinking-toggle {
+.assistant-thinking-toggle {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-xs);
   border: none;
   background: none;
-  padding: 2px 0;
+  padding: 0;
   cursor: pointer;
   font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-caption);
@@ -711,7 +769,7 @@ onUnmounted(() => {
   text-align: left;
 }
 
-.thinking-toggle:hover { color: var(--billadm-color-text-secondary); }
+.assistant-thinking-toggle:hover { color: var(--billadm-color-text-secondary); }
 
 .thinking-indicator {
   width: 12px;
@@ -734,11 +792,8 @@ onUnmounted(() => {
 .thinking-arrow { margin-left: auto; transition: transform var(--billadm-transition-fast); }
 .thinking-arrow--open { transform: rotate(180deg); }
 
-.thinking-content {
-  margin-top: var(--billadm-space-xs);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  background: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-sm);
+.assistant-thinking-content {
+  margin-top: var(--billadm-space-sm);
   font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-body-sm);
   color: var(--billadm-color-text-secondary);
