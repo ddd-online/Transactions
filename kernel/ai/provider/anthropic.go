@@ -193,6 +193,7 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 		var currentToolID string
 		var currentToolName string
 		var toolArgsAccum []byte
+		currentlyThinking := false
 
 		for scanner.Scan() {
 			select {
@@ -219,6 +220,7 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 					currentToolName = event.ContentBlock.Name
 					toolArgsAccum = nil
 				} else if event.ContentBlock.Type == "thinking" {
+					currentlyThinking = true
 					ch <- ChatEvent{Type: "thinking_start"}
 				}
 			case "content_block_delta":
@@ -230,7 +232,10 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 					ch <- ChatEvent{Type: "thinking_delta", Delta: event.Delta.Thinking}
 				}
 			case "content_block_stop":
-				if event.ContentBlock.Type == "thinking" {
+				// content_block_stop carries only "index" — no "content_block"
+				// field. Use tracked state to know which block just ended.
+				if currentlyThinking {
+					currentlyThinking = false
 					ch <- ChatEvent{Type: "thinking_done"}
 				}
 				if currentToolID != "" {
