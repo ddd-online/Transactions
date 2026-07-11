@@ -93,6 +93,7 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			ai.GET("/config", Handle(h.getAiConfig))
 			ai.PUT("/config", Handle(h.updateAiConfig))
 			ai.POST("/config/test", Handle(h.testAiConnection))
+			ai.POST("/provider/fetch", Handle(h.fetchProvider))
 			ai.GET("/messages", Handle(h.listAiMessages))
 			ai.DELETE("/messages", Handle(h.clearAiMessages))
 		}
