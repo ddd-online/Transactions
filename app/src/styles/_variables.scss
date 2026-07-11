@@ -1,6 +1,7 @@
 // ============================================
 // Transactions Design Tokens
-// "Clean Editorial Light" — crisp, calm, readable
+// "Warm Kinpaku Light" — refined, warm, precise
+// Reference: impeccable.style (#f7f4ef ivory, gold accent)
 // ============================================
 @use 'sass:map';
 
@@ -12,6 +13,8 @@ $theme-colors: (
   'primary-light': #6AB08C,
   'secondary': #8C7B6E,
   'accent': #C6963A,
+  'accent-light': #D4AE5E,
+  'accent-hover': #B8872E,
 ) !default;
 
 // Semantic colors — distinct, colorblind-friendly
@@ -25,7 +28,7 @@ $semantic-colors: (
 
 // Ledger accent palette
 $ledger-colors: (
-  'forest': #4A8C6F,
+  'forest': #4A8E70,
   'warm-brown': #8C7B6E,
   'amber': #C6963A,
   'vermillion': #D9705A,
@@ -35,14 +38,14 @@ $ledger-colors: (
   'camel': #B89A80,
 ) !default;
 
-// Background — clean white hierarchy with subtle warmth
+// Background — warm ivory hierarchy (ref: impeccable.style #f7f4ef)
 $background-colors: (
   'major': #FFFFFF,
-  'major-warm': #F5F3EE,
-  'minor': #EEEAE3,
+  'major-warm': #F7F4EF,
+  'minor': #F0EDE6,
   'elevated': #FFFFFF,
-  'window-border': #DFDBD3,
-  'divider': #E8E4DD,
+  'window-border': #E2DDD5,
+  'divider': #EBE6DE,
 ) !default;
 
 // Text — near-black for maximum readability
@@ -57,7 +60,7 @@ $text-colors: (
 $icon-colors: (
   'default': #5C5C55,
   'hover': #1D1D1B,
-  'active': #4A8C6F,
+  'active': #4A8E70,
 ) !default;
 
 // ============================================
@@ -152,6 +155,8 @@ $shadow-xl-color: rgba(0, 0, 0, 0.12);
   --billadm-color-primary-light: #{map.get($theme-colors, 'primary-light')};
   --billadm-color-secondary: #{map.get($theme-colors, 'secondary')};
   --billadm-color-accent: #{map.get($theme-colors, 'accent')};
+  --billadm-color-accent-light: #{map.get($theme-colors, 'accent-light')};
+  --billadm-color-accent-hover: #{map.get($theme-colors, 'accent-hover')};
 
   // Semantic
   --billadm-color-income: #{map.get($semantic-colors, 'income')};

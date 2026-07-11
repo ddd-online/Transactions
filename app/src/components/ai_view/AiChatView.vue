@@ -702,7 +702,7 @@ onUnmounted(() => {
 
 .chat-textarea:focus {
   background: var(--billadm-color-major-background);
-  box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.15);
+  box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15);
   border-color: var(--billadm-color-primary);
 }
 
@@ -734,7 +734,7 @@ onUnmounted(() => {
 /* Animations */
 @keyframes msg-user-enter { from { opacity: 0; transform: translateY(6px) translateX(4px); } to { opacity: 1; transform: translateY(0) translateX(0); } }
 @keyframes msg-assistant-enter { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
-@keyframes msg-assistant-border-glow { 0% { border-color: var(--billadm-color-primary-light); box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.12); } 100% { border-color: var(--billadm-color-divider); box-shadow: 0 0 0 0 transparent; } }
+@keyframes msg-assistant-border-glow { 0% { border-color: var(--billadm-color-primary-light); box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.12); } 100% { border-color: var(--billadm-color-divider); box-shadow: 0 0 0 0 transparent; } }
 @keyframes msg-tool-enter { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes msg-tool-dot-pop { 0% { transform: scale(0); } 60% { transform: scale(1.4); } 100% { transform: scale(1); } }
 

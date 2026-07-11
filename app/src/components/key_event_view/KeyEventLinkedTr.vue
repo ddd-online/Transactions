@@ -324,7 +324,7 @@ watch(
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(74, 140, 111, 0.18);
+  background: rgba(74, 142, 112, 0.18);
   color: var(--billadm-color-primary);
   font-size: 14px;
   pointer-events: none;

@@ -54,7 +54,7 @@ body::before {
   z-index: -1;
   // Subtle warm atmosphere
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(74, 140, 111, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 0%, rgba(74, 142, 112, 0.03) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 100%, rgba(198, 150, 58, 0.02) 0%, transparent 50%);
 }
 
@@ -300,13 +300,13 @@ body::before {
   &:focus,
   &.ant-input-focused {
     border-color: var(--billadm-color-primary);
-    box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.15);
+    box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15);
   }
 }
 
 .ant-select-focused .ant-select-selector {
   border-color: var(--billadm-color-primary) !important;
-  box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.15) !important;
+  box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15) !important;
 }
 
 // DatePicker panel "today" button

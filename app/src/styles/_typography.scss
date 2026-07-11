@@ -1,32 +1,27 @@
 // ============================================
 // Billadm Typography
-// "Warm Editorial Precision" Design System
+// "Clean Geometric Sans" — modern, readable, calm
+// Reference: impeccable.style (Albert Sans + Alumni Sans)
 // ============================================
 
 // ============================================
 // Font Imports (@fontsource packages)
 // ============================================
 
-// Note: These packages were installed via npm:
-// npm install @fontsource/jetbrains-mono @fontsource/playfair-display @fontsource/source-serif-4
-
+@use '@fontsource/inter/latin-400.css' as inter-400;
+@use '@fontsource/inter/latin-500.css' as inter-500;
+@use '@fontsource/inter/latin-600.css' as inter-600;
+@use '@fontsource/inter/latin-700.css' as inter-700;
 @use '@fontsource/jetbrains-mono/latin-400.css' as jb-400;
 @use '@fontsource/jetbrains-mono/latin-500.css' as jb-500;
-@use '@fontsource/playfair-display/latin-400.css' as pd-400;
-@use '@fontsource/playfair-display/latin-400-italic.css' as pd-400i;
-@use '@fontsource/playfair-display/latin-600.css' as pd-600;
-@use '@fontsource/source-serif-4/latin-400.css' as ss4-400;
-@use '@fontsource/source-serif-4/latin-400-italic.css' as ss4-400i;
-@use '@fontsource/source-serif-4/latin-500.css' as ss4-500;
-@use '@fontsource/source-serif-4/latin-600.css' as ss4-600;
 
 // ============================================
 // Font Variables
 // ============================================
 
 :root {
-  --billadm-font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --billadm-font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --billadm-font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --billadm-font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --billadm-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
 }
 
@@ -39,22 +34,22 @@
   &-display-xl {
     font-family: var(--billadm-font-display);
     font-size: var(--billadm-size-text-display-xl);
-    font-weight: 600;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-tight);
-    margin: 0;
-    letter-spacing: -0.03em;
-  }
-
-  // Display - Editorial serif for major headings
-  &-display {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-display);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--billadm-color-text-major);
     line-height: var(--billadm-height-tight);
     margin: 0;
     letter-spacing: -0.02em;
+  }
+
+  // Display - Geometric sans for major headings
+  &-display {
+    font-family: var(--billadm-font-display);
+    font-size: var(--billadm-size-text-display);
+    font-weight: 700;
+    color: var(--billadm-color-text-major);
+    line-height: var(--billadm-height-tight);
+    margin: 0;
+    letter-spacing: -0.015em;
   }
 
   &-display-sm {
@@ -64,14 +59,13 @@
     color: var(--billadm-color-text-major);
     line-height: var(--billadm-height-tight);
     margin: 0;
-    letter-spacing: -0.01em;
   }
 
-  // Title - Serif for section headers
+  // Title - Sans for section headers
   &-title {
     font-family: var(--billadm-font-display);
     font-size: var(--billadm-size-text-title);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--billadm-color-text-major);
     line-height: var(--billadm-height-snug);
     margin: 0;
@@ -80,7 +74,7 @@
   &-title-sm {
     font-family: var(--billadm-font-display);
     font-size: var(--billadm-size-text-title-sm);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--billadm-color-text-major);
     line-height: var(--billadm-height-snug);
     margin: 0;

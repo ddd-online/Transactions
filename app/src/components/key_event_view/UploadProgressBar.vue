@@ -179,7 +179,7 @@ const barClass = computed(() => ({
 .summary-bar-fill {
   height: 100%;
   border-radius: 2px;
-  background: var(--billadm-color-primary, #4A8C6F);
+  background: var(--billadm-color-primary, #4A8E70);
   transform-origin: left;
   transition: transform 200ms ease;
 
@@ -211,7 +211,7 @@ const barClass = computed(() => ({
   transition: background 150ms ease;
 
   &--uploading {
-    background: var(--billadm-color-hover-bg, rgba(74, 140, 111, 0.07));
+    background: var(--billadm-color-hover-bg, rgba(74, 142, 112, 0.07));
   }
 
   &--error {
@@ -237,7 +237,7 @@ const barClass = computed(() => ({
   }
 
   &.uploading {
-    color: var(--billadm-color-primary, #4A8C6F);
+    color: var(--billadm-color-primary, #4A8E70);
   }
 
   &.error {
@@ -282,7 +282,7 @@ const barClass = computed(() => ({
 .file-bar-fill {
   height: 100%;
   border-radius: 1px;
-  background: var(--billadm-color-primary, #4A8C6F);
+  background: var(--billadm-color-primary, #4A8E70);
   transform-origin: left;
   transition: transform 150ms ease;
 }
@@ -298,7 +298,7 @@ const barClass = computed(() => ({
   }
 
   &--uploading {
-    color: var(--billadm-color-primary, #4A8C6F);
+    color: var(--billadm-color-primary, #4A8E70);
     font-weight: var(--billadm-weight-medium, 500);
   }
 

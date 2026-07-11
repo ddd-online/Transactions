@@ -12,7 +12,7 @@ const locale = ref(zhCN);
 
 const themeConfig = computed(() => ({
   token: {
-    colorPrimary: '#4A8C6F',
+    colorPrimary: '#4A8E70',
     colorBgContainer: '#FFFFFF',
     colorBgElevated: '#FFFFFF',
     colorBgLayout: '#F9F8F6',
@@ -23,7 +23,7 @@ const themeConfig = computed(() => ({
     colorWarning: '#C68E30',
     colorError: '#D9705A',
     borderRadius: 8,
-    fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
   },
 }));
 </script>
