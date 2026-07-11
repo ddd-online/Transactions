@@ -20,7 +20,22 @@ export const aiApi = {
     return api.post('/v1/ai/config/test', config, '测试连接');
   },
 
+  async getMessages(): Promise<AiMessage[]> {
+    return api.get('/v1/ai/messages', '获取对话历史');
+  },
+
   async clearMessages(): Promise<void> {
     return api.delete('/v1/ai/messages', '清空对话');
   },
 };
+
+export interface AiMessage {
+  id: string;
+  conversation_id: string;
+  role: string;
+  content: string;
+  tool_calls: string;
+  tool_call_id: string;
+  tool_name: string;
+  created_at: number;
+}

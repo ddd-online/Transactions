@@ -145,6 +145,24 @@ func testAiConnection(c *gin.Context) {
 	ret.Data = gin.H{"message": "连接成功"}
 }
 
+// GET /api/v1/ai/messages
+func listAiMessages(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
+	messageDao := dao.NewAiMessageDao()
+	msgs, err := messageDao.ListRecent(ws(c), "default", 30)
+	if err != nil {
+		ret.Code = -1
+		ret.Msg = err.Error()
+		return
+	}
+	if msgs == nil {
+		msgs = make([]*models.AiMessage, 0)
+	}
+	ret.Data = msgs
+}
+
 // DELETE /api/v1/ai/messages
 func clearAiMessages(c *gin.Context) {
 	ret := models.NewResult()

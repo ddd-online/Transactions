@@ -1,119 +1,140 @@
 <template>
   <div class="ai-chat-view">
-    <!-- Header -->
-    <div class="chat-header">
-      <h2 class="chat-header-title">AI 助手</h2>
-      <a-button
-        type="text"
-        :disabled="messages.length === 0 && !streaming"
-        @click="clearConversation"
-        class="chat-header-clear"
-      >
-        <template #icon><DeleteOutlined /></template>
-        清空对话
-      </a-button>
-    </div>
+    <!-- 顶部工具栏（拖拽区域） -->
+    <div class="chat-toolbar"></div>
 
-    <!-- Messages Area -->
-    <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
-      <!-- Empty State -->
-      <div v-if="messages.length === 0 && !streaming" class="chat-empty">
-        <p class="chat-empty-greeting">下午好</p>
-        <p class="chat-empty-hint">询问你的财务数据</p>
+    <!-- 主体卡片 -->
+    <div class="chat-card">
+      <!-- Header -->
+      <div class="chat-header">
+        <h2 class="chat-header-title">AI 助手</h2>
+        <a-button
+          type="text"
+          :disabled="messages.length === 0 && !streaming"
+          @click="clearConversation"
+          class="chat-header-clear"
+        >
+          <template #icon><DeleteOutlined /></template>
+          清空对话
+        </a-button>
       </div>
 
-      <!-- Messages -->
-      <div
-        v-for="msg in messages"
-        :key="msg.id"
-        class="chat-message"
-        :class="`chat-message--${msg.role}`"
-      >
-        <!-- User Message -->
-        <div v-if="msg.role === 'user'" class="msg-user">
-          <div class="msg-user-content">{{ msg.content }}</div>
-          <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
+      <!-- Messages Area -->
+      <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
+        <!-- Empty State -->
+        <div v-if="messages.length === 0 && !streaming" class="chat-empty">
+          <p class="chat-empty-greeting">下午好</p>
+          <p class="chat-empty-hint">询问你的财务数据</p>
         </div>
 
-        <!-- AI Text Message -->
-        <div v-else-if="msg.role === 'assistant'" class="msg-assistant">
-          <div class="msg-assistant-content">
-            {{ msg.content }}
-            <span v-if="msg.streaming" class="streaming-cursor">|</span>
-          </div>
-          <div class="msg-assistant-meta">
-            <span>{{ formatTime(msg.timestamp) }}</span>
-            <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
-          </div>
-        </div>
-
-        <!-- Tool Card -->
+        <!-- Messages -->
         <div
-          v-else-if="msg.role === 'tool'"
-          class="msg-tool"
-          :class="{ 'msg-tool--done': msg.toolDone }"
+          v-for="msg in messages"
+          :key="msg.id"
+          class="chat-message"
+          :class="`chat-message--${msg.role}`"
         >
-          <div class="msg-tool-header">
-            <span class="msg-tool-indicator" :class="{ 'msg-tool-indicator--pulse': !msg.toolDone }"></span>
-            <span class="msg-tool-action">{{ toolActionText(msg) }}</span>
-          </div>
-          <div v-if="msg.toolDone && msg.toolResult" class="msg-tool-summary">
-            {{ msg.toolResult }}
-          </div>
-          <div v-if="msg.toolDone && msg.toolDetail" class="msg-tool-detail">
-            <a-button
-              type="link"
-              size="small"
-              @click="toggleToolDetail(msg.id)"
-              class="msg-tool-detail-toggle"
+          <!-- User Message -->
+          <div v-if="msg.role === 'user'" class="msg-user">
+            <div class="msg-user-content">{{ msg.content }}</div>
+            <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
+            <button
+              class="msg-copy-btn"
+              @click.stop="copyMessage(msg.content)"
+              title="复制"
             >
-              {{ expandedToolDetails.has(msg.id) ? '收起详情' : '查看详情' }}
-            </a-button>
-            <pre v-if="expandedToolDetails.has(msg.id)" class="msg-tool-detail-json">{{
-              JSON.stringify(msg.toolDetail, null, 2)
-            }}</pre>
+              <CopyOutlined />
+            </button>
+          </div>
+
+          <!-- AI Text Message -->
+          <div v-else-if="msg.role === 'assistant'" class="msg-assistant">
+            <div class="msg-assistant-content">
+              {{ msg.content }}
+              <span v-if="msg.streaming" class="streaming-cursor">|</span>
+            </div>
+            <div class="msg-assistant-meta">
+              <span>{{ formatTime(msg.timestamp) }}</span>
+              <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
+            </div>
+            <button
+              class="msg-copy-btn"
+              @click.stop="copyMessage(msg.content)"
+              title="复制"
+            >
+              <CopyOutlined />
+            </button>
+          </div>
+
+          <!-- Tool Card -->
+          <div
+            v-else-if="msg.role === 'tool'"
+            class="msg-tool"
+            :class="{ 'msg-tool--done': msg.toolDone }"
+          >
+            <div class="msg-tool-header">
+              <span class="msg-tool-indicator" :class="{ 'msg-tool-indicator--pulse': !msg.toolDone }"></span>
+              <span class="msg-tool-action">{{ toolActionText(msg) }}</span>
+            </div>
+            <div v-if="msg.toolDone && msg.toolResult" class="msg-tool-summary">
+              {{ msg.toolResult }}
+            </div>
+            <div v-if="msg.toolDone && msg.toolDetail" class="msg-tool-detail">
+              <a-button
+                type="link"
+                size="small"
+                @click="toggleToolDetail(msg.id)"
+                class="msg-tool-detail-toggle"
+              >
+                {{ expandedToolDetails.has(msg.id) ? '收起详情' : '查看详情' }}
+              </a-button>
+              <pre v-if="expandedToolDetails.has(msg.id)" class="msg-tool-detail-json">{{
+                JSON.stringify(msg.toolDetail, null, 2)
+              }}</pre>
+            </div>
           </div>
         </div>
+
+        <!-- Bottom anchor for auto-scroll -->
+        <div ref="scrollAnchorRef"></div>
       </div>
 
-      <!-- Bottom anchor for auto-scroll -->
-      <div ref="scrollAnchorRef"></div>
-    </div>
-
-    <!-- Input Area -->
-    <div class="chat-input-area">
-      <div class="chat-divider"></div>
-      <div class="chat-input-row">
-        <textarea
-          ref="textareaRef"
-          v-model="inputText"
-          class="chat-textarea"
-          :disabled="streaming"
-          placeholder="输入你的问题..."
-          rows="1"
-          @keydown="onKeydown"
-          @input="autoResize"
-        ></textarea>
-        <button
-          class="chat-send-btn"
-          :class="{ 'chat-send-btn--stop': streaming }"
-          :disabled="!streaming && !inputText.trim()"
-          @click="streaming ? stopGeneration() : sendMessage()"
-          :title="streaming ? '停止生成' : '发送'"
-        >
-          <PauseOutlined v-if="streaming" />
-          <SendOutlined v-else />
-        </button>
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <div class="chat-divider"></div>
+        <div class="chat-input-row">
+          <textarea
+            ref="textareaRef"
+            v-model="inputText"
+            class="chat-textarea"
+            :disabled="streaming"
+            placeholder="输入你的问题..."
+            rows="1"
+            @keydown="onKeydown"
+            @input="autoResize"
+          ></textarea>
+          <button
+            class="chat-send-btn"
+            :class="{ 'chat-send-btn--stop': streaming }"
+            :disabled="!streaming && !inputText.trim()"
+            @click="streaming ? stopGeneration() : sendMessage()"
+            :title="streaming ? '停止生成' : '发送'"
+          >
+            <PauseOutlined v-if="streaming" />
+            <SendOutlined v-else />
+          </button>
+        </div>
+        <div class="chat-input-hint">Enter 发送 · Shift+Enter 换行</div>
       </div>
-      <div class="chat-input-hint">Enter 发送 · Shift+Enter 换行</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onUnmounted } from 'vue'
-import { DeleteOutlined, SendOutlined, PauseOutlined } from '@ant-design/icons-vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { DeleteOutlined, SendOutlined, PauseOutlined, CopyOutlined } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
+import { aiApi, type AiMessage as AiMessageApi } from '@/backend/api/ai'
 import { message } from 'ant-design-vue'
 
 // ----------------------------------------------------------------
@@ -381,13 +402,49 @@ function stopGeneration() {
 // Clear conversation
 // ----------------------------------------------------------------
 
+function copyMessage(text: string) {
+  navigator.clipboard.writeText(text)
+  message.success('已复制')
+}
+
+async function loadHistory() {
+  try {
+    const apiMessages = await aiApi.getMessages()
+    if (!apiMessages || apiMessages.length === 0) return
+
+    messages.value = apiMessages.map((m: AiMessageApi): ChatMessage => {
+      const base: ChatMessage = {
+        id: m.id,
+        role: m.role as ChatMessage['role'],
+        content: m.content,
+        timestamp: m.created_at,
+      }
+      if (m.role === 'tool') {
+        base.toolName = m.tool_name
+        base.toolDone = true
+        base.toolResult = m.content.length > 200
+          ? m.content.substring(0, 200) + '...'
+          : m.content
+        if (m.content) {
+          try { base.toolDetail = JSON.parse(m.content) } catch { /* not JSON */ }
+        }
+      }
+      return base
+    })
+
+    // Scroll to bottom after loading
+    await nextTick()
+    scrollToBottom()
+  } catch {
+    // non-critical: show empty state if history can't be loaded
+  }
+}
+
 async function clearConversation() {
   messages.value = []
-  expandedToolDetails.value.clear()
-  // Also clear server-side history
+  expandedToolDetails.value = new Set()
   try {
-    const baseUrl = await getApiBaseUrl()
-    await fetch(`${baseUrl}/api/v1/ai/messages`, { method: 'DELETE' })
+    await aiApi.clearMessages()
   } catch {
     // non-critical
   }
@@ -490,6 +547,10 @@ function formatTime(ts: number): string {
 // Cleanup
 // ----------------------------------------------------------------
 
+onMounted(() => {
+  loadHistory()
+})
+
 onUnmounted(() => {
   if (abortController) {
     abortController.abort()
@@ -506,7 +567,34 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--billadm-color-major-background);
+  padding: var(--billadm-space-md) var(--billadm-space-lg);
+  background-color: var(--billadm-color-major-warm);
+}
+
+/* ========================================
+   Toolbar (drag region, follows BilladmPageLayout)
+   ======================================== */
+
+.chat-toolbar {
+  flex-shrink: 0;
+  height: var(--billadm-size-header-height);
+  margin-right: calc(3 * 32px + 2 * 6px);
+  -webkit-app-region: drag;
+}
+
+/* ========================================
+   Card Container
+   ======================================== */
+
+.chat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-lg);
+  box-shadow: var(--billadm-shadow-sm);
 }
 
 /* ========================================
@@ -520,7 +608,7 @@ onUnmounted(() => {
   height: var(--billadm-size-header-height);
   padding: 0 var(--billadm-space-xl);
   flex-shrink: 0;
-  -webkit-app-region: drag;
+  border-bottom: 1px solid var(--billadm-color-divider);
 }
 
 .chat-header-title {
@@ -606,6 +694,7 @@ onUnmounted(() => {
    ======================================== */
 
 .msg-user {
+  position: relative;
   max-width: 70%;
   background: var(--billadm-color-primary);
   color: var(--billadm-color-text-inverse);
@@ -619,6 +708,8 @@ onUnmounted(() => {
   line-height: var(--billadm-height-normal);
   white-space: pre-wrap;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .msg-user-time {
@@ -633,12 +724,18 @@ onUnmounted(() => {
    ======================================== */
 
 .msg-assistant {
+  position: relative;
   max-width: 80%;
-  background: var(--billadm-color-major-background);
+  background: var(--billadm-color-minor-background);
+  border-left: 3px solid var(--billadm-color-primary);
+  border: 1px solid var(--billadm-color-divider);
   border-left: 3px solid var(--billadm-color-primary);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-md);
-  box-shadow: var(--billadm-shadow-sm);
+}
+
+.msg-assistant .msg-copy-btn {
+  color: var(--billadm-color-text-disabled);
 }
 
 .msg-assistant-content {
@@ -648,12 +745,52 @@ onUnmounted(() => {
   line-height: var(--billadm-height-relaxed);
   white-space: pre-wrap;
   word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .msg-assistant-meta {
   font-size: var(--billadm-size-text-small);
   color: var(--billadm-color-text-disabled);
   margin-top: var(--billadm-space-sm);
+}
+
+/* ========================================
+   Copy Button
+   ======================================== */
+
+.msg-copy-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--billadm-radius-sm);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--billadm-transition-fast);
+  font-size: 13px;
+}
+
+.msg-user:hover .msg-copy-btn,
+.msg-assistant:hover .msg-copy-btn {
+  opacity: 1;
+}
+
+.msg-copy-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.msg-assistant .msg-copy-btn:hover {
+  background: var(--billadm-color-hover-bg);
+  color: var(--billadm-color-text-major);
 }
 
 /* ========================================
@@ -678,11 +815,10 @@ onUnmounted(() => {
 
 .msg-tool {
   max-width: 80%;
-  background: var(--billadm-color-minor-background);
+  background: transparent;
   border-left: 3px solid var(--billadm-color-accent);
-  border-radius: var(--billadm-radius-md);
-  padding: var(--billadm-space-md);
-  box-shadow: var(--billadm-shadow-sm);
+  padding: var(--billadm-space-xs) var(--billadm-space-md);
+  margin-bottom: var(--billadm-space-xs);
   transition: border-color var(--billadm-transition-normal);
 }
 
