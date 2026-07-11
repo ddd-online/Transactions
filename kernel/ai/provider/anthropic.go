@@ -63,8 +63,9 @@ type anthropicRequest struct {
 type anthropicStreamEvent struct {
 	Type  string `json:"type"`
 	Delta struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
+		Type        string `json:"type"`
+		Text        string `json:"text"`
+		PartialJSON string `json:"partial_json"`
 	} `json:"delta,omitempty"`
 	ContentBlock struct {
 		Type  string          `json:"type"`
@@ -168,6 +169,7 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 		}
 
 		scanner := bufio.NewScanner(resp.Body)
+		scanner.Buffer(make([]byte, 0, 1024*1024), 10*1024*1024) // 1MB initial, 10MB max
 		var currentToolID string
 		var currentToolName string
 		var toolArgsAccum []byte
@@ -201,7 +203,7 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 				if event.Delta.Type == "text_delta" {
 					ch <- ChatEvent{Type: "text_delta", Delta: event.Delta.Text}
 				} else if event.Delta.Type == "input_json_delta" {
-					toolArgsAccum = append(toolArgsAccum, event.Delta.Text...)
+					toolArgsAccum = append(toolArgsAccum, event.Delta.PartialJSON...)
 				}
 			case "content_block_stop":
 				if currentToolID != "" {
@@ -223,7 +225,14 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 				// stop_reason 在 message_delta 中
 			case "message_stop":
 				ch <- ChatEvent{Type: "done"}
+			case "error":
+				ch <- ChatEvent{Type: "error", Error: fmt.Errorf("API error event received")}
+				return
 			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			ch <- ChatEvent{Type: "error", Error: fmt.Errorf("scanner error: %w", err)}
 		}
 	}()
 
