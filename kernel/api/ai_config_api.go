@@ -28,6 +28,7 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 		"model":         config.Model,
 		"has_key":       config.APIKey != "",
 		"system_prompt": systemPrompt,
+		"provider":      config.Provider,
 	}, nil
 }
 
@@ -39,6 +40,7 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 		APIKey       string `json:"api_key"`
 		Model        string `json:"model"`
 		SystemPrompt string `json:"system_prompt"`
+		Provider     string `json:"provider"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -49,6 +51,7 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 		Endpoint:     req.Endpoint,
 		Model:        req.Model,
 		SystemPrompt: req.SystemPrompt,
+		Provider:     req.Provider,
 	}
 	if req.APIKey != "" {
 		config.APIKey = req.APIKey
