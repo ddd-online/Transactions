@@ -13,7 +13,7 @@
           <a-select
             v-model:value="form.endpoint"
             :options="endpointOptions"
-            style="width: 220px"
+            style="width: 360px"
             @change="onEndpointChange"
           />
         </div>
@@ -152,7 +152,7 @@ async function handleTestConnection() {
     await aiApi.testConnection({
       base_url: form.base_url,
       endpoint: form.endpoint,
-      api_key: form.api_key,
+      api_key: keyPlaceholder.value ? '' : form.api_key,
       model: form.model,
     })
     NotificationUtil.success('连接成功')

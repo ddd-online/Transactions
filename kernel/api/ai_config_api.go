@@ -94,12 +94,21 @@ func testAiConnection(c *gin.Context) {
 		return
 	}
 
+	apiKey := req.APIKey
+	if apiKey == "" {
+		// Fall back to stored key when not provided
+		existing, err := aiConfigDao.Get(ws(c))
+		if err == nil {
+			apiKey = existing.APIKey
+		}
+	}
+
 	var p provider.LLMProvider
 	switch req.Endpoint {
 	case "/v1/messages":
-		p = provider.NewAnthropicProvider(req.BaseURL, req.APIKey, req.Model)
+		p = provider.NewAnthropicProvider(req.BaseURL, apiKey, req.Model)
 	case "/chat/completions":
-		p = provider.NewOpenAIProvider(req.BaseURL, req.APIKey, req.Model)
+		p = provider.NewOpenAIProvider(req.BaseURL, apiKey, req.Model)
 	default:
 		ret.Code = -1
 		ret.Msg = "不支持的端点"
