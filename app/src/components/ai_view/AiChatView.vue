@@ -35,33 +35,37 @@
           :class="`chat-message--${msg.role}`"
         >
           <!-- User Message -->
-          <div v-if="msg.role === 'user'" class="msg-user">
-            <div class="msg-user-content">{{ msg.content }}</div>
+          <div v-if="msg.role === 'user'" class="msg-user-row">
             <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
-            <button
-              class="msg-copy-btn"
-              @click.stop="copyMessage(msg.content)"
-              title="复制"
-            >
-              <CopyOutlined />
-            </button>
+            <div class="msg-user">
+              <div class="msg-user-content">{{ msg.content }}</div>
+              <button
+                class="msg-copy-btn"
+                @click.stop="copyMessage(msg.content)"
+                title="复制"
+              >
+                <CopyOutlined />
+              </button>
+            </div>
           </div>
 
           <!-- AI Text Message -->
-          <div v-else-if="msg.role === 'assistant'" class="msg-assistant">
-            <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
-            <span v-if="msg.streaming" class="streaming-cursor">|</span>
+          <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
+            <div class="msg-assistant">
+              <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
+              <span v-if="msg.streaming" class="streaming-cursor">|</span>
+              <button
+                class="msg-copy-btn"
+                @click.stop="copyMessage(msg.content)"
+                title="复制"
+              >
+                <CopyOutlined />
+              </button>
+            </div>
             <div class="msg-assistant-meta">
               <span>{{ formatTime(msg.timestamp) }}</span>
               <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
             </div>
-            <button
-              class="msg-copy-btn"
-              @click.stop="copyMessage(msg.content)"
-              title="复制"
-            >
-              <CopyOutlined />
-            </button>
           </div>
 
           <!-- Tool Card -->
@@ -695,6 +699,13 @@ onUnmounted(() => {
    User Message Bubble
    ======================================== */
 
+.msg-user-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--billadm-space-sm);
+}
+
 .msg-user {
   position: relative;
   max-width: 70%;
@@ -716,20 +727,25 @@ onUnmounted(() => {
 
 .msg-user-time {
   font-size: var(--billadm-size-text-caption);
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: var(--billadm-space-xs);
-  text-align: right;
+  color: var(--billadm-color-text-disabled);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ========================================
    AI Assistant Message
    ======================================== */
 
+.msg-assistant-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--billadm-space-sm);
+}
+
 .msg-assistant {
   position: relative;
   max-width: 80%;
-  background: var(--billadm-color-minor-background);
-  border-left: 3px solid var(--billadm-color-primary);
+  background: rgba(74, 140, 111, 0.06);
   border: 1px solid var(--billadm-color-divider);
   border-left: 3px solid var(--billadm-color-primary);
   border-radius: var(--billadm-radius-md);
@@ -840,7 +856,8 @@ onUnmounted(() => {
 .msg-assistant-meta {
   font-size: var(--billadm-size-text-small);
   color: var(--billadm-color-text-disabled);
-  margin-top: var(--billadm-space-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ========================================
