@@ -1,100 +1,60 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/service"
 )
 
 // POST /charts
-func createChart(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) createChart(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	req, ok := dto.JsonCreateChart(c, ret)
+	req, ok := dto.JsonCreateChart(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parse create chart request failed")
 	}
 
-	chart, err := service.GetChartService().Create(ws, req)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = chart
+	return h.ChartSvc.Create(ws, req)
 }
 
 // DELETE /charts/:id
-func deleteChart(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteChart(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	chartId := c.Param("id")
 	if chartId == "" {
-		ret.Code = -1
-		ret.Msg = "missing chart id"
-		return
+		return nil, fmt.Errorf("missing chart id")
 	}
 
-	if err := service.GetChartService().DeleteById(ws, chartId); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.ChartSvc.DeleteById(ws, chartId); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // GET /charts?ledgerId=xxx
-func listCharts(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listCharts(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		ret.Code = -1
-		ret.Msg = "missing ledgerId"
-		return
+		return nil, fmt.Errorf("missing ledgerId")
 	}
 
-	charts, err := service.GetChartService().ListByLedgerId(ws, ledgerId)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = charts
+	return h.ChartSvc.ListByLedgerId(ws, ledgerId)
 }
 
 // PATCH /charts
-func updateChart(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) updateChart(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	req, ok := dto.JsonUpdateChart(c, ret)
+	req, ok := dto.JsonUpdateChart(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parse update chart request failed")
 	}
 
-	chart, err := service.GetChartService().Update(ws, req)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = chart
+	return h.ChartSvc.Update(ws, req)
 }

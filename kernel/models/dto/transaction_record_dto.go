@@ -11,21 +11,17 @@ import (
 	"github.com/billadm/models"
 )
 
-func JsonTransactionRecordDto(c *gin.Context, result *models.Result) (*TransactionRecordDto, bool) {
+func JsonTransactionRecordDto(c *gin.Context) (*TransactionRecordDto, bool) {
 	ret := &TransactionRecordDto{}
 	if err := c.BindJSON(ret); nil != err {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("parses request failed: %v", err)
 		return nil, false
 	}
 	return ret, true
 }
 
-func JsonTransactionRecordDtoBatch(c *gin.Context, result *models.Result) ([]*TransactionRecordDto, bool) {
+func JsonTransactionRecordDtoBatch(c *gin.Context) ([]*TransactionRecordDto, bool) {
 	var ret []*TransactionRecordDto
 	if err := c.BindJSON(&ret); nil != err {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("parses request failed: %v", err)
 		return nil, false
 	}
 	return ret, true
@@ -44,23 +40,16 @@ type TransactionRecordDto struct {
 	KeyEventDate    string   `json:"keyEventDate"`
 }
 
-func (dto *TransactionRecordDto) Validate(result *models.Result) bool {
-	// 校验账本ID是否合法
+func (dto *TransactionRecordDto) Validate() error {
 	if strings.TrimSpace(dto.LedgerID) == "" {
-		result.Code = -1
-		result.Msg = "LedgerID is empty"
-		return false
+		return fmt.Errorf("LedgerID is empty")
 	}
-	// 校验交易类型是否合法
 	if dto.TransactionType != constant.TransactionTypeIncome &&
 		dto.TransactionType != constant.TransactionTypeExpense &&
 		dto.TransactionType != constant.TransactionTypeTransfer {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("invalid TransactionType: %s", dto.TransactionType)
-		return false
+		return fmt.Errorf("invalid TransactionType: %s", dto.TransactionType)
 	}
-	// TODO: 校验类型ID是否合法
-	return true
+	return nil
 }
 
 func (dto *TransactionRecordDto) ToTransactionRecord() *models.TransactionRecord {

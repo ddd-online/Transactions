@@ -10,11 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var keyEventSvc KeyEventService
-
-func SetKeyEventService(svc KeyEventService) { keyEventSvc = svc }
-func GetKeyEventService() KeyEventService      { return keyEventSvc }
-
 func NewKeyEventService(imageService KeyEventImageService) KeyEventService {
 	return &keyEventServiceImpl{
 		imageService: imageService,

@@ -6,11 +6,6 @@ import (
 	"github.com/billadm/workspace"
 )
 
-var keyEventImgSvc KeyEventImageService
-
-func SetKeyEventImageService(svc KeyEventImageService) { keyEventImgSvc = svc }
-func GetKeyEventImageService() KeyEventImageService      { return keyEventImgSvc }
-
 func NewKeyEventImageService() KeyEventImageService {
 	return &keyEventImageServiceImpl{}
 }

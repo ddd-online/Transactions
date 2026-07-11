@@ -30,15 +30,10 @@ func getWS(ctx context.Context) (*workspace.Workspace, error) {
 
 type ledgerIDKey struct{}
 
-// WithLedgerID injects the current ledger ID into the context.
-// ChatService uses this before invoking tool Execute so tools don't
-// need to receive ledger_id as an explicit argument.
 func WithLedgerID(ctx context.Context, ledgerID string) context.Context {
 	return context.WithValue(ctx, ledgerIDKey{}, ledgerID)
 }
 
-// getLedgerID returns ledger ID first from context (injected by ChatService),
-// then falls back to the "ledger_id" argument passed by the AI model.
 func getLedgerID(ctx context.Context, args map[string]any) string {
 	if id, _ := ctx.Value(ledgerIDKey{}).(string); id != "" {
 		return id
@@ -46,8 +41,6 @@ func getLedgerID(ctx context.Context, args map[string]any) string {
 	return getStringArg(args, "ledger_id")
 }
 
-// requireLedgerID is like getLedgerID but returns an error when neither
-// source provides a ledger ID.
 func requireLedgerID(ctx context.Context, args map[string]any) (string, error) {
 	id := getLedgerID(ctx, args)
 	if id == "" {
@@ -56,8 +49,6 @@ func requireLedgerID(ctx context.Context, args map[string]any) (string, error) {
 	return id, nil
 }
 
-// parseDateRange converts two "YYYY-MM-DD" date strings to a []int64 Unix
-// timestamp range. The end date is set to the last second of that day.
 func parseDateRange(start, end string) ([]int64, error) {
 	if start == "" || end == "" {
 		return nil, fmt.Errorf("start_date and end_date are required")
@@ -76,9 +67,13 @@ func parseDateRange(start, end string) ([]int64, error) {
 
 // ---- 1. query_transactions ----
 
-type queryTransactionsTool struct{}
+type queryTransactionsTool struct {
+	trSvc service.TransactionRecordService
+}
 
-func NewQueryTransactionsTool() Tool { return &queryTransactionsTool{} }
+func NewQueryTransactionsTool(trSvc service.TransactionRecordService) Tool {
+	return &queryTransactionsTool{trSvc: trSvc}
+}
 
 func (t *queryTransactionsTool) Name() string { return "query_transactions" }
 func (t *queryTransactionsTool) Description() string {
@@ -132,7 +127,6 @@ func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any
 		Limit:    pageSize,
 	}
 
-	// Build a single QueryConditionItem if any filter field is set.
 	item := dto.QueryConditionItem{
 		TransactionType: getStringArg(args, "type"),
 		Category:        getStringArg(args, "category"),
@@ -142,7 +136,6 @@ func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any
 		condition.Items = append(condition.Items, item)
 	}
 
-	// Sort: convert simple strings to SortFields slice.
 	if sf := getStringArg(args, "sort_field"); sf != "" {
 		order := getStringArg(args, "sort_order")
 		if order == "" {
@@ -154,7 +147,7 @@ func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any
 		})
 	}
 
-	result, err := service.GetTrService().QueryTrsOnCondition(ws, condition)
+	result, err := t.trSvc.QueryTrsOnCondition(ws, condition)
 	if err != nil {
 		return "", err
 	}
@@ -165,9 +158,13 @@ func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any
 
 // ---- 2. list_ledgers ----
 
-type listLedgersTool struct{}
+type listLedgersTool struct {
+	ledgerSvc service.LedgerService
+}
 
-func NewListLedgersTool() Tool { return &listLedgersTool{} }
+func NewListLedgersTool(ledgerSvc service.LedgerService) Tool {
+	return &listLedgersTool{ledgerSvc: ledgerSvc}
+}
 
 func (t *listLedgersTool) Name() string        { return "list_ledgers" }
 func (t *listLedgersTool) Description() string { return "列出当前工作空间的所有账本" }
@@ -184,7 +181,7 @@ func (t *listLedgersTool) Execute(ctx context.Context, args map[string]any) (str
 	if err != nil {
 		return "", err
 	}
-	ledgers, err := service.GetLedgerService().ListAllLedger(ws)
+	ledgers, err := t.ledgerSvc.ListAllLedger(ws)
 	if err != nil {
 		return "", err
 	}
@@ -202,9 +199,13 @@ func (t *listLedgersTool) Execute(ctx context.Context, args map[string]any) (str
 
 // ---- 3. list_categories ----
 
-type listCategoriesTool struct{}
+type listCategoriesTool struct {
+	categorySvc service.CategoryService
+}
 
-func NewListCategoriesTool() Tool { return &listCategoriesTool{} }
+func NewListCategoriesTool(categorySvc service.CategoryService) Tool {
+	return &listCategoriesTool{categorySvc: categorySvc}
+}
 
 func (t *listCategoriesTool) Name() string        { return "list_categories" }
 func (t *listCategoriesTool) Description() string { return "列出分类。可按交易类型筛选。" }
@@ -235,7 +236,7 @@ func (t *listCategoriesTool) Execute(ctx context.Context, args map[string]any) (
 		trType = constant.All
 	}
 
-	cats, err := service.GetCategoryService().QueryCategory(ws, ledgerID, trType)
+	cats, err := t.categorySvc.QueryCategory(ws, ledgerID, trType)
 	if err != nil {
 		return "", err
 	}
@@ -245,9 +246,13 @@ func (t *listCategoriesTool) Execute(ctx context.Context, args map[string]any) (
 
 // ---- 4. list_tags ----
 
-type listTagsTool struct{}
+type listTagsTool struct {
+	tagSvc service.TagService
+}
 
-func NewListTagsTool() Tool { return &listTagsTool{} }
+func NewListTagsTool(tagSvc service.TagService) Tool {
+	return &listTagsTool{tagSvc: tagSvc}
+}
 
 func (t *listTagsTool) Name() string        { return "list_tags" }
 func (t *listTagsTool) Description() string { return "列出标签。可按分类和交易类型筛选。" }
@@ -277,8 +282,6 @@ func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string
 	category := getStringArg(args, "category")
 	trType := getStringArg(args, "transaction_type")
 
-	// Compose categoryTransactionType for service call.
-	// Format is "categoryName:transactionType", or constant.All for everything.
 	var catTrType string
 	if category != "" && trType != "" {
 		catTrType = category + ":" + trType
@@ -286,7 +289,7 @@ func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string
 		catTrType = constant.All
 	}
 
-	tags, err := service.GetTagService().QueryTags(ws, ledgerID, catTrType)
+	tags, err := t.tagSvc.QueryTags(ws, ledgerID, catTrType)
 	if err != nil {
 		return "", err
 	}
@@ -296,9 +299,13 @@ func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string
 
 // ---- 5. query_chart_data ----
 
-type queryChartDataTool struct{}
+type queryChartDataTool struct {
+	trSvc service.TransactionRecordService
+}
 
-func NewQueryChartDataTool() Tool { return &queryChartDataTool{} }
+func NewQueryChartDataTool(trSvc service.TransactionRecordService) Tool {
+	return &queryChartDataTool{trSvc: trSvc}
+}
 
 func (t *queryChartDataTool) Name() string        { return "query_chart_data" }
 func (t *queryChartDataTool) Description() string { return "查询图表统计数据。返回按交易类型分组的交易记录，前端可按时间聚合。支持年/月粒度。" }
@@ -337,7 +344,6 @@ func (t *queryChartDataTool) Execute(ctx context.Context, args map[string]any) (
 		granularity = "month"
 	}
 
-	// Build chart lines from the "types" argument.
 	var types []string
 	if typesRaw, ok := args["types"].([]any); ok {
 		for _, v := range typesRaw {
@@ -366,7 +372,7 @@ func (t *queryChartDataTool) Execute(ctx context.Context, args map[string]any) (
 		Lines:       lines,
 	}
 
-	result, err := service.GetTrService().QueryTrsForChart(ws, req)
+	result, err := t.trSvc.QueryTrsForChart(ws, req)
 	if err != nil {
 		return "", err
 	}
@@ -376,9 +382,13 @@ func (t *queryChartDataTool) Execute(ctx context.Context, args map[string]any) (
 
 // ---- 6. get_key_events ----
 
-type getKeyEventsTool struct{}
+type getKeyEventsTool struct {
+	keyEventSvc service.KeyEventService
+}
 
-func NewGetKeyEventsTool() Tool { return &getKeyEventsTool{} }
+func NewGetKeyEventsTool(keyEventSvc service.KeyEventService) Tool {
+	return &getKeyEventsTool{keyEventSvc: keyEventSvc}
+}
 
 func (t *getKeyEventsTool) Name() string        { return "get_key_events" }
 func (t *getKeyEventsTool) Description() string { return "查询指定年份的关键事件（人生里程碑）。" }
@@ -405,7 +415,7 @@ func (t *getKeyEventsTool) Execute(ctx context.Context, args map[string]any) (st
 	}
 
 	year := fmt.Sprintf("%d", int(getFloatArg(args, "year")))
-	events, err := service.GetKeyEventService().QueryByYear(ws, ledgerID, year)
+	events, err := t.keyEventSvc.QueryByYear(ws, ledgerID, year)
 	if err != nil {
 		return "", err
 	}

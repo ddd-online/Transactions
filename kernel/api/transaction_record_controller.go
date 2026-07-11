@@ -2,223 +2,140 @@ package api
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/service"
 )
 
 // POST /transactions/query
-func queryTransactions(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) queryTransactions(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	queryCondition, ok := dto.JsonQueryCondition(c, ret)
+	queryCondition, ok := dto.JsonQueryCondition(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 	logrus.Debugf("query condition: %v", queryCondition)
 
-	result, err := service.GetTrService().QueryTrsOnCondition(ws, queryCondition)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = result
+	return h.TrSvc.QueryTrsOnCondition(ws, queryCondition)
 }
 
 // POST /transactions
-func createTransaction(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) createTransaction(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	trDto, ok := dto.JsonTransactionRecordDto(c, ret)
+	trDto, ok := dto.JsonTransactionRecordDto(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 	logrus.Debugf("tr dto: %v", trDto)
 
-	if !trDto.Validate(ret) {
-		logrus.Errorf("validate transaction record error, err: %v", ret.Msg)
-		return
+	if err := trDto.Validate(); err != nil {
+		return nil, err
 	}
 
-	trId, err := service.GetTrService().CreateTr(ws, trDto)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = trId
+	return h.TrSvc.CreateTr(ws, trDto)
 }
 
 // POST /transactions/batch
-func batchCreateTransactions(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) batchCreateTransactions(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	dtos, ok := dto.JsonTransactionRecordDtoBatch(c, ret)
+	dtos, ok := dto.JsonTransactionRecordDtoBatch(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 	logrus.Debugf("batch create %d transaction records", len(dtos))
 
-	// Validate all records first
 	for i, trDto := range dtos {
-		if !trDto.Validate(ret) {
-			ret.Code = -1
-			ret.Msg = fmt.Sprintf("record %d: %s", i+1, ret.Msg)
-			logrus.Errorf("validate transaction record %d error: %v", i+1, ret.Msg)
-			return
+		if err := trDto.Validate(); err != nil {
+			return nil, fmt.Errorf("record %d: %w", i+1, err)
 		}
 	}
 
-	count, err := service.GetTrService().BatchCreateTr(ws, dtos)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = count
+	return h.TrSvc.BatchCreateTr(ws, dtos)
 }
 
 // DELETE /transactions/:id
-func deleteTransaction(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteTransaction(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
-		ret.Code = -1
-		ret.Msg = "missing transaction id"
-		return
+		return nil, fmt.Errorf("missing transaction id")
 	}
 
-	err := service.GetTrService().DeleteTrById(ws, id)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.TrSvc.DeleteTrById(ws, id); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // POST /transactions/query-chart-data
-func queryChartData(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) queryChartData(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	req, ok := dto.JsonChartQuery(c, ret)
+	req, ok := dto.JsonChartQuery(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 	logrus.Debugf("chart query request: %v", req)
 
-	result, err := service.GetTrService().QueryTrsForChart(ws, req)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = result
+	return h.TrSvc.QueryTrsForChart(ws, req)
 }
 
 // POST /transactions/link
-func linkTransactionToKeyEvent(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) linkTransactionToKeyEvent(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 
 	trId, _ := arg["transaction_id"].(string)
 	date, _ := arg["date"].(string)
 
 	if trId == "" || date == "" {
-		ret.Code = -1
-		ret.Msg = "transaction_id and date are required"
-		return
+		return nil, fmt.Errorf("transaction_id and date are required")
 	}
 
-	if err := service.GetTrService().LinkToKeyEvent(ws, trId, date); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.TrSvc.LinkToKeyEvent(ws, trId, date); err != nil {
+		return nil, err
 	}
-
-	ret.Data = date
+	return date, nil
 }
 
 // POST /transactions/unlink
-func unlinkTransactionFromKeyEvent(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) unlinkTransactionFromKeyEvent(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 
 	trId, _ := arg["transaction_id"].(string)
 	if trId == "" {
-		ret.Code = -1
-		ret.Msg = "transaction_id is required"
-		return
+		return nil, fmt.Errorf("transaction_id is required")
 	}
 
-	if err := service.GetTrService().UnlinkFromKeyEvent(ws, trId); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.TrSvc.UnlinkFromKeyEvent(ws, trId); err != nil {
+		return nil, err
 	}
-
-	ret.Data = trId
+	return trId, nil
 }
 
 // GET /transactions/linked/:date
-func listLinkedTransactions(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listLinkedTransactions(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
-		ret.Code = -1
-		ret.Msg = "date is required"
-		return
+		return nil, fmt.Errorf("date is required")
 	}
 
-	dtos, err := service.GetTrService().QueryLinkedByDate(ws, date)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = dtos
+	return h.TrSvc.QueryLinkedByDate(ws, date)
 }

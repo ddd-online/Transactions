@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -10,43 +9,32 @@ import (
 	"github.com/billadm/constant"
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/service"
 )
 
 // GET /ledgers?id=all or id=uuid1,uuid2
-// POST /ledgers (body: {name: string})
-func listLedgers(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listLedgers(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	ledgerId := c.Query("id")
 	if ledgerId == "" {
-		ret.Code = -1
-		ret.Msg = "missing required query parameter: id"
-		return
+		return nil, fmt.Errorf("missing required query parameter: id")
 	}
 
 	var ledgers []models.Ledger
 	var err error
 	if ledgerId == constant.All {
-		ledgers, err = service.GetLedgerService().ListAllLedger(ws)
+		ledgers, err = h.LedgerSvc.ListAllLedger(ws)
 		if err != nil {
-			ret.Code = -1
-			ret.Msg = err.Error()
-			return
+			return nil, err
 		}
 	} else {
 		var ledger *models.Ledger
 		ledgerIds := strings.Split(ledgerId, ",")
 		for _, id := range ledgerIds {
 			id = strings.TrimSpace(id)
-			ledger, err = service.GetLedgerService().QueryLedgerById(ws, id)
+			ledger, err = h.LedgerSvc.QueryLedgerById(ws, id)
 			if err != nil {
-				ret.Code = -1
-				ret.Msg = fmt.Sprintf("查询账本 %s 失败: %v", id, err)
-				return
+				return nil, fmt.Errorf("查询账本 %s 失败: %v", id, err)
 			}
 			ledgers = append(ledgers, *ledger)
 		}
@@ -59,120 +47,85 @@ func listLedgers(c *gin.Context) {
 		ledgerDtos = append(ledgerDtos, ledgerDto)
 	}
 
-	ret.Data = ledgerDtos
+	return ledgerDtos, nil
 }
 
 // POST /ledgers
-func createLedger(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) createLedger(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 
 	ledgerName, ok := arg["name"].(string)
 	if !ok {
-		ret.Code = -1
-		ret.Msg = "name在请求体中不存在"
-		return
+		return nil, fmt.Errorf("name在请求体中不存在")
 	}
 
 	description, _ := arg["description"].(string)
 
-	ledgerId, err := service.GetLedgerService().CreateLedger(ws, ledgerName, description)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = ledgerId
+	return h.LedgerSvc.CreateLedger(ws, ledgerName, description)
 }
 
 // GET /ledgers/:id
-func getLedger(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) getLedger(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
-		ret.Code = -1
-		ret.Msg = "missing ledger id"
-		return
+		return nil, fmt.Errorf("missing ledger id")
 	}
 
-	ledger, err := service.GetLedgerService().QueryLedgerById(ws, id)
+	ledger, err := h.LedgerSvc.QueryLedgerById(ws, id)
 	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+		return nil, err
 	}
 
 	ledgerDto := dto.LedgerDto{}
 	ledgerDto.FromLedger(ledger)
-	ret.Data = ledgerDto
+	return ledgerDto, nil
 }
 
 // PATCH /ledgers/:id
-func updateLedger(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) updateLedger(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
-		ret.Code = -1
-		ret.Msg = "missing ledger id"
-		return
+		return nil, fmt.Errorf("missing ledger id")
 	}
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 
 	ledgerName, ok := arg["name"].(string)
 	if !ok {
-		ret.Code = -1
-		ret.Msg = "name在请求体中不存在"
-		return
+		return nil, fmt.Errorf("name在请求体中不存在")
 	}
 
 	description, _ := arg["description"].(string)
 
-	err := service.GetLedgerService().ModifyLedger(ws, id, ledgerName, description)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.LedgerSvc.ModifyLedger(ws, id, ledgerName, description); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // DELETE /ledgers/:id
-func deleteLedger(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteLedger(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
-		ret.Code = -1
-		ret.Msg = "missing ledger id"
-		return
+		return nil, fmt.Errorf("missing ledger id")
 	}
 
-	err := service.GetLedgerService().DeleteLedgerById(ws, id)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.LedgerSvc.DeleteLedgerById(ws, id); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }

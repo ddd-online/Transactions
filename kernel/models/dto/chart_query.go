@@ -2,8 +2,6 @@ package dto
 
 import (
 	"github.com/gin-gonic/gin"
-
-	"github.com/billadm/models"
 )
 
 type ChartLineCondition struct {
@@ -31,11 +29,9 @@ type ChartQueryResponse struct {
 	Lines []ChartLineData `json:"lines"`
 }
 
-func JsonChartQuery(c *gin.Context, result *models.Result) (*ChartQueryRequest, bool) {
+func JsonChartQuery(c *gin.Context) (*ChartQueryRequest, bool) {
 	ret := &ChartQueryRequest{}
 	if err := c.BindJSON(ret); err != nil {
-		result.Code = -1
-		result.Msg = "parse chart query request failed: " + err.Error()
 		return nil, false
 	}
 	return ret, true

@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/billadm/models"
 )
 
 const (
@@ -13,7 +11,7 @@ const (
 	Not = "not"
 )
 
-func JsonQueryCondition(c *gin.Context, result *models.Result) (*TrQueryCondition, bool) {
+func JsonQueryCondition(c *gin.Context) (*TrQueryCondition, bool) {
 	ret := &TrQueryCondition{
 		Offset:  -1,
 		Limit:   -1,
@@ -21,8 +19,6 @@ func JsonQueryCondition(c *gin.Context, result *models.Result) (*TrQueryConditio
 		Items:   make([]QueryConditionItem, 0),
 	}
 	if err := c.BindJSON(ret); nil != err {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("解析消费记录查询条件失败: %v", err)
 		return nil, false
 	}
 	return ret, true
@@ -42,13 +38,11 @@ type QueryConditionSortField struct {
 	Order string `json:"order"`
 }
 
-func (qc *TrQueryCondition) Validate(result *models.Result) bool {
+func (qc *TrQueryCondition) Validate() error {
 	if len(qc.LedgerID) == 0 {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("账本Id不可为空: %s", qc.LedgerID)
-		return false
+		return fmt.Errorf("账本Id不可为空: %s", qc.LedgerID)
 	}
-	return true
+	return nil
 }
 
 type QueryConditionItem struct {

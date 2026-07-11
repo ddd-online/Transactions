@@ -2,21 +2,13 @@ package service
 
 import (
 	"github.com/billadm/constant"
-	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
 )
 
-var tagSvc TagService
-
-func SetTagService(svc TagService) { tagSvc = svc }
-func GetTagService() TagService      { return tagSvc }
-
-func NewTagService(trTagDao dao.TrTagDao) TagService {
-	return &tagServiceImpl{
-		trTagDao: trTagDao,
-	}
+func NewTagService() TagService {
+	return &tagServiceImpl{}
 }
 
 type TagService interface {
@@ -30,9 +22,7 @@ type TagService interface {
 
 var _ TagService = &tagServiceImpl{}
 
-type tagServiceImpl struct {
-	trTagDao dao.TrTagDao
-}
+type tagServiceImpl struct{}
 
 func (t *tagServiceImpl) QueryTags(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) ([]models.Tag, error) {
 	logrus.Infof("start to query tag, ledger: %s, category: %s", ledgerID, categoryTransactionType)
@@ -88,7 +78,7 @@ func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, nam
 	logrus.Infof("start to delete tag, ledger id: %s, name: %s", ledgerId, name)
 
 	// Delete TrTag entries that use this tag
-	if err := t.trTagDao.DeleteTrTagByTag(ws, ledgerId, name); err != nil {
+	if err := deleteTrTagByTag(ws, ledgerId, name); err != nil {
 		logrus.Errorf("delete tr tags failed: %v", err)
 		return err
 	}

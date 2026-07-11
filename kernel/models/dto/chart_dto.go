@@ -37,21 +37,17 @@ type UpdateChartRequest struct {
 	SortOrder   int        `json:"sortOrder"`
 }
 
-func JsonCreateChart(c *gin.Context, result *models.Result) (*CreateChartRequest, bool) {
+func JsonCreateChart(c *gin.Context) (*CreateChartRequest, bool) {
 	ret := &CreateChartRequest{}
 	if err := c.BindJSON(ret); err != nil {
-		result.Code = -1
-		result.Msg = "parse create chart request failed: " + err.Error()
 		return nil, false
 	}
 	return ret, true
 }
 
-func JsonUpdateChart(c *gin.Context, result *models.Result) (*UpdateChartRequest, bool) {
+func JsonUpdateChart(c *gin.Context) (*UpdateChartRequest, bool) {
 	ret := &UpdateChartRequest{}
 	if err := c.BindJSON(ret); err != nil {
-		result.Code = -1
-		result.Msg = "parse update chart request failed: " + err.Error()
 		return nil, false
 	}
 	return ret, true

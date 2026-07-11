@@ -8,32 +8,30 @@ import {
     queryKeyEventImages,
     addKeyEventImage,
     deleteKeyEventImage
-} from "@/backend/api/key-event";
-import { fetchLinkedTransactions } from "@/backend/api/tr";
-import { withErrorHandling } from "@/backend/errorHandler";
+} from "@/backend/api/key-event"
+import { fetchLinkedTransactions } from "@/backend/api/tr"
+import { withErrorHandling } from "@/backend/errorHandler"
 import { useLedgerStore } from '@/stores/ledgerStore'
-import NotificationUtil from "@/backend/notification";
-import { createImageUrls, revokeImageUrls, type ImageUrls } from '@/backend/imageOptimizer'
-import type { KeyEvent, KeyEventImage, TransactionRecord } from "@/types/billadm";
+import NotificationUtil from "@/backend/notification"
+import { KeyEventCache } from '@/backend/keyEventCache'
+import type { KeyEvent, KeyEventImage } from "@/types/billadm"
 
 export const useKeyEventStore = defineStore('keyEvent', () => {
     const getLedgerId = () => useLedgerStore().currentLedgerId
 
-    // 某年有记录的日期集合，用于日历高亮
-    const datesWithRecords = ref(new Set<string>());
-    const currentYear = ref(new Date().getFullYear());
-    // 日期 -> 标题 的缓存
-    const titles = ref(new Map<string, string>());
-    // 日期 -> 颜色 的缓存
-    const colors = ref(new Map<string, string>());
-    const images = ref<KeyEventImage[]>([]);
-    const imageCache = ref(new Map<string, KeyEventImage[]>());
-    const trCache = ref(new Map<string, TransactionRecord[]>());
-    const imageUrlCache = ref(new Map<string, ImageUrls>());
-    // 完整的 KeyEvent 列表，供 KeyEventList 消费
-    const events = ref<KeyEvent[]>([]);
+    // ---- Reactive state (public, used by components) ----
+    const datesWithRecords = ref(new Set<string>())
+    const currentYear = ref(new Date().getFullYear())
+    const titles = ref(new Map<string, string>())
+    const colors = ref(new Map<string, string>())
+    const images = ref<KeyEventImage[]>([])
+    const events = ref<KeyEvent[]>([])
 
-    // 获取某年有记录的日期列表
+    // ---- Cache (deep module — 5 methods, handles blob URL lifecycle) ----
+    const cache = new KeyEventCache()
+
+    // ---- Public API ----
+
     const fetchDatesByYear = async (year: number) => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
@@ -49,7 +47,6 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         }
     };
 
-    // 获取单日详情
     const fetchEventByDate = async (date: string): Promise<KeyEvent | null> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return null
@@ -60,30 +57,23 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                 colors.value.set(date, event.color);
             }
             return event;
-        } catch (error) {
-            // 404 表示当天没有记录，返回 null
+        } catch {
             return null;
         }
     };
 
-    // 保存事件（新建或更新）
     const saveEvent = async (date: string, title: string, content: string, color: string): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
         try {
             await saveKeyEvent(date, title, content, color, ledgerId);
             datesWithRecords.value.add(date);
-            // 更新 events 缓存
             const idx = events.value.findIndex(e => e.date === date);
             if (idx >= 0) {
                 events.value[idx] = { ...events.value[idx]!, title, content, color };
             } else {
                 events.value.push({
-                    id: '',
-                    date,
-                    title,
-                    content,
-                    color,
+                    id: '', date, title, content, color,
                     createdAt: Math.floor(Date.now() / 1000),
                     updatedAt: Math.floor(Date.now() / 1000),
                     ledgerId,
@@ -98,7 +88,6 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         }
     };
 
-    // 删除事件
     const deleteEvent = async (date: string): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
@@ -108,19 +97,9 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             titles.value.delete(date);
             colors.value.delete(date);
             events.value = events.value.filter(e => e.date !== date);
-            // revoke 该日期图片的 blob URLs
-            const cachedImgs = imageCache.value.get(date)
-            if (cachedImgs) {
-                for (const img of cachedImgs) {
-                    const urls = imageUrlCache.value.get(img.id)
-                    if (urls) {
-                        revokeImageUrls(urls)
-                        imageUrlCache.value.delete(img.id)
-                    }
-                }
-            }
-            imageCache.value.delete(date);
-            trCache.value.delete(date);
+            // Delegate cache cleanup to KeyEventCache
+            cache.invalidate(date);
+            images.value = [];
             NotificationUtil.success('删除成功');
         } catch (error) {
             NotificationUtil.error('删除失败', `${error}`);
@@ -128,57 +107,39 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         }
     };
 
-    // 某天是否有记录
-    const hasRecord = (date: string): boolean => {
-        return datesWithRecords.value.has(date);
-    };
-
-    // 获取某天的标题
-    const getTitle = (date: string): string => {
-        return titles.value.get(date) || '';
-    };
-
-    // 获取某天的颜色
-    const getColor = (date: string): string => {
-        return colors.value.get(date) || '';
-    };
-
-    // 从 events 数组同步读取（不发起网络请求）
-    const getEventByDate = (date: string): KeyEvent | null => {
-        return events.value.find(e => e.date === date) ?? null;
-    };
+    const hasRecord = (date: string): boolean => datesWithRecords.value.has(date);
+    const getTitle = (date: string): string => titles.value.get(date) || '';
+    const getColor = (date: string): string => colors.value.get(date) || '';
+    const getEventByDate = (date: string): KeyEvent | null =>
+        events.value.find(e => e.date === date) ?? null;
 
     const fetchImages = async (date: string): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
-        // 已有缓存则直接用
-        if (imageCache.value.has(date)) {
-            images.value = imageCache.value.get(date)!
+        // Use cache
+        const cached = cache.getImages(date)
+        if (cached) {
+            images.value = cached
             return
         }
         try {
             const result = await queryKeyEventImages(date, ledgerId);
-            imageCache.value.set(date, result);
+            cache.setImages(date, result);
             images.value = result;
-            // 异步生成 blob URLs（不阻塞渲染）
-            for (const img of result) {
-                if (!imageUrlCache.value.has(img.id)) {
-                    createImageUrls(img.data).then(urls => {
-                        imageUrlCache.value.set(img.id, urls)
-                    }).catch(() => { /* 静默忽略，组件 fallback 到 base64 */ })
-                }
-            }
         } catch (error) {
             NotificationUtil.error('加载图片失败', `${error}`);
             images.value = [];
         }
     };
 
-    const cacheLinkedTransactions = (date: string, trs: TransactionRecord[]): void => {
-        trCache.value.set(date, trs);
+    const cacheLinkedTransactions = async (date: string): Promise<void> => {
+        const trs = await withErrorHandling(
+            () => fetchLinkedTransactions(date),
+            { errorPrefix: '查询关联交易失败', fallback: [] }
+        );
+        cache.setTransactions(date, trs);
     };
 
-    // 预加载某年全部关键事件数据（事件列表 + 图片 + 关联交易）
     const preloadYearData = async (year: number): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
@@ -190,22 +151,13 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             events.value = eventList;
             currentYear.value = year;
 
-            // 并行预加载图片和关联交易
             if (eventList.length === 0) return;
             await Promise.all([
                 ...eventList.map(async (e) => {
                     try {
                         const imgs = await queryKeyEventImages(e.date, ledgerId);
-                        imageCache.value.set(e.date, imgs);
-                        // 生成 blob URLs
-                        for (const img of imgs) {
-                            if (!imageUrlCache.value.has(img.id)) {
-                                createImageUrls(img.data).then(urls => {
-                                    imageUrlCache.value.set(img.id, urls)
-                                }).catch(() => {})
-                            }
-                        }
-                    } catch { /* 静默忽略单个失败 */ }
+                        cache.setImages(e.date, imgs);
+                    } catch { /* ignore single failure */ }
                 }),
                 ...eventList.map(async (e) => {
                     try {
@@ -213,8 +165,8 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                             () => fetchLinkedTransactions(e.date),
                             { errorPrefix: '查询关联交易失败', fallback: [] }
                         );
-                        trCache.value.set(e.date, trs);
-                    } catch { /* 静默忽略单个失败 */ }
+                        cache.setTransactions(e.date, trs);
+                    } catch { /* ignore single failure */ }
                 }),
             ]);
         } catch (error) {
@@ -228,25 +180,15 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         try {
             const imageId = await addKeyEventImage(date, data, filename, ledgerId, onProgress);
             images.value.push({
-                id: imageId,
-                eventDate: date,
-                data,
-                filename,
+                id: imageId, eventDate: date, data, filename,
                 sortOrder: images.value.length + 1,
                 createdAt: Math.floor(Date.now() / 1000),
             });
-            // 为新图片生成 blob URLs
-            createImageUrls(data).then(urls => {
-                imageUrlCache.value.set(imageId, urls)
-            }).catch(() => {})
-            // 更新缓存
-            const cached = imageCache.value.get(date);
+            // Use cache
+            const cached = cache.getImages(date);
             if (cached) {
                 cached.push({
-                    id: imageId,
-                    eventDate: date,
-                    data,
-                    filename,
+                    id: imageId, eventDate: date, data, filename,
                     sortOrder: cached.length + 1,
                     createdAt: Math.floor(Date.now() / 1000),
                 });
@@ -264,18 +206,8 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             const target = images.value.find(img => img.id === imageId);
             await deleteKeyEventImage(imageId, ledgerId);
             images.value = images.value.filter(img => img.id !== imageId);
-            // revoke blob URL
-            const urls = imageUrlCache.value.get(imageId)
-            if (urls) {
-                revokeImageUrls(urls)
-                imageUrlCache.value.delete(imageId)
-            }
             if (target) {
-                const cached = imageCache.value.get(target.eventDate);
-                if (cached) {
-                    const idx = cached.findIndex(img => img.id === imageId);
-                    if (idx >= 0) cached.splice(idx, 1);
-                }
+                cache.invalidate(target.eventDate);
             }
         } catch (error) {
             NotificationUtil.error('删除图片失败', `${error}`);
@@ -284,17 +216,22 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     };
 
     const clearImages = (): void => {
-        // revoke 所有 blob URLs
-        for (const urls of imageUrlCache.value.values()) {
-            revokeImageUrls(urls)
-        }
-        imageUrlCache.value.clear()
+        cache.destroy();
         images.value = [];
     };
 
     return {
+        // Reactive state
         datesWithRecords,
         currentYear,
+        titles,
+        colors,
+        images,
+        events,
+        // Cache — exposed for component access (KeyEventImageGallery, KeyEventView)
+        imageUrlCache: cache.imageUrlCache,
+        trCache: cache.trCache,
+        // API
         fetchDatesByYear,
         fetchEventByDate,
         saveEvent,
@@ -303,11 +240,6 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         getTitle,
         getColor,
         getEventByDate,
-        images,
-        imageCache,
-        imageUrlCache,
-        trCache,
-        events,
         fetchImages,
         addImage,
         removeImage,

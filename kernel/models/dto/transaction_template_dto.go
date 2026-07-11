@@ -10,11 +10,9 @@ import (
 	"github.com/billadm/models"
 )
 
-func JsonTransactionTemplateDto(c *gin.Context, result *models.Result) (*TransactionTemplateDto, bool) {
+func JsonTransactionTemplateDto(c *gin.Context) (*TransactionTemplateDto, bool) {
 	ret := &TransactionTemplateDto{}
 	if err := c.BindJSON(ret); nil != err {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("parses request failed: %v", err)
 		return nil, false
 	}
 	return ret, true
@@ -32,25 +30,19 @@ type TransactionTemplateDto struct {
 	SortOrder      int      `json:"sort_order"`
 }
 
-func (dto *TransactionTemplateDto) Validate(result *models.Result) bool {
+func (dto *TransactionTemplateDto) Validate() error {
 	if dto.TemplateName == "" {
-		result.Code = -1
-		result.Msg = "模板名称不能为空"
-		return false
+		return fmt.Errorf("模板名称不能为空")
 	}
 	if dto.TransactionType != constant.TransactionTypeIncome &&
 		dto.TransactionType != constant.TransactionTypeExpense &&
 		dto.TransactionType != constant.TransactionTypeTransfer {
-		result.Code = -1
-		result.Msg = fmt.Sprintf("invalid transaction type: %s", dto.TransactionType)
-		return false
+		return fmt.Errorf("invalid transaction type: %s", dto.TransactionType)
 	}
 	if dto.Category == "" {
-		result.Code = -1
-		result.Msg = "分类不能为空"
-		return false
+		return fmt.Errorf("分类不能为空")
 	}
-	return true
+	return nil
 }
 
 func (dto *TransactionTemplateDto) ToTransactionTemplate() *models.TransactionTemplate {

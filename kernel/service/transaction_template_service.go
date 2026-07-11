@@ -8,11 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var tmplSvc TransactionTemplateService
-
-func SetTrTemplateService(svc TransactionTemplateService) { tmplSvc = svc }
-func GetTrTemplateService() TransactionTemplateService      { return tmplSvc }
-
 func NewTrTemplateService() TransactionTemplateService {
 	return &transactionTemplateServiceImpl{}
 }

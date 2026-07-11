@@ -1,274 +1,162 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/billadm/models"
-	"github.com/billadm/service"
 )
 
 // GET /api/v1/key-events/year/:year
-func listKeyEventsByYear(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listKeyEventsByYear(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	year := c.Param("year")
 	if year == "" {
-		ret.Code = -1
-		ret.Msg = "missing year parameter"
-		return
+		return nil, fmt.Errorf("missing year parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+		return nil, fmt.Errorf("ledger_id is required")
 	}
 
-	events, err := service.GetKeyEventService().QueryByYear(ws, ledgerID, year)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = events
+	return h.KeyEventSvc.QueryByYear(ws, ledgerID, year)
 }
 
 // GET /api/v1/key-events/dates/:year
-func listKeyEventDates(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listKeyEventDates(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	year := c.Param("year")
 	if year == "" {
-		ret.Code = -1
-		ret.Msg = "missing year parameter"
-		return
+		return nil, fmt.Errorf("missing year parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+		return nil, fmt.Errorf("ledger_id is required")
 	}
 
-	dates, err := service.GetKeyEventService().QueryDatesByYear(ws, ledgerID, year)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = dates
+	return h.KeyEventSvc.QueryDatesByYear(ws, ledgerID, year)
 }
 
 // GET /api/v1/key-events/:date
-func getKeyEvent(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) getKeyEvent(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
-		ret.Code = -1
-		ret.Msg = "missing date parameter"
-		return
+		return nil, fmt.Errorf("missing date parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+		return nil, fmt.Errorf("ledger_id is required")
 	}
 
-	event, err := service.GetKeyEventService().QueryByDate(ws, ledgerID, date)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = event
+	return h.KeyEventSvc.QueryByDate(ws, ledgerID, date)
 }
 
 // POST /api/v1/key-events  body: { date, title, content }
-func upsertKeyEvent(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) upsertKeyEvent(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 
 	ledgerID, ok := arg["ledger_id"].(string)
 	if !ok || ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+		return nil, fmt.Errorf("ledger_id is required")
 	}
 
 	date, ok := arg["date"].(string)
 	if !ok {
-		ret.Code = -1
-		ret.Msg = "date is required"
-		return
+		return nil, fmt.Errorf("date is required")
 	}
 
 	title, _ := arg["title"].(string)
 	content, _ := arg["content"].(string)
 	color, _ := arg["color"].(string)
 
-	if err := service.GetKeyEventService().UpsertKeyEvent(ws, ledgerID, date, title, content, color); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.KeyEventSvc.UpsertKeyEvent(ws, ledgerID, date, title, content, color); err != nil {
+		return nil, err
 	}
-
-	ret.Data = date
+	return date, nil
 }
 
 // DELETE /api/v1/key-events/:date
-func deleteKeyEvent(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteKeyEvent(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
-		ret.Code = -1
-		ret.Msg = "missing date parameter"
-		return
+		return nil, fmt.Errorf("missing date parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+		return nil, fmt.Errorf("ledger_id is required")
 	}
 
-	if err := service.GetKeyEventService().DeleteByDate(ws, ledgerID, date); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.KeyEventSvc.DeleteByDate(ws, ledgerID, date); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // GET /api/v1/key-events/:date/images
-func listKeyEventImages(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listKeyEventImages(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
-		ret.Code = -1
-		ret.Msg = "missing date parameter"
-		return
+		return nil, fmt.Errorf("missing date parameter")
 	}
 
-	ledgerID := c.Query("ledger_id")
-	if ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
-	}
-
-	images, err := service.GetKeyEventImageService().GetImagesByEventDate(ws, date)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = images
+	return h.KeyEventImgSvc.GetImagesByEventDate(ws, date)
 }
 
 // POST /api/v1/key-events/:date/images  body: { data, filename }
-func addKeyEventImage(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) addKeyEventImage(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	date := c.Param("date")
 	if date == "" {
-		ret.Code = -1
-		ret.Msg = "missing date parameter"
-		return
+		return nil, fmt.Errorf("missing date parameter")
 	}
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
-		return
-	}
-
-	ledgerID, ok := arg["ledger_id"].(string)
-	if !ok || ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 
 	data, ok := arg["data"].(string)
 	if !ok || data == "" {
-		ret.Code = -1
-		ret.Msg = "invalid image data"
-		return
+		return nil, fmt.Errorf("invalid image data")
 	}
 
 	filename, _ := arg["filename"].(string)
 
-	image, err := service.GetKeyEventImageService().AddImage(ws, date, data, filename)
+	image, err := h.KeyEventImgSvc.AddImage(ws, date, data, filename)
 	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+		return nil, err
 	}
-
-	ret.Data = image.ID
+	return image.ID, nil
 }
 
 // DELETE /api/v1/key-event-images/:id
-func deleteKeyEventImage(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteKeyEventImage(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	imageId := c.Param("id")
 	if imageId == "" {
-		ret.Code = -1
-		ret.Msg = "missing image id parameter"
-		return
+		return nil, fmt.Errorf("missing image id parameter")
 	}
 
-	ledgerID := c.Query("ledger_id")
-	if ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "ledger_id is required"
-		return
+	if err := h.KeyEventImgSvc.DeleteImage(ws, imageId); err != nil {
+		return nil, err
 	}
-
-	if err := service.GetKeyEventImageService().DeleteImage(ws, imageId); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
+	return nil, nil
 }

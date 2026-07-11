@@ -10,12 +10,14 @@ import (
 )
 
 // POST /workspace
-func openWorkspace(c *gin.Context) {
+func (h *Handlers) openWorkspace(c *gin.Context) {
 	ret := models.NewResult()
 	defer c.JSON(http.StatusOK, ret)
 
-	arg, ok := JsonArg(c, ret)
+	arg, ok := JsonArg(c)
 	if !ok {
+		ret.Code = -1
+		ret.Msg = "parses request failed"
 		return
 	}
 

@@ -11,11 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var chartSvc ChartService
-
-func SetChartService(svc ChartService) { chartSvc = svc }
-func GetChartService() ChartService      { return chartSvc }
-
 func NewChartService() ChartService {
 	return &chartServiceImpl{}
 }

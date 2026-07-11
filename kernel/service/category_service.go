@@ -9,11 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var categorySvc CategoryService
-
-func SetCategoryService(svc CategoryService) { categorySvc = svc }
-func GetCategoryService() CategoryService      { return categorySvc }
-
 func NewCategoryService(tagService TagService) CategoryService {
 	return &categoryServiceImpl{
 		tagService: tagService,

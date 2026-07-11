@@ -2,47 +2,31 @@ package api
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/billadm/ai/provider"
-	"github.com/billadm/dao"
 	"github.com/billadm/models"
 )
 
-var aiConfigDao dao.AiConfigDao
-
-// SetAiConfigDao is called by wire.go.
-func SetAiConfigDao(d dao.AiConfigDao) {
-	aiConfigDao = d
-}
-
 // GET /api/v1/ai/config
-func getAiConfig(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
-	config, err := aiConfigDao.Get(ws(c))
+func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
+	config, err := h.AiConfigDao.Get(ws(c))
 	if err != nil {
-		// Return empty config
 		config = &models.AiConfig{}
 	}
-	// Don't return api_key to the frontend
-	ret.Data = gin.H{
+	return gin.H{
 		"base_url": config.BaseURL,
 		"endpoint": config.Endpoint,
 		"model":    config.Model,
 		"has_key":  config.APIKey != "",
-	}
+	}, nil
 }
 
 // PUT /api/v1/ai/config
-func updateAiConfig(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	var req struct {
 		BaseURL  string `json:"base_url"`
 		Endpoint string `json:"endpoint"`
@@ -50,9 +34,7 @@ func updateAiConfig(c *gin.Context) {
 		Model    string `json:"model"`
 	}
 	if err := c.BindJSON(&req); err != nil {
-		ret.Code = -1
-		ret.Msg = "invalid request: " + err.Error()
-		return
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	config := &models.AiConfig{
@@ -63,25 +45,20 @@ func updateAiConfig(c *gin.Context) {
 	if req.APIKey != "" {
 		config.APIKey = req.APIKey
 	} else {
-		// Preserve existing key when not provided
-		existing, err := aiConfigDao.Get(ws(c))
+		existing, err := h.AiConfigDao.Get(ws(c))
 		if err == nil {
 			config.APIKey = existing.APIKey
 		}
 	}
 
-	if err := aiConfigDao.Save(ws(c), config); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.AiConfigDao.Save(ws(c), config); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // POST /api/v1/ai/config/test
-func testAiConnection(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 	var req struct {
 		BaseURL  string `json:"base_url"`
 		Endpoint string `json:"endpoint"`
@@ -89,15 +66,12 @@ func testAiConnection(c *gin.Context) {
 		Model    string `json:"model"`
 	}
 	if err := c.BindJSON(&req); err != nil {
-		ret.Code = -1
-		ret.Msg = "invalid request: " + err.Error()
-		return
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	apiKey := req.APIKey
 	if apiKey == "" {
-		// Fall back to stored key when not provided
-		existing, err := aiConfigDao.Get(ws(c))
+		existing, err := h.AiConfigDao.Get(ws(c))
 		if err == nil {
 			apiKey = existing.APIKey
 		}
@@ -110,9 +84,7 @@ func testAiConnection(c *gin.Context) {
 	case "/chat/completions":
 		p = provider.NewOpenAIProvider(req.BaseURL, apiKey, req.Model)
 	default:
-		ret.Code = -1
-		ret.Msg = "不支持的端点"
-		return
+		return nil, fmt.Errorf("不支持的端点")
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
@@ -124,54 +96,37 @@ func testAiConnection(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		ret.Code = -1
-		ret.Msg = "连接失败: " + err.Error()
-		return
+		return nil, fmt.Errorf("连接失败: %w", err)
 	}
 
-	// Consume the first event to verify the connection
 	for event := range eventCh {
 		if event.Type == "error" {
-			ret.Code = -1
-			ret.Msg = event.Error.Error()
-			return
+			return nil, event.Error
 		}
 		if event.Type == "text_delta" || event.Type == "done" {
-			ret.Data = gin.H{"message": "连接成功"}
-			return
+			return gin.H{"message": "连接成功"}, nil
 		}
 	}
 
-	ret.Data = gin.H{"message": "连接成功"}
+	return gin.H{"message": "连接成功"}, nil
 }
 
 // GET /api/v1/ai/messages
-func listAiMessages(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
-	messageDao := dao.NewAiMessageDao()
-	msgs, err := messageDao.ListRecent(ws(c), "default", 30)
+func (h *Handlers) listAiMessages(c *gin.Context) (any, error) {
+	msgs, err := h.AiMessageDao.ListRecent(ws(c), "default", 30)
 	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+		return nil, err
 	}
 	if msgs == nil {
 		msgs = make([]*models.AiMessage, 0)
 	}
-	ret.Data = msgs
+	return msgs, nil
 }
 
 // DELETE /api/v1/ai/messages
-func clearAiMessages(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
-	messageDao := dao.NewAiMessageDao()
-	if err := messageDao.DeleteAll(ws(c), "default"); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+func (h *Handlers) clearAiMessages(c *gin.Context) (any, error) {
+	if err := h.AiMessageDao.DeleteAll(ws(c), "default"); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }

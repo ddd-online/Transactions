@@ -4,25 +4,19 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/pkg/operator"
 	"github.com/billadm/util"
+	"github.com/billadm/util/set"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
-var trSvc TransactionRecordService
-
-func SetTrService(svc TransactionRecordService) { trSvc = svc }
-func GetTrService() TransactionRecordService      { return trSvc }
-
-func NewTrService(trDao dao.TransactionRecordDao, trTagDao dao.TrTagDao) TransactionRecordService {
+func NewTrService(keyEventSvc KeyEventService) TransactionRecordService {
 	return &transactionRecordServiceImpl{
-		trDao:    trDao,
-		trTagDao: trTagDao,
+		keyEventSvc: keyEventSvc,
 	}
 }
 
@@ -40,9 +34,148 @@ type TransactionRecordService interface {
 var _ TransactionRecordService = &transactionRecordServiceImpl{}
 
 type transactionRecordServiceImpl struct {
-	trDao    dao.TransactionRecordDao
-	trTagDao dao.TrTagDao
+	keyEventSvc KeyEventService
 }
+
+// ---- internal GORM helpers (merged from dao package) ----
+
+// createTrRecord inserts a single transaction record.
+func createTrRecord(ws *workspace.Workspace, record *models.TransactionRecord) error {
+	return ws.GetDb().Create(record).Error
+}
+
+// queryTrsOnConditionRaw queries transaction records with basic filters (ledger, time range, type).
+func queryTrsOnConditionRaw(ws *workspace.Workspace, condition *dto.TrQueryCondition) ([]*models.TransactionRecord, error) {
+	trs := make([]*models.TransactionRecord, 0)
+	db := ws.GetDb().Where("ledger_id = ?", condition.LedgerID)
+	db = db.Order("transaction_at desc, transaction_type asc, category desc, price desc")
+	if len(condition.TsRange) == 2 {
+		db = db.Where("transaction_at >= ?", condition.TsRange[0]).Where("transaction_at <= ?", condition.TsRange[1])
+	}
+	ttSet := set.New[string]()
+	for _, item := range condition.Items {
+		ttSet.Add(item.TransactionType)
+	}
+	if ttSet.Size() > 0 {
+		db = db.Where("transaction_type IN (?)", ttSet.Values())
+	}
+	db = db.Find(&trs)
+	if err := db.Error; err != nil {
+		return nil, err
+	}
+	return trs, nil
+}
+
+// queryTrById queries a single transaction by ID.
+func queryTrById(ws *workspace.Workspace, trId string) (*models.TransactionRecord, error) {
+	var tr models.TransactionRecord
+	if err := ws.GetDb().Where("transaction_id = ?", trId).First(&tr).Error; err != nil {
+		return nil, err
+	}
+	return &tr, nil
+}
+
+// deleteTrById deletes a single transaction record by ID.
+func deleteTrById(ws *workspace.Workspace, trId string) error {
+	return ws.GetDb().Where("transaction_id = ?", trId).Delete(&models.TransactionRecord{}).Error
+}
+
+// updateKeyEventDate updates the key_event_date column for a transaction.
+func updateKeyEventDate(ws *workspace.Workspace, trId string, date string) error {
+	result := ws.GetDb().
+		Model(&models.TransactionRecord{}).
+		Where("transaction_id = ?", trId).
+		Update("key_event_date", date)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// queryByKeyEventDate queries transactions linked to a specific key event date.
+func queryByKeyEventDate(ws *workspace.Workspace, date string) ([]*models.TransactionRecord, error) {
+	trs := make([]*models.TransactionRecord, 0)
+	err := ws.GetDb().
+		Where("key_event_date = ?", date).
+		Order("transaction_at desc").
+		Find(&trs).Error
+	return trs, err
+}
+
+// countTrByLedgerId counts transactions for a ledger.
+func countTrByLedgerId(ws *workspace.Workspace, ledgerId string) (int64, error) {
+	var count int64
+	err := ws.GetDb().Model(&models.TransactionRecord{}).Where("ledger_id = ?", ledgerId).Count(&count).Error
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
+}
+
+// deleteAllTrByLedgerId deletes all transactions for a ledger.
+func deleteAllTrByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.TransactionRecord{}).Error
+}
+
+// listAllTrByLedgerId lists all transactions for a ledger.
+func listAllTrByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*models.TransactionRecord, error) {
+	trs := make([]*models.TransactionRecord, 0)
+	if err := ws.GetDb().
+		Where("ledger_id = ?", ledgerId).
+		Order("transaction_at desc, category desc").
+		Find(&trs).Error; err != nil {
+		return nil, err
+	}
+	return trs, nil
+}
+
+// ---- TrTag helpers (merged from dao package) ----
+
+// createTrTags inserts multiple TrTag records.
+func createTrTags(ws *workspace.Workspace, tags []*models.TrTag) error {
+	if len(tags) <= 0 {
+		return nil
+	}
+	return ws.GetDb().Create(tags).Error
+}
+
+// deleteTrTagByTrId deletes all tags for a transaction.
+func deleteTrTagByTrId(ws *workspace.Workspace, trId string) error {
+	return ws.GetDb().Delete(&models.TrTag{}, "transaction_id = ?", trId).Error
+}
+
+// deleteTrTagByLedgerId deletes all tags for a ledger.
+func deleteTrTagByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Delete(&models.TrTag{}, "ledger_id = ?", ledgerId).Error
+}
+
+// deleteTrTagByTag deletes all tag entries for a specific tag name within a ledger.
+func deleteTrTagByTag(ws *workspace.Workspace, ledgerId string, tag string) error {
+	return ws.GetDb().
+		Where("ledger_id = ? AND tag = ?", ledgerId, tag).
+		Delete(&models.TrTag{}).Error
+}
+
+// queryTrTagsByTrIds batch queries tags for multiple transaction IDs.
+func queryTrTagsByTrIds(ws *workspace.Workspace, trIds []string) (map[string][]*models.TrTag, error) {
+	if len(trIds) == 0 {
+		return make(map[string][]*models.TrTag), nil
+	}
+	trTags := make([]*models.TrTag, 0)
+	if err := ws.GetDb().Where("transaction_id IN ?", trIds).Find(&trTags).Error; err != nil {
+		return nil, err
+	}
+	result := make(map[string][]*models.TrTag)
+	for _, tag := range trTags {
+		result[tag.TransactionID] = append(result[tag.TransactionID], tag)
+	}
+	return result, nil
+}
+
+// ---- Service methods ----
 
 // CreateTr creates a transaction record and its tags in a single transaction.
 func (t *transactionRecordServiceImpl) CreateTr(ws *workspace.Workspace, trDto *dto.TransactionRecordDto) (string, error) {
@@ -53,9 +186,8 @@ func (t *transactionRecordServiceImpl) CreateTr(ws *workspace.Workspace, trDto *
 	record := trDto.ToTransactionRecord()
 	record.TransactionID = transactionID
 
-	// Use transaction for atomicity
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
-		if err := t.trDao.CreateTr(tx, record); err != nil {
+		if err := createTrRecord(tx, record); err != nil {
 			return fmt.Errorf("create transaction record: %w", err)
 		}
 
@@ -68,7 +200,7 @@ func (t *transactionRecordServiceImpl) CreateTr(ws *workspace.Workspace, trDto *
 			}
 			trTags = append(trTags, trTag)
 		}
-		if err := t.trTagDao.CreateTrTags(tx, trTags); err != nil {
+		if err := createTrTags(tx, trTags); err != nil {
 			return fmt.Errorf("create tr tags: %w", err)
 		}
 		return nil
@@ -93,7 +225,6 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 
 	successCount := 0
 
-	// Use transaction for atomicity
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
 		for _, trDto := range dtos {
 			transactionID := util.GetUUID()
@@ -101,7 +232,7 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 			record := trDto.ToTransactionRecord()
 			record.TransactionID = transactionID
 
-			if err := t.trDao.CreateTr(tx, record); err != nil {
+			if err := createTrRecord(tx, record); err != nil {
 				logrus.Errorf("batch create: create transaction record failed: %v", err)
 				return fmt.Errorf("create transaction record: %w", err)
 			}
@@ -115,7 +246,7 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 				}
 				trTags = append(trTags, trTag)
 			}
-			if err := t.trTagDao.CreateTrTags(tx, trTags); err != nil {
+			if err := createTrTags(tx, trTags); err != nil {
 				logrus.Errorf("batch create: create tr tags failed: %v", err)
 				return fmt.Errorf("create tr tags: %w", err)
 			}
@@ -134,7 +265,6 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 	return successCount, nil
 }
 
-// convertSortFields converts DTO sort fields to operator sort fields
 func convertSortFields(dtoSortFields []dto.QueryConditionSortField) []operator.SortField {
 	if len(dtoSortFields) == 0 {
 		return []operator.SortField{
@@ -158,23 +288,20 @@ func convertSortFields(dtoSortFields []dto.QueryConditionSortField) []operator.S
 func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspace, condition *dto.TrQueryCondition) (*dto.TrQueryResult, error) {
 	logrus.Infof("start to query trs, condition: %#v", condition)
 
-	// Query all matching transaction records
-	trs, err := t.trDao.QueryTrsOnCondition(ws, condition)
+	trs, err := queryTrsOnConditionRaw(ws, condition)
 	if err != nil {
 		return nil, err
 	}
 
-	// Batch query all tags in a single query (fixes N+1 problem)
 	trIds := make([]string, len(trs))
 	for i, tr := range trs {
 		trIds[i] = tr.TransactionID
 	}
-	tagMap, err := t.trTagDao.QueryTrTagsByTrIds(ws, trIds)
+	tagMap, err := queryTrTagsByTrIds(ws, trIds)
 	if err != nil {
 		return nil, err
 	}
 
-	// Assemble DTOs
 	trDtos := make([]*dto.TransactionRecordDto, 0, len(trs))
 	for _, tr := range trs {
 		trDto := &dto.TransactionRecordDto{}
@@ -187,7 +314,6 @@ func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspa
 		trDtos = append(trDtos, trDto)
 	}
 
-	// Filter, sort, paginate and summarize
 	sortFields := convertSortFields(condition.SortFields)
 	summary := operator.NewTrOperator().
 		Add(trDtos).
@@ -203,14 +329,12 @@ func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspa
 func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace, req *dto.ChartQueryRequest) (*dto.ChartQueryResponse, error) {
 	logrus.Infof("start to query trs for chart, granularity: %s, lines: %d", req.Granularity, len(req.Lines))
 
-	// Collect all transaction types needed for chart lines
 	ttSet := make(map[string]bool)
 	for _, line := range req.Lines {
 		ttSet[line.TransactionType] = true
 	}
 
-	// Query all matching transaction records from DAO (without detailed filter)
-	trs, err := t.trDao.QueryTrsOnCondition(ws, &dto.TrQueryCondition{
+	trs, err := queryTrsOnConditionRaw(ws, &dto.TrQueryCondition{
 		LedgerID: req.LedgerID,
 		TsRange:  req.TsRange,
 	})
@@ -218,17 +342,15 @@ func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace,
 		return nil, err
 	}
 
-	// Batch query tags
 	trIds := make([]string, len(trs))
 	for i, tr := range trs {
 		trIds[i] = tr.TransactionID
 	}
-	tagMap, err := t.trTagDao.QueryTrTagsByTrIds(ws, trIds)
+	tagMap, err := queryTrTagsByTrIds(ws, trIds)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build DTOs with tags
 	trDtos := make([]*dto.TransactionRecordDto, 0, len(trs))
 	for _, tr := range trs {
 		trDto := &dto.TransactionRecordDto{}
@@ -241,13 +363,11 @@ func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace,
 		trDtos = append(trDtos, trDto)
 	}
 
-	// Process each chart line - filter records per line
 	response := &dto.ChartQueryResponse{
 		Lines: make([]dto.ChartLineData, 0, len(req.Lines)),
 	}
 
 	for _, line := range req.Lines {
-		// Filter by transaction type and outlier flag first
 		var filtered []*dto.TransactionRecordDto
 		for _, tr := range trDtos {
 			if tr.TransactionType != line.TransactionType {
@@ -259,8 +379,6 @@ func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace,
 			filtered = append(filtered, tr)
 		}
 
-		// Apply conditions with OR logic using TrOperator
-		// TrOperator.Filter uses OR between conditions (any condition matches)
 		filtered = operator.NewTrOperator().
 			Add(filtered).
 			Filter(line.Conditions).
@@ -281,12 +399,11 @@ func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace,
 func (t *transactionRecordServiceImpl) DeleteTrById(ws *workspace.Workspace, trId string) error {
 	logrus.Infof("start to delete transaction record, tr id: %s", trId)
 
-	// Use transaction for atomicity
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
-		if err := t.trTagDao.DeleteTrTagByTrId(tx, trId); err != nil {
+		if err := deleteTrTagByTrId(tx, trId); err != nil {
 			return fmt.Errorf("delete tr tags: %w", err)
 		}
-		if err := t.trDao.DeleteTrById(tx, trId); err != nil {
+		if err := deleteTrById(tx, trId); err != nil {
 			return fmt.Errorf("delete transaction record: %w", err)
 		}
 		return nil
@@ -305,7 +422,7 @@ func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, t
 	logrus.Infof("link transaction %s to key event date %s", trId, date)
 
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
-		tr, err := t.trDao.QueryById(tx, trId)
+		tr, err := queryTrById(tx, trId)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("transaction not found: %s", trId)
@@ -313,20 +430,20 @@ func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, t
 			return fmt.Errorf("query transaction: %w", err)
 		}
 
-		if err := t.trDao.UpdateKeyEventDate(tx, trId, date); err != nil {
+		if err := updateKeyEventDate(tx, trId, date); err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("transaction not found: %s", trId)
 			}
 			return fmt.Errorf("update key event date: %w", err)
 		}
 
-		keyEventSvc := GetKeyEventService()
-		_, keyErr := keyEventSvc.QueryByDate(tx, tr.LedgerID, date)
+		// Use injected keyEventSvc instead of global GetKeyEventService()
+		_, keyErr := t.keyEventSvc.QueryByDate(tx, tr.LedgerID, date)
 		if keyErr != nil && !errors.Is(keyErr, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("check key event: %w", keyErr)
 		}
 		if keyErr != nil && errors.Is(keyErr, gorm.ErrRecordNotFound) {
-			upsertErr := keyEventSvc.UpsertKeyEvent(tx, tr.LedgerID, date, "", "", "")
+			upsertErr := t.keyEventSvc.UpsertKeyEvent(tx, tr.LedgerID, date, "", "", "")
 			if upsertErr != nil {
 				return fmt.Errorf("auto-create key event: %w", upsertErr)
 			}
@@ -347,7 +464,7 @@ func (t *transactionRecordServiceImpl) LinkToKeyEvent(ws *workspace.Workspace, t
 func (t *transactionRecordServiceImpl) UnlinkFromKeyEvent(ws *workspace.Workspace, trId string) error {
 	logrus.Infof("unlink transaction %s from key event", trId)
 
-	if err := t.trDao.UpdateKeyEventDate(ws, trId, ""); err != nil {
+	if err := updateKeyEventDate(ws, trId, ""); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("transaction not found: %s", trId)
 		}
@@ -361,7 +478,7 @@ func (t *transactionRecordServiceImpl) UnlinkFromKeyEvent(ws *workspace.Workspac
 func (t *transactionRecordServiceImpl) QueryLinkedByDate(ws *workspace.Workspace, date string) ([]*dto.TransactionRecordDto, error) {
 	logrus.Infof("query linked transactions for date %s", date)
 
-	trs, err := t.trDao.QueryByKeyEventDate(ws, date)
+	trs, err := queryByKeyEventDate(ws, date)
 	if err != nil {
 		return nil, fmt.Errorf("query by key event date: %w", err)
 	}
@@ -370,7 +487,7 @@ func (t *transactionRecordServiceImpl) QueryLinkedByDate(ws *workspace.Workspace
 	for i, tr := range trs {
 		trIds[i] = tr.TransactionID
 	}
-	tagMap, err := t.trTagDao.QueryTrTagsByTrIds(ws, trIds)
+	tagMap, err := queryTrTagsByTrIds(ws, trIds)
 	if err != nil {
 		return nil, fmt.Errorf("query tr tags: %w", err)
 	}

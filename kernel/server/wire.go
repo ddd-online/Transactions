@@ -9,52 +9,47 @@ import (
 )
 
 // InitServices creates all service instances and wires them together.
+// Returns the Handlers struct ready to be passed to api.ServeAPI.
 // This is the compose root for the application.
-// Must be called once before the server starts.
-func InitServices() {
-	// DAOs (bottom layer)
-	trDao := dao.NewTransactionRecordDao()
-	trTagDao := dao.NewTrTagDao()
-
+func InitServices() *api.Handlers {
 	// Services with no dependencies
 	keyEventImageSvc := service.NewKeyEventImageService()
 	chartSvc := service.NewChartService()
 	trTemplateSvc := service.NewTrTemplateService()
-
-	// Services that depend on DAOs
-	tagSvc := service.NewTagService(trTagDao)
-	ledgerSvc := service.NewLedgerService(trDao, trTagDao)
-	trSvc := service.NewTrService(trDao, trTagDao)
+	ledgerSvc := service.NewLedgerService()
+	tagSvc := service.NewTagService()
 
 	// Services that depend on other services
 	categorySvc := service.NewCategoryService(tagSvc)
 	keyEventSvc := service.NewKeyEventService(keyEventImageSvc)
-
-	// Wire into package-level accessors
-	service.SetLedgerService(ledgerSvc)
-	service.SetTrService(trSvc)
-	service.SetCategoryService(categorySvc)
-	service.SetTagService(tagSvc)
-	service.SetChartService(chartSvc)
-	service.SetKeyEventService(keyEventSvc)
-	service.SetKeyEventImageService(keyEventImageSvc)
-	service.SetTrTemplateService(trTemplateSvc)
+	trSvc := service.NewTrService(keyEventSvc)
 
 	// ---- AI module ----
 	aiConfigDao := dao.NewAiConfigDao()
 	aiMessageDao := dao.NewAiMessageDao()
 	aiToolRegistry := tool.NewToolRegistry()
 
-	// Register 5 read-only tools
-	aiToolRegistry.Register(tool.NewQueryTransactionsTool())
-	aiToolRegistry.Register(tool.NewListLedgersTool())
-	aiToolRegistry.Register(tool.NewListCategoriesTool())
-	aiToolRegistry.Register(tool.NewListTagsTool())
-	aiToolRegistry.Register(tool.NewGetKeyEventsTool())
+	// Register tools with injected service interfaces
+	aiToolRegistry.Register(tool.NewQueryTransactionsTool(trSvc))
+	aiToolRegistry.Register(tool.NewListLedgersTool(ledgerSvc))
+	aiToolRegistry.Register(tool.NewListCategoriesTool(categorySvc))
+	aiToolRegistry.Register(tool.NewListTagsTool(tagSvc))
+	aiToolRegistry.Register(tool.NewGetKeyEventsTool(keyEventSvc))
+	aiToolRegistry.Register(tool.NewQueryChartDataTool(trSvc))
 
 	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry)
 
-	// Wire into API package
-	api.SetChatService(aiChatService)
-	api.SetAiConfigDao(aiConfigDao)
+	return &api.Handlers{
+		LedgerSvc:      ledgerSvc,
+		TrSvc:          trSvc,
+		CategorySvc:    categorySvc,
+		TagSvc:         tagSvc,
+		ChartSvc:       chartSvc,
+		KeyEventSvc:    keyEventSvc,
+		KeyEventImgSvc: keyEventImageSvc,
+		TrTemplateSvc:  trTemplateSvc,
+		ChatService:    aiChatService,
+		AiConfigDao:    aiConfigDao,
+		AiMessageDao:   aiMessageDao,
+	}
 }

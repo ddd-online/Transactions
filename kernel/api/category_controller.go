@@ -1,148 +1,112 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/service"
 )
 
 // GET /categories?type=all|income|expense|transfer&ledgerId=xxx
-func listCategories(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listCategories(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	trType := c.Query("type")
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		ret.Data = make([]dto.CategoryDto, 0)
-		return
+		return make([]dto.CategoryDto, 0), nil
 	}
 
-	categories, err := service.GetCategoryService().QueryCategory(ws, ledgerId, trType)
+	categories, err := h.CategorySvc.QueryCategory(ws, ledgerId, trType)
 	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+		return nil, err
 	}
 
 	categoryDtos := make([]dto.CategoryDto, 0)
 	for _, category := range categories {
 		categoryDto := dto.CategoryDto{}
 		categoryDto.FromCategory(&category)
-		// Count records for this category
-		count, err := service.GetCategoryService().CountRecordsByCategory(ws, ledgerId, category.Name)
+		count, err := h.CategorySvc.CountRecordsByCategory(ws, ledgerId, category.Name)
 		if err == nil {
 			categoryDto.RecordCount = int(count)
 		}
 		categoryDtos = append(categoryDtos, categoryDto)
 	}
 
-	ret.Data = categoryDtos
+	return categoryDtos, nil
 }
 
 // POST /categories
-func createCategory(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) createCategory(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	var req dto.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ret.Code = -1
-		ret.Msg = "Invalid request: " + err.Error()
-		return
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	if err := service.GetCategoryService().CreateCategory(ws, req.LedgerID, req.Name, req.TransactionType); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.CategorySvc.CreateCategory(ws, req.LedgerID, req.Name, req.TransactionType); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // DELETE /categories/:name
-func deleteCategory(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteCategory(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	name := c.Param("name")
 	transactionType := c.Query("type")
 	ledgerID := c.Query("ledgerId")
 	if name == "" || transactionType == "" || ledgerID == "" {
-		ret.Code = -1
-		ret.Msg = "Missing required parameters"
-		return
+		return nil, fmt.Errorf("missing required parameters")
 	}
 
-	if err := service.GetCategoryService().DeleteCategory(ws, ledgerID, name, transactionType); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.CategorySvc.DeleteCategory(ws, ledgerID, name, transactionType); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // PATCH /categories/:name/sort
-func updateCategorySort(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) updateCategorySort(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	name := c.Param("name")
 	var req dto.UpdateCategorySortRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ret.Code = -1
-		ret.Msg = "Invalid request: " + err.Error()
-		return
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	if err := service.GetCategoryService().UpdateCategorySort(ws, req.LedgerID, name, req.TransactionType, req.SortOrder); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.CategorySvc.UpdateCategorySort(ws, req.LedgerID, name, req.TransactionType, req.SortOrder); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // POST /categories/initialize
-func initializeCategories(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) initializeCategories(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	var req struct {
 		LedgerID string `json:"ledgerId"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ret.Code = -1
-		ret.Msg = "Invalid request: " + err.Error()
-		return
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	if req.LedgerID == "" {
-		ret.Code = -1
-		ret.Msg = "缺少 ledgerId 参数"
-		return
+		return nil, fmt.Errorf("缺少 ledgerId 参数")
 	}
 
-	categoryCount, tagCount, err := service.GetCategoryService().InitializeCategories(ws, req.LedgerID)
+	categoryCount, tagCount, err := h.CategorySvc.InitializeCategories(ws, req.LedgerID)
 	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+		return nil, err
 	}
 
-	ret.Data = dto.InitializeCategoriesResponse{
+	return dto.InitializeCategoriesResponse{
 		Categories: categoryCount,
 		Tags:       tagCount,
-	}
+	}, nil
 }

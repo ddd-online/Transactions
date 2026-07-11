@@ -1,95 +1,60 @@
 package api
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/service"
 )
 
 // POST /templates
-func createTemplate(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) createTemplate(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	templateDto, ok := dto.JsonTransactionTemplateDto(c, ret)
+	templateDto, ok := dto.JsonTransactionTemplateDto(c)
 	if !ok {
-		return
+		return nil, fmt.Errorf("parses request failed")
 	}
 	logrus.Debugf("template dto: %v", templateDto)
 
-	if !templateDto.Validate(ret) {
-		logrus.Errorf("validate transaction template error, err: %v", ret.Msg)
-		return
+	if err := templateDto.Validate(); err != nil {
+		return nil, err
 	}
 
-	templateId, err := service.GetTrTemplateService().Create(ws, templateDto)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = templateId
+	return h.TrTemplateSvc.Create(ws, templateDto)
 }
 
 // GET /templates
-func listTemplates(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) listTemplates(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		ret.Code = -1
-		ret.Msg = "missing ledgerId"
-		return
+		return nil, fmt.Errorf("missing ledgerId")
 	}
 
-	templates, err := service.GetTrTemplateService().ListByLedgerId(ws, ledgerId)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
-	}
-
-	ret.Data = templates
+	return h.TrTemplateSvc.ListByLedgerId(ws, ledgerId)
 }
 
 // DELETE /templates/:id
-func deleteTemplate(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) deleteTemplate(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	id := c.Param("id")
 	if id == "" {
-		ret.Code = -1
-		ret.Msg = "missing template id"
-		return
+		return nil, fmt.Errorf("missing template id")
 	}
 
-	err := service.GetTrTemplateService().DeleteById(ws, id)
-	if err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.TrTemplateSvc.DeleteById(ws, id); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
 
 // PATCH /templates/:id/sort
-func updateTemplateSort(c *gin.Context) {
-	ret := models.NewResult()
-	defer c.JSON(http.StatusOK, ret)
-
+func (h *Handlers) updateTemplateSort(c *gin.Context) (any, error) {
 	ws := ws(c)
 
 	id := c.Param("id")
@@ -98,14 +63,11 @@ func updateTemplateSort(c *gin.Context) {
 		SortOrder int    `json:"sortOrder"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		ret.Code = -1
-		ret.Msg = "Invalid request: " + err.Error()
-		return
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	if err := service.GetTrTemplateService().UpdateSortOrder(ws, id, req.LedgerID, req.SortOrder); err != nil {
-		ret.Code = -1
-		ret.Msg = err.Error()
-		return
+	if err := h.TrTemplateSvc.UpdateSortOrder(ws, id, req.LedgerID, req.SortOrder); err != nil {
+		return nil, err
 	}
+	return nil, nil
 }
