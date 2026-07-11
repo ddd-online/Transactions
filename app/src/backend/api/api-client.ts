@@ -48,6 +48,9 @@ function extractErrorMessage(error: unknown, errorPrefix?: string): string {
     if (axios.isAxiosError(error)) {
         const backendMsg = (error.response?.data as Result)?.msg;
         if (backendMsg) {
+            if (backendMsg === '未打开工作空间') {
+                window.dispatchEvent(new CustomEvent('workspace-required'));
+            }
             return `${errorPrefix || '请求失败'}: ${backendMsg}`;
         }
         return `${errorPrefix || '请求失败'}: ${error.message}`;

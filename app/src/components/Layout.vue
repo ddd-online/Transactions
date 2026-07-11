@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, onUnmounted, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
 import { useUpdateStore } from "@/stores/updateStore";
@@ -67,7 +67,18 @@ const initWorkspace = async () => {
   }
 }
 
-onMounted(initWorkspace);
+function onWorkspaceRequired() {
+  showWorkspaceSelect.value = true
+}
+
+onMounted(() => {
+  initWorkspace()
+  window.addEventListener('workspace-required', onWorkspaceRequired)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('workspace-required', onWorkspaceRequired)
+})
 </script>
 
 <style scoped>
