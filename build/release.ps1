@@ -96,8 +96,8 @@ try {
     $tagName = "v$version"
 
     if ($Body) {
-        # 使用传入的 body
-        $releaseBody = $Body
+        # 使用传入的 body，将 \n 转义为实际换行符
+        $releaseBody = $Body -replace '\\n', "`n"
         Write-Success "使用传入的发布说明"
     } else {
         # 先拉取远程 tag，确保本地有最新的 tag 列表
