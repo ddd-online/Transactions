@@ -236,15 +236,9 @@ async function sendMessage() {
   inputText.value = ''
   resetTextareaHeight()
 
-  // Create assistant placeholder (streaming)
-  const assistantMsg: ChatMessage = {
-    id: nextMsgId(),
-    role: 'assistant',
-    content: '',
-    timestamp: Date.now(),
-    streaming: true,
-  }
-  messages.value.push(assistantMsg)
+  // Assistant message is created lazily on first text_delta,
+  // so tool_call events (if any) appear before the assistant bubble.
+  const assistantMsgRef: { current: ChatMessage | null } = { current: null }
   streaming.value = true
   userScrolledUp = false
 
@@ -297,7 +291,7 @@ async function sendMessage() {
           // End of event
           try {
             const event: SSEEvent = JSON.parse(currentData)
-            handleSSEEvent(event, assistantMsg)
+            handleSSEEvent(event, assistantMsgRef)
           } catch {
             // skip malformed JSON
           }
@@ -312,7 +306,7 @@ async function sendMessage() {
       if (remaining) {
         try {
           const event: SSEEvent = JSON.parse(remaining)
-          handleSSEEvent(event, assistantMsg)
+          handleSSEEvent(event, assistantMsgRef)
         } catch {
           // skip
         }
@@ -320,34 +314,57 @@ async function sendMessage() {
     }
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      // User cancelled — finalize current assistant message
-      assistantMsg.streaming = false
-      assistantMsg.content += ' [已停止]'
+      if (assistantMsgRef.current) {
+        assistantMsgRef.current.content += ' [已停止]'
+      }
     } else {
-      // Error
-      assistantMsg.streaming = false
-      if (!assistantMsg.content) {
-        assistantMsg.content = `错误: ${err.message || '请求失败'}`
+      if (!assistantMsgRef.current) {
+        messages.value.push({
+          id: nextMsgId(),
+          role: 'assistant',
+          content: `错误: ${err.message || '请求失败'}`,
+          timestamp: Date.now(),
+        })
+      } else if (!assistantMsgRef.current.content) {
+        assistantMsgRef.current.content = `错误: ${err.message || '请求失败'}`
       } else {
-        assistantMsg.content += `\n\n[错误: ${err.message || '请求失败'}]`
+        assistantMsgRef.current.content += `\n\n[错误: ${err.message || '请求失败'}]`
       }
       console.error('AI chat error:', err)
     }
   } finally {
     streaming.value = false
     abortController = null
-    assistantMsg.streaming = false
+    if (assistantMsgRef.current) {
+      assistantMsgRef.current.streaming = false
+    }
     await nextTick()
     scrollToBottom()
   }
 }
 
-function handleSSEEvent(event: SSEEvent, assistantMsg: ChatMessage) {
+function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage | null }) {
+  const ensureAssistant = (): ChatMessage => {
+    if (!assistantMsgRef.current) {
+      assistantMsgRef.current = {
+        id: nextMsgId(),
+        role: 'assistant',
+        content: '',
+        timestamp: Date.now(),
+        streaming: true,
+      }
+      messages.value.push(assistantMsgRef.current)
+    }
+    return assistantMsgRef.current
+  }
+
   switch (event.type) {
-    case 'text_delta':
-      assistantMsg.content += event.delta || ''
+    case 'text_delta': {
+      const msg = ensureAssistant()
+      msg.content += event.delta || ''
       scrollToBottom()
       break
+    }
 
     case 'tool_call': {
       // Create a tool card in "executing" state
@@ -378,12 +395,16 @@ function handleSSEEvent(event: SSEEvent, assistantMsg: ChatMessage) {
     }
 
     case 'done':
-      assistantMsg.tokens = event.total_tokens
+      if (assistantMsgRef.current) {
+        assistantMsgRef.current.tokens = event.total_tokens
+      }
       break
 
-    case 'error':
-      assistantMsg.content += event.message || event.error || '未知错误'
+    case 'error': {
+      const msg = ensureAssistant()
+      msg.content += event.message || event.error || '未知错误'
       break
+    }
   }
 }
 
