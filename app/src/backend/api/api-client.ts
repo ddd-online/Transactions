@@ -82,6 +82,20 @@ const api = {
         }
     },
 
+    async put<T = any>(url: string, data: object = {}, errorPrefix?: string): Promise<T> {
+        try {
+            const client = await getApiClient();
+            const response: AxiosResponse<Result<T>> = await client.put(url, data);
+            checkSuccess(response.data, errorPrefix);
+            return response.data.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                throw new Error(`${errorPrefix || '请求失败'}: ${error.message}`);
+            }
+            throw error;
+        }
+    },
+
     async delete<T = any>(url: string, errorPrefix?: string): Promise<T> {
         try {
             const client = await getApiClient();

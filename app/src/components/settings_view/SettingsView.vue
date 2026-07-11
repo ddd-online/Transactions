@@ -32,6 +32,15 @@
           <InfoCircleOutlined class="nav-icon"/>
           <span class="nav-text">关于</span>
         </button>
+        <button
+          class="nav-item"
+          :class="{ active: activeComponent === 'ai' }"
+          @click="activeComponent = 'ai'"
+          aria-label="AI 助手"
+        >
+          <RobotOutlined class="nav-icon"/>
+          <span class="nav-text">AI 助手</span>
+        </button>
       </nav>
     </aside>
 
@@ -49,11 +58,13 @@ import { ref, computed } from 'vue';
 import {
   FileTextOutlined,
   SettingOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  RobotOutlined
 } from "@ant-design/icons-vue";
 import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
+import AiSetting from './AiSetting.vue';
 
 const activeComponent = ref('general');
 
@@ -61,6 +72,7 @@ const componentMap = {
   'general': GeneralSetting,
   'template': BilladmTemplateSetting,
   'about': AboutSetting,
+  'ai': AiSetting,
 };
 
 const currentComponent = computed(() => {
