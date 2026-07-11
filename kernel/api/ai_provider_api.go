@@ -3,12 +3,23 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// deepSeekError maps HTTP status codes to user-friendly messages.
+func deepSeekError(statusCode int) string {
+	switch statusCode {
+	case http.StatusUnauthorized:
+		return "API Key 无效"
+	case http.StatusForbidden:
+		return "API Key 无权访问"
+	default:
+		return fmt.Sprintf("DeepSeek API 返回 %d", statusCode)
+	}
+}
 
 // POST /api/v1/ai/provider/fetch
 func (h *Handlers) fetchProvider(c *gin.Context) (any, error) {
@@ -98,8 +109,7 @@ func fetchDeepSeekBalance(client *http.Client, apiKey string) (any, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("DeepSeek API 返回 %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%s", deepSeekError(resp.StatusCode))
 	}
 
 	var result deepSeekBalanceResponse
@@ -127,8 +137,7 @@ func fetchDeepSeekModels(client *http.Client, apiKey string) (any, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("DeepSeek API 返回 %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("%s", deepSeekError(resp.StatusCode))
 	}
 
 	var result deepSeekModelsResponse
