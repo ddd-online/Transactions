@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 )
 
@@ -250,27 +251,24 @@ func flushToolCalls(acc map[int]*toolCallAccum, ch chan<- ChatEvent) {
 	if len(acc) == 0 {
 		return
 	}
-	tcs := make([]ToolCall, 0, len(acc))
-	// 按 Index 顺序遍历，确保 tool calls 顺序正确
-	for i := 0; i < len(acc); i++ {
-		a, ok := acc[i]
-		if !ok {
-			continue
-		}
+	// 收集所有索引并排序，确保按顺序发送
+	indices := make([]int, 0, len(acc))
+	for idx := range acc {
+		indices = append(indices, idx)
+	}
+	sort.Ints(indices)
+
+	tcs := make([]ToolCall, 0, len(indices))
+	for _, idx := range indices {
+		accum := acc[idx]
 		var args map[string]any
-		argsStr := a.argsBuilder.String()
-		if argsStr != "" {
-			if err := json.Unmarshal([]byte(argsStr), &args); err != nil {
-				args = make(map[string]any)
-			}
-		} else {
-			args = make(map[string]any)
+		if err := json.Unmarshal([]byte(accum.argsBuilder.String()), &args); err == nil {
+			tcs = append(tcs, ToolCall{
+				ID:        accum.id,
+				Name:      accum.name,
+				Arguments: args,
+			})
 		}
-		tcs = append(tcs, ToolCall{
-			ID:        a.id,
-			Name:      a.name,
-			Arguments: args,
-		})
 	}
 	if len(tcs) > 0 {
 		ch <- ChatEvent{Type: "tool_call", ToolCalls: tcs}
