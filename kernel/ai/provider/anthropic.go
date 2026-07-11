@@ -82,16 +82,29 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 	// 构建 Anthropic 消息
 	messages := make([]anthropicMessage, 0)
 	for _, m := range req.Messages {
-		content := make([]anthropicContentBlock, 0)
-
 		if m.Role == "tool" {
-			// tool result 回传
-			content = append(content, anthropicContentBlock{
+			// Anthropic requires all tool_results in a SINGLE user message
+			// immediately after the assistant message. Merge consecutive
+			// tool results into the same user message.
+			toolBlock := anthropicContentBlock{
 				Type:      "tool_result",
 				ToolUseID: m.ToolCallID,
 				Content:   m.Content,
-			})
-		} else if len(m.ToolCalls) > 0 {
+			}
+			if len(messages) > 0 && messages[len(messages)-1].Role == "user" {
+				messages[len(messages)-1].Content = append(messages[len(messages)-1].Content, toolBlock)
+			} else {
+				messages = append(messages, anthropicMessage{
+					Role:    "user",
+					Content: []anthropicContentBlock{toolBlock},
+				})
+			}
+			continue
+		}
+
+		content := make([]anthropicContentBlock, 0)
+
+		if len(m.ToolCalls) > 0 {
 			// assistant 消息带 tool_calls
 			for _, tc := range m.ToolCalls {
 				content = append(content, anthropicContentBlock{
@@ -108,12 +121,8 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 			})
 		}
 
-		role := m.Role
-		if role == "tool" {
-			role = "user" // Anthropic 要求 tool result 的 role 必须是 user
-		}
 		messages = append(messages, anthropicMessage{
-			Role:    role,
+			Role:    m.Role,
 			Content: content,
 		})
 	}

@@ -25,21 +25,21 @@
         </button>
         <button
           class="nav-item"
-          :class="{ active: activeComponent === 'about' }"
-          @click="activeComponent = 'about'"
-          aria-label="关于"
-        >
-          <InfoCircleOutlined class="nav-icon"/>
-          <span class="nav-text">关于</span>
-        </button>
-        <button
-          class="nav-item"
           :class="{ active: activeComponent === 'ai' }"
           @click="activeComponent = 'ai'"
           aria-label="AI 助手"
         >
           <RobotOutlined class="nav-icon"/>
           <span class="nav-text">AI 助手</span>
+        </button>
+        <button
+          class="nav-item"
+          :class="{ active: activeComponent === 'about' }"
+          @click="activeComponent = 'about'"
+          aria-label="关于"
+        >
+          <InfoCircleOutlined class="nav-icon"/>
+          <span class="nav-text">关于</span>
         </button>
       </nav>
     </aside>
