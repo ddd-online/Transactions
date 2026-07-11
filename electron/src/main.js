@@ -384,7 +384,12 @@ const createMainWindow = () => {
         },
     });
 
-    mainWindow.loadURL(getUiServer());
+    // 清除 HTTP 缓存，确保升级后加载最新前端资源
+    // Chromium 可能在 Cache-Control: no-store 生效前就返回了磁盘缓存的 index.html，
+    // 导致旧 index.html 引用旧 hash 的 JS/CSS 资源，整个 UI 停留在旧版本
+    mainWindow.webContents.session.clearCache().then(() => {
+        mainWindow.loadURL(getUiServer());
+    });
 
     if (isDev) {
         mainWindow.webContents.openDevTools();
