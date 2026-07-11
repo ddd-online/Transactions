@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -20,7 +21,7 @@ const (
 
 工具约束：
 - **金额单位**：所有金额的单位是以分为单位的整数
-- **时间戳**：时间戳单位是**秒**。自Unix纪元以来的秒数
+- **当前账本**：{{CURRENT_LEDGER}}
 
 你的职责：
 - 帮助用户查询和分析交易记录（支出、收入、转账）
@@ -29,12 +30,12 @@ const (
 - 查询关键事件（人生里程碑）
 
 你的原则：
+- 没有用户说明时，仅处理当前账本而不是所有账本
 - 所有数据来自用户自己的数据库，你看到的都是真实数据
 - 如果数据不足以回答问题，诚实告知用户
 - 金额单位是人民币元（¥），回答时保持 2 位小数
-- 回答简洁但完整。先给出结论，再展示细节
-- 当用户的问题模糊时，用工具搜索数据后再回答，不要猜测
-- 回答时减少非必要的Emoji`
+- 回答简洁但完整，少用Emoji。先给出结论，再展示细节
+- 当用户的问题模糊时，用工具搜索数据后再回答，不要猜测`
 
 	MaxToolCallRounds  = 50
 	MaxHistoryMessages = 50
@@ -66,11 +67,11 @@ func NewChatService(configDao dao.AiConfigDao, messageDao dao.AiMessageDao, regi
 }
 
 // Chat 执行一次对话，返回 SSE 事件 channel。
-// ws 用于数据库访问，ledgerID 注入到工具执行 context 中。
-func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerID string, userMessage string) (<-chan SSEEvent, error) {
-	// 带工具执行 workspace 和 ledgerID 的 context
+// ws 用于数据库访问，ledgerName 注入到工具执行 context 中，也用于替换系统提示词中的占位符。
+func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerName string, userMessage string) (<-chan SSEEvent, error) {
+	// 带工具执行 workspace 和 ledgerName 的 context
 	toolCtx := tool.WithWorkspace(ctx, ws)
-	toolCtx = tool.WithLedgerID(toolCtx, ledgerID)
+	toolCtx = tool.WithLedgerName(toolCtx, ledgerName)
 
 	// 加载配置
 	config, err := s.configDao.Get(ws)
@@ -143,6 +144,8 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 			if prompt == "" {
 				prompt = DefaultSystemPrompt
 			}
+			// Replace placeholders with actual values
+			prompt = replacePlaceholders(prompt, ledgerName)
 
 			req := provider.ChatRequest{
 				SystemPrompt: prompt,
@@ -332,4 +335,11 @@ func truncateString(s string) string {
 		return s[:100] + "..."
 	}
 	return s
+}
+
+// replacePlaceholders 替换系统提示词中的占位符为实际值。
+// 当前支持的占位符：{{CURRENT_LEDGER}} → 当前账本名称。
+func replacePlaceholders(prompt string, ledgerName string) string {
+	prompt = strings.ReplaceAll(prompt, "{{CURRENT_LEDGER}}", ledgerName)
+	return prompt
 }

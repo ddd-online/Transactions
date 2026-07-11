@@ -197,7 +197,7 @@ async function sendMessage() {
 
   const baseUrl = await getApiBaseUrl()
   // Pass scroll callback to composable — respects user scroll position
-  await send(text, ledgerStore.currentLedgerId, baseUrl, scrollToBottom)
+  await send(text, ledgerStore.currentLedgerId, ledgerStore.currentLedgerName, baseUrl, scrollToBottom)
 
   await nextTick()
   scrollToBottom()

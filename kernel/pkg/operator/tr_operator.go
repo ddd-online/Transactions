@@ -172,9 +172,14 @@ func (t *TrOperator) Summary() *dto.TrQueryResult {
 
 	// 执行分页
 	var items []*dto.TransactionRecordDto
+	pageSize := t.limit
+	page := 1
+	totalPages := 1
+
 	if t.limit == 0 {
 		// limit=0 表示不分页（或取全部）
 		items = t.trDtos
+		pageSize = len(t.trDtos)
 	} else {
 		start := t.offset
 		end := t.offset + t.limit
@@ -190,11 +195,17 @@ func (t *TrOperator) Summary() *dto.TrQueryResult {
 		} else {
 			items = []*dto.TransactionRecordDto{}
 		}
+
+		page = (t.offset / t.limit) + 1
+		totalPages = (int(total) + t.limit - 1) / t.limit
 	}
 
 	return &dto.TrQueryResult{
 		Items:        items,
 		Total:        total,
+		Page:         page,
+		PageSize:     pageSize,
+		TotalPages:   totalPages,
 		TrStatistics: trStatistics,
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Knetic/govaluate"
 	"github.com/billadm/constant"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
@@ -28,25 +29,82 @@ func getWS(ctx context.Context) (*workspace.Workspace, error) {
 	return ws, nil
 }
 
-type ledgerIDKey struct{}
+type ledgerNameKey struct{}
 
-func WithLedgerID(ctx context.Context, ledgerID string) context.Context {
-	return context.WithValue(ctx, ledgerIDKey{}, ledgerID)
+// WithLedgerName 将当前账本名称注入 context，供工具执行时使用。
+func WithLedgerName(ctx context.Context, ledgerName string) context.Context {
+	return context.WithValue(ctx, ledgerNameKey{}, ledgerName)
 }
 
-func getLedgerID(ctx context.Context, args map[string]any) string {
-	if id, _ := ctx.Value(ledgerIDKey{}).(string); id != "" {
-		return id
+func getLedgerName(ctx context.Context, args map[string]any) string {
+	if name, _ := ctx.Value(ledgerNameKey{}).(string); name != "" {
+		return name
 	}
-	return getStringArg(args, "ledger_id")
+	return getStringArg(args, "ledger_name")
 }
 
-func requireLedgerID(ctx context.Context, args map[string]any) (string, error) {
-	id := getLedgerID(ctx, args)
-	if id == "" {
-		return "", fmt.Errorf("ledger_id is required: pass it as an argument or inject via WithLedgerID")
+// resolveLedgerID 根据账本名称解析 ledger ID。
+// 优先使用 args 中的 ledger_name，其次使用 context 中注入的当前账本名。
+func resolveLedgerID(ctx context.Context, args map[string]any, ledgerSvc service.LedgerService) (string, error) {
+	name := getLedgerName(ctx, args)
+	if name == "" {
+		return "", fmt.Errorf("ledger_name is required: pass it as an argument or set the current ledger")
 	}
-	return id, nil
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
+	ledger, err := ledgerSvc.QueryLedgerByName(ws, name)
+	if err != nil {
+		return "", fmt.Errorf("未找到账本 %q", name)
+	}
+	return ledger.ID, nil
+}
+
+// resolvePeriod 将 period 参数转换为日期范围（start_date, end_date）。
+// 如果传了 start_date/end_date，直接使用；否则按 period 计算；都未传则默认 last_30_days。
+func resolvePeriod(args map[string]any) (string, string) {
+	start := getStringArg(args, "start_date")
+	end := getStringArg(args, "end_date")
+	if start != "" && end != "" {
+		return start, end
+	}
+
+	now := time.Now()
+	period := getStringArg(args, "period")
+	if period == "" {
+		period = "last_30_days"
+	}
+
+	switch period {
+	case "today":
+		today := now.Format("2006-01-02")
+		return today, today
+	case "this_week":
+		weekday := now.Weekday()
+		var offset int
+		if weekday == time.Sunday {
+			offset = 6
+		} else {
+			offset = int(weekday) - 1
+		}
+		monday := now.AddDate(0, 0, -offset)
+		return monday.Format("2006-01-02"), now.Format("2006-01-02")
+	case "this_month":
+		firstDay := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		return firstDay.Format("2006-01-02"), now.Format("2006-01-02")
+	case "last_month":
+		firstDay := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location())
+		lastDay := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Add(-time.Second)
+		return firstDay.Format("2006-01-02"), lastDay.Format("2006-01-02")
+	case "this_year":
+		firstDay := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+		return firstDay.Format("2006-01-02"), now.Format("2006-01-02")
+	case "last_30_days":
+		return now.AddDate(0, 0, -30).Format("2006-01-02"), now.Format("2006-01-02")
+	default:
+		return now.AddDate(0, 0, -30).Format("2006-01-02"), now.Format("2006-01-02")
+	}
 }
 
 func parseDateRange(start, end string) ([]int64, error) {
@@ -68,48 +126,46 @@ func parseDateRange(start, end string) ([]int64, error) {
 // ---- 1. query_transactions ----
 
 type queryTransactionsTool struct {
-	trSvc service.TransactionRecordService
+	trSvc     service.TransactionRecordService
+	ledgerSvc service.LedgerService
 }
 
-func NewQueryTransactionsTool(trSvc service.TransactionRecordService) Tool {
-	return &queryTransactionsTool{trSvc: trSvc}
+func NewQueryTransactionsTool(trSvc service.TransactionRecordService, ledgerSvc service.LedgerService) Tool {
+	return &queryTransactionsTool{trSvc: trSvc, ledgerSvc: ledgerSvc}
 }
 
 func (t *queryTransactionsTool) Name() string { return "query_transactions" }
 func (t *queryTransactionsTool) Description() string {
-	return "查询交易记录。可按日期范围、交易类型(expense/income/transfer)、分类、标签、关键词筛选，支持排序和分页。"
+	return "查询交易记录。支持按时间范围（period 或 start_date/end_date）、交易类型、分类、标签、关键词筛选，支持分页。默认按日期倒序排列。"
 }
 
 func (t *queryTransactionsTool) InputSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ledger_id":   map[string]any{"type": "string", "description": "账本ID（必填）"},
-			"start_date":  map[string]any{"type": "string", "description": "开始日期，格式 YYYY-MM-DD"},
-			"end_date":    map[string]any{"type": "string", "description": "结束日期，格式 YYYY-MM-DD"},
+			"ledger_name": map[string]any{"type": "string", "description": "账本名称（可选，默认使用当前选中账本）"},
+			"period":      map[string]any{"type": "string", "description": "便捷时间范围: today/this_week/this_month/last_month/this_year/last_30_days。与 start_date/end_date 互斥，默认 last_30_days"},
+			"start_date":  map[string]any{"type": "string", "description": "开始日期 YYYY-MM-DD（与 period 互斥）"},
+			"end_date":    map[string]any{"type": "string", "description": "结束日期 YYYY-MM-DD（与 period 互斥）"},
 			"type":        map[string]any{"type": "string", "description": "交易类型: expense/income/transfer"},
 			"category":    map[string]any{"type": "string", "description": "分类名称"},
 			"keyword":     map[string]any{"type": "string", "description": "关键词搜索（匹配描述）"},
-			"sort_field":  map[string]any{"type": "string", "description": "排序字段，默认 transactionAt"},
-			"sort_order":  map[string]any{"type": "string", "description": "排序方向: asc/desc，默认 desc"},
+			"tags":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "标签名称列表"},
+			"tag_policy":  map[string]any{"type": "string", "description": "标签匹配策略: any（满足任一标签）/ all（满足所有标签），默认 any"},
 			"page":        map[string]any{"type": "integer", "description": "页码，从 1 开始，默认 1"},
 			"page_size":   map[string]any{"type": "integer", "description": "每页条数，默认 20，最大 50"},
 		},
-		"required": []string{"ledger_id", "start_date", "end_date"},
 	}
 }
 
 func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws, err := getWS(ctx)
-	if err != nil {
-		return "", err
-	}
-	ledgerID, err := requireLedgerID(ctx, args)
+	ledgerID, err := resolveLedgerID(ctx, args, t.ledgerSvc)
 	if err != nil {
 		return "", err
 	}
 
-	tsRange, err := parseDateRange(getStringArg(args, "start_date"), getStringArg(args, "end_date"))
+	start, end := resolvePeriod(args)
+	tsRange, err := parseDateRange(start, end)
 	if err != nil {
 		return "", err
 	}
@@ -132,21 +188,29 @@ func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any
 		Category:        getStringArg(args, "category"),
 		Description:     getStringArg(args, "keyword"),
 	}
-	if item.TransactionType != "" || item.Category != "" || item.Description != "" {
+	// tags
+	if tagsRaw, ok := args["tags"].([]any); ok {
+		for _, v := range tagsRaw {
+			if s, ok := v.(string); ok {
+				item.Tags = append(item.Tags, s)
+			}
+		}
+	}
+	// tag_policy
+	if tp := getStringArg(args, "tag_policy"); tp != "" {
+		item.TagPolicy = tp
+	} else {
+		item.TagPolicy = "any"
+	}
+
+	if item.TransactionType != "" || item.Category != "" || item.Description != "" || len(item.Tags) > 0 {
 		condition.Items = append(condition.Items, item)
 	}
 
-	if sf := getStringArg(args, "sort_field"); sf != "" {
-		order := getStringArg(args, "sort_order")
-		if order == "" {
-			order = "desc"
-		}
-		condition.SortFields = append(condition.SortFields, dto.QueryConditionSortField{
-			Field: sf,
-			Order: order,
-		})
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
 	}
-
 	result, err := t.trSvc.QueryTrsOnCondition(ws, condition)
 	if err != nil {
 		return "", err
@@ -201,10 +265,11 @@ func (t *listLedgersTool) Execute(ctx context.Context, args map[string]any) (str
 
 type listCategoriesTool struct {
 	categorySvc service.CategoryService
+	ledgerSvc   service.LedgerService
 }
 
-func NewListCategoriesTool(categorySvc service.CategoryService) Tool {
-	return &listCategoriesTool{categorySvc: categorySvc}
+func NewListCategoriesTool(categorySvc service.CategoryService, ledgerSvc service.LedgerService) Tool {
+	return &listCategoriesTool{categorySvc: categorySvc, ledgerSvc: ledgerSvc}
 }
 
 func (t *listCategoriesTool) Name() string        { return "list_categories" }
@@ -214,19 +279,14 @@ func (t *listCategoriesTool) InputSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ledger_id":        map[string]any{"type": "string", "description": "账本ID（必填）"},
+			"ledger_name":      map[string]any{"type": "string", "description": "账本名称（可选，默认使用当前选中账本）"},
 			"transaction_type": map[string]any{"type": "string", "description": "交易类型: expense/income/transfer，不传返回全部"},
 		},
-		"required": []string{"ledger_id"},
 	}
 }
 
 func (t *listCategoriesTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws, err := getWS(ctx)
-	if err != nil {
-		return "", err
-	}
-	ledgerID, err := requireLedgerID(ctx, args)
+	ledgerID, err := resolveLedgerID(ctx, args, t.ledgerSvc)
 	if err != nil {
 		return "", err
 	}
@@ -236,6 +296,10 @@ func (t *listCategoriesTool) Execute(ctx context.Context, args map[string]any) (
 		trType = constant.All
 	}
 
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	cats, err := t.categorySvc.QueryCategory(ws, ledgerID, trType)
 	if err != nil {
 		return "", err
@@ -247,11 +311,12 @@ func (t *listCategoriesTool) Execute(ctx context.Context, args map[string]any) (
 // ---- 4. list_tags ----
 
 type listTagsTool struct {
-	tagSvc service.TagService
+	tagSvc    service.TagService
+	ledgerSvc service.LedgerService
 }
 
-func NewListTagsTool(tagSvc service.TagService) Tool {
-	return &listTagsTool{tagSvc: tagSvc}
+func NewListTagsTool(tagSvc service.TagService, ledgerSvc service.LedgerService) Tool {
+	return &listTagsTool{tagSvc: tagSvc, ledgerSvc: ledgerSvc}
 }
 
 func (t *listTagsTool) Name() string        { return "list_tags" }
@@ -261,20 +326,15 @@ func (t *listTagsTool) InputSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ledger_id":        map[string]any{"type": "string", "description": "账本ID（必填）"},
+			"ledger_name":      map[string]any{"type": "string", "description": "账本名称（可选，默认使用当前选中账本）"},
 			"category":         map[string]any{"type": "string", "description": "分类名称"},
 			"transaction_type": map[string]any{"type": "string", "description": "交易类型"},
 		},
-		"required": []string{"ledger_id"},
 	}
 }
 
 func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws, err := getWS(ctx)
-	if err != nil {
-		return "", err
-	}
-	ledgerID, err := requireLedgerID(ctx, args)
+	ledgerID, err := resolveLedgerID(ctx, args, t.ledgerSvc)
 	if err != nil {
 		return "", err
 	}
@@ -289,6 +349,10 @@ func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string
 		catTrType = constant.All
 	}
 
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	tags, err := t.tagSvc.QueryTags(ws, ledgerID, catTrType)
 	if err != nil {
 		return "", err
@@ -297,97 +361,15 @@ func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string
 	return string(b), nil
 }
 
-// ---- 5. query_chart_data ----
-
-type queryChartDataTool struct {
-	trSvc service.TransactionRecordService
-}
-
-func NewQueryChartDataTool(trSvc service.TransactionRecordService) Tool {
-	return &queryChartDataTool{trSvc: trSvc}
-}
-
-func (t *queryChartDataTool) Name() string        { return "query_chart_data" }
-func (t *queryChartDataTool) Description() string { return "查询图表统计数据。返回按交易类型分组的交易记录，前端可按时间聚合。支持年/月粒度。" }
-
-func (t *queryChartDataTool) InputSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"ledger_id":   map[string]any{"type": "string", "description": "账本ID（必填）"},
-			"granularity": map[string]any{"type": "string", "description": "时间粒度: year 或 month，默认 month"},
-			"start_date":  map[string]any{"type": "string", "description": "开始日期 YYYY-MM-DD"},
-			"end_date":    map[string]any{"type": "string", "description": "结束日期 YYYY-MM-DD"},
-			"types":       map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "交易类型列表，默认包含 expense/income/transfer"},
-		},
-		"required": []string{"ledger_id", "start_date", "end_date"},
-	}
-}
-
-func (t *queryChartDataTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws, err := getWS(ctx)
-	if err != nil {
-		return "", err
-	}
-	ledgerID, err := requireLedgerID(ctx, args)
-	if err != nil {
-		return "", err
-	}
-
-	tsRange, err := parseDateRange(getStringArg(args, "start_date"), getStringArg(args, "end_date"))
-	if err != nil {
-		return "", err
-	}
-
-	granularity := getStringArg(args, "granularity")
-	if granularity == "" {
-		granularity = "month"
-	}
-
-	var types []string
-	if typesRaw, ok := args["types"].([]any); ok {
-		for _, v := range typesRaw {
-			if s, ok := v.(string); ok {
-				types = append(types, s)
-			}
-		}
-	}
-	if len(types) == 0 {
-		types = []string{constant.TransactionTypeExpense, constant.TransactionTypeIncome, constant.TransactionTypeTransfer}
-	}
-
-	lines := make([]dto.ChartLineCondition, 0, len(types))
-	for _, tt := range types {
-		lines = append(lines, dto.ChartLineCondition{
-			Label:           tt,
-			TransactionType: tt,
-			IncludeOutlier:  true,
-		})
-	}
-
-	req := &dto.ChartQueryRequest{
-		LedgerID:    ledgerID,
-		TsRange:     tsRange,
-		Granularity: granularity,
-		Lines:       lines,
-	}
-
-	result, err := t.trSvc.QueryTrsForChart(ws, req)
-	if err != nil {
-		return "", err
-	}
-	b, _ := json.Marshal(result)
-	return string(b), nil
-}
-
-// ---- 6. get_key_events ----
+// ---- 5. get_key_events ----
 
 type getKeyEventsTool struct {
 	keyEventSvc service.KeyEventService
+	ledgerSvc   service.LedgerService
 }
 
-func NewGetKeyEventsTool(keyEventSvc service.KeyEventService) Tool {
-	return &getKeyEventsTool{keyEventSvc: keyEventSvc}
+func NewGetKeyEventsTool(keyEventSvc service.KeyEventService, ledgerSvc service.LedgerService) Tool {
+	return &getKeyEventsTool{keyEventSvc: keyEventSvc, ledgerSvc: ledgerSvc}
 }
 
 func (t *getKeyEventsTool) Name() string        { return "get_key_events" }
@@ -397,29 +379,115 @@ func (t *getKeyEventsTool) InputSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ledger_id": map[string]any{"type": "string", "description": "账本ID（必填）"},
-			"year":      map[string]any{"type": "integer", "description": "年份，如 2026"},
+			"ledger_name": map[string]any{"type": "string", "description": "账本名称（可选，默认使用当前选中账本）"},
+			"year":        map[string]any{"type": "integer", "description": "年份，如 2026"},
 		},
-		"required": []string{"ledger_id", "year"},
+		"required": []string{"year"},
 	}
 }
 
 func (t *getKeyEventsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws, err := getWS(ctx)
-	if err != nil {
-		return "", err
-	}
-	ledgerID, err := requireLedgerID(ctx, args)
+	ledgerID, err := resolveLedgerID(ctx, args, t.ledgerSvc)
 	if err != nil {
 		return "", err
 	}
 
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	year := fmt.Sprintf("%d", int(getFloatArg(args, "year")))
 	events, err := t.keyEventSvc.QueryByYear(ws, ledgerID, year)
 	if err != nil {
 		return "", err
 	}
 	b, _ := json.Marshal(events)
+	return string(b), nil
+}
+
+// ---- 6. get_current_time ----
+
+type getCurrentTimeTool struct{}
+
+func NewGetCurrentTimeTool() Tool {
+	return &getCurrentTimeTool{}
+}
+
+func (t *getCurrentTimeTool) Name() string        { return "get_current_time" }
+func (t *getCurrentTimeTool) Description() string {
+	return "获取当前日期和时间，返回 YYYY-MM-DD HH:MM:SS 格式的字符串。例如：{\"datetime\": \"2026-07-11 14:30:34\"}。无参数。"
+}
+
+func (t *getCurrentTimeTool) InputSchema() map[string]any {
+	return map[string]any{
+		"type":       "object",
+		"properties": map[string]any{},
+	}
+}
+
+func (t *getCurrentTimeTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	now := time.Now()
+	result := map[string]any{
+		"datetime": now.Format("2006-01-02 15:04:05"),
+	}
+	b, _ := json.Marshal(result)
+	return string(b), nil
+}
+
+// ---- 7. calculate ----
+
+type calculateTool struct{}
+
+func NewCalculateTool() Tool {
+	return &calculateTool{}
+}
+
+func (t *calculateTool) Name() string { return "calculate" }
+func (t *calculateTool) Description() string {
+	return "对数学表达式求值，支持四则运算（+ - * /）和括号。例如表达式 \"(100 + 200) * 3 / 5\" 返回 {\"result\": 180.00}。结果保留两位小数。"
+}
+
+func (t *calculateTool) InputSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"expression": map[string]any{
+				"type":        "string",
+				"description": "数学表达式，如 \"100 + 200 * 3\" 或 \"(100 + 200) / 5\"",
+			},
+		},
+		"required": []string{"expression"},
+	}
+}
+
+func (t *calculateTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	expr, err := govaluate.NewEvaluableExpression(getStringArg(args, "expression"))
+	if err != nil {
+		return fmt.Sprintf(`{"error": "表达式语法错误: %s"}`, err.Error()), nil
+	}
+
+	result, err := expr.Evaluate(nil)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "计算错误: %s"}`, err.Error()), nil
+	}
+
+	// Convert result to float64 and format to 2 decimal places
+	var num float64
+	switch v := result.(type) {
+	case float64:
+		num = v
+	case int:
+		num = float64(v)
+	case int64:
+		num = float64(v)
+	default:
+		return fmt.Sprintf(`{"error": "不支持的结果类型: %T"}`, result), nil
+	}
+
+	output := map[string]any{
+		"result": fmt.Sprintf("%.2f", num),
+	}
+	b, _ := json.Marshal(output)
 	return string(b), nil
 }
 

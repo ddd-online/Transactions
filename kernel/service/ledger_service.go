@@ -18,6 +18,7 @@ type LedgerService interface {
 	ModifyLedger(ws *workspace.Workspace, ledgerId, ledgerName, description string) error
 	ListAllLedger(ws *workspace.Workspace) ([]models.Ledger, error)
 	QueryLedgerById(ws *workspace.Workspace, ledgerId string) (*models.Ledger, error)
+	QueryLedgerByName(ws *workspace.Workspace, ledgerName string) (*models.Ledger, error)
 	DeleteLedgerById(ws *workspace.Workspace, ledgerId string) error
 }
 
@@ -88,6 +89,19 @@ func (l *ledgerServiceImpl) QueryLedgerById(ws *workspace.Workspace, ledgerId st
 	}
 
 	logrus.Infof("end to query ledger by id, id: %s", ledgerId)
+	return &ledger, nil
+}
+
+func (l *ledgerServiceImpl) QueryLedgerByName(ws *workspace.Workspace, ledgerName string) (*models.Ledger, error) {
+	logrus.Infof("start to query ledger by name, name: %s", ledgerName)
+
+	var ledger models.Ledger
+	if err := ws.GetDb().Where("name = ?", ledgerName).First(&ledger).Error; err != nil {
+		logrus.Errorf("query ledger by name failed, name: %s, err: %v", ledgerName, err)
+		return nil, err
+	}
+
+	logrus.Infof("end to query ledger by name, name: %s, id: %s", ledgerName, ledger.ID)
 	return &ledger, nil
 }
 

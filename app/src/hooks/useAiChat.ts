@@ -240,7 +240,7 @@ export function useAiChat() {
 
   // ---- Public API ----
 
-  async function send(text: string, ledgerId: string, apiBaseUrl: string, onChange: () => void): Promise<void> {
+  async function send(text: string, ledgerId: string, ledgerName: string, apiBaseUrl: string, onChange: () => void): Promise<void> {
     if (streaming.value) return
 
     // Add user message
@@ -260,7 +260,7 @@ export function useAiChat() {
       const response = await fetch(`${apiBaseUrl}/api/v1/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, ledger_id: ledgerId }),
+        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName }),
         signal: abortController.signal,
       })
 

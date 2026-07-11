@@ -19,8 +19,8 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	}
 
 	var req struct {
-		Message  string `json:"message"`
-		LedgerID string `json:"ledger_id"`
+		Message    string `json:"message"`
+		LedgerName string `json:"ledger_name"`
 	}
 	if err := c.BindJSON(&req); err != nil || req.Message == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
@@ -39,7 +39,7 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.WriteHeader(http.StatusOK)
 
-	eventCh, err := h.ChatService.Chat(c.Request.Context(), ws, req.LedgerID, req.Message)
+	eventCh, err := h.ChatService.Chat(c.Request.Context(), ws, req.LedgerName, req.Message)
 	if err != nil {
 		data, _ := json.Marshal(ai.SSEEvent{Type: "error", Message: err.Error()})
 		c.Writer.Write([]byte("data: " + string(data) + "\n\n"))

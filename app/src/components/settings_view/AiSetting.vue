@@ -104,9 +104,12 @@
 
       <!-- 系统提示词 -->
       <div class="setting-card setting-card-vertical">
-        <div class="setting-info">
-          <span class="setting-title">系统提示词</span>
-          <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
+        <div class="setting-header-row">
+          <div class="setting-info">
+            <span class="setting-title">系统提示词</span>
+            <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
+          </div>
+          <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
         </div>
         <div class="setting-action setting-action-full">
           <a-textarea
@@ -117,7 +120,9 @@
             placeholder="留空使用默认提示词"
             style="width: 100%; font-family: var(--billadm-font-mono); font-size: var(--billadm-size-text-body-sm)"
           />
-          <a-button size="small" style="margin-top: 8px" @click="resetSystemPrompt">恢复默认</a-button>
+          <div class="placeholder-hint">
+            支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
+          </div>
         </div>
       </div>
 
@@ -430,6 +435,13 @@ onMounted(() => {
   align-items: flex-start;
 }
 
+.setting-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .setting-action-full {
   margin-left: 0;
   margin-top: var(--billadm-space-md);
@@ -499,5 +511,19 @@ onMounted(() => {
 
 .balance-sub {
   color: var(--billadm-color-text-tertiary, #9B9B92);
+}
+
+.placeholder-hint {
+  margin-top: 4px;
+  color: var(--billadm-color-text-tertiary, #9B9B92);
+  font-size: var(--billadm-size-text-caption-sm, 12px);
+}
+
+.placeholder-hint code {
+  background: var(--billadm-color-bg-secondary, #f5f5f4);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: var(--billadm-font-mono);
+  font-size: inherit;
 }
 </style>

@@ -30,12 +30,13 @@ func InitServices() *api.Handlers {
 	aiToolRegistry := tool.NewToolRegistry()
 
 	// Register tools with injected service interfaces
-	aiToolRegistry.Register(tool.NewQueryTransactionsTool(trSvc))
+	aiToolRegistry.Register(tool.NewQueryTransactionsTool(trSvc, ledgerSvc))
 	aiToolRegistry.Register(tool.NewListLedgersTool(ledgerSvc))
-	aiToolRegistry.Register(tool.NewListCategoriesTool(categorySvc))
-	aiToolRegistry.Register(tool.NewListTagsTool(tagSvc))
-	aiToolRegistry.Register(tool.NewGetKeyEventsTool(keyEventSvc))
-	aiToolRegistry.Register(tool.NewQueryChartDataTool(trSvc))
+	aiToolRegistry.Register(tool.NewListCategoriesTool(categorySvc, ledgerSvc))
+	aiToolRegistry.Register(tool.NewListTagsTool(tagSvc, ledgerSvc))
+	aiToolRegistry.Register(tool.NewGetKeyEventsTool(keyEventSvc, ledgerSvc))
+	aiToolRegistry.Register(tool.NewGetCurrentTimeTool())
+	aiToolRegistry.Register(tool.NewCalculateTool())
 
 	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry)
 

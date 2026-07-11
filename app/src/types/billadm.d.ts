@@ -27,6 +27,9 @@ export interface Result<T = any> {
 export interface TrQueryResult {
     items: TransactionRecord[];
     total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
     trStatistics: TrStatistics;
 }
 
