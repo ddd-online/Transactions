@@ -7,6 +7,7 @@ type AiConfig struct {
 	APIKey       string `gorm:"type:text;not null;default:''" json:"api_key"`
 	Model        string `gorm:"type:text;not null;default:''" json:"model"`
 	SystemPrompt string `gorm:"type:text;not null;default:''" json:"system_prompt"`
+	Provider     string `gorm:"type:text;not null;default:''" json:"provider"`
 	CreatedAt    int64  `gorm:"autoCreateTime:milli" json:"created_at"`
 	UpdatedAt    int64  `gorm:"autoUpdateTime:milli" json:"updated_at"`
 }
