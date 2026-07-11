@@ -92,3 +92,4 @@ git push
 | `build.ps1` Go 编译失败 | CGO 或依赖问题 | 检查 `CGO_ENABLED=1`，确认 gcc 可用 |
 | `release.ps1` gh 未登录 | `gh auth login` 未执行过 | 终端中执行 `gh auth login`，完成后重试 |
 | `release.ps1` 产物路径不对 | 版本号与产物文件名不匹配 | 确认版本号正确，重新执行 `build.ps1` |
+| 上传速度极慢 | `gh` CLI 不走系统代理，直连 GitHub | `release.ps1` 现已自动检测 Windows 系统代理（`HKCU\...\ProxyServer`）并设置 `HTTPS_PROXY`，无需手动处理 |

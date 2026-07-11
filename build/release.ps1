@@ -89,6 +89,20 @@ try {
     Write-Success "GitHub CLI 就绪"
 
     # ==============================
+    # 3.5 自动配置代理（gh CLI 不走系统代理，需手动设置环境变量）
+    # ==============================
+    if (-not $env:HTTPS_PROXY) {
+        $sysProxy = (Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' -ErrorAction SilentlyContinue).ProxyServer
+        if ($sysProxy) {
+            $env:HTTPS_PROXY = "http://$sysProxy"
+            $env:HTTP_PROXY = "http://$sysProxy"
+            Write-Success "自动检测到系统代理: $sysProxy，已设置 HTTPS_PROXY / HTTP_PROXY"
+        }
+    } else {
+        Write-Info "使用已有的 HTTPS_PROXY: $env:HTTPS_PROXY"
+    }
+
+    # ==============================
     # 4. 生成 Release Body
     # ==============================
     Write-Step "生成 Release Notes..."
