@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/billadm/constant"
+	"github.com/billadm/models"
 	"github.com/billadm/util"
 )
 
@@ -27,6 +28,14 @@ func NewWorkspace(directory string) (*Workspace, error) {
 	dbFile := filepath.Join(directory, constant.DbName)
 	db, err := util.NewDbInstance(dbFile)
 	if err != nil {
+		return nil, err
+	}
+
+	// Auto-migrate AI tables
+	if err := db.AutoMigrate(&models.AiConfig{}); err != nil {
+		return nil, err
+	}
+	if err := db.AutoMigrate(&models.AiMessage{}); err != nil {
 		return nil, err
 	}
 
