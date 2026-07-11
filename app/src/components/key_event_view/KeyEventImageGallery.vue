@@ -9,7 +9,7 @@
       <!-- 左侧大图 -->
       <div class="gallery-main" @click="triggerPreview">
         <a-image v-if="selectedImage" :src="props.urlCache?.get(selectedImage.id)?.full ?? selectedImage.data" :preview="true" width="100%" height="100%"
-          style="object-fit: cover;" :preview-visible="previewVisible" @visible-change="onPreviewChange" />
+          style="object-fit: cover;" :preview-visible="previewVisible" @visible-change="onPreviewChange" loading="lazy" />
       </div>
 
       <!-- 右侧缩略图列 -->
@@ -18,7 +18,7 @@
           <div v-for="(img, index) in images" :key="img.id" class="thumb-item"
             :class="{ 'is-selected': selectedId === img.id, 'thumb-enter': true }"
             :style="{ animationDelay: `${Math.min(index * 50, 300)}ms` }" @click="selectedId = img.id">
-            <img :src="props.urlCache?.get(img.id)?.thumb ?? img.data" class="thumb-img" alt="" />
+            <img :src="props.urlCache?.get(img.id)?.thumb ?? img.data" class="thumb-img" alt="" loading="lazy" decoding="async" />
             <button class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)" aria-label="删除图片">
               <CloseOutlined />
             </button>
@@ -109,7 +109,7 @@ const onPreviewChange = (visible: boolean) => {
 <style scoped>
 .image-gallery {
   display: flex;
-  gap: 8px;
+  gap: var(--billadm-space-sm);
   flex: 1;
   min-height: 0;
   margin-bottom: var(--billadm-space-md);
@@ -164,11 +164,12 @@ const onPreviewChange = (visible: boolean) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--billadm-space-xs);
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  contain: strict;
 }
 
 .gallery-thumbs::-webkit-scrollbar {
@@ -225,6 +226,11 @@ const onPreviewChange = (visible: boolean) => {
   transform: none;
 }
 
+.thumb-item:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
 .thumb-img {
   width: 100%;
   height: 100%;
@@ -265,7 +271,7 @@ const onPreviewChange = (visible: boolean) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--billadm-size-text-caption);
   color: rgba(0, 0, 0, 0.65);
 }
 
@@ -276,7 +282,7 @@ const onPreviewChange = (visible: boolean) => {
 /* ========== 滚动指示箭头 ========== */
 .scroll-hint-arrow {
   position: absolute;
-  bottom: 4px;
+  bottom: var(--billadm-space-xs);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -288,7 +294,7 @@ const onPreviewChange = (visible: boolean) => {
   background: var(--billadm-color-major-background);
   box-shadow: var(--billadm-shadow-md);
   color: var(--billadm-color-primary);
-  font-size: 14px;
+  font-size: var(--billadm-size-text-body);
   pointer-events: none;
 }
 
@@ -300,5 +306,30 @@ const onPreviewChange = (visible: boolean) => {
 .scroll-hint-enter-from,
 .scroll-hint-leave-to {
   opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb-item {
+    transition: none;
+  }
+  .thumb-item:hover {
+    transform: none;
+  }
+  .thumb-enter {
+    animation: none;
+  }
+  .gallery-main :deep(.ant-image-img) {
+    animation: none;
+  }
+  .thumb-delete-btn {
+    transition: none;
+  }
+  .thumb-delete-btn:hover {
+    transform: none;
+  }
+  .scroll-hint-enter-active,
+  .scroll-hint-leave-active {
+    transition: none;
+  }
 }
 </style>

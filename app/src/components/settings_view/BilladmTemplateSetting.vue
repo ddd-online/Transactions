@@ -257,7 +257,7 @@ watch(() => ledgerStore.currentLedgerId, () => {
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
   cursor: grab;
   transition: color var(--billadm-transition-fast);
   vertical-align: middle;
@@ -319,6 +319,11 @@ watch(() => ledgerStore.currentLedgerId, () => {
   cursor: not-allowed;
 }
 
+.action-icon:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
 /* 表头列间分割线 */
 :deep(.ant-table-thead > tr > th) {
   border-right: 1px solid var(--billadm-color-divider);
@@ -333,5 +338,10 @@ watch(() => ledgerStore.currentLedgerId, () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drag-handle,
+  .action-icon { transition: none; }
 }
 </style>

@@ -11,7 +11,6 @@
           :style="{ '--c': type.color }"
           @click="activeType = type.value"
         >
-          <span class="type-card-bar"></span>
           <span class="type-card-label">{{ type.label }}</span>
         </button>
       </nav>
@@ -346,11 +345,10 @@ watch(
 }
 
 .type-card {
-  position: relative;
   display: flex;
   align-items: center;
   height: 36px;
-  padding: 0 var(--billadm-space-md) 0 calc(var(--billadm-space-md) + 4px);
+  padding: 0 var(--billadm-space-md);
   font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-body-sm);
   font-weight: 500;
@@ -365,43 +363,21 @@ watch(
               color var(--billadm-transition-fast);
 }
 
-.type-card-bar {
-  position: absolute;
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
-  background-color: var(--billadm-color-divider);
-  transition: width var(--billadm-transition-smooth),
-              background-color var(--billadm-transition-smooth);
-}
-
 .type-card:hover:not(.is-active) {
   color: var(--billadm-color-text-major);
   box-shadow: var(--billadm-shadow-sm);
 }
 
-.type-card:hover:not(.is-active) .type-card-bar {
-  background-color: var(--c);
-  opacity: 0.5;
-}
-
 .type-card.is-active {
   color: var(--c);
   background-color: color-mix(in srgb, var(--c) 8%, var(--billadm-color-major-background));
-  border-color: color-mix(in srgb, var(--c) 20%, transparent);
+  border-color: color-mix(in srgb, var(--c) 30%, transparent);
   box-shadow: var(--billadm-shadow-sm);
 }
 
-.type-card.is-active .type-card-bar {
-  width: 4px;
-  background-color: var(--c);
-}
-
-.type-card-label {
-  position: relative;
-  z-index: 1;
+.type-card:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
 }
 
 /* Main Grid */
@@ -423,5 +399,9 @@ watch(
 .form-label {
   font-size: var(--billadm-size-text-body);
   color: var(--billadm-color-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-card { transition: none; }
 }
 </style>

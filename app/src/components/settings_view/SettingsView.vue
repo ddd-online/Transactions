@@ -145,16 +145,25 @@ const currentComponent = computed(() => {
   font-weight: 500;
 }
 
+.nav-item:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
 .nav-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: var(--billadm-size-text-section);
 }
 
 .nav-text {
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item { transition: none; }
 }
 
 /* Content */

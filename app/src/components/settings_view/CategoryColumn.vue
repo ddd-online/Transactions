@@ -142,6 +142,11 @@ useListDragSort(listRef, dragEnabled, {
   cursor: not-allowed;
 }
 
+.add-btn:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
 /* Column */
 .column {
   display: flex;
@@ -195,7 +200,7 @@ useListDragSort(listRef, dragEnabled, {
   justify-content: center;
   flex: 1;
   font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
 }
 
 /* Drag Handle — 始终可见 */
@@ -205,7 +210,7 @@ useListDragSort(listRef, dragEnabled, {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
   cursor: grab;
   transition: color var(--billadm-transition-fast);
   margin-right: 2px;
@@ -242,6 +247,16 @@ useListDragSort(listRef, dragEnabled, {
 .list-item.is-active {
   background-color: var(--billadm-color-active-bg);
   font-weight: 500;
+}
+
+.list-item:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
+.action-icon:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
 }
 
 .item-main {
@@ -324,6 +339,14 @@ useListDragSort(listRef, dragEnabled, {
   opacity: 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .list-item,
+  .drag-handle,
+  .action-icon,
+  .add-btn,
+  .init-btn { transition: none; }
+}
+
 /* 初始化空状态 */
 .empty-init {
   display: flex;
@@ -338,7 +361,7 @@ useListDragSort(listRef, dragEnabled, {
 .empty-init-icon {
   width: 64px;
   height: 64px;
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
   opacity: 0.4;
 }
 
@@ -374,5 +397,10 @@ useListDragSort(listRef, dragEnabled, {
 .init-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.init-btn:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
 }
 </style>

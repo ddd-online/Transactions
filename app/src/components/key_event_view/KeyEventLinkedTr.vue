@@ -118,7 +118,7 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--billadm-space-sm);
+  padding: var(--billadm-space-md);
   background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg);
   overflow: hidden;
@@ -136,7 +136,7 @@ watch(
 
 .panel-empty-text {
   font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
 }
 
 /* ========== 卡片列表 ========== */
@@ -146,6 +146,7 @@ watch(
   padding: var(--billadm-space-xs);
   scrollbar-width: none;
   -ms-overflow-style: none;
+  contain: strict;
 }
 
 .linked-cards::-webkit-scrollbar {
@@ -157,8 +158,8 @@ watch(
   position: relative;
   display: flex;
   align-items: flex-start;
-  padding: var(--billadm-space-xs) var(--billadm-space-sm);
-  margin-bottom: var(--billadm-space-2xs);
+  padding: var(--billadm-space-sm);
+  margin-bottom: var(--billadm-space-xs);
   border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
   background-color: var(--billadm-color-major-background);
@@ -166,6 +167,8 @@ watch(
   transition: box-shadow var(--billadm-transition-smooth);
   min-height: 68px;
   box-sizing: border-box;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 68px;
 }
 
 .linked-card:hover {
@@ -193,7 +196,7 @@ watch(
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--billadm-space-xs);
 }
 
 /* ========== 主行：分类 + 金额 ========== */
@@ -268,8 +271,8 @@ watch(
 /* ========== 删除按钮 ========== */
 .linked-card-delete {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
+  bottom: var(--billadm-space-xs);
+  right: var(--billadm-space-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -283,7 +286,7 @@ watch(
   transition: color var(--billadm-transition-fast),
               background-color var(--billadm-transition-fast),
               transform var(--billadm-transition-fast);
-  font-size: 12px;
+  font-size: var(--billadm-size-text-caption);
   opacity: 0;
 }
 
@@ -295,6 +298,18 @@ watch(
   color: var(--billadm-color-expense);
   background: rgba(217, 112, 90, 0.12);
   transform: scale(1.1);
+}
+
+.linked-card-delete:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.linked-card:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--billadm-shadow-md);
 }
 
 /* ========== 滚动指示箭头 ========== */
@@ -325,5 +340,24 @@ watch(
 .scroll-hint-enter-from,
 .scroll-hint-leave-to {
   opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linked-card {
+    transition: none;
+  }
+  .linked-card-delete {
+    transition: none;
+  }
+  .linked-card-delete:hover {
+    transform: none;
+  }
+  .card-enter {
+    animation: none;
+  }
+  .scroll-hint-enter-active,
+  .scroll-hint-leave-active {
+    transition: none;
+  }
 }
 </style>

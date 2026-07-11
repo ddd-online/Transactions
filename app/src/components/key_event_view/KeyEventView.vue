@@ -288,7 +288,7 @@ onMounted(async () => {
   flex: 1;
   display: grid;
   grid-template-columns: 280px 1fr 280px;
-  gap: var(--billadm-space-md);
+  gap: var(--billadm-space-lg);
   min-height: 0;
   overflow: hidden;
 }
@@ -296,16 +296,19 @@ onMounted(async () => {
 .panel-left {
   height: 100%;
   overflow: hidden;
+  contain: layout style;
 }
 
 .panel-center {
   height: 100%;
   overflow: hidden;
+  contain: layout style;
 }
 
 .panel-right {
   height: 100%;
   overflow: hidden;
+  contain: layout style;
 }
 
 </style>

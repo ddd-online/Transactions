@@ -17,7 +17,12 @@
         :key="chart.chartId"
         class="chart-list-item"
         :class="{ active: selectedId === chart.chartId }"
+        tabindex="0"
+        role="option"
+        :aria-selected="selectedId === chart.chartId"
         @click="selectChart(chart)"
+        @keydown.enter="selectChart(chart)"
+        @keydown.space.prevent="selectChart(chart)"
       >
         <span class="chart-list-item-title">{{ chart.title }}</span>
         <div class="chart-list-item-actions" @click.stop>
@@ -141,6 +146,11 @@ const handleDelete = async (chart: ChartDto) => {
 .chart-list-item:hover {
   background-color: var(--billadm-color-hover-bg);
   color: var(--billadm-color-text-major);
+}
+
+.chart-list-item:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: -2px;
 }
 
 .chart-list-item.active {

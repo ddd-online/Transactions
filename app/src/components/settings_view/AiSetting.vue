@@ -381,7 +381,7 @@ onMounted(() => {
 .setting-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--billadm-space-sm);
 }
 
 .setting-card {
@@ -402,7 +402,7 @@ onMounted(() => {
 .setting-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--billadm-space-2xs);
   min-width: 0;
 }
 
@@ -460,7 +460,7 @@ onMounted(() => {
 }
 
 .balance-error {
-  color: var(--billadm-color-error, #D9705A);
+  color: var(--billadm-color-expense);
 }
 
 .balance-info {
@@ -484,11 +484,11 @@ onMounted(() => {
 }
 
 .dot-available {
-  background-color: var(--billadm-color-success, #3D8C5E);
+  background-color: var(--billadm-color-success);
 }
 
 .dot-unavailable {
-  background-color: var(--billadm-color-error, #D9705A);
+  background-color: var(--billadm-color-expense);
 }
 
 .balance-row {
@@ -510,20 +510,24 @@ onMounted(() => {
 }
 
 .balance-sub {
-  color: var(--billadm-color-text-tertiary, #9B9B92);
+  color: var(--billadm-color-text-secondary);
 }
 
 .placeholder-hint {
-  margin-top: 4px;
-  color: var(--billadm-color-text-tertiary, #9B9B92);
-  font-size: var(--billadm-size-text-caption-sm, 12px);
+  margin-top: var(--billadm-space-xs);
+  color: var(--billadm-color-text-secondary);
+  font-size: var(--billadm-size-text-caption);
 }
 
 .placeholder-hint code {
-  background: var(--billadm-color-bg-secondary, #f5f5f4);
+  background: var(--billadm-color-minor-background);
   padding: 1px 6px;
-  border-radius: 3px;
+  border-radius: var(--billadm-radius-sm);
   font-family: var(--billadm-font-mono);
   font-size: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setting-card { transition: none; }
 }
 </style>

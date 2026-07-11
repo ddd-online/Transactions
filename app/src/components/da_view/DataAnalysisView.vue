@@ -306,7 +306,7 @@ watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true
 }
 
 .da-sidebar {
-  flex: 0 0 200px;
+  flex: 0 0 220px;
   background-color: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-lg);
   overflow-y: auto;

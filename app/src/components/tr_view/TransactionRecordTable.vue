@@ -211,9 +211,8 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
     await createTrForLedger(syncRecord);
     syncPopoverTarget.value = null;
     message.success('同步成功');
-  } catch (error) {
+  } catch {
     message.error('同步失败');
-    console.error('sync transaction failed:', error);
   } finally {
     syncingTransactionId.value = null;
   }
@@ -290,7 +289,7 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 .cell-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--billadm-space-xs);
 }
 
 .tag-item {
@@ -334,7 +333,7 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 
 .cell-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--billadm-space-xs);
   justify-content: center;
 }
 
@@ -343,12 +342,12 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 .sync-ledger-item {
-  padding: 6px 12px;
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--billadm-radius-sm);
   font-size: var(--billadm-size-text-body);
   color: var(--billadm-color-text-major);
-  transition: background-color 0.2s;
+  transition: background-color var(--billadm-transition-fast);
 }
 
 .sync-ledger-item:hover {
@@ -356,8 +355,12 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 .sync-empty {
-  padding: 6px 12px;
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
   color: var(--billadm-color-text-secondary);
   font-size: var(--billadm-size-text-caption);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-ledger-item { transition: none; }
 }
 </style>

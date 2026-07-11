@@ -22,7 +22,7 @@
         <div
           class="summary-bar-fill"
           :class="barClass"
-          :style="{ width: overallPercent + '%' }"
+          :style="{ transform: `scaleX(${overallPercent / 100})` }"
         />
       </div>
     </div>
@@ -50,7 +50,7 @@
             <div class="file-bar-track">
               <div
                 class="file-bar-fill"
-                :style="{ width: file.percent + '%' }"
+                :style="{ transform: `scaleX(${file.percent / 100})` }"
               />
             </div>
           </template>
@@ -150,7 +150,7 @@ const barClass = computed(() => ({
 }
 
 .summary-icon {
-  font-size: 14px;
+  font-size: var(--billadm-size-text-body);
 
   &.done {
     color: var(--billadm-color-success, #3D8C5E);
@@ -180,7 +180,8 @@ const barClass = computed(() => ({
   height: 100%;
   border-radius: 2px;
   background: var(--billadm-color-primary, #4A8C6F);
-  transition: width 200ms ease;
+  transform-origin: left;
+  transition: transform 200ms ease;
 
   &--done {
     background: var(--billadm-color-success, #3D8C5E);
@@ -229,7 +230,7 @@ const barClass = computed(() => ({
 }
 
 .dot-icon {
-  font-size: 14px;
+  font-size: var(--billadm-size-text-body);
 
   &.done {
     color: var(--billadm-color-success, #3D8C5E);
@@ -282,7 +283,8 @@ const barClass = computed(() => ({
   height: 100%;
   border-radius: 1px;
   background: var(--billadm-color-primary, #4A8C6F);
-  transition: width 150ms ease;
+  transform-origin: left;
+  transition: transform 150ms ease;
 }
 
 /* 状态标签 */
@@ -332,5 +334,15 @@ const barClass = computed(() => ({
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-bar-fill,
+  .file-bar-fill {
+    transition: none;
+  }
+  .file-row {
+    transition: none;
+  }
 }
 </style>

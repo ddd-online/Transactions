@@ -109,7 +109,7 @@ const truncate = (text: string, max: number): string => {
 
 .panel-empty-text {
   font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
 }
 
 /* ========== 事件列表 ========== */
@@ -120,6 +120,7 @@ const truncate = (text: string, max: number): string => {
   display: flex;
   flex-direction: column;
   gap: var(--billadm-space-sm);
+  contain: strict;
 }
 
 /* ========== 事件卡片 ========== */
@@ -133,6 +134,8 @@ const truncate = (text: string, max: number): string => {
               box-shadow var(--billadm-transition-smooth),
               transform var(--billadm-transition-smooth);
   background-color: var(--billadm-color-major-background);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
 }
 
 .event-card:hover {
@@ -162,11 +165,12 @@ const truncate = (text: string, max: number): string => {
   background-color: var(--event-color, var(--billadm-color-primary));
   border-radius: 2px;
   margin: var(--billadm-space-sm) 0;
-  transition: width var(--billadm-transition-smooth);
+  transform-origin: left;
+  transition: transform var(--billadm-transition-smooth);
 }
 
 .event-card.is-active .event-card-bar {
-  width: 6px;
+  transform: scaleX(1.5);
 }
 
 .event-card-body {
@@ -194,18 +198,18 @@ const truncate = (text: string, max: number): string => {
 
 .event-card-desc {
   font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  margin-top: var(--billadm-space-2xs);
 }
 
 /* ========== 删除按钮 ========== */
 .event-card-delete {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: var(--billadm-space-xs);
+  right: var(--billadm-space-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -219,7 +223,7 @@ const truncate = (text: string, max: number): string => {
   transition: color var(--billadm-transition-fast),
               background-color var(--billadm-transition-fast),
               transform var(--billadm-transition-fast);
-  font-size: 12px;
+  font-size: var(--billadm-size-text-caption);
   opacity: 0;
 }
 
@@ -234,8 +238,32 @@ const truncate = (text: string, max: number): string => {
   transform: scale(1.1);
 }
 
+.event-card-delete:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
 /* ========== 底部 ========== */
 .panel-footer {
   flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-card {
+    transition: none;
+  }
+  .event-card-bar {
+    transition: none;
+  }
+  .event-card-delete {
+    transition: none;
+  }
+  .event-card:hover {
+    transform: none;
+  }
+  .event-card-delete:hover {
+    transform: none;
+  }
 }
 </style>

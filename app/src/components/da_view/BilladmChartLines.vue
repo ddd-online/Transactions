@@ -63,7 +63,7 @@
                 </a-tag>
               </div>
             </template>
-            <span v-else class="text-disabled">无</span>
+            <span v-else class="text-secondary">无</span>
           </template>
         </a-table-column>
         <a-table-column v-if="!isPreset" title="操作" width="60">
@@ -140,7 +140,7 @@ const newLineForm = ref<NewLineForm>({
 
 watch(() => props.lines, (v) => { localLines.value = [...v] }, { deep: true })
 
-const getTypeColor = (type: string) => TransactionTypeToColor.get(type) || '#999'
+const getTypeColor = (type: string) => TransactionTypeToColor.get(type) || 'var(--billadm-color-text-secondary)'
 const getTypeLabel = (type: string) => TransactionTypeToLabel.get(type) || type
 
 const handleSave = () => {
@@ -223,7 +223,7 @@ const resetNewLineForm = () => {
 <style scoped>
 .chart-lines {
   flex-shrink: 0;
-  margin-top: var(--billadm-space-lg);
+  margin-top: var(--billadm-space-xl);
 }
 
 .chart-lines-section {

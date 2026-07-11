@@ -85,7 +85,7 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
 .setting-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--billadm-space-sm);
 }
 
 .setting-card {
@@ -106,7 +106,7 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
 .setting-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--billadm-space-2xs);
   min-width: 0;
 }
 
@@ -134,5 +134,9 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
 .setting-action {
   flex-shrink: 0;
   margin-left: var(--billadm-space-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setting-card { transition: none; }
 }
 </style>

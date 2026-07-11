@@ -7,7 +7,7 @@
         <a-select
           v-if="!isPreset"
           v-model:value="editGranularity"
-          style="width: 100px;"
+          class="granularity-select"
           size="small"
           @change="handleGranularityChange"
         >
@@ -80,7 +80,7 @@ const emit = defineEmits<{
 const editGranularity = ref(props.granularity)
 watch(() => props.granularity, (v) => { editGranularity.value = v })
 
-const getTypeColor = (type: string) => TransactionTypeToColor.get(type) || '#999'
+const getTypeColor = (type: string) => TransactionTypeToColor.get(type) || 'var(--billadm-color-text-secondary)'
 
 const handleGranularityChange = () => {
   if (!props.chartId) return
@@ -119,7 +119,7 @@ const formatAmount = (amount: number) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-md) var(--billadm-space-2xl);
+  padding: var(--billadm-space-lg) var(--billadm-space-xl);
   flex-shrink: 0;
   background-color: var(--billadm-color-major-background);
   border-bottom: 1px solid var(--billadm-color-divider);
@@ -139,6 +139,10 @@ const formatAmount = (amount: number) => {
   gap: var(--billadm-space-sm);
 }
 
+.granularity-select {
+  width: 100px;
+}
+
 /* ========== 中间主体：双栏布局 ========== */
 .chart-body {
   flex: 1;
@@ -151,7 +155,7 @@ const formatAmount = (amount: number) => {
 .chart-view-content {
   flex: 1;
   min-width: 0;
-  padding: var(--billadm-space-2xl);
+  padding: var(--billadm-space-xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +163,7 @@ const formatAmount = (amount: number) => {
 }
 
 .chart-canvas {
-  width: 90%;
+  width: 100%;
   aspect-ratio: 16 / 9;
 }
 
@@ -169,7 +173,7 @@ const formatAmount = (amount: number) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--billadm-space-sm);
   padding: var(--billadm-space-lg);
   background-color: var(--billadm-color-major-background);
   border-left: 1px solid var(--billadm-color-divider);
@@ -178,7 +182,7 @@ const formatAmount = (amount: number) => {
 
 .stat-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--billadm-space-sm);
   padding: var(--billadm-space-sm) var(--billadm-space-md);
   border-radius: var(--billadm-radius-md);
@@ -188,7 +192,6 @@ const formatAmount = (amount: number) => {
 .stat-dot {
   width: 8px;
   height: 8px;
-  margin-top: 5px;
   border-radius: var(--billadm-radius-full);
   flex-shrink: 0;
 }
@@ -220,11 +223,18 @@ const formatAmount = (amount: number) => {
 /* 图表过渡 */
 .chart-fade-enter-active,
 .chart-fade-leave-active {
-  transition: opacity 200ms ease;
+  transition: opacity var(--billadm-transition-fast);
 }
 .chart-fade-enter-from,
 .chart-fade-leave-to {
   opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-fade-enter-active,
+  .chart-fade-leave-active {
+    transition: none;
+  }
 }
 
 </style>

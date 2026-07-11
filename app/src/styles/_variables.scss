@@ -8,8 +8,8 @@
 // Theme Colors
 // ============================================
 $theme-colors: (
-  'primary': #4A8C6F,
-  'primary-light': #6BAA8C,
+  'primary': #4A8E70,
+  'primary-light': #6AB08C,
   'secondary': #8C7B6E,
   'accent': #C6963A,
 ) !default;
@@ -38,11 +38,11 @@ $ledger-colors: (
 // Background — clean white hierarchy with subtle warmth
 $background-colors: (
   'major': #FFFFFF,
-  'major-warm': #F9F8F6,
-  'minor': #F3F1ED,
+  'major-warm': #F5F3EE,
+  'minor': #EEEAE3,
   'elevated': #FFFFFF,
-  'window-border': #E4E1DB,
-  'divider': #EDEBE7,
+  'window-border': #DFDBD3,
+  'divider': #E8E4DD,
 ) !default;
 
 // Text — near-black for maximum readability
@@ -240,8 +240,8 @@ $shadow-xl-color: rgba(0, 0, 0, 0.12);
   --billadm-transition-smooth: #{map.get($transitions, 'smooth')};
 
   // Hover / active states
-  --billadm-color-hover-bg: rgba(74, 140, 111, 0.07);
-  --billadm-color-active-bg: rgba(74, 140, 111, 0.12);
+  --billadm-color-hover-bg: rgba(74, 142, 112, 0.08);
+  --billadm-color-active-bg: rgba(74, 142, 112, 0.14);
   --billadm-color-danger-hover-bg: rgba(217, 112, 90, 0.10);
 
   // Button

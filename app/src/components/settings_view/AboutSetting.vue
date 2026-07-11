@@ -163,7 +163,7 @@ const handleRetry = () => {
 }
 
 .update-icon {
-  font-size: 16px;
+  font-size: var(--billadm-size-text-section);
 }
 
 .update-text {

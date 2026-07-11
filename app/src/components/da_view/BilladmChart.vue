@@ -101,7 +101,7 @@ const option = computed<EChartsOption | null>(() => {
     },
     legend: {
       data: labels,
-      bottom: 0,
+      top: 0,
       textStyle: {
         color: themeColors.labelFill,
         fontSize: 13,
@@ -110,7 +110,7 @@ const option = computed<EChartsOption | null>(() => {
     grid: {
       left: 60,
       right: 30,
-      top: 20,
+      top: 45,
       bottom: 40,
     },
     xAxis: {
