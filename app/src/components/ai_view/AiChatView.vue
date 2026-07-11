@@ -380,7 +380,7 @@ async function sendMessage() {
 function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage | null }, thinkingMsgRef: { current: ChatMessage | null }) {
   const ensureThinking = (): ChatMessage => {
     if (!thinkingMsgRef.current) {
-      thinkingMsgRef.current = {
+      const msg: ChatMessage = {
         id: nextMsgId(),
         role: 'thinking',
         content: '',
@@ -389,21 +389,25 @@ function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage
         thinkingActive: true,
         thinkingCollapsed: false,
       }
-      messages.value.push(thinkingMsgRef.current)
+      messages.value.push(msg)
+      // Must read back from reactive array — the raw object is not reactive
+      thinkingMsgRef.current = messages.value[messages.value.length - 1]!
     }
     return thinkingMsgRef.current
   }
 
   const ensureAssistant = (): ChatMessage => {
     if (!assistantMsgRef.current) {
-      assistantMsgRef.current = {
+      const msg: ChatMessage = {
         id: nextMsgId(),
         role: 'assistant',
         content: '',
         timestamp: Date.now(),
         streaming: true,
       }
-      messages.value.push(assistantMsgRef.current)
+      messages.value.push(msg)
+      // Must read back from reactive array — the raw object is not reactive
+      assistantMsgRef.current = messages.value[messages.value.length - 1]!
     }
     return assistantMsgRef.current
   }
