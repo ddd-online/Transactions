@@ -132,7 +132,7 @@ const onSelectEvent = async (date: string) => {
   } else {
     // 缓存未命中则走原路径
     await loadLinkedTransactions(date)
-    keyEventStore.cacheLinkedTransactions(date, linkedTransactions.value)
+    keyEventStore.cacheLinkedTransactions(date)
   }
 }
 

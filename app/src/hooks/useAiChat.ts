@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { aiApi, type AiMessage as AiMessageApi } from '@/backend/api/ai'
 
 // ----------------------------------------------------------------
