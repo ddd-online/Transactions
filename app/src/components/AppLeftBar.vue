@@ -100,6 +100,7 @@ import {
   LineChartOutlined,
   StarOutlined,
   SettingOutlined,
+  RobotOutlined,
 } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { message, Modal } from 'ant-design-vue'
@@ -113,6 +114,7 @@ const navItems = [
   { path: '/tr_view', label: '消费记录', icon: TransactionOutlined },
   { path: '/da_view', label: '数据分析', icon: LineChartOutlined },
   { path: '/key_event_view', label: '关键事件', icon: StarOutlined },
+  { path: '/ai_view', label: 'AI 助手', icon: RobotOutlined },
 ]
 
 const navigate = (path: string) => {

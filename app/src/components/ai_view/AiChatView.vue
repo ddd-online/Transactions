@@ -1,0 +1,858 @@
+<template>
+  <div class="ai-chat-view">
+    <!-- Header -->
+    <div class="chat-header">
+      <h2 class="chat-header-title">AI 助手</h2>
+      <a-button
+        type="text"
+        :disabled="messages.length === 0 && !streaming"
+        @click="clearConversation"
+        class="chat-header-clear"
+      >
+        <template #icon><DeleteOutlined /></template>
+        清空对话
+      </a-button>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
+      <!-- Empty State -->
+      <div v-if="messages.length === 0 && !streaming" class="chat-empty">
+        <p class="chat-empty-greeting">下午好</p>
+        <p class="chat-empty-hint">询问你的财务数据</p>
+      </div>
+
+      <!-- Messages -->
+      <div
+        v-for="msg in messages"
+        :key="msg.id"
+        class="chat-message"
+        :class="`chat-message--${msg.role}`"
+      >
+        <!-- User Message -->
+        <div v-if="msg.role === 'user'" class="msg-user">
+          <div class="msg-user-content">{{ msg.content }}</div>
+          <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
+        </div>
+
+        <!-- AI Text Message -->
+        <div v-else-if="msg.role === 'assistant'" class="msg-assistant">
+          <div class="msg-assistant-content">
+            {{ msg.content }}
+            <span v-if="msg.streaming" class="streaming-cursor">|</span>
+          </div>
+          <div class="msg-assistant-meta">
+            <span>{{ formatTime(msg.timestamp) }}</span>
+            <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
+          </div>
+        </div>
+
+        <!-- Tool Card -->
+        <div
+          v-else-if="msg.role === 'tool'"
+          class="msg-tool"
+          :class="{ 'msg-tool--done': msg.toolDone }"
+        >
+          <div class="msg-tool-header">
+            <span class="msg-tool-indicator" :class="{ 'msg-tool-indicator--pulse': !msg.toolDone }"></span>
+            <span class="msg-tool-action">{{ toolActionText(msg) }}</span>
+          </div>
+          <div v-if="msg.toolDone && msg.toolResult" class="msg-tool-summary">
+            {{ msg.toolResult }}
+          </div>
+          <div v-if="msg.toolDone && msg.toolDetail" class="msg-tool-detail">
+            <a-button
+              type="link"
+              size="small"
+              @click="toggleToolDetail(msg.id)"
+              class="msg-tool-detail-toggle"
+            >
+              {{ expandedToolDetails.has(msg.id) ? '收起详情' : '查看详情' }}
+            </a-button>
+            <pre v-if="expandedToolDetails.has(msg.id)" class="msg-tool-detail-json">{{
+              JSON.stringify(msg.toolDetail, null, 2)
+            }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom anchor for auto-scroll -->
+      <div ref="scrollAnchorRef"></div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+      <div class="chat-divider"></div>
+      <div class="chat-input-row">
+        <textarea
+          ref="textareaRef"
+          v-model="inputText"
+          class="chat-textarea"
+          :disabled="streaming"
+          placeholder="输入你的问题..."
+          rows="1"
+          @keydown="onKeydown"
+          @input="autoResize"
+        ></textarea>
+        <button
+          class="chat-send-btn"
+          :class="{ 'chat-send-btn--stop': streaming }"
+          :disabled="!streaming && !inputText.trim()"
+          @click="streaming ? stopGeneration() : sendMessage()"
+          :title="streaming ? '停止生成' : '发送'"
+        >
+          <PauseOutlined v-if="streaming" />
+          <SendOutlined v-else />
+        </button>
+      </div>
+      <div class="chat-input-hint">Enter 发送 · Shift+Enter 换行</div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, nextTick, onUnmounted } from 'vue'
+import { DeleteOutlined, SendOutlined, PauseOutlined } from '@ant-design/icons-vue'
+import { useLedgerStore } from '@/stores/ledgerStore'
+import { message } from 'ant-design-vue'
+
+// ----------------------------------------------------------------
+// Types
+// ----------------------------------------------------------------
+
+interface SSEEvent {
+  type: 'text_delta' | 'tool_call' | 'tool_result' | 'done' | 'error'
+  delta?: string
+  tool?: string
+  args?: Record<string, any>
+  summary?: string
+  detail?: any
+  total_tokens?: number
+  error?: string
+  message?: string
+}
+
+interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'tool'
+  content: string
+  toolName?: string
+  toolArgs?: Record<string, any>
+  toolResult?: string
+  toolDetail?: any
+  toolDone?: boolean
+  timestamp: number
+  tokens?: number
+  streaming?: boolean
+}
+
+// ----------------------------------------------------------------
+// State
+// ----------------------------------------------------------------
+
+const ledgerStore = useLedgerStore()
+const messages = ref<ChatMessage[]>([])
+const inputText = ref('')
+const streaming = ref(false)
+const messageListRef = ref<HTMLElement | null>(null)
+const scrollAnchorRef = ref<HTMLElement | null>(null)
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const expandedToolDetails = ref<Set<string>>(new Set())
+
+let abortController: AbortController | null = null
+let userScrolledUp = false
+let msgIdCounter = 0
+
+// ----------------------------------------------------------------
+// API helpers
+// ----------------------------------------------------------------
+
+async function getApiBaseUrl(): Promise<string> {
+  if (window.electronAPI?.getApiServer) {
+    try {
+      const server = await window.electronAPI.getApiServer()
+      return server
+    } catch {
+      // fall through
+    }
+  }
+  return 'http://127.0.0.1:28080'
+}
+
+// ----------------------------------------------------------------
+// Core: send message via SSE
+// ----------------------------------------------------------------
+
+function nextMsgId(): string {
+  msgIdCounter++
+  return `msg-${Date.now()}-${msgIdCounter}`
+}
+
+async function sendMessage() {
+  const text = inputText.value.trim()
+  if (!text || streaming.value) return
+
+  // Validate ledger
+  if (!ledgerStore.currentLedgerId) {
+    message.warning('请先选择账本')
+    return
+  }
+
+  // Add user message
+  const userMsg: ChatMessage = {
+    id: nextMsgId(),
+    role: 'user',
+    content: text,
+    timestamp: Date.now(),
+  }
+  messages.value.push(userMsg)
+  inputText.value = ''
+  resetTextareaHeight()
+
+  // Create assistant placeholder (streaming)
+  const assistantMsg: ChatMessage = {
+    id: nextMsgId(),
+    role: 'assistant',
+    content: '',
+    timestamp: Date.now(),
+    streaming: true,
+  }
+  messages.value.push(assistantMsg)
+  streaming.value = true
+  userScrolledUp = false
+
+  await nextTick()
+  scrollToBottom()
+
+  // Prepare SSE fetch
+  abortController = new AbortController()
+  const baseUrl = await getApiBaseUrl()
+
+  try {
+    const response = await fetch(`${baseUrl}/api/v1/ai/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        ledger_id: ledgerStore.currentLedgerId,
+      }),
+      signal: abortController.signal,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`)
+    }
+
+    if (!response.body) {
+      throw new Error('不支持流式响应')
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+
+      // Parse SSE lines: "data: {...}\n\n"
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      let currentData = ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          currentData += line.slice(6)
+        } else if (line === '' && currentData) {
+          // End of event
+          try {
+            const event: SSEEvent = JSON.parse(currentData)
+            handleSSEEvent(event, assistantMsg)
+          } catch {
+            // skip malformed JSON
+          }
+          currentData = ''
+        }
+      }
+    }
+
+    // Handle any remaining data in buffer
+    if (buffer.startsWith('data: ')) {
+      const remaining = buffer.slice(6).trim()
+      if (remaining) {
+        try {
+          const event: SSEEvent = JSON.parse(remaining)
+          handleSSEEvent(event, assistantMsg)
+        } catch {
+          // skip
+        }
+      }
+    }
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      // User cancelled — finalize current assistant message
+      assistantMsg.streaming = false
+      assistantMsg.content += ' [已停止]'
+    } else {
+      // Error
+      assistantMsg.streaming = false
+      if (!assistantMsg.content) {
+        assistantMsg.content = `错误: ${err.message || '请求失败'}`
+      } else {
+        assistantMsg.content += `\n\n[错误: ${err.message || '请求失败'}]`
+      }
+      console.error('AI chat error:', err)
+    }
+  } finally {
+    streaming.value = false
+    abortController = null
+    assistantMsg.streaming = false
+    await nextTick()
+    scrollToBottom()
+  }
+}
+
+function handleSSEEvent(event: SSEEvent, assistantMsg: ChatMessage) {
+  switch (event.type) {
+    case 'text_delta':
+      assistantMsg.content += event.delta || ''
+      scrollToBottom()
+      break
+
+    case 'tool_call': {
+      // Create a tool card in "executing" state
+      const toolMsg: ChatMessage = {
+        id: nextMsgId(),
+        role: 'tool',
+        content: '',
+        toolName: event.tool || '',
+        toolArgs: event.args || {},
+        toolDone: false,
+        timestamp: Date.now(),
+      }
+      messages.value.push(toolMsg)
+      scrollToBottom()
+      break
+    }
+
+    case 'tool_result': {
+      // Find the last tool card with matching name that's not done yet
+      const toolMsg = findLastUndoneToolCard(event.tool || '')
+      if (toolMsg) {
+        toolMsg.toolDone = true
+        toolMsg.toolResult = event.summary || ''
+        toolMsg.toolDetail = event.detail || null
+      }
+      scrollToBottom()
+      break
+    }
+
+    case 'done':
+      assistantMsg.tokens = event.total_tokens
+      break
+
+    case 'error':
+      assistantMsg.content += event.message || event.error || '未知错误'
+      break
+  }
+}
+
+function findLastUndoneToolCard(toolName: string): ChatMessage | null {
+  for (let i = messages.value.length - 1; i >= 0; i--) {
+    const msg = messages.value[i]
+    if (msg && msg.role === 'tool' && msg.toolName === toolName && !msg.toolDone) {
+      return msg
+    }
+  }
+  return null
+}
+
+function stopGeneration() {
+  if (abortController) {
+    abortController.abort()
+    abortController = null
+  }
+}
+
+// ----------------------------------------------------------------
+// Clear conversation
+// ----------------------------------------------------------------
+
+async function clearConversation() {
+  messages.value = []
+  expandedToolDetails.value.clear()
+  // Also clear server-side history
+  try {
+    const baseUrl = await getApiBaseUrl()
+    await fetch(`${baseUrl}/api/v1/ai/messages`, { method: 'DELETE' })
+  } catch {
+    // non-critical
+  }
+}
+
+// ----------------------------------------------------------------
+// Tool detail toggle
+// ----------------------------------------------------------------
+
+function toggleToolDetail(msgId: string) {
+  if (expandedToolDetails.value.has(msgId)) {
+    expandedToolDetails.value.delete(msgId)
+  } else {
+    expandedToolDetails.value.add(msgId)
+  }
+}
+
+function toolActionText(msg: ChatMessage): string {
+  if (msg.toolDone) {
+    return `已完成: ${msg.toolName || '工具'}`
+  }
+  const argsDesc = msg.toolArgs ? describeArgs(msg.toolArgs) : ''
+  return `正在查询${argsDesc}...`
+}
+
+function describeArgs(args: Record<string, any>): string {
+  const parts: string[] = []
+  if (args.start_date && args.end_date) {
+    parts.push(`${args.start_date} 至 ${args.end_date}`)
+  } else if (args.year) {
+    parts.push(`${args.year}年`)
+  }
+  if (args.type) {
+    const typeMap: Record<string, string> = { expense: '支出', income: '收入', transfer: '转账' }
+    parts.push(typeMap[args.type] || args.type)
+  }
+  if (args.category) parts.push(args.category)
+  if (args.keyword) parts.push(args.keyword)
+  return parts.length > 0 ? ` ${parts.join(' · ')}` : ''
+}
+
+// ----------------------------------------------------------------
+// Scroll management
+// ----------------------------------------------------------------
+
+function scrollToBottom() {
+  if (userScrolledUp) return
+  nextTick(() => {
+    scrollAnchorRef.value?.scrollIntoView({ behavior: 'smooth' })
+  })
+}
+
+function onScroll() {
+  const el = messageListRef.value
+  if (!el) return
+  const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+  userScrolledUp = distFromBottom > 60
+}
+
+// ----------------------------------------------------------------
+// Input handling
+// ----------------------------------------------------------------
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    sendMessage()
+  }
+}
+
+function autoResize() {
+  nextTick(() => {
+    const el = textareaRef.value
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`
+  })
+}
+
+function resetTextareaHeight() {
+  nextTick(() => {
+    const el = textareaRef.value
+    if (!el) return
+    el.style.height = 'auto'
+  })
+}
+
+// ----------------------------------------------------------------
+// Time formatting
+// ----------------------------------------------------------------
+
+function formatTime(ts: number): string {
+  const d = new Date(ts)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${hh}:${mm}`
+}
+
+// ----------------------------------------------------------------
+// Cleanup
+// ----------------------------------------------------------------
+
+onUnmounted(() => {
+  if (abortController) {
+    abortController.abort()
+  }
+})
+</script>
+
+<style scoped>
+/* ========================================
+   Layout
+   ======================================== */
+
+.ai-chat-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--billadm-color-major-background);
+}
+
+/* ========================================
+   Header
+   ======================================== */
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--billadm-size-header-height);
+  padding: 0 var(--billadm-space-xl);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+
+.chat-header-title {
+  font-family: var(--billadm-font-display);
+  font-size: var(--billadm-size-text-title);
+  font-weight: 500;
+  color: var(--billadm-color-text-major);
+  margin: 0;
+}
+
+.chat-header-clear {
+  -webkit-app-region: no-drag;
+  color: var(--billadm-color-text-secondary);
+  font-size: var(--billadm-size-text-body-sm);
+}
+
+.chat-header-clear:hover {
+  color: var(--billadm-color-text-major);
+}
+
+/* ========================================
+   Messages Area
+   ======================================== */
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--billadm-space-xl);
+  position: relative;
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+
+.chat-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.chat-empty-greeting {
+  font-family: var(--billadm-font-display);
+  font-size: var(--billadm-size-text-display);
+  font-weight: 400;
+  color: var(--billadm-color-text-disabled);
+  margin: 0 0 var(--billadm-space-sm) 0;
+}
+
+.chat-empty-hint {
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-disabled);
+  margin: 0;
+}
+
+/* ========================================
+   Message Wrapper
+   ======================================== */
+
+.chat-message {
+  margin-bottom: var(--billadm-space-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-message--user {
+  align-items: flex-end;
+}
+
+.chat-message--assistant {
+  align-items: flex-start;
+}
+
+.chat-message--tool {
+  align-items: flex-start;
+}
+
+/* ========================================
+   User Message Bubble
+   ======================================== */
+
+.msg-user {
+  max-width: 70%;
+  background: var(--billadm-color-primary);
+  color: var(--billadm-color-text-inverse);
+  border-radius: var(--billadm-radius-md);
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+}
+
+.msg-user-content {
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body);
+  line-height: var(--billadm-height-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-user-time {
+  font-size: var(--billadm-size-text-caption);
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: var(--billadm-space-xs);
+  text-align: right;
+}
+
+/* ========================================
+   AI Assistant Message
+   ======================================== */
+
+.msg-assistant {
+  max-width: 80%;
+  background: var(--billadm-color-major-background);
+  border-left: 3px solid var(--billadm-color-primary);
+  border-radius: var(--billadm-radius-md);
+  padding: var(--billadm-space-md);
+  box-shadow: var(--billadm-shadow-sm);
+}
+
+.msg-assistant-content {
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-major);
+  line-height: var(--billadm-height-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg-assistant-meta {
+  font-size: var(--billadm-size-text-small);
+  color: var(--billadm-color-text-disabled);
+  margin-top: var(--billadm-space-sm);
+}
+
+/* ========================================
+   Streaming Cursor
+   ======================================== */
+
+.streaming-cursor {
+  display: inline;
+  color: var(--billadm-color-primary);
+  font-weight: var(--billadm-weight-bold);
+  animation: cursor-blink 0.6s step-end infinite alternate;
+}
+
+@keyframes cursor-blink {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ========================================
+   Tool Card
+   ======================================== */
+
+.msg-tool {
+  max-width: 80%;
+  background: var(--billadm-color-minor-background);
+  border-left: 3px solid var(--billadm-color-accent);
+  border-radius: var(--billadm-radius-md);
+  padding: var(--billadm-space-md);
+  box-shadow: var(--billadm-shadow-sm);
+  transition: border-color var(--billadm-transition-normal);
+}
+
+.msg-tool--done {
+  border-left-color: var(--billadm-color-success);
+}
+
+.msg-tool-header {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body-sm);
+  color: var(--billadm-color-text-secondary);
+}
+
+.msg-tool-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--billadm-color-accent);
+  flex-shrink: 0;
+}
+
+.msg-tool-indicator--pulse {
+  animation: pulse-scale 1s ease-in-out infinite;
+}
+
+@keyframes pulse-scale {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.msg-tool--done .msg-tool-indicator {
+  background: var(--billadm-color-success);
+  animation: none;
+}
+
+.msg-tool-action {
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body-sm);
+}
+
+.msg-tool-summary {
+  margin-top: var(--billadm-space-sm);
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-major);
+  line-height: var(--billadm-height-normal);
+}
+
+.msg-tool-detail {
+  margin-top: var(--billadm-space-sm);
+}
+
+.msg-tool-detail-toggle {
+  font-size: var(--billadm-size-text-caption);
+  padding: 0;
+  height: auto;
+  color: var(--billadm-color-primary);
+}
+
+.msg-tool-detail-json {
+  margin-top: var(--billadm-space-sm);
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  background: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-sm);
+  font-family: var(--billadm-font-mono);
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+  line-height: var(--billadm-height-normal);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ========================================
+   Input Area
+   ======================================== */
+
+.chat-input-area {
+  padding: 0 var(--billadm-space-xl) var(--billadm-space-md);
+  flex-shrink: 0;
+}
+
+.chat-divider {
+  height: 1px;
+  background: var(--billadm-color-divider);
+  margin-bottom: var(--billadm-space-md);
+}
+
+.chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--billadm-space-sm);
+}
+
+.chat-textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  border: 1px solid var(--billadm-color-window-border);
+  border-radius: var(--billadm-radius-lg);
+  background: var(--billadm-color-minor-background);
+  font-family: var(--billadm-font-body);
+  font-size: var(--billadm-size-text-body);
+  color: var(--billadm-color-text-major);
+  line-height: var(--billadm-height-normal);
+  resize: none;
+  outline: none;
+  transition: all var(--billadm-transition-fast);
+}
+
+.chat-textarea:focus {
+  background: var(--billadm-color-major-background);
+  box-shadow: 0 0 0 2px rgba(74, 140, 111, 0.15);
+  border-color: var(--billadm-color-primary);
+}
+
+.chat-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-textarea::placeholder {
+  color: var(--billadm-color-text-disabled);
+}
+
+/* Send / Stop Button */
+
+.chat-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--billadm-color-primary);
+  color: var(--billadm-color-text-inverse);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  transition: background var(--billadm-transition-fast);
+}
+
+.chat-send-btn:hover:not(:disabled) {
+  background: var(--billadm-color-primary-light);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chat-send-btn--stop {
+  background: var(--billadm-color-expense);
+}
+
+.chat-send-btn--stop:hover {
+  background: #c4624e;
+}
+
+/* Hint */
+
+.chat-input-hint {
+  font-size: var(--billadm-size-text-small);
+  color: var(--billadm-color-text-disabled);
+  margin-top: var(--billadm-space-xs);
+  margin-left: var(--billadm-space-sm);
+}
+</style>

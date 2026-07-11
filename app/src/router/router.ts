@@ -28,6 +28,11 @@ const routes = [
         component: () => import('@/components/key_event_view/KeyEventView.vue')
       },
       {
+        name: 'AI 助手',
+        path: 'ai_view',
+        component: () => import('@/components/ai_view/AiChatView.vue'),
+      },
+      {
         name: '应用设置',
         path: 'settings_view',
         component: () => import('@/components/settings_view/SettingsView.vue')
