@@ -411,14 +411,17 @@ async function loadHistory() {
     const apiMessages = await aiApi.getMessages()
     if (!apiMessages || apiMessages.length === 0) return
 
-    messages.value = apiMessages.map((m: AiMessageApi): ChatMessage => {
-      const base: ChatMessage = {
-        id: m.id,
-        role: m.role as ChatMessage['role'],
-        content: m.content,
-        timestamp: m.created_at,
-      }
-      if (m.role === 'tool') {
+    messages.value = apiMessages
+      // Skip intermediate assistant messages that only contain tool_calls
+      .filter((m: AiMessageApi) => !(m.role === 'assistant' && m.tool_calls))
+      .map((m: AiMessageApi): ChatMessage => {
+        const base: ChatMessage = {
+          id: m.id,
+          role: m.role as ChatMessage['role'],
+          content: m.content,
+          timestamp: m.created_at,
+        }
+        if (m.role === 'tool') {
         base.toolName = m.tool_name
         base.toolDone = true
         base.toolResult = m.content.length > 200

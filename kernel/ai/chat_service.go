@@ -149,12 +149,13 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 			var assistantContent string
 			var toolCalls []provider.ToolCall
 			gotToolCalls := false
+			var bufferedDeltas []string
 
 			for event := range eventCh {
 				switch event.Type {
 				case "text_delta":
 					assistantContent += event.Delta
-					ch <- SSEEvent{Type: "text_delta", Delta: event.Delta}
+					bufferedDeltas = append(bufferedDeltas, event.Delta)
 				case "tool_call":
 					gotToolCalls = true
 					toolCalls = append(toolCalls, event.ToolCalls...)
@@ -169,9 +170,11 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 				}
 			}
 
-			// 如果 AI 没有调用工具，结束循环
+			// 如果 AI 没有调用工具，发送缓冲文本并结束
 			if !gotToolCalls || len(toolCalls) == 0 {
-				// 保存 assistant 消息
+				for _, delta := range bufferedDeltas {
+					ch <- SSEEvent{Type: "text_delta", Delta: delta}
+				}
 				if assistantContent != "" {
 					s.saveMessage(ws, &models.AiMessage{
 						ID:             uuid.NewString(),
@@ -184,17 +187,8 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 				return
 			}
 
-			// 保存 assistant 消息（带 tool_calls）
-			tcsJSON, _ := json.Marshal(toolCalls)
-			s.saveMessage(ws, &models.AiMessage{
-				ID:             uuid.NewString(),
-				ConversationID: "default",
-				Role:           "assistant",
-				Content:        assistantContent,
-				ToolCalls:      string(tcsJSON),
-			})
-
-			// 追加 assistant 消息到 messages
+			// 有工具调用：不发送缓冲文本，不持久化中间 assistant 消息。
+			// 仅追加到内存 messages 供 LLM 上下文使用。
 			messages = append(messages, provider.ChatMessage{
 				Role:      "assistant",
 				Content:   assistantContent,
