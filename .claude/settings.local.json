@@ -24,7 +24,9 @@
       "Bash(powershell -ExecutionPolicy Bypass -File /d/github/Transactions/build/build.ps1)",
       "Bash(npx electron-builder *)",
       "Bash(sed -i '/NewQueryChartDataTool/d' /d/github/Transactions/kernel/server/wire.go)",
-      "Bash(sed -i 's/Register 6 read-only tools/Register 5 read-only tools/' /d/github/Transactions/kernel/server/wire.go)"
+      "Bash(sed -i 's/Register 6 read-only tools/Register 5 read-only tools/' /d/github/Transactions/kernel/server/wire.go)",
+      "Bash(powershell.exe *)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }
