@@ -20,8 +20,12 @@ func WithWorkspace(ctx context.Context, ws *workspace.Workspace) context.Context
 	return context.WithValue(ctx, wsKey{}, ws)
 }
 
-func getWS(ctx context.Context) *workspace.Workspace {
-	return ctx.Value(wsKey{}).(*workspace.Workspace)
+func getWS(ctx context.Context) (*workspace.Workspace, error) {
+	ws, ok := ctx.Value(wsKey{}).(*workspace.Workspace)
+	if !ok || ws == nil {
+		return nil, fmt.Errorf("workspace not found in context")
+	}
+	return ws, nil
 }
 
 type ledgerIDKey struct{}
@@ -101,7 +105,10 @@ func (t *queryTransactionsTool) InputSchema() map[string]any {
 }
 
 func (t *queryTransactionsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws := getWS(ctx)
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	ledgerID, err := requireLedgerID(ctx, args)
 	if err != nil {
 		return "", err
@@ -173,7 +180,10 @@ func (t *listLedgersTool) InputSchema() map[string]any {
 }
 
 func (t *listLedgersTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws := getWS(ctx)
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	ledgers, err := service.GetLedgerService().ListAllLedger(ws)
 	if err != nil {
 		return "", err
@@ -211,7 +221,10 @@ func (t *listCategoriesTool) InputSchema() map[string]any {
 }
 
 func (t *listCategoriesTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws := getWS(ctx)
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	ledgerID, err := requireLedgerID(ctx, args)
 	if err != nil {
 		return "", err
@@ -252,7 +265,10 @@ func (t *listTagsTool) InputSchema() map[string]any {
 }
 
 func (t *listTagsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws := getWS(ctx)
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	ledgerID, err := requireLedgerID(ctx, args)
 	if err != nil {
 		return "", err
@@ -302,7 +318,10 @@ func (t *queryChartDataTool) InputSchema() map[string]any {
 }
 
 func (t *queryChartDataTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws := getWS(ctx)
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	ledgerID, err := requireLedgerID(ctx, args)
 	if err != nil {
 		return "", err
@@ -376,7 +395,10 @@ func (t *getKeyEventsTool) InputSchema() map[string]any {
 }
 
 func (t *getKeyEventsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
-	ws := getWS(ctx)
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
 	ledgerID, err := requireLedgerID(ctx, args)
 	if err != nil {
 		return "", err
