@@ -51,26 +51,29 @@
             </div>
           </div>
 
+          <!-- Thinking Block -->
+          <div v-else-if="msg.role === 'thinking'" class="msg-thinking-row">
+            <div class="msg-thinking">
+              <button
+                class="thinking-toggle"
+                @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
+              >
+                <span class="thinking-dot" :class="{ 'thinking-dot--active': msg.thinkingActive }"></span>
+                <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
+                <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed && !msg.thinkingActive }">▾</span>
+              </button>
+              <div
+                v-if="msg.content && (!msg.thinkingCollapsed || msg.thinkingActive)"
+                class="thinking-content"
+              >{{ msg.content }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span></div>
+            </div>
+          </div>
+
           <!-- AI Text Message -->
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
             <div class="msg-assistant">
-              <!-- Thinking process (collapsible) -->
-              <div v-if="msg.thinking || msg.thinkingActive" class="thinking-block">
-                <button
-                  class="thinking-toggle"
-                  @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
-                >
-                  <span class="thinking-dot" :class="{ 'thinking-dot--active': msg.thinkingActive }"></span>
-                  <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
-                  <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed && !msg.thinkingActive }">▾</span>
-                </button>
-                <div
-                  v-if="msg.thinking && (!msg.thinkingCollapsed || msg.thinkingActive)"
-                  class="thinking-content"
-                >{{ msg.thinking }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span></div>
-              </div>
               <div class="msg-assistant-content" v-html="renderMarkdown(msg.content)"></div>
-              <span v-if="msg.streaming && !msg.thinkingActive" class="streaming-cursor">|</span>
+              <span v-if="msg.streaming" class="streaming-cursor">|</span>
             </div>
             <div class="msg-meta-col">
               <button
@@ -95,7 +98,13 @@
           >
             <div class="msg-tool-header">
               <span class="msg-tool-indicator" :class="{ 'msg-tool-indicator--pulse': !msg.toolDone }"></span>
-              <span class="msg-tool-action">{{ toolActionText(msg) }}</span>
+              <span class="msg-tool-name">{{ msg.toolName }}</span>
+            </div>
+            <div v-if="msg.toolArgs && Object.keys(msg.toolArgs).length > 0" class="msg-tool-args">
+              <div v-for="(val, key) in msg.toolArgs" :key="key" class="msg-tool-arg">
+                <span class="msg-tool-arg-key">{{ key }}</span>
+                <span class="msg-tool-arg-val">{{ formatArgValue(val) }}</span>
+              </div>
             </div>
             <div v-if="msg.toolDone && msg.toolResult" class="msg-tool-summary">
               {{ msg.toolResult }}
@@ -176,7 +185,7 @@ interface SSEEvent {
 
 interface ChatMessage {
   id: string
-  role: 'user' | 'assistant' | 'tool'
+  role: 'user' | 'assistant' | 'tool' | 'thinking'
   content: string
   toolName?: string
   toolArgs?: Record<string, any>
@@ -256,7 +265,10 @@ async function sendMessage() {
 
   // Assistant message is created lazily on first text_delta,
   // so tool_call events (if any) appear before the assistant bubble.
+  // Thinking message is also created lazily on first thinking_delta,
+  // so it appears before tool cards and assistant text.
   const assistantMsgRef: { current: ChatMessage | null } = { current: null }
+  const thinkingMsgRef: { current: ChatMessage | null } = { current: null }
   streaming.value = true
   userScrolledUp = false
 
@@ -309,7 +321,7 @@ async function sendMessage() {
           // End of event
           try {
             const event: SSEEvent = JSON.parse(currentData)
-            handleSSEEvent(event, assistantMsgRef)
+            handleSSEEvent(event, assistantMsgRef, thinkingMsgRef)
           } catch {
             // skip malformed JSON
           }
@@ -324,7 +336,7 @@ async function sendMessage() {
       if (remaining) {
         try {
           const event: SSEEvent = JSON.parse(remaining)
-          handleSSEEvent(event, assistantMsgRef)
+          handleSSEEvent(event, assistantMsgRef, thinkingMsgRef)
         } catch {
           // skip
         }
@@ -356,12 +368,32 @@ async function sendMessage() {
     if (assistantMsgRef.current) {
       assistantMsgRef.current.streaming = false
     }
+    if (thinkingMsgRef.current) {
+      thinkingMsgRef.current.streaming = false
+      thinkingMsgRef.current.thinkingActive = false
+    }
     await nextTick()
     scrollToBottom()
   }
 }
 
-function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage | null }) {
+function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage | null }, thinkingMsgRef: { current: ChatMessage | null }) {
+  const ensureThinking = (): ChatMessage => {
+    if (!thinkingMsgRef.current) {
+      thinkingMsgRef.current = {
+        id: nextMsgId(),
+        role: 'thinking',
+        content: '',
+        timestamp: Date.now(),
+        streaming: true,
+        thinkingActive: true,
+        thinkingCollapsed: false,
+      }
+      messages.value.push(thinkingMsgRef.current)
+    }
+    return thinkingMsgRef.current
+  }
+
   const ensureAssistant = (): ChatMessage => {
     if (!assistantMsgRef.current) {
       assistantMsgRef.current = {
@@ -378,22 +410,23 @@ function handleSSEEvent(event: SSEEvent, assistantMsgRef: { current: ChatMessage
 
   switch (event.type) {
     case 'thinking_start':
-      ensureAssistant()
+      ensureThinking()
       break
 
     case 'thinking_delta': {
-      const msg = ensureAssistant()
+      const msg = ensureThinking()
       msg.thinkingActive = true
-      msg.thinking = (msg.thinking || '') + (event.delta || '')
+      msg.content += event.delta || ''
       msg.thinkingCollapsed = false
       scrollToBottom()
       break
     }
 
     case 'thinking_done':
-      if (assistantMsgRef.current) {
-        assistantMsgRef.current.thinkingActive = false
-        assistantMsgRef.current.thinkingCollapsed = true
+      if (thinkingMsgRef.current) {
+        thinkingMsgRef.current.thinkingActive = false
+        thinkingMsgRef.current.thinkingCollapsed = true
+        thinkingMsgRef.current.streaming = false
       }
       break
 
@@ -530,28 +563,12 @@ function toggleToolDetail(msgId: string) {
   }
 }
 
-function toolActionText(msg: ChatMessage): string {
-  if (msg.toolDone) {
-    return `已完成: ${msg.toolName || '工具'}`
-  }
-  const argsDesc = msg.toolArgs ? describeArgs(msg.toolArgs) : ''
-  return `正在查询${argsDesc}...`
-}
-
-function describeArgs(args: Record<string, any>): string {
-  const parts: string[] = []
-  if (args.start_date && args.end_date) {
-    parts.push(`${args.start_date} 至 ${args.end_date}`)
-  } else if (args.year) {
-    parts.push(`${args.year}年`)
-  }
-  if (args.type) {
-    const typeMap: Record<string, string> = { expense: '支出', income: '收入', transfer: '转账' }
-    parts.push(typeMap[args.type] || args.type)
-  }
-  if (args.category) parts.push(args.category)
-  if (args.keyword) parts.push(args.keyword)
-  return parts.length > 0 ? ` ${parts.join(' · ')}` : ''
+function formatArgValue(val: any): string {
+  if (typeof val === 'string') return val
+  if (typeof val === 'number') return String(val)
+  if (typeof val === 'boolean') return val ? '是' : '否'
+  if (val === null || val === undefined) return '—'
+  return JSON.stringify(val)
 }
 
 // ----------------------------------------------------------------
@@ -1021,9 +1038,57 @@ onUnmounted(() => {
   animation: none;
 }
 
+.msg-tool-name {
+  font-family: var(--billadm-font-mono);
+  font-size: var(--billadm-size-text-body-sm);
+  color: var(--billadm-color-text-major);
+  font-weight: 500;
+}
+
 .msg-tool-action {
   font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-body-sm);
+}
+
+/* ========================================
+   Tool Args Display
+   ======================================== */
+
+.msg-tool-args {
+  margin-top: var(--billadm-space-xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.msg-tool-arg {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--billadm-color-minor-background);
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-sm);
+  padding: 1px 6px;
+  font-size: var(--billadm-size-text-caption);
+  line-height: 1.6;
+}
+
+.msg-tool-arg-key {
+  color: var(--billadm-color-text-disabled);
+  font-family: var(--billadm-font-body);
+}
+
+.msg-tool-arg-key::after {
+  content: ':';
+}
+
+.msg-tool-arg-val {
+  color: var(--billadm-color-text-major);
+  font-family: var(--billadm-font-mono);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .msg-tool-summary {
@@ -1243,13 +1308,38 @@ onUnmounted(() => {
   }
 }
 
+@keyframes msg-thinking-enter {
+  0% {
+    opacity: 0;
+    border-left-color: transparent;
+  }
+  100% {
+    opacity: 1;
+    border-left-color: var(--billadm-color-divider);
+  }
+}
+
+.chat-message--thinking {
+  animation-name: msg-thinking-enter;
+  animation-duration: 200ms;
+}
+
 /* ========================================
-   Thinking Block
+   Thinking Block (standalone message)
    ======================================== */
 
-.thinking-block {
-  margin-bottom: var(--billadm-space-sm);
+.msg-thinking-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--billadm-space-xs);
+}
+
+.msg-thinking {
+  max-width: 90%;
+  background: transparent;
+  border-left: 3px solid var(--billadm-color-divider);
   border-radius: var(--billadm-radius-sm);
+  padding: var(--billadm-space-xs) var(--billadm-space-md);
   overflow: hidden;
 }
 

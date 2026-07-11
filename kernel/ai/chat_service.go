@@ -149,13 +149,12 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 			var assistantContent string
 			var toolCalls []provider.ToolCall
 			gotToolCalls := false
-			var bufferedDeltas []string
 
 			for event := range eventCh {
 				switch event.Type {
 				case "text_delta":
 					assistantContent += event.Delta
-					bufferedDeltas = append(bufferedDeltas, event.Delta)
+					ch <- SSEEvent{Type: "text_delta", Delta: event.Delta}
 				case "thinking_delta":
 					ch <- SSEEvent{Type: "thinking_delta", Delta: event.Delta}
 				case "thinking_start":
@@ -176,11 +175,8 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 				}
 			}
 
-			// 如果 AI 没有调用工具，发送缓冲文本并结束
+			// 如果 AI 没有调用工具，直接结束
 			if !gotToolCalls || len(toolCalls) == 0 {
-				for _, delta := range bufferedDeltas {
-					ch <- SSEEvent{Type: "text_delta", Delta: delta}
-				}
 				if assistantContent != "" {
 					s.saveMessage(ws, &models.AiMessage{
 						ID:             uuid.NewString(),
@@ -193,7 +189,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerI
 				return
 			}
 
-			// 有工具调用：不发送缓冲文本。持久化中间 assistant 消息
+			// 有工具调用：持久化中间 assistant 消息
 			// 供历史加载时 LLM 上下文使用（前端会过滤掉不展示）。
 			tcsJSON, _ := json.Marshal(toolCalls)
 			s.saveMessage(ws, &models.AiMessage{
