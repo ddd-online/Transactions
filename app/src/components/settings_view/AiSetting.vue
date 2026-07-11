@@ -73,16 +73,25 @@
           <span class="setting-desc">使用的模型名称</span>
         </div>
         <div class="setting-action">
-          <!-- DeepSeek: 下拉框 -->
-          <a-select
-            v-if="form.provider === 'deepseek'"
-            v-model:value="form.model"
-            :loading="modelsLoading"
-            :options="modelOptions"
-            :placeholder="modelsError ? '加载失败，请重试' : '请选择模型'"
-            style="width: 360px"
-            :not-found-content="modelsError ? modelsError : undefined"
-          />
+          <!-- DeepSeek: 正常时下拉框，加载失败时降级为输入框 + 重试 -->
+          <template v-if="form.provider === 'deepseek'">
+            <a-select
+              v-if="!modelsError"
+              v-model:value="form.model"
+              :loading="modelsLoading"
+              :options="modelOptions"
+              placeholder="请选择模型"
+              style="width: 360px"
+            />
+            <div v-else class="model-error-inline">
+              <a-input
+                v-model:value="form.model"
+                placeholder="加载失败，请手动输入模型名"
+                style="width: 280px"
+              />
+              <a-button type="link" size="small" @click="fetchModels">重试</a-button>
+            </div>
+          </template>
           <!-- 自定义: 文本输入框 -->
           <a-input
             v-else
@@ -430,6 +439,12 @@ onMounted(() => {
 .balance-hint {
   font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-secondary);
+}
+
+.model-error-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-xs);
 }
 
 .balance-error {
