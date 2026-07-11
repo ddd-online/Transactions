@@ -39,6 +39,22 @@ function checkSuccess(result: Result, prefix?: string): void {
     }
 }
 
+/**
+ * Extract a user-friendly error message from an Axios error.
+ * Prefers the backend's `msg` field from the response body when available
+ * (e.g. 500 errors from middleware), falls back to Axios's generic message.
+ */
+function extractErrorMessage(error: unknown, errorPrefix?: string): string {
+    if (axios.isAxiosError(error)) {
+        const backendMsg = (error.response?.data as Result)?.msg;
+        if (backendMsg) {
+            return `${errorPrefix || '请求失败'}: ${backendMsg}`;
+        }
+        return `${errorPrefix || '请求失败'}: ${error.message}`;
+    }
+    throw error;
+}
+
 const api = {
     async get<T = any>(url: string, errorPrefix?: string): Promise<T> {
         try {
@@ -47,10 +63,7 @@ const api = {
             checkSuccess(response.data, errorPrefix);
             return response.data.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                throw new Error(`${errorPrefix || '请求失败'}: ${error.message}`);
-            }
-            throw error;
+            throw new Error(extractErrorMessage(error, errorPrefix));
         }
     },
 
@@ -61,10 +74,7 @@ const api = {
             checkSuccess(response.data, errorPrefix);
             return response.data.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                throw new Error(`${errorPrefix || '请求失败'}: ${error.message}`);
-            }
-            throw error;
+            throw new Error(extractErrorMessage(error, errorPrefix));
         }
     },
 
@@ -75,10 +85,7 @@ const api = {
             checkSuccess(response.data, errorPrefix);
             return response.data.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                throw new Error(`${errorPrefix || '请求失败'}: ${error.message}`);
-            }
-            throw error;
+            throw new Error(extractErrorMessage(error, errorPrefix));
         }
     },
 
@@ -89,10 +96,7 @@ const api = {
             checkSuccess(response.data, errorPrefix);
             return response.data.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                throw new Error(`${errorPrefix || '请求失败'}: ${error.message}`);
-            }
-            throw error;
+            throw new Error(extractErrorMessage(error, errorPrefix));
         }
     },
 
@@ -103,10 +107,7 @@ const api = {
             checkSuccess(response.data, errorPrefix);
             return response.data.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                throw new Error(`${errorPrefix || '请求失败'}: ${error.message}`);
-            }
-            throw error;
+            throw new Error(extractErrorMessage(error, errorPrefix));
         }
     }
 };
