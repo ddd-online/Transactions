@@ -21,22 +21,28 @@ func SetAiConfigDao(d dao.AiConfigDao) {
 
 // GET /api/v1/ai/config
 func getAiConfig(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
 	config, err := aiConfigDao.Get(ws(c))
 	if err != nil {
 		// Return empty config
 		config = &models.AiConfig{}
 	}
 	// Don't return api_key to the frontend
-	c.JSON(http.StatusOK, gin.H{
+	ret.Data = gin.H{
 		"base_url": config.BaseURL,
 		"endpoint": config.Endpoint,
 		"model":    config.Model,
 		"has_key":  config.APIKey != "",
-	})
+	}
 }
 
 // PUT /api/v1/ai/config
 func updateAiConfig(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
 	var req struct {
 		BaseURL  string `json:"base_url"`
 		Endpoint string `json:"endpoint"`
@@ -44,7 +50,8 @@ func updateAiConfig(c *gin.Context) {
 		Model    string `json:"model"`
 	}
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ret.Code = -1
+		ret.Msg = "invalid request: " + err.Error()
 		return
 	}
 
@@ -56,15 +63,17 @@ func updateAiConfig(c *gin.Context) {
 	}
 
 	if err := aiConfigDao.Save(ws(c), config); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ret.Code = -1
+		ret.Msg = err.Error()
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
 // POST /api/v1/ai/config/test
 func testAiConnection(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
 	var req struct {
 		BaseURL  string `json:"base_url"`
 		Endpoint string `json:"endpoint"`
@@ -72,7 +81,8 @@ func testAiConnection(c *gin.Context) {
 		Model    string `json:"model"`
 	}
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ret.Code = -1
+		ret.Msg = "invalid request: " + err.Error()
 		return
 	}
 
@@ -83,7 +93,8 @@ func testAiConnection(c *gin.Context) {
 	case "/chat/completions":
 		p = provider.NewOpenAIProvider(req.BaseURL, req.APIKey, req.Model)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "不支持的端点"})
+		ret.Code = -1
+		ret.Msg = "不支持的端点"
 		return
 	}
 
@@ -96,31 +107,36 @@ func testAiConnection(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "连接失败: " + err.Error()})
+		ret.Code = -1
+		ret.Msg = "连接失败: " + err.Error()
 		return
 	}
 
 	// Consume the first event to verify the connection
 	for event := range eventCh {
 		if event.Type == "error" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": event.Error.Error()})
+			ret.Code = -1
+			ret.Msg = event.Error.Error()
 			return
 		}
 		if event.Type == "text_delta" || event.Type == "done" {
-			c.JSON(http.StatusOK, gin.H{"message": "连接成功"})
+			ret.Data = gin.H{"message": "连接成功"}
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "连接成功"})
+	ret.Data = gin.H{"message": "连接成功"}
 }
 
 // DELETE /api/v1/ai/messages
 func clearAiMessages(c *gin.Context) {
+	ret := models.NewResult()
+	defer c.JSON(http.StatusOK, ret)
+
 	messageDao := dao.NewAiMessageDao()
 	if err := messageDao.DeleteAll(ws(c), "default"); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ret.Code = -1
+		ret.Msg = err.Error()
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "已清空"})
 }
