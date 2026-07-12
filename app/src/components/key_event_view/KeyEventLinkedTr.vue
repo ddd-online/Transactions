@@ -144,13 +144,15 @@ watch(
   flex: 1;
   overflow-y: auto;
   padding: var(--billadm-space-xs);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   contain: strict;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
+  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
 }
 
-.linked-cards::-webkit-scrollbar {
-  display: none;
+.linked-cards::-webkit-scrollbar-thumb:hover {
+  background: rgba(141, 127, 111, 0.40);
 }
 
 /* ========== 卡片 ========== */

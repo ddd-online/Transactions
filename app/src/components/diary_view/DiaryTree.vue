@@ -230,7 +230,26 @@ watch(() => props.dates.length, (len) => {
 .tree-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: var(--billadm-space-xs) 0;
+  padding: var(--billadm-space-xs) var(--billadm-space-sm) var(--billadm-space-xs) 0;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: var(--billadm-space-xs);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(141, 127, 111, 0.18);
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
+}
+
+.tree-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(141, 127, 111, 0.40);
 }
 
 /* 年份分组之间留白 — 2:1 节奏：组间 > 组内 */

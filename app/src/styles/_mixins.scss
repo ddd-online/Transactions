@@ -48,23 +48,25 @@
   text-overflow: ellipsis;
 }
 
-// Scrollbar
+// Scrollbar — subtle warm stone, hides until hover then fades in
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   &::-webkit-scrollbar-track {
     background: transparent;
+    margin-block: var(--billadm-space-xs);
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--billadm-color-window-border);
-    border-radius: 3px;
+    background: rgba(141, 127, 111, 0.18);
+    border-radius: 8px;
+    transition: background 0.3s ease;
 
     &:hover {
-      background-color: var(--billadm-color-text-secondary);
+      background: rgba(141, 127, 111, 0.40);
     }
   }
 }

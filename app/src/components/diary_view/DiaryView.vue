@@ -96,7 +96,7 @@ const onDelete = async (date: string) => {
 .diary-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: var(--billadm-space-md);
   min-height: 0;
   overflow: hidden;
