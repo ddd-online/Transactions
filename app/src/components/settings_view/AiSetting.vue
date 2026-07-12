@@ -233,8 +233,37 @@ async function fetchRoles() {
 }
 
 function onRoleChange(role: any) {
-  currentRole.value = role as string
-  loadConfig()
+  const newRole = role as string
+  if (currentRole.value === newRole) return
+  // Save shared fields to old role before switching
+  saveSharedToRole(currentRole.value)
+  currentRole.value = newRole
+  loadSystemPrompt()
+}
+
+async function saveSharedToRole(role: string) {
+  try {
+    await aiApi.updateConfig({
+      role,
+      provider: form.provider,
+      base_url: form.base_url,
+      endpoint: form.endpoint,
+      api_key: keyPlaceholder.value ? '' : form.api_key,
+      model: form.model,
+      system_prompt: form.system_prompt,
+    })
+  } catch {
+    // Best-effort sync, ignore errors
+  }
+}
+
+async function loadSystemPrompt() {
+  try {
+    const config = await aiApi.getConfig(currentRole.value)
+    form.system_prompt = config.system_prompt || ''
+  } catch {
+    form.system_prompt = ''
+  }
 }
 
 // 模型下拉框状态
