@@ -170,3 +170,25 @@ export interface KeyEventImage {
     sortOrder: number;
     createdAt: number;
 }
+
+/**
+ * 日记条目
+ */
+export interface DiaryEntry {
+    id: string;           // UUID
+    date: string;         // YYYY-MM-DD
+    content: string;      // Markdown 正文
+    wordCount: number;    // 字数（Unicode 字符数）
+    mood: string;         // 心情 emoji（可为空）
+    createdAt: number;    // Unix 时间戳
+    updatedAt: number;    // Unix 时间戳
+}
+
+/**
+ * 日记日期列表项（用于构建左侧树）
+ */
+export interface DiaryDateItem {
+    date: string;         // YYYY-MM-DD
+    wordCount: number;    // 字数（Unicode 字符数）
+    mood: string;         // 心情 emoji
+}

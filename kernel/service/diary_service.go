@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
@@ -14,6 +15,8 @@ import (
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/unicode"
 	"gorm.io/gorm/clause"
 )
 
@@ -139,9 +142,52 @@ func (s *diaryServiceImpl) ScanDirectory(dir string) ([]FileItem, error) {
 }
 
 func (s *diaryServiceImpl) ImportFile(ws *workspace.Workspace, path string, date string) (*models.DiaryEntry, error) {
-	content, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("读取文件失败 %s: %w", path, err)
 	}
-	return s.Upsert(ws, date, string(content), "")
+	content := toUTF8(raw)
+	return s.Upsert(ws, date, content, "")
+}
+
+// toUTF8 将字节内容转为 UTF-8 字符串。
+// 依次尝试：UTF-8 → UTF-16 BOM → GBK → 替换非法字节。
+func toUTF8(raw []byte) string {
+	if utf8.Valid(raw) {
+		return string(raw)
+	}
+	if decoded := decodeUTF16(raw); decoded != "" {
+		return decoded
+	}
+	decoded, err := simplifiedchinese.GBK.NewDecoder().Bytes(raw)
+	if err == nil {
+		return string(decoded)
+	}
+	// 回退：替换非法 UTF-8 字节为 ?
+	return string(bytes.ToValidUTF8(raw, []byte("?")))
+}
+
+// decodeUTF16 尝试将 UTF-16 LE/BE（带 BOM）解码为 UTF-8。
+func decodeUTF16(raw []byte) string {
+	if len(raw) < 2 {
+		return ""
+	}
+	// 根据 BOM 选择编码并跳过 BOM 字节
+	var (
+		decoded     []byte
+		err         error
+		bomStripped = raw[2:]
+	)
+	switch {
+	case raw[0] == 0xFF && raw[1] == 0xFE:
+		decoded, err = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder().Bytes(bomStripped)
+	case raw[0] == 0xFE && raw[1] == 0xFF:
+		decoded, err = unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder().Bytes(bomStripped)
+	default:
+		return ""
+	}
+	if err != nil {
+		return ""
+	}
+	return string(decoded)
 }

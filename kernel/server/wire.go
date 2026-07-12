@@ -18,6 +18,7 @@ func InitServices() *api.Handlers {
 	trTemplateSvc := service.NewTrTemplateService()
 	ledgerSvc := service.NewLedgerService()
 	tagSvc := service.NewTagService()
+	diarySvc := service.NewDiaryService()
 
 	// Services that depend on other services
 	categorySvc := service.NewCategoryService(tagSvc)
@@ -49,6 +50,7 @@ func InitServices() *api.Handlers {
 		KeyEventSvc:    keyEventSvc,
 		KeyEventImgSvc: keyEventImageSvc,
 		TrTemplateSvc:  trTemplateSvc,
+		DiarySvc:       diarySvc,
 		ChatService:    aiChatService,
 		AiConfigDao:    aiConfigDao,
 		AiMessageDao:   aiMessageDao,

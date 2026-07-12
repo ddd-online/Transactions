@@ -28,6 +28,11 @@ const routes = [
         component: () => import('@/components/key_event_view/KeyEventView.vue')
       },
       {
+        name: '日记管理',
+        path: 'diary_view',
+        component: () => import('@/components/diary_view/DiaryView.vue')
+      },
+      {
         name: 'AI 助手',
         path: 'ai_view',
         component: () => import('@/components/ai_view/AiChatView.vue'),

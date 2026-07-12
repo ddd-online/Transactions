@@ -20,6 +20,7 @@ type Handlers struct {
 	KeyEventSvc    service.KeyEventService
 	KeyEventImgSvc service.KeyEventImageService
 	TrTemplateSvc  service.TransactionTemplateService
+	DiarySvc       service.DiaryService
 
 	// AI
 	ChatService  *ai.ChatService
