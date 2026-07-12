@@ -13,7 +13,7 @@
           <a-select
             v-model:value="form.provider"
             :options="providerOptions"
-            style="width: 360px"
+            class="setting-input-wide"
             @change="onProviderChange"
           />
         </div>
@@ -29,7 +29,7 @@
           <a-select
             v-model:value="form.endpoint"
             :options="endpointOptions"
-            style="width: 360px"
+            class="setting-input-wide"
             @change="onEndpointChange"
           />
         </div>
@@ -45,7 +45,7 @@
           <a-input
             v-model:value="form.base_url"
             :placeholder="baseUrlPlaceholder"
-            style="width: 360px"
+            class="setting-input-wide"
           />
         </div>
       </div>
@@ -60,7 +60,7 @@
           <a-input-password
             v-model:value="form.api_key"
             :placeholder="keyPlaceholder ? '••••••••' : '请输入 API Key'"
-            style="width: 360px"
+            class="setting-input-wide"
             @focus="onKeyFieldFocus"
           />
         </div>
@@ -81,7 +81,7 @@
               :loading="modelsLoading"
               :options="modelOptions"
               placeholder="请选择模型"
-              style="width: 360px"
+              class="setting-input-wide"
             />
             <div v-else class="model-error-inline">
               <a-input
@@ -97,7 +97,7 @@
             v-else
             v-model:value="form.model"
             placeholder="例如: claude-sonnet-4-20250514"
-            style="width: 360px"
+            class="setting-input-wide"
           />
         </div>
       </div>
@@ -408,7 +408,7 @@ onMounted(() => {
 
 .setting-title {
   font-size: var(--billadm-size-text-body);
-  font-weight: 500;
+  font-weight: var(--billadm-weight-medium);
   color: var(--billadm-color-text-major);
 }
 
@@ -424,6 +424,9 @@ onMounted(() => {
   flex-shrink: 0;
   margin-left: var(--billadm-space-lg);
 }
+
+.setting-input-wide { width: 360px; }
+.setting-input-small { width: 200px; }
 
 .setting-action-row {
   display: flex;
@@ -472,7 +475,7 @@ onMounted(() => {
 .balance-status {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--billadm-space-xs);
   font-size: var(--billadm-size-text-body);
   color: var(--billadm-color-text-major);
 }
@@ -500,7 +503,7 @@ onMounted(() => {
 }
 
 .balance-currency {
-  font-weight: 600;
+  font-weight: var(--billadm-weight-semibold);
   min-width: 36px;
 }
 
@@ -521,7 +524,7 @@ onMounted(() => {
 
 .placeholder-hint code {
   background: var(--billadm-color-minor-background);
-  padding: 1px 6px;
+  padding: var(--billadm-space-2xs) var(--billadm-space-xs);
   border-radius: var(--billadm-radius-sm);
   font-family: var(--billadm-font-mono);
   font-size: inherit;

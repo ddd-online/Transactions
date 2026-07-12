@@ -221,7 +221,7 @@ const getTypeLabel = (type: string) => {
 }
 
 const getTypeColor = (type: string) => {
-  return TransactionTypeToColor.get(type) || '#999'
+  return TransactionTypeToColor.get(type) || '#9E9E96'
 }
 
 onMounted(() => {
@@ -311,7 +311,7 @@ watch(() => ledgerStore.currentLedgerId, () => {
 
 .action-icon.delete:hover:not(:disabled) {
   color: var(--billadm-color-negative);
-  background-color: rgba(199, 62, 58, 0.08);
+  background-color: var(--billadm-color-danger-hover-bg);
 }
 
 .action-icon:disabled {

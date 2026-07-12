@@ -27,10 +27,10 @@
           class="nav-item"
           :class="{ active: activeComponent === 'diary' }"
           @click="activeComponent = 'diary'"
-          aria-label="日记"
+          aria-label="日记配置"
         >
           <BookOutlined class="nav-icon"/>
-          <span class="nav-text">日记</span>
+          <span class="nav-text">日记配置</span>
         </button>
         <button
           class="nav-item"

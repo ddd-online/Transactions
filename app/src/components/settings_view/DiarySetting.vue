@@ -1,92 +1,95 @@
 <template>
   <div class="diary-setting">
-    <h2 class="setting-title">日记管理</h2>
+    <BilladmPageHeader title="日记配置" />
 
-    <div class="setting-section">
-      <h3 class="section-title">导入日记</h3>
-
-      <!-- 空闲态：导入按钮 -->
-      <div v-if="importState.status === 'idle'" class="import-action">
-        <a-tooltip
-          title="从本地目录批量导入日记，文件名需为 YYYY-MM-DD.txt 格式"
-          :mouse-enter-delay="0.5"
-        >
-          <a-button
-            type="default"
-            :disabled="!isElectron && !manualPath"
-            @click="handleImportClick"
+    <div class="setting-list">
+      <!-- 导入日记 -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-card-title">导入日记</span>
+          <span class="setting-desc">从本地目录批量导入，文件名需为 YYYY-MM-DD.txt 格式</span>
+          <!-- 浏览器 dev 模式降级 -->
+          <div v-if="!isElectron" class="dev-path-row">
+            <a-input
+              v-model:value="manualPath"
+              placeholder="例如 C:\Users\me\diaries 或 /home/me/diaries"
+              size="small"
+              class="dev-path-input"
+            />
+          </div>
+        </div>
+        <div class="setting-action">
+          <a-tooltip
+            title="从本地目录批量导入日记，文件名需为 YYYY-MM-DD.txt 格式"
+            :mouse-enter-delay="0.5"
           >
-            <template #icon><FolderOpenOutlined /></template>
-            选择目录导入
-          </a-button>
-        </a-tooltip>
-        <!-- 浏览器 dev 模式降级：手动输入路径 -->
-        <div v-if="!isElectron" class="dev-path-row">
-          <span class="dev-path-hint">浏览器模式请输入目录路径：</span>
-          <a-input
-            v-model:value="manualPath"
-            placeholder="例如 /Users/me/diary-export"
-            size="small"
-            style="width: 260px"
+            <a-button
+              type="default"
+              :disabled="!isElectron && !manualPath"
+              @click="handleImportClick"
+            >
+              <template #icon><FolderOpenOutlined /></template>
+              选择目录导入
+            </a-button>
+          </a-tooltip>
+        </div>
+      </div>
+    </div>
+
+    <!-- 进度条（导入中/完成/错误） -->
+    <div v-if="importState.status !== 'idle'" class="import-progress-card">
+      <div class="progress-summary">
+        <div class="summary-row">
+          <span class="summary-text">
+            <LoadingOutlined v-if="importState.status === 'scanning'" spin />
+            <template v-if="importState.status === 'scanning'">
+              正在扫描目录…
+            </template>
+            <template v-else-if="importState.status === 'importing'">
+              导入中 {{ importState.completed }}/{{ importState.total }}
+            </template>
+            <template v-else-if="importState.status === 'done'">
+              <CheckCircleOutlined class="status-icon done" />
+              {{ importState.total }} 篇导入完成
+            </template>
+            <template v-else-if="importState.status === 'error'">
+              <CloseCircleOutlined class="status-icon error" />
+              导入中断，已完成 {{ importState.completed }}/{{ importState.total }}
+            </template>
+          </span>
+          <span class="summary-percent">{{ percent }}%</span>
+        </div>
+        <div class="summary-bar-track">
+          <div
+            class="summary-bar-fill"
+            :class="barClass"
+            :style="{ transform: `scaleX(${percent / 100})` }"
           />
         </div>
       </div>
 
-      <!-- 非空闲态：进度条 -->
-      <div v-else class="import-progress-card">
-        <div class="progress-summary">
-          <div class="summary-row">
-            <span class="summary-text">
-              <LoadingOutlined v-if="importState.status === 'scanning'" spin />
-              <template v-if="importState.status === 'scanning'">
-                正在扫描目录…
-              </template>
-              <template v-else-if="importState.status === 'importing'">
-                导入中 {{ importState.completed }}/{{ importState.total }}
-              </template>
-              <template v-else-if="importState.status === 'done'">
-                <CheckCircleOutlined class="status-icon done" />
-                {{ importState.total }} 篇导入完成
-              </template>
-              <template v-else-if="importState.status === 'error'">
-                <CloseCircleOutlined class="status-icon error" />
-                导入中断，已完成 {{ importState.completed }}/{{ importState.total }}
-              </template>
-            </span>
-            <span class="summary-percent">{{ percent }}%</span>
-          </div>
-          <div class="summary-bar-track">
-            <div
-              class="summary-bar-fill"
-              :class="barClass"
-              :style="{ transform: `scaleX(${percent / 100})` }"
-            />
-          </div>
-        </div>
-
-        <!-- 文件列表 -->
-        <div class="file-list" v-if="importState.files.length > 0">
-          <div
-            v-for="(f, i) in importState.files"
-            :key="i"
-            class="file-row"
-            :class="'file-row--' + f.status"
-            :title="f.errorMessage || undefined"
-          >
-            <span class="file-dot">
-              <CheckCircleFilled v-if="f.status === 'done'" class="dot-icon done" />
-              <LoadingOutlined v-else-if="f.status === 'importing'" class="dot-icon importing" spin />
-              <CloseCircleFilled v-else-if="f.status === 'error'" class="dot-icon error" />
-              <span v-else class="dot-dot" />
-            </span>
-            <span class="file-date">{{ f.date }}</span>
-            <span class="file-status-text" :class="'status--' + f.status">
-              <template v-if="f.status === 'pending'">等待中</template>
-              <template v-else-if="f.status === 'importing'">导入中</template>
-              <template v-else-if="f.status === 'done'">已完成</template>
-              <template v-else-if="f.status === 'error'">{{ f.errorMessage || '失败' }}</template>
-            </span>
-          </div>
+      <!-- 文件列表 -->
+      <div class="file-list" v-if="importState.files.length > 0">
+        <div
+          v-for="(f, i) in importState.files"
+          :key="i"
+          class="file-row"
+          :class="'file-row--' + f.status"
+          :title="f.errorMessage || undefined"
+        >
+          <span class="file-dot">
+            <CheckCircleFilled v-if="f.status === 'done'" class="dot-icon done" />
+            <LoadingOutlined v-else-if="f.status === 'importing'" class="dot-icon importing" spin />
+            <CloseCircleFilled v-else-if="f.status === 'error'" class="dot-icon error" />
+            <span v-else class="dot-dot" />
+          </span>
+          <span class="file-date">{{ f.date }}</span>
+          <span class="file-status-text" :class="'status--' + f.status">
+            <template v-if="f.status === 'pending'">等待中</template>
+            <template v-else-if="f.status === 'importing'">导入中</template>
+            <template v-else-if="f.status === 'done'">已完成</template>
+            <template v-else-if="f.status === 'error'">{{ f.errorMessage || '失败' }}</template>
+          </span>
         </div>
       </div>
     </div>
@@ -97,6 +100,7 @@
 import { reactive, computed, ref, onUnmounted } from 'vue'
 import { FolderOpenOutlined, CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
+import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 import { scanDirectory, importFile } from '@/backend/api/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
 
@@ -230,47 +234,66 @@ async function doImport(directory: string) {
 
 <style scoped>
 .diary-setting {
-  max-width: 560px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.setting-title {
-  font-size: var(--billadm-size-text-section);
-  font-weight: var(--billadm-weight-semibold);
-  color: var(--billadm-color-text-major);
-  margin: 0 0 var(--billadm-space-xl) 0;
-}
-
-.setting-section {
-  margin-bottom: var(--billadm-space-xl);
-}
-
-.section-title {
-  font-size: var(--billadm-size-text-body);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
-  margin: 0 0 var(--billadm-space-md) 0;
-}
-
-/* ---- 导入按钮区 ---- */
-.import-action {
+.setting-list {
   display: flex;
   flex-direction: column;
   gap: var(--billadm-space-sm);
 }
 
-.dev-path-row {
+.setting-card {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  justify-content: space-between;
+  padding: var(--billadm-space-md) var(--billadm-space-lg);
+  background-color: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-md);
+  transition: background-color var(--billadm-transition-fast);
 }
 
-.dev-path-hint {
+.setting-card:hover {
+  background-color: var(--billadm-color-hover-bg);
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-2xs);
+  min-width: 0;
+}
+
+.setting-card-title {
+  font-size: var(--billadm-size-text-body);
+  font-weight: var(--billadm-weight-medium);
+  color: var(--billadm-color-text-major);
+}
+
+.setting-desc {
   font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
+}
+
+.setting-action {
+  flex-shrink: 0;
+  margin-left: var(--billadm-space-lg);
+}
+
+.dev-path-row {
+  margin-top: var(--billadm-space-xs);
+}
+
+.dev-path-input {
+  width: 260px;
 }
 
 /* ---- 进度卡片 ---- */
 .import-progress-card {
+  margin-top: var(--billadm-space-md);
   background: var(--billadm-color-major-background);
   border: 1px solid var(--billadm-color-divider);
   border-radius: var(--billadm-radius-md);
@@ -286,13 +309,13 @@ async function doImport(directory: string) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: var(--billadm-space-sm);
 }
 
 .summary-text {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--billadm-space-xs);
   font-size: var(--billadm-size-text-body-sm);
   font-weight: var(--billadm-weight-medium);
   color: var(--billadm-color-text-major);
@@ -310,14 +333,14 @@ async function doImport(directory: string) {
 .summary-bar-track {
   width: 100%;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--billadm-space-2xs);
   background: var(--billadm-color-minor-background);
   overflow: hidden;
 }
 
 .summary-bar-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: var(--billadm-space-2xs);
   background: var(--billadm-color-primary);
   transform-origin: left;
   transition: transform 200ms ease;
@@ -330,7 +353,7 @@ async function doImport(directory: string) {
 .file-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   max-height: 280px;
   overflow-y: auto;
 }
@@ -339,9 +362,13 @@ async function doImport(directory: string) {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-sm);
-  padding: 5px var(--billadm-space-xs);
+  padding: var(--billadm-space-xs) var(--billadm-space-xs);
   border-radius: var(--billadm-radius-sm);
   font-size: var(--billadm-size-text-body-sm);
+}
+
+.file-row:hover {
+  background: var(--billadm-color-hover-bg);
 }
 
 .file-row--importing {

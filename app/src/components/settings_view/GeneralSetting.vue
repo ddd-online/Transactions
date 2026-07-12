@@ -112,7 +112,7 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
 
 .setting-title {
   font-size: var(--billadm-size-text-body);
-  font-weight: 500;
+  font-weight: var(--billadm-weight-medium);
   color: var(--billadm-color-text-major);
 }
 

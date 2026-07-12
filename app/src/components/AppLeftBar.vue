@@ -111,7 +111,7 @@ const navItems = [
   { path: '/tr_view', label: '消费记录', icon: TransactionOutlined },
   { path: '/da_view', label: '数据分析', icon: LineChartOutlined },
   { path: '/key_event_view', label: '关键事件', icon: StarOutlined },
-  { path: '/diary_view', label: '日记管理', icon: ReadOutlined },
+  { path: '/diary_view', label: '日记', icon: ReadOutlined },
   { path: '/ai_view', label: 'AI 助手', icon: RobotOutlined },
 ]
 
