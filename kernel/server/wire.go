@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/billadm/ai"
+	"github.com/billadm/ai/role"
 	"github.com/billadm/ai/tool"
 	"github.com/billadm/api"
 	"github.com/billadm/dao"
@@ -41,7 +42,12 @@ func InitServices() *api.Handlers {
 	aiToolRegistry.Register(tool.NewQueryDiaryTool(diarySvc))
 	aiToolRegistry.Register(tool.NewWriteDiaryTool(diarySvc))
 
-	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry)
+	// Role registry
+	roleRegistry := role.NewRegistry()
+	roleRegistry.Register(role.NewFinanceRole())
+	roleRegistry.Register(role.NewDiaryRole())
+
+	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry, roleRegistry)
 
 	return &api.Handlers{
 		LedgerSvc:      ledgerSvc,

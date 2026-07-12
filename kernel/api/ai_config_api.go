@@ -14,7 +14,8 @@ import (
 
 // GET /api/v1/ai/config
 func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
-	config, err := h.AiConfigDao.Get(ws(c))
+	role := c.DefaultQuery("role", "financial_assistant")
+	config, err := h.AiConfigDao.Get(ws(c), role)
 	if err != nil {
 		config = &models.AiConfig{}
 	}
@@ -29,6 +30,7 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 		"has_key":       config.APIKey != "",
 		"system_prompt": systemPrompt,
 		"provider":      config.Provider,
+		"role":          role,
 	}, nil
 }
 
@@ -41,12 +43,17 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 		Model        string `json:"model"`
 		SystemPrompt string `json:"system_prompt"`
 		Provider     string `json:"provider"`
+		Role         string `json:"role"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
+	if req.Role == "" {
+		req.Role = "financial_assistant"
+	}
 
 	config := &models.AiConfig{
+		Role:         req.Role,
 		BaseURL:      req.BaseURL,
 		Endpoint:     req.Endpoint,
 		Model:        req.Model,
@@ -56,7 +63,7 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	if req.APIKey != "" {
 		config.APIKey = req.APIKey
 	} else {
-		existing, err := h.AiConfigDao.Get(ws(c))
+		existing, err := h.AiConfigDao.Get(ws(c), req.Role)
 		if err == nil {
 			config.APIKey = existing.APIKey
 		}
@@ -75,6 +82,7 @@ func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 		Endpoint string `json:"endpoint"`
 		APIKey   string `json:"api_key"`
 		Model    string `json:"model"`
+		Role     string `json:"role"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -82,7 +90,11 @@ func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 
 	apiKey := req.APIKey
 	if apiKey == "" {
-		existing, err := h.AiConfigDao.Get(ws(c))
+		role := req.Role
+		if role == "" {
+			role = "financial_assistant"
+		}
+		existing, err := h.AiConfigDao.Get(ws(c), role)
 		if err == nil {
 			apiKey = existing.APIKey
 		}
@@ -124,7 +136,8 @@ func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 
 // GET /api/v1/ai/messages
 func (h *Handlers) listAiMessages(c *gin.Context) (any, error) {
-	msgs, err := h.AiMessageDao.ListRecent(ws(c), "default", 30)
+	role := c.DefaultQuery("role", "financial_assistant")
+	msgs, err := h.AiMessageDao.ListRecent(ws(c), "default", role, 30)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +149,8 @@ func (h *Handlers) listAiMessages(c *gin.Context) (any, error) {
 
 // DELETE /api/v1/ai/messages
 func (h *Handlers) clearAiMessages(c *gin.Context) (any, error) {
-	if err := h.AiMessageDao.DeleteAll(ws(c), "default"); err != nil {
+	role := c.DefaultQuery("role", "financial_assistant")
+	if err := h.AiMessageDao.DeleteAll(ws(c), "default", role); err != nil {
 		return nil, err
 	}
 	return nil, nil

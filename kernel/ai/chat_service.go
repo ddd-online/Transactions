@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/billadm/ai/provider"
+	"github.com/billadm/ai/role"
 	"github.com/billadm/ai/tool"
 	"github.com/billadm/dao"
 	"github.com/billadm/models"
@@ -53,28 +54,42 @@ type SSEEvent struct {
 }
 
 type ChatService struct {
-	configDao  dao.AiConfigDao
-	messageDao dao.AiMessageDao
-	registry   *tool.ToolRegistry
+	configDao    dao.AiConfigDao
+	messageDao   dao.AiMessageDao
+	registry     *tool.ToolRegistry
+	roleRegistry *role.Registry
 }
 
-func NewChatService(configDao dao.AiConfigDao, messageDao dao.AiMessageDao, registry *tool.ToolRegistry) *ChatService {
+func NewChatService(configDao dao.AiConfigDao, messageDao dao.AiMessageDao, registry *tool.ToolRegistry, roleRegistry *role.Registry) *ChatService {
 	return &ChatService{
-		configDao:  configDao,
-		messageDao: messageDao,
-		registry:   registry,
+		configDao:    configDao,
+		messageDao:   messageDao,
+		registry:     registry,
+		roleRegistry: roleRegistry,
 	}
 }
 
 // Chat 执行一次对话，返回 SSE 事件 channel。
 // ws 用于数据库访问，ledgerName 注入到工具执行 context 中，也用于替换系统提示词中的占位符。
-func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerName string, userMessage string) (<-chan SSEEvent, error) {
+func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleName string, ledgerName string, userMessage string) (<-chan SSEEvent, error) {
 	// 带工具执行 workspace 和 ledgerName 的 context
 	toolCtx := tool.WithWorkspace(ctx, ws)
 	toolCtx = tool.WithLedgerName(toolCtx, ledgerName)
 
+	// 获取角色定义
+	roleDef, ok := s.roleRegistry.Get(roleName)
+	if !ok {
+		return nil, fmt.Errorf("未知角色: %s", roleName)
+	}
+
+	// 构建角色工具名称集合
+	roleToolNames := make(map[string]bool)
+	for _, name := range roleDef.ToolNames() {
+		roleToolNames[name] = true
+	}
+
 	// 加载配置
-	config, err := s.configDao.Get(ws)
+	config, err := s.configDao.Get(ws, roleName)
 	if err != nil {
 		return nil, fmt.Errorf("AI 配置未找到，请先在设置中配置: %w", err)
 	}
@@ -94,7 +109,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 	}
 
 	// 加载历史
-	history, err := s.messageDao.ListRecent(ws, "default", MaxHistoryMessages)
+	history, err := s.messageDao.ListRecent(ws, "default", roleName, MaxHistoryMessages)
 	if err != nil {
 		return nil, fmt.Errorf("加载对话历史失败: %w", err)
 	}
@@ -121,6 +136,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 		ID:             uuid.NewString(),
 		ConversationID: "default",
 		MsgRole:        "user",
+		AiRole:         roleName,
 		Content:        userMessage,
 	}
 	_ = s.messageDao.Save(ws, userMsg) // 忽略保存错误，不中断对话
@@ -139,10 +155,10 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 			default:
 			}
 
-			// Use stored system prompt if configured, otherwise fall back to default
+			// Use stored system prompt if configured, otherwise fall back to role default
 			prompt := config.SystemPrompt
 			if prompt == "" {
-				prompt = DefaultSystemPrompt
+				prompt = roleDef.DefaultSystemPrompt()
 			}
 			// Replace placeholders with actual values
 			prompt = replacePlaceholders(prompt, ledgerName)
@@ -150,7 +166,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 			req := provider.ChatRequest{
 				SystemPrompt: prompt,
 				Messages:     messages,
-				Tools:        s.registry.ToDefs(),
+				Tools:        s.toolDefsForRole(roleToolNames),
 			}
 
 			eventCh, err := llmProvider.ChatStream(ctx, req)
@@ -195,6 +211,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 						ID:             uuid.NewString(),
 						ConversationID: "default",
 						MsgRole:        "assistant",
+						AiRole:         roleName,
 						Content:        assistantContent,
 					})
 				}
@@ -209,6 +226,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 				ID:             uuid.NewString(),
 				ConversationID: "default",
 				MsgRole:        "assistant",
+				AiRole:         roleName,
 				Content:        assistantContent,
 				ToolCalls:      string(tcsJSON),
 			})
@@ -233,6 +251,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 						ID:             uuid.NewString(),
 						ConversationID: "default",
 						MsgRole:        "tool",
+						AiRole:         roleName,
 						Content:        errMsg,
 						ToolCallID:     tc.ID,
 						ToolName:       tc.Name,
@@ -261,6 +280,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 					ID:             uuid.NewString(),
 					ConversationID: "default",
 					MsgRole:        "tool",
+					AiRole:         roleName,
 					Content:        result,
 					ToolCallID:     tc.ID,
 					ToolName:       tc.Name,
@@ -343,6 +363,18 @@ func truncateString(s string) string {
 		return s[:100] + "..."
 	}
 	return s
+}
+
+// toolDefsForRole filters the tool registry definitions to only include tools in the role's allowed set.
+func (s *ChatService) toolDefsForRole(roleToolNames map[string]bool) []provider.ToolDef {
+	allDefs := s.registry.ToDefs()
+	filtered := make([]provider.ToolDef, 0, len(roleToolNames))
+	for _, def := range allDefs {
+		if roleToolNames[def.Name] {
+			filtered = append(filtered, def)
+		}
+	}
+	return filtered
 }
 
 // replacePlaceholders 替换系统提示词中的占位符为实际值。

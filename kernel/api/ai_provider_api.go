@@ -26,7 +26,8 @@ func (h *Handlers) fetchProvider(c *gin.Context) (any, error) {
 	var req struct {
 		Action   string `json:"action"`
 		APIKey   string `json:"api_key"`
-		Provider string `json:"provider"` // 前端传入，优先使用
+		Provider string `json:"provider"`
+		Role     string `json:"role"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -36,7 +37,11 @@ func (h *Handlers) fetchProvider(c *gin.Context) (any, error) {
 	apiKey := req.APIKey
 	provider := req.Provider
 	if apiKey == "" || provider == "" {
-		config, err := h.AiConfigDao.Get(ws(c))
+		role := req.Role
+		if role == "" {
+			role = "financial_assistant"
+		}
+		config, err := h.AiConfigDao.Get(ws(c), role)
 		if err != nil {
 			return nil, fmt.Errorf("未找到 AI 配置，请先保存配置")
 		}

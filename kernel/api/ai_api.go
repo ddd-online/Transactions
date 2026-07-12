@@ -21,6 +21,7 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	var req struct {
 		Message    string `json:"message"`
 		LedgerName string `json:"ledger_name"`
+		RoleName   string `json:"role_name"`
 	}
 	if err := c.BindJSON(&req); err != nil || req.Message == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
@@ -29,6 +30,9 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	if len(req.Message) > 4000 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "消息过长，最多 4000 字符"})
 		return
+	}
+	if req.RoleName == "" {
+		req.RoleName = "financial_assistant"
 	}
 
 	ws := ws(c)
@@ -39,7 +43,7 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.WriteHeader(http.StatusOK)
 
-	eventCh, err := h.ChatService.Chat(c.Request.Context(), ws, req.LedgerName, req.Message)
+	eventCh, err := h.ChatService.Chat(c.Request.Context(), ws, req.RoleName, req.LedgerName, req.Message)
 	if err != nil {
 		data, _ := json.Marshal(ai.SSEEvent{Type: "error", Message: err.Error()})
 		c.Writer.Write([]byte("data: " + string(data) + "\n\n"))
