@@ -109,25 +109,27 @@
             <span class="setting-title">系统提示词</span>
             <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
-          <div class="setting-header-actions">
-            <a-select
-              v-model:value="currentRole"
-              :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-              size="small"
-              style="width: 110px"
-              @change="onRoleChange"
-            />
-            <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
-          </div>
+        </div>
+        <div class="prompt-controls">
+          <span class="prompt-role-label">角色</span>
+          <a-select
+            v-model:value="currentRole"
+            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+            size="small"
+            style="width: 110px"
+            @change="onRoleChange"
+          />
+          <span class="prompt-controls-spacer"></span>
+          <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
         </div>
         <div class="setting-action setting-action-full">
           <a-textarea
             v-model:value="form.system_prompt"
-            :rows="6"
+            :rows="8"
             :maxlength="4000"
             show-count
             placeholder="留空使用默认提示词"
-            style="width: 100%; font-family: var(--billadm-font-mono); font-size: var(--billadm-size-text-body-sm)"
+            class="prompt-textarea"
           />
           <div class="placeholder-hint" v-if="currentRole === 'financial_assistant'">
             支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
@@ -484,6 +486,41 @@ onMounted(() => {
   margin-left: var(--billadm-space-lg);
 }
 
+.prompt-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  width: 100%;
+  margin-top: var(--billadm-space-sm);
+}
+
+.prompt-role-label {
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.prompt-controls-spacer {
+  flex: 1;
+}
+
+.prompt-textarea {
+  width: 100%;
+  font-family: var(--billadm-font-mono);
+  font-size: var(--billadm-size-text-body-sm);
+  line-height: var(--billadm-height-normal);
+  color: var(--billadm-color-text-major);
+  background: var(--billadm-color-minor-background);
+  border-color: var(--billadm-color-divider);
+  resize: vertical;
+}
+
+.prompt-textarea:focus {
+  background: var(--billadm-color-major-background);
+  border-color: var(--billadm-color-primary);
+  box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.12);
+}
+
 .setting-action-full {
   margin-left: 0;
   margin-top: var(--billadm-space-md);
@@ -569,14 +606,11 @@ onMounted(() => {
   font-size: inherit;
 }
 
-:deep(textarea) {
+.prompt-textarea :deep(textarea) {
   &::-webkit-scrollbar { width: 5px; }
   &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
-}
-
-:deep(textarea)::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 127, 111, 0.40);
+  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; }
+  &:hover::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.40); }
 }
 
 @media (prefers-reduced-motion: reduce) {
