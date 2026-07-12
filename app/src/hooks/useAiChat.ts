@@ -41,6 +41,7 @@ export interface ChatMessage {
 export function useAiChat() {
   const messages = ref<ChatMessage[]>([])
   const streaming = ref(false)
+  const currentRole = ref<string>('financial_assistant')
 
   let abortController: AbortController | null = null
   let msgIdCounter = 0
@@ -260,7 +261,7 @@ export function useAiChat() {
       const response = await fetch(`${apiBaseUrl}/api/v1/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName }),
+        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName, role: currentRole.value }),
         signal: abortController.signal,
       })
 
@@ -318,7 +319,7 @@ export function useAiChat() {
 
   async function loadHistory(): Promise<void> {
     try {
-      const apiMessages = await aiApi.getMessages()
+      const apiMessages = await aiApi.getMessages(currentRole.value)
       if (!apiMessages || apiMessages.length === 0) return
 
       messages.value = apiMessages
@@ -350,10 +351,17 @@ export function useAiChat() {
   async function clear(): Promise<void> {
     messages.value = []
     try {
-      await aiApi.clearMessages()
+      await aiApi.clearMessages(currentRole.value)
     } catch {
       // non-critical
     }
+  }
+
+  function switchRole(role: string) {
+    if (currentRole.value === role) return
+    currentRole.value = role
+    messages.value = []
+    loadHistory()
   }
 
   function cleanup() {
@@ -362,5 +370,5 @@ export function useAiChat() {
     }
   }
 
-  return { messages, streaming, send, stop, loadHistory, clear, cleanup }
+  return { messages, streaming, currentRole, send, stop, loadHistory, clear, cleanup, switchRole }
 }
