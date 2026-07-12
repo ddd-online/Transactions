@@ -17,11 +17,7 @@
       </a-form-item>
 
       <a-form-item label="类型" name="type">
-        <a-radio-group v-model:value="trForm.type" button-style="solid">
-          <a-radio-button value="income">收入</a-radio-button>
-          <a-radio-button value="expense">支出</a-radio-button>
-          <a-radio-button value="transfer">转账</a-radio-button>
-        </a-radio-group>
+        <a-segmented v-model:value="trForm.type" :options="typeOptions" />
       </a-form-item>
 
       <a-form-item label="分类" name="category">
@@ -112,6 +108,12 @@ const trForm = ref<TrForm>(createEmptyForm())
 const selectedTemplateId = ref<string | undefined>()
 const openSaveTemplateModal = ref(false)
 const templateName = ref('')
+
+const typeOptions = [
+  { label: '收入', value: 'income' },
+  { label: '支出', value: 'expense' },
+  { label: '转账', value: 'transfer' },
+]
 
 const flagOptions = [{ label: '离群值', value: 'outlier' }]
 
