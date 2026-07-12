@@ -159,18 +159,24 @@ func buildSortClause(sortFields []dto.QueryConditionSortField) string {
 	if len(sortFields) == 0 {
 		return "transaction_at desc"
 	}
+	fieldMap := map[string]string{
+		"transactionAt": "transaction_at",
+		"transactionType": "transaction_type",
+		"price":            "price",
+		"category":         "category",
+	}
 	clauses := make([]string, 0, len(sortFields))
 	for _, sf := range sortFields {
 		order := "desc"
 		if sf.Order == "asc" {
 			order = "asc"
 		}
-		switch sf.Field {
-		case "price", "transactionType", "category", "transactionAt":
-			clauses = append(clauses, sf.Field+" "+order)
-		default:
-			clauses = append(clauses, sf.Field+" "+order)
+		if col, ok := fieldMap[sf.Field]; ok {
+			clauses = append(clauses, col+" "+order)
 		}
+	}
+	if len(clauses) == 0 {
+		return "transaction_at desc"
 	}
 	return strings.Join(clauses, ", ")
 }
