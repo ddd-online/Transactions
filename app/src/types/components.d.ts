@@ -81,6 +81,7 @@ declare module 'vue' {
     SettingsView: typeof import('./../components/settings_view/SettingsView.vue')['default']
     TagColumn: typeof import('./../components/settings_view/TagColumn.vue')['default']
     TransactionRecordFilter: typeof import('./../components/common/TransactionRecordFilter.vue')['default']
+    TransactionRecordModal: typeof import('./../components/tr_view/TransactionRecordModal.vue')['default']
     TransactionRecordTable: typeof import('./../components/tr_view/TransactionRecordTable.vue')['default']
     TransactionRecordView: typeof import('./../components/tr_view/TransactionRecordView.vue')['default']
     TrSortModal: typeof import('./../components/tr_view/TrSortModal.vue')['default']
