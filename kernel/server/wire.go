@@ -38,6 +38,8 @@ func InitServices() *api.Handlers {
 	aiToolRegistry.Register(tool.NewGetKeyEventsTool(keyEventSvc, ledgerSvc))
 	aiToolRegistry.Register(tool.NewGetTimeTool())
 	aiToolRegistry.Register(tool.NewCalculateTool())
+	aiToolRegistry.Register(tool.NewQueryDiaryTool(diarySvc))
+	aiToolRegistry.Register(tool.NewWriteDiaryTool(diarySvc))
 
 	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry)
 

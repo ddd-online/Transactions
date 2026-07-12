@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Knetic/govaluate"
 	"github.com/billadm/constant"
+	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/service"
 	"github.com/billadm/workspace"
@@ -543,4 +545,134 @@ func getFloatArg(args map[string]any, key string) float64 {
 		return v
 	}
 	return 0
+}
+
+// ---- 8. query_diary ----
+
+type queryDiaryTool struct {
+	diarySvc service.DiaryService
+}
+
+func NewQueryDiaryTool(diarySvc service.DiaryService) Tool {
+	return &queryDiaryTool{diarySvc: diarySvc}
+}
+
+func (t *queryDiaryTool) Name() string        { return "query_diary" }
+func (t *queryDiaryTool) Description() string { return "查询日记。可按日期、关键词、年份、心情查询。不传参数返回最近日记日期列表。" }
+
+func (t *queryDiaryTool) InputSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"date":    map[string]any{"type": "string", "description": "具体日期 YYYY-MM-DD"},
+			"keyword": map[string]any{"type": "string", "description": "关键词搜索（匹配正文内容）"},
+			"year":    map[string]any{"type": "integer", "description": "年份，如 2026"},
+			"mood":    map[string]any{"type": "string", "description": "心情筛选"},
+		},
+	}
+}
+
+func (t *queryDiaryTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	if date := getStringArg(args, "date"); date != "" {
+		entry, err := t.diarySvc.GetByDate(ws, date)
+		if err != nil {
+			return "", err
+		}
+		b, _ := json.Marshal(entry)
+		return string(b), nil
+	}
+
+	items, err := t.diarySvc.ListDates(ws)
+	if err != nil {
+		return "", err
+	}
+
+	if keyword := getStringArg(args, "keyword"); keyword != "" {
+		var filtered []models.DiaryDateItem
+		for _, item := range items {
+			entry, err := t.diarySvc.GetByDate(ws, item.Date)
+			if err != nil {
+				continue
+			}
+			if strings.Contains(entry.Content, keyword) {
+				filtered = append(filtered, item)
+			}
+		}
+		items = filtered
+	}
+
+	if year := getIntArg(args, "year", 0); year > 0 {
+		var filtered []models.DiaryDateItem
+		for _, item := range items {
+			if strings.HasPrefix(item.Date, fmt.Sprintf("%d-", year)) {
+				filtered = append(filtered, item)
+			}
+		}
+		items = filtered
+	}
+
+	if mood := getStringArg(args, "mood"); mood != "" {
+		var filtered []models.DiaryDateItem
+		for _, item := range items {
+			if item.Mood == mood {
+				filtered = append(filtered, item)
+			}
+		}
+		items = filtered
+	}
+
+	b, _ := json.Marshal(items)
+	return string(b), nil
+}
+
+// ---- 9. write_diary ----
+
+type writeDiaryTool struct {
+	diarySvc service.DiaryService
+}
+
+func NewWriteDiaryTool(diarySvc service.DiaryService) Tool {
+	return &writeDiaryTool{diarySvc: diarySvc}
+}
+
+func (t *writeDiaryTool) Name() string        { return "write_diary" }
+func (t *writeDiaryTool) Description() string { return "创建或更新指定日期的日记。如果该日期已有日记则覆盖内容。" }
+
+func (t *writeDiaryTool) InputSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"date":    map[string]any{"type": "string", "description": "日期 YYYY-MM-DD（必填）"},
+			"content": map[string]any{"type": "string", "description": "日记正文，支持 Markdown（必填）"},
+			"mood":    map[string]any{"type": "string", "description": "心情标记，可选值: happy/sad/neutral/excited/anxious/calm/grateful/tired"},
+		},
+		"required": []string{"date", "content"},
+	}
+}
+
+func (t *writeDiaryTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+	ws, err := getWS(ctx)
+	if err != nil {
+		return "", err
+	}
+	date := getStringArg(args, "date")
+	content := getStringArg(args, "content")
+	mood := getStringArg(args, "mood")
+
+	entry, err := t.diarySvc.Upsert(ws, date, content, mood)
+	if err != nil {
+		return "", err
+	}
+	b, _ := json.Marshal(map[string]any{
+		"date":       entry.Date,
+		"word_count": entry.WordCount,
+		"mood":       entry.Mood,
+		"message":    "日记已保存",
+	})
+	return string(b), nil
 }
