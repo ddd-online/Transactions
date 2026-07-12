@@ -3,8 +3,8 @@
     <div class="sort-list">
       <div v-for="(item, index) in items" :key="index" class="sort-item">
         <span class="sort-priority">{{ index + 1 }}</span>
-        <a-select v-model:value="item.field" :options="getAvailableFields(index)" placeholder="选择字段" style="width: 120px" />
-        <a-select v-model:value="item.order" style="width: 100px">
+        <a-select v-model:value="item.field" size="small" :options="getAvailableFields(index)" placeholder="选择字段" style="width: 120px" />
+        <a-select v-model:value="item.order" size="small" style="width: 100px">
           <a-select-option value="asc">升序</a-select-option>
           <a-select-option value="desc">降序</a-select-option>
         </a-select>

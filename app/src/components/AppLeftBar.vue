@@ -334,7 +334,6 @@ const handleDeleteLedger = (id: string, name: string) => {
 
 /* 次级导航按钮 — 设置等工具项，视觉降权 */
 .nav-btn-secondary {
-  font-size: var(--billadm-size-text-caption);
 }
 
 .nav-btn-secondary .nav-btn-icon {

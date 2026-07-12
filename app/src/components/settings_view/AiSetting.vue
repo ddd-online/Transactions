@@ -12,6 +12,7 @@
         <div class="setting-action">
           <a-select
             v-model:value="form.provider"
+            size="small"
             :options="providerOptions"
             class="setting-input-wide"
             @change="onProviderChange"
@@ -28,6 +29,7 @@
         <div class="setting-action">
           <a-select
             v-model:value="form.endpoint"
+            size="small"
             :options="endpointOptions"
             class="setting-input-wide"
             @change="onEndpointChange"
@@ -78,6 +80,7 @@
             <a-select
               v-if="!modelsError"
               v-model:value="form.model"
+              size="small"
               :loading="modelsLoading"
               :options="modelOptions"
               placeholder="请选择模型"
@@ -113,6 +116,7 @@
             <span class="prompt-role-label">角色</span>
             <a-select
               v-model:value="currentRole"
+              size="small"
               :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
               style="width: 120px"
               @change="onRoleChange"

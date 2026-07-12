@@ -9,7 +9,7 @@
       <!-- 交易类型 -->
       <div class="form-item">
         <div class="form-label">交易类型</div>
-        <a-select v-model:value="tempTransactionType" placeholder="请选择交易类型" allow-clear class="form-select">
+        <a-select v-model:value="tempTransactionType" size="small" placeholder="请选择交易类型" allow-clear class="form-select">
           <a-select-option v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </a-select-option>
@@ -19,28 +19,28 @@
       <!-- 分类 -->
       <div class="form-item">
         <div class="form-label">分类</div>
-        <a-select v-model:value="tempCategory" placeholder="请选择分类" :options="categoryOptions" allow-clear
+        <a-select v-model:value="tempCategory" size="small" placeholder="请选择分类" :options="categoryOptions" allow-clear
           @change="onCategoryChange" class="form-select" />
       </div>
 
       <!-- 标签 -->
       <div class="form-item">
         <div class="form-label">标签</div>
-        <a-select v-model:value="tempTags" mode="multiple" placeholder="请选择标签" :options="tagOptions" allow-clear class="form-select" />
+        <a-select v-model:value="tempTags" size="small" mode="multiple" placeholder="请选择标签" :options="tagOptions" allow-clear class="form-select" />
       </div>
 
       <!-- 标签匹配策略和取反 -->
       <div class="form-row">
         <div class="form-item-half">
           <div class="form-label">标签匹配</div>
-          <a-select v-model:value="tempTagPolicy" class="form-select">
+          <a-select v-model:value="tempTagPolicy" size="small" class="form-select">
             <a-select-option value="any">任意</a-select-option>
             <a-select-option value="all">全部</a-select-option>
           </a-select>
         </div>
         <div class="form-item-half">
           <div class="form-label">标签取反</div>
-          <a-select v-model:value="tempTagNot" class="form-select">
+          <a-select v-model:value="tempTagNot" size="small" class="form-select">
             <a-select-option value="no">否</a-select-option>
             <a-select-option value="yes">是</a-select-option>
           </a-select>

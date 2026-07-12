@@ -13,6 +13,7 @@
     </a-button>
     <a-range-picker
         v-model:value="timeRange"
+        size="small"
         :picker="timeRangeTypeValue"
         :presets="getTimeRangePresets()"
         inputReadOnly

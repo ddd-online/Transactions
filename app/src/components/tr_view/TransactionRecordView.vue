@@ -61,7 +61,7 @@
       <a-form :model="trForm" :rules="rules">
         <a-form-item label="模板">
           <div class="template-select-row">
-            <a-select v-model:value="selectedTemplateId" :options="templateOptions" placeholder="选择模板自动填充"
+            <a-select v-model:value="selectedTemplateId" size="small" :options="templateOptions" placeholder="选择模板自动填充"
               class="template-select" allowClear />
             <a-button @click="saveAsTemplate" :disabled="!trForm.type || !trForm.category">
               保存为模板
@@ -70,7 +70,7 @@
         </a-form-item>
 
         <a-form-item label="时间" name="time">
-          <a-date-picker v-model:value="trForm.time" style="width: 100%" />
+          <a-date-picker v-model:value="trForm.time" style="width: 100%" size="small" />
         </a-form-item>
 
         <a-form-item label="类型" name="type">
@@ -82,11 +82,11 @@
         </a-form-item>
 
         <a-form-item label="分类" name="category">
-          <a-select v-model:value="trForm.category" :options="categoryOptions" />
+          <a-select v-model:value="trForm.category" size="small" :options="categoryOptions" />
         </a-form-item>
 
         <a-form-item label="标签" name="tags">
-          <a-select v-model:value="trForm.tags" :options="tagOptions" mode="multiple" placeholder="选择一个或多个标签" />
+          <a-select v-model:value="trForm.tags" size="small" :options="tagOptions" mode="multiple" placeholder="选择一个或多个标签" />
         </a-form-item>
 
         <a-form-item label="标记" name="flags">
@@ -125,9 +125,10 @@
     >
       <a-form>
         <a-form-item label="选择日期">
-          <a-date-picker
-            v-model:value="linkDate"
-            style="width: 100%"
+            <a-date-picker
+              v-model:value="linkDate"
+              size="small"
+              style="width: 100%"
             placeholder="选择要关联的日期"
           />
         </a-form-item>

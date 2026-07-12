@@ -47,7 +47,7 @@
           <a-input v-model:value="createForm.title" placeholder="请输入图表名称" />
         </a-form-item>
         <a-form-item label="时间粒度" name="granularity">
-          <a-select v-model:value="createForm.granularity" placeholder="请选择时间粒度">
+          <a-select v-model:value="createForm.granularity" size="small" placeholder="请选择时间粒度">
             <a-select-option value="year">年度</a-select-option>
             <a-select-option value="month">月度</a-select-option>
           </a-select>

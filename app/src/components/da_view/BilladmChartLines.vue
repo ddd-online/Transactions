@@ -7,22 +7,22 @@
           <a-input v-model:value="newLineForm.label" placeholder="请输入曲线名称" />
         </a-form-item>
         <a-form-item label="交易类型" name="transactionType">
-          <a-select v-model:value="newLineForm.transactionType" placeholder="请选择交易类型" @change="onTransactionTypeChange">
+          <a-select v-model:value="newLineForm.transactionType" size="small" placeholder="请选择交易类型" @change="onTransactionTypeChange">
             <a-select-option value="income">收入</a-select-option>
             <a-select-option value="expense">支出</a-select-option>
             <a-select-option value="transfer">转账</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="分类" name="category">
-          <a-select v-model:value="newLineForm.category" placeholder="请选择分类" :options="categoryOptions" allow-clear
+          <a-select v-model:value="newLineForm.category" size="small" placeholder="请选择分类" :options="categoryOptions" allow-clear
             @change="onCategoryChange" />
         </a-form-item>
         <a-form-item label="标签" name="tags">
-          <a-select v-model:value="newLineForm.tags" mode="multiple" placeholder="请选择标签" :options="tagOptions"
+          <a-select v-model:value="newLineForm.tags" size="small" mode="multiple" placeholder="请选择标签" :options="tagOptions"
             allow-clear />
         </a-form-item>
         <a-form-item label="标签匹配" name="tagPolicy">
-          <a-select v-model:value="newLineForm.tagPolicy">
+          <a-select v-model:value="newLineForm.tagPolicy" size="small">
             <a-select-option value="any">任意</a-select-option>
             <a-select-option value="all">全部</a-select-option>
           </a-select>

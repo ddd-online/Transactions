@@ -17,10 +17,10 @@
       layout="vertical"
     >
       <a-form-item label="日期" name="date">
-        <a-date-picker v-model:value="formDate" style="width: 100%" size="large" />
+        <a-date-picker v-model:value="formDate" style="width: 100%" size="small" />
       </a-form-item>
       <a-form-item label="名称" name="title">
-        <a-input v-model:value="formTitle" placeholder="事件名称（可选）" :maxlength="200" size="large" />
+        <a-input v-model:value="formTitle" placeholder="事件名称（可选）" :maxlength="200" size="small" />
       </a-form-item>
     </a-form>
   </a-modal>
