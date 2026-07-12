@@ -120,7 +120,7 @@ const moods = [
 ]
 
 // ---- 本地状态 ----
-const mode = ref<'edit' | 'preview'>('edit')
+const mode = ref<'edit' | 'preview'>('preview')
 const localContent = ref('')
 const localMood = ref('')
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
@@ -135,18 +135,11 @@ watch(() => props.entry, (newEntry) => {
   if (newEntry) {
     localContent.value = newEntry.content
     localMood.value = newEntry.mood
-    mode.value = 'edit'
-    nextTick(() => {
-      const ta = textareaRef.value
-      if (ta) {
-        ta.focus()
-        ta.setSelectionRange(ta.value.length, ta.value.length)
-      }
-    })
+    mode.value = 'preview'
   } else {
     localContent.value = ''
     localMood.value = ''
-    mode.value = 'edit'
+    mode.value = 'preview'
   }
 }, { immediate: true })
 
