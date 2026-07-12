@@ -235,26 +235,8 @@ async function fetchRoles() {
 function onRoleChange(role: any) {
   const newRole = role as string
   if (currentRole.value === newRole) return
-  // Save shared fields to old role before switching
-  saveSharedToRole(currentRole.value)
   currentRole.value = newRole
   loadSystemPrompt()
-}
-
-async function saveSharedToRole(role: string) {
-  try {
-    await aiApi.updateConfig({
-      role,
-      provider: form.provider,
-      base_url: form.base_url,
-      endpoint: form.endpoint,
-      api_key: keyPlaceholder.value ? '' : form.api_key,
-      model: form.model,
-      system_prompt: form.system_prompt,
-    })
-  } catch {
-    // Best-effort sync, ignore errors
-  }
 }
 
 async function loadSystemPrompt() {
