@@ -10,7 +10,7 @@ func NewAiConfigDao() AiConfigDao {
 }
 
 type AiConfigDao interface {
-	Get(ws *workspace.Workspace) (*models.AiConfig, error)
+	Get(ws *workspace.Workspace, role string) (*models.AiConfig, error)
 	Save(ws *workspace.Workspace, config *models.AiConfig) error
 }
 
@@ -18,9 +18,9 @@ var _ AiConfigDao = &aiConfigDaoImpl{}
 
 type aiConfigDaoImpl struct{}
 
-func (d *aiConfigDaoImpl) Get(ws *workspace.Workspace) (*models.AiConfig, error) {
+func (d *aiConfigDaoImpl) Get(ws *workspace.Workspace, role string) (*models.AiConfig, error) {
 	var config models.AiConfig
-	err := ws.GetDb().First(&config).Error
+	err := ws.GetDb().Where("role = ?", role).First(&config).Error
 	if err != nil {
 		return nil, err
 	}
@@ -28,15 +28,12 @@ func (d *aiConfigDaoImpl) Get(ws *workspace.Workspace) (*models.AiConfig, error)
 }
 
 func (d *aiConfigDaoImpl) Save(ws *workspace.Workspace, config *models.AiConfig) error {
-	// 单行配置表：先查是否存在，存在则更新，不存在则创建
 	var existing models.AiConfig
-	err := ws.GetDb().First(&existing).Error
+	err := ws.GetDb().Where("role = ?", config.Role).First(&existing).Error
 	if err != nil {
-		// 不存在，创建
 		config.ID = 1
 		return ws.GetDb().Create(config).Error
 	}
-	// 存在，更新
 	config.ID = existing.ID
 	return ws.GetDb().Model(&existing).Select("base_url", "endpoint", "api_key", "model", "system_prompt", "provider").Updates(config).Error
 }
