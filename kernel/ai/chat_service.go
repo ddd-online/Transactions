@@ -229,14 +229,14 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 						Content:    errMsg,
 						ToolCallID: tc.ID,
 					})
-				s.saveMessage(ws, &models.AiMessage{
-					ID:             uuid.NewString(),
-					ConversationID: "default",
-					MsgRole:        "tool",
-					Content:        errMsg,
-					ToolCallID:     tc.ID,
-					ToolName:       tc.Name,
-				})
+					s.saveMessage(ws, &models.AiMessage{
+						ID:             uuid.NewString(),
+						ConversationID: "default",
+						MsgRole:        "tool",
+						Content:        errMsg,
+						ToolCallID:     tc.ID,
+						ToolName:       tc.Name,
+					})
 					continue
 				}
 
@@ -257,14 +257,14 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, ledgerN
 					ToolCallID: tc.ID,
 				})
 
-			s.saveMessage(ws, &models.AiMessage{
-				ID:             uuid.NewString(),
-				ConversationID: "default",
-				MsgRole:        "tool",
-				Content:        result,
-				ToolCallID:     tc.ID,
-				ToolName:       tc.Name,
-			})
+				s.saveMessage(ws, &models.AiMessage{
+					ID:             uuid.NewString(),
+					ConversationID: "default",
+					MsgRole:        "tool",
+					Content:        result,
+					ToolCallID:     tc.ID,
+					ToolName:       tc.Name,
+				})
 			}
 		}
 
