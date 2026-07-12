@@ -335,10 +335,7 @@ body::before {
   &:hover {
     border-color: var(--billadm-color-primary);
   }
-}
 
-// Single-select: 选中值/占位符垂直居中
-.ant-select-single .ant-select-selector {
   .ant-select-selection-search {
     display: flex;
     align-items: center;
@@ -352,21 +349,11 @@ body::before {
   }
 }
 
-// Multi-select: 标签及内部元素高度按比例放大
+// Multi-select: 标签高度按比例放大
 .ant-select-multiple {
-  .ant-select-selection-overflow {
-    min-height: 24px;
-  }
-
   .ant-select-selection-item {
     height: 24px;
     line-height: 22px;
-  }
-
-  .ant-select-selection-search-input,
-  .ant-select-selection-search-mirror {
-    height: 24px;
-    line-height: 24px;
   }
 
   .ant-select-selector::after {
