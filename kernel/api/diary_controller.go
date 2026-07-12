@@ -71,7 +71,11 @@ func (h *Handlers) importScanDiary(c *gin.Context) (any, error) {
 		return nil, fmt.Errorf("directory is required")
 	}
 
-	return h.DiarySvc.ScanDirectory(directory)
+	files, err := h.DiarySvc.ScanDirectory(directory)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"files": files}, nil
 }
 
 // POST /api/v1/diary/import/file  body: { path, date }

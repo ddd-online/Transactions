@@ -101,7 +101,7 @@ import { scanDirectory, importFile } from '@/backend/api/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
 
 // ---- Electron 检测 ----
-const isElectron = computed(() => typeof window !== 'undefined' && !!(window as any).electronAPI)
+const isElectron = computed(() => !!window.electronAPI)
 
 // ---- 手动路径（浏览器 dev 降级） ----
 const manualPath = ref('')
@@ -146,7 +146,7 @@ async function handleImportClick() {
   let directory: string
 
   if (isElectron.value) {
-    const result = await (window as any).electronAPI.openDialog({
+    const result = await window.electronAPI.openDialog({
       properties: ['openDirectory'],
     })
     if (result.canceled || !result.filePaths?.length) return
