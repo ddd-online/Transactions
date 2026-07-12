@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import type { FormInstance } from 'ant-design-vue/es/form'
 import type { Rule } from 'ant-design-vue/es/form'
 import { message } from 'ant-design-vue'
@@ -71,6 +71,7 @@ const props = defineProps<{
   open: boolean
   record: TransactionRecord | null
   currentLedgerId: string
+  defaultDate?: Dayjs
 }>()
 
 const emit = defineEmits<{
@@ -119,8 +120,8 @@ const flagOptions = [{ label: '离群值', value: 'outlier' }]
 
 const modalTitle = computed(() => props.record ? '编辑消费记录' : '新增消费记录')
 
-function createEmptyForm(): TrForm {
-  return { id: '', price: '', type: '', category: '', description: '', tags: [], flags: [], time: dayjs() }
+function createEmptyForm(date?: Dayjs): TrForm {
+  return { id: '', price: '', type: '', category: '', description: '', tags: [], flags: [], time: date ?? dayjs() }
 }
 
 watch(() => props.open, (val) => {
@@ -128,7 +129,7 @@ watch(() => props.open, (val) => {
   if (props.record) {
     trForm.value = trDtoToTrForm(props.record)
   } else {
-    trForm.value = createEmptyForm()
+    trForm.value = createEmptyForm(props.defaultDate)
     trForm.value.type = 'expense'
   }
   selectedTemplateId.value = undefined
@@ -148,6 +149,13 @@ watch(() => trForm.value.type, async (newType) => {
     }
   } else {
     trForm.value.category = ''
+  }
+})
+
+watch(categoryOptions, (newOptions) => {
+  if (newOptions.length > 0 && (!trForm.value.category || !newOptions.some(o => o.value === trForm.value.category))) {
+    const first = newOptions[0]
+    if (first) trForm.value.category = first.value as string
   }
 })
 

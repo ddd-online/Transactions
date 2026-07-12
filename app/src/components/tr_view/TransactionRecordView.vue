@@ -60,6 +60,7 @@
       :open="openTrModal"
       :record="editingRecord"
       :currentLedgerId="ledgerStore.currentLedgerId"
+      :defaultDate="trQueryConditionStore.timeRange?.[0]"
       @close="closeTrModal"
       @saved="onTrSaved"
     />
