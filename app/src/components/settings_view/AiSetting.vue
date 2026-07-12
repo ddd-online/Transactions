@@ -10,18 +10,12 @@
           <span class="setting-desc">为不同角色配置独立的系统提示词</span>
         </div>
         <div class="setting-action">
-          <a-radio-group
+          <a-select
             v-model:value="currentRole"
-            button-style="solid"
-            size="small"
-            @change="(e: any) => onRoleChange(e.target.value)"
-          >
-            <a-radio-button
-              v-for="r in availableRoles"
-              :key="r.name"
-              :value="r.name"
-            >{{ r.display_name }}</a-radio-button>
-          </a-radio-group>
+            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+            class="setting-input-wide"
+            @change="onRoleChange"
+          />
         </div>
       </div>
 
@@ -243,8 +237,8 @@ async function fetchRoles() {
   }
 }
 
-function onRoleChange(role: string) {
-  currentRole.value = role
+function onRoleChange(role: any) {
+  currentRole.value = role as string
   loadConfig()
 }
 
