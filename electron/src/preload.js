@@ -60,4 +60,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('update:download-error', handler);
         return () => ipcRenderer.removeListener('update:download-error', handler);
     },
+
+    onWindowStateChanged: (cb) => {
+        const handler = (_event, data) => cb(data);
+        ipcRenderer.on('window-state-changed', handler);
+        return () => ipcRenderer.removeListener('window-state-changed', handler);
+    },
 });

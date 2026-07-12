@@ -11,15 +11,6 @@ electron/        # Electron main process + preload bridge
 build/           # PowerShell build scripts (clean.ps1 → build.ps1 → release.ps1)
 ```
 
-## OpenWolf Protocol
-
-> See also: `.wolf/OPENWOLF.md` and `opencode.json` instructions.
-
-- Check `.wolf/anatomy.md` before reading files, `.wolf/cerebrum.md` before generating code
-- After file changes: update `.wolf/anatomy.md` and append to `.wolf/memory.md`
-- Log bugs to `.wolf/buglog.json`; check it before fixing anything
-- If you edit a file more than twice, that's a bug — log it
-
 ## Key Commands
 
 **Dev (3 terminals simultaneously — Go has no hot reload):**
@@ -45,18 +36,21 @@ cd app && npx vue-tsc -b         # Type-check only
 
 ## Critical Gotchas
 
-- **CGO_ENABLED=1** is required for Go build (SQLite)
+- **CGO is NOT required** — the project uses `github.com/glebarez/sqlite` (pure Go SQLite). Production builds use `CGO_ENABLED=0`.
+- **Kernel port differs by mode**: `:28080` in dev (`go run`), `:31943` in production (launched by Electron with `-port 31943`). The frontend API client auto-detects via `electronAPI.getApiServer()`.
 - **Money is always integer cents** — `centsToYuan(cents)` for display, `yuanToCents(str)` for input
 - **Transaction update = delete + create** — no PATCH endpoint for transactions
-- **Components are auto-imported** — `unplugin-vue-components` scans `src/components/`, no manual imports needed for Ant Design Vue or custom components
-- **`electronAPI`** only exists inside Electron — the frontend API client falls back to `http://127.0.0.1:28080` in browser dev mode
-- **Vite base is `/static`**, not `/`
+- **Components are auto-imported** — `unplugin-vue-components` scans `src/components/`, no manual imports needed for Ant Design Vue or custom components. Generated types: `src/types/components.d.ts`.
+- **`electronAPI`** only exists inside Electron (`contextBridge` in preload.js) — the frontend API client (`api-client.ts`) falls back to `http://127.0.0.1:28080/api` in browser dev mode
+- **Vite base is `/static`**, not `/`. Path alias `@` → `app/src/`.
 - **Go backend has no hot reload** — restart `go run main.go` after changes
-- **`__BUILD_TIME__`** is a Vite-injected compile-time global, available in frontend code
-- **Version is defined only in `electron/package.json`**
+- **`__BUILD_TIME__`** is a Vite-injected compile-time global, defined in `vite.config.ts`
+- **Version is defined only in `electron/package.json`** — build and release scripts read it from there
 - **HEIC images**: use `heic-to` (libheif 1.22.2+), never `heic2any` (too old)
 - **Vite `optimizeDeps.include`** must include `heic-to`; never use `optimizeDeps.exclude` for UMD modules
 - **Scrollbar**: always `@include custom-scrollbar` from `_mixins.scss` — 5px warm stone thumb, never browser default or manual `::-webkit-scrollbar`. For Ant Design internals, use `:deep()` to pierce.
+- **Electron frame: false** — custom title bar via `window-control` IPC, not OS native chrome
+- **No frontend tests** — vitest is in dependencies but no test files exist
 
 ## Release
 

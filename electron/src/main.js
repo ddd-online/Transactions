@@ -415,6 +415,13 @@ const createMainWindow = () => {
                 break;
         }
     });
+
+    mainWindow.on('maximize', () => {
+        mainWindow.webContents.send('window-state-changed', { maximized: true });
+    });
+    mainWindow.on('unmaximize', () => {
+        mainWindow.webContents.send('window-state-changed', { maximized: false });
+    });
 };
 
 let initWindow = null;

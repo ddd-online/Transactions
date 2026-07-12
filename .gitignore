@@ -6,5 +6,6 @@ kernel/test
 build/target
 .worktrees/
 .codegraph/
+.opencode/
 # Claude Code (deprecated, migrated to OpenCode)
 .claude/

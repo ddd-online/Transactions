@@ -514,7 +514,7 @@ body::before {
 .ant-message {
   font-family: var(--billadm-font-body);
   top: auto !important;
-  bottom: 48px;
+  bottom: var(--billadm-size-header-height);
 
   &-notice-content {
     border-radius: var(--billadm-radius-lg);

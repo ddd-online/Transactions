@@ -34,6 +34,7 @@ declare global {
             }) => void) => () => void;
             onDownloadComplete: (cb: (data: { filePath: string }) => void) => () => void;
             onDownloadError: (cb: (data: { message: string }) => void) => () => void;
+            onWindowStateChanged: (cb: (data: { maximized: boolean }) => void) => () => void;
         };
     }
 }

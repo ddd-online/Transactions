@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-11T12:00:00.000Z",
+  "title": "Design System: Transactions",
+  "extensions": {
+    "colorMeta": {
+      "muted-teal": { "role": "primary", "displayName": "Muted Teal", "canonical": "#4A8E70", "tonalRamp": ["oklch(27% 0.05 165)", "oklch(33% 0.06 165)", "oklch(39% 0.06 165)", "oklch(45% 0.06 165)", "oklch(51% 0.05 165)", "oklch(60% 0.04 165)", "oklch(75% 0.03 165)", "oklch(90% 0.02 165)"] },
+      "muted-teal-light": { "role": "primary-light", "displayName": "Muted Teal Light", "canonical": "#6AB08C", "tonalRamp": ["oklch(33% 0.06 165)", "oklch(39% 0.06 165)", "oklch(45% 0.06 165)", "oklch(51% 0.07 165)", "oklch(57% 0.07 165)", "oklch(65% 0.05 165)", "oklch(78% 0.04 165)", "oklch(92% 0.02 165)"] },
+      "warm-bark": { "role": "secondary", "displayName": "Warm Bark", "canonical": "#8C7B6E", "tonalRamp": ["oklch(28% 0.03 70)", "oklch(35% 0.03 70)", "oklch(42% 0.03 70)", "oklch(48% 0.03 70)", "oklch(54% 0.02 70)", "oklch(64% 0.02 70)", "oklch(78% 0.01 70)", "oklch(92% 0.005 70)"] },
+      "amber-gold": { "role": "accent", "displayName": "Amber Gold", "canonical": "#C6963A", "tonalRamp": ["oklch(28% 0.08 80)", "oklch(38% 0.10 80)", "oklch(48% 0.11 80)", "oklch(56% 0.11 80)", "oklch(64% 0.10 80)", "oklch(72% 0.08 80)", "oklch(82% 0.05 80)", "oklch(92% 0.02 80)"] },
+      "warm-ivory": { "role": "neutral", "displayName": "Warm Ivory", "canonical": "#F7F4EF", "tonalRamp": ["oklch(15% 0.005 90)", "oklch(30% 0.005 90)", "oklch(45% 0.005 90)", "oklch(60% 0.005 90)", "oklch(75% 0.005 90)", "oklch(85% 0.005 90)", "oklch(93% 0.005 90)", "oklch(97% 0.005 90)"] },
+      "clean-white": { "role": "neutral", "displayName": "Clean White", "canonical": "#FFFFFF", "tonalRamp": ["oklch(15% 0 0)", "oklch(30% 0 0)", "oklch(45% 0 0)", "oklch(60% 0 0)", "oklch(75% 0 0)", "oklch(85% 0 0)", "oklch(95% 0 0)", "oklch(100% 0 0)"] },
+      "sage-income": { "role": "semantic", "displayName": "Sage Green (Income)", "canonical": "#3D8C5E", "tonalRamp": ["oklch(25% 0.06 150)", "oklch(32% 0.07 150)", "oklch(38% 0.07 150)", "oklch(44% 0.07 150)", "oklch(50% 0.07 150)", "oklch(60% 0.05 150)", "oklch(75% 0.03 150)", "oklch(92% 0.02 150)"] },
+      "vermillion-expense": { "role": "semantic", "displayName": "Vermillion (Expense)", "canonical": "#D9705A", "tonalRamp": ["oklch(28% 0.10 25)", "oklch(37% 0.12 25)", "oklch(46% 0.13 25)", "oklch(54% 0.12 25)", "oklch(62% 0.10 25)", "oklch(72% 0.07 25)", "oklch(84% 0.04 25)", "oklch(94% 0.02 25)"] },
+      "steel-transfer": { "role": "semantic", "displayName": "Steel Blue (Transfer)", "canonical": "#5C8DB5", "tonalRamp": ["oklch(26% 0.06 250)", "oklch(32% 0.07 250)", "oklch(38% 0.07 250)", "oklch(45% 0.07 250)", "oklch(52% 0.06 250)", "oklch(62% 0.05 250)", "oklch(78% 0.03 250)", "oklch(92% 0.01 250)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display / Headings", "purpose": "Section headings, modal titles, card titles. Weight 600 at 18–28px." },
+      "body": { "displayName": "Body Text", "purpose": "Default prose, table cells, descriptions, form content. Weight 400 at 14px." },
+      "label": { "displayName": "Labels", "purpose": "Uppercase table headers, statistic labels, badges. Weight 500 at 11–12px, 0.04em tracking." },
+      "mono": { "displayName": "Monospace (Numbers)", "purpose": "Every monetary value. JetBrains Mono, tabular-nums, negative letter-spacing." }
+    },
+    "shadows": [
+      { "name": "ambient-sm", "value": "0 1px 3px rgba(0,0,0,0.05)", "purpose": "Default card elevation, static containers." },
+      { "name": "hover-md", "value": "0 2px 8px rgba(0,0,0,0.07)", "purpose": "Card hover, dropdown popover." },
+      { "name": "modal-lg", "value": "0 4px 16px rgba(0,0,0,0.09)", "purpose": "Modal dialogs, drawers." },
+      { "name": "focus-ring", "value": "0 0 0 2px rgba(74,142,112,0.15)", "purpose": "Input focus, button focus-visible." }
+    ],
+    "motion": [
+      { "name": "fast", "value": "150ms ease", "purpose": "Button state changes, hover transitions." },
+      { "name": "normal", "value": "200ms ease", "purpose": "Card hover, border transitions, fade-in." },
+      { "name": "slow", "value": "300ms ease", "purpose": "Scrollbar thumb fade, drawer open." },
+      { "name": "smooth", "value": "300ms cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Modal enter/exit, page transitions." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action on any screen. Teal fill, white text, 8px radius.",
+      "html": "<button class=\"ds-btn-primary\">Save Changes</button>",
+      "css": ".ds-btn-primary { background: #4A8E70; color: #fff; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; border: none; border-radius: 8px; padding: 0 16px; height: 36px; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: #6AB08C; } .ds-btn-primary:focus-visible { outline: 2px solid #4A8E70; outline-offset: 2px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Secondary action. Transparent with warm-border stroke.",
+      "html": "<button class=\"ds-btn-default\">Cancel</button>",
+      "css": ".ds-btn-default { background: transparent; color: #1D1D1B; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; border: 1px solid #E2DDD5; border-radius: 8px; padding: 0 16px; height: 36px; cursor: pointer; transition: all 150ms ease; } .ds-btn-default:hover { border-color: #4A8E70; color: #4A8E70; } .ds-btn-default:focus-visible { outline: 2px solid #4A8E70; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Bordered container for content blocks. White fill, warm border, 12px radius, 24px padding.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Monthly Summary</div><div class=\"ds-card-content\">$12,450.00</div></div>",
+      "css": ".ds-card { background: #FFFFFF; border: 1px solid #E2DDD5; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: box-shadow 200ms ease, border-color 200ms ease; } .ds-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-color: #4A8E70; } .ds-card-title { font-family: Inter, system-ui, sans-serif; font-size: 18px; font-weight: 500; color: #1D1D1B; margin-bottom: 12px; } .ds-card-content { font-family: JetBrains Mono, SF Mono, Consolas, monospace; font-size: 20px; font-weight: 500; color: #1D1D1B; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Income Tag",
+      "kind": "chip",
+      "refersTo": "tag-income",
+      "description": "Income transaction type badge. Sage green on 10% opacity background.",
+      "html": "<span class=\"ds-tag ds-tag-income\">Income</span>",
+      "css": ".ds-tag { font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; border-radius: 6px; padding: 2px 8px; border: none; } .ds-tag-income { background: rgba(61,140,94,0.10); color: #3D8C5E; }"
+    },
+    {
+      "name": "Expense Tag",
+      "kind": "chip",
+      "refersTo": "tag-expense",
+      "description": "Expense transaction type badge. Vermillion on 10% opacity background.",
+      "html": "<span class=\"ds-tag ds-tag-expense\">Expense</span>",
+      "css": ".ds-tag { font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; border-radius: 6px; padding: 2px 8px; border: none; } .ds-tag-expense { background: rgba(217,112,90,0.10); color: #D9705A; }"
+    },
+    {
+      "name": "Nav Button",
+      "kind": "nav",
+      "refersTo": "nav-button",
+      "description": "Sidebar icon navigation button. 40×40px, icon-centered, slate at rest, teal on activation.",
+      "html": "<button class=\"ds-nav-btn\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><line x1=\"3\" y1=\"9\" x2=\"21\" y2=\"9\"/><line x1=\"9\" y1=\"21\" x2=\"9\" y2=\"9\"/></svg></button>",
+      "css": ".ds-nav-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; background: none; border-radius: 8px; color: #5C5C55; cursor: pointer; transition: background 150ms ease, color 150ms ease; } .ds-nav-btn:hover { background: rgba(74,142,112,0.08); color: #1D1D1B; } .ds-nav-btn.active { background: rgba(74,142,112,0.14); color: #4A8E70; } .ds-nav-btn:focus-visible { outline: 2px solid #4A8E70; outline-offset: 2px; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text input with warm-border stroke, teal focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Enter amount\" />",
+      "css": ".ds-input { font-family: Inter, system-ui, sans-serif; font-size: 14px; color: #1D1D1B; background: #FFFFFF; border: 1px solid #E2DDD5; border-radius: 8px; padding: 0 12px; height: 36px; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input:hover { border-color: #4A8E70; } .ds-input:focus { border-color: #4A8E70; box-shadow: 0 0 0 2px rgba(74,142,112,0.15); } .ds-input::placeholder { color: #9E9E96; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Ledger",
+    "overview": "Transactions is a calm, restrained personal finance desktop app. The interface exists to serve the task — tracking money — and then gets out of the way. It rejects the SaaS dashboard reflex, the cold corporate greybox, and the gamified whimsical. The design strategy is Restrained with deliberate semantic payload: a single muted-teal accent carries primary actions and focus states, used on ≤10% of surface area. Semantic colors activate only where transaction data lives.",
+    "keyCharacteristics": [
+      "Restrained color: one accent, semantic colors only for data",
+      "Inter for UI, JetBrains Mono for numbers — tabular-nums on every amount",
+      "Monospace money display at 14–28px with negative letter-spacing",
+      "Cards are bordered, not shadow-dominant; elevation lifts on hover",
+      "Custom 5px warm-stone scrollbar with hover fade-in",
+      "Electron-native: frameless window with custom title bar",
+      "Flat at rest, subtle shadow on interaction"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "The primary teal accent is used on ≤10% of any given screen. Its rarity is the point. Saturation on interactive elements only.", "section": "colors" },
+      { "name": "The Semantic Silo Rule", "body": "Income/expense/transfer colors only appear where transaction data lives. They do not leak into navigation, chrome, or general-purpose UI.", "section": "colors" },
+      { "name": "The Monospace Money Rule", "body": "Every monetary value uses JetBrains Mono with font-variant-numeric: tabular-nums. Never display a financial number in a proportional font.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state: hover, focus, modal overlay. A static card with a heavy shadow is an anti-pattern.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use JetBrains Mono with font-variant-numeric: tabular-nums for every monetary value",
+      "Do keep the primary teal accent to ≤10% of any screen",
+      "Do use the warm-ivory page background as the default body backdrop",
+      "Do use semantic colors only where transaction data lives",
+      "Do use bordered cards with shadow only on hover",
+      "Do keep transitions fast (150–200ms)",
+      "Do respect the Electron frameless window drag regions"
+    ],
+    "donts": [
+      "Don't use SaaS cream/sand/beige as the dominant background",
+      "Don't use dark mode, neon accents, or glassmorphism",
+      "Don't add decorative motion that doesn't convey state",
+      "Don't use border-left/right colored accent stripes",
+      "Don't use gradient text (background-clip: text)",
+      "Don't ship browser-default scrollbars",
+      "Don't use display fonts in UI labels",
+      "Don't make the same button look different in two places"
+    ]
+  }
+}

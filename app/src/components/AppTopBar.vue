@@ -3,8 +3,9 @@
     <button class="window-btn" @click="onMinimize" aria-label="最小化" title="最小化">
       <LineOutlined />
     </button>
-    <button class="window-btn" @click="onMaximize" aria-label="最大化" title="最大化">
-      <BorderOutlined />
+    <button class="window-btn" @click="onMaximize" :aria-label="isMaximized ? '还原' : '最大化'" :title="isMaximized ? '还原' : '最大化'">
+      <SwitcherOutlined v-if="isMaximized" />
+      <BorderOutlined v-else />
     </button>
     <button class="window-btn window-btn--close" @click="onClose" aria-label="关闭" title="关闭">
       <CloseOutlined />
@@ -13,7 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import { BorderOutlined, CloseOutlined, LineOutlined } from "@ant-design/icons-vue";
+import { ref, onMounted, onUnmounted } from 'vue'
+import { BorderOutlined, CloseOutlined, LineOutlined, SwitcherOutlined } from "@ant-design/icons-vue";
+
+const isMaximized = ref(false)
+
+let unsub: (() => void) | null = null
 
 const onMinimize = () => {
   window.electronAPI.minimizeWindow();
@@ -26,6 +32,16 @@ const onMaximize = () => {
 const onClose = () => {
   window.electronAPI.closeWindow();
 }
+
+onMounted(() => {
+  unsub = window.electronAPI.onWindowStateChanged?.(({ maximized }) => {
+    isMaximized.value = maximized
+  }) ?? null
+})
+
+onUnmounted(() => {
+  unsub?.()
+})
 </script>
 
 <style scoped>

@@ -205,7 +205,6 @@ const handleDeleteLedger = (id: string, name: string) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left;
 }
 
 .ledger-btn-arrow {
@@ -333,15 +332,12 @@ const handleDeleteLedger = (id: string, name: string) => {
 }
 
 /* 次级导航按钮 — 设置等工具项，视觉降权 */
-.nav-btn-secondary {
-}
-
 .nav-btn-secondary .nav-btn-icon {
   font-size: 16px;
 }
 
 .nav-btn-secondary .nav-btn-text {
-  color: var(--billadm-color-text-disabled);
+  color: var(--billadm-color-text-secondary);
 }
 
 .nav-btn-secondary:hover .nav-btn-text,

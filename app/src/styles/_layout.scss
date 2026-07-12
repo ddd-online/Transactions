@@ -37,17 +37,6 @@
   justify-content: flex-end;
 }
 
-// Sider
-.layout-sider {
-  background-color: var(--billadm-color-minor-background) !important;
-
-  .ant-layout-sider-children {
-    @include flex-column;
-    justify-content: center;
-    height: 100%;
-  }
-}
-
 // ============================================
 // Toolbar Layout
 // ============================================
@@ -88,67 +77,6 @@
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: var(--billadm-space-xl);
   padding: var(--billadm-space-xl);
-}
-
-// ============================================
-// Menu Bar (AppTopBar)
-// ============================================
-
-.menu-bar {
-  @include flex-center;
-  height: 100%;
-  position: relative;
-
-  > * {
-    @include no-drag-region;
-  }
-
-  &-avatar {
-    width: var(--billadm-size-sider-width);
-    @include flex-center;
-  }
-
-  &-left {
-    margin-right: auto;
-    @include flex-center;
-  }
-
-  &-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  &-right {
-    @include flex-center;
-    gap: var(--billadm-space-xs);
-    margin-right: var(--billadm-space-sm);
-  }
-}
-
-// ============================================
-// Icon Navigation (AppLeftBar)
-// ============================================
-
-.icon-nav {
-  @include flex-column;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  padding: var(--billadm-space-md) var(--billadm-space-xs);
-  gap: var(--billadm-space-md);
-
-  &-top {
-    @include flex-column;
-    gap: var(--billadm-space-md);
-    margin-bottom: auto;
-  }
-
-  &-bottom {
-    @include flex-column;
-    gap: var(--billadm-space-md);
-  }
 }
 
 // ============================================
