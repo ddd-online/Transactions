@@ -38,7 +38,7 @@ const (
 - 回答简洁但完整，少用Emoji。先给出结论，再展示细节
 - 当用户的问题模糊时，用工具搜索数据后再回答，不要猜测`
 
-	MaxToolCallRounds  = 50
+	MaxToolCallRounds  = 9999
 	MaxHistoryMessages = 50
 )
 
@@ -88,13 +88,23 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 		roleToolNames[name] = true
 	}
 
-	// 加载配置
+	// 加载配置 — 优先当前角色，不存在或不完整则回退到财务助手（共享 API 连接信息）
 	config, err := s.configDao.Get(ws, roleName)
-	if err != nil {
-		return nil, fmt.Errorf("AI 配置未找到，请先在设置中配置: %w", err)
-	}
-	if config.BaseURL == "" || config.APIKey == "" || config.Model == "" || config.Endpoint == "" {
-		return nil, fmt.Errorf("AI 配置不完整，请先在设置中配置 Base URL、端点、API Key 和模型")
+	if err != nil || roleName != "financial_assistant" && (config.BaseURL == "" || config.APIKey == "" || config.Model == "" || config.Endpoint == "") {
+		defaultConfig, fallbackErr := s.configDao.Get(ws, "financial_assistant")
+		if fallbackErr != nil {
+			if err != nil {
+				return nil, fmt.Errorf("AI 配置未找到，请先在设置中配置: %w", err)
+			}
+			return nil, fmt.Errorf("AI 配置不完整，请先在设置中配置 Base URL、端点、API Key 和模型")
+		}
+		config = &models.AiConfig{
+			BaseURL:  defaultConfig.BaseURL,
+			Endpoint: defaultConfig.Endpoint,
+			APIKey:   defaultConfig.APIKey,
+			Model:    defaultConfig.Model,
+			Provider: defaultConfig.Provider,
+		}
 	}
 
 	// 选择 provider

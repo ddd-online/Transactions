@@ -1,32 +1,7 @@
 <template>
   <div class="diary-tree">
-    <!-- 工具栏 -->
-    <div v-if="yearNodes.length > 0" class="tree-toolbar">
-      <a-tooltip title="定位到今天" placement="left">
-        <button class="tree-action-btn" @click="goToToday">
-          <svg viewBox="0 0 48 48" fill="none">
-            <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M24 37V44" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M36 24H44" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 24H11" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M24 11V4" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </a-tooltip>
-      <a-tooltip title="收起全部" placement="left">
-        <button class="tree-action-btn" @click="collapseAll">
-          <svg viewBox="0 0 48 48" fill="none">
-            <path d="M6 10L42 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 20L42 20" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 40L24 26L42 40" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </a-tooltip>
-    </div>
-
     <!-- 空状态 -->
     <div v-if="yearNodes.length === 0" class="tree-empty">
-      <span class="tree-empty-icon">📝</span>
       <span class="tree-empty-text">暂无日记</span>
       <span class="tree-empty-hint">点击「今天」开始写第一篇</span>
     </div>
@@ -222,13 +197,14 @@ let initialized = false
 watch(() => props.dates.length, (len) => {
   if (len > 0 && !initialized) {
     initialized = true
-    // 所有年份默认折叠
     for (const y of yearNodes.value) {
       collapsedYears.value.add(y.year)
     }
     collapsedYears.value = new Set(collapsedYears.value)
   }
 }, { immediate: true })
+
+defineExpose({ collapseAll, goToToday })
 </script>
 
 <style scoped>
@@ -242,47 +218,6 @@ watch(() => props.dates.length, (len) => {
   --diary-tree-caret-width: 12px;
 }
 
-/* ---- 工具栏 ---- */
-.tree-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--billadm-space-2xs);
-  padding: var(--billadm-space-2xs) var(--billadm-space-sm);
-  border-bottom: 1px solid var(--billadm-color-divider);
-}
-
-.tree-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--billadm-color-text-secondary);
-  background: transparent;
-  border: none;
-  border-radius: var(--billadm-radius-sm);
-  cursor: pointer;
-  transition: color var(--billadm-transition-fast),
-              background var(--billadm-transition-fast);
-  outline: none;
-}
-
-.tree-action-btn:hover {
-  color: var(--billadm-color-text-major);
-  background: var(--billadm-color-hover-bg);
-}
-
-.tree-action-btn:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
-  outline-offset: 2px;
-}
-
-.tree-action-btn svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
 /* ---- 空状态 ---- */
 .tree-empty {
   display: flex;
@@ -292,12 +227,6 @@ watch(() => props.dates.length, (len) => {
   gap: var(--billadm-space-xs);
   height: 100%;
   padding: var(--billadm-space-xl);
-}
-
-.tree-empty-icon {
-  font-size: 28px;
-  opacity: 0.5;
-  margin-bottom: var(--billadm-space-xs);
 }
 
 .tree-empty-text {

@@ -21,7 +21,7 @@ func (h *Handlers) aiChat(c *gin.Context) {
 	var req struct {
 		Message    string `json:"message"`
 		LedgerName string `json:"ledger_name"`
-		RoleName   string `json:"role_name"`
+		RoleName   string `json:"role"`
 	}
 	if err := c.BindJSON(&req); err != nil || req.Message == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})

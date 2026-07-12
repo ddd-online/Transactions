@@ -547,6 +547,23 @@ func getFloatArg(args map[string]any, key string) float64 {
 	return 0
 }
 
+// moodKeywordToEmoji 将 LLM 使用的英文心情关键词转换为前端存储的 emoji。
+var moodKeywordToEmoji = map[string]string{
+	"happy":   "😊",
+	"neutral": "😐",
+	"sad":     "😢",
+	"angry":   "😤",
+	"anxious": "😰",
+}
+
+// convertMoodKeyword 将心情关键词转为 emoji，未知/空值返回原值。
+func convertMoodKeyword(mood string) string {
+	if emoji, ok := moodKeywordToEmoji[mood]; ok {
+		return emoji
+	}
+	return mood
+}
+
 // ---- 8. query_diary ----
 
 type queryDiaryTool struct {
@@ -567,7 +584,7 @@ func (t *queryDiaryTool) InputSchema() map[string]any {
 			"date":    map[string]any{"type": "string", "description": "具体日期 YYYY-MM-DD"},
 			"keyword": map[string]any{"type": "string", "description": "关键词搜索（匹配正文内容）"},
 			"year":    map[string]any{"type": "integer", "description": "年份，如 2026"},
-			"mood":    map[string]any{"type": "string", "description": "心情筛选"},
+			"mood":    map[string]any{"type": "string", "description": "心情筛选，可选值: happy(开心) / neutral(平静) / sad(难过) / angry(生气) / anxious(焦虑)"},
 		},
 	}
 }
@@ -616,7 +633,7 @@ func (t *queryDiaryTool) Execute(ctx context.Context, args map[string]any) (stri
 		items = filtered
 	}
 
-	if mood := getStringArg(args, "mood"); mood != "" {
+	if mood := convertMoodKeyword(getStringArg(args, "mood")); mood != "" {
 		var filtered []models.DiaryDateItem
 		for _, item := range items {
 			if item.Mood == mood {
@@ -649,7 +666,7 @@ func (t *writeDiaryTool) InputSchema() map[string]any {
 		"properties": map[string]any{
 			"date":    map[string]any{"type": "string", "description": "日期 YYYY-MM-DD（必填）"},
 			"content": map[string]any{"type": "string", "description": "日记正文，支持 Markdown（必填）"},
-			"mood":    map[string]any{"type": "string", "description": "心情标记，可选值: happy/sad/neutral/excited/anxious/calm/grateful/tired"},
+			"mood":    map[string]any{"type": "string", "description": "心情，可选值: happy(开心) / neutral(平静) / sad(难过) / angry(生气) / anxious(焦虑)，不传表示无"},
 		},
 		"required": []string{"date", "content"},
 	}
@@ -662,7 +679,7 @@ func (t *writeDiaryTool) Execute(ctx context.Context, args map[string]any) (stri
 	}
 	date := getStringArg(args, "date")
 	content := getStringArg(args, "content")
-	mood := getStringArg(args, "mood")
+	mood := convertMoodKeyword(getStringArg(args, "mood"))
 
 	entry, err := t.diarySvc.Upsert(ws, date, content, mood)
 	if err != nil {

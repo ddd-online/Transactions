@@ -232,16 +232,7 @@ async function fetchRoles() {
 
 function onRoleChange(role: any) {
   currentRole.value = role as string
-  loadSystemPrompt()
-}
-
-async function loadSystemPrompt() {
-  try {
-    const config = await aiApi.getConfig(currentRole.value)
-    form.system_prompt = config.system_prompt || ''
-  } catch {
-    form.system_prompt = ''
-  }
+  loadConfig()
 }
 
 // 模型下拉框状态
