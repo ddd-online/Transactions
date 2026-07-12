@@ -1,8 +1,9 @@
 # release.ps1 - 一键将打包产物发布到 GitHub Release
-# 用法: .\release.ps1 [-Body "发布说明"]
+# 用法: .\release.ps1 [-BodyFile "path/to/notes.md"]
 
 param(
-    [string]$Body
+    [string]$Body,
+    [string]$BodyFile
 )
 
 # 设置输出编码为 UTF-8（防止中文乱码）
@@ -119,9 +120,14 @@ try {
 
     $tagName = "v$version"
 
-    if ($Body) {
-        # 使用传入的 body，将 \n 转义为实际换行符
-        $releaseBody = $Body -replace '\\n', "`n"
+    $notesFile = $null
+
+    if ($BodyFile -and (Test-Path $BodyFile)) {
+        $notesFile = $BodyFile
+        Write-Success "从文件读取发布说明: $BodyFile"
+    } elseif ($Body) {
+        $notesFile = Join-Path $env:TEMP "release-notes-$tagName.md"
+        $Body -replace '\\n', "`n" | Out-File -FilePath $notesFile -Encoding UTF8
         Write-Success "使用传入的发布说明"
     } else {
         # 先拉取远程 tag，确保本地有最新的 tag 列表
@@ -133,14 +139,13 @@ try {
         if ($prevTag) {
             $commitLog = git -C $projectRoot log --oneline "$prevTag..HEAD" 2>$null
             if ($commitLog) {
-                $releaseBody = "## Changes since $prevTag`n`n$commitLog"
+                $notesFile = Join-Path $env:TEMP "release-notes-$tagName.md"
+                "## Changes since $prevTag`n`n$commitLog" | Out-File -FilePath $notesFile -Encoding UTF8
                 Write-Success "从上一条 tag ($prevTag) 生成了 changelog"
             } else {
-                $releaseBody = "Transactions $tagName"
                 Write-Info "与上一条 tag 无差异，使用默认 body"
             }
         } else {
-            $releaseBody = "Transactions $tagName"
             Write-Info "未找到上一条 tag，使用默认 body"
         }
     }
@@ -160,9 +165,12 @@ try {
     Write-Host "  文件大小:   " -NoNewline
     Write-Host "$fileSize MB" -ForegroundColor Yellow
     Write-Host "----------------------------------------" -ForegroundColor Cyan
-    Write-Host "  Body 预览:" -ForegroundColor White
-    Write-Host "----------------------------------------" -ForegroundColor Cyan
-    Write-Host $releaseBody -ForegroundColor DarkGray
+    if ($notesFile) {
+        Write-Host "  Body 来源:" -ForegroundColor White
+        Write-Host "  $notesFile" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  Body: (默认)" -ForegroundColor DarkGray
+    }
     Write-Host "========================================" -ForegroundColor Cyan
 
     $confirmation = Read-Host "`n确认发布？[Y/N]"
@@ -178,9 +186,12 @@ try {
 
     Set-Location $projectRoot
 
-    gh release create $tagName $exePath `
-        --title "Transactions $tagName" `
-        --notes $releaseBody
+    $ghArgs = @("release", "create", $tagName, $exePath, "--title", "Transactions $tagName")
+    if ($notesFile) {
+        $ghArgs += "--notes-file"
+        $ghArgs += $notesFile
+    }
+    gh @ghArgs
 
     if ($LASTEXITCODE -ne 0) {
         Write-ErrorCustom "创建 GitHub Release 失败，退出码: $LASTEXITCODE"
