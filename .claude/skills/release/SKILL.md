@@ -39,7 +39,7 @@ pwsh.exe -ExecutionPolicy Bypass -File "build/build.ps1"
 
 ## Step 3: 生成 Release Body 并发布
 
-`release.ps1` 支持 `-Body` 参数（不带则自动生成 `git log --oneline` 列表）。
+`release.ps1` 支持 `-BodyFile` 参数（指向发布说明文件，推荐），也支持 `-Body`（命令行字符串，有 bash 转义风险）。不传参数则自动从 `git log` 生成。
 
 先拉取 tag、获取变更列表：
 
@@ -48,9 +48,10 @@ git fetch --tags origin
 git log --oneline <prevTag>..HEAD
 ```
 
-根据 `git log` 输出，将提交历史总结为简洁的发布说明。用中文组织，**按功能分组**而非逐条罗列，格式类似：
+根据 `git log` 输出，将提交历史总结为简洁的发布说明。用中文组织，**按功能分组**而非逐条罗列，写入临时文件：
 
-```
+```bash
+cat > /tmp/release_notes.md << 'EOF'
 ## 新增
 
 - xxx
@@ -62,16 +63,17 @@ git log --oneline <prevTag>..HEAD
 ## 改进
 
 - xxx
+EOF
 ```
 
-然后调用 `release.ps1`，传入 body（单行用 `\n` 换行）：
+然后调用 `release.ps1`，通过 `-BodyFile` 传入文件路径（避免 bash 吃掉 `\n` 的问题）：
 
 ```bash
-echo Y | pwsh.exe -ExecutionPolicy Bypass -File "build/release.ps1" -Body "## 新增\n\n- xxx\n\n## 修复\n\n- xxx"
+echo Y | pwsh.exe -ExecutionPolicy Bypass -File "build/release.ps1" -BodyFile /tmp/release_notes.md
 ```
 
-- `-Body` 的内容直接作为 Release Notes
 - `release.ps1` 需要交互确认，用 `echo Y` 管道自动确认
+- `-BodyFile` 的内容直接作为 Release Notes（UTF-8 编码）
 
 **完成条件**：输出 "GitHub Release vX.Y.Z 发布成功！"
 
@@ -92,4 +94,5 @@ git push
 | `build.ps1` Go 编译失败 | CGO 或依赖问题 | 检查 `CGO_ENABLED=1`，确认 gcc 可用 |
 | `release.ps1` gh 未登录 | `gh auth login` 未执行过 | 终端中执行 `gh auth login`，完成后重试 |
 | `release.ps1` 产物路径不对 | 版本号与产物文件名不匹配 | 确认版本号正确，重新执行 `build.ps1` |
-| 上传速度极慢 | `gh` CLI 不走系统代理，直连 GitHub | `release.ps1` 现已自动检测 Windows 系统代理（`HKCU\...\ProxyServer`）并设置 `HTTPS_PROXY`，无需手动处理 |
+| 上传失败 `proxyconnect tcp ... refused` | 代理已配置但不可达 | `release.ps1` 会 TCP 探测代理可用性（1.5s 超时），不可用则自动直连 |
+| 上传速度极慢 | `gh` CLI 不走系统代理，直连 GitHub | `release.ps1` 现已自动检测 Windows 系统代理（`HKCU\...\ProxyServer`）并设置 `HTTPS_PROXY` |
