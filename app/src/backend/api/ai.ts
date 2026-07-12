@@ -40,36 +40,43 @@ export interface ModelsResponse {
   models: { id: string }[];
 }
 
+export interface AiRole {
+  name: string
+  display_name: string
+}
+
 export const aiApi = {
-  async getConfig(): Promise<AiConfigResponse> {
-    return api.get('/v1/ai/config', '获取AI配置');
+  async fetchRoles(): Promise<AiRole[]> {
+    return api.get('/v1/ai/roles', '获取角色列表')
   },
 
-  async updateConfig(config: AiConfig): Promise<void> {
-    return api.put('/v1/ai/config', config, '保存AI配置');
+  async getConfig(role: string = 'financial_assistant'): Promise<AiConfigResponse> {
+    return api.get(`/v1/ai/config?role=${encodeURIComponent(role)}`, '获取AI配置')
   },
 
-  async testConnection(config: AiConfig): Promise<void> {
-    return api.post('/v1/ai/config/test', config, '测试连接');
+  async updateConfig(config: AiConfig & { role?: string }): Promise<void> {
+    const body = { ...config, role: config.role || 'financial_assistant' }
+    return api.put('/v1/ai/config', body, '保存AI配置')
+  },
+
+  async testConnection(config: AiConfig & { role?: string }): Promise<void> {
+    const body = { ...config, role: config.role || 'financial_assistant' }
+    return api.post('/v1/ai/config/test', body, '测试连接')
   },
 
   async fetchProvider(action: 'balance' | 'models', apiKey?: string, provider?: string): Promise<any> {
-    const body: ProviderFetchRequest = { action };
-    if (apiKey) {
-      body.api_key = apiKey;
-    }
-    if (provider) {
-      body.provider = provider;
-    }
-    return api.post('/v1/ai/provider/fetch', body, '获取供应商信息');
+    const body: ProviderFetchRequest = { action }
+    if (apiKey) body.api_key = apiKey
+    if (provider) body.provider = provider
+    return api.post('/v1/ai/provider/fetch', body, '获取供应商信息')
   },
 
-  async getMessages(): Promise<AiMessage[]> {
-    return api.get('/v1/ai/messages', '获取对话历史');
+  async getMessages(role: string = 'financial_assistant'): Promise<AiMessage[]> {
+    return api.get(`/v1/ai/messages?role=${encodeURIComponent(role)}`, '获取对话历史')
   },
 
-  async clearMessages(): Promise<void> {
-    return api.delete('/v1/ai/messages', '清空对话');
+  async clearMessages(role: string = 'financial_assistant'): Promise<void> {
+    return api.delete(`/v1/ai/messages?role=${encodeURIComponent(role)}`, '清空对话')
   },
 };
 
