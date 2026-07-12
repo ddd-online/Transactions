@@ -284,9 +284,8 @@ body::before {
   }
 }
 
-// Input, DatePicker
-.ant-input,
-.ant-picker {
+// Input
+.ant-input {
   border-radius: var(--billadm-radius-md);
   border-color: var(--billadm-color-window-border);
   font-family: var(--billadm-font-body);
@@ -300,6 +299,27 @@ body::before {
   &.ant-input-focused {
     border-color: var(--billadm-color-primary);
     box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15);
+  }
+}
+
+// DatePicker — 高度统一为按钮主高度
+.ant-picker {
+  min-height: var(--billadm-btn-height-md) !important;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--billadm-radius-md) !important;
+  border-color: var(--billadm-color-window-border) !important;
+  font-family: var(--billadm-font-body);
+  transition: all var(--billadm-transition-fast);
+
+  &:hover {
+    border-color: var(--billadm-color-primary);
+  }
+
+  input {
+    height: auto;
+    line-height: 1;
   }
 }
 
