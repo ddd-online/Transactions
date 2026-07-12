@@ -25,6 +25,15 @@
         </button>
         <button
           class="nav-item"
+          :class="{ active: activeComponent === 'diary' }"
+          @click="activeComponent = 'diary'"
+          aria-label="日记"
+        >
+          <BookOutlined class="nav-icon"/>
+          <span class="nav-text">日记</span>
+        </button>
+        <button
+          class="nav-item"
           :class="{ active: activeComponent === 'ai' }"
           @click="activeComponent = 'ai'"
           aria-label="AI 助手"
@@ -59,18 +68,21 @@ import {
   FileTextOutlined,
   SettingOutlined,
   InfoCircleOutlined,
-  RobotOutlined
+  RobotOutlined,
+  BookOutlined,
 } from "@ant-design/icons-vue";
 import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
 import AiSetting from './AiSetting.vue';
+import DiarySetting from './DiarySetting.vue';
 
 const activeComponent = ref('general');
 
 const componentMap = {
   'general': GeneralSetting,
   'template': BilladmTemplateSetting,
+  'diary': DiarySetting,
   'about': AboutSetting,
   'ai': AiSetting,
 };
