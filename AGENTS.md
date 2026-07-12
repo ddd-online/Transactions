@@ -1,10 +1,21 @@
-# CLAUDE.md
+# AGENTS.md
 
-> [!NOTE]
-> This file has been migrated to `AGENTS.md`. OpenCode reads `AGENTS.md` as the primary project instructions file.
-> This file is kept for backward compatibility with Claude Code.
+This file provides guidance to OpenCode when working with code in this repository.
 
 > **OpenWolf**: This project uses OpenWolf for context management. Follow `.wolf/OPENWOLF.md` every session, check `.wolf/cerebrum.md` before generating code, and check `.wolf/anatomy.md` before reading files.
+
+## OpenWolf Protocol Rules
+
+The following rules are enforced for every session:
+
+- Check `.wolf/anatomy.md` before reading any project file
+- Check `.wolf/cerebrum.md` Do-Not-Repeat list before generating code
+- After writing or editing files, update `.wolf/anatomy.md` and append to `.wolf/memory.md`
+- After receiving a user correction, update `.wolf/cerebrum.md` immediately (Preferences, Learnings, or Do-Not-Repeat)
+- LEARN from every interaction: if you discover a convention, user preference, or project pattern, add it to `.wolf/cerebrum.md`. Low threshold — when in doubt, log it.
+- BEFORE fixing any bug or error: read `.wolf/buglog.json` for known fixes
+- AFTER fixing any bug, error, failed test, failed build, or user-reported problem: ALWAYS log to `.wolf/buglog.json` with error_message, root_cause, fix, and tags
+- If you edit a file more than twice in a session, that likely indicates a bug — log it to `.wolf/buglog.json`
 
 ## Project Overview
 
@@ -259,16 +270,6 @@ The frontend communicates with the Go backend through a lazy-initialized Axios c
 - **Switching**: Use the workspace setting in the settings view, or restart with a different `--workspace` flag. Each workspace is an independent SQLite file.
 - **Persistence**: Workspace path and window bounds are persisted to `~/.transactions.json` (not used in dev mode).
 
-## OpenWolf Context Management
-
-This project uses OpenWolf (`.wolf/`) for cross-session context. Key rules:
-
-- **Before reading files**: Check `.wolf/anatomy.md` for file descriptions to avoid unnecessary reads.
-- **Before generating code**: Check `.wolf/cerebrum.md` for user preferences, learned conventions, and the Do-Not-Repeat list.
-- **After actions**: Append to `.wolf/memory.md` and update `.wolf/anatomy.md` if files changed.
-- **Bug logging**: After any fix, log to `.wolf/buglog.json` with error, root cause, and fix.
-- **Do-Not-Repeat**: Never use `heic2any` (outdated) — use `heic-to` for HEIC image decoding. Never `optimizeDeps.exclude` for UMD modules in Vite.
-
 ## Important Conventions
 
 - **Go backend has no hot reload** — restart `go run main.go` after changes.
@@ -307,7 +308,7 @@ Release is scripted via an OpenCode skill at `.opencode/skills/release/SKILL.md`
 
 `build/release.ps1` accepts `-Body "release notes"` for custom release notes; when omitted, auto-generates from `git log` since last tag. Version is read from `electron/package.json` (sole version source).
 
-## Agent skills
+## Agent Skills
 
 ### Release
 

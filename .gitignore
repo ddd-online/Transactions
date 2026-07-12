@@ -6,4 +6,5 @@ kernel/test
 build/target
 .worktrees/
 .codegraph/
-.claude/settings.local.json
+# Claude Code (deprecated, migrated to OpenCode)
+.claude/

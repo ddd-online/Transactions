@@ -1,12 +1,9 @@
 ---
 name: release
-description: [DEPRECATED] 已迁移至 .opencode/skills/release/SKILL.md — 执行 Transactions 项目的发布流程。
+description: 执行 Transactions 项目的发布流程：版本升级、构建、打包、发布到 GitHub Release。
 ---
 
-> [!WARNING]
-> 此 skill 已迁移至 `.opencode/skills/release/SKILL.md`。请使用新路径。
-
-# Release 发布流程 (已废弃)
+# Release 发布流程
 
 三步完成发布：版本号 → 构建打包 → 总结变更并发布到 GitHub Release。
 
@@ -30,7 +27,7 @@ git add electron/package.json && git commit -m "chore: bump version to x.y.z"
 两个脚本串联执行。构建过程可能触发 TS 类型错误，需要根据错误信息修复源码后重试。
 
 ```bash
-pwsh.exe -ExecutionPolicy Bypass -File "build/clean.ps1" && \
+pwsh.exe -ExecutionPolicy Bypass -File "build/clean.ps1"
 pwsh.exe -ExecutionPolicy Bypass -File "build/build.ps1"
 ```
 
