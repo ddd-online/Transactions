@@ -3,22 +3,6 @@
     <BilladmPageHeader title="AI 助手" />
 
     <div class="setting-list">
-      <!-- Role Selection -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">角色</span>
-          <span class="setting-desc">为不同角色配置独立的系统提示词</span>
-        </div>
-        <div class="setting-action">
-          <a-select
-            v-model:value="currentRole"
-            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-            class="setting-input-wide"
-            @change="onRoleChange"
-          />
-        </div>
-      </div>
-
       <!-- 供应商 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -122,10 +106,19 @@
       <div class="setting-card setting-card-vertical">
         <div class="setting-header-row">
           <div class="setting-info">
-            <span class="setting-title">系统提示词 — {{ availableRoles.find(r => r.name === currentRole)?.display_name || currentRole }}</span>
+            <span class="setting-title">系统提示词</span>
             <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
-          <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
+          <div class="setting-header-actions">
+            <a-select
+              v-model:value="currentRole"
+              :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+              size="small"
+              style="width: 110px"
+              @change="onRoleChange"
+            />
+            <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
+          </div>
         </div>
         <div class="setting-action setting-action-full">
           <a-textarea
@@ -481,6 +474,14 @@ onMounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
+}
+
+.setting-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  flex-shrink: 0;
+  margin-left: var(--billadm-space-lg);
 }
 
 .setting-action-full {
