@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/ai"
 	"github.com/billadm/ai/provider"
 	"github.com/billadm/models"
 )
@@ -21,7 +20,9 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 	}
 	systemPrompt := config.SystemPrompt
 	if systemPrompt == "" {
-		systemPrompt = ai.DefaultSystemPrompt
+		if roleDef, ok := h.RoleRegistry.Get(role); ok {
+			systemPrompt = roleDef.DefaultSystemPrompt()
+		}
 	}
 	return gin.H{
 		"base_url":      config.BaseURL,
@@ -145,6 +146,19 @@ func (h *Handlers) listAiMessages(c *gin.Context) (any, error) {
 		msgs = make([]*models.AiMessage, 0)
 	}
 	return msgs, nil
+}
+
+// GET /api/v1/ai/roles
+func (h *Handlers) listRoles(c *gin.Context) (any, error) {
+	roles := h.RoleRegistry.List()
+	result := make([]gin.H, 0, len(roles))
+	for _, r := range roles {
+		result = append(result, gin.H{
+			"name":         r.Name(),
+			"display_name": r.DisplayName(),
+		})
+	}
+	return result, nil
 }
 
 // DELETE /api/v1/ai/messages

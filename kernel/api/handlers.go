@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/billadm/ai"
+	"github.com/billadm/ai/role"
 	"github.com/billadm/dao"
 	"github.com/billadm/service"
 )
@@ -26,4 +27,5 @@ type Handlers struct {
 	ChatService  *ai.ChatService
 	AiConfigDao  dao.AiConfigDao
 	AiMessageDao dao.AiMessageDao
+	RoleRegistry *role.Registry
 }

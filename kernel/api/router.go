@@ -106,6 +106,7 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 		ai := v1.Group("/ai")
 		{
 			ai.POST("/chat", h.aiChat) // SSE — not wrapped in Handle()
+			ai.GET("/roles", Handle(h.listRoles))
 			ai.GET("/config", Handle(h.getAiConfig))
 			ai.PUT("/config", Handle(h.updateAiConfig))
 			ai.POST("/config/test", Handle(h.testAiConnection))

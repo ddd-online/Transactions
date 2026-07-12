@@ -62,5 +62,6 @@ func InitServices() *api.Handlers {
 		ChatService:    aiChatService,
 		AiConfigDao:    aiConfigDao,
 		AiMessageDao:   aiMessageDao,
+		RoleRegistry:   roleRegistry,
 	}
 }
