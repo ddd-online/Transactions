@@ -36,10 +36,10 @@
           class="nav-item"
           :class="{ active: activeComponent === 'ai' }"
           @click="activeComponent = 'ai'"
-          aria-label="AI 助手"
+          aria-label="智能助手"
         >
           <RobotOutlined class="nav-icon"/>
-          <span class="nav-text">AI 助手</span>
+          <span class="nav-text">智能助手</span>
         </button>
         <button
           class="nav-item"

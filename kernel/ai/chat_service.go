@@ -383,3 +383,29 @@ func replacePlaceholders(prompt string, ledgerName string) string {
 	prompt = strings.ReplaceAll(prompt, "{{CURRENT_LEDGER}}", ledgerName)
 	return prompt
 }
+
+// ToolInfo holds tool metadata for API responses.
+type ToolInfo struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	InputSchema map[string]any `json:"input_schema"`
+}
+
+// RoleTools returns tools available to the given role.
+func (s *ChatService) RoleTools(roleName string) ([]ToolInfo, bool) {
+	roleDef, ok := s.roleRegistry.Get(roleName)
+	if !ok {
+		return nil, false
+	}
+	var result []ToolInfo
+	for _, name := range roleDef.ToolNames() {
+		if t, ok := s.registry.Get(name); ok {
+			result = append(result, ToolInfo{
+				Name:        t.Name(),
+				Description: t.Description(),
+				InputSchema: t.InputSchema(),
+			})
+		}
+	}
+	return result, true
+}

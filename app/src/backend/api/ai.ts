@@ -45,9 +45,24 @@ export interface AiRole {
   display_name: string
 }
 
+export interface ToolInfo {
+  name: string
+  description: string
+  input_schema: Record<string, any>
+}
+
+export interface RoleToolsResponse {
+  role: string
+  tools: ToolInfo[]
+}
+
 export const aiApi = {
   async fetchRoles(): Promise<AiRole[]> {
     return api.get('/v1/ai/roles', '获取角色列表')
+  },
+
+  async fetchRoleTools(role: string = 'financial_assistant'): Promise<RoleToolsResponse> {
+    return api.get(`/v1/ai/roles/tools?role=${encodeURIComponent(role)}`, '获取工具列表')
   },
 
   async getConfig(role: string = 'financial_assistant'): Promise<AiConfigResponse> {

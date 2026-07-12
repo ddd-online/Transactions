@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/billadm/ai"
 	"github.com/billadm/ai/provider"
 	"github.com/billadm/models"
 )
@@ -168,4 +169,20 @@ func (h *Handlers) clearAiMessages(c *gin.Context) (any, error) {
 		return nil, err
 	}
 	return nil, nil
+}
+
+// GET /api/v1/ai/roles/tools
+func (h *Handlers) roleTools(c *gin.Context) (any, error) {
+	role := c.DefaultQuery("role", "financial_assistant")
+	tools, ok := h.ChatService.RoleTools(role)
+	if !ok {
+		return nil, fmt.Errorf("角色不存在: %s", role)
+	}
+	if tools == nil {
+		tools = make([]ai.ToolInfo, 0)
+	}
+	return gin.H{
+		"role":  role,
+		"tools": tools,
+	}, nil
 }

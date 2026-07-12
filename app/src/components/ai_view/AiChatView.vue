@@ -1,20 +1,31 @@
 <template>
   <div class="ai-chat-view">
-    <div class="chat-toolbar"></div>
+    <div class="chat-toolbar">
+      <a-button size="small" @click="openToolsModal">查看工具</a-button>
+    </div>
 
     <div class="chat-card">
       <!-- Header -->
       <div class="chat-header">
         <div class="chat-header-left">
-          <a-select
-            v-model:value="currentRole"
-            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-            :loading="rolesLoading"
-            class="chat-role-select"
-            @change="onRoleChange"
-            size="small"
-            :bordered="false"
-          />
+          <a-dropdown :trigger="['click']" placement="bottomLeft">
+            <button class="chat-role-trigger">
+              <RobotOutlined class="chat-role-trigger-icon" />
+              <span class="chat-role-trigger-text">{{ currentRoleDisplay }}</span>
+              <DownOutlined class="chat-role-trigger-arrow" />
+            </button>
+            <template #overlay>
+              <div class="chat-role-menu">
+                <div
+                  v-for="role in availableRoles"
+                  :key="role.name"
+                  class="chat-role-menu-item"
+                  :class="{ active: currentRole === role.name }"
+                  @click="onRoleChange(role.name)"
+                >{{ role.display_name }}</div>
+              </div>
+            </template>
+          </a-dropdown>
         </div>
         <a-button
           type="text"
@@ -142,17 +153,40 @@
         </div>
       </div>
     </div>
+
+    <a-modal
+      v-model:open="toolsModalVisible"
+      title="可用工具"
+      :footer="null"
+      centered
+      :width="520"
+    >
+      <div v-if="toolsLoading" class="tools-loading">加载中...</div>
+      <div v-else-if="currentRoleTools.length === 0" class="tools-empty">暂无可用工具</div>
+      <div v-else class="tools-list">
+        <div v-for="tool in currentRoleTools" :key="tool.name" class="tools-item">
+          <div class="tools-item-header" @click="tool._expanded = !tool._expanded">
+            <span class="tools-item-name">{{ tool.name }}</span>
+            <DownOutlined class="tools-item-arrow" :class="{ 'tools-item-arrow--open': tool._expanded }" />
+          </div>
+          <div class="tools-item-desc">{{ tool.description }}</div>
+          <div v-if="tool._expanded" class="tools-item-schema">
+            <pre>{{ JSON.stringify(tool.input_schema, null, 2) }}</pre>
+          </div>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined, RobotOutlined, DownOutlined } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { renderMarkdown } from '@/utils/markdown'
 import { message } from 'ant-design-vue'
 import { useAiChat } from '@/hooks/useAiChat'
-import { aiApi, type AiRole } from '@/backend/api/ai'
+import { aiApi, type AiRole, type ToolInfo } from '@/backend/api/ai'
 
 // ---- AiChat composable (deep module) ----
 const { messages, streaming, currentRole, send, stop, loadHistory, clear, cleanup, switchRole } = useAiChat()
@@ -179,6 +213,11 @@ function onRoleChange(value: any) {
   if (typeof value === 'string') switchRole(value)
 }
 
+const currentRoleDisplay = computed(() => {
+  const role = availableRoles.value.find(r => r.name === currentRole.value)
+  return role?.display_name ?? currentRole.value
+})
+
 const roleHint = computed(() => {
   return currentRole.value === 'diary_assistant' ? '和日记助手聊聊…' : '询问你的财务数据'
 })
@@ -189,6 +228,28 @@ const roleChips = computed(() => {
   }
   return ['本月支出汇总', '和上月相比支出变化', '餐饮消费趋势']
 })
+
+// ---- Tools modal ----
+interface ToolWithExpanded extends ToolInfo {
+  _expanded?: boolean
+}
+
+const toolsModalVisible = ref(false)
+const currentRoleTools = ref<ToolWithExpanded[]>([])
+const toolsLoading = ref(false)
+
+async function openToolsModal() {
+  toolsModalVisible.value = true
+  toolsLoading.value = true
+  try {
+    const res = await aiApi.fetchRoleTools(currentRole.value)
+    currentRoleTools.value = (res.tools || []).map(t => ({ ...t, _expanded: false }))
+  } catch {
+    currentRoleTools.value = []
+  } finally {
+    toolsLoading.value = false
+  }
+}
 
 // ---- Local state ----
 const ledgerStore = useLedgerStore()
@@ -368,10 +429,20 @@ onUnmounted(() => {
 }
 
 .chat-toolbar {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
-  height: var(--billadm-size-header-height);
+  padding: 0 0 var(--billadm-space-md) 0;
   margin-right: calc(3 * 32px + 2 * 6px);
   -webkit-app-region: drag;
+}
+
+.chat-toolbar :deep(*) {
+  -webkit-app-region: no-drag;
+}
+
+.chat-toolbar :deep(.ant-btn) {
+  height: 32px;
 }
 
 .chat-card {
@@ -395,33 +466,73 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--billadm-color-divider);
 }
 
-.chat-header-title {
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-title);
-  font-weight: 500;
-  color: var(--billadm-color-text-major);
-  margin: 0;
-}
-
 .chat-header-left {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-sm);
 }
 
-.chat-role-select {
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-title);
-  font-weight: 500;
-  color: var(--billadm-color-text-major);
-  min-width: 120px;
+.chat-role-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  height: 32px;
+  padding: 0 var(--billadm-space-sm);
+  border: none;
+  background: none;
+  border-radius: var(--billadm-radius-sm);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--billadm-transition-fast);
 }
 
-.chat-role-select :deep(.ant-select-selection-item) {
+.chat-role-trigger:hover {
+  background: var(--billadm-color-hover-bg);
+}
+
+.chat-role-trigger-icon {
+  font-size: var(--billadm-size-text-title-sm);
+  color: var(--billadm-color-primary);
+}
+
+.chat-role-trigger-text {
   font-family: var(--billadm-font-display);
   font-size: var(--billadm-size-text-title);
   font-weight: 500;
   color: var(--billadm-color-text-major);
+}
+
+.chat-role-trigger-arrow {
+  font-size: 10px;
+  color: var(--billadm-color-text-secondary);
+  transition: transform var(--billadm-transition-fast);
+}
+
+.chat-role-menu {
+  min-width: 140px;
+  padding: var(--billadm-space-xs);
+  background: var(--billadm-color-major-background);
+  border-radius: var(--billadm-radius-md);
+  box-shadow: var(--billadm-shadow-lg);
+}
+
+.chat-role-menu-item {
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  border-radius: var(--billadm-radius-sm);
+  cursor: pointer;
+  font-size: var(--billadm-size-text-body-sm);
+  color: var(--billadm-color-text-major);
+  transition: background var(--billadm-transition-fast);
+}
+
+.chat-role-menu-item:hover {
+  background: var(--billadm-color-hover-bg);
+}
+
+.chat-role-menu-item.active {
+  background: var(--billadm-color-active-bg);
+  color: var(--billadm-color-primary);
+  font-weight: 500;
 }
 
 .chat-header-clear {
@@ -901,5 +1012,80 @@ onUnmounted(() => {
   line-height: var(--billadm-height-normal);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Tools Modal */
+.tools-loading,
+.tools-empty {
+  text-align: center;
+  padding: var(--billadm-space-xl);
+  color: var(--billadm-color-text-secondary);
+  font-size: var(--billadm-size-text-body-sm);
+}
+
+.tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-xs);
+}
+
+.tools-item {
+  border: 1px solid var(--billadm-color-divider);
+  border-radius: var(--billadm-radius-md);
+  overflow: hidden;
+}
+
+.tools-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  cursor: pointer;
+  transition: background var(--billadm-transition-fast);
+}
+
+.tools-item-header:hover {
+  background: var(--billadm-color-hover-bg);
+}
+
+.tools-item-name {
+  font-family: var(--billadm-font-mono);
+  font-size: var(--billadm-size-text-body-sm);
+  font-weight: 500;
+  color: var(--billadm-color-text-major);
+}
+
+.tools-item-arrow {
+  font-size: 10px;
+  color: var(--billadm-color-text-secondary);
+  transition: transform var(--billadm-transition-fast);
+}
+
+.tools-item-arrow--open {
+  transform: rotate(180deg);
+}
+
+.tools-item-desc {
+  padding: 0 var(--billadm-space-md) var(--billadm-space-sm);
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+  line-height: var(--billadm-height-normal);
+}
+
+.tools-item-schema {
+  padding: 0 var(--billadm-space-md) var(--billadm-space-sm);
+}
+
+.tools-item-schema pre {
+  margin: 0;
+  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  background: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-sm);
+  font-family: var(--billadm-font-mono);
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+  line-height: var(--billadm-height-normal);
+  overflow-x: auto;
+  white-space: pre;
 }
 </style>

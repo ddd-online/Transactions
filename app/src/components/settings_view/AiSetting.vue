@@ -1,6 +1,6 @@
 <template>
   <div class="ai-setting">
-    <BilladmPageHeader title="AI 助手" />
+    <BilladmPageHeader title="智能助手" />
 
     <div class="setting-list">
       <!-- 供应商 -->
@@ -107,7 +107,7 @@
         <div class="setting-header-row">
           <div class="setting-info">
             <span class="setting-title">系统提示词</span>
-            <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
+            <span class="setting-desc">自定义智能助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
           <div class="setting-header-actions">
             <span class="prompt-role-label">角色</span>
@@ -491,6 +491,12 @@ onMounted(() => {
   gap: var(--billadm-space-sm);
   flex-shrink: 0;
   margin-left: var(--billadm-space-lg);
+}
+
+.setting-header-actions :deep(.ant-select-selector) {
+  height: 32px;
+  display: flex;
+  align-items: center;
 }
 
 .prompt-role-label {

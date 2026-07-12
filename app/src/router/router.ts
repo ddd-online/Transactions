@@ -33,7 +33,7 @@ const routes = [
         component: () => import('@/components/diary_view/DiaryView.vue')
       },
       {
-        name: 'AI 助手',
+        name: '智能助手',
         path: 'ai_view',
         component: () => import('@/components/ai_view/AiChatView.vue'),
       },
