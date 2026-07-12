@@ -5,7 +5,17 @@
     <div class="chat-card">
       <!-- Header -->
       <div class="chat-header">
-        <h2 class="chat-header-title">AI 助手</h2>
+        <div class="chat-header-left">
+          <a-select
+            v-model:value="currentRole"
+            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+            :loading="rolesLoading"
+            class="chat-role-select"
+            @change="onRoleChange"
+            size="small"
+            :bordered="false"
+          />
+        </div>
         <a-button
           type="text"
           :disabled="messages.length === 0 && !streaming"
@@ -21,11 +31,14 @@
       <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
         <div v-if="messages.length === 0 && !streaming" class="chat-empty">
           <p class="chat-empty-greeting">{{ greeting }}</p>
-          <p class="chat-empty-hint">询问你的财务数据</p>
+          <p class="chat-empty-hint">{{ roleHint }}</p>
           <div class="chat-empty-chips">
-            <button class="chat-empty-chip" @click="fillAndSend('本月支出汇总')">本月支出汇总</button>
-            <button class="chat-empty-chip" @click="fillAndSend('和上月相比支出变化')">环比支出变化</button>
-            <button class="chat-empty-chip" @click="fillAndSend('餐饮类消费趋势')">餐饮消费趋势</button>
+            <button
+              v-for="chip in roleChips"
+              :key="chip"
+              class="chat-empty-chip"
+              @click="fillAndSend(chip)"
+            >{{ chip }}</button>
           </div>
         </div>
 
@@ -139,9 +152,43 @@ import { useLedgerStore } from '@/stores/ledgerStore'
 import { renderMarkdown } from '@/utils/markdown'
 import { message } from 'ant-design-vue'
 import { useAiChat } from '@/hooks/useAiChat'
+import { aiApi, type AiRole } from '@/backend/api/ai'
 
 // ---- AiChat composable (deep module) ----
-const { messages, streaming, send, stop, loadHistory, clear, cleanup } = useAiChat()
+const { messages, streaming, currentRole, send, stop, loadHistory, clear, cleanup, switchRole } = useAiChat()
+
+// ---- Role management ----
+const availableRoles = ref<AiRole[]>([])
+const rolesLoading = ref(false)
+
+async function fetchRoles() {
+  rolesLoading.value = true
+  try {
+    availableRoles.value = await aiApi.fetchRoles()
+  } catch {
+    availableRoles.value = [
+      { name: 'financial_assistant', display_name: '财务助手' },
+      { name: 'diary_assistant', display_name: '日记助手' },
+    ]
+  } finally {
+    rolesLoading.value = false
+  }
+}
+
+function onRoleChange(value: any) {
+  if (typeof value === 'string') switchRole(value)
+}
+
+const roleHint = computed(() => {
+  return currentRole.value === 'diary_assistant' ? '和日记助手聊聊…' : '询问你的财务数据'
+})
+
+const roleChips = computed(() => {
+  if (currentRole.value === 'diary_assistant') {
+    return ['今天写一篇日记', '帮我回顾这几天的心情', '上周日的日记写了什么']
+  }
+  return ['本月支出汇总', '和上月相比支出变化', '餐饮消费趋势']
+})
 
 // ---- Local state ----
 const ledgerStore = useLedgerStore()
@@ -302,6 +349,7 @@ watch(
 
 // ---- Lifecycle ----
 onMounted(() => {
+  fetchRoles()
   loadHistory()
 })
 
@@ -353,6 +401,27 @@ onUnmounted(() => {
   font-weight: 500;
   color: var(--billadm-color-text-major);
   margin: 0;
+}
+
+.chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+}
+
+.chat-role-select {
+  font-family: var(--billadm-font-display);
+  font-size: var(--billadm-size-text-title);
+  font-weight: 500;
+  color: var(--billadm-color-text-major);
+  min-width: 120px;
+}
+
+.chat-role-select :deep(.ant-select-selection-item) {
+  font-family: var(--billadm-font-display);
+  font-size: var(--billadm-size-text-title);
+  font-weight: 500;
+  color: var(--billadm-color-text-major);
 }
 
 .chat-header-clear {
