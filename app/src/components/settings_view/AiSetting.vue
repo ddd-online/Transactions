@@ -233,9 +233,7 @@ async function fetchRoles() {
 }
 
 function onRoleChange(role: any) {
-  const newRole = role as string
-  if (currentRole.value === newRole) return
-  currentRole.value = newRole
+  currentRole.value = role as string
   loadSystemPrompt()
 }
 
