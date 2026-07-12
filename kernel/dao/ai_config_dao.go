@@ -31,9 +31,14 @@ func (d *aiConfigDaoImpl) Save(ws *workspace.Workspace, config *models.AiConfig)
 	var existing models.AiConfig
 	err := ws.GetDb().Where("role = ?", config.Role).First(&existing).Error
 	if err != nil {
-		config.ID = 1
 		return ws.GetDb().Create(config).Error
 	}
-	config.ID = existing.ID
-	return ws.GetDb().Model(&existing).Select("base_url", "endpoint", "api_key", "model", "system_prompt", "provider").Updates(config).Error
+	return ws.GetDb().Model(&models.AiConfig{}).Where("id = ?", existing.ID).Updates(map[string]interface{}{
+		"base_url":      config.BaseURL,
+		"endpoint":      config.Endpoint,
+		"api_key":       config.APIKey,
+		"model":         config.Model,
+		"system_prompt": config.SystemPrompt,
+		"provider":      config.Provider,
+	}).Error
 }

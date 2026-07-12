@@ -109,18 +109,16 @@
             <span class="setting-title">系统提示词</span>
             <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
-        </div>
-        <div class="prompt-controls">
-          <span class="prompt-role-label">角色</span>
-          <a-select
-            v-model:value="currentRole"
-            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-            size="small"
-            style="width: 110px"
-            @change="onRoleChange"
-          />
-          <span class="prompt-controls-spacer"></span>
-          <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
+          <div class="setting-header-actions">
+            <span class="prompt-role-label">角色</span>
+            <a-select
+              v-model:value="currentRole"
+              :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+              style="width: 120px"
+              @change="onRoleChange"
+            />
+            <a-button @click="resetSystemPrompt">恢复默认</a-button>
+          </div>
         </div>
         <div class="setting-action setting-action-full">
           <a-textarea
@@ -495,22 +493,10 @@ onMounted(() => {
   margin-left: var(--billadm-space-lg);
 }
 
-.prompt-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--billadm-space-sm);
-  width: 100%;
-  margin-top: var(--billadm-space-sm);
-}
-
 .prompt-role-label {
   font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-secondary);
   flex-shrink: 0;
-}
-
-.prompt-controls-spacer {
-  flex: 1;
 }
 
 .prompt-textarea {
