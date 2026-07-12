@@ -12,25 +12,30 @@ func (h *Handlers) listDiaryDates(c *gin.Context) (any, error) {
 	return h.DiarySvc.ListDates(ws)
 }
 
+func requireDate(c *gin.Context) (string, error) {
+	date := c.Param("date")
+	if date == "" {
+		return "", fmt.Errorf("missing date parameter")
+	}
+	return date, nil
+}
+
 // GET /api/v1/diary/:date
 func (h *Handlers) getDiary(c *gin.Context) (any, error) {
 	ws := ws(c)
-
-	date := c.Param("date")
-	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+	date, err := requireDate(c)
+	if err != nil {
+		return nil, err
 	}
-
 	return h.DiarySvc.GetByDate(ws, date)
 }
 
 // PUT /api/v1/diary/:date  body: { content, mood }
 func (h *Handlers) upsertDiary(c *gin.Context) (any, error) {
 	ws := ws(c)
-
-	date := c.Param("date")
-	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+	date, err := requireDate(c)
+	if err != nil {
+		return nil, err
 	}
 
 	arg, ok := JsonArg(c)
@@ -47,10 +52,9 @@ func (h *Handlers) upsertDiary(c *gin.Context) (any, error) {
 // DELETE /api/v1/diary/:date
 func (h *Handlers) deleteDiary(c *gin.Context) (any, error) {
 	ws := ws(c)
-
-	date := c.Param("date")
-	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+	date, err := requireDate(c)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := h.DiarySvc.DeleteByDate(ws, date); err != nil {

@@ -40,9 +40,6 @@
 import { ref, onMounted } from 'vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useDiaryStore } from '@/stores/diaryStore'
-import DiaryTree from './DiaryTree.vue'
-import DiaryEditor from './DiaryEditor.vue'
-
 const store = useDiaryStore()
 
 const selectedDate = ref('')

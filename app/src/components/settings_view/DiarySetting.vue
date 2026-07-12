@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref } from 'vue'
+import { reactive, computed, ref, onUnmounted } from 'vue'
 import { FolderOpenOutlined, CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { scanDirectory, importFile } from '@/backend/api/diary'
@@ -127,6 +127,8 @@ const importState = reactive<ImportState>({
   total: 0,
   completed: 0,
 })
+let resetTimer: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => { if (resetTimer) clearTimeout(resetTimer) })
 
 const percent = computed(() => {
   if (importState.total === 0) return 0
@@ -216,7 +218,7 @@ async function doImport(directory: string) {
   if (importState.status === 'done') {
     message.success(`成功导入 ${importState.completed} 篇日记`)
     // 1.5s 后自动恢复按钮
-    setTimeout(() => {
+    resetTimer = setTimeout(() => {
       importState.status = 'idle'
       importState.files = []
       importState.total = 0

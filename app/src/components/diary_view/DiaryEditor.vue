@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onUnmounted } from 'vue'
 import dayjs from 'dayjs'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
@@ -127,6 +127,7 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 // ---- 自动保存 ----
 let saveTimer: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => { if (saveTimer) clearTimeout(saveTimer) })
 
 // 同步外部 entry 到本地编辑状态
 watch(() => props.entry, (newEntry) => {
@@ -198,22 +199,11 @@ const onDeleteClick = () => {
 }
 
 // ---- 派生值 ----
-const formattedDate = computed(() => {
-  if (!props.entry?.date) return ''
-  return dayjs(props.entry.date).format('YYYY年M月D日')
-})
+const dateDayjs = computed(() => props.entry?.date ? dayjs(props.entry.date) : null)
+const formattedDate = computed(() => dateDayjs.value?.format('YYYY年M月D日') ?? '')
+const weekday = computed(() => dateDayjs.value?.format('dddd') ?? '')
 
-const weekday = computed(() => {
-  if (!props.entry?.date) return ''
-  return dayjs(props.entry.date).format('dddd')
-})
-
-const wordCount = computed(() => {
-  // Iterator-based Unicode code point count — no array allocation
-  let count = 0
-  for (const _ of localContent.value) count++
-  return count
-})
+const wordCount = computed(() => [...localContent.value].length)
 
 const renderedHtml = computed(() => renderMarkdown(localContent.value))
 </script>

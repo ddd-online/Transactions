@@ -41,7 +41,7 @@ export const useDiaryStore = defineStore('diary', () => {
                 dates.value[idx] = item
             } else {
                 dates.value.push(item)
-                dates.value.sort((a, b) => b.date.localeCompare(a.date))
+                dates.value = [...dates.value].sort((a, b) => b.date.localeCompare(a.date))
             }
         } catch {
             saveStatus.value = 'error'

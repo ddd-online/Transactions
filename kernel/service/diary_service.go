@@ -106,6 +106,9 @@ func (s *diaryServiceImpl) DeleteByDate(ws *workspace.Workspace, date string) er
 // fileNameRe 匹配 YYYY-MM-DD.txt 文件名
 var fileNameRe = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2})\.txt$`)
 
+// gbkDecoder 复用，避免每次 toUTF8 调用时重新分配
+var gbkDecoder = simplifiedchinese.GBK.NewDecoder()
+
 func (s *diaryServiceImpl) ScanDirectory(dir string) ([]FileItem, error) {
 	var files []FileItem
 
@@ -159,7 +162,7 @@ func toUTF8(raw []byte) string {
 	if decoded := decodeUTF16(raw); decoded != "" {
 		return decoded
 	}
-	decoded, err := simplifiedchinese.GBK.NewDecoder().Bytes(raw)
+	decoded, err := gbkDecoder.Bytes(raw)
 	if err == nil {
 		return string(decoded)
 	}
@@ -173,16 +176,13 @@ func decodeUTF16(raw []byte) string {
 		return ""
 	}
 	// 根据 BOM 选择编码并跳过 BOM 字节
-	var (
-		decoded     []byte
-		err         error
-		bomStripped = raw[2:]
-	)
+	var decoded []byte
+	var err error
 	switch {
 	case raw[0] == 0xFF && raw[1] == 0xFE:
-		decoded, err = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder().Bytes(bomStripped)
+		decoded, err = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder().Bytes(raw[2:])
 	case raw[0] == 0xFE && raw[1] == 0xFF:
-		decoded, err = unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder().Bytes(bomStripped)
+		decoded, err = unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder().Bytes(raw[2:])
 	default:
 		return ""
 	}
