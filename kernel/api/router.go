@@ -86,6 +86,22 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			keyEventImages.DELETE("/:id", Handle(h.deleteKeyEventImage))
 		}
 
+		// Diary
+		diary := v1.Group("/diary")
+		{
+			diary.GET("/dates", Handle(h.listDiaryDates))
+			diary.GET("/:date", Handle(h.getDiary))
+			diary.PUT("/:date", Handle(h.upsertDiary))
+			diary.DELETE("/:date", Handle(h.deleteDiary))
+
+			// Diary import
+			importGroup := diary.Group("/import")
+			{
+				importGroup.POST("/scan", Handle(h.importScanDiary))
+				importGroup.POST("/file", Handle(h.importOneDiary))
+			}
+		}
+
 		// AI Chat (requires workspace)
 		ai := v1.Group("/ai")
 		{
