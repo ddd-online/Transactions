@@ -298,7 +298,7 @@ body::before {
   &:focus,
   &.ant-input-focused {
     border-color: var(--billadm-color-primary);
-    box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15);
+    box-shadow: var(--billadm-shadow-focus);
   }
 }
 
@@ -337,7 +337,10 @@ body::before {
   &:hover {
     border-color: var(--billadm-color-primary);
   }
+}
 
+// Single-select: 文本垂直居中（不影响多选标签）
+.ant-select-single .ant-select-selector {
   .ant-select-selection-search {
     display: flex;
     align-items: center;
@@ -353,7 +356,7 @@ body::before {
 
 .ant-select-focused .ant-select-selector {
   border-color: var(--billadm-color-primary) !important;
-  box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15) !important;
+  box-shadow: var(--billadm-shadow-focus) !important;
 }
 
 // DatePicker panel "today" button

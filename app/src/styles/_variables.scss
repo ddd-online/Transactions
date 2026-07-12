@@ -249,6 +249,9 @@ $shadow-xl-color: rgba(0, 0, 0, 0.12);
   --billadm-color-active-bg: rgba(74, 142, 112, 0.14);
   --billadm-color-danger-hover-bg: rgba(217, 112, 90, 0.10);
 
+  // Shadows
+  --billadm-shadow-focus: 0 0 0 2px rgba(74, 142, 112, 0.15);
+
   // Button
   --billadm-btn-height-sm: 28px;
   --billadm-btn-height-md: 36px;
