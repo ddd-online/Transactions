@@ -1,20 +1,19 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models/dto"
+	"github.com/billadm/api/binding"
+	"github.com/billadm/models"
 )
 
 // POST /charts
 func (h *Handlers) createChart(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	req, ok := dto.JsonCreateChart(c)
+	req, ok := binding.JsonCreateChart(c)
 	if !ok {
-		return nil, fmt.Errorf("parse create chart request failed")
+		return nil, models.NewBadRequest("parse create chart request failed")
 	}
 
 	return h.ChartSvc.Create(ws, req)
@@ -26,7 +25,7 @@ func (h *Handlers) deleteChart(c *gin.Context) (any, error) {
 
 	chartId := c.Param("id")
 	if chartId == "" {
-		return nil, fmt.Errorf("missing chart id")
+		return nil, models.NewBadRequest("missing chart id")
 	}
 
 	if err := h.ChartSvc.DeleteById(ws, chartId); err != nil {
@@ -41,7 +40,7 @@ func (h *Handlers) listCharts(c *gin.Context) (any, error) {
 
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		return nil, fmt.Errorf("missing ledgerId")
+		return nil, models.NewBadRequest("missing ledgerId")
 	}
 
 	return h.ChartSvc.ListByLedgerId(ws, ledgerId)
@@ -51,9 +50,9 @@ func (h *Handlers) listCharts(c *gin.Context) (any, error) {
 func (h *Handlers) updateChart(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	req, ok := dto.JsonUpdateChart(c)
+	req, ok := binding.JsonUpdateChart(c)
 	if !ok {
-		return nil, fmt.Errorf("parse update chart request failed")
+		return nil, models.NewBadRequest("parse update chart request failed")
 	}
 
 	return h.ChartSvc.Update(ws, req)

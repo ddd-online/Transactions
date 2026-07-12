@@ -1,10 +1,9 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
+	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 )
 
@@ -43,7 +42,7 @@ func (h *Handlers) createTag(c *gin.Context) (any, error) {
 
 	var req dto.CreateTagRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
 	}
 
 	if err := h.TagSvc.CreateTag(ws, req.LedgerID, req.Name, req.CategoryTransactionType); err != nil {
@@ -60,7 +59,7 @@ func (h *Handlers) deleteTag(c *gin.Context) (any, error) {
 	categoryTransactionType := c.Query("categoryTransactionType")
 	ledgerID := c.Query("ledgerId")
 	if name == "" || categoryTransactionType == "" || ledgerID == "" {
-		return nil, fmt.Errorf("missing required parameters")
+		return nil, models.NewBadRequest("missing required parameters")
 	}
 
 	if err := h.TagSvc.DeleteTag(ws, ledgerID, name, categoryTransactionType); err != nil {
@@ -76,7 +75,7 @@ func (h *Handlers) updateTagSort(c *gin.Context) (any, error) {
 	name := c.Param("name")
 	var req dto.UpdateTagSortRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
 	}
 
 	if err := h.TagSvc.UpdateTagSort(ws, req.LedgerID, name, req.CategoryTransactionType, req.SortOrder); err != nil {

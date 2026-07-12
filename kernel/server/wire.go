@@ -7,24 +7,38 @@ import (
 	"github.com/billadm/api"
 	"github.com/billadm/dao"
 	"github.com/billadm/service"
+	"github.com/billadm/workspace"
 )
 
 // InitServices creates all service instances and wires them together.
 // Returns the Handlers struct ready to be passed to api.ServeAPI.
 // This is the compose root for the application.
-func InitServices() *api.Handlers {
-	// Services with no dependencies
-	keyEventImageSvc := service.NewKeyEventImageService()
-	chartSvc := service.NewChartService()
-	trTemplateSvc := service.NewTrTemplateService()
-	ledgerSvc := service.NewLedgerService()
-	tagSvc := service.NewTagService()
-	diarySvc := service.NewDiaryService()
+func InitServices(mgr *workspace.WsManager) *api.Handlers {
+	// ---- DAO layer ----
+	trDao := dao.NewTransactionRecordDao()
+	trTagDao := dao.NewTrTagDao()
+	ledgerDao := dao.NewLedgerDao()
+	categoryDao := dao.NewCategoryDao()
+	tagDao := dao.NewTagDao()
+	chartDao := dao.NewChartDao()
+	keyEventDao := dao.NewKeyEventDao()
+	keyEventImageDao := dao.NewKeyEventImageDao()
+	diaryDao := dao.NewDiaryDao()
+	trTemplateDao := dao.NewTransactionTemplateDao()
 
-	// Services that depend on other services
-	categorySvc := service.NewCategoryService(tagSvc)
-	keyEventSvc := service.NewKeyEventService(keyEventImageSvc)
-	trSvc := service.NewTrService(keyEventSvc)
+	// ---- Service layer ----
+	// Leaf services (no service deps)
+	keyEventImageSvc := service.NewKeyEventImageService(keyEventImageDao)
+	chartSvc := service.NewChartService(chartDao)
+	trTemplateSvc := service.NewTrTemplateService(trTemplateDao)
+	diarySvc := service.NewDiaryService(diaryDao)
+
+	// Services with service+dao deps
+	tagSvc := service.NewTagService(tagDao, trTagDao)
+	categorySvc := service.NewCategoryService(tagSvc, categoryDao)
+	keyEventSvc := service.NewKeyEventService(keyEventImageSvc, keyEventDao)
+	trSvc := service.NewTrService(keyEventSvc, trDao, trTagDao)
+	ledgerSvc := service.NewLedgerService(ledgerDao, trDao, trTagDao)
 
 	// ---- AI module ----
 	aiConfigDao := dao.NewAiConfigDao()
@@ -50,6 +64,7 @@ func InitServices() *api.Handlers {
 	aiChatService := ai.NewChatService(aiConfigDao, aiMessageDao, aiToolRegistry, roleRegistry)
 
 	return &api.Handlers{
+		WsMgr:          mgr,
 		LedgerSvc:      ledgerSvc,
 		TrSvc:          trSvc,
 		CategorySvc:    categorySvc,

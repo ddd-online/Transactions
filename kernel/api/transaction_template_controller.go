@@ -1,20 +1,19 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models/dto"
+	"github.com/billadm/api/binding"
+	"github.com/billadm/models"
 )
 
 // POST /templates
 func (h *Handlers) createTemplate(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	templateDto, ok := dto.JsonTransactionTemplateDto(c)
+	templateDto, ok := binding.JsonTransactionTemplateDto(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 	if err := templateDto.Validate(); err != nil {
 		return nil, err
@@ -29,7 +28,7 @@ func (h *Handlers) listTemplates(c *gin.Context) (any, error) {
 
 	ledgerId := c.Query("ledgerId")
 	if ledgerId == "" {
-		return nil, fmt.Errorf("missing ledgerId")
+		return nil, models.NewBadRequest("missing ledgerId")
 	}
 
 	return h.TrTemplateSvc.ListByLedgerId(ws, ledgerId)
@@ -41,7 +40,7 @@ func (h *Handlers) deleteTemplate(c *gin.Context) (any, error) {
 
 	id := c.Param("id")
 	if id == "" {
-		return nil, fmt.Errorf("missing template id")
+		return nil, models.NewBadRequest("missing template id")
 	}
 
 	if err := h.TrTemplateSvc.DeleteById(ws, id); err != nil {
@@ -60,7 +59,7 @@ func (h *Handlers) updateTemplateSort(c *gin.Context) (any, error) {
 		SortOrder int    `json:"sortOrder"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
 	}
 
 	if err := h.TrTemplateSvc.UpdateSortOrder(ws, id, req.LedgerID, req.SortOrder); err != nil {

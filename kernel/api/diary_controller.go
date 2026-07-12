@@ -1,9 +1,9 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
+
+	"github.com/billadm/models"
 )
 
 // GET /api/v1/diary/dates
@@ -15,7 +15,7 @@ func (h *Handlers) listDiaryDates(c *gin.Context) (any, error) {
 func requireDate(c *gin.Context) (string, error) {
 	date := c.Param("date")
 	if date == "" {
-		return "", fmt.Errorf("missing date parameter")
+		return "", models.NewBadRequest("missing date parameter")
 	}
 	return date, nil
 }
@@ -40,7 +40,7 @@ func (h *Handlers) upsertDiary(c *gin.Context) (any, error) {
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	content, _ := arg["content"].(string)
@@ -67,12 +67,12 @@ func (h *Handlers) deleteDiary(c *gin.Context) (any, error) {
 func (h *Handlers) importScanDiary(c *gin.Context) (any, error) {
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	directory, _ := arg["directory"].(string)
 	if directory == "" {
-		return nil, fmt.Errorf("directory is required")
+		return nil, models.NewBadRequest("directory is required")
 	}
 
 	files, err := h.DiarySvc.ScanDirectory(directory)
@@ -88,13 +88,13 @@ func (h *Handlers) importOneDiary(c *gin.Context) (any, error) {
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	path, _ := arg["path"].(string)
 	date, _ := arg["date"].(string)
 	if path == "" || date == "" {
-		return nil, fmt.Errorf("path and date are required")
+		return nil, models.NewBadRequest("path and date are required")
 	}
 
 	return h.DiarySvc.ImportFile(ws, path, date)

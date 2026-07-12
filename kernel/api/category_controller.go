@@ -1,10 +1,9 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
+	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 )
 
@@ -43,7 +42,7 @@ func (h *Handlers) createCategory(c *gin.Context) (any, error) {
 
 	var req dto.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
 	}
 
 	if err := h.CategorySvc.CreateCategory(ws, req.LedgerID, req.Name, req.TransactionType); err != nil {
@@ -60,7 +59,7 @@ func (h *Handlers) deleteCategory(c *gin.Context) (any, error) {
 	transactionType := c.Query("type")
 	ledgerID := c.Query("ledgerId")
 	if name == "" || transactionType == "" || ledgerID == "" {
-		return nil, fmt.Errorf("missing required parameters")
+		return nil, models.NewBadRequest("missing required parameters")
 	}
 
 	if err := h.CategorySvc.DeleteCategory(ws, ledgerID, name, transactionType); err != nil {
@@ -76,7 +75,7 @@ func (h *Handlers) updateCategorySort(c *gin.Context) (any, error) {
 	name := c.Param("name")
 	var req dto.UpdateCategorySortRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
 	}
 
 	if err := h.CategorySvc.UpdateCategorySort(ws, req.LedgerID, name, req.TransactionType, req.SortOrder); err != nil {
@@ -93,11 +92,11 @@ func (h *Handlers) initializeCategories(c *gin.Context) (any, error) {
 		LedgerID string `json:"ledgerId"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
 	}
 
 	if req.LedgerID == "" {
-		return nil, fmt.Errorf("缺少 ledgerId 参数")
+		return nil, models.NewBadRequest("缺少 ledgerId 参数")
 	}
 
 	categoryCount, tagCount, err := h.CategorySvc.InitializeCategories(ws, req.LedgerID)

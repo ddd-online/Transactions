@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/billadm/models"
-	"github.com/billadm/workspace"
 )
 
 // POST /workspace
@@ -28,7 +27,7 @@ func (h *Handlers) openWorkspace(c *gin.Context) {
 		return
 	}
 
-	err := workspace.Manager.OpenWorkspace(workspaceDir)
+	err := h.WsMgr.OpenWorkspace(workspaceDir)
 	if err != nil {
 		ret.Code = -1
 		ret.Msg = err.Error()

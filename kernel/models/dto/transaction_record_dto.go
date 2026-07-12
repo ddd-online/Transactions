@@ -5,27 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/billadm/constant"
 	"github.com/billadm/models"
 )
-
-func JsonTransactionRecordDto(c *gin.Context) (*TransactionRecordDto, bool) {
-	ret := &TransactionRecordDto{}
-	if err := c.BindJSON(ret); nil != err {
-		return nil, false
-	}
-	return ret, true
-}
-
-func JsonTransactionRecordDtoBatch(c *gin.Context) ([]*TransactionRecordDto, bool) {
-	var ret []*TransactionRecordDto
-	if err := c.BindJSON(&ret); nil != err {
-		return nil, false
-	}
-	return ret, true
-}
 
 type TransactionRecordDto struct {
 	LedgerID        string   `json:"ledgerId"`

@@ -1,9 +1,5 @@
 package dto
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 type ChartLineCondition struct {
 	Label          string               `json:"label"`
 	TransactionType string             `json:"transactionType"`
@@ -29,10 +25,4 @@ type ChartQueryResponse struct {
 	Lines []ChartLineData `json:"lines"`
 }
 
-func JsonChartQuery(c *gin.Context) (*ChartQueryRequest, bool) {
-	ret := &ChartQueryRequest{}
-	if err := c.BindJSON(ret); err != nil {
-		return nil, false
-	}
-	return ret, true
-}
+

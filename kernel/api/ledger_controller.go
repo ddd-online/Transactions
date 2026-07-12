@@ -17,7 +17,7 @@ func (h *Handlers) listLedgers(c *gin.Context) (any, error) {
 
 	ledgerId := c.Query("id")
 	if ledgerId == "" {
-		return nil, fmt.Errorf("missing required query parameter: id")
+		return nil, models.NewBadRequest("missing required query parameter: id")
 	}
 
 	var ledgers []models.Ledger
@@ -56,12 +56,12 @@ func (h *Handlers) createLedger(c *gin.Context) (any, error) {
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	ledgerName, ok := arg["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("name在请求体中不存在")
+		return nil, models.NewBadRequest("name在请求体中不存在")
 	}
 
 	description, _ := arg["description"].(string)
@@ -75,12 +75,12 @@ func (h *Handlers) getLedger(c *gin.Context) (any, error) {
 
 	id := c.Param("id")
 	if id == "" {
-		return nil, fmt.Errorf("missing ledger id")
+		return nil, models.NewBadRequest("missing ledger id")
 	}
 
 	ledger, err := h.LedgerSvc.QueryLedgerById(ws, id)
 	if err != nil {
-		return nil, err
+		return nil, models.NewNotFound(err.Error())
 	}
 
 	ledgerDto := dto.LedgerDto{}
@@ -94,17 +94,17 @@ func (h *Handlers) updateLedger(c *gin.Context) (any, error) {
 
 	id := c.Param("id")
 	if id == "" {
-		return nil, fmt.Errorf("missing ledger id")
+		return nil, models.NewBadRequest("missing ledger id")
 	}
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	ledgerName, ok := arg["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("name在请求体中不存在")
+		return nil, models.NewBadRequest("name在请求体中不存在")
 	}
 
 	description, _ := arg["description"].(string)
@@ -121,7 +121,7 @@ func (h *Handlers) deleteLedger(c *gin.Context) (any, error) {
 
 	id := c.Param("id")
 	if id == "" {
-		return nil, fmt.Errorf("missing ledger id")
+		return nil, models.NewBadRequest("missing ledger id")
 	}
 
 	if err := h.LedgerSvc.DeleteLedgerById(ws, id); err != nil {

@@ -4,19 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/billadm/constant"
 	"github.com/billadm/models"
 )
-
-func JsonTransactionTemplateDto(c *gin.Context) (*TransactionTemplateDto, bool) {
-	ret := &TransactionTemplateDto{}
-	if err := c.BindJSON(ret); nil != err {
-		return nil, false
-	}
-	return ret, true
-}
 
 type TransactionTemplateDto struct {
 	TemplateID      string   `json:"template_id"`

@@ -5,16 +5,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models/dto"
+	"github.com/billadm/api/binding"
+	"github.com/billadm/models"
 )
 
 // POST /transactions/query
 func (h *Handlers) queryTransactions(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	queryCondition, ok := dto.JsonQueryCondition(c)
+	queryCondition, ok := binding.JsonQueryCondition(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 	return h.TrSvc.QueryTrsOnCondition(ws, queryCondition)
 }
@@ -23,12 +24,12 @@ func (h *Handlers) queryTransactions(c *gin.Context) (any, error) {
 func (h *Handlers) createTransaction(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	trDto, ok := dto.JsonTransactionRecordDto(c)
+	trDto, ok := binding.JsonTransactionRecordDto(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 	if err := trDto.Validate(); err != nil {
-		return nil, err
+		return nil, models.NewBadRequest(err.Error())
 	}
 
 	return h.TrSvc.CreateTr(ws, trDto)
@@ -38,13 +39,13 @@ func (h *Handlers) createTransaction(c *gin.Context) (any, error) {
 func (h *Handlers) batchCreateTransactions(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	dtos, ok := dto.JsonTransactionRecordDtoBatch(c)
+	dtos, ok := binding.JsonTransactionRecordDtoBatch(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 	for i, trDto := range dtos {
 		if err := trDto.Validate(); err != nil {
-			return nil, fmt.Errorf("record %d: %w", i+1, err)
+			return nil, models.NewBadRequest(fmt.Sprintf("record %d: %s", i+1, err.Error()))
 		}
 	}
 
@@ -57,7 +58,7 @@ func (h *Handlers) deleteTransaction(c *gin.Context) (any, error) {
 
 	id := c.Param("id")
 	if id == "" {
-		return nil, fmt.Errorf("missing transaction id")
+		return nil, models.NewBadRequest("missing transaction id")
 	}
 
 	if err := h.TrSvc.DeleteTrById(ws, id); err != nil {
@@ -70,9 +71,9 @@ func (h *Handlers) deleteTransaction(c *gin.Context) (any, error) {
 func (h *Handlers) queryChartData(c *gin.Context) (any, error) {
 	ws := ws(c)
 
-	req, ok := dto.JsonChartQuery(c)
+	req, ok := binding.JsonChartQuery(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 	return h.TrSvc.QueryTrsForChart(ws, req)
 }
@@ -83,14 +84,14 @@ func (h *Handlers) linkTransactionToKeyEvent(c *gin.Context) (any, error) {
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	trId, _ := arg["transaction_id"].(string)
 	date, _ := arg["date"].(string)
 
 	if trId == "" || date == "" {
-		return nil, fmt.Errorf("transaction_id and date are required")
+		return nil, models.NewBadRequest("transaction_id and date are required")
 	}
 
 	if err := h.TrSvc.LinkToKeyEvent(ws, trId, date); err != nil {
@@ -105,12 +106,12 @@ func (h *Handlers) unlinkTransactionFromKeyEvent(c *gin.Context) (any, error) {
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	trId, _ := arg["transaction_id"].(string)
 	if trId == "" {
-		return nil, fmt.Errorf("transaction_id is required")
+		return nil, models.NewBadRequest("transaction_id is required")
 	}
 
 	if err := h.TrSvc.UnlinkFromKeyEvent(ws, trId); err != nil {
@@ -125,7 +126,7 @@ func (h *Handlers) listLinkedTransactions(c *gin.Context) (any, error) {
 
 	date := c.Param("date")
 	if date == "" {
-		return nil, fmt.Errorf("date is required")
+		return nil, models.NewBadRequest("date is required")
 	}
 
 	return h.TrSvc.QueryLinkedByDate(ws, date)

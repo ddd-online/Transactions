@@ -9,11 +9,11 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 	// Endpoints that don't require an open workspace
 	{
 		ginServer.POST("/api/v1/workspace", h.openWorkspace)
-		ginServer.POST("/api/v1/app/exit", exitApp)
+		ginServer.POST("/api/v1/app/exit", h.exitApp)
 	}
 
 	v1 := ginServer.Group("/api/v1")
-	v1.Use(RequireWorkspace())
+	v1.Use(RequireWorkspace(h.WsMgr))
 	{
 		// Ledgers: RESTful CRUD
 		ledgers := v1.Group("/ledgers")

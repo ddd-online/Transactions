@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"github.com/billadm/models"
 )
 
@@ -35,20 +33,4 @@ type UpdateChartRequest struct {
 	Lines       []ChartLine `json:"lines"`
 	ChartType   string     `json:"chartType"`
 	SortOrder   int        `json:"sortOrder"`
-}
-
-func JsonCreateChart(c *gin.Context) (*CreateChartRequest, bool) {
-	ret := &CreateChartRequest{}
-	if err := c.BindJSON(ret); err != nil {
-		return nil, false
-	}
-	return ret, true
-}
-
-func JsonUpdateChart(c *gin.Context) (*UpdateChartRequest, bool) {
-	ret := &UpdateChartRequest{}
-	if err := c.BindJSON(ret); err != nil {
-		return nil, false
-	}
-	return ret, true
 }

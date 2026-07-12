@@ -5,6 +5,7 @@ import (
 	"github.com/billadm/ai/role"
 	"github.com/billadm/dao"
 	"github.com/billadm/service"
+	"github.com/billadm/workspace"
 )
 
 // Handlers holds all service interfaces and AI dependencies,
@@ -12,6 +13,8 @@ import (
 // Each handler method receives its dependencies through the struct,
 // not through package-level global variables.
 type Handlers struct {
+	WsMgr *workspace.WsManager
+
 	// Services
 	LedgerSvc      service.LedgerService
 	TrSvc          service.TransactionRecordService

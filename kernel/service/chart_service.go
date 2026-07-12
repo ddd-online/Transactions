@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
 	"github.com/billadm/util"
@@ -11,8 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewChartService() ChartService {
-	return &chartServiceImpl{}
+func NewChartService(chartDao dao.ChartDao) ChartService {
+	return &chartServiceImpl{
+		chartDao: chartDao,
+	}
 }
 
 type ChartService interface {
@@ -24,7 +27,9 @@ type ChartService interface {
 
 var _ ChartService = &chartServiceImpl{}
 
-type chartServiceImpl struct{}
+type chartServiceImpl struct {
+	chartDao dao.ChartDao
+}
 
 func defaultChartLines() []models.ChartLine {
 	return []models.ChartLine{
@@ -34,11 +39,9 @@ func defaultChartLines() []models.ChartLine {
 	}
 }
 
-// seedDefaultCharts inserts the 3 preset trend charts once — only when the ledger has no charts at all.
-// After the initial seed, deleted presets stay deleted.
 func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID string) error {
-	var count int64
-	if err := ws.GetDb().Model(&models.Chart{}).Where("ledger_id = ?", ledgerID).Count(&count).Error; err != nil {
+	count, err := t.chartDao.CountByLedgerId(ws, ledgerID)
+	if err != nil {
 		logrus.Warnf("统计图表数量失败: %v", err)
 		return err
 	}
@@ -78,11 +81,11 @@ func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID s
 		if err != nil {
 			return fmt.Errorf("marshal %s: %w", p.title, err)
 		}
-		if err := ws.GetDb().Create(&models.Chart{
+		if err := t.chartDao.Create(ws, &models.Chart{
 			ChartID: util.GetUUID(), LedgerID: ledgerID, Title: p.title,
 			Granularity: p.granularity, ChartLines: string(linesJSON), ChartType: "line",
 			IsPreset: true, SortOrder: p.sortOrder,
-		}).Error; err != nil {
+		}); err != nil {
 			return fmt.Errorf("seed %s: %w", p.title, err)
 		}
 	}
@@ -94,11 +97,8 @@ func (t *chartServiceImpl) seedDefaultCharts(ws *workspace.Workspace, ledgerID s
 func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartRequest) (*dto.ChartDto, error) {
 	chartID := util.GetUUID()
 
-	var maxSortOrder int
-	if err := ws.GetDb().Model(&models.Chart{}).
-		Where("ledger_id = ?", req.LedgerID).
-		Select("COALESCE(MAX(sort_order), 0)").
-		Scan(&maxSortOrder).Error; err != nil {
+	maxSortOrder, err := t.chartDao.GetMaxSort(ws, req.LedgerID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -110,26 +110,23 @@ func (t *chartServiceImpl) Create(ws *workspace.Workspace, req *dto.CreateChartR
 	chart := &models.Chart{
 		ChartID:     chartID,
 		LedgerID:    req.LedgerID,
-		Title:      req.Title,
-		Granularity:  req.Granularity,
-		ChartLines:   string(linesJSON),
+		Title:       req.Title,
+		Granularity: req.Granularity,
+		ChartLines:  string(linesJSON),
 		ChartType:   req.ChartType,
 		IsPreset:    false,
 		SortOrder:   maxSortOrder + 1,
 	}
 
-	if err := ws.GetDb().Create(chart).Error; err != nil {
+	if err := t.chartDao.Create(ws, chart); err != nil {
 		return nil, fmt.Errorf("create chart failed: %w", err)
 	}
-
 
 	return t.toDto(chart)
 }
 
 func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) error {
-	if err := ws.GetDb().
-		Where("chart_id = ?", chartId).
-		Delete(&models.Chart{}).Error; err != nil {
+	if err := t.chartDao.DeleteById(ws, chartId); err != nil {
 		return fmt.Errorf("delete chart failed: %w", err)
 	}
 
@@ -137,16 +134,12 @@ func (t *chartServiceImpl) DeleteById(ws *workspace.Workspace, chartId string) e
 }
 
 func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*dto.ChartDto, error) {
-	// Lazy seed default charts for new ledgers
 	if err := t.seedDefaultCharts(ws, ledgerId); err != nil {
 		logrus.Warnf("为账本 %s 创建预设图表失败: %v", ledgerId, err)
 	}
 
-	charts := make([]*models.Chart, 0)
-	if err := ws.GetDb().
-		Where("ledger_id = ?", ledgerId).
-		Order("is_preset DESC, sort_order ASC, created_at DESC").
-		Find(&charts).Error; err != nil {
+	charts, err := t.chartDao.QueryByLedgerId(ws, ledgerId)
+	if err != nil {
 		return nil, err
 	}
 
@@ -163,7 +156,7 @@ func (t *chartServiceImpl) ListByLedgerId(ws *workspace.Workspace, ledgerId stri
 }
 
 func (t *chartServiceImpl) Update(ws *workspace.Workspace, req *dto.UpdateChartRequest) (*dto.ChartDto, error) {
-	chart, err := t.getById(ws, req.ChartID)
+	chart, err := t.chartDao.QueryById(ws, req.ChartID)
 	if err != nil {
 		return nil, fmt.Errorf("get chart failed: %w", err)
 	}
@@ -179,18 +172,11 @@ func (t *chartServiceImpl) Update(ws *workspace.Workspace, req *dto.UpdateChartR
 	chart.ChartType = req.ChartType
 	chart.SortOrder = req.SortOrder
 
-	if err := ws.GetDb().Save(chart).Error; err != nil {
+	if err := t.chartDao.Save(ws, chart); err != nil {
 		return nil, fmt.Errorf("update chart failed: %w", err)
 	}
 
-
 	return t.toDto(chart)
-}
-
-func (t *chartServiceImpl) getById(ws *workspace.Workspace, chartId string) (*models.Chart, error) {
-	var chart models.Chart
-	err := ws.GetDb().Where("chart_id = ?", chartId).First(&chart).Error
-	return &chart, err
 }
 
 func (t *chartServiceImpl) toDto(chart *models.Chart) (*dto.ChartDto, error) {
@@ -203,7 +189,7 @@ func (t *chartServiceImpl) toDto(chart *models.Chart) (*dto.ChartDto, error) {
 		ChartID:     chart.ChartID,
 		LedgerID:    chart.LedgerID,
 		Title:       chart.Title,
-		Granularity:  chart.Granularity,
+		Granularity: chart.Granularity,
 		Lines:       lines,
 		ChartType:   chart.ChartType,
 		IsPreset:    chart.IsPreset,

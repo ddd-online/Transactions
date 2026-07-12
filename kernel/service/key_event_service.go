@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 
+	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
@@ -10,9 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewKeyEventService(imageService KeyEventImageService) KeyEventService {
+func NewKeyEventService(imageService KeyEventImageService, keyEventDao dao.KeyEventDao) KeyEventService {
 	return &keyEventServiceImpl{
 		imageService: imageService,
+		keyEventDao:  keyEventDao,
 	}
 }
 
@@ -28,9 +30,9 @@ var _ KeyEventService = &keyEventServiceImpl{}
 
 type keyEventServiceImpl struct {
 	imageService KeyEventImageService
+	keyEventDao  dao.KeyEventDao
 }
 
-// UpsertKeyEvent 根据 date 判断是否存在：存在则更新 title、content、color，不存在则新建
 func (s *keyEventServiceImpl) UpsertKeyEvent(ws *workspace.Workspace, ledgerID string, date string, title string, content string, color string) error {
 	if len(title) > 200 {
 		title = title[:200]
@@ -43,14 +45,12 @@ func (s *keyEventServiceImpl) UpsertKeyEvent(ws *workspace.Workspace, ledgerID s
 	}
 
 	if err == nil {
-		// Update
 		existing.Title = title
 		existing.Content = content
 		existing.Color = color
-		return ws.GetDb().Save(&existing).Error
+		return s.keyEventDao.Upsert(ws, &existing)
 	}
 
-	// Create
 	event := &models.KeyEvent{
 		ID:       util.GetUUID(),
 		Date:     date,
@@ -59,27 +59,19 @@ func (s *keyEventServiceImpl) UpsertKeyEvent(ws *workspace.Workspace, ledgerID s
 		Color:    color,
 		LedgerID: ledgerID,
 	}
-	return ws.GetDb().Save(event).Error
+	return s.keyEventDao.Upsert(ws, event)
 }
 
 func (s *keyEventServiceImpl) QueryByDate(ws *workspace.Workspace, ledgerID string, date string) (*models.KeyEvent, error) {
-	var event models.KeyEvent
-	err := ws.GetDb().Where("ledger_id = ? AND date = ?", ledgerID, date).First(&event).Error
-	if err != nil {
-		return nil, err
-	}
-	return &event, nil
+	return s.keyEventDao.QueryByDate(ws, ledgerID, date)
 }
 
 func (s *keyEventServiceImpl) QueryByYear(ws *workspace.Workspace, ledgerID string, year string) ([]models.KeyEvent, error) {
-	events := make([]models.KeyEvent, 0)
-	err := ws.GetDb().Where("ledger_id = ? AND date LIKE ?", ledgerID, year+"-%").Find(&events).Error
-	return events, err
+	return s.keyEventDao.QueryByYear(ws, ledgerID, year)
 }
 
 func (s *keyEventServiceImpl) QueryDatesByYear(ws *workspace.Workspace, ledgerID string, year string) ([]string, error) {
-	events := make([]models.KeyEvent, 0)
-	err := ws.GetDb().Where("ledger_id = ? AND date LIKE ?", ledgerID, year+"-%").Find(&events).Error
+	events, err := s.keyEventDao.QueryByYear(ws, ledgerID, year)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +88,7 @@ func (s *keyEventServiceImpl) DeleteByDate(ws *workspace.Workspace, ledgerID str
 		if err := s.imageService.DeleteImagesByEventDate(tx, date); err != nil {
 			return fmt.Errorf("delete key event images: %w", err)
 		}
-		if err := tx.GetDb().Where("ledger_id = ? AND date = ?", ledgerID, date).Delete(&models.KeyEvent{}).Error; err != nil {
+		if err := s.keyEventDao.DeleteByDate(tx, ledgerID, date); err != nil {
 			return fmt.Errorf("delete key event: %w", err)
 		}
 		return nil

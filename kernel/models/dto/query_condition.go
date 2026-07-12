@@ -2,27 +2,12 @@ package dto
 
 import (
 	"fmt"
-
-	"github.com/gin-gonic/gin"
 )
 
 const (
 	Any = "any"
 	Not = "not"
 )
-
-func JsonQueryCondition(c *gin.Context) (*TrQueryCondition, bool) {
-	ret := &TrQueryCondition{
-		Offset:  -1,
-		Limit:   -1,
-		TsRange: make([]int64, 0),
-		Items:   make([]QueryConditionItem, 0),
-	}
-	if err := c.BindJSON(ret); nil != err {
-		return nil, false
-	}
-	return ret, true
-}
 
 type TrQueryCondition struct {
 	LedgerID   string               `json:"ledgerId"`

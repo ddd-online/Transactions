@@ -11,13 +11,13 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/unicode"
-	"gorm.io/gorm/clause"
 )
 
 // FileItem 表示一个待导入的日记文件
@@ -26,8 +26,10 @@ type FileItem struct {
 	Path string `json:"path"` // 文件绝对路径
 }
 
-func NewDiaryService() DiaryService {
-	return &diaryServiceImpl{}
+func NewDiaryService(diaryDao dao.DiaryDao) DiaryService {
+	return &diaryServiceImpl{
+		diaryDao: diaryDao,
+	}
 }
 
 type DiaryService interface {
@@ -42,14 +44,12 @@ type DiaryService interface {
 
 var _ DiaryService = &diaryServiceImpl{}
 
-type diaryServiceImpl struct{}
+type diaryServiceImpl struct {
+	diaryDao dao.DiaryDao
+}
 
 func (s *diaryServiceImpl) ListDates(ws *workspace.Workspace) ([]models.DiaryDateItem, error) {
-	var entries []models.DiaryEntry
-	err := ws.GetDb().Model(&models.DiaryEntry{}).
-		Select("date, word_count, mood").
-		Order("date DESC").
-		Find(&entries).Error
+	entries, err := s.diaryDao.ListDates(ws)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +65,7 @@ func (s *diaryServiceImpl) ListDates(ws *workspace.Workspace) ([]models.DiaryDat
 }
 
 func (s *diaryServiceImpl) GetByDate(ws *workspace.Workspace, date string) (*models.DiaryEntry, error) {
-	var entry models.DiaryEntry
-	err := ws.GetDb().Where("date = ?", date).First(&entry).Error
-	if err != nil {
-		return nil, err
-	}
-	return &entry, nil
+	return s.diaryDao.QueryByDate(ws, date)
 }
 
 func (s *diaryServiceImpl) Upsert(ws *workspace.Workspace, date string, content string, mood string) (*models.DiaryEntry, error) {
@@ -81,10 +76,7 @@ func (s *diaryServiceImpl) Upsert(ws *workspace.Workspace, date string, content 
 		WordCount: utf8.RuneCountInString(content),
 		Mood:      mood,
 	}
-	err := ws.GetDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "date"}},
-		DoUpdates: clause.AssignmentColumns([]string{"content", "word_count", "mood"}),
-	}).Create(&entry).Error
+	err := s.diaryDao.Upsert(ws, &entry)
 	if err != nil {
 		return nil, err
 	}
@@ -93,12 +85,8 @@ func (s *diaryServiceImpl) Upsert(ws *workspace.Workspace, date string, content 
 
 func (s *diaryServiceImpl) DeleteByDate(ws *workspace.Workspace, date string) error {
 	logrus.Infof("删除日记, 日期: %s", date)
-	result := ws.GetDb().Where("date = ?", date).Delete(&models.DiaryEntry{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("日记不存在: %s", date)
+	if err := s.diaryDao.DeleteByDate(ws, date); err != nil {
+		return err
 	}
 	return nil
 }
@@ -125,7 +113,6 @@ func (s *diaryServiceImpl) ScanDirectory(dir string) ([]FileItem, error) {
 			return nil
 		}
 		dateStr := matches[1]
-		// 校验日期合法性（排除 2026-13-01 这类非法日期）
 		if _, parseErr := time.Parse("2006-01-02", dateStr); parseErr != nil {
 			return nil
 		}
@@ -136,7 +123,6 @@ func (s *diaryServiceImpl) ScanDirectory(dir string) ([]FileItem, error) {
 		return nil, fmt.Errorf("扫描目录失败: %w", err)
 	}
 
-	// 按日期升序（旧→新），导入顺序自然
 	sort.Slice(files, func(i, j int) bool {
 		return files[i].Date < files[j].Date
 	})
@@ -153,8 +139,6 @@ func (s *diaryServiceImpl) ImportFile(ws *workspace.Workspace, path string, date
 	return s.Upsert(ws, date, content, "")
 }
 
-// toUTF8 将字节内容转为 UTF-8 字符串。
-// 依次尝试：UTF-8 → UTF-16 BOM → GBK → 替换非法字节。
 func toUTF8(raw []byte) string {
 	if utf8.Valid(raw) {
 		return string(raw)
@@ -166,16 +150,13 @@ func toUTF8(raw []byte) string {
 	if err == nil {
 		return string(decoded)
 	}
-	// 回退：替换非法 UTF-8 字节为 ?
 	return string(bytes.ToValidUTF8(raw, []byte("?")))
 }
 
-// decodeUTF16 尝试将 UTF-16 LE/BE（带 BOM）解码为 UTF-8。
 func decodeUTF16(raw []byte) string {
 	if len(raw) < 2 {
 		return ""
 	}
-	// 根据 BOM 选择编码并跳过 BOM 字节
 	var decoded []byte
 	var err error
 	switch {

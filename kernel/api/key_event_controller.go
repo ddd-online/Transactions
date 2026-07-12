@@ -1,9 +1,9 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
+
+	"github.com/billadm/models"
 )
 
 // GET /api/v1/key-events/year/:year
@@ -12,12 +12,12 @@ func (h *Handlers) listKeyEventsByYear(c *gin.Context) (any, error) {
 
 	year := c.Param("year")
 	if year == "" {
-		return nil, fmt.Errorf("missing year parameter")
+		return nil, models.NewBadRequest("missing year parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		return nil, fmt.Errorf("ledger_id is required")
+		return nil, models.NewBadRequest("ledger_id is required")
 	}
 
 	return h.KeyEventSvc.QueryByYear(ws, ledgerID, year)
@@ -29,12 +29,12 @@ func (h *Handlers) listKeyEventDates(c *gin.Context) (any, error) {
 
 	year := c.Param("year")
 	if year == "" {
-		return nil, fmt.Errorf("missing year parameter")
+		return nil, models.NewBadRequest("missing year parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		return nil, fmt.Errorf("ledger_id is required")
+		return nil, models.NewBadRequest("ledger_id is required")
 	}
 
 	return h.KeyEventSvc.QueryDatesByYear(ws, ledgerID, year)
@@ -46,12 +46,12 @@ func (h *Handlers) getKeyEvent(c *gin.Context) (any, error) {
 
 	date := c.Param("date")
 	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+		return nil, models.NewBadRequest("missing date parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		return nil, fmt.Errorf("ledger_id is required")
+		return nil, models.NewBadRequest("ledger_id is required")
 	}
 
 	return h.KeyEventSvc.QueryByDate(ws, ledgerID, date)
@@ -63,17 +63,17 @@ func (h *Handlers) upsertKeyEvent(c *gin.Context) (any, error) {
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	ledgerID, ok := arg["ledger_id"].(string)
 	if !ok || ledgerID == "" {
-		return nil, fmt.Errorf("ledger_id is required")
+		return nil, models.NewBadRequest("ledger_id is required")
 	}
 
 	date, ok := arg["date"].(string)
 	if !ok {
-		return nil, fmt.Errorf("date is required")
+		return nil, models.NewBadRequest("date is required")
 	}
 
 	title, _ := arg["title"].(string)
@@ -92,12 +92,12 @@ func (h *Handlers) deleteKeyEvent(c *gin.Context) (any, error) {
 
 	date := c.Param("date")
 	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+		return nil, models.NewBadRequest("missing date parameter")
 	}
 
 	ledgerID := c.Query("ledger_id")
 	if ledgerID == "" {
-		return nil, fmt.Errorf("ledger_id is required")
+		return nil, models.NewBadRequest("ledger_id is required")
 	}
 
 	if err := h.KeyEventSvc.DeleteByDate(ws, ledgerID, date); err != nil {
@@ -112,7 +112,7 @@ func (h *Handlers) listKeyEventImages(c *gin.Context) (any, error) {
 
 	date := c.Param("date")
 	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+		return nil, models.NewBadRequest("missing date parameter")
 	}
 
 	return h.KeyEventImgSvc.GetImagesByEventDate(ws, date)
@@ -124,17 +124,17 @@ func (h *Handlers) addKeyEventImage(c *gin.Context) (any, error) {
 
 	date := c.Param("date")
 	if date == "" {
-		return nil, fmt.Errorf("missing date parameter")
+		return nil, models.NewBadRequest("missing date parameter")
 	}
 
 	arg, ok := JsonArg(c)
 	if !ok {
-		return nil, fmt.Errorf("parses request failed")
+		return nil, models.NewBadRequest("parses request failed")
 	}
 
 	data, ok := arg["data"].(string)
 	if !ok || data == "" {
-		return nil, fmt.Errorf("invalid image data")
+		return nil, models.NewBadRequest("invalid image data")
 	}
 
 	filename, _ := arg["filename"].(string)
@@ -152,7 +152,7 @@ func (h *Handlers) deleteKeyEventImage(c *gin.Context) (any, error) {
 
 	imageId := c.Param("id")
 	if imageId == "" {
-		return nil, fmt.Errorf("missing image id parameter")
+		return nil, models.NewBadRequest("missing image id parameter")
 	}
 
 	if err := h.KeyEventImgSvc.DeleteImage(ws, imageId); err != nil {

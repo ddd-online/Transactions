@@ -10,7 +10,9 @@ const (
 	ErrOpenedWorkspaceNotFound = "未打开工作空间"
 )
 
-var Manager = &WsManager{}
+func NewWsManager() *WsManager {
+	return &WsManager{}
+}
 
 type WsManager struct {
 	workspace *Workspace
