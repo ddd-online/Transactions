@@ -4,6 +4,7 @@
       <div class="diary-toolbar">
         <div class="toolbar-left">
           <a-button size="small" @click="goToToday">今天</a-button>
+          <a-button size="small" @click="collapseAll">收起全部</a-button>
           <a-date-picker
             v-model:value="jumpDate"
             size="small"
@@ -20,6 +21,7 @@
     <!-- 两栏主体 -->
     <div class="diary-body">
       <DiaryTree
+        ref="treeRef"
         class="panel-left"
         :dates="store.dates"
         :selected-date="selectedDate"
@@ -44,6 +46,7 @@ const store = useDiaryStore()
 
 const selectedDate = ref('')
 const jumpDate = ref<Dayjs>()
+const treeRef = ref()
 
 // ---- 初始化 ----
 onMounted(async () => {
@@ -61,6 +64,11 @@ const goToDate = (date: string) => {
 const goToToday = () => {
   jumpDate.value = undefined
   goToDate(dayjs().format('YYYY-MM-DD'))
+  treeRef.value?.goToToday()
+}
+
+const collapseAll = () => {
+  treeRef.value?.collapseAll()
 }
 
 const onJumpToDate = (_value: string | Dayjs, dateString: string) => {

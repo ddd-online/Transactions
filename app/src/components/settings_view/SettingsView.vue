@@ -126,7 +126,7 @@ const currentComponent = computed(() => {
   display: flex;
   flex-direction: column;
   padding: var(--billadm-space-sm);
-  gap: 2px;
+  gap: var(--billadm-space-2xs);
 }
 
 .nav-item {

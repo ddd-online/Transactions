@@ -216,6 +216,9 @@ const handleDeleteLedger = (id: string, name: string) => {
 
 /* 下拉菜单 */
 .ledger-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-2xs);
   min-width: 180px;
   padding: var(--billadm-space-xs);
   background: var(--billadm-color-major-background);

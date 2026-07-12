@@ -430,6 +430,7 @@ onUnmounted(() => {
 
 .chat-toolbar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
   padding: 0 0 var(--billadm-space-md) 0;
@@ -509,6 +510,9 @@ onUnmounted(() => {
 }
 
 .chat-role-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-2xs);
   min-width: 140px;
   padding: var(--billadm-space-xs);
   background: var(--billadm-color-major-background);
@@ -1030,9 +1034,11 @@ onUnmounted(() => {
 }
 
 .tools-item {
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-md);
-  overflow: hidden;
+  border-bottom: 1px solid var(--billadm-color-divider);
+}
+
+.tools-item:last-child {
+  border-bottom: none;
 }
 
 .tools-item-header {
