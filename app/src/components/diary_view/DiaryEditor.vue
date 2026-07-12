@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onUnmounted } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import dayjs from 'dayjs'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
@@ -123,7 +123,6 @@ const moods = [
 const mode = ref<'edit' | 'preview'>('preview')
 const localContent = ref('')
 const localMood = ref('')
-const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 // ---- 自动保存 ----
 let saveTimer: ReturnType<typeof setTimeout> | null = null
