@@ -362,3 +362,20 @@
     }
   }
 }
+
+// ============================================
+// Select Dropdown — 统一选项间距
+// ============================================
+
+.ant-select-dropdown {
+  .ant-select-item {
+    padding: var(--billadm-space-sm) var(--billadm-space-md);
+    min-height: auto;
+    line-height: var(--billadm-line-height-body);
+  }
+
+  .ant-select-item-option-content {
+    font-family: var(--billadm-font-body);
+    font-size: var(--billadm-size-text-body-sm);
+  }
+}
