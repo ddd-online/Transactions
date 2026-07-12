@@ -94,9 +94,19 @@ try {
     if (-not $env:HTTPS_PROXY) {
         $sysProxy = (Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' -ErrorAction SilentlyContinue).ProxyServer
         if ($sysProxy) {
-            $env:HTTPS_PROXY = "http://$sysProxy"
-            $env:HTTP_PROXY = "http://$sysProxy"
-            Write-Success "自动检测到系统代理: $sysProxy，已设置 HTTPS_PROXY / HTTP_PROXY"
+            # 检查代理是否可用
+            $proxyHost, $proxyPort = $sysProxy -split ':'
+            $proxyPort = if ($proxyPort) { [int]$proxyPort } else { 1080 }
+            $tcp = New-Object System.Net.Sockets.TcpClient
+            $connected = $tcp.ConnectAsync($proxyHost, $proxyPort).Wait(1500)
+            $tcp.Dispose()
+            if ($connected) {
+                $env:HTTPS_PROXY = "http://$sysProxy"
+                $env:HTTP_PROXY = "http://$sysProxy"
+                Write-Success "自动检测到系统代理: $sysProxy，已设置 HTTPS_PROXY / HTTP_PROXY"
+            } else {
+                Write-Warn "系统代理 $sysProxy 不可用，将直连 GitHub"
+            }
         }
     } else {
         Write-Info "使用已有的 HTTPS_PROXY: $env:HTTPS_PROXY"
