@@ -488,6 +488,12 @@ onMounted(() => {
   margin-left: var(--billadm-space-lg);
 }
 
+.setting-header-actions :deep(.ant-select-selector) {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
 .prompt-role-label {
   font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-secondary);

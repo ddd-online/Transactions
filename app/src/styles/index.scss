@@ -284,8 +284,9 @@ body::before {
   }
 }
 
-// Input, DatePicker
+// Input, Select, DatePicker
 .ant-input,
+.ant-select-selector,
 .ant-picker {
   border-radius: var(--billadm-radius-md);
   border-color: var(--billadm-color-window-border);
@@ -300,34 +301,6 @@ body::before {
   &.ant-input-focused {
     border-color: var(--billadm-color-primary);
     box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.15);
-  }
-}
-
-// Select — 高度统一为按钮主高度
-.ant-select-selector {
-  min-height: var(--billadm-btn-height-md) !important;
-  height: auto !important;
-  display: flex !important;
-  align-items: center;
-  border-radius: var(--billadm-radius-md) !important;
-  border-color: var(--billadm-color-window-border) !important;
-  font-family: var(--billadm-font-body);
-  transition: all var(--billadm-transition-fast);
-
-  &:hover {
-    border-color: var(--billadm-color-primary);
-  }
-
-  .ant-select-selection-search {
-    display: flex;
-    align-items: center;
-  }
-
-  .ant-select-selection-placeholder,
-  .ant-select-selection-item {
-    display: flex;
-    align-items: center;
-    line-height: 1;
   }
 }
 
