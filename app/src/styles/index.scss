@@ -344,7 +344,7 @@ body::before {
   }
 
   .ant-select-selection-placeholder,
-  .ant-select-selection-item {
+  > .ant-select-selection-item {
     display: flex;
     align-items: center;
     line-height: 1;
