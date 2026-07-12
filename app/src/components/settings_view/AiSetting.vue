@@ -3,6 +3,28 @@
     <BilladmPageHeader title="AI 助手" />
 
     <div class="setting-list">
+      <!-- Role Selection -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-title">角色</span>
+          <span class="setting-desc">为不同角色配置独立的系统提示词</span>
+        </div>
+        <div class="setting-action">
+          <a-radio-group
+            v-model:value="currentRole"
+            button-style="solid"
+            size="small"
+            @change="(e: any) => onRoleChange(e.target.value)"
+          >
+            <a-radio-button
+              v-for="r in availableRoles"
+              :key="r.name"
+              :value="r.name"
+            >{{ r.display_name }}</a-radio-button>
+          </a-radio-group>
+        </div>
+      </div>
+
       <!-- 供应商 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -106,7 +128,7 @@
       <div class="setting-card setting-card-vertical">
         <div class="setting-header-row">
           <div class="setting-info">
-            <span class="setting-title">系统提示词</span>
+            <span class="setting-title">系统提示词 — {{ availableRoles.find(r => r.name === currentRole)?.display_name || currentRole }}</span>
             <span class="setting-desc">自定义 AI 助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
           <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
@@ -120,7 +142,7 @@
             placeholder="留空使用默认提示词"
             style="width: 100%; font-family: var(--billadm-font-mono); font-size: var(--billadm-size-text-body-sm)"
           />
-          <div class="placeholder-hint">
+          <div class="placeholder-hint" v-if="currentRole === 'financial_assistant'">
             支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
           </div>
         </div>
@@ -174,7 +196,7 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue'
 import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
-import { aiApi, type AiConfig, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
+import { aiApi, type AiConfig, type AiRole, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
 import NotificationUtil from '@/backend/notification'
 
 const providerOptions = [
@@ -206,6 +228,25 @@ const form = reactive<FormState>({
 const testing = ref(false)
 const saving = ref(false)
 const keyPlaceholder = ref(false)
+
+const availableRoles = ref<AiRole[]>([])
+const currentRole = ref<string>('financial_assistant')
+
+async function fetchRoles() {
+  try {
+    availableRoles.value = await aiApi.fetchRoles()
+  } catch {
+    availableRoles.value = [
+      { name: 'financial_assistant', display_name: '财务助手' },
+      { name: 'diary_assistant', display_name: '日记助手' },
+    ]
+  }
+}
+
+function onRoleChange(role: string) {
+  currentRole.value = role
+  loadConfig()
+}
 
 // 模型下拉框状态
 const modelsLoading = ref(false)
@@ -297,7 +338,7 @@ function fetchDeepSeekResources() {
 
 async function loadConfig() {
   try {
-    const config = await aiApi.getConfig()
+    const config = await aiApi.getConfig(currentRole.value)
     form.provider = config.provider || ''
     form.base_url = config.base_url || ''
     form.endpoint = config.endpoint || '/v1/messages'
@@ -319,6 +360,7 @@ async function handleTestConnection() {
   testing.value = true
   try {
     await aiApi.testConnection({
+      role: currentRole.value,
       provider: form.provider,
       base_url: form.base_url,
       endpoint: form.endpoint,
@@ -339,6 +381,7 @@ async function handleSave() {
   try {
     const keyToSave = keyPlaceholder.value ? '' : form.api_key
     await aiApi.updateConfig({
+      role: currentRole.value,
       provider: form.provider,
       base_url: form.base_url,
       endpoint: form.endpoint,
@@ -367,6 +410,7 @@ function resetSystemPrompt() {
 }
 
 onMounted(() => {
+  fetchRoles()
   loadConfig()
 })
 </script>
