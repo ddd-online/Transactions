@@ -24,7 +24,7 @@
         <!-- 底部分页 -->
         <div class="tr-footer">
         <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
-          :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="[15, 30, 50, 100]"
+          :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
           show-size-changer />
         </div>
       </div>
@@ -302,7 +302,19 @@ watch(() => [ledgerStore.currentLedgerId, trQueryConditionStore.timeRange, trQue
   { immediate: true }
 );
 
-watch(() => [currentPage, pageSize], async () => {
+let ignoreNextPageWatch = false;
+
+watch(pageSize, async () => {
+  ignoreNextPageWatch = true;
+  currentPage.value = 1;
+  await refreshTable();
+});
+
+watch(currentPage, async () => {
+  if (ignoreNextPageWatch) {
+    ignoreNextPageWatch = false;
+    return;
+  }
   await refreshTable();
 });
 
