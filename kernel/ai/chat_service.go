@@ -119,6 +119,9 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 		}
 		messages = append(messages, msg)
 	}
+
+	messages = filterOrphanedToolResults(messages)
+
 	messages = append(messages, provider.ChatMessage{Role: "user", Content: userMessage})
 
 	// 保存用户消息
@@ -289,6 +292,23 @@ func (s *ChatService) saveMessage(ws *workspace.Workspace, msg *models.AiMessage
 	if err := s.messageDao.Save(ws, msg); err != nil {
 		logrus.Errorf("保存 AI 消息失败: %v", err)
 	}
+}
+
+func filterOrphanedToolResults(messages []provider.ChatMessage) []provider.ChatMessage {
+	knownToolUseIDs := make(map[string]bool)
+	for _, m := range messages {
+		for _, tc := range m.ToolCalls {
+			knownToolUseIDs[tc.ID] = true
+		}
+	}
+	filtered := messages[:0]
+	for _, m := range messages {
+		if m.Role == "tool" && m.ToolCallID != "" && !knownToolUseIDs[m.ToolCallID] {
+			continue
+		}
+		filtered = append(filtered, m)
+	}
+	return filtered
 }
 
 // summarizeResult 根据工具名称生成结果摘要。
