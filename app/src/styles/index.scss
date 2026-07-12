@@ -327,6 +327,8 @@ body::before {
 .ant-select-selector {
   min-height: var(--billadm-btn-height-md) !important;
   height: auto !important;
+  display: flex !important;
+  align-items: center;
   border-radius: var(--billadm-radius-md) !important;
   border-color: var(--billadm-color-window-border) !important;
   font-family: var(--billadm-font-body);
@@ -346,19 +348,6 @@ body::before {
     display: flex;
     align-items: center;
     line-height: 1;
-  }
-}
-
-// Multi-select: 标签高度按比例放大
-.ant-select-multiple {
-  .ant-select-selection-item {
-    height: 24px;
-    line-height: 22px;
-  }
-
-  .ant-select-selector::after {
-    margin: 2px 0;
-    line-height: 24px;
   }
 }
 
