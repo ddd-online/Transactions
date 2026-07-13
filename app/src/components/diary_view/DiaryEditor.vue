@@ -225,7 +225,7 @@ const renderedHtml = computed(() => renderMarkdown(localContent.value))
 
 .empty-icon {
   font-size: 32px;
-  opacity: 0.4;
+  opacity: 0.6;
   margin-bottom: var(--billadm-space-xs);
 }
 
@@ -282,7 +282,7 @@ const renderedHtml = computed(() => renderMarkdown(localContent.value))
 .mood-picker {
   display: flex;
   gap: 0;
-  background: var(--billadm-color-minor-background);
+  background: rgba(140, 123, 110, 0.07);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-2xs);
 }

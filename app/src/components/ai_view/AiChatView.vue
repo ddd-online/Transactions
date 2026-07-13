@@ -67,7 +67,7 @@
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
             <div class="msg-assistant">
               <!-- Inline Thinking -->
-              <div v-if="msg.thinkingContent" class="assistant-thinking">
+              <div v-if="msg.thinkingContent" class="assistant-thinking" :class="{ 'assistant-thinking--active': msg.thinkingActive }">
                 <button
                   class="assistant-thinking-toggle"
                   @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
@@ -574,7 +574,7 @@ onUnmounted(() => {
   font-family: var(--billadm-font-display);
   font-size: var(--billadm-size-text-display);
   font-weight: 400;
-  color: var(--billadm-color-text-secondary);
+  color: var(--billadm-color-secondary);
   margin: 0 0 var(--billadm-space-sm) 0;
 }
 
@@ -677,8 +677,8 @@ onUnmounted(() => {
 .msg-assistant {
   position: relative;
   max-width: 90%;
-  background: var(--billadm-color-hover-bg);
-  border: 1px solid var(--billadm-color-divider);
+  background: rgba(140, 123, 110, 0.05);
+  border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-md);
 }
@@ -753,15 +753,18 @@ onUnmounted(() => {
 /* Tool Card */
 .msg-tool {
   max-width: 90%;
-  background: var(--billadm-color-minor-background);
-  border: 1px solid var(--billadm-color-divider);
+  background: rgba(198, 150, 58, 0.04);
+  border: 1px solid rgba(198, 150, 58, 0.18);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-sm) var(--billadm-space-md);
   margin-bottom: var(--billadm-space-xs);
-  transition: border-color var(--billadm-transition-normal);
+  transition: background var(--billadm-transition-normal), border-color var(--billadm-transition-normal);
 }
 
-.msg-tool--done { border-color: var(--billadm-color-success); }
+.msg-tool--done {
+  background: rgba(61, 140, 94, 0.05);
+  border-color: var(--billadm-color-success);
+}
 
 .msg-tool-header {
   display: flex;
@@ -847,6 +850,7 @@ onUnmounted(() => {
   height: 28px;
   padding: 0 var(--billadm-space-xl);
   flex-shrink: 0;
+  background: rgba(198, 150, 58, 0.04);
 }
 
 .chat-streaming-ring {
@@ -1016,6 +1020,13 @@ onUnmounted(() => {
   line-height: var(--billadm-height-normal);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.assistant-thinking--active {
+  background: rgba(198, 150, 58, 0.04);
+  border-radius: var(--billadm-radius-sm);
+  margin: calc(-1 * var(--billadm-space-xs));
+  padding: var(--billadm-space-xs);
 }
 
 /* Tools Modal */

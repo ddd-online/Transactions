@@ -324,11 +324,11 @@ body::before {
 }
 
 // Select — 高度统一为按钮主高度
+// 注意：align-items 仅用于 single-select，multi-select 由 Ant Design 内部 overflow flex 容器自行管理
 .ant-select-selector {
   min-height: var(--billadm-btn-height-md) !important;
   height: auto !important;
   display: flex !important;
-  align-items: center;
   border-radius: var(--billadm-radius-md) !important;
   border-color: var(--billadm-color-window-border) !important;
   font-family: var(--billadm-font-body);
@@ -339,8 +339,10 @@ body::before {
   }
 }
 
-// Single-select: 文本垂直居中（不影响多选标签）
+// Single-select: 文本垂直居中
 .ant-select-single .ant-select-selector {
+  align-items: center;
+
   .ant-select-selection-search {
     display: flex;
     align-items: center;
