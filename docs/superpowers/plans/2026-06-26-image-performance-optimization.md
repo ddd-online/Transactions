@@ -377,6 +377,5 @@ cd kernel && go test ./...
 - [ ] **Step 3: 更新文档 + Commit**
 
 ```bash
-git add .wolf/anatomy.md .wolf/memory.md
 git commit -m "chore: 记录图片性能优化实施完成"
 ```

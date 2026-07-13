@@ -555,23 +555,8 @@ cd app && npx vue-tsc --noEmit --project tsconfig.json
 cd app && npm run build 2>&1 | tail -20
 ```
 
-- [ ] **Step 3: 更新 .wolf/anatomy.md**
+- [ ] **Step 3: Commit**
 
 ```bash
-# 新增 UploadProgressBar.vue 条目
-# 路径: app/src/components/key_event_view/UploadProgressBar.vue
-# 描述: 图片上传进度条组件，显示文件级进度和单文件百分比
-```
-
-- [ ] **Step 4: 追加 .wolf/memory.md**
-
-```bash
-# | 时间 | 完成图片上传进度条实施 | 5 files | 编译通过，构建成功 | ~tokens |
-```
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add .wolf/anatomy.md .wolf/memory.md
 git commit -m "chore: 记录图片上传进度条实施完成"
 ```

@@ -441,16 +441,11 @@ cd app && npm run build
 cd kernel && go test ./...
 ```
 
-- [ ] **Step 6: 更新文档**
-
-更新 `.wolf/anatomy.md` 和 `.wolf/memory.md`。
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add app/src/components/key_event_view/KeyEventView.vue \
         app/src/components/key_event_view/KeyEventDetail.vue \
-        app/src/components/key_event_view/KeyEventLinkedTr.vue \
-        .wolf/anatomy.md .wolf/memory.md
+        app/src/components/key_event_view/KeyEventLinkedTr.vue
 git commit -m "chore: 清理无用 loading 状态，记录预加载功能实施完成"
 ```

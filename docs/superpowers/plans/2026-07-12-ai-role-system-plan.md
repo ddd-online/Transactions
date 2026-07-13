@@ -1868,40 +1868,8 @@ git commit -m "fix: e2e verification fixes for role system"
 
 ---
 
-### Task 12: 规范文档更新
-
-**Files:**
-- Modify: `.wolf/anatomy.md`
-- Modify: `.wolf/cerebrum.md`
-- Append: `.wolf/memory.md`
-
-- [ ] **Step 1: 更新 anatomy.md**
-
-新增条目：
-```
-kernel/ai/role/role.go        | Role interface + Registry (角色注册表) | ~40 行
-kernel/ai/role/finance_role.go | 财务助手角色定义 | ~50 行
-kernel/ai/role/diary_role.go   | 日记助手角色定义 | ~40 行
-```
-
-更新已有条目以反映签名变化。
-
-- [ ] **Step 2: 更新 cerebrum.md**
-
-在 `## Key Learnings` 添加：
-- AI 角色系统通过 `kernel/ai/role/` 包实现角色注册表模式
-- 每个角色定义 Name + DisplayName + DefaultSystemPrompt + ToolNames
-- 工具在全局 ToolRegistry 注册，ChatService 按角色 ToolNames 过滤后发给 LLM
-
-- [ ] **Step 3: 追加 memory.md**
-
-```
-| HH:MM | AI 多角色系统实现完成 | 财务助手 + 日记助手切换 | 成功 | ~8000 |
-```
-
-- [ ] **Step 4: Commit**
+### Task 12: Commit
 
 ```bash
-git add .wolf/anatomy.md .wolf/cerebrum.md .wolf/memory.md
-git commit -m "docs: update anatomy, cerebrum, memory after role system implementation"
+git commit -m "docs: update after role system implementation"
 ```

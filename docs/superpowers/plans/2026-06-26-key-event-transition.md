@@ -491,9 +491,8 @@ cd app && npm run build
 cd kernel && go test ./...
 ```
 
-- [ ] **Step 3: 更新 .wolf/anatomy.md 和 .wolf/memory.md**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add .wolf/anatomy.md .wolf/memory.md
 git commit -m "chore: 记录关键事件过渡动效实施完成"
 ```

@@ -124,13 +124,20 @@ function createEmptyForm(date?: Dayjs): TrForm {
   return { id: '', price: '', type: '', category: '', description: '', tags: [], flags: [], time: date ?? dayjs() }
 }
 
-watch(() => props.open, (val) => {
+watch(() => props.open, async (val) => {
   if (!val) return
   if (props.record) {
     trForm.value = trDtoToTrForm(props.record)
   } else {
     trForm.value = createEmptyForm(props.defaultDate)
     trForm.value.type = 'expense'
+    if (props.currentLedgerId) {
+      const categories = await loadCategoryOptions('expense')
+      const first = categories[0]
+      if (first) {
+        trForm.value.category = first.name
+      }
+    }
   }
   selectedTemplateId.value = undefined
 })

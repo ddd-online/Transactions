@@ -23,7 +23,6 @@
     "webfetch": "allow"
   },
   "instructions": [
-    ".wolf/OPENWOLF.md",
     "PRODUCT.md"
   ]
 }
