@@ -45,6 +45,8 @@ func NewWorkspace(directory string) (*Workspace, error) {
 	// 迁移旧数据：将旧 AiConfig 中的连接字段复制到新 AiApiConfig 表
 	migrateAiConfig(db)
 
+	migrateKeyEventImages(db, directory)
+
 	return &Workspace{
 		directory: directory,
 		db:        db,
