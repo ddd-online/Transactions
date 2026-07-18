@@ -23,6 +23,7 @@ type KeyEventImageService interface {
 	GetImagesByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error)
 	DeleteImage(ws *workspace.Workspace, imageId string) error
 	DeleteImagesByEventDate(ws *workspace.Workspace, date string) error
+	DeleteImageRecordsByEventDate(ws *workspace.Workspace, date string) error
 }
 
 var _ KeyEventImageService = &keyEventImageServiceImpl{}
@@ -88,6 +89,10 @@ func (s *keyEventImageServiceImpl) DeleteImagesByEventDate(ws *workspace.Workspa
 	for i := range images {
 		removeImageFiles(ws.GetDirectory(), images[i].FilePath, images[i].ThumbPath)
 	}
+	return s.keyEventImageDao.DeleteByEventDate(ws, date)
+}
+
+func (s *keyEventImageServiceImpl) DeleteImageRecordsByEventDate(ws *workspace.Workspace, date string) error {
 	return s.keyEventImageDao.DeleteByEventDate(ws, date)
 }
 
