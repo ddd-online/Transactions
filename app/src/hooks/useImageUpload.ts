@@ -20,7 +20,6 @@ export interface UploadProgress {
 export type UploadHandler = (
   date: string,
   data: string,
-  filename: string,
   onProgress?: (percent: number) => void
 ) => Promise<void>
 
@@ -94,7 +93,6 @@ export function useImageUpload(uploadFn: UploadHandler) {
       await uploadFn(
         targetDate,
         data,
-        file.name,
         (percent: number) => {
           const entry = progress.value.files[currentFileIndex]
           if (entry) {
