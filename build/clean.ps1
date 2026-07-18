@@ -11,11 +11,11 @@ $projectRoot = Split-Path -Parent $scriptDir
 
 # 定义要清理的路径
 $vueDistDir = Join-Path $projectRoot "app" "dist"
-$kernelExe = Join-Path $projectRoot "kernel" "Billadm-Kernel.exe"
+$kernelExe = Join-Path $projectRoot "kernel" "transactions.exe"
 $electronDistDir = Join-Path $projectRoot "electron" "dist"
 $electronLogsDir = Join-Path $projectRoot "electron" "logs"
 $buildTargetDir = Join-Path $projectRoot "build" "target"
-$electronKernelExe = Join-Path $projectRoot "electron" "Billadm-Kernel.exe"
+$electronKernelExe = Join-Path $projectRoot "electron" "transactions.exe"
 
 # 颜色辅助函数（提升可读性）
 function Write-Info { param($msg) Write-Host "📦 $msg" -ForegroundColor Cyan }

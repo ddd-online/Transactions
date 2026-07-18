@@ -9,7 +9,7 @@ files:
   - node_modules/**
   - package.json
   - dist/**
-  - Billadm-Kernel.exe
+  - transactions.exe
 win:
   icon: "Transactions.ico"
   requestedExecutionLevel: "asInvoker"

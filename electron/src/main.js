@@ -74,7 +74,7 @@ let kernelProcess = null;
 
 const startKernel = () => {
     if (isDev) return;
-    const kernelExe = path.join(appPath, 'Billadm-Kernel.exe');
+    const kernelExe = path.join(appPath, 'transactions.exe');
     log(`Starting kernel: ${kernelExe}`);
     const cp = require("child_process");
     kernelProcess = cp.spawn(kernelExe, ['-mode', 'release', '-port', API_PORT], {
@@ -328,7 +328,7 @@ const registerCommonHandlers = () => {
         } catch (e) {
             log(`update:download error: ${e.message}`);
             if (downloadFilePath && fs.existsSync(downloadFilePath)) {
-                try { fs.unlinkSync(downloadFilePath); } catch {}
+                try { fs.unlinkSync(downloadFilePath); } catch { }
             }
             downloadFilePath = null;
             downloadRequest = null;
@@ -343,7 +343,7 @@ const registerCommonHandlers = () => {
             downloadRequest = null;
         }
         if (downloadFilePath && fs.existsSync(downloadFilePath)) {
-            try { fs.unlinkSync(downloadFilePath); } catch {}
+            try { fs.unlinkSync(downloadFilePath); } catch { }
         }
         downloadFilePath = null;
     });

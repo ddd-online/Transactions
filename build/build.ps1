@@ -15,7 +15,7 @@ $kernelDir = Join-Path $projectRoot "kernel"
 $electronDir = Join-Path $projectRoot "electron"
 
 $appDistDir = Join-Path $vueDir "dist"
-$kernelExe = Join-Path $kernelDir "Billadm-Kernel.exe"
+$kernelExe = Join-Path $kernelDir "transactions.exe"
 
 # 颜色辅助函数（可选，提升可读性）
 function Write-Info { param($msg) Write-Host "📦 $msg" -ForegroundColor Cyan }
@@ -115,7 +115,7 @@ try {
 
     # 清理 electron 目录中的旧资源
     $targetDist = Join-Path $electronDir "dist"
-    $targetKernel = Join-Path $electronDir "Billadm-Kernel.exe"
+    $targetKernel = Join-Path $electronDir "transactions.exe"
 
     foreach ($item in @($targetDist, $targetKernel)) {
         if (Test-Path $item) {
@@ -138,7 +138,7 @@ try {
         exit 1
     }
     Copy-Item -Path $kernelExe -Destination $electronDir -Force -ErrorAction Stop
-    Write-Success "已拷贝 Billadm-Kernel.exe 到 $electronDir"
+    Write-Success "已拷贝 transactions.exe 到 $electronDir"
 
 
     # ==============================
