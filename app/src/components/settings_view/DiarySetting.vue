@@ -1,6 +1,5 @@
 <template>
-  <div class="diary-setting">
-    <BilladmPageHeader title="日记配置" />
+  <SettingsPageWrapper title="日记配置">
 
     <div class="setting-list">
       <!-- 导入日记 -->
@@ -93,14 +92,13 @@
         </div>
       </div>
     </div>
-  </div>
+  </SettingsPageWrapper>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, ref, onUnmounted } from 'vue'
 import { FolderOpenOutlined, CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 import { scanDirectory, importFile } from '@/backend/api/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
 
@@ -233,12 +231,6 @@ async function doImport(directory: string) {
 </script>
 
 <style scoped>
-.diary-setting {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 .setting-list {
   display: flex;
   flex-direction: column;
