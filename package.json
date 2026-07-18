@@ -1,0 +1,10 @@
+{
+  "name": "transactions",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others -n kernel,app,electron -c blue,green,yellow \"cd kernel && go run main.go\" \"cd app && npm run dev\" \"cd electron && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

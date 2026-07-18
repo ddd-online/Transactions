@@ -29,7 +29,15 @@
 
 ### 热更新调试
 
-使用vue的热更新能力，需要以下三个步骤，打开三个powershell窗口，分别执行：
+使用vue的热更新能力，推荐使用一键启动方式：
+
+```powershell
+npm run dev    # 在项目根目录执行，同时启动 Go 后端 + Vue 前端 + Electron
+```
+
+Go 后端没有热重载，修改 Go 代码后需要 Ctrl+C 重新 `npm run dev`。
+
+也可以分开启动（三个终端窗口）：
 
 1. `kernel`目录下执行`go run main.go`，启动`go`服务
 2. `app`目录下执行`npm run dev`，启动`vue`服务
