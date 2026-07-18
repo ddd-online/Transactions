@@ -40,23 +40,9 @@ func GetDefaultData() map[string]map[string][]string {
 	return defaultData
 }
 
-// SeedData drops old category/tag tables (to remove legacy PRIMARY KEY constraints),
-// recreates them via AutoMigrate, then seeds default data for the given ledger.
+// SeedData seeds default categories and tags for the given ledger.
 // Returns (categoryCount, tagCount, error).
 func SeedData(db *gorm.DB, ledgerID string) (int, int, error) {
-	// 删除旧表以移除旧版 name 字段上的 PRIMARY KEY 约束（SQLite 不支持 ALTER CONSTRAINT）
-	if err := db.Migrator().DropTable(&models.Tag{}); err != nil {
-		logrus.Warnf("删除旧标签表失败（可能不存在）: %v", err)
-	}
-	if err := db.Migrator().DropTable(&models.Category{}); err != nil {
-		logrus.Warnf("删除旧分类表失败（可能不存在）: %v", err)
-	}
-
-	// 重新创建表（使用新的联合唯一索引）
-	if err := db.AutoMigrate(&models.Category{}, &models.Tag{}); err != nil {
-		logrus.Errorf("重建分类标签表失败: %v", err)
-		return 0, 0, err
-	}
 
 	categoryCount := 0
 	tagCount := 0

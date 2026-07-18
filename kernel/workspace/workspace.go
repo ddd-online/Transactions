@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/billadm/constant"
-	"github.com/billadm/models"
 	"github.com/billadm/util"
 )
 
@@ -30,22 +29,6 @@ func NewWorkspace(directory string) (*Workspace, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Auto-migrate AI tables
-	if err := db.AutoMigrate(&models.AiConfig{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&models.AiApiConfig{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&models.AiMessage{}); err != nil {
-		return nil, err
-	}
-
-	// 迁移旧数据：将旧 AiConfig 中的连接字段复制到新 AiApiConfig 表
-	migrateAiConfig(db)
-
-	migrateKeyEventImages(db, directory)
 
 	return &Workspace{
 		directory: directory,
@@ -85,42 +68,3 @@ func (w *Workspace) Close() {
 	}
 }
 
-// migrateAiConfig 将旧版 AiConfig 表中的 API 连接配置迁移到新的 AiApiConfig 表。
-func migrateAiConfig(db *gorm.DB) {
-	var count int64
-	db.Table("tbl_billadm_ai_api_config").Count(&count)
-	if count > 0 {
-		return
-	}
-
-	// 读取旧表数据 — 只查有 provider 且有连接信息的记录
-	type oldRow struct {
-		Provider string
-		BaseURL  string
-		Endpoint string
-		APIKey   string
-		Model    string
-	}
-	var rows []oldRow
-	if err := db.Table("tbl_billadm_ai_config").
-		Select("provider, base_url, endpoint, api_key, model").
-		Where("provider != ''").
-		Group("provider").
-		Find(&rows).Error; err != nil {
-		logrus.Warnf("迁移 AI 配置失败: %v", err)
-		return
-	}
-
-	for _, r := range rows {
-		apiConfig := &models.AiApiConfig{
-			Provider: r.Provider,
-			BaseURL:  r.BaseURL,
-			Endpoint: r.Endpoint,
-			APIKey:   r.APIKey,
-			Model:    r.Model,
-		}
-		if err := db.Create(apiConfig).Error; err != nil {
-			logrus.Warnf("迁移 AI API 配置 %s 失败: %v", r.Provider, err)
-		}
-	}
-}
