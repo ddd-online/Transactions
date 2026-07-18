@@ -45,10 +45,10 @@
           class="nav-item"
           :class="{ active: activeComponent === 'about' }"
           @click="activeComponent = 'about'"
-          aria-label="关于"
+          aria-label="关于软件"
         >
           <InfoCircleOutlined class="nav-icon"/>
-          <span class="nav-text">关于</span>
+          <span class="nav-text">关于软件</span>
         </button>
       </nav>
     </aside>
