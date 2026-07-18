@@ -3,9 +3,11 @@
     <div class="about-header">
       <div class="app-logo">
         <svg width="1024" height="1024" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" fill="#4A8E70" />
+          <!-- Background: Primary green #2D5A27 -->
+          <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" fill="#2D5A27" />
+          <!-- Letter T: Fills ~75% of icon, centered, Playfair Display font, color #FAFAF8 -->
           <text x="512" y="540" dominant-baseline="central" text-anchor="middle"
-            font-family="Inter, system-ui, -apple-system, sans-serif" font-size="820" font-weight="600"
+            font-family="Playfair Display, Georgia, 'Times New Roman', serif" font-size="820" font-weight="600"
             fill="#FAFAF8" letter-spacing="-8">T</text>
         </svg>
       </div>
