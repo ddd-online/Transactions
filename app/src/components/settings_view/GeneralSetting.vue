@@ -1,6 +1,5 @@
 <template>
-  <div class="general-setting">
-    <BilladmPageHeader title="通用" />
+  <SettingsPageWrapper title="通用">
 
     <div class="setting-list">
       <!-- 工作空间 -->
@@ -38,12 +37,11 @@
       placeholder="请输入或选择工作目录路径"
       @confirm="handleSwitchWorkspace"
     />
-  </div>
-</template>
 
+  </SettingsPageWrapper>
+</template>
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
-import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import NotificationUtil from '@/backend/notification'
 
@@ -76,12 +74,6 @@ const onDevToolsToggle = (checked: boolean | string | number) => {
 </script>
 
 <style scoped>
-.general-setting {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 .setting-list {
   display: flex;
   flex-direction: column;
