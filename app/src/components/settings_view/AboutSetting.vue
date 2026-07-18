@@ -111,7 +111,7 @@ const handleRetry = () => {
   justify-content: center;
   height: 100%;
   gap: var(--billadm-space-lg);
-  padding: var(--billadm-space-xl) 0;
+  padding: var(--billadm-space-md) var(--billadm-space-lg);
 }
 
 .about-header {
