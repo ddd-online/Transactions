@@ -3,8 +3,8 @@
     <div class="sort-list">
       <div v-for="(item, index) in items" :key="index" class="sort-item">
         <span class="sort-priority">{{ index + 1 }}</span>
-        <a-select v-model:value="item.field" :options="getAvailableFields(index)" placeholder="选择字段" style="width: 120px" />
-        <a-select v-model:value="item.order" style="width: 100px">
+        <a-select v-model:value="item.field" :options="getAvailableFields(index)" placeholder="选择字段" class="sort-select sort-select-field" />
+        <a-select v-model:value="item.order" class="sort-select sort-select-order">
           <a-select-option value="asc">升序</a-select-option>
           <a-select-option value="desc">降序</a-select-option>
         </a-select>
@@ -101,6 +101,16 @@ defineExpose({ setItems: (v: SortItem[]) => { items.value = [...v] } })
   justify-content: center;
   font-size: var(--billadm-size-text-caption);
   font-weight: 600;
+  flex-shrink: 0;
+}
+.sort-select {
+  flex: 1;
+}
+.sort-select-order {
+  flex: 0 0 100px;
+}
+.sort-item :deep(.ant-btn) {
+  margin-left: auto;
   flex-shrink: 0;
 }
 .sort-actions {
