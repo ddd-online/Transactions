@@ -27,7 +27,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     const images = ref<KeyEventImage[]>([])
     const events = ref<KeyEvent[]>([])
 
-    // ---- Cache (deep module — 5 methods, handles blob URL lifecycle) ----
+    // ---- Cache (deep module — 5 methods) ----
     const cache = new KeyEventCache()
 
     // ---- Public API ----
@@ -174,24 +174,15 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         }
     };
 
-    const addImage = async (date: string, data: string, filename: string, onProgress?: (percent: number) => void): Promise<void> => {
+    const addImage = async (date: string, data: string, onProgress?: (percent: number) => void): Promise<void> => {
         const ledgerId = getLedgerId()
         if (!ledgerId) return
         try {
-            const imageId = await addKeyEventImage(date, data, filename, ledgerId, onProgress);
-            images.value.push({
-                id: imageId, eventDate: date, data, filename,
-                sortOrder: images.value.length + 1,
-                createdAt: Math.floor(Date.now() / 1000),
-            });
-            // Use cache
+            const image = await addKeyEventImage(date, data, ledgerId, onProgress);
+            images.value.push(image);
             const cached = cache.getImages(date);
             if (cached) {
-                cached.push({
-                    id: imageId, eventDate: date, data, filename,
-                    sortOrder: cached.length + 1,
-                    createdAt: Math.floor(Date.now() / 1000),
-                });
+                cached.push(image);
             }
         } catch (error) {
             NotificationUtil.error('添加图片失败', `${error}`);
@@ -229,7 +220,6 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         images,
         events,
         // Cache — exposed for component access (KeyEventImageGallery, KeyEventView)
-        imageUrlCache: cache.imageUrlCache,
         trCache: cache.trCache,
         // API
         fetchDatesByYear,
