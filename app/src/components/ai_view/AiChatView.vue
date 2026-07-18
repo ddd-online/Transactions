@@ -893,7 +893,7 @@ onUnmounted(() => {
 /* Input Area */
 .chat-input-area { padding: 0 var(--billadm-space-xl) var(--billadm-space-md); flex-shrink: 0; }
 .chat-divider { height: 1px; background: var(--billadm-color-divider); margin-bottom: var(--billadm-space-md); }
-.chat-input-row { display: flex; align-items: flex-end; gap: var(--billadm-space-sm); }
+.chat-input-row { display: flex; align-items: center; gap: var(--billadm-space-sm); }
 
 .chat-textarea {
   flex: 1;

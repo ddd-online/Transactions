@@ -121,8 +121,14 @@ const startKernel = () => {
 // 系统托盘
 const createTray = () => {
     try {
-        const iconPath = path.join(appPath, 'assets', 'icon.ico');
+        const iconPath = isDev
+            ? path.join(appPath, 'assets', 'Transactions.ico')
+            : app.getPath('exe');
         const icon = nativeImage.createFromPath(iconPath);
+        if (icon.isEmpty()) {
+            log('托盘图标创建失败：图标为空');
+            return;
+        }
         tray = new Tray(icon.resize({ width: 16, height: 16 }));
         tray.setToolTip(app.getName());
 
