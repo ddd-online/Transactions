@@ -37,24 +37,25 @@ let transactionsCfg = {
     width: 1400, height: 1000, x: undefined, y: undefined, workspaceDir: '',
 };
 
-function readTransactionsCfg() {
-    if (isDev) return;
+function transactionsCfgPath() {
     const homeDir = os.homedir();
-    const filePath = path.join(homeDir, '.transactions.json');
+    return path.join(homeDir, isDev ? '.transactions-dev.json' : '.transactions.json');
+}
+
+function readTransactionsCfg() {
+    const filePath = transactionsCfgPath();
     try {
         const fileContent = fs.readFileSync(filePath, 'utf8');
         const tmpObj = JSON.parse(fileContent);
         transactionsCfg = { ...transactionsCfg, ...tmpObj };
     } catch (err) {
-        log(`读取 .transactions.json 文件失败: ${err.message}`);
+        log(`读取配置文件失败: ${err.message}`);
     }
     log(`窗口 ${transactionsCfg.width}x${transactionsCfg.height} workspace ${transactionsCfg.workspaceDir}`);
 }
 
 function saveTransactionsCfg() {
-    if (isDev) return;
-    const homeDir = os.homedir();
-    const filePath = path.join(homeDir, '.transactions.json');
+    const filePath = transactionsCfgPath();
     try {
         if (typeof transactionsCfg !== 'object' || transactionsCfg === null) {
             log('transactionsCfg 无效，无法保存');
