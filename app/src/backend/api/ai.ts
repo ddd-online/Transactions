@@ -56,6 +56,12 @@ export interface RoleToolsResponse {
   tools: ToolInfo[]
 }
 
+export interface QuickCommand {
+  role: string
+  label: string
+  sort_order: number
+}
+
 export const aiApi = {
   async fetchRoles(): Promise<AiRole[]> {
     return api.get('/v1/ai/roles', '获取角色列表')
@@ -92,6 +98,14 @@ export const aiApi = {
 
   async clearMessages(role: string = 'financial_assistant'): Promise<void> {
     return api.delete(`/v1/ai/messages?role=${encodeURIComponent(role)}`, '清空对话')
+  },
+
+  async getQuickCommands(role: string = 'financial_assistant'): Promise<QuickCommand[]> {
+    return api.get(`/v1/ai/quick-commands?role=${encodeURIComponent(role)}`, '获取快捷命令')
+  },
+
+  async saveQuickCommands(role: string, commands: { label: string }[]): Promise<void> {
+    return api.put('/v1/ai/quick-commands', { role, commands }, '保存快捷命令')
   },
 };
 

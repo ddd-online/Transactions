@@ -42,14 +42,13 @@
       <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
         <div v-if="messages.length === 0 && !streaming" class="chat-empty">
           <p class="chat-empty-greeting">{{ greeting }}</p>
-          <p class="chat-empty-hint">{{ roleHint }}</p>
-          <div class="chat-empty-chips">
+          <div v-if="quickCommands.length > 0" class="chat-empty-chips">
             <button
-              v-for="chip in roleChips"
-              :key="chip"
+              v-for="(cmd, idx) in quickCommands"
+              :key="idx"
               class="chat-empty-chip"
-              @click="fillAndSend(chip)"
-            >{{ chip }}</button>
+              @click="fillAndSend(cmd.label)"
+            >{{ cmd.label }}</button>
           </div>
         </div>
 
@@ -186,7 +185,7 @@ import { useLedgerStore } from '@/stores/ledgerStore'
 import { renderMarkdown } from '@/utils/markdown'
 import { message } from 'ant-design-vue'
 import { useAiChat } from '@/hooks/useAiChat'
-import { aiApi, type AiRole, type ToolInfo } from '@/backend/api/ai'
+import { aiApi, type AiRole, type QuickCommand, type ToolInfo } from '@/backend/api/ai'
 
 // ---- AiChat composable (deep module) ----
 const { messages, streaming, currentRole, send, stop, loadHistory, clear, cleanup, switchRole } = useAiChat()
@@ -218,15 +217,19 @@ const currentRoleDisplay = computed(() => {
   return role?.display_name ?? currentRole.value
 })
 
-const roleHint = computed(() => {
-  return currentRole.value === 'diary_assistant' ? '和日记助手聊聊…' : '询问你的财务数据'
-})
+// ---- Quick Commands ----
+const quickCommands = ref<QuickCommand[]>([])
 
-const roleChips = computed(() => {
-  if (currentRole.value === 'diary_assistant') {
-    return ['今天写一篇日记', '帮我回顾这几天的心情', '上周日的日记写了什么']
+async function loadQuickCommands() {
+  try {
+    quickCommands.value = await aiApi.getQuickCommands(currentRole.value)
+  } catch {
+    quickCommands.value = []
   }
-  return ['本月支出汇总', '和上月相比支出变化', '餐饮消费趋势']
+}
+
+watch(currentRole, () => {
+  loadQuickCommands()
 })
 
 // ---- Tools modal ----
@@ -412,6 +415,7 @@ watch(
 onMounted(() => {
   fetchRoles()
   loadHistory()
+  loadQuickCommands()
 })
 
 onUnmounted(() => {
@@ -434,6 +438,7 @@ onUnmounted(() => {
   align-items: center;
   flex-shrink: 0;
   padding: 0 0 var(--billadm-space-md) 0;
+  /* Reserve space for Electron frameless window controls (3 × 32px + 2 × 6px gaps) */
   margin-right: calc(3 * 32px + 2 * 6px);
   -webkit-app-region: drag;
 }
@@ -462,7 +467,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   height: var(--billadm-size-header-height);
-  padding: 0 var(--billadm-space-xl);
+  padding: var(--billadm-space-sm) var(--billadm-space-xl);
   flex-shrink: 0;
   border-bottom: 1px solid var(--billadm-color-divider);
 }
@@ -805,7 +810,7 @@ onUnmounted(() => {
 .msg-tool-arg {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--billadm-space-2xs);
   background: var(--billadm-color-minor-background);
   border: 1px solid var(--billadm-color-divider);
   border-radius: var(--billadm-radius-sm);

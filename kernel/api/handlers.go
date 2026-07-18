@@ -27,8 +27,9 @@ type Handlers struct {
 	DiarySvc       service.DiaryService
 
 	// AI
-	ChatService  *ai.ChatService
-	AiConfigDao  dao.AiConfigDao
-	AiMessageDao dao.AiMessageDao
-	RoleRegistry *role.Registry
+	ChatService        *ai.ChatService
+	AiConfigDao        dao.AiConfigDao
+	AiMessageDao       dao.AiMessageDao
+	AiQuickCommandDao  dao.AiQuickCommandDao
+	RoleRegistry       *role.Registry
 }

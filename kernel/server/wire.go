@@ -43,6 +43,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	// ---- AI module ----
 	aiConfigDao := dao.NewAiConfigDao()
 	aiMessageDao := dao.NewAiMessageDao()
+	aiQuickCommandDao := dao.NewAiQuickCommandDao()
 	aiToolRegistry := tool.NewToolRegistry()
 
 	// Register tools with injected service interfaces
@@ -74,9 +75,10 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 		KeyEventImgSvc: keyEventImageSvc,
 		TrTemplateSvc:  trTemplateSvc,
 		DiarySvc:       diarySvc,
-		ChatService:    aiChatService,
-		AiConfigDao:    aiConfigDao,
-		AiMessageDao:   aiMessageDao,
-		RoleRegistry:   roleRegistry,
+		ChatService:       aiChatService,
+		AiConfigDao:       aiConfigDao,
+		AiMessageDao:      aiMessageDao,
+		AiQuickCommandDao: aiQuickCommandDao,
+		RoleRegistry:      roleRegistry,
 	}
 }
