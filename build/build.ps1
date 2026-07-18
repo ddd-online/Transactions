@@ -142,17 +142,26 @@ try {
 
 
     # ==============================
-    # 4. 裁剪生产依赖 → 打包 → 恢复全量依赖
+    # 4. 裁剪生产依赖 → 装回打包工具 → 打包 → 恢复全量依赖
     # ==============================
     Set-Location $electronDir
 
     Write-Step "正在裁剪 node_modules（仅保留生产依赖，加速打包）..."
-    & npm prune --production
+    & npm prune --omit=dev
     if ($LASTEXITCODE -ne 0) {
         Write-Warn "npm prune 返回非零退出码，继续打包..."
     } else {
         Write-Success "已裁剪 dev 依赖"
     }
+
+    Write-Step "正在装回 electron-builder（打包需要）..."
+    & npm install --no-save electron-builder
+    if ($LASTEXITCODE -ne 0) {
+        Write-ErrorCustom "electron-builder 安装失败"
+        & npm install --ignore-scripts
+        exit 1
+    }
+    Write-Success "electron-builder 已就绪"
 
     Write-Step "正在执行 Electron 应用打包..."
     Write-Host "   执行命令: npm run package" -ForegroundColor Yellow
