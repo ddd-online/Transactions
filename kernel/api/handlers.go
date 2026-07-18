@@ -29,6 +29,7 @@ type Handlers struct {
 	// AI
 	ChatService        *ai.ChatService
 	AiConfigDao        dao.AiConfigDao
+	AiApiConfigDao     dao.AiApiConfigDao
 	AiMessageDao       dao.AiMessageDao
 	AiQuickCommandDao  dao.AiQuickCommandDao
 	RoleRegistry       *role.Registry

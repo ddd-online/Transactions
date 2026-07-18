@@ -34,14 +34,16 @@ type SSEEvent struct {
 }
 
 type ChatService struct {
+	apiConfigDao dao.AiApiConfigDao
 	configDao    dao.AiConfigDao
 	messageDao   dao.AiMessageDao
 	registry     *tool.ToolRegistry
 	roleRegistry *role.Registry
 }
 
-func NewChatService(configDao dao.AiConfigDao, messageDao dao.AiMessageDao, registry *tool.ToolRegistry, roleRegistry *role.Registry) *ChatService {
+func NewChatService(apiConfigDao dao.AiApiConfigDao, configDao dao.AiConfigDao, messageDao dao.AiMessageDao, registry *tool.ToolRegistry, roleRegistry *role.Registry) *ChatService {
 	return &ChatService{
+		apiConfigDao: apiConfigDao,
 		configDao:    configDao,
 		messageDao:   messageDao,
 		registry:     registry,
@@ -51,7 +53,7 @@ func NewChatService(configDao dao.AiConfigDao, messageDao dao.AiMessageDao, regi
 
 // Chat 执行一次对话，返回 SSE 事件 channel。
 // ws 用于数据库访问，ledgerName 注入到工具执行 context 中，也用于替换系统提示词中的占位符。
-func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleName string, ledgerName string, userMessage string) (<-chan SSEEvent, error) {
+func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleName string, providerName string, ledgerName string, userMessage string) (<-chan SSEEvent, error) {
 	// 带工具执行 workspace 和 ledgerName 的 context
 	toolCtx := tool.WithWorkspace(ctx, ws)
 	toolCtx = tool.WithLedgerName(toolCtx, ledgerName)
@@ -68,34 +70,31 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 		roleToolNames[name] = true
 	}
 
-	// 加载配置 — 优先当前角色，不存在或不完整则回退到财务助手（共享 API 连接信息）
-	config, err := s.configDao.Get(ws, roleName)
-	if err != nil || roleName != "financial_assistant" && (config.BaseURL == "" || config.APIKey == "" || config.Model == "" || config.Endpoint == "") {
-		defaultConfig, fallbackErr := s.configDao.Get(ws, "financial_assistant")
-		if fallbackErr != nil {
-			if err != nil {
-				return nil, fmt.Errorf("AI 配置未找到，请先在设置中配置: %w", err)
-			}
-			return nil, fmt.Errorf("AI 配置不完整，请先在设置中配置 Base URL、端点、API Key 和模型")
-		}
-		config = &models.AiConfig{
-			BaseURL:  defaultConfig.BaseURL,
-			Endpoint: defaultConfig.Endpoint,
-			APIKey:   defaultConfig.APIKey,
-			Model:    defaultConfig.Model,
-			Provider: defaultConfig.Provider,
-		}
+	// 加载 API 连接配置 — 按供应商名称查询
+	if providerName == "" {
+		providerName = "deepseek"
+	}
+	apiConfig, err := s.apiConfigDao.Get(ws, providerName)
+	if err != nil {
+		return nil, fmt.Errorf("AI API 配置未找到，请先在设置中配置供应商「%s」", providerName)
+	}
+
+	// 加载角色配置 — 获取系统提示词
+	roleConfig, _ := s.configDao.Get(ws, roleName)
+	var systemPrompt string
+	if roleConfig != nil {
+		systemPrompt = roleConfig.SystemPrompt
 	}
 
 	// 选择 provider
 	var llmProvider provider.LLMProvider
-	switch config.Endpoint {
+	switch apiConfig.Endpoint {
 	case "/v1/messages":
-		llmProvider = provider.NewAnthropicProvider(config.BaseURL, config.APIKey, config.Model)
+		llmProvider = provider.NewAnthropicProvider(apiConfig.BaseURL, apiConfig.APIKey, apiConfig.Model)
 	case "/chat/completions":
-		llmProvider = provider.NewOpenAIProvider(config.BaseURL, config.APIKey, config.Model)
+		llmProvider = provider.NewOpenAIProvider(apiConfig.BaseURL, apiConfig.APIKey, apiConfig.Model)
 	default:
-		return nil, fmt.Errorf("不支持的端点: %s", config.Endpoint)
+		return nil, fmt.Errorf("不支持的端点: %s", apiConfig.Endpoint)
 	}
 
 	// 加载历史
@@ -149,7 +148,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 			}
 
 			// Use stored system prompt if configured, otherwise fall back to role default
-			prompt := config.SystemPrompt
+			prompt := systemPrompt
 			if prompt == "" {
 				prompt = roleDef.DefaultSystemPrompt()
 			}

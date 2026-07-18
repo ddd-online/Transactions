@@ -31,6 +31,7 @@ func NewDbInstance(dbPath string) (*gorm.DB, error) {
 		&models.KeyEventImage{},
 		&models.DiaryEntry{},
 		&models.AiConfig{},
+		&models.AiApiConfig{},
 		&models.AiMessage{},
 		&models.AiQuickCommand{},
 	); err != nil {

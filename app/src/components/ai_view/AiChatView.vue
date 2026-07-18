@@ -189,7 +189,7 @@ import { useAiChat } from '@/hooks/useAiChat'
 import { aiApi, type AiRole, type QuickCommand, type ToolInfo } from '@/backend/api/ai'
 
 // ---- AiChat composable (deep module) ----
-const { messages, streaming, currentRole, send, stop, loadHistory, clear, cleanup, switchRole } = useAiChat()
+const { messages, streaming, currentRole, currentProvider, send, stop, loadHistory, clear, cleanup, switchRole } = useAiChat()
 
 // ---- Role management ----
 const availableRoles = ref<AiRole[]>([])
@@ -206,6 +206,15 @@ async function fetchRoles() {
     ]
   } finally {
     rolesLoading.value = false
+  }
+}
+
+async function loadProvider() {
+  try {
+    const config = await aiApi.getConfig(currentRole.value)
+    currentProvider.value = config.provider || 'deepseek'
+  } catch {
+    // keep default
   }
 }
 
@@ -417,6 +426,7 @@ onMounted(() => {
   fetchRoles()
   loadHistory()
   loadQuickCommands()
+  loadProvider()
 })
 
 onUnmounted(() => {

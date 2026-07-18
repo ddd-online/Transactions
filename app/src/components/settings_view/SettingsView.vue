@@ -9,10 +9,10 @@
           class="nav-item"
           :class="{ active: activeComponent === 'general' }"
           @click="activeComponent = 'general'"
-          aria-label="通用"
+          aria-label="通用设置"
         >
           <SettingOutlined class="nav-icon"/>
-          <span class="nav-text">通用</span>
+          <span class="nav-text">通用设置</span>
         </button>
         <button
           class="nav-item"

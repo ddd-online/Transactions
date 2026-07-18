@@ -42,6 +42,7 @@ export function useAiChat() {
   const messages = ref<ChatMessage[]>([])
   const streaming = ref(false)
   const currentRole = ref<string>('financial_assistant')
+  const currentProvider = ref<string>('deepseek')
 
   let abortController: AbortController | null = null
   let msgIdCounter = 0
@@ -261,7 +262,7 @@ export function useAiChat() {
       const response = await fetch(`${apiBaseUrl}/api/v1/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName, role: currentRole.value }),
+        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName, role: currentRole.value, provider: currentProvider.value }),
         signal: abortController.signal,
       })
 
@@ -370,5 +371,5 @@ export function useAiChat() {
     }
   }
 
-  return { messages, streaming, currentRole, send, stop, loadHistory, clear, cleanup, switchRole }
+  return { messages, streaming, currentRole, currentProvider, send, stop, loadHistory, clear, cleanup, switchRole }
 }

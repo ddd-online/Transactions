@@ -1,5 +1,5 @@
 <template>
-  <SettingsPageWrapper title="通用">
+  <SettingsPageWrapper title="通用设置">
 
     <div class="setting-list">
       <!-- 工作空间 -->

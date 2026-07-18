@@ -278,7 +278,7 @@ async function fetchRoles() {
 
 function onRoleChange(value: unknown) {
   currentRole.value = value as string
-  loadConfig()
+  loadRoleConfig()
 }
 
 // 模型下拉框状态
@@ -372,7 +372,7 @@ function fetchDeepSeekResources() {
 async function loadConfig() {
   loaded.value = false
   try {
-    const config = await aiApi.getConfig(currentRole.value)
+    const config = await aiApi.getConfig(currentRole.value, form.provider || 'deepseek')
     form.provider = config.provider || ''
     form.base_url = config.base_url || ''
     form.endpoint = config.endpoint || '/v1/messages'
@@ -387,6 +387,19 @@ async function loadConfig() {
     onProviderChange(form.provider)
   } catch {
     // 加载失败时保持默认值
+  } finally {
+    await nextTick()
+    loaded.value = true
+  }
+}
+
+async function loadRoleConfig() {
+  loaded.value = false
+  try {
+    const config = await aiApi.getConfig(currentRole.value, form.provider || 'deepseek')
+    form.system_prompt = config.system_prompt || ''
+  } catch {
+    // 加载失败时保持当前提示词
   } finally {
     await nextTick()
     loaded.value = true

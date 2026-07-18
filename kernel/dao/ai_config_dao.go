@@ -34,11 +34,6 @@ func (d *aiConfigDaoImpl) Save(ws *workspace.Workspace, config *models.AiConfig)
 		return ws.GetDb().Create(config).Error
 	}
 	return ws.GetDb().Model(&models.AiConfig{}).Where("id = ?", existing.ID).Updates(map[string]interface{}{
-		"base_url":      config.BaseURL,
-		"endpoint":      config.Endpoint,
-		"api_key":       config.APIKey,
-		"model":         config.Model,
 		"system_prompt": config.SystemPrompt,
-		"provider":      config.Provider,
 	}).Error
 }

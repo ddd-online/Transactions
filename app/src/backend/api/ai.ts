@@ -71,8 +71,8 @@ export const aiApi = {
     return api.get(`/v1/ai/roles/tools?role=${encodeURIComponent(role)}`, '获取工具列表')
   },
 
-  async getConfig(role: string = 'financial_assistant'): Promise<AiConfigResponse> {
-    return api.get(`/v1/ai/config?role=${encodeURIComponent(role)}`, '获取AI配置')
+  async getConfig(role: string = 'financial_assistant', provider: string = 'deepseek'): Promise<AiConfigResponse> {
+    return api.get(`/v1/ai/config?role=${encodeURIComponent(role)}&provider=${encodeURIComponent(provider)}`, '获取AI配置')
   },
 
   async updateConfig(config: AiConfig & { role?: string }): Promise<void> {
@@ -80,8 +80,8 @@ export const aiApi = {
     return api.put('/v1/ai/config', body, '保存AI配置')
   },
 
-  async testConnection(config: AiConfig & { role?: string }): Promise<void> {
-    const body = { ...config, role: config.role || 'financial_assistant' }
+  async testConnection(config: AiConfig & { role?: string; provider?: string }): Promise<void> {
+    const body = { ...config, role: config.role || 'financial_assistant', provider: config.provider || 'deepseek' }
     return api.post('/v1/ai/config/test', body, '测试连接')
   },
 

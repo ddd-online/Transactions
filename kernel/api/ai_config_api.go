@@ -15,23 +15,41 @@ import (
 // GET /api/v1/ai/config
 func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 	role := c.DefaultQuery("role", "financial_assistant")
-	config, err := h.AiConfigDao.Get(ws(c), role)
-	if err != nil {
-		config = &models.AiConfig{}
+	provider := c.DefaultQuery("provider", "deepseek")
+
+	roleConfig, _ := h.AiConfigDao.Get(ws(c), role)
+	apiConfig, err := h.AiApiConfigDao.Get(ws(c), provider)
+
+	systemPrompt := ""
+	if roleConfig != nil {
+		systemPrompt = roleConfig.SystemPrompt
 	}
-	systemPrompt := config.SystemPrompt
 	if systemPrompt == "" {
 		if roleDef, ok := h.RoleRegistry.Get(role); ok {
 			systemPrompt = roleDef.DefaultSystemPrompt()
 		}
 	}
+
+	baseURL := ""
+	endpoint := ""
+	model := ""
+	hasKey := false
+	providerName := provider
+	if err == nil {
+		baseURL = apiConfig.BaseURL
+		endpoint = apiConfig.Endpoint
+		model = apiConfig.Model
+		hasKey = apiConfig.APIKey != ""
+		providerName = apiConfig.Provider
+	}
+
 	return gin.H{
-		"base_url":      config.BaseURL,
-		"endpoint":      config.Endpoint,
-		"model":         config.Model,
-		"has_key":       config.APIKey != "",
+		"base_url":      baseURL,
+		"endpoint":      endpoint,
+		"model":         model,
+		"has_key":       hasKey,
 		"system_prompt": systemPrompt,
-		"provider":      config.Provider,
+		"provider":      providerName,
 		"role":          role,
 	}, nil
 }
@@ -53,30 +71,41 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	if req.Role == "" {
 		req.Role = "financial_assistant"
 	}
+	if req.Provider == "" {
+		req.Provider = "deepseek"
+	}
 	if len(req.SystemPrompt) > 10000 {
 		return nil, fmt.Errorf("系统提示词不能超过 10000 个字符")
 	}
 
-	config := &models.AiConfig{
-		Role:         req.Role,
-		BaseURL:      req.BaseURL,
-		Endpoint:     req.Endpoint,
-		Model:        req.Model,
-		SystemPrompt: req.SystemPrompt,
-		Provider:     req.Provider,
+	// 保存 API 连接配置（按供应商）
+	apiConfig := &models.AiApiConfig{
+		Provider: req.Provider,
+		BaseURL:  req.BaseURL,
+		Endpoint: req.Endpoint,
+		Model:    req.Model,
 	}
 	if req.APIKey != "" {
-		config.APIKey = req.APIKey
+		apiConfig.APIKey = req.APIKey
 	} else {
-		existing, err := h.AiConfigDao.Get(ws(c), req.Role)
+		existing, err := h.AiApiConfigDao.Get(ws(c), req.Provider)
 		if err == nil {
-			config.APIKey = existing.APIKey
+			apiConfig.APIKey = existing.APIKey
 		}
 	}
-
-	if err := h.AiConfigDao.Save(ws(c), config); err != nil {
+	if err := h.AiApiConfigDao.Save(ws(c), apiConfig); err != nil {
 		return nil, err
 	}
+
+	// 保存角色配置（系统提示词）
+	roleConfig := &models.AiConfig{
+		Role:         req.Role,
+		SystemPrompt: req.SystemPrompt,
+	}
+	if err := h.AiConfigDao.Save(ws(c), roleConfig); err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 
@@ -88,6 +117,7 @@ func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 		APIKey   string `json:"api_key"`
 		Model    string `json:"model"`
 		Role     string `json:"role"`
+		Provider string `json:"provider"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -95,11 +125,11 @@ func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 
 	apiKey := req.APIKey
 	if apiKey == "" {
-		role := req.Role
-		if role == "" {
-			role = "financial_assistant"
+		provider := req.Provider
+		if provider == "" {
+			provider = "deepseek"
 		}
-		existing, err := h.AiConfigDao.Get(ws(c), role)
+		existing, err := h.AiApiConfigDao.Get(ws(c), provider)
 		if err == nil {
 			apiKey = existing.APIKey
 		}

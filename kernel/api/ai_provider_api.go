@@ -37,13 +37,12 @@ func (h *Handlers) fetchProvider(c *gin.Context) (any, error) {
 	apiKey := req.APIKey
 	provider := req.Provider
 	if apiKey == "" || provider == "" {
-		role := req.Role
-		if role == "" {
-			role = "financial_assistant"
+		if provider == "" {
+			provider = "deepseek"
 		}
-		config, err := h.AiConfigDao.Get(ws(c), role)
+		config, err := h.AiApiConfigDao.Get(ws(c), provider)
 		if err != nil {
-			return nil, fmt.Errorf("未找到 AI 配置，请先保存配置")
+			return nil, fmt.Errorf("未找到 API 配置，请先保存配置")
 		}
 		if apiKey == "" {
 			apiKey = config.APIKey
