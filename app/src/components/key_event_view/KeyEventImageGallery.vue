@@ -8,7 +8,7 @@
     <template v-else>
       <!-- 左侧大图 -->
       <div class="gallery-main" @click="triggerPreview">
-        <a-image v-if="selectedImage" :src="props.urlCache?.get(selectedImage.id)?.full ?? selectedImage.data" :preview="true" width="100%" height="100%"
+        <a-image v-if="selectedImage" :src="getImageUrl(selectedImage.filePath)" :preview="true" width="100%" height="100%"
           style="object-fit: cover;" :preview-visible="previewVisible" @visible-change="onPreviewChange" loading="lazy" />
       </div>
 
@@ -18,7 +18,7 @@
           <div v-for="(img, index) in images" :key="img.id" class="thumb-item"
             :class="{ 'is-selected': selectedId === img.id, 'thumb-enter': true }"
             :style="{ animationDelay: `${Math.min(index * 50, 300)}ms` }" @click="selectedId = img.id">
-            <img :src="props.urlCache?.get(img.id)?.thumb ?? img.data" class="thumb-img" alt="" loading="lazy" decoding="async" />
+            <img :src="getImageUrl(img.thumbPath)" class="thumb-img" alt="" loading="lazy" decoding="async" />
             <button class="thumb-delete-btn" @click.stop="$emit('delete-image', img.id)" aria-label="删除图片">
               <CloseOutlined />
             </button>
@@ -40,11 +40,10 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { DownOutlined, CloseOutlined } from '@ant-design/icons-vue'
 import type { KeyEventImage } from '@/types/billadm'
-import type { ImageUrls } from '@/backend/imageOptimizer'
+import { getImageUrl } from '@/backend/imageUrl'
 
 const props = defineProps<{
   images: KeyEventImage[]
-  urlCache?: Map<string, ImageUrls>
 }>()
 
 defineEmits<{

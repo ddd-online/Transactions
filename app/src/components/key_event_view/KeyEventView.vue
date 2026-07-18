@@ -29,7 +29,6 @@
         class="panel-center"
         :event="currentEvent"
         :images="keyEventStore.images"
-        :url-cache="keyEventStore.imageUrlCache"
         :is-editing="isEditing"
         :progress="uploadProgress"
         @edit="isEditing = true"
@@ -166,7 +165,7 @@ const handleDeleteEvent = async (date: string) => {
 
 // ========== 图片管理 ==========
 const { progress: uploadProgress, addFiles, retry, skip, reset: resetUpload } = useImageUpload(
-  (date, data, filename, onProgress) => keyEventStore.addImage(date, data, filename, onProgress)
+  (date, data, onProgress) => keyEventStore.addImage(date, data, onProgress)
 )
 
 const handleAddImages = async (files: File[]) => {
