@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 
@@ -74,7 +75,7 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	if req.Provider == "" {
 		req.Provider = "deepseek"
 	}
-	if len(req.SystemPrompt) > 10000 {
+	if utf8.RuneCountInString(req.SystemPrompt) > 10000 {
 		return nil, fmt.Errorf("系统提示词不能超过 10000 个字符")
 	}
 

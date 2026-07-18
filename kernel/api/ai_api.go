@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ func (h *Handlers) aiChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
 		return
 	}
-	if len(req.Message) > 10000 {
+	if utf8.RuneCountInString(req.Message) > 10000 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "消息过长，最多 10000 字符"})
 		return
 	}
