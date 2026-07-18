@@ -165,8 +165,8 @@ export interface KeyEvent {
 export interface KeyEventImage {
     id: string;
     eventDate: string;
-    data: string;
-    filename: string;
+    filePath: string;
+    thumbPath: string;
     sortOrder: number;
     createdAt: number;
 }

@@ -21,10 +21,10 @@ export async function queryKeyEventImages(date: string, ledgerId: string): Promi
     return api.get<KeyEventImage[]>(`/v1/key-events/${date}/images?ledger_id=${ledgerId}`, '查询关键事件图片');
 }
 
-export async function addKeyEventImage(date: string, data: string, filename: string, ledgerId: string, onProgress?: (percent: number) => void): Promise<string> {
-    return api.post<string>(
+export async function addKeyEventImage(date: string, data: string, ledgerId: string, onProgress?: (percent: number) => void): Promise<KeyEventImage> {
+    return api.post<KeyEventImage>(
         `/v1/key-events/${date}/images`,
-        { data, filename, ledger_id: ledgerId },
+        { data, ledger_id: ledgerId },
         '添加关键事件图片',
         {
             timeout: 30000,
