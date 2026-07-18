@@ -1,6 +1,5 @@
 <template>
-  <div class="ai-setting">
-    <BilladmPageHeader title="智能助手" />
+  <SettingsPageWrapper title="智能助手">
 
     <div class="setting-list">
       <!-- 供应商 -->
@@ -232,12 +231,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </SettingsPageWrapper>
 </template>
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 import { aiApi, type AiConfig, type AiRole, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
 import NotificationUtil from '@/backend/notification'
 import { DeleteOutlined } from '@ant-design/icons-vue'
@@ -549,12 +547,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.ai-setting {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 .setting-list {
   display: flex;
   flex-direction: column;
