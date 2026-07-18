@@ -183,7 +183,7 @@ const currentComponent = computed(() => {
   flex: 1;
   min-width: 0;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   background-color: var(--billadm-color-major-warm);
 }
 
@@ -191,6 +191,5 @@ const currentComponent = computed(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
 }
 </style>
