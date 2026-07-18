@@ -147,24 +147,27 @@
         </div>
       </div>
 
-      <!-- 系统提示词 -->
-      <div class="setting-card setting-card-vertical">
+      <!-- 角色配置 (系统提示词 + 快捷命令) -->
+      <div class="setting-card setting-card-vertical setting-section">
+        <div class="role-selector-row">
+          <span class="role-selector-label">角色</span>
+          <a-select
+            v-model:value="currentRole"
+            size="small"
+            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+            style="width: 140px"
+            @change="onRoleChange"
+          />
+        </div>
+
+        <div class="card-section-divider" />
+
         <div class="setting-header-row">
           <div class="setting-info">
             <span class="setting-title">系统提示词</span>
             <span class="setting-desc">自定义智能助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
-          <div class="setting-header-actions">
-            <span class="prompt-role-label">角色</span>
-            <a-select
-              v-model:value="currentRole"
-              size="small"
-              :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-              style="width: 120px"
-              @change="onRoleChange"
-            />
-            <a-button @click="resetSystemPrompt">恢复默认</a-button>
-          </div>
+          <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
         </div>
         <div class="setting-action setting-action-full">
           <a-textarea
@@ -179,16 +182,66 @@
             支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
           </div>
         </div>
+
+        <div class="card-section-divider" />
+
+        <div class="setting-header-row">
+          <div class="setting-info">
+            <span class="setting-title">快捷命令</span>
+            <span class="setting-desc">在聊天页快捷发送的常用问题，支持拖拽排序</span>
+          </div>
+          <a-button size="small" @click="addCommand">+ 新增</a-button>
+        </div>
+        <div class="setting-action setting-action-full">
+          <div class="quick-commands-list" ref="commandsListRef">
+            <div
+              v-for="(cmd, index) in commands"
+              :key="cmd.id"
+              class="quick-command-item"
+            >
+              <span class="drag-handle" title="拖动排序">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <circle cx="5" cy="3" r="1.5" />
+                  <circle cx="11" cy="3" r="1.5" />
+                  <circle cx="5" cy="8" r="1.5" />
+                  <circle cx="11" cy="8" r="1.5" />
+                  <circle cx="5" cy="13" r="1.5" />
+                  <circle cx="11" cy="13" r="1.5" />
+                </svg>
+              </span>
+              <a-input
+                v-model:value="cmd.label"
+                size="small"
+                placeholder="输入快捷命令"
+                :maxlength="200"
+                @change="onCommandLabelChange"
+              />
+              <a-button
+                type="text"
+                size="small"
+                @click="removeCommand(index)"
+                class="cmd-delete-btn"
+              >
+                <template #icon><DeleteOutlined /></template>
+              </a-button>
+            </div>
+            <div v-if="commands.length === 0" class="quick-commands-empty">
+              暂无快捷命令
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
 import { aiApi, type AiConfig, type AiRole, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
 import NotificationUtil from '@/backend/notification'
+import { DeleteOutlined } from '@ant-design/icons-vue'
+import Sortable from 'sortablejs'
 
 const providerOptions = [
   { label: 'DeepSeek', value: 'deepseek' },
@@ -234,8 +287,8 @@ async function fetchRoles() {
   }
 }
 
-function onRoleChange(role: any) {
-  currentRole.value = role as string
+function onRoleChange(value: unknown) {
+  currentRole.value = value as string
   loadConfig()
 }
 
@@ -400,9 +453,98 @@ function resetSystemPrompt() {
   form.system_prompt = ''
 }
 
+// ---- Quick Commands ----
+let idCounter = 0
+const commands = ref<{ id: number; label: string }[]>([])
+const commandsListRef = ref<HTMLElement | null>(null)
+let sortable: Sortable | null = null
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
+function initSortable() {
+  const el = commandsListRef.value
+  if (!el || commands.value.length === 0) {
+    destroySortable()
+    return
+  }
+  destroySortable()
+  sortable = Sortable.create(el, {
+    animation: 200,
+    handle: '.drag-handle',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    onEnd(evt) {
+      if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex && commands.value.length > evt.oldIndex) {
+        const item = commands.value.splice(evt.oldIndex, 1)[0]
+        if (item) {
+          commands.value.splice(evt.newIndex, 0, item)
+        }
+        nextTick(() => initSortable())
+        autoSaveCommands()
+      }
+    },
+  })
+}
+
+function destroySortable() {
+  if (sortable) {
+    sortable.destroy()
+    sortable = null
+  }
+}
+
+async function loadCommands() {
+  try {
+    const items = await aiApi.getQuickCommands(currentRole.value)
+    commands.value = items.map(c => ({ id: idCounter++, label: c.label }))
+  } catch {
+    commands.value = []
+  }
+  await nextTick()
+  initSortable()
+}
+
+function addCommand() {
+  commands.value.push({ id: idCounter++, label: '' })
+  nextTick(() => initSortable())
+}
+
+function removeCommand(index: number) {
+  commands.value.splice(index, 1)
+  nextTick(() => initSortable())
+  autoSaveCommands()
+}
+
+function onCommandLabelChange() {
+  autoSaveCommands()
+}
+
+function autoSaveCommands() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    const items = commands.value.map(c => ({ label: c.label })).filter(c => c.label.trim() !== '')
+    aiApi.saveQuickCommands(currentRole.value, items).catch(() => {})
+  }, 300)
+}
+
+watch(currentRole, async () => {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+  destroySortable()
+  await loadCommands()
+})
+
 onMounted(() => {
   fetchRoles()
   loadConfig()
+  loadCommands()
+})
+
+onUnmounted(() => {
+  destroySortable()
+  if (saveTimer) clearTimeout(saveTimer)
 })
 </script>
 
@@ -473,6 +615,10 @@ onMounted(() => {
   align-items: flex-start;
 }
 
+.setting-section {
+  margin-top: var(--billadm-space-xl);
+}
+
 .setting-header-row {
   display: flex;
   align-items: flex-start;
@@ -480,18 +626,25 @@ onMounted(() => {
   width: 100%;
 }
 
-.setting-header-actions {
+.role-selector-row {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-sm);
-  flex-shrink: 0;
-  margin-left: var(--billadm-space-lg);
+  width: 100%;
 }
 
-.prompt-role-label {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+.role-selector-label {
+  font-size: var(--billadm-size-text-body);
+  font-weight: var(--billadm-weight-medium);
+  color: var(--billadm-color-text-major);
   flex-shrink: 0;
+}
+
+.card-section-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--billadm-color-divider);
+  margin: var(--billadm-space-lg) 0;
 }
 
 .prompt-textarea {
@@ -513,7 +666,7 @@ onMounted(() => {
 
 .setting-action-full {
   margin-left: 0;
-  margin-top: var(--billadm-space-md);
+  margin-top: var(--billadm-space-sm);
   width: 100%;
 }
 
@@ -601,6 +754,74 @@ onMounted(() => {
   &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
   &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; }
   &:hover::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.40); }
+}
+
+/* Quick Commands */
+.quick-commands-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--billadm-space-xs);
+}
+
+.quick-command-item {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-xs);
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--billadm-color-text-secondary);
+  cursor: grab;
+  margin-right: 2px;
+}
+
+.drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.drag-handle:hover {
+  color: var(--billadm-color-primary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.cmd-delete-btn {
+  flex-shrink: 0;
+  color: var(--billadm-color-text-secondary);
+}
+
+.cmd-delete-btn:hover {
+  color: var(--billadm-color-expense);
+}
+
+.quick-commands-empty {
+  font-size: var(--billadm-size-text-caption);
+  color: var(--billadm-color-text-secondary);
+  padding: var(--billadm-space-sm) 0;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+}
+
+.sortable-chosen {
+  background: var(--billadm-color-hover-bg);
+  border-radius: var(--billadm-radius-sm);
+}
+
+.sortable-drag {
+  opacity: 0.8;
+  background: var(--billadm-color-major-background);
+  box-shadow: var(--billadm-shadow-md);
+  border-radius: var(--billadm-radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {
