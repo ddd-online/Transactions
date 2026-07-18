@@ -1,6 +1,5 @@
 <template>
-  <div class="template-setting">
-    <BilladmPageHeader title="消费模板" />
+  <SettingsPageWrapper title="消费模板">
 
     <div v-if="templates.length === 0 && !loading" class="template-empty">
       <a-empty description="暂无模板" />
@@ -67,7 +66,7 @@
         </template>
       </a-table>
     </div>
-  </div>
+  </SettingsPageWrapper>
 </template>
 
 <script lang="ts" setup>
@@ -239,12 +238,6 @@ watch(() => ledgerStore.currentLedgerId, () => {
 </script>
 
 <style scoped>
-.template-setting {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 .template-table-wrapper {
   flex: 1;
   overflow: auto;
