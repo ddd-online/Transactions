@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, net } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, net, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -35,6 +35,7 @@ const log = (message) => {
 
 let transactionsCfg = {
     width: 1400, height: 1000, x: undefined, y: undefined, workspaceDir: '',
+    closeBehavior: '',
 };
 
 function transactionsCfgPath() {
@@ -71,6 +72,7 @@ function saveTransactionsCfg() {
 
 // 内核
 let kernelProcess = null;
+let tray = null;
 
 const startKernel = () => {
     if (isDev) return;
@@ -114,6 +116,47 @@ const startKernel = () => {
     kernelProcess.on('error', (err) => {
         log('[Kernel Process] Failed to start:', err);
     });
+};
+
+// 系统托盘
+const createTray = () => {
+    try {
+        const iconPath = path.join(appPath, 'assets', 'icon.ico');
+        const icon = nativeImage.createFromPath(iconPath);
+        tray = new Tray(icon.resize({ width: 16, height: 16 }));
+        tray.setToolTip(app.getName());
+
+        const contextMenu = Menu.buildFromTemplate([
+            {
+                label: '显示主窗口', click: () => {
+                    if (mainWindow) {
+                        mainWindow.show();
+                        mainWindow.setSkipTaskbar(false);
+                        mainWindow.focus();
+                    }
+                },
+            },
+            { type: 'separator' },
+            {
+                label: '关闭程序', click: () => {
+                    if (kernelProcess) kernelProcess.kill();
+                    saveTransactionsCfg();
+                    app.quit();
+                },
+            },
+        ]);
+        tray.setContextMenu(contextMenu);
+
+        tray.on('click', () => {
+            if (mainWindow) {
+                mainWindow.show();
+                mainWindow.setSkipTaskbar(false);
+                mainWindow.focus();
+            }
+        });
+    } catch (e) {
+        log(`创建托盘图标失败: ${e.message}`);
+    }
 };
 
 // 通用 IPC 处理器
@@ -165,6 +208,15 @@ const registerCommonHandlers = () => {
                 mainWindow.webContents.closeDevTools();
             }
         }
+    });
+
+    ipcMain.handle('config:get-close-behavior', () => {
+        return transactionsCfg.closeBehavior || '';
+    });
+
+    ipcMain.handle('config:set-close-behavior', (event, behavior) => {
+        transactionsCfg.closeBehavior = behavior;
+        saveTransactionsCfg();
     });
 
     // ── 更新 ──
@@ -367,11 +419,63 @@ app.on('second-instance', () => {
     const win = mainWindow || initWindow;
     if (win) {
         if (win.isMinimized()) win.restore();
+        if (!win.isVisible()) {
+            win.show();
+            win.setSkipTaskbar(false);
+        }
         win.focus();
     }
 });
 
 let mainWindow = null;
+
+const handleWindowClose = async () => {
+    const bounds = mainWindow.getBounds();
+    transactionsCfg = { ...transactionsCfg, ...bounds };
+
+    if (!transactionsCfg.closeBehavior) {
+        const { response, checkboxChecked } = await dialog.showMessageBox(mainWindow, {
+            type: 'question',
+            title: '关闭选项',
+            message: '请选择关闭行为',
+            detail: '您希望点击关闭按钮时执行什么操作？',
+            buttons: ['直接关闭', '缩小到托盘'],
+            defaultId: 0,
+            checkboxLabel: '下次不再提醒',
+            checkboxChecked: false,
+        });
+
+        const behavior = response === 0 ? 'quit' : 'tray';
+        if (checkboxChecked) {
+            transactionsCfg.closeBehavior = behavior;
+            saveTransactionsCfg();
+        }
+
+        if (behavior === 'quit') {
+            await quitApp();
+            mainWindow.close();
+        } else {
+            saveTransactionsCfg();
+            mainWindow.hide();
+            mainWindow.setSkipTaskbar(true);
+        }
+    } else if (transactionsCfg.closeBehavior === 'tray') {
+        saveTransactionsCfg();
+        mainWindow.hide();
+        mainWindow.setSkipTaskbar(true);
+    } else {
+        await quitApp();
+        mainWindow.close();
+    }
+};
+
+const quitApp = async () => {
+    try {
+        await net.fetch(API_SERVER + "/api/v1/app/exit", { method: "POST" });
+    } catch (e) {
+        log(`请求kernel关闭失败 ${e}`);
+    }
+};
 
 const createMainWindow = () => {
     mainWindow = new BrowserWindow({
@@ -405,14 +509,7 @@ const createMainWindow = () => {
                 mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
                 break;
             case 'close':
-                try {
-                    await net.fetch(API_SERVER + "/api/v1/app/exit", { method: "POST" });
-                } catch (e) {
-                    log(`请求kernel关闭失败 ${e}`);
-                }
-                const bounds = mainWindow.getBounds();
-                transactionsCfg = { ...transactionsCfg, ...bounds }
-                mainWindow.close();
+                await handleWindowClose();
                 break;
         }
     });
@@ -466,6 +563,7 @@ app.whenReady().then(() => {
     readTransactionsCfg();
     startKernel();
     registerCommonHandlers();
+    createTray();
 
     if (!transactionsCfg.workspaceDir) {
         createInitWindow();
@@ -482,6 +580,13 @@ app.whenReady().then(() => {
             }
         }
     });
+});
+
+app.on('before-quit', () => {
+    if (tray) {
+        tray.destroy();
+        tray = null;
+    }
 });
 
 app.on('window-all-closed', () => {

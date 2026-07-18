@@ -32,6 +32,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.send('devtools:toggle', enabled);
     },
 
+    getCloseBehavior: async () => {
+        return await ipcRenderer.invoke('config:get-close-behavior');
+    },
+    setCloseBehavior: async (behavior) => {
+        return await ipcRenderer.invoke('config:set-close-behavior', behavior);
+    },
+
     // ── 更新 ──
     checkUpdate: async () => {
         return await ipcRenderer.invoke('update:check');

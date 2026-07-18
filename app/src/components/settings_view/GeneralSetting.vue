@@ -15,6 +15,24 @@
         </div>
       </div>
 
+      <!-- 关闭行为 -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-title">关闭行为</span>
+          <span class="setting-desc">点击关闭按钮时的操作</span>
+        </div>
+        <div class="setting-action">
+          <a-radio-group
+            :value="closeBehavior"
+            @change="onCloseBehaviorChange"
+            size="small"
+          >
+            <a-radio-button value="quit">直接关闭</a-radio-button>
+            <a-radio-button value="tray">缩小到托盘</a-radio-button>
+          </a-radio-group>
+        </div>
+      </div>
+
       <!-- DevTools 开关 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -70,6 +88,19 @@ const devToolsEnabled = ref(false)
 
 const onDevToolsToggle = (checked: boolean | string | number) => {
   window.electronAPI?.toggleDevTools(Boolean(checked))
+}
+
+// ---- 关闭行为 ----
+const closeBehavior = ref('')
+
+onMounted(async () => {
+  closeBehavior.value = await window.electronAPI?.getCloseBehavior() || ''
+})
+
+const onCloseBehaviorChange = (e: any) => {
+  const value = e.target.value as string
+  closeBehavior.value = value
+  window.electronAPI?.setCloseBehavior(value)
 }
 </script>
 

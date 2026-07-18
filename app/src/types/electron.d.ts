@@ -15,6 +15,9 @@ declare global {
             getApiServer: () => Promise<string>;
             toggleDevTools: (enabled: boolean) => void;
 
+            getCloseBehavior: () => Promise<string>;
+            setCloseBehavior: (behavior: string) => Promise<void>;
+
             // ── 更新 ──
             checkUpdate: () => Promise<{
                 hasUpdate: boolean;
