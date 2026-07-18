@@ -2,13 +2,23 @@
   <SettingsPageWrapper title="智能助手">
 
     <div class="setting-list">
-      <!-- 供应商 -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">供应商</span>
-          <span class="setting-desc">选择 AI 服务供应商</span>
+      <!-- API 连接 -->
+      <div class="setting-card setting-card-vertical">
+        <div class="setting-header-row">
+          <div class="setting-info">
+            <span class="setting-title">API 连接</span>
+            <span class="setting-desc">配置 AI 服务供应商和连接参数</span>
+          </div>
+          <a-button @click="handleTestConnection" :loading="testing">测试连接</a-button>
         </div>
-        <div class="setting-action">
+
+        <div class="card-section-divider" />
+
+        <div class="inline-field">
+          <div class="setting-info">
+            <span class="setting-title">供应商</span>
+            <span class="setting-desc">选择 AI 服务供应商</span>
+          </div>
           <a-select
             v-model:value="form.provider"
             size="small"
@@ -17,15 +27,12 @@
             @change="onProviderChange"
           />
         </div>
-      </div>
 
-      <!-- 端点 -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">端点</span>
-          <span class="setting-desc">选择 AI 服务提供商的 API 端点</span>
-        </div>
-        <div class="setting-action">
+        <div class="inline-field">
+          <div class="setting-info">
+            <span class="setting-title">端点</span>
+            <span class="setting-desc">选择 AI 服务提供商的 API 端点</span>
+          </div>
           <a-select
             v-model:value="form.endpoint"
             size="small"
@@ -34,30 +41,24 @@
             @change="onEndpointChange"
           />
         </div>
-      </div>
 
-      <!-- Base URL -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">Base URL</span>
-          <span class="setting-desc">API 服务的基础地址</span>
-        </div>
-        <div class="setting-action">
+        <div class="inline-field">
+          <div class="setting-info">
+            <span class="setting-title">Base URL</span>
+            <span class="setting-desc">API 服务的基础地址</span>
+          </div>
           <a-input
             v-model:value="form.base_url"
             :placeholder="baseUrlPlaceholder"
             class="setting-input-wide"
           />
         </div>
-      </div>
 
-      <!-- API Key -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">API Key</span>
-          <span class="setting-desc">{{ form.has_key ? '已设置' : 'API 访问密钥' }}</span>
-        </div>
-        <div class="setting-action">
+        <div class="inline-field">
+          <div class="setting-info">
+            <span class="setting-title">API Key</span>
+            <span class="setting-desc">{{ form.has_key ? '已设置' : 'API 访问密钥' }}</span>
+          </div>
           <a-input-password
             v-model:value="form.api_key"
             :placeholder="keyPlaceholder ? '••••••••' : '请输入 API Key'"
@@ -65,16 +66,12 @@
             @focus="onKeyFieldFocus"
           />
         </div>
-      </div>
 
-      <!-- 模型 -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">模型</span>
-          <span class="setting-desc">使用的模型名称</span>
-        </div>
-        <div class="setting-action">
-          <!-- DeepSeek: 正常时下拉框，加载失败时降级为输入框 + 重试 -->
+        <div class="inline-field">
+          <div class="setting-info">
+            <span class="setting-title">模型</span>
+            <span class="setting-desc">使用的模型名称</span>
+          </div>
           <template v-if="form.provider === 'deepseek'">
             <a-select
               v-if="!modelsError"
@@ -94,7 +91,6 @@
               <a-button type="link" size="small" @click="fetchModels">重试</a-button>
             </div>
           </template>
-          <!-- 自定义: 文本输入框 -->
           <a-input
             v-else
             v-model:value="form.model"
@@ -102,54 +98,47 @@
             class="setting-input-wide"
           />
         </div>
-      </div>
 
-      <!-- 余额 (仅 DeepSeek) -->
-      <div v-if="form.provider === 'deepseek'" class="setting-card setting-card-vertical">
-        <div class="setting-info">
-          <span class="setting-title">账户余额</span>
-          <span class="setting-desc">DeepSeek API 账户余额信息</span>
-        </div>
-        <div class="setting-action setting-action-full">
-          <div v-if="!form.has_key" class="balance-hint">请先设置 API Key</div>
-          <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
-          <div v-else-if="balanceError" class="balance-hint balance-error">
-            {{ balanceError }}
-            <a-button type="link" size="small" @click="fetchBalance">重试</a-button>
-          </div>
-          <div v-else-if="balance" class="balance-info">
-            <div class="balance-status">
-              <span class="balance-dot" :class="balance.is_available ? 'dot-available' : 'dot-unavailable'" />
-              <span>{{ balance.is_available ? '可用' : '不可用' }}</span>
+        <template v-if="form.provider === 'deepseek'">
+          <div class="card-section-divider" />
+          <div class="balance-section">
+            <div class="setting-info">
+              <span class="setting-title">账户余额</span>
+              <span class="setting-desc">DeepSeek API 账户余额信息</span>
             </div>
-            <div v-for="info in balance.balance_infos" :key="info.currency" class="balance-row">
-              <span class="balance-currency">{{ info.currency }}</span>
-              <span class="balance-value">
-                总额 {{ info.total_balance }}
-                <span class="balance-sub">赠金 {{ info.granted_balance }}</span>
-                <span class="balance-sub">充值 {{ info.topped_up_balance }}</span>
-              </span>
+            <div class="setting-action setting-action-full">
+              <div v-if="!form.has_key" class="balance-hint">请先设置 API Key</div>
+              <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
+              <div v-else-if="balanceError" class="balance-hint balance-error">
+                {{ balanceError }}
+                <a-button type="link" size="small" @click="fetchBalance">重试</a-button>
+              </div>
+              <div v-else-if="balance" class="balance-info">
+                <div class="balance-status">
+                  <span class="balance-dot" :class="balance.is_available ? 'dot-available' : 'dot-unavailable'" />
+                  <span>{{ balance.is_available ? '可用' : '不可用' }}</span>
+                </div>
+                <div v-for="info in balance.balance_infos" :key="info.currency" class="balance-row">
+                  <span class="balance-currency">{{ info.currency }}</span>
+                  <span class="balance-value">
+                    总额 {{ info.total_balance }}
+                    <span class="balance-sub">赠金 {{ info.granted_balance }}</span>
+                    <span class="balance-sub">充值 {{ info.topped_up_balance }}</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="setting-card">
-        <div class="setting-info">
-          <span class="setting-title">连接测试</span>
-          <span class="setting-desc">验证配置是否能正常连接 AI 服务</span>
-        </div>
-        <div class="setting-action setting-action-row">
-          <a-button @click="handleTestConnection" :loading="testing">测试连接</a-button>
-          <a-button type="primary" @click="handleSave" :loading="saving">保存配置</a-button>
-        </div>
+        </template>
       </div>
 
       <!-- 角色配置 (系统提示词 + 快捷命令) -->
       <div class="setting-card setting-card-vertical setting-section">
-        <div class="role-selector-row">
-          <span class="role-selector-label">角色</span>
+        <div class="setting-header-row">
+          <div class="setting-info">
+            <span class="setting-title">角色</span>
+            <span class="setting-desc">选择智能助手的角色</span>
+          </div>
           <a-select
             v-model:value="currentRole"
             size="small"
@@ -172,7 +161,7 @@
           <a-textarea
             v-model:value="form.system_prompt"
             :rows="8"
-            :maxlength="4000"
+            :maxlength="10000"
             show-count
             placeholder="留空使用默认提示词"
             class="prompt-textarea"
@@ -268,8 +257,10 @@ const form = reactive<FormState>({
 })
 
 const testing = ref(false)
-const saving = ref(false)
 const keyPlaceholder = ref(false)
+
+const loaded = ref(false)
+let configSaveTimer: ReturnType<typeof setTimeout> | null = null
 
 const availableRoles = ref<AiRole[]>([])
 const currentRole = ref<string>('financial_assistant')
@@ -379,6 +370,7 @@ function fetchDeepSeekResources() {
 }
 
 async function loadConfig() {
+  loaded.value = false
   try {
     const config = await aiApi.getConfig(currentRole.value)
     form.provider = config.provider || ''
@@ -395,6 +387,9 @@ async function loadConfig() {
     onProviderChange(form.provider)
   } catch {
     // 加载失败时保持默认值
+  } finally {
+    await nextTick()
+    loaded.value = true
   }
 }
 
@@ -418,34 +413,40 @@ async function handleTestConnection() {
   }
 }
 
-async function handleSave() {
-  saving.value = true
-  try {
-    const keyToSave = keyPlaceholder.value ? '' : form.api_key
-    await aiApi.updateConfig({
-      role: currentRole.value,
-      provider: form.provider,
-      base_url: form.base_url,
-      endpoint: form.endpoint,
-      api_key: keyToSave,
-      model: form.model,
-      system_prompt: form.system_prompt,
-    })
-    if (keyToSave) {
-      form.has_key = true
-      keyPlaceholder.value = false
-    } else if (!keyPlaceholder.value) {
-      form.has_key = false
+function autoSaveConfig() {
+  if (configSaveTimer) clearTimeout(configSaveTimer)
+  configSaveTimer = setTimeout(async () => {
+    try {
+      const keyToSave = keyPlaceholder.value ? '' : form.api_key
+      await aiApi.updateConfig({
+        role: currentRole.value,
+        provider: form.provider,
+        base_url: form.base_url,
+        endpoint: form.endpoint,
+        api_key: keyToSave,
+        model: form.model,
+        system_prompt: form.system_prompt,
+      })
+      if (keyToSave) {
+        form.has_key = true
+        keyPlaceholder.value = false
+      } else if (!keyPlaceholder.value) {
+        form.has_key = false
+      }
+      fetchDeepSeekResources()
+    } catch (e: any) {
+      NotificationUtil.error('自动保存失败', e.message)
     }
-    NotificationUtil.success('AI 配置已保存')
-    // 保存后重新查询 DeepSeek 资源（可能有新的 API Key）
-    fetchDeepSeekResources()
-  } catch (e: any) {
-    NotificationUtil.error('保存失败', e.message)
-  } finally {
-    saving.value = false
-  }
+  }, 800)
 }
+
+watch(
+  () => [form.provider, form.base_url, form.endpoint, form.api_key, form.model, form.system_prompt],
+  () => {
+    if (!loaded.value) return
+    autoSaveConfig()
+  }
+)
 
 function resetSystemPrompt() {
   form.system_prompt = ''
@@ -543,6 +544,7 @@ onMounted(() => {
 onUnmounted(() => {
   destroySortable()
   if (saveTimer) clearTimeout(saveTimer)
+  if (configSaveTimer) clearTimeout(configSaveTimer)
 })
 </script>
 
@@ -600,6 +602,22 @@ onUnmounted(() => {
 .setting-action-row {
   display: flex;
   gap: var(--billadm-space-sm);
+}
+
+.inline-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--billadm-space-sm) 0;
+}
+
+.inline-field:first-of-type {
+  padding-top: 0;
+}
+
+.balance-section {
+  width: 100%;
 }
 
 .setting-card-vertical {

@@ -134,6 +134,7 @@
             v-model="inputText"
             class="chat-textarea"
             :disabled="streaming"
+            maxlength="10000"
             placeholder="输入你的问题...  (Enter 发送 / Shift+Enter 换行)"
             rows="1"
             @keydown="onKeydown"

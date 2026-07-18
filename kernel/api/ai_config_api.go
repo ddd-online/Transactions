@@ -53,6 +53,9 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	if req.Role == "" {
 		req.Role = "financial_assistant"
 	}
+	if len(req.SystemPrompt) > 10000 {
+		return nil, fmt.Errorf("系统提示词不能超过 10000 个字符")
+	}
 
 	config := &models.AiConfig{
 		Role:         req.Role,

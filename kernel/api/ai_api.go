@@ -27,8 +27,8 @@ func (h *Handlers) aiChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
 		return
 	}
-	if len(req.Message) > 4000 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "消息过长，最多 4000 字符"})
+	if len(req.Message) > 10000 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "消息过长，最多 10000 字符"})
 		return
 	}
 	if req.RoleName == "" {
