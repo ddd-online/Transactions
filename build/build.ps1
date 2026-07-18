@@ -142,15 +142,34 @@ try {
 
 
     # ==============================
-    # 4. 执行 Electron 打包
+    # 4. 裁剪生产依赖 → 打包 → 恢复全量依赖
     # ==============================
-    Write-Step "正在执行 Electron 应用打包..."
     Set-Location $electronDir
+
+    Write-Step "正在裁剪 node_modules（仅保留生产依赖，加速打包）..."
+    & npm prune --production
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warn "npm prune 返回非零退出码，继续打包..."
+    } else {
+        Write-Success "已裁剪 dev 依赖"
+    }
+
+    Write-Step "正在执行 Electron 应用打包..."
     Write-Host "   执行命令: npm run package" -ForegroundColor Yellow
     & npm run package
+    $packageExitCode = $LASTEXITCODE
+
+    Write-Step "正在恢复 node_modules 全量依赖..."
+    & npm install --ignore-scripts
     if ($LASTEXITCODE -ne 0) {
-        Write-ErrorCustom "Electron 打包失败，退出码: $LASTEXITCODE"
-        exit $LASTEXITCODE
+        Write-Warn "npm install 返回非零退出码，请手动运行 npm install"
+    } else {
+        Write-Success "已恢复全量依赖"
+    }
+
+    if ($packageExitCode -ne 0) {
+        Write-ErrorCustom "Electron 打包失败，退出码: $packageExitCode"
+        exit $packageExitCode
     }
     Write-Success "Electron 应用打包成功！"
 
