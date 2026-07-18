@@ -25,6 +25,24 @@ func (h *Handlers) serveStaticFile(c *gin.Context) {
 		return
 	}
 
-	fullPath := filepath.Join(ws.GetDirectory(), "data", "assets", cleanPath)
-	c.File(fullPath)
+	baseDir := filepath.Join(ws.GetDirectory(), "data", "assets")
+	fullPath := filepath.Join(baseDir, cleanPath)
+
+	// Resolve symlinks and verify path stays within base directory
+	resolved, err := filepath.Abs(fullPath)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusForbidden, models.Result{Code: -1, Msg: "invalid file path"})
+		return
+	}
+	absBase, err := filepath.Abs(baseDir)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusForbidden, models.Result{Code: -1, Msg: "invalid file path"})
+		return
+	}
+	if !strings.HasPrefix(resolved, absBase+string(filepath.Separator)) && resolved != absBase {
+		c.AbortWithStatusJSON(http.StatusForbidden, models.Result{Code: -1, Msg: "invalid file path"})
+		return
+	}
+
+	c.File(resolved)
 }
