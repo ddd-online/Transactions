@@ -26,7 +26,10 @@ defineProps<{
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--billadm-space-md) var(--billadm-space-lg) 0;
+  padding: var(--billadm-space-xl) var(--billadm-space-lg) 0;
+
+  --settings-card-gap: var(--billadm-space-sm);
+  --settings-section-gap: var(--billadm-space-xl);
 }
 
 .page-body {
@@ -34,8 +37,9 @@ defineProps<{
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  gap: var(--billadm-space-sm);
   min-height: 0;
-  padding-bottom: var(--billadm-space-md);
+  padding-bottom: var(--billadm-space-xl);
 
   @include custom-scrollbar;
 }
