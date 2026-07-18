@@ -22,14 +22,11 @@
           <span class="setting-desc">点击关闭按钮时的操作</span>
         </div>
         <div class="setting-action">
-          <a-radio-group
-            :value="closeBehavior"
+          <a-segmented
+            v-model:value="closeBehavior"
+            :options="closeBehaviorOptions"
             @change="onCloseBehaviorChange"
-            size="small"
-          >
-            <a-radio-button value="quit">直接关闭</a-radio-button>
-            <a-radio-button value="tray">缩小到托盘</a-radio-button>
-          </a-radio-group>
+          />
         </div>
       </div>
 
@@ -97,10 +94,13 @@ onMounted(async () => {
   closeBehavior.value = await window.electronAPI?.getCloseBehavior() || ''
 })
 
-const onCloseBehaviorChange = (e: any) => {
-  const value = e.target.value as string
-  closeBehavior.value = value
-  window.electronAPI?.setCloseBehavior(value)
+const closeBehaviorOptions = [
+  { value: 'quit', label: '直接关闭' },
+  { value: 'tray', label: '缩小到托盘' },
+]
+
+const onCloseBehaviorChange = (value: string | number) => {
+  window.electronAPI?.setCloseBehavior(String(value))
 }
 </script>
 

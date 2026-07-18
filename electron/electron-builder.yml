@@ -10,6 +10,7 @@ files:
   - package.json
   - dist/**
   - transactions.exe
+  - assets/Transactions.ico
 win:
   icon: "Transactions.ico"
   requestedExecutionLevel: "asInvoker"
