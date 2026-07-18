@@ -19,13 +19,8 @@
             <span class="setting-title">供应商</span>
             <span class="setting-desc">选择 AI 服务供应商</span>
           </div>
-          <a-select
-            v-model:value="form.provider"
-            size="small"
-            :options="providerOptions"
-            class="setting-input-wide"
-            @change="onProviderChange"
-          />
+          <a-select v-model:value="form.provider" :options="providerOptions" class="setting-input-wide"
+            @change="onProviderChange" />
         </div>
 
         <div class="inline-field">
@@ -33,13 +28,8 @@
             <span class="setting-title">端点</span>
             <span class="setting-desc">选择 AI 服务提供商的 API 端点</span>
           </div>
-          <a-select
-            v-model:value="form.endpoint"
-            size="small"
-            :options="endpointOptions"
-            class="setting-input-wide"
-            @change="onEndpointChange"
-          />
+          <a-select v-model:value="form.endpoint" :options="endpointOptions" class="setting-input-wide"
+            @change="onEndpointChange" />
         </div>
 
         <div class="inline-field">
@@ -47,11 +37,7 @@
             <span class="setting-title">Base URL</span>
             <span class="setting-desc">API 服务的基础地址</span>
           </div>
-          <a-input
-            v-model:value="form.base_url"
-            :placeholder="baseUrlPlaceholder"
-            class="setting-input-wide"
-          />
+          <a-input v-model:value="form.base_url" :placeholder="baseUrlPlaceholder" class="setting-input-wide" />
         </div>
 
         <div class="inline-field">
@@ -59,12 +45,8 @@
             <span class="setting-title">API Key</span>
             <span class="setting-desc">{{ form.has_key ? '已设置' : 'API 访问密钥' }}</span>
           </div>
-          <a-input-password
-            v-model:value="form.api_key"
-            :placeholder="keyPlaceholder ? '••••••••' : '请输入 API Key'"
-            class="setting-input-wide"
-            @focus="onKeyFieldFocus"
-          />
+          <a-input-password v-model:value="form.api_key" :placeholder="keyPlaceholder ? '••••••••' : '请输入 API Key'"
+            class="setting-input-wide" @focus="onKeyFieldFocus" />
         </div>
 
         <div class="inline-field">
@@ -73,30 +55,15 @@
             <span class="setting-desc">使用的模型名称</span>
           </div>
           <template v-if="form.provider === 'deepseek'">
-            <a-select
-              v-if="!modelsError"
-              v-model:value="form.model"
-              size="small"
-              :loading="modelsLoading"
-              :options="modelOptions"
-              placeholder="请选择模型"
-              class="setting-input-wide"
-            />
+            <a-select v-if="!modelsError" v-model:value="form.model" :loading="modelsLoading" :options="modelOptions"
+              placeholder="请选择模型" class="setting-input-wide" />
             <div v-else class="model-error-inline">
-              <a-input
-                v-model:value="form.model"
-                placeholder="加载失败，请手动输入模型名"
-                style="width: 280px"
-              />
-              <a-button type="link" size="small" @click="fetchModels">重试</a-button>
+              <a-input v-model:value="form.model" placeholder="加载失败，请手动输入模型名" style="width: 280px" />
+              <a-button type="link" @click="fetchModels">重试</a-button>
             </div>
           </template>
-          <a-input
-            v-else
-            v-model:value="form.model"
-            placeholder="例如: claude-sonnet-4-20250514"
-            class="setting-input-wide"
-          />
+          <a-input v-else v-model:value="form.model" placeholder="例如: claude-sonnet-4-20250514"
+            class="setting-input-wide" />
         </div>
 
         <template v-if="form.provider === 'deepseek'">
@@ -106,7 +73,7 @@
             <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
             <div v-else-if="balanceError" class="balance-hint balance-error">
               {{ balanceError }}
-              <a-button type="link" size="small" @click="fetchBalance">重试</a-button>
+              <a-button type="link" @click="fetchBalance">重试</a-button>
             </div>
             <div v-else-if="balance" class="balance-info">
               <div class="balance-header">
@@ -139,13 +106,9 @@
             <span class="setting-title">角色</span>
             <span class="setting-desc">选择智能助手的角色</span>
           </div>
-          <a-select
-            v-model:value="currentRole"
-            size="small"
-            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-            style="width: 140px"
-            @change="onRoleChange"
-          />
+          <a-select v-model:value="currentRole"
+            :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))" style="width: 140px"
+            @change="onRoleChange" />
         </div>
 
         <div class="card-section-divider" />
@@ -155,17 +118,11 @@
             <span class="setting-title">系统提示词</span>
             <span class="setting-desc">自定义智能助手的行为和回答风格。留空则使用默认提示词</span>
           </div>
-          <a-button size="small" @click="resetSystemPrompt">恢复默认</a-button>
+          <a-button @click="resetSystemPrompt">恢复默认</a-button>
         </div>
         <div class="setting-action setting-action-full">
-          <a-textarea
-            v-model:value="form.system_prompt"
-            :rows="8"
-            :maxlength="10000"
-            show-count
-            placeholder="留空使用默认提示词"
-            class="prompt-textarea"
-          />
+          <a-textarea v-model:value="form.system_prompt" :rows="8" :maxlength="10000" show-count placeholder="留空使用默认提示词"
+            class="prompt-textarea" />
           <div class="placeholder-hint" v-if="currentRole === 'financial_assistant'">
             支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
           </div>
@@ -178,15 +135,11 @@
             <span class="setting-title">快捷命令</span>
             <span class="setting-desc">在聊天页快捷发送的常用问题，支持拖拽排序</span>
           </div>
-          <a-button size="small" @click="addCommand">+ 新增</a-button>
+          <a-button @click="addCommand">+ 新增</a-button>
         </div>
         <div class="setting-action setting-action-full">
           <div class="quick-commands-list" ref="commandsListRef">
-            <div
-              v-for="(cmd, index) in commands"
-              :key="cmd.id"
-              class="quick-command-item"
-            >
+            <div v-for="(cmd, index) in commands" :key="cmd.id" class="quick-command-item">
               <span class="drag-handle" title="拖动排序">
                 <svg viewBox="0 0 16 16" fill="currentColor">
                   <circle cx="5" cy="3" r="1.5" />
@@ -197,20 +150,11 @@
                   <circle cx="11" cy="13" r="1.5" />
                 </svg>
               </span>
-              <a-input
-                v-model:value="cmd.label"
-                size="small"
-                placeholder="输入快捷命令"
-                :maxlength="200"
-                @change="onCommandLabelChange"
-              />
-              <a-button
-                type="text"
-                size="small"
-                @click="removeCommand(index)"
-                class="cmd-delete-btn"
-              >
-                <template #icon><DeleteOutlined /></template>
+              <a-input v-model:value="cmd.label" placeholder="输入快捷命令" :maxlength="200" @change="onCommandLabelChange" />
+              <a-button type="text" @click="removeCommand(index)" class="cmd-delete-btn">
+                <template #icon>
+                  <DeleteOutlined />
+                </template>
               </a-button>
             </div>
             <div v-if="commands.length === 0" class="quick-commands-empty">
@@ -535,7 +479,7 @@ function autoSaveCommands() {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     const items = commands.value.map(c => ({ label: c.label })).filter(c => c.label.trim() !== '')
-    aiApi.saveQuickCommands(currentRole.value, items).catch(() => {})
+    aiApi.saveQuickCommands(currentRole.value, items).catch(() => { })
   }, 300)
 }
 
@@ -609,8 +553,13 @@ onUnmounted(() => {
   margin-left: var(--billadm-space-lg);
 }
 
-.setting-input-wide { width: 360px; }
-.setting-input-small { width: 200px; }
+.setting-input-wide {
+  width: 360px;
+}
+
+.setting-input-small {
+  width: 200px;
+}
 
 .setting-action-row {
   display: flex;
@@ -795,10 +744,23 @@ onUnmounted(() => {
 }
 
 .prompt-textarea :deep(textarea) {
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; }
-  &:hover::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.40); }
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: var(--billadm-space-xs);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(141, 127, 111, 0.18);
+    border-radius: 8px;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba(141, 127, 111, 0.40);
+  }
 }
 
 /* Quick Commands */
@@ -870,6 +832,8 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .setting-card { transition: none; }
+  .setting-card {
+    transition: none;
+  }
 }
 </style>

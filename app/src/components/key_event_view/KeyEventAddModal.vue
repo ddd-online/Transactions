@@ -1,26 +1,12 @@
 <template>
-  <a-modal
-    :open="open"
-    title="添加事件"
-    ok-text="确认"
-    cancel-text="取消"
-    centered
-    :width="360"
-    :confirm-loading="loading"
-    @ok="handleConfirm"
-    @cancel="$emit('close')"
-  >
-    <a-form
-      ref="formRef"
-      :model="formState"
-      :rules="formRules"
-      layout="vertical"
-    >
+  <a-modal :open="open" title="添加事件" ok-text="确认" cancel-text="取消" centered :width="360" :confirm-loading="loading"
+    @ok="handleConfirm" @cancel="$emit('close')">
+    <a-form ref="formRef" :model="formState" :rules="formRules" layout="vertical">
       <a-form-item label="日期" name="date">
-        <a-date-picker v-model:value="formDate" style="width: 100%" size="small" />
+        <a-date-picker v-model:value="formDate" style="width: 100%" />
       </a-form-item>
       <a-form-item label="名称" name="title">
-        <a-input v-model:value="formTitle" placeholder="事件名称（可选）" :maxlength="200" size="small" />
+        <a-input v-model:value="formTitle" placeholder="事件名称（可选）" :maxlength="200" />
       </a-form-item>
     </a-form>
   </a-modal>
@@ -81,5 +67,4 @@ const handleConfirm = async () => {
 };
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

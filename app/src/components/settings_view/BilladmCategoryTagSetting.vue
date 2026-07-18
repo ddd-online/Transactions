@@ -3,14 +3,9 @@
     <template #toolbar>
       <!-- 类型切换导航 -->
       <nav class="type-nav">
-        <button
-          v-for="type in transactionTypes"
-          :key="type.value"
-          class="type-card"
-          :class="{ 'is-active': activeType === type.value }"
-          :style="{ '--c': type.color }"
-          @click="activeType = type.value"
-        >
+        <button v-for="type in transactionTypes" :key="type.value" class="type-card"
+          :class="{ 'is-active': activeType === type.value }" :style="{ '--c': type.color }"
+          @click="activeType = type.value">
           <span class="type-card-label">{{ type.label }}</span>
         </button>
       </nav>
@@ -18,34 +13,20 @@
 
     <!-- 主体：分类列表 + 标签列表 -->
     <div class="setting-main">
-      <CategoryColumn
-        :categories="categories"
-        :selected-category="selectedCategory"
-        :has-ledger="!!ledgerStore.currentLedgerId"
-        :has-any-categories="hasAnyCategories"
-        :init-loading="initLoading"
-        @select-category="selectCategory"
-        @add-category="openAddCategoryModal"
-        @reorder-category="reorderCategories"
-        @delete-category="confirmDeleteCategory"
-        @initialize="handleInitialize"
-      />
+      <CategoryColumn :categories="categories" :selected-category="selectedCategory"
+        :has-ledger="!!ledgerStore.currentLedgerId" :has-any-categories="hasAnyCategories" :init-loading="initLoading"
+        @select-category="selectCategory" @add-category="openAddCategoryModal" @reorder-category="reorderCategories"
+        @delete-category="confirmDeleteCategory" @initialize="handleInitialize" />
 
-      <TagColumn
-        :tags="selectedTags"
-        :selected-category="selectedCategory"
-        @add-tag="openAddTagModal"
-        @reorder-tag="reorderTags"
-        @delete-tag="confirmDeleteTag"
-      />
+      <TagColumn :tags="selectedTags" :selected-category="selectedCategory" @add-tag="openAddTagModal"
+        @reorder-tag="reorderTags" @delete-tag="confirmDeleteTag" />
     </div>
 
     <!-- 添加分类弹窗 -->
     <a-modal v-model:open="openCategoryModal" title="新增分类" @ok="confirmAddCategory" ok-text="确认" cancel-text="取消"
       centered :width="360">
       <div class="modal-form">
-        <label class="form-label">名称</label>
-        <a-input v-model:value="categoryForm.name" placeholder="输入分类名称" size="large" :maxlength="20" />
+        <a-input v-model:value="categoryForm.name" placeholder="输入分类名称" :maxlength="20" />
       </div>
     </a-modal>
 
@@ -53,8 +34,7 @@
     <a-modal v-model:open="openTagModal" title="新增标签" @ok="confirmAddTag" ok-text="确认" cancel-text="取消" centered
       :width="360">
       <div class="modal-form">
-        <label class="form-label">名称</label>
-        <a-input v-model:value="tagForm.name" placeholder="输入标签名称" size="large" :maxlength="20" />
+        <a-input v-model:value="tagForm.name" placeholder="输入标签名称" :maxlength="20" />
       </div>
     </a-modal>
 
@@ -359,8 +339,8 @@ watch(
   cursor: pointer;
   user-select: none;
   transition: background-color var(--billadm-transition-smooth),
-              box-shadow var(--billadm-transition-smooth),
-              color var(--billadm-transition-fast);
+    box-shadow var(--billadm-transition-smooth),
+    color var(--billadm-transition-fast);
 }
 
 .type-card:hover:not(.is-active) {
@@ -402,6 +382,8 @@ watch(
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .type-card { transition: none; }
+  .type-card {
+    transition: none;
+  }
 }
 </style>

@@ -12,18 +12,10 @@
 
     <!-- 图表列表 -->
     <div class="chart-list-section">
-      <div
-        v-for="chart in allCharts"
-        :key="chart.chartId"
-        class="chart-list-item"
-        :class="{ active: selectedId === chart.chartId }"
-        tabindex="0"
-        role="option"
-        :aria-selected="selectedId === chart.chartId"
-        @click="selectChart(chart)"
-        @keydown.enter="selectChart(chart)"
-        @keydown.space.prevent="selectChart(chart)"
-      >
+      <div v-for="chart in allCharts" :key="chart.chartId" class="chart-list-item"
+        :class="{ active: selectedId === chart.chartId }" tabindex="0" role="option"
+        :aria-selected="selectedId === chart.chartId" @click="selectChart(chart)" @keydown.enter="selectChart(chart)"
+        @keydown.space.prevent="selectChart(chart)">
         <span class="chart-list-item-title">{{ chart.title }}</span>
         <div class="chart-list-item-actions" @click.stop>
           <a-button type="text" size="small" danger @click="handleDelete(chart)">
@@ -36,18 +28,13 @@
     </div>
 
     <!-- 新增图表弹窗 -->
-    <a-modal
-      v-model:open="showCreateModal"
-      title="新增图表"
-      @ok="handleCreate"
-      :confirm-loading="createLoading"
-    >
+    <a-modal v-model:open="showCreateModal" title="新增图表" @ok="handleCreate" :confirm-loading="createLoading">
       <a-form :model="createForm" layout="vertical">
         <a-form-item label="图表名称" name="title">
           <a-input v-model:value="createForm.title" placeholder="请输入图表名称" />
         </a-form-item>
         <a-form-item label="时间粒度" name="granularity">
-          <a-select v-model:value="createForm.granularity" size="small" placeholder="请选择时间粒度">
+          <a-select v-model:value="createForm.granularity" placeholder="请选择时间粒度">
             <a-select-option value="year">年度</a-select-option>
             <a-select-option value="month">月度</a-select-option>
           </a-select>

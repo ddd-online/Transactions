@@ -16,24 +16,18 @@
             </button>
             <template #overlay>
               <div class="chat-role-menu">
-                <div
-                  v-for="role in availableRoles"
-                  :key="role.name"
-                  class="chat-role-menu-item"
-                  :class="{ active: currentRole === role.name }"
-                  @click="onRoleChange(role.name)"
-                >{{ role.display_name }}</div>
+                <div v-for="role in availableRoles" :key="role.name" class="chat-role-menu-item"
+                  :class="{ active: currentRole === role.name }" @click="onRoleChange(role.name)">{{ role.display_name
+                  }}</div>
               </div>
             </template>
           </a-dropdown>
         </div>
-        <a-button
-          type="text"
-          :disabled="messages.length === 0 && !streaming"
-          @click="clearConversation"
-          class="chat-header-clear"
-        >
-          <template #icon><DeleteOutlined /></template>
+        <a-button type="text" :disabled="messages.length === 0 && !streaming" @click="clearConversation"
+          class="chat-header-clear">
+          <template #icon>
+            <DeleteOutlined />
+          </template>
           清空对话
         </a-button>
       </div>
@@ -43,12 +37,9 @@
         <div v-if="messages.length === 0 && !streaming" class="chat-empty">
           <p class="chat-empty-greeting">{{ greeting }}</p>
           <div v-if="quickCommands.length > 0" class="chat-empty-chips">
-            <button
-              v-for="(cmd, idx) in quickCommands"
-              :key="idx"
-              class="chat-empty-chip"
-              @click="fillAndSend(cmd.label)"
-            >{{ cmd.label }}</button>
+            <button v-for="(cmd, idx) in quickCommands" :key="idx" class="chat-empty-chip"
+              @click="fillAndSend(cmd.label)">{{
+              cmd.label }}</button>
           </div>
         </div>
 
@@ -56,25 +47,28 @@
           <!-- User Message -->
           <div v-if="msg.role === 'user'" class="msg-user-row">
             <div class="msg-meta-col">
-              <button class="msg-copy-btn" @click.stop="copyMessage(msg.content)" title="复制"><CopyOutlined /></button>
+              <button class="msg-copy-btn" @click.stop="copyMessage(msg.content)" title="复制">
+                <CopyOutlined />
+              </button>
               <div class="msg-user-time">{{ formatTime(msg.timestamp) }}</div>
             </div>
-            <div class="msg-user"><div class="msg-user-content">{{ msg.content }}</div></div>
+            <div class="msg-user">
+              <div class="msg-user-content">{{ msg.content }}</div>
+            </div>
           </div>
 
           <!-- AI Text Message -->
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
             <div class="msg-assistant">
               <!-- Inline Thinking -->
-              <div v-if="msg.thinkingContent" class="assistant-thinking" :class="{ 'assistant-thinking--active': msg.thinkingActive }">
-                <button
-                  class="assistant-thinking-toggle"
-                  @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
-                  :aria-expanded="!msg.thinkingCollapsed || msg.thinkingActive"
-                >
+              <div v-if="msg.thinkingContent" class="assistant-thinking"
+                :class="{ 'assistant-thinking--active': msg.thinkingActive }">
+                <button class="assistant-thinking-toggle" @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
+                  :aria-expanded="!msg.thinkingCollapsed || msg.thinkingActive">
                   <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
                   <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
-                  <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed || msg.thinkingActive }">▾</span>
+                  <span class="thinking-arrow"
+                    :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed || msg.thinkingActive }">▾</span>
                 </button>
                 <div v-if="!msg.thinkingCollapsed || msg.thinkingActive" class="assistant-thinking-content">
                   {{ msg.thinkingContent }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span>
@@ -84,7 +78,9 @@
               <span v-if="msg.streaming" class="streaming-cursor">|</span>
             </div>
             <div class="msg-meta-col">
-              <button class="msg-copy-btn" @click.stop="copyMessage(msg.content)" title="复制"><CopyOutlined /></button>
+              <button class="msg-copy-btn" @click.stop="copyMessage(msg.content)" title="复制">
+                <CopyOutlined />
+              </button>
               <div class="msg-assistant-meta">
                 <span>{{ formatTime(msg.timestamp) }}</span>
                 <span v-if="msg.tokens">&nbsp;·&nbsp;{{ msg.tokens }}tk</span>
@@ -109,7 +105,8 @@
               <a-button type="link" size="small" @click="toggleToolDetail(msg.id)" class="msg-tool-detail-toggle">
                 {{ expandedToolDetails.has(msg.id) ? '收起详情' : '查看详情' }}
               </a-button>
-              <pre v-if="expandedToolDetails.has(msg.id)" class="msg-tool-detail-json">{{ JSON.stringify(msg.toolDetail, null, 2) }}</pre>
+              <pre v-if="expandedToolDetails.has(msg.id)" class="msg-tool-detail-json">{{ JSON.stringify(msg.toolDetail, null,
+          2) }}</pre>
             </div>
           </div>
         </div>
@@ -129,24 +126,12 @@
       <div class="chat-input-area">
         <div class="chat-divider"></div>
         <div class="chat-input-row">
-          <textarea
-            ref="textareaRef"
-            v-model="inputText"
-            class="chat-textarea"
-            :disabled="streaming"
-            maxlength="10000"
-            placeholder="输入你的问题...  (Enter 发送 / Shift+Enter 换行)"
-            rows="1"
-            @keydown="onKeydown"
-            @input="autoResize"
-          ></textarea>
-          <button
-            class="chat-send-btn"
-            :class="{ 'chat-send-btn--stop': streaming }"
-            :disabled="!streaming && !inputText.trim()"
-            @click="streaming ? stopGeneration() : sendMessage()"
-            :title="streaming ? '停止生成' : '发送'"
-          >
+          <textarea ref="textareaRef" v-model="inputText" class="chat-textarea" :disabled="streaming" maxlength="10000"
+            placeholder="输入你的问题...  (Enter 发送 / Shift+Enter 换行)" rows="1" @keydown="onKeydown"
+            @input="autoResize"></textarea>
+          <button class="chat-send-btn" :class="{ 'chat-send-btn--stop': streaming }"
+            :disabled="!streaming && !inputText.trim()" @click="streaming ? stopGeneration() : sendMessage()"
+            :title="streaming ? '停止生成' : '发送'">
             <StopOutlined v-if="streaming" />
             <SendOutlined v-else />
           </button>
@@ -154,13 +139,7 @@
       </div>
     </div>
 
-    <a-modal
-      v-model:open="toolsModalVisible"
-      title="可用工具"
-      :footer="null"
-      centered
-      :width="520"
-    >
+    <a-modal v-model:open="toolsModalVisible" title="可用工具" :footer="null" centered :width="520">
       <div v-if="toolsLoading" class="tools-loading">加载中...</div>
       <div v-else-if="currentRoleTools.length === 0" class="tools-empty">暂无可用工具</div>
       <div v-else class="tools-list">
@@ -561,7 +540,9 @@ onUnmounted(() => {
   font-size: var(--billadm-size-text-body-sm);
 }
 
-.chat-header-clear:hover { color: var(--billadm-color-text-major); }
+.chat-header-clear:hover {
+  color: var(--billadm-color-text-major);
+}
 
 .chat-messages {
   flex: 1;
@@ -569,9 +550,20 @@ onUnmounted(() => {
   padding: var(--billadm-space-xl);
   position: relative;
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: var(--billadm-space-xs);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(141, 127, 111, 0.18);
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
@@ -637,9 +629,17 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-.chat-message--user { align-items: flex-end; }
-.chat-message--assistant { align-items: flex-start; }
-.chat-message--tool { align-items: flex-start; }
+.chat-message--user {
+  align-items: flex-end;
+}
+
+.chat-message--assistant {
+  align-items: flex-start;
+}
+
+.chat-message--tool {
+  align-items: flex-start;
+}
 
 /* User Message */
 .msg-user-row {
@@ -708,24 +708,107 @@ onUnmounted(() => {
   -webkit-user-select: text;
 }
 
-.msg-assistant-content :deep(p) { margin: 0 0 var(--billadm-space-sm) 0; }
-.msg-assistant-content :deep(p:last-child) { margin-bottom: 0; }
-.msg-assistant-content :deep(code) { font-family: var(--billadm-font-mono); font-size: 0.9em; background: var(--billadm-color-minor-background); padding: var(--billadm-space-2xs) var(--billadm-space-xs); border-radius: var(--billadm-radius-sm); }
-.msg-assistant-content :deep(pre) { margin: var(--billadm-space-sm) 0; padding: var(--billadm-space-md); background: var(--billadm-color-minor-background); border-radius: var(--billadm-radius-sm); overflow-x: auto; }
-.msg-assistant-content :deep(pre code) { background: none; padding: 0; font-size: var(--billadm-size-text-body-sm); line-height: var(--billadm-height-normal); }
-.msg-assistant-content :deep(table) { width: 100%; border-collapse: collapse; margin: var(--billadm-space-sm) 0; font-size: var(--billadm-size-text-body-sm); }
-.msg-assistant-content :deep(th), .msg-assistant-content :deep(td) { border: 1px solid var(--billadm-color-divider); padding: var(--billadm-space-xs) var(--billadm-space-sm); text-align: left; }
-.msg-assistant-content :deep(th) { background: var(--billadm-color-minor-background); font-weight: 600; }
-.msg-assistant-content :deep(ul), .msg-assistant-content :deep(ol) { margin: var(--billadm-space-sm) 0; padding-left: var(--billadm-space-xl); }
-.msg-assistant-content :deep(blockquote) { margin: var(--billadm-space-sm) 0; padding: var(--billadm-space-xs) var(--billadm-space-md); background: var(--billadm-color-minor-background); border-radius: var(--billadm-radius-sm); color: var(--billadm-color-text-secondary); }
-.msg-assistant-content :deep(a) { color: var(--billadm-color-primary); }
-.msg-assistant-content :deep(hr) { border: none; border-top: 1px solid var(--billadm-color-divider); margin: var(--billadm-space-md) 0; }
-.msg-assistant-content :deep(strong) { font-weight: 600; }
-.msg-assistant-content :deep(h1), .msg-assistant-content :deep(h2), .msg-assistant-content :deep(h3) { font-family: var(--billadm-font-display); margin: var(--billadm-space-md) 0 var(--billadm-space-sm) 0; font-weight: 600; }
-.msg-assistant-content :deep(h1) { font-size: 1.3em; }
-.msg-assistant-content :deep(h2) { font-size: 1.15em; }
-.msg-assistant-content :deep(h3) { font-size: 1.05em; }
-.msg-assistant-content :deep(input[type="checkbox"]) { margin-right: var(--billadm-space-xs); }
+.msg-assistant-content :deep(p) {
+  margin: 0 0 var(--billadm-space-sm) 0;
+}
+
+.msg-assistant-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.msg-assistant-content :deep(code) {
+  font-family: var(--billadm-font-mono);
+  font-size: 0.9em;
+  background: var(--billadm-color-minor-background);
+  padding: var(--billadm-space-2xs) var(--billadm-space-xs);
+  border-radius: var(--billadm-radius-sm);
+}
+
+.msg-assistant-content :deep(pre) {
+  margin: var(--billadm-space-sm) 0;
+  padding: var(--billadm-space-md);
+  background: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-sm);
+  overflow-x: auto;
+}
+
+.msg-assistant-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  font-size: var(--billadm-size-text-body-sm);
+  line-height: var(--billadm-height-normal);
+}
+
+.msg-assistant-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--billadm-space-sm) 0;
+  font-size: var(--billadm-size-text-body-sm);
+}
+
+.msg-assistant-content :deep(th),
+.msg-assistant-content :deep(td) {
+  border: 1px solid var(--billadm-color-divider);
+  padding: var(--billadm-space-xs) var(--billadm-space-sm);
+  text-align: left;
+}
+
+.msg-assistant-content :deep(th) {
+  background: var(--billadm-color-minor-background);
+  font-weight: 600;
+}
+
+.msg-assistant-content :deep(ul),
+.msg-assistant-content :deep(ol) {
+  margin: var(--billadm-space-sm) 0;
+  padding-left: var(--billadm-space-xl);
+}
+
+.msg-assistant-content :deep(blockquote) {
+  margin: var(--billadm-space-sm) 0;
+  padding: var(--billadm-space-xs) var(--billadm-space-md);
+  background: var(--billadm-color-minor-background);
+  border-radius: var(--billadm-radius-sm);
+  color: var(--billadm-color-text-secondary);
+}
+
+.msg-assistant-content :deep(a) {
+  color: var(--billadm-color-primary);
+}
+
+.msg-assistant-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--billadm-color-divider);
+  margin: var(--billadm-space-md) 0;
+}
+
+.msg-assistant-content :deep(strong) {
+  font-weight: 600;
+}
+
+.msg-assistant-content :deep(h1),
+.msg-assistant-content :deep(h2),
+.msg-assistant-content :deep(h3) {
+  font-family: var(--billadm-font-display);
+  margin: var(--billadm-space-md) 0 var(--billadm-space-sm) 0;
+  font-weight: 600;
+}
+
+.msg-assistant-content :deep(h1) {
+  font-size: 1.3em;
+}
+
+.msg-assistant-content :deep(h2) {
+  font-size: 1.15em;
+}
+
+.msg-assistant-content :deep(h3) {
+  font-size: 1.05em;
+}
+
+.msg-assistant-content :deep(input[type="checkbox"]) {
+  margin-right: var(--billadm-space-xs);
+}
 
 .msg-assistant-meta {
   font-size: var(--billadm-size-text-small);
@@ -752,9 +835,20 @@ onUnmounted(() => {
   transition: opacity var(--billadm-transition-fast);
 }
 
-.chat-message:hover .msg-copy-btn { opacity: 1; }
-.msg-copy-btn:hover { background: var(--billadm-color-hover-bg); color: var(--billadm-color-text-major); }
-.msg-copy-btn:focus-visible { outline: 2px solid var(--billadm-color-primary); outline-offset: 2px; opacity: 1; }
+.chat-message:hover .msg-copy-btn {
+  opacity: 1;
+}
+
+.msg-copy-btn:hover {
+  background: var(--billadm-color-hover-bg);
+  color: var(--billadm-color-text-major);
+}
+
+.msg-copy-btn:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+  opacity: 1;
+}
 
 /* Streaming Cursor */
 .streaming-cursor {
@@ -764,7 +858,15 @@ onUnmounted(() => {
   animation: cursor-blink 0.6s step-end infinite alternate;
 }
 
-@keyframes cursor-blink { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes cursor-blink {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
 
 /* Tool Card */
 .msg-tool {
@@ -799,15 +901,31 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.msg-tool-indicator--pulse { animation: pulse-scale 1s ease-in-out infinite; }
-
-@keyframes pulse-scale {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.6; }
-  100% { transform: scale(1); opacity: 1; }
+.msg-tool-indicator--pulse {
+  animation: pulse-scale 1s ease-in-out infinite;
 }
 
-.msg-tool--done .msg-tool-indicator { background: var(--billadm-color-success); animation: none; }
+@keyframes pulse-scale {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.msg-tool--done .msg-tool-indicator {
+  background: var(--billadm-color-success);
+  animation: none;
+}
 
 .msg-tool-name {
   font-family: var(--billadm-font-mono);
@@ -816,7 +934,12 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.msg-tool-args { margin-top: var(--billadm-space-xs); display: flex; flex-wrap: wrap; gap: var(--billadm-space-xs); }
+.msg-tool-args {
+  margin-top: var(--billadm-space-xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--billadm-space-xs);
+}
 
 .msg-tool-arg {
   display: inline-flex;
@@ -830,9 +953,23 @@ onUnmounted(() => {
   line-height: 1.6;
 }
 
-.msg-tool-arg-key { color: var(--billadm-color-text-secondary); font-family: var(--billadm-font-body); }
-.msg-tool-arg-key::after { content: ':'; }
-.msg-tool-arg-val { color: var(--billadm-color-text-major); font-family: var(--billadm-font-mono); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-tool-arg-key {
+  color: var(--billadm-color-text-secondary);
+  font-family: var(--billadm-font-body);
+}
+
+.msg-tool-arg-key::after {
+  content: ':';
+}
+
+.msg-tool-arg-val {
+  color: var(--billadm-color-text-major);
+  font-family: var(--billadm-font-mono);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .msg-tool-summary {
   margin-top: var(--billadm-space-sm);
@@ -842,8 +979,16 @@ onUnmounted(() => {
   line-height: var(--billadm-height-normal);
 }
 
-.msg-tool-detail { margin-top: var(--billadm-space-sm); }
-.msg-tool-detail-toggle { font-size: var(--billadm-size-text-caption); padding: 0; height: auto; color: var(--billadm-color-primary); }
+.msg-tool-detail {
+  margin-top: var(--billadm-space-sm);
+}
+
+.msg-tool-detail-toggle {
+  font-size: var(--billadm-size-text-caption);
+  padding: 0;
+  height: auto;
+  color: var(--billadm-color-primary);
+}
 
 .msg-tool-detail-json {
   margin-top: var(--billadm-space-sm);
@@ -885,15 +1030,36 @@ onUnmounted(() => {
   color: var(--billadm-color-text-secondary);
 }
 
-.streaming-bar-fade-enter-active { transition: opacity 200ms ease; }
-.streaming-bar-fade-leave-active { transition: opacity 200ms ease; }
+.streaming-bar-fade-enter-active {
+  transition: opacity 200ms ease;
+}
+
+.streaming-bar-fade-leave-active {
+  transition: opacity 200ms ease;
+}
+
 .streaming-bar-fade-enter-from,
-.streaming-bar-fade-leave-to { opacity: 0; }
+.streaming-bar-fade-leave-to {
+  opacity: 0;
+}
 
 /* Input Area */
-.chat-input-area { padding: 0 var(--billadm-space-xl) var(--billadm-space-md); flex-shrink: 0; }
-.chat-divider { height: 1px; background: var(--billadm-color-divider); margin-bottom: var(--billadm-space-md); }
-.chat-input-row { display: flex; align-items: center; gap: var(--billadm-space-sm); }
+.chat-input-area {
+  padding: 0 var(--billadm-space-xl) var(--billadm-space-md);
+  flex-shrink: 0;
+}
+
+.chat-divider {
+  height: 1px;
+  background: var(--billadm-color-divider);
+  margin-bottom: var(--billadm-space-md);
+}
+
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+}
 
 .chat-textarea {
   flex: 1;
@@ -918,8 +1084,14 @@ onUnmounted(() => {
   border-color: var(--billadm-color-primary);
 }
 
-.chat-textarea:disabled { opacity: 0.6; cursor: not-allowed; }
-.chat-textarea::placeholder { color: var(--billadm-color-text-secondary); }
+.chat-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chat-textarea::placeholder {
+  color: var(--billadm-color-text-secondary);
+}
 
 .chat-send-btn {
   width: 36px;
@@ -937,36 +1109,156 @@ onUnmounted(() => {
   transition: background var(--billadm-transition-fast);
 }
 
-.chat-send-btn:hover:not(:disabled) { background: var(--billadm-color-primary-light); }
-.chat-send-btn:focus-visible { outline: 2px solid var(--billadm-color-primary); outline-offset: 2px; }
-.chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.chat-send-btn--stop { background: var(--billadm-color-expense); }
-.chat-send-btn--stop:hover { filter: brightness(0.88); }
+.chat-send-btn:hover:not(:disabled) {
+  background: var(--billadm-color-primary-light);
+}
+
+.chat-send-btn:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chat-send-btn--stop {
+  background: var(--billadm-color-expense);
+}
+
+.chat-send-btn--stop:hover {
+  filter: brightness(0.88);
+}
 
 /* Animations */
-@keyframes msg-user-enter { from { opacity: 0; transform: translateY(6px) translateX(4px); } to { opacity: 1; transform: translateY(0) translateX(0); } }
-@keyframes msg-assistant-enter { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
-@keyframes msg-assistant-border-glow { 0% { border-color: var(--billadm-color-primary-light); box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.12); } 100% { border-color: var(--billadm-color-divider); box-shadow: 0 0 0 0 transparent; } }
-@keyframes msg-tool-enter { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
-@keyframes msg-tool-dot-pop { 0% { transform: scale(0); } 60% { transform: scale(1.4); } 100% { transform: scale(1); } }
+@keyframes msg-user-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) translateX(4px);
+  }
 
-.chat-message { animation-duration: 200ms; animation-fill-mode: both; animation-timing-function: ease-out; }
-.chat-message--user { animation-name: msg-user-enter; animation-duration: 150ms; }
-.chat-message--assistant { animation-name: msg-assistant-enter; animation-duration: 300ms; }
-.chat-message--assistant .msg-assistant { animation: msg-assistant-border-glow 400ms ease-out both; }
-.chat-message--tool { animation-name: msg-tool-enter; animation-duration: 200ms; }
-.chat-message--tool .msg-tool-indicator { animation: msg-tool-dot-pop 300ms ease-out both; }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+@keyframes msg-assistant-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes msg-assistant-border-glow {
+  0% {
+    border-color: var(--billadm-color-primary-light);
+    box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.12);
+  }
+
+  100% {
+    border-color: var(--billadm-color-divider);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes msg-tool-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes msg-tool-dot-pop {
+  0% {
+    transform: scale(0);
+  }
+
+  60% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.chat-message {
+  animation-duration: 200ms;
+  animation-fill-mode: both;
+  animation-timing-function: ease-out;
+}
+
+.chat-message--user {
+  animation-name: msg-user-enter;
+  animation-duration: 150ms;
+}
+
+.chat-message--assistant {
+  animation-name: msg-assistant-enter;
+  animation-duration: 300ms;
+}
+
+.chat-message--assistant .msg-assistant {
+  animation: msg-assistant-border-glow 400ms ease-out both;
+}
+
+.chat-message--tool {
+  animation-name: msg-tool-enter;
+  animation-duration: 200ms;
+}
+
+.chat-message--tool .msg-tool-indicator {
+  animation: msg-tool-dot-pop 300ms ease-out both;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .chat-message { animation: none; }
-  .msg-assistant { animation: none; }
-  .msg-tool-indicator { animation: none; }
-  .msg-tool-indicator--pulse { animation: none; }
-  .chat-streaming-ring { animation: none; border-top-color: var(--billadm-color-accent); }
-  .streaming-cursor { animation: none; }
-  .thinking-indicator--active { animation: none; border-top-color: var(--billadm-color-accent); }
+  .chat-message {
+    animation: none;
+  }
+
+  .msg-assistant {
+    animation: none;
+  }
+
+  .msg-tool-indicator {
+    animation: none;
+  }
+
+  .msg-tool-indicator--pulse {
+    animation: none;
+  }
+
+  .chat-streaming-ring {
+    animation: none;
+    border-top-color: var(--billadm-color-accent);
+  }
+
+  .streaming-cursor {
+    animation: none;
+  }
+
+  .thinking-indicator--active {
+    animation: none;
+    border-top-color: var(--billadm-color-accent);
+  }
+
   .streaming-bar-fade-enter-active,
-  .streaming-bar-fade-leave-active { transition: opacity 0ms; }
+  .streaming-bar-fade-leave-active {
+    transition: opacity 0ms;
+  }
+
   .chat-textarea,
   .chat-empty-chip,
   .chat-send-btn,
@@ -974,7 +1266,9 @@ onUnmounted(() => {
   .msg-tool,
   .assistant-thinking-toggle,
   .thinking-arrow,
-  .thinking-indicator { transition: none; }
+  .thinking-indicator {
+    transition: none;
+  }
 }
 
 /* Inline Thinking (inside assistant bubble) */
@@ -999,7 +1293,9 @@ onUnmounted(() => {
   text-align: left;
 }
 
-.assistant-thinking-toggle:hover { color: var(--billadm-color-text-secondary); }
+.assistant-thinking-toggle:hover {
+  color: var(--billadm-color-text-secondary);
+}
 
 .assistant-thinking-toggle:focus-visible {
   outline: 2px solid var(--billadm-color-primary);
@@ -1023,10 +1319,20 @@ onUnmounted(() => {
   animation: thinking-spin 0.8s linear infinite;
 }
 
-@keyframes thinking-spin { to { transform: rotate(360deg); } }
+@keyframes thinking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-.thinking-arrow { margin-left: auto; transition: transform var(--billadm-transition-fast); }
-.thinking-arrow--open { transform: rotate(180deg); }
+.thinking-arrow {
+  margin-left: auto;
+  transition: transform var(--billadm-transition-fast);
+}
+
+.thinking-arrow--open {
+  transform: rotate(180deg);
+}
 
 .assistant-thinking-content {
   margin-top: var(--billadm-space-sm);

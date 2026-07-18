@@ -17,15 +17,16 @@
       <div class="tr-body">
         <div class="tr-content">
           <a-spin :spinning="tableLoading">
-            <transaction-record-table :items="tableData" :ledgers="ledgerStore.ledgers" :currentLedgerId="ledgerStore.currentLedgerId" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
+            <transaction-record-table :items="tableData" :ledgers="ledgerStore.ledgers"
+              :currentLedgerId="ledgerStore.currentLedgerId" @edit="updateTr" @delete="deleteTr" @link="handleLink" />
           </a-spin>
         </div>
 
         <!-- 底部分页 -->
         <div class="tr-footer">
-        <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
-          :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
-          show-size-changer />
+          <a-pagination v-model:current="currentPage" v-model:pageSize="pageSize" :total="trTotal"
+            :show-total="(total: number) => `共 ${total} 条记录`" :pageSizeOptions="['15', '30', '50', '100']"
+            show-size-changer />
         </div>
       </div>
     </template>
@@ -56,33 +57,15 @@
     <TransactionRecordFilter v-model="openTrFilterModal" />
 
     <!-- 编辑/新建弹窗 -->
-    <TransactionRecordModal
-      :open="openTrModal"
-      :record="editingRecord"
-      :currentLedgerId="ledgerStore.currentLedgerId"
-      :defaultDate="trQueryConditionStore.timeRange?.[0]"
-      @close="closeTrModal"
-      @saved="onTrSaved"
-    />
+    <TransactionRecordModal :open="openTrModal" :record="editingRecord" :currentLedgerId="ledgerStore.currentLedgerId"
+      :defaultDate="trQueryConditionStore.timeRange?.[0]" @close="closeTrModal" @saved="onTrSaved" />
 
     <!-- 关联关键事件弹窗 -->
-    <a-modal
-      v-model:open="openLinkModal"
-      title="关联关键事件"
-      ok-text="确认关联"
-      cancel-text="取消"
-      centered
-      @ok="confirmLink"
-      @cancel="openLinkModal = false"
-    >
+    <a-modal v-model:open="openLinkModal" title="关联关键事件" ok-text="确认关联" cancel-text="取消" centered @ok="confirmLink"
+      @cancel="openLinkModal = false">
       <a-form>
         <a-form-item label="选择日期">
-            <a-date-picker
-              v-model:value="linkDate"
-              size="small"
-              style="width: 100%"
-            placeholder="选择要关联的日期"
-          />
+          <a-date-picker v-model:value="linkDate" style="width: 100%" placeholder="选择要关联的日期" />
         </a-form-item>
       </a-form>
       <template v-if="linkingRecord?.keyEventDate" #footer>
@@ -174,10 +157,10 @@ const onTrSaved = async () => {
   await refreshTable();
 };
 
-	const refreshTable = async () => {
-	  const stats = await fetchTransactions();
-	  if (stats) appDataStore.setStatistics(stats);
-	};
+const refreshTable = async () => {
+  const stats = await fetchTransactions();
+  if (stats) appDataStore.setStatistics(stats);
+};
 
 watch(() => [ledgerStore.currentLedgerId, trQueryConditionStore.timeRange, trQueryConditionStore.trQueryConditionItems],
   async () => {
@@ -263,9 +246,20 @@ const handleUnlink = async () => {
   overflow-x: hidden;
   min-height: 0;
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: var(--billadm-space-xs);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(141, 127, 111, 0.18);
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
 }
 
 .tr-content::-webkit-scrollbar-thumb:hover {

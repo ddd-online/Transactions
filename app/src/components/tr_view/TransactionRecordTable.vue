@@ -1,20 +1,14 @@
 <template>
-  <a-table
-    :columns="columns"
-    :data-source="items"
-    :pagination="false"
-    :sticky="true"
-    size="middle"
-    class="transaction-table"
-  >
+  <a-table :columns="columns" :data-source="items" :pagination="false" :sticky="true" size="middle"
+    class="transaction-table">
     <template #bodyCell="{ column, record }">
-      <template v-if="column.dataIndex==='transactionAt'">
+      <template v-if="column.dataIndex === 'transactionAt'">
         <span class="cell-date">
           {{ formatTimestamp(record.transactionAt, 'MM-DD') }}
         </span>
       </template>
 
-      <template v-else-if="column.dataIndex==='transactionType'">
+      <template v-else-if="column.dataIndex === 'transactionType'">
         <span class="cell-type" :class="`type-${record.transactionType}`">
           {{ TransactionTypeToLabel.get(record.transactionType) || record.transactionType }}
         </span>
@@ -57,7 +51,8 @@
               <EditOutlined />
             </a-button>
           </a-tooltip>
-          <a-tooltip v-if="(record as TransactionRecord).keyEventDate" :title="'已关联至 ' + (record as TransactionRecord).keyEventDate">
+          <a-tooltip v-if="(record as TransactionRecord).keyEventDate"
+            :title="'已关联至 ' + (record as TransactionRecord).keyEventDate">
             <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
               <LinkOutlined />
             </a-button>
@@ -67,20 +62,13 @@
               <LinkOutlined />
             </a-button>
           </a-tooltip>
-          <a-popover
-            :open="syncPopoverTarget === (record as TransactionRecord).transactionId"
+          <a-popover :open="syncPopoverTarget === (record as TransactionRecord).transactionId"
             @update:open="(val) => { if (syncingTransactionId === (record as TransactionRecord).transactionId) return; syncPopoverTarget = val ? (record as TransactionRecord).transactionId : null }"
-            trigger="click"
-            placement="bottomRight"
-          >
+            trigger="click" placement="bottomRight">
             <template #content>
               <div class="sync-popover-content">
-                <div
-                  v-for="ledger in ledgers.filter(l => l.id !== currentLedgerId)"
-                  :key="ledger.id"
-                  class="sync-ledger-item"
-                  @click="handleSyncTarget(record as TransactionRecord, ledger.id)"
-                >
+                <div v-for="ledger in ledgers.filter(l => l.id !== currentLedgerId)" :key="ledger.id"
+                  class="sync-ledger-item" @click="handleSyncTarget(record as TransactionRecord, ledger.id)">
                   {{ ledger.name }}
                 </div>
                 <div v-if="ledgers.filter(l => l.id !== currentLedgerId).length === 0" class="sync-empty">
@@ -89,17 +77,14 @@
               </div>
             </template>
             <a-tooltip title="同步到其他账本">
-              <a-button type="text" size="small" :disabled="syncingTransactionId === (record as TransactionRecord).transactionId">
+              <a-button type="text" size="small"
+                :disabled="syncingTransactionId === (record as TransactionRecord).transactionId">
                 <SyncOutlined :spin="syncingTransactionId === (record as TransactionRecord).transactionId" />
               </a-button>
             </a-tooltip>
           </a-popover>
-          <a-popconfirm
-            title="确认删除此条记录？"
-            ok-text="确认"
-            @confirm="handleDelete(record as TransactionRecord)"
-            :showCancel="false"
-          >
+          <a-popconfirm title="确认删除此条记录？" ok-text="确认" @confirm="handleDelete(record as TransactionRecord)"
+            :showCancel="false">
             <a-tooltip title="删除">
               <a-button type="text" size="small" danger>
                 <DeleteOutlined />
@@ -113,14 +98,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref} from 'vue';
-import type {TransactionRecord, Ledger} from '@/types/billadm';
-import {centsToYuan, formatTimestamp} from "@/backend/functions";
-import {TransactionTypeToLabel} from "@/backend/constant";
-import type {ColumnsType} from "ant-design-vue/es/table";
-import {EditOutlined, DeleteOutlined, LinkOutlined, SyncOutlined} from "@ant-design/icons-vue";
-import {createTrForLedger} from "@/backend/api/tr";
-import {message} from "ant-design-vue";
+import { ref } from 'vue';
+import type { TransactionRecord, Ledger } from '@/types/billadm';
+import { centsToYuan, formatTimestamp } from "@/backend/functions";
+import { TransactionTypeToLabel } from "@/backend/constant";
+import type { ColumnsType } from "ant-design-vue/es/table";
+import { EditOutlined, DeleteOutlined, LinkOutlined, SyncOutlined } from "@ant-design/icons-vue";
+import { createTrForLedger } from "@/backend/api/tr";
+import { message } from "ant-design-vue";
 
 const columns: ColumnsType = [
   {
@@ -361,6 +346,8 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sync-ledger-item { transition: none; }
+  .sync-ledger-item {
+    transition: none;
+  }
 }
 </style>

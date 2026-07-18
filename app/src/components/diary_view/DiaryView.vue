@@ -5,35 +5,18 @@
         <div class="toolbar-left">
           <a-button size="small" @click="goToToday">今天</a-button>
           <a-button size="small" @click="collapseAll">收起全部</a-button>
-          <a-date-picker
-            v-model:value="jumpDate"
-            size="small"
-            placeholder="跳转到日期"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-            :allow-clear="false"
-            @change="onJumpToDate"
-          />
+          <a-date-picker v-model:value="jumpDate" size="small" placeholder="跳转到日期" format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD" :allow-clear="false" @change="onJumpToDate" />
         </div>
       </div>
     </template>
 
     <!-- 两栏主体 -->
     <div class="diary-body">
-      <DiaryTree
-        ref="treeRef"
-        class="panel-left"
-        :dates="store.dates"
-        :selected-date="selectedDate"
-        @select="onSelectDate"
-      />
-      <DiaryEditor
-        class="panel-right"
-        :entry="store.currentEntry"
-        :save-status="store.saveStatus"
-        @save="onSave"
-        @delete="onDelete"
-      />
+      <DiaryTree ref="treeRef" class="panel-left" :dates="store.dates" :selected-date="selectedDate"
+        @select="onSelectDate" />
+      <DiaryEditor class="panel-right" :entry="store.currentEntry" :save-status="store.saveStatus" @save="onSave"
+        @delete="onDelete" />
     </div>
   </BilladmPageLayout>
 </template>

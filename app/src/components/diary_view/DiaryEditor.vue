@@ -20,16 +20,9 @@
         <div class="editor-meta">
           <!-- 心情选择器 -->
           <div class="mood-picker" role="radiogroup" aria-label="心情">
-            <button
-              v-for="m in moods"
-              :key="m.emoji || 'none'"
-              class="mood-btn"
-              :class="{ active: localMood === m.emoji, 'is-none': m.emoji === '' }"
-              :aria-label="m.label"
-              :aria-pressed="localMood === m.emoji"
-              :title="m.label"
-              @click="onMoodChange(m.emoji)"
-            >
+            <button v-for="m in moods" :key="m.emoji || 'none'" class="mood-btn"
+              :class="{ active: localMood === m.emoji, 'is-none': m.emoji === '' }" :aria-label="m.label"
+              :aria-pressed="localMood === m.emoji" :title="m.label" @click="onMoodChange(m.emoji)">
               {{ m.emoji || '—' }}
             </button>
           </div>
@@ -40,49 +33,34 @@
       <!-- 编辑/预览区 -->
       <div class="editor-body">
         <div v-if="mode === 'edit'" class="editor-textarea-wrap">
-          <textarea
-            ref="textareaRef"
-            class="editor-textarea"
-            :value="localContent"
-            placeholder="写下今天的日记…"
-            @input="onInput"
-            @keydown="onKeydown"
-          />
+          <textarea ref="textareaRef" class="editor-textarea" :value="localContent" placeholder="写下今天的日记…"
+            @input="onInput" @keydown="onKeydown" />
         </div>
-        <div
-          v-if="mode === 'preview'"
-          class="editor-preview"
-          v-html="renderedHtml"
-        />
+        <div v-if="mode === 'preview'" class="editor-preview" v-html="renderedHtml" />
       </div>
 
       <!-- 底部：模式切换 + 操作 + 保存状态 -->
       <div class="editor-footer">
         <div class="footer-left">
-          <a-button
-            type="text"
-            size="small"
-            @click="mode = mode === 'edit' ? 'preview' : 'edit'"
-          >
-            <template #icon>
-              <EyeOutlined v-if="mode === 'edit'" />
-              <EditOutlined v-else />
-            </template>
-            {{ mode === 'edit' ? '预览' : '编辑' }}
-          </a-button>
-          <span class="footer-hint">Ctrl+S 保存</span>
+          <a-tooltip title="Ctrl+S 保存">
+            <a-button type="text" @click="mode = mode === 'edit' ? 'preview' : 'edit'">
+              <template #icon>
+                <EyeOutlined v-if="mode === 'edit'" />
+                <EditOutlined v-else />
+              </template>
+              {{ mode === 'edit' ? '预览' : '编辑' }}
+            </a-button>
+          </a-tooltip>
+
         </div>
         <div class="footer-right">
           <span v-if="saveStatus === 'saving'" class="save-status is-saving">保存中…</span>
           <span v-else-if="saveStatus === 'saved'" class="save-status is-saved">已保存</span>
           <span v-else-if="saveStatus === 'error'" class="save-status is-error">保存失败</span>
-          <a-button
-            type="text"
-            size="small"
-            danger
-            @click="onDeleteClick"
-          >
-            <template #icon><DeleteOutlined /></template>
+          <a-button type="text" danger @click="onDeleteClick">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
             删除
           </a-button>
         </div>
@@ -111,7 +89,7 @@ const emit = defineEmits<{
 
 // ---- 心情选项 ----
 const moods = [
-  { emoji: '',  label: '无' },
+  { emoji: '', label: '无' },
   { emoji: '😊', label: '开心' },
   { emoji: '😐', label: '平静' },
   { emoji: '😢', label: '难过' },
@@ -299,8 +277,8 @@ const renderedHtml = computed(() => renderMarkdown(localContent.value))
   align-items: center;
   justify-content: center;
   transition: transform var(--billadm-transition-fast),
-              opacity var(--billadm-transition-fast),
-              background var(--billadm-transition-fast);
+    opacity var(--billadm-transition-fast),
+    background var(--billadm-transition-fast);
   opacity: 0.35;
   line-height: 1;
 }
@@ -385,18 +363,45 @@ const renderedHtml = computed(() => renderMarkdown(localContent.value))
 }
 
 /* Markdown 预览基础样式 */
-.editor-preview :deep(h1) { font-size: 1.6em; margin: 1em 0 0.5em; font-weight: var(--billadm-weight-bold); }
-.editor-preview :deep(h2) { font-size: 1.35em; margin: 0.9em 0 0.45em; font-weight: var(--billadm-weight-semibold); }
-.editor-preview :deep(h3) { font-size: 1.15em; margin: 0.8em 0 0.4em; font-weight: var(--billadm-weight-semibold); }
-.editor-preview :deep(p) { margin: 0.5em 0; }
-.editor-preview :deep(ul), .editor-preview :deep(ol) { padding-left: 1.5em; margin: 0.5em 0; }
-.editor-preview :deep(li) { margin: 0.25em 0; }
+.editor-preview :deep(h1) {
+  font-size: 1.6em;
+  margin: 1em 0 0.5em;
+  font-weight: var(--billadm-weight-bold);
+}
+
+.editor-preview :deep(h2) {
+  font-size: 1.35em;
+  margin: 0.9em 0 0.45em;
+  font-weight: var(--billadm-weight-semibold);
+}
+
+.editor-preview :deep(h3) {
+  font-size: 1.15em;
+  margin: 0.8em 0 0.4em;
+  font-weight: var(--billadm-weight-semibold);
+}
+
+.editor-preview :deep(p) {
+  margin: 0.5em 0;
+}
+
+.editor-preview :deep(ul),
+.editor-preview :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.editor-preview :deep(li) {
+  margin: 0.25em 0;
+}
+
 .editor-preview :deep(blockquote) {
   border-left: 2px solid var(--billadm-color-primary);
   margin: 0.6em 0;
   padding-left: var(--billadm-space-md);
   color: var(--billadm-color-text-secondary);
 }
+
 .editor-preview :deep(code) {
   font-family: var(--billadm-font-mono);
   font-size: 0.92em;
@@ -404,6 +409,7 @@ const renderedHtml = computed(() => renderMarkdown(localContent.value))
   padding: var(--billadm-space-2xs) var(--billadm-space-xs);
   border-radius: var(--billadm-radius-sm);
 }
+
 .editor-preview :deep(pre) {
   background: var(--billadm-color-minor-background);
   padding: var(--billadm-space-md);
@@ -411,10 +417,26 @@ const renderedHtml = computed(() => renderMarkdown(localContent.value))
   overflow-x: auto;
   margin: 0.6em 0;
 }
-.editor-preview :deep(pre code) { background: none; padding: 0; }
-.editor-preview :deep(img) { max-width: 100%; border-radius: var(--billadm-radius-md); }
-.editor-preview :deep(hr) { border: none; border-top: 1px solid var(--billadm-color-divider); margin: 1em 0; }
-.editor-preview :deep(a) { color: var(--billadm-color-primary); }
+
+.editor-preview :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.editor-preview :deep(img) {
+  max-width: 100%;
+  border-radius: var(--billadm-radius-md);
+}
+
+.editor-preview :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--billadm-color-divider);
+  margin: 1em 0;
+}
+
+.editor-preview :deep(a) {
+  color: var(--billadm-color-primary);
+}
 
 /* ---- 底部 ---- */
 .editor-footer {

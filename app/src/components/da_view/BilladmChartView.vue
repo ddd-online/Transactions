@@ -8,7 +8,6 @@
           v-if="!isPreset"
           v-model:value="editGranularity"
           class="granularity-select"
-          size="small"
           @change="handleGranularityChange"
         >
           <a-select-option value="year">年度</a-select-option>
