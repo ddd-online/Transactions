@@ -102,22 +102,22 @@
         <template v-if="form.provider === 'deepseek'">
           <div class="card-section-divider" />
           <div class="balance-section">
-            <div class="setting-info">
-              <span class="setting-title">账户余额</span>
-              <span class="setting-desc">DeepSeek API 账户余额信息</span>
+            <div v-if="!form.has_key" class="balance-hint">请先设置 API Key</div>
+            <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
+            <div v-else-if="balanceError" class="balance-hint balance-error">
+              {{ balanceError }}
+              <a-button type="link" size="small" @click="fetchBalance">重试</a-button>
             </div>
-            <div class="setting-action setting-action-full">
-              <div v-if="!form.has_key" class="balance-hint">请先设置 API Key</div>
-              <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
-              <div v-else-if="balanceError" class="balance-hint balance-error">
-                {{ balanceError }}
-                <a-button type="link" size="small" @click="fetchBalance">重试</a-button>
-              </div>
-              <div v-else-if="balance" class="balance-info">
+            <div v-else-if="balance" class="balance-info">
+              <div class="balance-header">
+                <span class="setting-title">账户余额</span>
                 <div class="balance-status">
                   <span class="balance-dot" :class="balance.is_available ? 'dot-available' : 'dot-unavailable'" />
                   <span>{{ balance.is_available ? '可用' : '不可用' }}</span>
                 </div>
+              </div>
+              <div class="balance-meta">
+                <span class="setting-desc">DeepSeek API 账户余额信息</span>
                 <div v-for="info in balance.balance_infos" :key="info.currency" class="balance-row">
                   <span class="balance-currency">{{ info.currency }}</span>
                   <span class="balance-value">
@@ -712,14 +712,35 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--billadm-space-xs);
+  width: 100%;
+}
+
+.balance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.balance-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.balance-meta .setting-desc {
+  overflow: visible;
 }
 
 .balance-status {
   display: flex;
   align-items: center;
   gap: var(--billadm-space-xs);
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-major);
+  flex-shrink: 0;
+  margin-left: var(--billadm-space-lg);
 }
 
 .balance-dot {
@@ -739,6 +760,7 @@ onUnmounted(() => {
 .balance-row {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--billadm-space-sm);
   font-size: var(--billadm-size-text-caption);
   color: var(--billadm-color-text-secondary);
