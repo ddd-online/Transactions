@@ -118,7 +118,7 @@ func (h *Handlers) listKeyEventImages(c *gin.Context) (any, error) {
 	return h.KeyEventImgSvc.GetImagesByEventDate(ws, date)
 }
 
-// POST /api/v1/key-events/:date/images  body: { data, filename }
+// POST /api/v1/key-events/:date/images  body: { data }
 func (h *Handlers) addKeyEventImage(c *gin.Context) (any, error) {
 	ws := ws(c)
 
@@ -137,13 +137,11 @@ func (h *Handlers) addKeyEventImage(c *gin.Context) (any, error) {
 		return nil, models.NewBadRequest("invalid image data")
 	}
 
-	filename, _ := arg["filename"].(string)
-
-	image, err := h.KeyEventImgSvc.AddImage(ws, date, data, filename)
+	image, err := h.KeyEventImgSvc.AddImage(ws, date, data)
 	if err != nil {
 		return nil, err
 	}
-	return image.ID, nil
+	return image, nil
 }
 
 // DELETE /api/v1/key-event-images/:id
