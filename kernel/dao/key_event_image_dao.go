@@ -10,6 +10,7 @@ type KeyEventImageDao interface {
 	QueryByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error)
 	DeleteById(ws *workspace.Workspace, imageId string) error
 	DeleteByEventDate(ws *workspace.Workspace, date string) error
+	QueryById(ws *workspace.Workspace, imageId string) (*models.KeyEventImage, error)
 }
 
 var _ KeyEventImageDao = &keyEventImageDaoImpl{}
@@ -22,6 +23,15 @@ func NewKeyEventImageDao() KeyEventImageDao {
 
 func (d *keyEventImageDaoImpl) Create(ws *workspace.Workspace, image *models.KeyEventImage) error {
 	return ws.GetDb().Create(image).Error
+}
+
+func (d *keyEventImageDaoImpl) QueryById(ws *workspace.Workspace, imageId string) (*models.KeyEventImage, error) {
+	var image models.KeyEventImage
+	err := ws.GetDb().Where("id = ?", imageId).First(&image).Error
+	if err != nil {
+		return nil, err
+	}
+	return &image, nil
 }
 
 func (d *keyEventImageDaoImpl) QueryByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error) {
