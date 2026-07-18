@@ -86,6 +86,9 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			keyEventImages.DELETE("/:id", Handle(h.deleteKeyEventImage))
 		}
 
+		// Static assets (served from workspace data/assets/ directory)
+		v1.GET("/static/*filepath", h.serveStaticFile)
+
 		// Diary
 		diary := v1.Group("/diary")
 		{
