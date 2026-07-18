@@ -1,10 +1,10 @@
 <template>
-  <a-modal :title="modalTitle" :open="open" width="800px" @ok="handleConfirm" ok-text="确认"
-    @cancel="handleClose" cancel-text="取消" centered>
+  <a-modal :title="modalTitle" :open="open" width="800px" @ok="handleConfirm" ok-text="确认" @cancel="handleClose"
+    cancel-text="取消" centered>
     <a-form ref="formRef" :model="trForm" :rules="rules">
       <a-form-item label="模板">
         <div class="template-select-row">
-          <a-select v-model:value="selectedTemplateId" size="small" :options="templateOptions" placeholder="选择模板自动填充"
+          <a-select v-model:value="selectedTemplateId" :options="templateOptions" placeholder="选择模板自动填充"
             class="template-select" allowClear />
           <a-button @click="handleSaveAsTemplate" :disabled="!trForm.type || !trForm.category">
             保存为模板
@@ -13,7 +13,7 @@
       </a-form-item>
 
       <a-form-item label="时间" name="time">
-        <a-date-picker v-model:value="trForm.time" style="width: 100%" size="small" />
+        <a-date-picker v-model:value="trForm.time" style="width: 100%" />
       </a-form-item>
 
       <a-form-item label="类型" name="type">
@@ -21,11 +21,11 @@
       </a-form-item>
 
       <a-form-item label="分类" name="category">
-        <a-select v-model:value="trForm.category" size="small" :options="categoryOptions" />
+        <a-select v-model:value="trForm.category" :options="categoryOptions" />
       </a-form-item>
 
       <a-form-item label="标签" name="tags">
-        <a-select v-model:value="trForm.tags" size="small" :options="tagOptions" mode="multiple" placeholder="选择一个或多个标签" />
+        <a-select v-model:value="trForm.tags" :options="tagOptions" mode="multiple" placeholder="选择一个或多个标签" />
       </a-form-item>
 
       <a-form-item label="标记" name="flags">
@@ -42,8 +42,8 @@
     </a-form>
   </a-modal>
 
-  <a-modal v-model:open="openSaveTemplateModal" title="保存为模板" @ok="handleConfirmSaveTemplate" ok-text="保存" cancel-text="取消"
-    centered>
+  <a-modal v-model:open="openSaveTemplateModal" title="保存为模板" @ok="handleConfirmSaveTemplate" ok-text="保存"
+    cancel-text="取消" centered>
     <a-form>
       <a-form-item label="模板名称">
         <a-input v-model:value="templateName" placeholder="请输入模板名称" />
