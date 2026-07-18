@@ -2,6 +2,7 @@ import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 import type { Result } from "@/types/billadm";
 
 let apiClient: AxiosInstance | null = null;
+let cachedBaseUrl = 'http://127.0.0.1:28080';
 
 async function getApiClient(): Promise<AxiosInstance> {
     if (apiClient) {
@@ -19,6 +20,8 @@ async function getApiClient(): Promise<AxiosInstance> {
             console.warn('Failed to get API server from Electron, using default:', e);
         }
     }
+
+    cachedBaseUrl = baseURL.replace(/\/api$/, '');
 
     apiClient = axios.create({
         baseURL,
@@ -114,5 +117,9 @@ const api = {
         }
     }
 };
+
+export function getImageBaseUrl(): string {
+    return cachedBaseUrl;
+}
 
 export default api;
