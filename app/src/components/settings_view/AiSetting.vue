@@ -105,40 +105,6 @@
         </div>
       </div>
 
-      <!-- 系统提示词 -->
-      <div class="setting-card setting-card-vertical">
-        <div class="setting-header-row">
-          <div class="setting-info">
-            <span class="setting-title">系统提示词</span>
-            <span class="setting-desc">自定义智能助手的行为和回答风格。留空则使用默认提示词</span>
-          </div>
-          <div class="setting-header-actions">
-            <span class="prompt-role-label">角色</span>
-            <a-select
-              v-model:value="currentRole"
-              size="small"
-              :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
-              style="width: 120px"
-              @change="onRoleChange"
-            />
-            <a-button @click="resetSystemPrompt">恢复默认</a-button>
-          </div>
-        </div>
-        <div class="setting-action setting-action-full">
-          <a-textarea
-            v-model:value="form.system_prompt"
-            :rows="8"
-            :maxlength="4000"
-            show-count
-            placeholder="留空使用默认提示词"
-            class="prompt-textarea"
-          />
-          <div class="placeholder-hint" v-if="currentRole === 'financial_assistant'">
-            支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
-          </div>
-        </div>
-      </div>
-
       <!-- 余额 (仅 DeepSeek) -->
       <div v-if="form.provider === 'deepseek'" class="setting-card setting-card-vertical">
         <div class="setting-info">
@@ -178,6 +144,40 @@
         <div class="setting-action setting-action-row">
           <a-button @click="handleTestConnection" :loading="testing">测试连接</a-button>
           <a-button type="primary" @click="handleSave" :loading="saving">保存配置</a-button>
+        </div>
+      </div>
+
+      <!-- 系统提示词 -->
+      <div class="setting-card setting-card-vertical">
+        <div class="setting-header-row">
+          <div class="setting-info">
+            <span class="setting-title">系统提示词</span>
+            <span class="setting-desc">自定义智能助手的行为和回答风格。留空则使用默认提示词</span>
+          </div>
+          <div class="setting-header-actions">
+            <span class="prompt-role-label">角色</span>
+            <a-select
+              v-model:value="currentRole"
+              size="small"
+              :options="availableRoles.map(r => ({ label: r.display_name, value: r.name }))"
+              style="width: 120px"
+              @change="onRoleChange"
+            />
+            <a-button @click="resetSystemPrompt">恢复默认</a-button>
+          </div>
+        </div>
+        <div class="setting-action setting-action-full">
+          <a-textarea
+            v-model:value="form.system_prompt"
+            :rows="8"
+            :maxlength="4000"
+            show-count
+            placeholder="留空使用默认提示词"
+            class="prompt-textarea"
+          />
+          <div class="placeholder-hint" v-if="currentRole === 'financial_assistant'">
+            支持占位符：<code v-pre>{{CURRENT_LEDGER}}</code> = 当前选中的账本名称
+          </div>
         </div>
       </div>
     </div>
