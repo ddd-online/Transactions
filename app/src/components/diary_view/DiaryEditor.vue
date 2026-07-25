@@ -101,6 +101,7 @@ const moods = [
 const mode = ref<'edit' | 'preview'>('preview')
 const localContent = ref('')
 const localMood = ref('')
+const currentEntryDate = ref<string | null>(null)
 
 // ---- 自动保存 ----
 let saveTimer: ReturnType<typeof setTimeout> | null = null
@@ -110,10 +111,15 @@ onUnmounted(() => { if (saveTimer) clearTimeout(saveTimer) })
 watch(() => props.entry, (newEntry) => {
   if (saveTimer) clearTimeout(saveTimer)
   if (newEntry) {
+    const isDifferentDate = currentEntryDate.value !== newEntry.date
+    currentEntryDate.value = newEntry.date
     localContent.value = newEntry.content
     localMood.value = newEntry.mood
-    mode.value = 'preview'
+    if (isDifferentDate) {
+      mode.value = 'preview'
+    }
   } else {
+    currentEntryDate.value = null
     localContent.value = ''
     localMood.value = ''
     mode.value = 'preview'
