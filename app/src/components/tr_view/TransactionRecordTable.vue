@@ -1,6 +1,6 @@
 <template>
   <a-table :columns="columns" :data-source="items" :pagination="false" :sticky="true" size="middle"
-    class="transaction-table">
+    class="transaction-table" :row-class-name="getRowClassName">
     <template #bodyCell="{ column, record }">
       <template v-if="column.dataIndex === 'transactionAt'">
         <span class="cell-date">
@@ -19,7 +19,7 @@
       </template>
 
       <template v-else-if="column.dataIndex === 'tags'">
-        <div class="cell-tags">
+        <div class="cell-tags" :class="`tags-${record.transactionType}`">
           <a-tag v-for="tag in record.tags" :key="tag" class="tag-item">
             {{ tag }}
           </a-tag>
@@ -170,6 +170,10 @@ const emit = defineEmits<{
   (e: 'link', record: TransactionRecord): void;
 }>();
 
+const getRowClassName = (record: TransactionRecord) => {
+  return `row-type-${record.transactionType}`;
+};
+
 const syncPopoverTarget = ref<string | null>(null);
 const syncingTransactionId = ref<string | null>(null);
 
@@ -240,6 +244,18 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
   background-color: var(--billadm-color-hover-bg);
 }
 
+.transaction-table :deep(.row-type-income > td) {
+  background-color: rgba(61, 140, 94, 0.05);
+}
+
+.transaction-table :deep(.row-type-expense > td) {
+  background-color: rgba(217, 112, 90, 0.05);
+}
+
+.transaction-table :deep(.row-type-transfer > td) {
+  background-color: rgba(92, 141, 181, 0.05);
+}
+
 .cell-date {
   font-family: var(--billadm-font-mono);
   font-size: var(--billadm-size-text-caption);
@@ -282,6 +298,21 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
   background-color: var(--billadm-color-minor-background);
   border: none;
   color: var(--billadm-color-text-secondary);
+}
+
+.tags-income .tag-item {
+  background-color: rgba(61, 140, 94, 0.08);
+  color: var(--billadm-color-income);
+}
+
+.tags-expense .tag-item {
+  background-color: rgba(217, 112, 90, 0.08);
+  color: var(--billadm-color-expense);
+}
+
+.tags-transfer .tag-item {
+  background-color: rgba(92, 141, 181, 0.08);
+  color: var(--billadm-color-transfer);
 }
 
 .tag-outlier {

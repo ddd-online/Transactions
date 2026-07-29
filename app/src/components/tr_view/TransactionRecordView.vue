@@ -290,9 +290,39 @@ const handleUnlink = async () => {
   bottom: 72px;
 }
 
+.float-secondary :deep(.ant-float-btn-body) {
+  background-color: var(--billadm-color-minor-background);
+  box-shadow: var(--billadm-shadow-sm);
+  border: 1px solid transparent;
+  transition: background-color var(--billadm-transition-fast),
+              box-shadow var(--billadm-transition-fast),
+              border-color var(--billadm-transition-fast);
+}
+
+.float-secondary:hover :deep(.ant-float-btn-body) {
+  background-color: var(--billadm-color-major-background);
+  border-color: var(--billadm-color-primary-light);
+  box-shadow: var(--billadm-shadow-md);
+}
+
 .float-sort {
   right: 160px;
   bottom: 72px;
+}
+
+.float-sort :deep(.ant-float-btn-body) {
+  background-color: var(--billadm-color-minor-background);
+  box-shadow: var(--billadm-shadow-sm);
+  border: 1px solid transparent;
+  transition: background-color var(--billadm-transition-fast),
+              box-shadow var(--billadm-transition-fast),
+              border-color var(--billadm-transition-fast);
+}
+
+.float-sort:hover :deep(.ant-float-btn-body) {
+  background-color: var(--billadm-color-major-background);
+  border-color: var(--billadm-color-primary-light);
+  box-shadow: var(--billadm-shadow-md);
 }
 
 /* tr-body 作为 page-content 的 flex 子项，确保 tr-footer 始终在底部 */

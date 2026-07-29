@@ -16,7 +16,7 @@
     </div>
 
     <!-- 关联交易卡片列表 -->
-    <div v-else ref="cardsRef" class="linked-cards" @scroll="onScroll">
+    <div v-else class="linked-cards">
       <div
         v-for="(tr, index) in transactions"
         :key="tr.transactionId"
@@ -65,18 +65,11 @@
       </div>
     </div>
 
-    <!-- 滚动指示箭头 -->
-    <Transition name="scroll-hint">
-      <div v-if="showScrollHint" class="scroll-hint-arrow">
-        <DownOutlined />
-      </div>
-    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { DeleteOutlined, DownOutlined } from "@ant-design/icons-vue";
+import { DeleteOutlined } from "@ant-design/icons-vue";
 import { centsToYuan } from "@/backend/functions";
 import type { TransactionRecord } from "@/types/billadm";
 
@@ -91,26 +84,6 @@ const props = defineProps<Props>();
 defineEmits<{
   (e: 'delete', transactionId: string): void;
 }>();
-
-const cardsRef = ref<HTMLElement | null>(null)
-const showScrollHint = ref(false)
-
-const checkOverflow = () => {
-  const el = cardsRef.value
-  if (!el) return
-  showScrollHint.value = el.scrollHeight > el.clientHeight + 2 && el.scrollTop + el.clientHeight < el.scrollHeight - 4
-}
-
-const onScroll = () => {
-  checkOverflow()
-}
-
-watch(
-  () => props.transactions,
-  () => {
-    nextTick(() => checkOverflow())
-  }
-)
 </script>
 
 <style scoped>
@@ -314,36 +287,6 @@ watch(
   box-shadow: var(--billadm-shadow-md);
 }
 
-/* ========== 滚动指示箭头 ========== */
-.scroll-hint-arrow {
-  position: absolute;
-  bottom: var(--billadm-space-sm);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(74, 142, 112, 0.18);
-  color: var(--billadm-color-primary);
-  font-size: 14px;
-  pointer-events: none;
-  backdrop-filter: blur(2px);
-}
-
-/* 过渡动画 */
-.scroll-hint-enter-active,
-.scroll-hint-leave-active {
-  transition: opacity var(--billadm-transition-smooth);
-}
-
-.scroll-hint-enter-from,
-.scroll-hint-leave-to {
-  opacity: 0;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .linked-card {
     transition: none;
@@ -356,10 +299,6 @@ watch(
   }
   .card-enter {
     animation: none;
-  }
-  .scroll-hint-enter-active,
-  .scroll-hint-leave-active {
-    transition: none;
   }
 }
 </style>
