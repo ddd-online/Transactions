@@ -9,6 +9,7 @@ declare global {
             maximizeWindow: () => void;
             closeWindow: () => void;
             openDialog: (options: any) => Promise<any>;
+            saveFile: (relativePath: string) => Promise<{ success: boolean; error?: string; canceled?: boolean }>;
             setWorkspace: (workspaceDir: string) => void;
             getWorkspace: () => Promise<string>;
             getAppInfo: (field: string) => Promise<any>;

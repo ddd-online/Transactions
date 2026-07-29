@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openDialog: async (options) => {
         return await ipcRenderer.invoke('dialog:open', options);
     },
+    saveFile: async (relativePath) => {
+        return await ipcRenderer.invoke('file:save', relativePath);
+    },
     setWorkspace: (workspaceDir) => {
         ipcRenderer.send('workspace:set', workspaceDir);
     },

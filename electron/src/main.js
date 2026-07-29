@@ -182,6 +182,35 @@ const registerCommonHandlers = () => {
         }
     });
 
+    ipcMain.handle('file:save', async (event, relativePath) => {
+        try {
+            const srcPath = path.join(transactionsCfg.workspaceDir, 'data', 'assets', relativePath);
+            log(`file:save source: ${srcPath}`);
+
+            if (!fs.existsSync(srcPath)) {
+                return { success: false, error: '源文件不存在' };
+            }
+
+            const ext = path.extname(relativePath);
+            const baseName = path.basename(relativePath, ext);
+            const result = await dialog.showSaveDialog({
+                defaultPath: baseName + ext,
+                filters: [{ name: '图片文件', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic'] }],
+            });
+
+            if (result.canceled) {
+                return { success: false, canceled: true };
+            }
+
+            fs.copyFileSync(srcPath, result.filePath);
+            log(`file:save saved to: ${result.filePath}`);
+            return { success: true };
+        } catch (err) {
+            log(`file:save error: ${err.message}`);
+            return { success: false, error: err.message };
+        }
+    });
+
     ipcMain.on('workspace:set', (event, workspaceDir) => {
         transactionsCfg.workspaceDir = workspaceDir;
         saveTransactionsCfg();

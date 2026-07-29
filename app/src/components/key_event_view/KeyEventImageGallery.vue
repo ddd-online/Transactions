@@ -10,11 +10,14 @@
       <div class="gallery-main" @click="triggerPreview">
         <a-image v-if="selectedImage" :src="getImageUrl(selectedImage.filePath)" :preview="true" width="100%" height="100%"
           style="object-fit: cover;" :preview-visible="previewVisible" @visible-change="onPreviewChange" loading="lazy" />
+        <button class="download-btn" @click.stop="handleDownload" aria-label="下载图片">
+          <DownloadOutlined />
+        </button>
       </div>
 
       <!-- 右侧缩略图列 -->
       <div class="gallery-thumbs-wrap">
-        <div ref="thumbsRef" class="gallery-thumbs" @scroll="onScroll">
+        <div class="gallery-thumbs">
           <div v-for="(img, index) in images" :key="img.id" class="thumb-item"
             :class="{ 'is-selected': selectedId === img.id, 'thumb-enter': true }"
             :style="{ animationDelay: `${Math.min(index * 50, 300)}ms` }" @click="selectedId = img.id">
@@ -25,22 +28,17 @@
           </div>
         </div>
 
-        <!-- 滚动指示箭头（在滚动容器外，不跟随滚动） -->
-        <Transition name="scroll-hint">
-          <div v-if="showScrollHint" class="scroll-hint-arrow">
-            <DownOutlined />
-          </div>
-        </Transition>
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import { DownOutlined, CloseOutlined } from '@ant-design/icons-vue'
+import { ref, computed, watch } from 'vue'
+import { CloseOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import type { KeyEventImage } from '@/types/billadm'
 import { getImageUrl } from '@/backend/imageUrl'
+import { message } from 'ant-design-vue'
 
 const props = defineProps<{
   images: KeyEventImage[]
@@ -73,26 +71,22 @@ watch(
   { immediate: true, deep: true }
 )
 
-// 滚动指示
-const thumbsRef = ref<HTMLElement | null>(null)
-const showScrollHint = ref(false)
 
-const checkOverflow = () => {
-  const el = thumbsRef.value
-  if (!el) return
-  showScrollHint.value = el.scrollHeight > el.clientHeight + 2 && el.scrollTop + el.clientHeight < el.scrollHeight - 4
-}
 
-const onScroll = () => {
-  checkOverflow()
-}
-
-watch(
-  () => props.images,
-  () => {
-    nextTick(() => checkOverflow())
+const handleDownload = async () => {
+  if (!selectedImage.value) return
+  try {
+    const result = await window.electronAPI.saveFile(selectedImage.value.filePath)
+    if (result.canceled) return
+    if (result.success) {
+      message.success('图片已保存')
+    } else {
+      message.error(result.error || '保存失败')
+    }
+  } catch (e: any) {
+    message.error(e?.message || '保存失败')
   }
-)
+}
 
 const triggerPreview = () => {
   if (selectedImage.value) {
@@ -126,6 +120,7 @@ const onPreviewChange = (visible: boolean) => {
 
 /* 左侧大图 */
 .gallery-main {
+  position: relative;
   flex: 1;
   min-width: 0;
   border-radius: var(--billadm-radius-md);
@@ -144,6 +139,58 @@ const onPreviewChange = (visible: boolean) => {
 .gallery-main :deep(.ant-image-img) {
   object-fit: cover;
   animation: main-fade-in 400ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+.download-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: var(--billadm-radius-sm);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06),
+              0 1px 3px rgba(0, 0, 0, 0.12);
+  line-height: 1;
+  z-index: 1;
+  transition: background var(--billadm-transition-fast),
+              transform var(--billadm-transition-fast),
+              box-shadow var(--billadm-transition-fast);
+}
+
+.download-btn:hover {
+  background: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08),
+              0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.download-btn:focus-visible {
+  outline: 2px solid var(--billadm-color-primary);
+  outline-offset: 2px;
+}
+
+.download-btn:active {
+  transform: scale(0.95);
+  background: var(--billadm-color-minor-background);
+}
+
+.download-btn :deep(.anticon) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--billadm-size-text-body);
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.download-btn:hover :deep(.anticon) {
+  color: var(--billadm-color-primary);
 }
 
 @keyframes main-fade-in {
@@ -166,13 +213,15 @@ const onPreviewChange = (visible: boolean) => {
   gap: var(--billadm-space-xs);
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   contain: strict;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
+  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
 }
 
-.gallery-thumbs::-webkit-scrollbar {
-  display: none;
+.gallery-thumbs::-webkit-scrollbar-thumb:hover {
+  background: rgba(141, 127, 111, 0.40);
 }
 
 .thumb-item {
@@ -278,34 +327,7 @@ const onPreviewChange = (visible: boolean) => {
   color: rgba(0, 0, 0, 0.85);
 }
 
-/* ========== 滚动指示箭头 ========== */
-.scroll-hint-arrow {
-  position: absolute;
-  bottom: var(--billadm-space-xs);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-md);
-  color: var(--billadm-color-primary);
-  font-size: var(--billadm-size-text-body);
-  pointer-events: none;
-}
 
-.scroll-hint-enter-active,
-.scroll-hint-leave-active {
-  transition: opacity var(--billadm-transition-smooth);
-}
-
-.scroll-hint-enter-from,
-.scroll-hint-leave-to {
-  opacity: 0;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .thumb-item {
@@ -320,15 +342,20 @@ const onPreviewChange = (visible: boolean) => {
   .gallery-main :deep(.ant-image-img) {
     animation: none;
   }
+  .download-btn {
+    transition: none;
+  }
+  .download-btn:hover {
+    transform: none;
+  }
+  .download-btn:active {
+    transform: none;
+  }
   .thumb-delete-btn {
     transition: none;
   }
   .thumb-delete-btn:hover {
     transform: none;
-  }
-  .scroll-hint-enter-active,
-  .scroll-hint-leave-active {
-    transition: none;
   }
 }
 </style>
