@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -8,7 +9,6 @@ import (
 	"github.com/billadm/constant"
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/util/set"
 	"github.com/billadm/workspace"
 )
 
@@ -28,7 +28,7 @@ type TrFilterResult struct {
 
 type TransactionRecordDao interface {
 	Create(ws *workspace.Workspace, record *models.TransactionRecord) error
-	QueryByCondition(ws *workspace.Workspace, condition *dto.TrQueryCondition) ([]*models.TransactionRecord, error)
+	CreateBatch(ws *workspace.Workspace, records []*models.TransactionRecord) error
 	QueryFiltered(ws *workspace.Workspace, condition *dto.TrQueryCondition) (*TrFilterResult, error)
 	QueryById(ws *workspace.Workspace, trId string) (*models.TransactionRecord, error)
 	DeleteById(ws *workspace.Workspace, trId string) error
@@ -36,7 +36,8 @@ type TransactionRecordDao interface {
 	QueryByKeyEventDate(ws *workspace.Workspace, date string) ([]*models.TransactionRecord, error)
 	CountByLedgerId(ws *workspace.Workspace, ledgerId string) (int64, error)
 	DeleteAllByLedgerId(ws *workspace.Workspace, ledgerId string) error
-	ListAllByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*models.TransactionRecord, error)
+	QueryStatistics(ws *workspace.Workspace, ledgerId string, tsRange []int64) (TrStatistics, error)
+	QueryChartLineData(ws *workspace.Workspace, ledgerId string, tsRange []int64, granularity string, line dto.ChartLineCondition) ([]dto.ChartPoint, error)
 }
 
 var _ TransactionRecordDao = &trDaoImpl{}
@@ -51,25 +52,11 @@ func (d *trDaoImpl) Create(ws *workspace.Workspace, record *models.TransactionRe
 	return ws.GetDb().Create(record).Error
 }
 
-func (d *trDaoImpl) QueryByCondition(ws *workspace.Workspace, condition *dto.TrQueryCondition) ([]*models.TransactionRecord, error) {
-	trs := make([]*models.TransactionRecord, 0)
-	db := ws.GetDb().Where("ledger_id = ?", condition.LedgerID)
-	db = db.Order("transaction_at desc, transaction_type asc, category desc, price desc")
-	if len(condition.TsRange) == 2 {
-		db = db.Where("transaction_at >= ?", condition.TsRange[0]).Where("transaction_at <= ?", condition.TsRange[1])
+func (d *trDaoImpl) CreateBatch(ws *workspace.Workspace, records []*models.TransactionRecord) error {
+	if len(records) == 0 {
+		return nil
 	}
-	ttSet := set.New[string]()
-	for _, item := range condition.Items {
-		ttSet.Add(item.TransactionType)
-	}
-	if ttSet.Size() > 0 {
-		db = db.Where("transaction_type IN (?)", ttSet.Values())
-	}
-	db = db.Find(&trs)
-	if err := db.Error; err != nil {
-		return nil, err
-	}
-	return trs, nil
+	return ws.GetDb().CreateInBatches(records, 500).Error
 }
 
 func (d *trDaoImpl) QueryById(ws *workspace.Workspace, trId string) (*models.TransactionRecord, error) {
@@ -120,39 +107,80 @@ func (d *trDaoImpl) DeleteAllByLedgerId(ws *workspace.Workspace, ledgerId string
 	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.TransactionRecord{}).Error
 }
 
-func (d *trDaoImpl) ListAllByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*models.TransactionRecord, error) {
-	trs := make([]*models.TransactionRecord, 0)
-	if err := ws.GetDb().
-		Where("ledger_id = ?", ledgerId).
-		Order("transaction_at desc, category desc").
-		Find(&trs).Error; err != nil {
-		return nil, err
-	}
-	return trs, nil
-}
-
-// buildFilteredQuery applies filter conditions to a GORM query for transaction records.
-// It pushes category, description, and transaction type filters to SQL.
-// Tag filtering remains in-memory (too complex for SQLite subqueries with any/all/NOT policies).
+// buildFilteredQuery 把查询条件下推到 SQL。
+// 条件项之间是 OR 关系（与内存版 TrOperator 语义一致），item 内部字段是 AND；
+// 标签条件通过 EXISTS / COUNT 子查询实现，无需再回内存过滤。
 func buildFilteredQuery(db *gorm.DB, condition *dto.TrQueryCondition) *gorm.DB {
 	db = db.Where("ledger_id = ?", condition.LedgerID)
 	if len(condition.TsRange) == 2 {
 		db = db.Where("transaction_at >= ?", condition.TsRange[0]).Where("transaction_at <= ?", condition.TsRange[1])
 	}
-	ttSet := set.New[string]()
-	for _, item := range condition.Items {
-		ttSet.Add(item.TransactionType)
-		if item.Category != "" {
-			db = db.Where("category = ?", item.Category)
-		}
-		if item.Description != "" {
-			db = db.Where("description LIKE ?", "%"+item.Description+"%")
-		}
-	}
-	if ttSet.Size() > 0 {
-		db = db.Where("transaction_type IN (?)", ttSet.Values())
+	if clause, args := buildItemsClause(condition.Items); clause != "" {
+		db = db.Where(clause, args...)
 	}
 	return db
+}
+
+// buildItemsClause 将 OR 语义的条件项列表转换为 SQL 片段（含占位符与参数）。
+func buildItemsClause(items []dto.QueryConditionItem) (string, []any) {
+	if len(items) == 0 {
+		return "", nil
+	}
+	orClauses := make([]string, 0, len(items))
+	orArgs := make([]any, 0)
+	for _, item := range items {
+		sub := make([]string, 0, 4)
+		subArgs := make([]any, 0, 4)
+
+		if item.TransactionType != "" {
+			sub = append(sub, "transaction_type = ?")
+			subArgs = append(subArgs, item.TransactionType)
+		}
+		if item.Category != "" {
+			sub = append(sub, "category = ?")
+			subArgs = append(subArgs, item.Category)
+		}
+		if item.Description != "" {
+			// instr() 与 Go 的 strings.Contains 等价：区分大小写，且不把 % _ 当通配符
+			sub = append(sub, "instr(description, ?) > 0")
+			subArgs = append(subArgs, item.Description)
+		}
+		if len(item.Tags) > 0 {
+			sub = append(sub, buildTagCondition(item.Tags, item.TagPolicy, item.TagNot))
+			for _, tag := range item.Tags {
+				subArgs = append(subArgs, tag)
+			}
+		}
+		if len(sub) == 0 {
+			// 空条件项在内存实现中匹配所有记录（OR 语义），保持等价
+			orClauses = append(orClauses, "1 = 1")
+			continue
+		}
+		orClauses = append(orClauses, "("+strings.Join(sub, " AND ")+")")
+		orArgs = append(orArgs, subArgs...)
+	}
+	return strings.Join(orClauses, " OR "), orArgs
+}
+
+// buildTagCondition 生成标签匹配子查询。
+// policy 为 "all" 时要求记录同时包含全部标签，否则按 "any"（包含任意一个）处理。
+func buildTagCondition(tags []string, policy string, negate bool) string {
+	trTable := (&models.TransactionRecord{}).TableName()
+	tagTable := (&models.TrTag{}).TableName()
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(tags)), ",")
+
+	var expr string
+	if policy == constant.All {
+		expr = fmt.Sprintf("(SELECT COUNT(DISTINCT t.tag) FROM %s t WHERE t.transaction_id = %s.transaction_id AND t.tag IN (%s)) = %d",
+			tagTable, trTable, placeholders, len(tags))
+	} else {
+		expr = fmt.Sprintf("EXISTS (SELECT 1 FROM %s t WHERE t.transaction_id = %s.transaction_id AND t.tag IN (%s))",
+			tagTable, trTable, placeholders)
+	}
+	if negate {
+		return "NOT " + expr
+	}
+	return expr
 }
 
 func buildSortClause(sortFields []dto.QueryConditionSortField) string {
@@ -205,18 +233,29 @@ func (d *trDaoImpl) QueryFiltered(ws *workspace.Workspace, condition *dto.TrQuer
 		return nil, err
 	}
 
-	stats := TrStatistics{}
-	statDb := ws.GetDb().Model(&models.TransactionRecord{}).Where("ledger_id = ?", condition.LedgerID)
-	if len(condition.TsRange) == 2 {
-		statDb = statDb.Where("transaction_at >= ?", condition.TsRange[0]).Where("transaction_at <= ?", condition.TsRange[1])
+	stats, err := d.QueryStatistics(ws, condition.LedgerID, condition.TsRange)
+	if err != nil {
+		return nil, err
 	}
-	type row struct {
+
+	return &TrFilterResult{Items: trs, Total: total, Statistics: stats}, nil
+}
+
+// QueryStatistics 按交易类型汇总指定账本与时间范围内的金额。
+// 统计口径固定为"账本 + 时间范围"（不随筛选条件变化），底部统计条展示的是范围总额。
+func (d *trDaoImpl) QueryStatistics(ws *workspace.Workspace, ledgerId string, tsRange []int64) (TrStatistics, error) {
+	var stats TrStatistics
+	db := ws.GetDb().Model(&models.TransactionRecord{}).Where("ledger_id = ?", ledgerId)
+	if len(tsRange) == 2 {
+		db = db.Where("transaction_at >= ?", tsRange[0]).Where("transaction_at <= ?", tsRange[1])
+	}
+	type statRow struct {
 		TransactionType string
 		Total           int64
 	}
-	var rows []row
-	if err := statDb.Select("transaction_type, SUM(price) as total").Group("transaction_type").Scan(&rows).Error; err != nil {
-		return nil, err
+	var rows []statRow
+	if err := db.Select("transaction_type, SUM(price) as total").Group("transaction_type").Scan(&rows).Error; err != nil {
+		return stats, err
 	}
 	for _, r := range rows {
 		switch r.TransactionType {
@@ -228,6 +267,36 @@ func (d *trDaoImpl) QueryFiltered(ws *workspace.Workspace, condition *dto.TrQuer
 			stats.Transfer = r.Total
 		}
 	}
+	return stats, nil
+}
 
-	return &TrFilterResult{Items: trs, Total: total, Statistics: stats}, nil
+// QueryChartLineData 在 SQL 中完成按时间桶的金额聚合，只返回序列点，
+// 不再把全量明细序列化给前端。
+func (d *trDaoImpl) QueryChartLineData(ws *workspace.Workspace, ledgerId string, tsRange []int64, granularity string, line dto.ChartLineCondition) ([]dto.ChartPoint, error) {
+	db := ws.GetDb().Model(&models.TransactionRecord{})
+	db = db.Where("ledger_id = ?", ledgerId)
+	if len(tsRange) == 2 {
+		db = db.Where("transaction_at >= ?", tsRange[0]).Where("transaction_at <= ?", tsRange[1])
+	}
+	db = db.Where("transaction_type = ?", line.TransactionType)
+	if !line.IncludeOutlier {
+		// Flags 存的是 JSON（{"outlier":true}）；json_extract 缺失或非法时返回 NULL，行保留
+		db = db.Where("json_extract(flags, '$.outlier') IS NOT 1")
+	}
+	if clause, args := buildItemsClause(line.Conditions); clause != "" {
+		db = db.Where(clause, args...)
+	}
+
+	timeFmt := "%Y-%m"
+	if granularity == "year" {
+		timeFmt = "%Y"
+	}
+	points := make([]dto.ChartPoint, 0)
+	// transaction_at 为 unix 秒
+	if err := db.Select(fmt.Sprintf("strftime('%s', transaction_at, 'unixepoch') AS time, SUM(price) AS amount", timeFmt)).
+		Group("time").
+		Scan(&points).Error; err != nil {
+		return nil, err
+	}
+	return points, nil
 }

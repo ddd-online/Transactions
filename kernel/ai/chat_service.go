@@ -18,7 +18,9 @@ import (
 )
 
 const (
-	MaxToolCallRounds  = 9999
+	// MaxToolCallRounds 限制单次对话中模型连续调用工具的最大轮数，
+	// 防止模型陷入工具调用死循环（如反复查询同一数据）。
+	MaxToolCallRounds  = 12
 	MaxHistoryMessages = 50
 )
 
@@ -280,7 +282,8 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 			}
 		}
 
-		// 超过最大轮次
+		// 超过最大轮次（模型仍在调用工具），强制结束并告警
+		logrus.Warnf("AI 工具调用达到最大轮数 %d, 强制结束对话", MaxToolCallRounds)
 		ch <- SSEEvent{Type: "done"}
 	}()
 

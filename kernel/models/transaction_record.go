@@ -6,7 +6,7 @@ package models
 // TransactionRecord 消费记录结构体
 type TransactionRecord struct {
 	TransactionID string `gorm:"primaryKey;comment:交易UUID" json:"transaction_id"`
-	LedgerID      string `gorm:"not null;comment:关联账本ID" json:"ledger_id"`
+	LedgerID      string `gorm:"not null;index:idx_tr_ledger_at,priority:1;comment:关联账本ID" json:"ledger_id"`
 
 	// 交易核心信息
 	Price           int64  `gorm:"not null;comment:交易金额" json:"price"`
@@ -20,10 +20,10 @@ type TransactionRecord struct {
 	Flags string `gorm:"comment:标记集" json:"flags"`
 
 	// 关联关键事件日期
-	KeyEventDate string `gorm:"type:varchar(10);default:'';comment:关联关键事件日期" json:"key_event_date"`
+	KeyEventDate string `gorm:"type:varchar(10);default:'';index:idx_tr_key_event_date;comment:关联关键事件日期" json:"key_event_date"`
 
 	// 时间信息
-	TransactionAt int64 `gorm:"not null;comment:交易时间" json:"transaction_at"`
+	TransactionAt int64 `gorm:"not null;index:idx_tr_ledger_at,priority:2;comment:交易时间" json:"transaction_at"`
 	CreatedAt     int64 `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"created_at"`
 	UpdatedAt     int64 `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updated_at"`
 }

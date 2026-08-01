@@ -11,7 +11,10 @@ import (
 )
 
 func NewGinServer() *gin.Engine {
-	server := gin.Default()
+	server := gin.New()
+	server.Use(gin.Recovery())
+	// 自研请求日志：request-id + 耗时 + 慢请求告警（替换 gin.Default 的默认 Logger）
+	server.Use(requestLogger())
 	// cors
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},                                                // 允许的源

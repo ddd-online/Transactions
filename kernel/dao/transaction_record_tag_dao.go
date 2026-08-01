@@ -25,7 +25,7 @@ func (d *trTagDaoImpl) CreateBatch(ws *workspace.Workspace, tags []*models.TrTag
 	if len(tags) <= 0 {
 		return nil
 	}
-	return ws.GetDb().Create(tags).Error
+	return ws.GetDb().CreateInBatches(tags, 500).Error
 }
 
 func (d *trTagDaoImpl) DeleteByTrId(ws *workspace.Workspace, trId string) error {

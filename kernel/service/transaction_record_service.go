@@ -3,11 +3,13 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/billadm/dao"
+	"github.com/billadm/constant"
 	"github.com/billadm/models"
 	"github.com/billadm/models/dto"
-	"github.com/billadm/pkg/operator"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
@@ -82,81 +84,50 @@ func (t *transactionRecordServiceImpl) BatchCreateTr(ws *workspace.Workspace, dt
 		return 0, nil
 	}
 
-	successCount := 0
+	records := make([]*models.TransactionRecord, 0, len(dtos))
+	trTags := make([]*models.TrTag, 0)
+
+	for _, trDto := range dtos {
+		transactionID := util.GetUUID()
+
+		record := trDto.ToTransactionRecord()
+		record.TransactionID = transactionID
+		records = append(records, record)
+
+		for _, tag := range trDto.Tags {
+			trTags = append(trTags, &models.TrTag{
+				LedgerID:      trDto.LedgerID,
+				TransactionID: transactionID,
+				Tag:           tag,
+			})
+		}
+	}
 
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
-		for _, trDto := range dtos {
-			transactionID := util.GetUUID()
-
-			record := trDto.ToTransactionRecord()
-			record.TransactionID = transactionID
-
-			if err := t.trDao.Create(tx, record); err != nil {
-				logrus.Errorf("批量创建: 创建交易记录失败: %v", err)
-				return fmt.Errorf("create transaction record: %w", err)
-			}
-
-			trTags := make([]*models.TrTag, 0, len(trDto.Tags))
-			for _, tag := range trDto.Tags {
-				trTag := &models.TrTag{
-					LedgerID:      trDto.LedgerID,
-					TransactionID: transactionID,
-					Tag:           tag,
-				}
-				trTags = append(trTags, trTag)
-			}
+		// CreateInBatches 分批 INSERT，避免逐条写入的 SQL 编译开销
+		if err := t.trDao.CreateBatch(tx, records); err != nil {
+			logrus.Errorf("批量创建: 创建交易记录失败: %v", err)
+			return fmt.Errorf("create transaction records: %w", err)
+		}
+		if len(trTags) > 0 {
 			if err := t.trTagDao.CreateBatch(tx, trTags); err != nil {
 				logrus.Errorf("批量创建: 创建标签关联失败: %v", err)
 				return fmt.Errorf("create tr tags: %w", err)
 			}
-
-			successCount++
 		}
 		return nil
 	})
 
 	if err != nil {
 		logrus.Errorf("批量创建交易记录失败: %v", err)
-		return successCount, err
+		return 0, err
 	}
 
-	logrus.Infof("批量创建交易记录成功, 数量: %d", successCount)
-	return successCount, nil
-}
-
-func convertSortFields(dtoSortFields []dto.QueryConditionSortField) []operator.SortField {
-	if len(dtoSortFields) == 0 {
-		return []operator.SortField{
-			{Field: "transactionAt", Order: operator.Desc},
-		}
-	}
-	result := make([]operator.SortField, 0, len(dtoSortFields))
-	for _, sf := range dtoSortFields {
-		order := operator.Desc
-		if sf.Order == "asc" {
-			order = operator.Asc
-		}
-		result = append(result, operator.SortField{
-			Field: sf.Field,
-			Order: order,
-		})
-	}
-	return result
+	logrus.Infof("批量创建交易记录成功, 数量: %d", len(dtos))
+	return len(dtos), nil
 }
 
 func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspace, condition *dto.TrQueryCondition) (*dto.TrQueryResult, error) {
-	hasTagFilter := false
-	for _, item := range condition.Items {
-		if len(item.Tags) > 0 {
-			hasTagFilter = true
-			break
-		}
-	}
-
-	if hasTagFilter {
-		return t.queryWithTagFilter(ws, condition)
-	}
-
 	result, err := t.trDao.QueryFiltered(ws, condition)
 	if err != nil {
 		return nil, err
@@ -210,104 +181,89 @@ func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspa
 	}, nil
 }
 
-func (t *transactionRecordServiceImpl) queryWithTagFilter(ws *workspace.Workspace, condition *dto.TrQueryCondition) (*dto.TrQueryResult, error) {
-	trs, err := t.trDao.QueryByCondition(ws, condition)
-	if err != nil {
-		return nil, err
-	}
-
-	trIds := make([]string, len(trs))
-	for i, tr := range trs {
-		trIds[i] = tr.TransactionID
-	}
-	tagMap, err := t.trTagDao.QueryByTrIds(ws, trIds)
-	if err != nil {
-		return nil, err
-	}
-
-	trDtos := make([]*dto.TransactionRecordDto, 0, len(trs))
-	for _, tr := range trs {
-		trDto := &dto.TransactionRecordDto{}
-		trDto.FromTransactionRecord(tr)
-		if tags, ok := tagMap[tr.TransactionID]; ok {
-			for _, tag := range tags {
-				trDto.Tags = append(trDto.Tags, tag.Tag)
-			}
-		}
-		trDtos = append(trDtos, trDto)
-	}
-
-	sortFields := convertSortFields(condition.SortFields)
-	summary := operator.NewTrOperator().
-		Add(trDtos).
-		Filter(condition.Items).
-		Sort(sortFields).
-		Page(condition.Offset, condition.Limit).
-		Summary()
-
-	return summary, nil
-}
-
 func (t *transactionRecordServiceImpl) QueryTrsForChart(ws *workspace.Workspace, req *dto.ChartQueryRequest) (*dto.ChartQueryResponse, error) {
-	trs, err := t.trDao.QueryByCondition(ws, &dto.TrQueryCondition{
-		LedgerID: req.LedgerID,
-		TsRange:  req.TsRange,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	trIds := make([]string, len(trs))
-	for i, tr := range trs {
-		trIds[i] = tr.TransactionID
-	}
-	tagMap, err := t.trTagDao.QueryByTrIds(ws, trIds)
-	if err != nil {
-		return nil, err
-	}
-
-	trDtos := make([]*dto.TransactionRecordDto, 0, len(trs))
-	for _, tr := range trs {
-		trDto := &dto.TransactionRecordDto{}
-		trDto.FromTransactionRecord(tr)
-		if tags, ok := tagMap[tr.TransactionID]; ok {
-			for _, tag := range tags {
-				trDto.Tags = append(trDto.Tags, tag.Tag)
+	// 每条曲线在 SQL 中完成过滤 + 时间桶聚合，只返回序列点
+	linePoints := make([][]dto.ChartPoint, len(req.Lines))
+	minBucket, maxBucket := "", ""
+	for i, line := range req.Lines {
+		points, err := t.trDao.QueryChartLineData(ws, req.LedgerID, req.TsRange, req.Granularity, line)
+		if err != nil {
+			return nil, fmt.Errorf("query chart line %q: %w", line.Label, err)
+		}
+		linePoints[i] = points
+		for _, p := range points {
+			if minBucket == "" || p.Time < minBucket {
+				minBucket = p.Time
+			}
+			if maxBucket == "" || p.Time > maxBucket {
+				maxBucket = p.Time
 			}
 		}
-		trDtos = append(trDtos, trDto)
 	}
 
-	response := &dto.ChartQueryResponse{
-		Lines: make([]dto.ChartLineData, 0, len(req.Lines)),
+	stats, err := t.trDao.QueryStatistics(ws, req.LedgerID, req.TsRange)
+	if err != nil {
+		return nil, fmt.Errorf("query chart statistics: %w", err)
 	}
 
-	for _, line := range req.Lines {
-		var filtered []*dto.TransactionRecordDto
-		for _, tr := range trDtos {
-			if tr.TransactionType != line.TransactionType {
-				continue
-			}
-			if !line.IncludeOutlier && tr.Outlier {
-				continue
-			}
-			filtered = append(filtered, tr)
+	labels := chartTimeLabels(minBucket, maxBucket, req.Granularity)
+	lines := make([]dto.ChartLineData, 0, len(req.Lines))
+	for i, line := range req.Lines {
+		byBucket := make(map[string]int64, len(linePoints[i]))
+		for _, p := range linePoints[i] {
+			byBucket[p.Time] = p.Amount
 		}
-
-		filtered = operator.NewTrOperator().
-			Add(filtered).
-			Filter(line.Conditions).
-			Summary().
-			Items
-
-		response.Lines = append(response.Lines, dto.ChartLineData{
+		data := make([]dto.ChartPoint, 0, len(labels))
+		for _, label := range labels {
+			data = append(data, dto.ChartPoint{Time: label, Amount: byBucket[label]})
+		}
+		lines = append(lines, dto.ChartLineData{
 			Label: line.Label,
 			Type:  line.TransactionType,
-			Items: filtered,
+			Data:  data,
 		})
 	}
 
-	return response, nil
+	return &dto.ChartQueryResponse{
+		Lines: lines,
+		Statistics: map[string]int64{
+			constant.TransactionTypeIncome:   stats.Income,
+			constant.TransactionTypeExpense:  stats.Expense,
+			constant.TransactionTypeTransfer: stats.Transfer,
+		},
+	}, nil
+}
+
+// chartTimeLabels 根据所有曲线数据的实际桶范围生成连续时间轴并补零。
+// 桶格式：month -> "2026-01"，year -> "2026"（字典序即时间序）。
+func chartTimeLabels(minBucket, maxBucket, granularity string) []string {
+	if minBucket == "" {
+		return nil
+	}
+	if granularity == "year" {
+		minYear, errMin := strconv.Atoi(minBucket)
+		maxYear, errMax := strconv.Atoi(maxBucket)
+		if errMin != nil || errMax != nil {
+			return nil
+		}
+		labels := make([]string, 0, maxYear-minYear+1)
+		for y := minYear; y <= maxYear; y++ {
+			labels = append(labels, strconv.Itoa(y))
+		}
+		return labels
+	}
+
+	start, errStart := time.Parse("2006-01", minBucket)
+	end, errEnd := time.Parse("2006-01", maxBucket)
+	if errStart != nil || errEnd != nil {
+		return nil
+	}
+	var labels []string
+	for !start.After(end) {
+		labels = append(labels, start.Format("2006-01"))
+		start = start.AddDate(0, 1, 0)
+	}
+	return labels
 }
 
 func (t *transactionRecordServiceImpl) DeleteTrById(ws *workspace.Workspace, trId string) error {

@@ -1,17 +1,23 @@
 import api from "@/backend/api/api-client";
-import type { TransactionRecord, TrQueryCondition, TrQueryResult } from "@/types/billadm";
+import type { TransactionRecord, TrQueryCondition, TrQueryResult, TrStatistics } from "@/types/billadm";
 import type { ChartLine } from '@/backend/chart';
 
 export async function queryTrOnCondition(condition: TrQueryCondition): Promise<TrQueryResult> {
     return api.post<TrQueryResult>('/v1/transactions/query', condition, '查询消费记录');
 }
 
+export interface ChartPoint {
+    time: string
+    amount: number // 分
+}
+
 export interface ChartQueryResponse {
     lines: {
         label: string
         type: string
-        items: TransactionRecord[]
+        data: ChartPoint[]
     }[]
+    statistics: TrStatistics
 }
 
 export interface ChartQueryRequest {

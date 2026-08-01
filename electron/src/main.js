@@ -142,8 +142,8 @@ const createTray = () => {
             },
             { type: 'separator' },
             {
-                label: '关闭程序', click: () => {
-                    if (kernelProcess) kernelProcess.kill();
+                label: '关闭程序', click: async () => {
+                    await stopKernel();
                     saveTransactionsCfg();
                     app.quit();
                 },
@@ -254,7 +254,9 @@ const registerCommonHandlers = () => {
 
     // ── 更新 ──
     let downloadRequest = null;
+    let downloadWriteStream = null;
     let downloadFilePath = null;
+    let downloadCancelled = false;
 
     ipcMain.handle('update:check', async () => {
         try {
@@ -333,23 +335,60 @@ const registerCommonHandlers = () => {
 
     ipcMain.handle('update:download', async (event, downloadUrl) => {
         try {
-            // Cancel any existing download
+            downloadCancelled = false;
+            // 中断上一次未完成的下载并清理
             if (downloadRequest) {
                 downloadRequest.destroy();
                 downloadRequest = null;
+            }
+            if (downloadWriteStream) {
+                downloadWriteStream.destroy();
+                downloadWriteStream = null;
             }
 
             const urlObj = new URL(downloadUrl);
             const fileName = path.basename(urlObj.pathname);
             downloadFilePath = path.join(os.tmpdir(), fileName);
+            const tmpPath = downloadFilePath + '.part';
 
-            // If file already exists from a previous completed download, reuse it
+            // 已下载完成的文件直接复用
             if (fs.existsSync(downloadFilePath)) {
                 mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
                 return { success: true };
             }
 
+            // 流式写入磁盘，避免把整个安装包缓存在内存中
+            const writeStream = fs.createWriteStream(tmpPath);
+            downloadWriteStream = writeStream;
+
             await new Promise((resolve, reject) => {
+                let settled = false;
+                const fail = (err) => {
+                    if (settled) return;
+                    settled = true;
+                    downloadRequest = null;
+                    downloadWriteStream = null;
+                    // Windows 下流未完全关闭时 unlink 会报 EBUSY，等 close 后再清理
+                    writeStream.once('close', () => {
+                        try { fs.unlinkSync(tmpPath); } catch (e) { /* 已清理或不存在 */ }
+                    });
+                    writeStream.destroy();
+                    if (downloadCancelled) {
+                        resolve(); // 用户主动取消：静默结束
+                        return;
+                    }
+                    reject(err);
+                };
+                const succeed = () => {
+                    if (settled) return;
+                    settled = true;
+                    downloadRequest = null;
+                    downloadWriteStream = null;
+                    fs.renameSync(tmpPath, downloadFilePath);
+                    mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
+                    resolve();
+                };
+
                 const req = net.request({
                     method: 'GET',
                     url: downloadUrl,
@@ -357,20 +396,22 @@ const registerCommonHandlers = () => {
                 downloadRequest = req;
 
                 req.on('response', (res) => {
-                    // Handle redirect
+                    // net.request 默认跟随重定向，走到这里通常已是 200
                     if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                        reject(new Error('Redirect not supported; use direct URL'));
+                        fail(new Error('Redirect not supported; use direct URL'));
                         return;
                     }
 
                     const total = parseInt(res.headers['content-length'] || '0', 10);
                     let downloaded = 0;
                     const startTime = Date.now();
-                    const chunks = [];
 
                     res.on('data', (chunk) => {
-                        chunks.push(chunk);
                         downloaded += chunk.length;
+                        if (!writeStream.write(chunk)) {
+                            res.pause();
+                            writeStream.once('drain', () => res.resume());
+                        }
                         const percent = total > 0 ? Math.round((downloaded / total) * 100) : 0;
                         const elapsed = (Date.now() - startTime) / 1000;
                         const speed = elapsed > 0 ? formatSpeed(downloaded / elapsed) : '0 B/s';
@@ -384,25 +425,17 @@ const registerCommonHandlers = () => {
                     });
 
                     res.on('end', () => {
-                        const buffer = Buffer.concat(chunks);
-                        try {
-                            fs.writeFileSync(downloadFilePath, buffer);
-                            downloadRequest = null;
-                            mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
-                            resolve();
-                        } catch (e) {
-                            reject(e);
-                        }
+                        writeStream.end(() => succeed());
                     });
 
-                    res.on('error', reject);
+                    res.on('error', fail);
                 });
 
                 req.on('error', (e) => {
                     if (downloadRequest === null) {
                         resolve(); // Cancelled silently
                     } else {
-                        reject(e);
+                        fail(e);
                     }
                 });
 
@@ -412,23 +445,39 @@ const registerCommonHandlers = () => {
             return { success: true };
         } catch (e) {
             log(`update:download error: ${e.message}`);
+            if (downloadCancelled) {
+                return { success: false, error: 'cancelled' };
+            }
             if (downloadFilePath && fs.existsSync(downloadFilePath)) {
                 try { fs.unlinkSync(downloadFilePath); } catch { }
             }
             downloadFilePath = null;
             downloadRequest = null;
+            downloadWriteStream = null;
             mainWindow.webContents.send('update:download-error', { message: e.message });
             return { success: false, error: e.message };
         }
     });
 
     ipcMain.on('update:cancel', () => {
+        downloadCancelled = true;
         if (downloadRequest) {
             downloadRequest.destroy();
             downloadRequest = null;
         }
-        if (downloadFilePath && fs.existsSync(downloadFilePath)) {
-            try { fs.unlinkSync(downloadFilePath); } catch { }
+        if (downloadWriteStream) {
+            const stream = downloadWriteStream;
+            downloadWriteStream = null;
+            stream.once('close', () => {
+                try { fs.unlinkSync(stream.path); } catch { }
+            });
+            try { stream.destroy(); } catch { }
+        }
+        if (downloadFilePath) {
+            try {
+                fs.unlinkSync(downloadFilePath);
+                fs.unlinkSync(downloadFilePath + '.part');
+            } catch { }
         }
         downloadFilePath = null;
     });
@@ -502,12 +551,30 @@ const handleWindowClose = async () => {
     }
 };
 
-const quitApp = async () => {
+// 优雅停止内核：先请求 /api/v1/app/exit 让其保存并退出，超时再强制结束，
+// 避免直接 kill 导致 SQLite WAL 未正常 checkpoint。
+const stopKernel = async () => {
+    if (!kernelProcess) return;
     try {
         await net.fetch(API_SERVER + "/api/v1/app/exit", { method: "POST" });
     } catch (e) {
         log(`请求kernel关闭失败 ${e}`);
     }
+    const deadline = Date.now() + 3000;
+    while (kernelProcess && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    if (kernelProcess) {
+        try {
+            kernelProcess.kill();
+        } catch (e) {
+            log(`强制结束kernel失败: ${e}`);
+        }
+    }
+};
+
+const quitApp = async () => {
+    await stopKernel();
 };
 
 const createMainWindow = () => {
@@ -624,10 +691,10 @@ app.on('before-quit', () => {
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-        if (kernelProcess) {
-            kernelProcess.kill();
-        }
         saveTransactionsCfg();
-        app.quit();
+        (async () => {
+            await stopKernel();
+            app.quit();
+        })();
     }
 });

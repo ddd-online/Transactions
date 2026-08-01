@@ -14,15 +14,22 @@ type ChartQueryRequest struct {
 	Lines       []ChartLineCondition `json:"lines"`
 }
 
-// ChartLineData contains filtered transaction records for a single line
+// ChartPoint 是聚合后的单个时间序列点。
+type ChartPoint struct {
+	Time   string `json:"time"`
+	Amount int64  `json:"amount"`
+}
+
+// ChartLineData 包含单条曲线的聚合序列数据。
 type ChartLineData struct {
-	Label string                     `json:"label"`
-	Type  string                     `json:"type"`
-	Items []*TransactionRecordDto    `json:"items"`
+	Label string       `json:"label"`
+	Type  string       `json:"type"`
+	Data  []ChartPoint `json:"data"`
 }
 
 type ChartQueryResponse struct {
-	Lines []ChartLineData `json:"lines"`
+	Lines      []ChartLineData `json:"lines"`
+	Statistics map[string]int64 `json:"statistics"`
 }
 
 

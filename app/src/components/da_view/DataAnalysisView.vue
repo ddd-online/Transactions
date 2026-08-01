@@ -59,7 +59,7 @@ import { convertToUnixTimeRange } from '@/backend/timerange.ts'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { queryChartData, queryTrOnCondition as queryTrOnConditionRaw } from '@/backend/api/tr.ts'
 import { queryCharts, createChart as createChartApi, updateChart as updateChartApi, type ChartDto } from '@/backend/api/chart'
-import { buildLineChartData, type ChartLine, type TimeSeriesData } from '@/backend/chart'
+import { chartLinePointsToTimeSeries, type ChartLine, type TimeSeriesData } from '@/backend/chart'
 import type { TrStatistics } from '@/types/billadm'
 
 const ledgerStore = useLedgerStore()
@@ -100,6 +100,7 @@ const queryStatistics = async (): Promise<TrStatistics | null> => {
         ? convertToUnixTimeRange(trQueryConditionStore.timeRange)
         : undefined,
       items: [],
+      limit: 1, // 只取统计，不拉全量明细
     }),
     {
       errorPrefix: '查询消费记录失败',
@@ -109,8 +110,8 @@ const queryStatistics = async (): Promise<TrStatistics | null> => {
   return result.trStatistics || null
 }
 
-// 加载图表数据
-const loadChartData = async (chart: ChartDto): Promise<ChartInstance | null> => {
+// 加载图表数据（后端已按时间桶聚合，只返回序列点 + 统计）
+const loadChartData = async (chart: ChartDto): Promise<{ instance: ChartInstance | null; statistics: TrStatistics | null }> => {
   const response = await queryChartData({
     ledgerId: chart.ledgerId,
     tsRange: trQueryConditionStore.timeRange
@@ -120,19 +121,15 @@ const loadChartData = async (chart: ChartDto): Promise<ChartInstance | null> => 
     lines: chart.lines,
   })
 
-  const lineRecords = response.lines.map((line) => ({
-    label: line.label,
-    type: line.type,
-    items: line.items,
-  }))
-  const data = buildLineChartData(lineRecords, chart.granularity)
-
   return {
-    title: chart.title,
-    granularity: chart.granularity,
-    data,
-    lines: chart.lines,
-    chartId: chart.chartId,
+    instance: {
+      title: chart.title,
+      granularity: chart.granularity,
+      data: chartLinePointsToTimeSeries(response.lines),
+      lines: chart.lines,
+      chartId: chart.chartId,
+    },
+    statistics: response.statistics || null,
   }
 }
 
@@ -156,10 +153,12 @@ const loadAllCharts = async () => {
     allCharts.value = []
   }
 
-  // 并行加载所有图表数据
+  // 并行加载所有图表数据（每条曲线在 SQL 内聚合，payload 已大幅缩小）
+  let statistics: TrStatistics | null = null
   const results = await Promise.all(
     allCharts.value.map(async (chart) => {
-      const instance = await loadChartData(chart)
+      const { instance, statistics: lineStats } = await loadChartData(chart)
+      if (lineStats) statistics = lineStats
       return { chartId: chart.chartId, instance }
     })
   )
@@ -169,8 +168,10 @@ const loadAllCharts = async () => {
     if (instance) chartDataCache.value.set(chartId, instance)
   })
 
-  // 更新底部统计
-  const statistics = await queryStatistics()
+  // 更新底部统计：有图表时直接用聚合响应中的统计；无图表时兜底轻量查询
+  if (!statistics) {
+    statistics = await queryStatistics()
+  }
   if (statistics) appDataStore.setStatistics(statistics)
 
   // 保持当前选中
@@ -208,13 +209,14 @@ const onChartCreate = async (request: { title: string; granularity: 'year' | 'mo
     })
     allCharts.value.push(newChart)
 
-    const instance = await loadChartData(newChart)
+    const { instance, statistics } = await loadChartData(newChart)
     if (instance) {
       chartDataCache.value.set(newChart.chartId, instance)
     }
 
     selectedChart.value = instance
     selectedChartId.value = newChart.chartId
+    if (statistics) appDataStore.setStatistics(statistics)
     message.success('创建成功')
   } catch (error) {
     message.error('创建失败')
