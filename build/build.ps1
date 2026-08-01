@@ -29,6 +29,29 @@ $initialLocation = Get-Location
 
 try {
     # ==============================
+    # 0. 自动配置代理（electron-builder 下载 Electron/NSIS 资源需要）
+    # ==============================
+    if (-not $env:HTTPS_PROXY) {
+        $sysProxy = (Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' -ErrorAction SilentlyContinue).ProxyServer
+        if ($sysProxy) {
+            $proxyHost, $proxyPort = $sysProxy -split ':'
+            $proxyPort = if ($proxyPort) { [int]$proxyPort } else { 1080 }
+            $tcp = New-Object System.Net.Sockets.TcpClient
+            $connected = $tcp.ConnectAsync($proxyHost, $proxyPort).Wait(1500)
+            $tcp.Dispose()
+            if ($connected) {
+                $env:HTTPS_PROXY = "http://$sysProxy"
+                $env:HTTP_PROXY = "http://$sysProxy"
+                Write-Success "自动检测到系统代理: $sysProxy，已设置 HTTPS_PROXY / HTTP_PROXY"
+            } else {
+                Write-Warn "系统代理 $sysProxy 不可用，将直连（若 Electron 打包下载资源超时，可手动设置 HTTPS_PROXY 后重试）"
+            }
+        }
+    } else {
+        Write-Info "使用已有的 HTTPS_PROXY: $env:HTTPS_PROXY"
+    }
+
+    # ==============================
     # 1. 构建 Vue 前端
     # ==============================
     Write-Step "正在构建前端 Vue 项目..."
