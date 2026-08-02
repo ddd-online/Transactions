@@ -119,13 +119,13 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         // Use cache
         const cached = cache.getImages(date)
         if (cached) {
-            images.value = cached
+            images.value = [...cached]
             return
         }
         try {
             const result = await queryKeyEventImages(date, ledgerId);
             cache.setImages(date, result);
-            images.value = result;
+            images.value = [...result];
         } catch (error) {
             NotificationUtil.error('加载图片失败', `${error}`);
             images.value = [];
@@ -179,10 +179,11 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
         if (!ledgerId) return
         try {
             const image = await addKeyEventImage(date, data, ledgerId, onProgress);
-            images.value.push(image);
+            // 不可变更新：新数组不再与缓存共享引用
+            images.value = [...images.value, image];
             const cached = cache.getImages(date);
             if (cached) {
-                cached.push(image);
+                cache.setImages(date, [...cached, image]);
             }
         } catch (error) {
             NotificationUtil.error('添加图片失败', `${error}`);
