@@ -88,6 +88,21 @@ echo Y | pwsh.exe -ExecutionPolicy Bypass -File "build/release.ps1" -BodyFile "$
 - `release.ps1` 需要交互确认，用 `echo Y` 管道自动确认
 - `-BodyFile` 的内容直接作为 Release Notes（UTF-8 编码）
 
+> ⚠️ **Tag 与构建提交一致性**：`release.ps1` 通过 gh 创建 Release 时，若本地提交尚未推送到远端，gh 会按远端默认分支 tip 打 tag，导致 tag 指向比实际构建更早的提交（产物与发布说明不受影响，但后续 `git log vX.Y.Z..HEAD` 会统计出重复变更）。发布前先推送 main 可避免：
+
+```powershell
+git push origin main
+```
+
+发布后校验 tag 指向：
+
+```powershell
+git fetch --tags origin
+git rev-parse vX.Y.Z     # 应与当前 HEAD / bump 提交一致
+```
+
+若不一致，按"故障处理"中的方法修正。
+
 **完成条件**：输出 "GitHub Release vX.Y.Z 发布成功！"，且 `gh release view vX.Y.Z` 可见发布与资产。
 
 ## Step 4: 善后
@@ -100,7 +115,7 @@ git add -A && git commit -m "chore: 同步 lockfile 版本"  # 如有需要
 git push
 ```
 
-最后用 `gh release view vX.Y.Z` 复核 Release 状态（非草稿、非预发布）与安装包资产已上线。
+最后用 `gh release view vX.Y.Z` 复核 Release 状态（非草稿、非预发布）与安装包资产已上线，并确认 tag 指向构建提交（`git rev-parse vX.Y.Z` 与当前 HEAD 一致）。
 
 ## 故障处理
 
@@ -111,6 +126,7 @@ git push
 | `build.ps1` Electron 打包失败 `connect ETIMEDOUT` | electron-builder 下载 Electron/NSIS 资源直连 GitHub 超时 | `build.ps1` 已自动检测系统代理；仍失败则手动设置 `HTTPS_PROXY`/`HTTP_PROXY` 后重跑 |
 | `release.ps1` gh 未登录 | `gh auth login` 未执行过 | 终端中执行 `gh auth login`，完成后重试 |
 | `release.ps1` 产物路径不对 | 版本号与产物文件名不匹配 | 确认版本号正确，重新执行 `build.ps1` |
+| Release tag 指向旧提交 | 发版时本地提交尚未推送，gh 按远端默认分支 tip 打 tag | 发布前先 `git push origin main`；已发生时修正：`git tag -f vX.Y.Z <实际构建提交>` 后 `git push --force origin refs/tags/vX.Y.Z`（Release 与资产保留，属改写远端，需确认后操作） |
 | 上传失败 `proxyconnect tcp ... refused` | 代理已配置但不可达 | `release.ps1` 会 TCP 探测代理可用性（1.5s 超时），不可用则自动直连 |
 | 上传速度极慢 | `gh` CLI 不走系统代理，直连 GitHub | `release.ps1` 现已自动检测 Windows 系统代理（`HKCU\...\ProxyServer`）并设置 `HTTPS_PROXY` |
 
