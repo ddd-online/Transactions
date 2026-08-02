@@ -99,3 +99,20 @@ func (h *Handlers) importOneDiary(c *gin.Context) (any, error) {
 
 	return h.DiarySvc.ImportFile(ws, path, date)
 }
+
+// POST /api/v1/diary/export  body: { directory }
+func (h *Handlers) exportDiary(c *gin.Context) (any, error) {
+	ws := ws(c)
+
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+
+	directory, _ := arg["directory"].(string)
+	if directory == "" {
+		return nil, models.NewBadRequest("directory is required")
+	}
+
+	return h.DiarySvc.ExportToDirectory(ws, directory)
+}

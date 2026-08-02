@@ -26,6 +26,19 @@ type FileItem struct {
 	Path string `json:"path"` // 文件绝对路径
 }
 
+// ExportFileError 记录导出失败的单个文件
+type ExportFileError struct {
+	Date  string `json:"date"`
+	Error string `json:"error"`
+}
+
+// ExportResult 导出结果汇总
+type ExportResult struct {
+	Total   int               `json:"total"`
+	Success int               `json:"success"`
+	Failed  []ExportFileError `json:"failed"`
+}
+
 func NewDiaryService(diaryDao dao.DiaryDao) DiaryService {
 	return &diaryServiceImpl{
 		diaryDao: diaryDao,
@@ -40,6 +53,8 @@ type DiaryService interface {
 	// Import 导入
 	ScanDirectory(dir string) ([]FileItem, error)
 	ImportFile(ws *workspace.Workspace, path string, date string) (*models.DiaryEntry, error)
+	// Export 导出
+	ExportToDirectory(ws *workspace.Workspace, dir string) (*ExportResult, error)
 }
 
 var _ DiaryService = &diaryServiceImpl{}
@@ -91,8 +106,8 @@ func (s *diaryServiceImpl) DeleteByDate(ws *workspace.Workspace, date string) er
 	return nil
 }
 
-// fileNameRe 匹配 YYYY-MM-DD.txt 文件名
-var fileNameRe = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2})\.txt$`)
+// fileNameRe 匹配 YYYY-MM-DD.txt / YYYY-MM-DD.md 文件名
+var fileNameRe = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2})\.(txt|md)$`)
 
 // gbkDecoder 复用，避免每次 toUTF8 调用时重新分配
 var gbkDecoder = simplifiedchinese.GBK.NewDecoder()
@@ -109,7 +124,7 @@ func (s *diaryServiceImpl) ScanDirectory(dir string) ([]FileItem, error) {
 		}
 		name := d.Name()
 		matches := fileNameRe.FindStringSubmatch(name)
-		if len(matches) != 2 {
+		if len(matches) != 3 {
 			return nil
 		}
 		dateStr := matches[1]
@@ -137,6 +152,28 @@ func (s *diaryServiceImpl) ImportFile(ws *workspace.Workspace, path string, date
 	}
 	content := toUTF8(raw)
 	return s.Upsert(ws, date, content, "")
+}
+
+func (s *diaryServiceImpl) ExportToDirectory(ws *workspace.Workspace, dir string) (*ExportResult, error) {
+	entries, err := s.diaryDao.ListAll(ws)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("创建导出目录失败: %w", err)
+	}
+
+	result := &ExportResult{Total: len(entries)}
+	for _, entry := range entries {
+		filePath := filepath.Join(dir, entry.Date+".md")
+		if err := os.WriteFile(filePath, []byte(entry.Content), 0o644); err != nil {
+			result.Failed = append(result.Failed, ExportFileError{Date: entry.Date, Error: err.Error()})
+			continue
+		}
+		result.Success++
+	}
+	return result, nil
 }
 
 func toUTF8(raw []byte) string {

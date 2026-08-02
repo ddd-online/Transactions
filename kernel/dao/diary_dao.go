@@ -8,6 +8,7 @@ import (
 
 type DiaryDao interface {
 	ListDates(ws *workspace.Workspace) ([]models.DiaryEntry, error)
+	ListAll(ws *workspace.Workspace) ([]models.DiaryEntry, error)
 	QueryByDate(ws *workspace.Workspace, date string) (*models.DiaryEntry, error)
 	Upsert(ws *workspace.Workspace, entry *models.DiaryEntry) error
 	DeleteByDate(ws *workspace.Workspace, date string) error
@@ -26,6 +27,17 @@ func (d *diaryDaoImpl) ListDates(ws *workspace.Workspace) ([]models.DiaryEntry, 
 	err := ws.GetDb().Model(&models.DiaryEntry{}).
 		Select("date, word_count, mood").
 		Order("date DESC").
+		Find(&entries).Error
+	if err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func (d *diaryDaoImpl) ListAll(ws *workspace.Workspace) ([]models.DiaryEntry, error) {
+	var entries []models.DiaryEntry
+	err := ws.GetDb().Model(&models.DiaryEntry{}).
+		Order("date ASC").
 		Find(&entries).Error
 	if err != nil {
 		return nil, err

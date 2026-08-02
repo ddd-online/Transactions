@@ -30,3 +30,19 @@ export async function scanDirectory(directory: string): Promise<{ files: { date:
 export async function importFile(path: string, date: string): Promise<{ date: string; wordCount: number }> {
     return api.post('/v1/diary/import/file', { path, date }, '导入日记文件');
 }
+
+export interface DiaryExportFailedItem {
+    date: string
+    error: string
+}
+
+export interface DiaryExportResult {
+    total: number
+    success: number
+    failed: DiaryExportFailedItem[]
+}
+
+/** 导出全部日记到指定目录，每篇一个 YYYY-MM-DD.md */
+export async function exportDiary(directory: string): Promise<DiaryExportResult> {
+    return api.post('/v1/diary/export', { directory }, '导出日记');
+}

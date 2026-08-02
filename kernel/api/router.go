@@ -103,6 +103,9 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 				importGroup.POST("/scan", Handle(h.importScanDiary))
 				importGroup.POST("/file", Handle(h.importOneDiary))
 			}
+
+			// Diary export
+			diary.POST("/export", Handle(h.exportDiary))
 		}
 
 		// AI Chat (requires workspace)

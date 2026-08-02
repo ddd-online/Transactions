@@ -6,7 +6,7 @@
       <div class="setting-card">
         <div class="setting-info">
           <span class="setting-card-title">导入日记</span>
-          <span class="setting-desc">从本地目录批量导入，文件名需为 YYYY-MM-DD.txt 格式</span>
+          <span class="setting-desc">从本地目录批量导入，文件名需为 YYYY-MM-DD.txt 或 YYYY-MM-DD.md 格式</span>
           <!-- 浏览器 dev 模式降级 -->
           <div v-if="!isElectron" class="dev-path-row">
             <a-input
@@ -19,7 +19,7 @@
         </div>
         <div class="setting-action">
           <a-tooltip
-            title="从本地目录批量导入日记，文件名需为 YYYY-MM-DD.txt 格式"
+            title="从本地目录批量导入日记，文件名需为 YYYY-MM-DD.txt 或 YYYY-MM-DD.md 格式"
             :mouse-enter-delay="0.5"
           >
             <a-button
@@ -29,6 +29,39 @@
             >
               <template #icon><FolderOpenOutlined /></template>
               选择目录导入
+            </a-button>
+          </a-tooltip>
+        </div>
+      </div>
+
+      <!-- 导出日记 -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-card-title">导出日记</span>
+          <span class="setting-desc">将全部日记导出为 Markdown 文件（YYYY-MM-DD.md），可重新导入</span>
+          <!-- 浏览器 dev 模式降级 -->
+          <div v-if="!isElectron" class="dev-path-row">
+            <a-input
+              v-model:value="exportManualPath"
+              placeholder="例如 C:\Users\me\diary-export 或 /home/me/diary-export"
+              size="small"
+              class="dev-path-input"
+            />
+          </div>
+        </div>
+        <div class="setting-action">
+          <a-tooltip
+            title="将全部日记导出为 Markdown 文件（YYYY-MM-DD.md）"
+            :mouse-enter-delay="0.5"
+          >
+            <a-button
+              type="default"
+              :loading="exportState.status === 'exporting'"
+              :disabled="!isElectron && !exportManualPath"
+              @click="handleExportClick"
+            >
+              <template #icon><ExportOutlined /></template>
+              选择目录导出
             </a-button>
           </a-tooltip>
         </div>
@@ -92,14 +125,33 @@
         </div>
       </div>
     </div>
+
+    <!-- 导出失败明细 -->
+    <div v-if="exportState.status === 'done' && exportState.failed.length > 0" class="import-progress-card">
+      <div class="export-summary-title">导出完成，{{ exportState.success }}/{{ exportState.total }} 篇成功，{{ exportState.failed.length }} 篇失败：</div>
+      <div class="file-list">
+        <div
+          v-for="(f, i) in exportState.failed"
+          :key="i"
+          class="file-row file-row--error"
+          :title="f.error"
+        >
+          <span class="file-dot">
+            <CloseCircleFilled class="dot-icon error" />
+          </span>
+          <span class="file-date">{{ f.date }}</span>
+          <span class="file-status-text status--error">{{ f.error }}</span>
+        </div>
+      </div>
+    </div>
   </SettingsPageWrapper>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, ref, onUnmounted } from 'vue'
-import { FolderOpenOutlined, CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons-vue'
+import { FolderOpenOutlined, ExportOutlined, CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import { scanDirectory, importFile } from '@/backend/api/diary'
+import { scanDirectory, importFile, exportDiary } from '@/backend/api/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
 
 // ---- Electron 检测 ----
@@ -107,6 +159,7 @@ const isElectron = computed(() => !!window.electronAPI)
 
 // ---- 手动路径（浏览器 dev 降级） ----
 const manualPath = ref('')
+const exportManualPath = ref('')
 
 // ---- 进度状态 ----
 
@@ -131,6 +184,29 @@ const importState = reactive<ImportState>({
 })
 let resetTimer: ReturnType<typeof setTimeout> | null = null
 onUnmounted(() => { if (resetTimer) clearTimeout(resetTimer) })
+
+// ---- 导出状态 ----
+
+interface ExportFailedItem {
+  date: string
+  error: string
+}
+
+interface ExportState {
+  status: 'idle' | 'exporting' | 'done'
+  total: number
+  success: number
+  failed: ExportFailedItem[]
+}
+
+const exportState = reactive<ExportState>({
+  status: 'idle',
+  total: 0,
+  success: 0,
+  failed: [],
+})
+let exportResetTimer: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => { if (exportResetTimer) clearTimeout(exportResetTimer) })
 
 const percent = computed(() => {
   if (importState.total === 0) return 0
@@ -181,7 +257,7 @@ async function doImport(directory: string) {
   }
 
   if (fileList.length === 0) {
-    message.info('未找到符合格式的日记文件（YYYY-MM-DD.txt）')
+    message.info('未找到符合格式的日记文件（YYYY-MM-DD.txt / .md）')
     importState.status = 'idle'
     return
   }
@@ -226,6 +302,56 @@ async function doImport(directory: string) {
       importState.total = 0
       importState.completed = 0
     }, 1500)
+  }
+}
+
+// ---- 导出流程 ----
+
+async function handleExportClick() {
+  let directory: string
+
+  if (isElectron.value) {
+    const result = await window.electronAPI.openDialog({
+      properties: ['openDirectory'],
+    })
+    if (result.canceled || !result.filePaths?.length) return
+    directory = result.filePaths[0]
+  } else {
+    if (!exportManualPath.value.trim()) return
+    directory = exportManualPath.value.trim()
+  }
+
+  await doExport(directory)
+}
+
+async function doExport(directory: string) {
+  exportState.status = 'exporting'
+
+  try {
+    const res = await exportDiary(directory)
+    exportState.status = 'done'
+    exportState.total = res.total
+    exportState.success = res.success
+    exportState.failed = res.failed || []
+
+    if (res.total === 0) {
+      message.info('没有可导出的日记')
+    } else if (exportState.failed.length > 0) {
+      message.warning(`导出完成，成功 ${res.success} 篇，失败 ${exportState.failed.length} 篇`)
+    } else {
+      message.success(`成功导出 ${res.success} 篇日记`)
+    }
+
+    // 3s 后自动恢复按钮
+    exportResetTimer = setTimeout(() => {
+      exportState.status = 'idle'
+      exportState.total = 0
+      exportState.success = 0
+      exportState.failed = []
+    }, 3000)
+  } catch (e: any) {
+    exportState.status = 'idle'
+    message.error('导出失败: ' + (e?.message || e))
   }
 }
 </script>
@@ -273,6 +399,13 @@ async function doImport(directory: string) {
 .setting-action {
   flex-shrink: 0;
   margin-left: var(--billadm-space-lg);
+}
+
+.export-summary-title {
+  font-size: var(--billadm-size-text-body-sm);
+  font-weight: var(--billadm-weight-medium);
+  color: var(--billadm-color-text-major);
+  margin-bottom: var(--billadm-space-sm);
 }
 
 .dev-path-row {
