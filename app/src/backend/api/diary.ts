@@ -42,7 +42,15 @@ export interface DiaryExportResult {
     failed: DiaryExportFailedItem[]
 }
 
-/** 导出全部日记到指定目录，每篇一个 YYYY-MM-DD.md */
-export async function exportDiary(directory: string): Promise<DiaryExportResult> {
-    return api.post('/v1/diary/export', { directory }, '导出日记');
+export interface DiaryExportFilter {
+    year?: number
+    month?: number
+}
+
+/** 导出日记到指定目录，每篇一个 YYYY-MM-DD.md；可传 year/month 按年或按月筛选 */
+export async function exportDiary(directory: string, filter: DiaryExportFilter = {}): Promise<DiaryExportResult> {
+    const body: Record<string, unknown> = { directory }
+    if (filter.year) body.year = filter.year
+    if (filter.month) body.month = filter.month
+    return api.post('/v1/diary/export', body, '导出日记');
 }

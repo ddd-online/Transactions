@@ -73,7 +73,7 @@ func TestExportToDirectory(t *testing.T) {
 
 	// 目标目录尚不存在，验证自动创建
 	target := filepath.Join(t.TempDir(), "nested", "diary-export")
-	result, err := svc.ExportToDirectory(ws, target)
+	result, err := svc.ExportToDirectory(ws, target, 0, 0)
 	if err != nil {
 		t.Fatalf("导出失败: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestExportToDirectoryEmpty(t *testing.T) {
 	svc, ws := newDiaryService(t)
 
 	target := filepath.Join(t.TempDir(), "empty-export")
-	result, err := svc.ExportToDirectory(ws, target)
+	result, err := svc.ExportToDirectory(ws, target, 0, 0)
 	if err != nil {
 		t.Fatalf("导出失败: %v", err)
 	}
@@ -105,5 +105,55 @@ func TestExportToDirectoryEmpty(t *testing.T) {
 	}
 	if _, err := os.Stat(target); err != nil {
 		t.Fatalf("空导出也应创建目录: %v", err)
+	}
+}
+
+func TestExportToDirectoryByYearAndMonth(t *testing.T) {
+	svc, ws := newDiaryService(t)
+
+	seeds := []struct {
+		date    string
+		content string
+	}{
+		{date: "2025-12-31", content: "跨年"},
+		{date: "2026-01-15", content: "一月"},
+		{date: "2026-02-10", content: "二月"},
+		{date: "2026-08-01", content: "八月"},
+	}
+	for _, s := range seeds {
+		if _, err := svc.Upsert(ws, s.date, s.content, ""); err != nil {
+			t.Fatalf("写入日记 %s 失败: %v", s.date, err)
+		}
+	}
+
+	// 按年：2026 年应有 3 篇
+	yearDir := t.TempDir()
+	yearResult, err := svc.ExportToDirectory(ws, yearDir, 2026, 0)
+	if err != nil {
+		t.Fatalf("按年导出失败: %v", err)
+	}
+	if yearResult.Total != 3 || yearResult.Success != 3 {
+		t.Fatalf("按年导出结果异常: %+v", yearResult)
+	}
+	for _, date := range []string{"2026-01-15", "2026-02-10", "2026-08-01"} {
+		if _, err := os.Stat(filepath.Join(yearDir, date+".md")); err != nil {
+			t.Fatalf("按年导出缺少 %s: %v", date, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(yearDir, "2025-12-31.md")); err == nil {
+		t.Fatal("按年导出不应包含 2025-12-31")
+	}
+
+	// 按年月：2026-02 应只有 1 篇
+	monthDir := t.TempDir()
+	monthResult, err := svc.ExportToDirectory(ws, monthDir, 2026, 2)
+	if err != nil {
+		t.Fatalf("按月导出失败: %v", err)
+	}
+	if monthResult.Total != 1 || monthResult.Success != 1 {
+		t.Fatalf("按月导出结果异常: %+v", monthResult)
+	}
+	if _, err := os.Stat(filepath.Join(monthDir, "2026-02-10.md")); err != nil {
+		t.Fatalf("按月导出缺少 2026-02-10: %v", err)
 	}
 }

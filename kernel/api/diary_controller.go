@@ -100,7 +100,7 @@ func (h *Handlers) importOneDiary(c *gin.Context) (any, error) {
 	return h.DiarySvc.ImportFile(ws, path, date)
 }
 
-// POST /api/v1/diary/export  body: { directory }
+// POST /api/v1/diary/export  body: { directory, year?, month? }
 func (h *Handlers) exportDiary(c *gin.Context) (any, error) {
 	ws := ws(c)
 
@@ -114,5 +114,13 @@ func (h *Handlers) exportDiary(c *gin.Context) (any, error) {
 		return nil, models.NewBadRequest("directory is required")
 	}
 
-	return h.DiarySvc.ExportToDirectory(ws, directory)
+	yearVal, _ := arg["year"].(float64)
+	monthVal, _ := arg["month"].(float64)
+	year := int(yearVal)
+	month := int(monthVal)
+	if year < 0 || month < 0 || month > 12 || (year == 0 && month != 0) {
+		return nil, models.NewBadRequest("invalid year/month range")
+	}
+
+	return h.DiarySvc.ExportToDirectory(ws, directory, year, month)
 }

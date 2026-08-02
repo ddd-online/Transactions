@@ -38,7 +38,28 @@
       <div class="setting-card">
         <div class="setting-info">
           <span class="setting-card-title">导出日记</span>
-          <span class="setting-desc">将全部日记导出为 Markdown 文件（YYYY-MM-DD.md），可重新导入</span>
+          <span class="setting-desc">将日记导出为 Markdown 文件（YYYY-MM-DD.md），可重新导入</span>
+          <div class="export-scope-row">
+            <a-segmented v-model:value="exportScope" :options="scopeOptions" size="small" />
+            <a-date-picker
+              v-if="exportScope === 'year'"
+              v-model:value="exportYear"
+              picker="year"
+              value-format="YYYY"
+              size="small"
+              :allow-clear="false"
+              class="export-scope-picker"
+            />
+            <a-date-picker
+              v-else-if="exportScope === 'month'"
+              v-model:value="exportMonth"
+              picker="month"
+              value-format="YYYY-MM"
+              size="small"
+              :allow-clear="false"
+              class="export-scope-picker"
+            />
+          </div>
           <!-- 浏览器 dev 模式降级 -->
           <div v-if="!isElectron" class="dev-path-row">
             <a-input
@@ -149,6 +170,7 @@
 
 <script setup lang="ts">
 import { reactive, computed, ref, onUnmounted } from 'vue'
+import dayjs from 'dayjs'
 import { FolderOpenOutlined, ExportOutlined, CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined, CloseCircleFilled, LoadingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { scanDirectory, importFile, exportDiary } from '@/backend/api/diary'
@@ -160,6 +182,19 @@ const isElectron = computed(() => !!window.electronAPI)
 // ---- 手动路径（浏览器 dev 降级） ----
 const manualPath = ref('')
 const exportManualPath = ref('')
+
+// ---- 导出范围 ----
+type ExportScope = 'all' | 'year' | 'month'
+
+const scopeOptions = [
+  { label: '全部', value: 'all' },
+  { label: '按年', value: 'year' },
+  { label: '按月', value: 'month' },
+]
+
+const exportScope = ref<ExportScope>('all')
+const exportYear = ref(dayjs().format('YYYY'))
+const exportMonth = ref(dayjs().format('YYYY-MM'))
 
 // ---- 进度状态 ----
 
@@ -328,18 +363,33 @@ async function doExport(directory: string) {
   exportState.status = 'exporting'
 
   try {
-    const res = await exportDiary(directory)
+    const filter: { year?: number; month?: number } = {}
+    if (exportScope.value === 'year') {
+      filter.year = parseInt(exportYear.value, 10)
+    } else if (exportScope.value === 'month') {
+      const [y, m] = exportMonth.value.split('-')
+      filter.year = parseInt(y!, 10)
+      filter.month = parseInt(m!, 10)
+    }
+
+    const res = await exportDiary(directory, filter)
     exportState.status = 'done'
     exportState.total = res.total
     exportState.success = res.success
     exportState.failed = res.failed || []
 
+    const scopeLabel = exportScope.value === 'year'
+      ? `（${exportYear.value}年）`
+      : exportScope.value === 'month'
+        ? `（${exportMonth.value}）`
+        : ''
+
     if (res.total === 0) {
-      message.info('没有可导出的日记')
+      message.info(`没有可导出的日记${scopeLabel}`)
     } else if (exportState.failed.length > 0) {
-      message.warning(`导出完成，成功 ${res.success} 篇，失败 ${exportState.failed.length} 篇`)
+      message.warning(`导出完成${scopeLabel}，成功 ${res.success} 篇，失败 ${exportState.failed.length} 篇`)
     } else {
-      message.success(`成功导出 ${res.success} 篇日记`)
+      message.success(`成功导出 ${res.success} 篇日记${scopeLabel}`)
     }
 
     // 3s 后自动恢复按钮
@@ -406,6 +456,17 @@ async function doExport(directory: string) {
   font-weight: var(--billadm-weight-medium);
   color: var(--billadm-color-text-major);
   margin-bottom: var(--billadm-space-sm);
+}
+
+.export-scope-row {
+  display: flex;
+  align-items: center;
+  gap: var(--billadm-space-sm);
+  margin-top: var(--billadm-space-xs);
+}
+
+.export-scope-picker {
+  width: 120px;
 }
 
 .dev-path-row {

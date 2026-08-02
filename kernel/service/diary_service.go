@@ -54,7 +54,8 @@ type DiaryService interface {
 	ScanDirectory(dir string) ([]FileItem, error)
 	ImportFile(ws *workspace.Workspace, path string, date string) (*models.DiaryEntry, error)
 	// Export 导出
-	ExportToDirectory(ws *workspace.Workspace, dir string) (*ExportResult, error)
+	// year/month 均为 0 表示全部；year > 0 时按年筛选；month > 0 时按月筛选（需配合 year）
+	ExportToDirectory(ws *workspace.Workspace, dir string, year int, month int) (*ExportResult, error)
 }
 
 var _ DiaryService = &diaryServiceImpl{}
@@ -154,10 +155,28 @@ func (s *diaryServiceImpl) ImportFile(ws *workspace.Workspace, path string, date
 	return s.Upsert(ws, date, content, "")
 }
 
-func (s *diaryServiceImpl) ExportToDirectory(ws *workspace.Workspace, dir string) (*ExportResult, error) {
+func (s *diaryServiceImpl) ExportToDirectory(ws *workspace.Workspace, dir string, year int, month int) (*ExportResult, error) {
 	entries, err := s.diaryDao.ListAll(ws)
 	if err != nil {
 		return nil, err
+	}
+
+	if year > 0 || month > 0 {
+		filtered := make([]models.DiaryEntry, 0, len(entries))
+		for _, entry := range entries {
+			date, parseErr := time.Parse("2006-01-02", entry.Date)
+			if parseErr != nil {
+				continue
+			}
+			if year > 0 && date.Year() != year {
+				continue
+			}
+			if month > 0 && int(date.Month()) != month {
+				continue
+			}
+			filtered = append(filtered, entry)
+		}
+		entries = filtered
 	}
 
 	if err := os.MkdirAll(dir, 0o755); err != nil {
