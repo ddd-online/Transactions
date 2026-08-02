@@ -24,7 +24,7 @@
       <div class="chart-view-content">
         <Transition name="chart-fade" mode="out-in">
           <BilladmChart v-if="data.length > 0" key="chart" class="chart-canvas" :data="data" x-field="time" y-field="amount" :title="title" :lines="lines" />
-          <a-empty v-else key="empty" class="chart-canvas" description="暂无数据" />
+          <a-empty v-else key="empty" class="chart-empty" description="暂无数据" />
         </Transition>
       </div>
       <div v-if="lineSums.length > 0" class="chart-view-stats">
@@ -164,6 +164,16 @@ const formatAmount = (amount: number) => {
 .chart-canvas {
   width: 100%;
   aspect-ratio: 16 / 9;
+}
+
+.chart-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 
 /* 右侧：统计面板 */
