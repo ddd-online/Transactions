@@ -287,27 +287,36 @@ onMounted(async () => {
   flex: 1;
   display: grid;
   grid-template-columns: 280px 1fr 280px;
-  gap: var(--billadm-space-lg);
+  gap: 0;
   min-height: 0;
   overflow: hidden;
+  background-color: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-window-border);
+  border-radius: var(--billadm-radius-lg);
 }
 
-.panel-left {
+.key-event-body .panel-left {
   height: 100%;
   overflow: hidden;
   contain: layout style;
+  border-right: 1px solid var(--billadm-color-divider);
+  border-radius: 0;
 }
 
-.panel-center {
+.key-event-body .panel-center {
   height: 100%;
   overflow: hidden;
   contain: layout style;
+  border: none;
+  border-radius: 0;
 }
 
-.panel-right {
+.key-event-body .panel-right {
   height: 100%;
   overflow: hidden;
   contain: layout style;
+  border-left: 1px solid var(--billadm-color-divider);
+  border-radius: 0;
 }
 
 </style>

@@ -228,8 +228,16 @@ const resetNewLineForm = () => {
 
 .chart-lines-section {
   background-color: var(--billadm-color-major-background);
-  border-radius: var(--billadm-radius-lg);
+  border-radius: 0;
   overflow: hidden;
+}
+
+/* Ant Design 表格默认给容器与首/末列表头加 2px 圆角，此处统一为直角 */
+.chart-lines-section :deep(.ant-table-container),
+.chart-lines-section :deep(.ant-table-container table > thead > tr:first-child > *:first-child),
+.chart-lines-section :deep(.ant-table-container table > thead > tr:first-child > *:last-child) {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .chart-lines-section-toolbar {

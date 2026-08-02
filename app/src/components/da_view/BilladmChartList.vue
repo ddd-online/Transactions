@@ -17,6 +17,15 @@
         :aria-selected="selectedId === chart.chartId" @click="selectChart(chart)" @keydown.enter="selectChart(chart)"
         @keydown.space.prevent="selectChart(chart)">
         <span class="chart-list-item-title">{{ chart.title }}</span>
+        <span class="chart-list-dots" aria-hidden="true">
+          <span
+            v-for="(color, i) in lineColors(chart)"
+            :key="`${chart.chartId}-${i}`"
+            class="chart-list-dot"
+            :style="{ backgroundColor: color }"
+          />
+          <span v-if="chart.lines.length === 0" class="chart-list-dot chart-list-dot--empty" />
+        </span>
         <div class="chart-list-item-actions" @click.stop>
           <a-button type="text" size="small" danger @click="handleDelete(chart)">
             <template #icon>
@@ -50,6 +59,7 @@ import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { ChartDto } from '@/backend/api/chart'
 import { deleteChart as deleteChartApi } from '@/backend/api/chart'
+import { TransactionTypeToColor } from '@/backend/constant'
 
 interface Props {
   allCharts: ChartDto[]
@@ -67,6 +77,21 @@ const emit = defineEmits<{
 const selectedId = ref<string>('')
 const showCreateModal = ref(false)
 const createLoading = ref(false)
+
+// 每个图表的曲线类型颜色（去重，最多 3 个），用于列表项的色彩区分
+const lineColors = (chart: ChartDto): string[] => {
+  const seen = new Set<string>()
+  const colors: string[] = []
+  for (const line of chart.lines) {
+    const color = TransactionTypeToColor.get(line.transactionType)
+    if (color && !seen.has(color)) {
+      seen.add(color)
+      colors.push(color)
+      if (colors.length === 3) break
+    }
+  }
+  return colors
+}
 const createForm = ref<{ title: string; granularity: 'year' | 'month' }>({
   title: '',
   granularity: 'year'
@@ -128,6 +153,26 @@ const handleDelete = async (chart: ChartDto) => {
   transition: all var(--billadm-transition-fast);
   color: var(--billadm-color-text-secondary);
   border-radius: var(--billadm-radius-md);
+}
+
+.chart-list-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.chart-list-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--billadm-radius-full);
+  flex-shrink: 0;
+}
+
+.chart-list-dot--empty {
+  background: transparent;
+  border: 1px dashed var(--billadm-color-text-disabled);
 }
 
 .chart-list-item:hover {

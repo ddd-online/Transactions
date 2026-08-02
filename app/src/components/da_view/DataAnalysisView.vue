@@ -304,13 +304,16 @@ watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true
   min-height: 0;
   overflow: hidden;
   display: flex;
-  gap: var(--billadm-space-md);
+  gap: 0;
+  background-color: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-window-border);
+  border-radius: var(--billadm-radius-lg);
 }
 
 .da-sidebar {
   flex: 0 0 220px;
-  background-color: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-lg);
+  background-color: var(--billadm-color-major-background);
+  border-right: 1px solid var(--billadm-color-divider);
   overflow-y: auto;
 }
 
@@ -318,8 +321,7 @@ watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background-color: transparent;
-  border-radius: var(--billadm-radius-lg);
+  background-color: var(--billadm-color-major-background);
 }
 
 .da-empty {
