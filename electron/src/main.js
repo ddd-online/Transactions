@@ -20,17 +20,55 @@ const getUiServer = () => {
     }
 };
 
-// 应用日志
+// 应用日志（按大小轮转：单文件超过 MAX_LOG_SIZE 后滚动为 app.log.1..N，保留 MAX_LOG_BACKUPS 份备份）
 const logDir = path.join(appPath, 'logs');
 const logFile = path.join(logDir, 'app.log');
+const MAX_LOG_SIZE = 5 * 1024 * 1024; // 单文件上限 5MB
+const MAX_LOG_BACKUPS = 5;            // 最多保留 5 份历史备份
 
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
 }
-const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+const rotateLogsIfNeeded = () => {
+    let size = 0;
+    try {
+        size = fs.statSync(logFile).size;
+    } catch {
+        return; // 文件不存在（首次启动）无需轮转
+    }
+    if (size < MAX_LOG_SIZE) return;
+    // 删除最旧备份
+    try {
+        fs.unlinkSync(path.join(logDir, `app.log.${MAX_LOG_BACKUPS}`));
+    } catch { }
+    // 备份逆序顺移：app.log.1 -> app.log.2 ... app.log.N-1 -> app.log.N
+    for (let i = MAX_LOG_BACKUPS - 1; i >= 1; i--) {
+        const from = path.join(logDir, `app.log.${i}`);
+        if (fs.existsSync(from)) {
+            try {
+                fs.renameSync(from, path.join(logDir, `app.log.${i + 1}`));
+            } catch (e) {
+                console.error(`日志备份顺移失败: ${e.message}`);
+            }
+        }
+    }
+    try {
+        fs.renameSync(logFile, path.join(logDir, 'app.log.1'));
+        console.log(`日志已轮转: ${logFile} (${(size / 1024 / 1024).toFixed(1)}MB)`);
+    } catch (e) {
+        console.error(`日志轮转失败: ${e.message}`);
+    }
+};
+
 const log = (message) => {
-    const time = new Date().toISOString();
-    logStream.write(`[${time}] ${message}\n`);
+    try {
+        rotateLogsIfNeeded();
+        const time = new Date().toISOString();
+        fs.appendFileSync(logFile, `[${time}] ${message}\n`);
+    } catch (e) {
+        console.error(`写日志失败: ${e.message}`);
+    }
 };
 
 let transactionsCfg = {
@@ -73,48 +111,83 @@ function saveTransactionsCfg() {
 // 内核
 let kernelProcess = null;
 let tray = null;
+let kernelQuitting = false;       // 应用主动退出流程标记，抑制“异常退出”弹窗
+let kernelAlertActive = false;    // 防止探活与退出事件重复弹窗
+let kernelHealthFails = 0;
+let kernelHealthTimer = null;
+let kernelStartedAt = 0;          // kernel 最近一次启动时间，用于启动宽限期
+let kernelStatus = 'unknown';     // 'unknown' | 'starting' | 'ok' | 'down' | 'stopped'
+let kernelStatusDetail = '';
+
+const KERNEL_HEALTH_INTERVAL = 5000;      // 健康检查间隔（ms）
+const KERNEL_HEALTH_TIMEOUT = 1500;       // 单次探测超时（ms）
+const KERNEL_HEALTH_FAIL_THRESHOLD = 3;   // 连续失败多少次判定异常
+const KERNEL_START_GRACE_MS = 15000;      // 启动宽限期，期间不判定异常
+
+// 推送 kernel 状态到渲染进程（标题栏红绿灯）。状态无变化时不重复推送。
+const setKernelStatus = (state, detail = '') => {
+    if (kernelStatus === state && kernelStatusDetail === detail) return;
+    kernelStatus = state;
+    kernelStatusDetail = detail;
+    log(`kernel状态变更: ${state}${detail ? ` (${detail})` : ''}`);
+    for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) {
+            win.webContents.send('kernel:status', { state, detail });
+        }
+    }
+};
 
 const startKernel = () => {
     if (isDev) return;
+    if (kernelProcess) return;
     const kernelExe = path.join(appPath, 'transactions.exe');
     log(`Starting kernel: ${kernelExe}`);
     const cp = require("child_process");
-    kernelProcess = cp.spawn(kernelExe, ['-mode', 'release', '-port', API_PORT], {
+    const proc = cp.spawn(kernelExe, ['-mode', 'release', '-port', API_PORT], {
         detached: false,
+        windowsHide: true,
     });
+    proc.expectedExit = false; // 该进程是否被主动要求退出（正常退出 / 重启）
+    kernelProcess = proc;
+    kernelHealthFails = 0;
+    kernelStartedAt = Date.now();
+    setKernelStatus('starting', '正在启动后台服务');
 
-    kernelProcess.stdout.on('data', (data) => {
+    proc.stdout.on('data', (data) => {
         log(`[Kernel STDOUT]: ${data.toString()}`);
     });
 
-    kernelProcess.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
         log(`[Kernel STDERR]: ${data.toString()}`);
     });
 
-    kernelProcess.on('close', (code) => {
-        if (kernelProcess) {
-            log(`[Kernel Process] kernel [pid=${kernelProcess.pid}] closed with code ${code}`);
-        } else {
-            log(`[Kernel Process] kernel closed with code ${code}`);
-        }
+    proc.on('error', (err) => {
+        if (kernelProcess !== proc) return;
         kernelProcess = null;
+        log(`[Kernel Process] Failed to start: ${err.message}`);
+        setKernelStatus('down', `启动失败: ${err.message}`);
+        if (!kernelQuitting && !proc.expectedExit) {
+            showKernelAlert('后台服务启动失败', `无法启动后台服务：${err.message}`);
+        }
     });
 
-    kernelProcess.on('exit', (code) => {
-        const pid = kernelProcess ? kernelProcess.pid : 'unknown';
-        log(`[Kernel Process] kernel [pid=${pid}] exited with code ${code}`);
-        if (code !== 0 && code !== null) {
-            dialog.showMessageBox({
-                type: 'error',
-                title: '后台服务异常退出',
-                message: `后台服务异常退出，退出码: ${code}\n请重启应用`,
-            });
-        }
+    proc.on('exit', (code, signal) => {
+        if (kernelProcess !== proc) return;
         kernelProcess = null;
+        const detail = `退出码: ${code}${signal ? `, 信号: ${signal}` : ''}`;
+        log(`[Kernel Process] kernel [pid=${proc.pid}] exited, ${detail}`);
+        setKernelStatus(proc.expectedExit ? 'stopped' : 'down', proc.expectedExit ? '后台服务已停止' : `异常退出 ${detail}`);
+        if (!kernelQuitting && !proc.expectedExit) {
+            showKernelAlert(
+                '后台服务异常退出',
+                `后台服务异常退出（${detail}）。\n数据由 SQLite WAL 保护，不会丢失。您可以立即重启后台服务，或退出应用。`
+            );
+        }
     });
 
-    kernelProcess.on('error', (err) => {
-        log('[Kernel Process] Failed to start:', err);
+    proc.on('close', (code) => {
+        if (kernelProcess === proc) kernelProcess = null;
+        log(`[Kernel Process] kernel [pid=${proc.pid}] closed with code ${code}`);
     });
 };
 
@@ -251,6 +324,11 @@ const registerCommonHandlers = () => {
         transactionsCfg.closeBehavior = behavior;
         saveTransactionsCfg();
     });
+
+    ipcMain.handle('kernel:get-status', () => ({
+        state: kernelStatus,
+        detail: kernelStatusDetail,
+    }));
 
     // ── 更新 ──
     let downloadRequest = null;
@@ -553,28 +631,146 @@ const handleWindowClose = async () => {
 
 // 优雅停止内核：先请求 /api/v1/app/exit 让其保存并退出，超时再强制结束，
 // 避免直接 kill 导致 SQLite WAL 未正常 checkpoint。
-const stopKernel = async () => {
-    if (!kernelProcess) return;
+const stopKernel = async (waitMs = 3000) => {
+    const proc = kernelProcess;
+    if (!proc) return;
+    proc.expectedExit = true;
     try {
         await net.fetch(API_SERVER + "/api/v1/app/exit", { method: "POST" });
     } catch (e) {
         log(`请求kernel关闭失败 ${e}`);
     }
-    const deadline = Date.now() + 3000;
-    while (kernelProcess && Date.now() < deadline) {
+    const deadline = Date.now() + waitMs;
+    while (kernelProcess === proc && Date.now() < deadline) {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
-    if (kernelProcess) {
+    if (kernelProcess === proc) {
+        log(`kernel未在 ${waitMs}ms 内正常退出，强制结束 pid=${proc.pid}`);
         try {
-            kernelProcess.kill();
+            proc.kill();
         } catch (e) {
             log(`强制结束kernel失败: ${e}`);
+        }
+        // kill 后确认进程真正退出，避免残留进程继续占用端口
+        const killDeadline = Date.now() + 2000;
+        while (kernelProcess === proc && Date.now() < killDeadline) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        if (kernelProcess === proc) {
+            log('kernel 强制结束后仍未退出，可能存在残留进程');
         }
     }
 };
 
 const quitApp = async () => {
+    kernelQuitting = true;
     await stopKernel();
+};
+
+// 弹窗提醒（异常退出 / 启动失败 / 无响应）。通过 kernelAlertActive 去重，
+// 避免退出事件与健康检查同时触发多个弹窗。
+const showKernelAlert = async (title, message, options = {}) => {
+    const { allowRestart = true } = options;
+    if (kernelAlertActive || kernelQuitting) return;
+    kernelAlertActive = true;
+    try {
+        const buttons = allowRestart ? ['重启后台服务', '退出应用'] : ['知道了'];
+        const { response } = await dialog.showMessageBox({
+            type: 'warning',
+            title,
+            message,
+            buttons,
+            defaultId: 0,
+            cancelId: buttons.length - 1,
+            noLink: true,
+        });
+        if (allowRestart && response === 0) {
+            log('用户选择重启后台服务');
+            await restartKernel();
+        } else if (response === buttons.length - 1) {
+            log('用户选择退出应用');
+            kernelQuitting = true;
+            app.quit();
+        }
+    } catch (e) {
+        log(`弹窗失败: ${e.message}`);
+    } finally {
+        kernelAlertActive = false;
+    }
+};
+
+const restartKernel = async () => {
+    log('开始重启后台服务');
+    const proc = kernelProcess;
+    if (proc) proc.expectedExit = true;
+    await stopKernel();
+    startKernel();
+    setKernelStatus('starting', '正在重启后台服务');
+    // 等待健康恢复，最多 10s
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+        if (await pingKernelOnce()) {
+            setKernelStatus('ok');
+            log('后台服务重启成功');
+            return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    log('后台服务重启后仍不可达');
+};
+
+const pingKernelOnce = async () => {
+    try {
+        const res = await net.fetch(`${API_SERVER}/api/v1/health`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(KERNEL_HEALTH_TIMEOUT),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return true;
+    } catch (e) {
+        log(`kernel健康检查失败: ${e.message}`);
+        return false;
+    }
+};
+
+// 定时探活：连续 KERNEL_HEALTH_FAIL_THRESHOLD 次失败才判定异常，
+// 避免 kernel 瞬时繁忙（慢查询 / AI 请求）造成误报。
+const pingKernel = async () => {
+    if (kernelQuitting) return;
+    if (await pingKernelOnce()) {
+        kernelHealthFails = 0;
+        setKernelStatus('ok');
+        return;
+    }
+    // 启动宽限期内不累计失败，避免慢速机器初始化（AutoMigrate 等）导致误报
+    if (Date.now() - kernelStartedAt < KERNEL_START_GRACE_MS) {
+        log(`kernel 仍在启动宽限期内（已启动 ${Math.round((Date.now() - kernelStartedAt) / 1000)}s），跳过判定`);
+        return;
+    }
+    kernelHealthFails += 1;
+    if (kernelHealthFails < KERNEL_HEALTH_FAIL_THRESHOLD) return;
+    kernelHealthFails = 0;
+    setKernelStatus('down', `连续 ${KERNEL_HEALTH_FAIL_THRESHOLD} 次健康检查失败`);
+    if (kernelProcess) {
+        log('kernel 连续健康检查失败但进程仍在，判定为无响应');
+        showKernelAlert(
+            '后台服务无响应',
+            `后台服务连续 ${KERNEL_HEALTH_FAIL_THRESHOLD} 次健康检查失败，可能已卡死。\n您可以重启后台服务，或退出应用。`
+        );
+    }
+};
+
+const startKernelHealthMonitor = () => {
+    if (kernelHealthTimer) return;
+    log(`启动kernel健康检查（每 ${KERNEL_HEALTH_INTERVAL / 1000}s 一次）`);
+    kernelHealthTimer = setInterval(pingKernel, KERNEL_HEALTH_INTERVAL);
+};
+
+const stopKernelHealthMonitor = () => {
+    if (kernelHealthTimer) {
+        clearInterval(kernelHealthTimer);
+        kernelHealthTimer = null;
+    }
 };
 
 const createMainWindow = () => {
@@ -662,6 +858,7 @@ if (!gotTheLock) {
 app.whenReady().then(() => {
     readTransactionsCfg();
     startKernel();
+    startKernelHealthMonitor();
     registerCommonHandlers();
     createTray();
 
@@ -682,10 +879,26 @@ app.whenReady().then(() => {
     });
 });
 
-app.on('before-quit', () => {
+let kernelStopInProgress = false;
+
+app.on('before-quit', (event) => {
+    kernelQuitting = true;
+    setKernelStatus('stopped', '应用退出中');
+    stopKernelHealthMonitor();
     if (tray) {
         tray.destroy();
         tray = null;
+    }
+    // 兜底：如果走到这里 kernel 还活着（例如直接 app.quit()），
+    // 先优雅停止再真正退出，防止子进程残留占用端口。
+    if (kernelProcess && !kernelStopInProgress) {
+        event.preventDefault();
+        kernelStopInProgress = true;
+        (async () => {
+            await stopKernel();
+            kernelStopInProgress = false;
+            app.quit();
+        })();
     }
 });
 
@@ -693,7 +906,7 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         saveTransactionsCfg();
         (async () => {
-            await stopKernel();
+            await quitApp();
             app.quit();
         })();
     }

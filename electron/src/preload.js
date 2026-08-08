@@ -76,4 +76,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('window-state-changed', handler);
         return () => ipcRenderer.removeListener('window-state-changed', handler);
     },
+
+    getKernelStatus: async () => {
+        return await ipcRenderer.invoke('kernel:get-status');
+    },
+    onKernelStatusChanged: (cb) => {
+        const handler = (_event, data) => cb(data);
+        ipcRenderer.on('kernel:status', handler);
+        return () => ipcRenderer.removeListener('kernel:status', handler);
+    },
 });

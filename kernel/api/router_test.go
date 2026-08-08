@@ -21,3 +21,17 @@ func TestServeAPIRegistersDiaryExport(t *testing.T) {
 	}
 	t.Fatal("未注册 POST /api/v1/diary/export")
 }
+
+// TestServeAPIRegistersHealth 冒烟测试：健康检查接口必须注册，且不依赖工作空间。
+func TestServeAPIRegistersHealth(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	api.ServeAPI(r, &api.Handlers{})
+
+	for _, route := range r.Routes() {
+		if route.Method == "GET" && route.Path == "/api/v1/health" {
+			return
+		}
+	}
+	t.Fatal("未注册 GET /api/v1/health")
+}

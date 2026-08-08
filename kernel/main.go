@@ -1,6 +1,13 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
@@ -27,8 +34,30 @@ func main() {
 	mgr := workspace.NewWsManager()
 	handlers := server.InitServices(mgr)
 	api.ServeAPI(ginServer, handlers)
+
+	// 优雅退出：收到 Ctrl+C / 系统关机 / taskkill（无 /F）时，
+	// 也先关闭工作空间数据库（WAL checkpoint），而不是直接终止进程。
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	var closeOnce sync.Once
+	gracefulExit := func(reason string) {
+		closeOnce.Do(func() {
+			logrus.Infof("--------- 退出Billadm (%s) ---------", reason)
+			mgr.Close()
+			// 给 HTTP 响应与在途请求一点收尾时间
+			time.Sleep(500 * time.Millisecond)
+			os.Exit(0)
+		})
+	}
+
+	go func() {
+		<-ctx.Done()
+		gracefulExit("收到退出信号")
+	}()
+
 	if err := ginServer.Run("127.0.0.1:" + util.Config.Port); err != nil {
 		logrus.Errorf("启动Billadm失败 %v", err)
-		return
+		gracefulExit("HTTP 服务退出")
 	}
 }

@@ -3,6 +3,7 @@ package workspace
 import (
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -14,6 +15,7 @@ import (
 type Workspace struct {
 	directory string
 	db        *gorm.DB
+	closeOnce sync.Once
 }
 
 func NewWorkspace(directory string) (*Workspace, error) {
@@ -58,13 +60,14 @@ func (w *Workspace) Transaction(fn func(tx *Workspace) error) error {
 }
 
 func (w *Workspace) Close() {
-	sqlDb, err := w.db.DB()
-	if err != nil {
-		logrus.Errorf("获取 sql.DB 失败: %v", err)
-	}
-	err = sqlDb.Close()
-	if err != nil {
-		logrus.Errorf("关闭数据库连接失败: %v", err)
-	}
+	w.closeOnce.Do(func() {
+		sqlDb, err := w.db.DB()
+		if err != nil {
+			logrus.Errorf("获取 sql.DB 失败: %v", err)
+			return
+		}
+		if err := sqlDb.Close(); err != nil {
+			logrus.Errorf("关闭数据库连接失败: %v", err)
+		}
+	})
 }
-

@@ -8,6 +8,7 @@ import (
 func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 	// Endpoints that don't require an open workspace
 	{
+		ginServer.GET("/api/v1/health", h.health)
 		ginServer.POST("/api/v1/workspace", h.openWorkspace)
 		ginServer.POST("/api/v1/app/exit", h.exitApp)
 	}
