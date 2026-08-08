@@ -428,8 +428,8 @@ onUnmounted(() => {
   align-items: center;
   flex-shrink: 0;
   padding: 0 0 var(--billadm-space-md) 0;
-  /* Reserve space for Electron frameless window controls (3 × 32px + 2 × 6px gaps) */
-  margin-right: calc(3 * 32px + 2 * 6px);
+  /* Reserve space for Electron frameless window controls (status dot 26px + 3 × 32px + 3 × 6px gaps) */
+  margin-right: calc(26px + 3 * 32px + 3 * 6px);
   -webkit-app-region: drag;
 }
 

@@ -23,8 +23,8 @@
   align-items: center;
   flex-shrink: 0;
   padding: 0 0 var(--billadm-space-md) 0;
-  margin-right: calc(3 * 32px + 2 * 6px);
-  /* 为窗口控制按钮 (3个32px按钮 + 2个6px间隙 = 108px) 留出空间，避免拖拽区域覆盖按钮 */
+  margin-right: calc(26px + 3 * 32px + 3 * 6px);
+  /* 为窗口控制区（状态灯 26px + 3个32px按钮 + 3个6px间隙 = 140px）留出空间，避免拖拽区域覆盖 */
   -webkit-app-region: drag;
 }
 

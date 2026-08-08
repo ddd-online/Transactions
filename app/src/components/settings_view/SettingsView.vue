@@ -107,7 +107,7 @@ const currentComponent = computed(() => {
   left: 200px; /* 避开左侧 sidebar 宽度 */
   right: 0;
   height: 32px;
-  margin-right: calc(12px + 3 * 32px + 2 * 6px); /* 避开窗口控制按钮: right:12px + 3×32px按钮 + 2×6px间隙 = 120px */
+  margin-right: calc(12px + 26px + 3 * 32px + 3 * 6px); /* 避开窗口控制区: right:12px + 状态灯26px + 3×32px按钮 + 3×6px间隙 = 152px */
   -webkit-app-region: drag;
   z-index: 1;
 }
