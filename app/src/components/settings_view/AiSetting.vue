@@ -171,6 +171,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { aiApi, type AiConfig, type AiRole, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
 import NotificationUtil from '@/backend/notification'
+import { getErrorMessage } from '@/backend/errorHandler'
 import { DeleteOutlined } from '@ant-design/icons-vue'
 import Sortable from 'sortablejs'
 
@@ -281,8 +282,8 @@ async function fetchModels() {
   try {
     const res = await aiApi.fetchProvider('models', getEffectiveApiKey(), form.provider) as ModelsResponse
     modelOptions.value = res.models.map(m => ({ label: m.id, value: m.id }))
-  } catch (e: any) {
-    modelsError.value = e.message || '加载失败'
+  } catch (e) {
+    modelsError.value = getErrorMessage(e) || '加载失败'
   } finally {
     modelsLoading.value = false
   }
@@ -293,9 +294,9 @@ async function fetchBalance() {
   balanceError.value = ''
   try {
     balance.value = await aiApi.fetchProvider('balance', getEffectiveApiKey(), form.provider) as BalanceResponse
-  } catch (e: any) {
+  } catch (e) {
     balance.value = null
-    balanceError.value = e.message || '加载失败'
+    balanceError.value = getErrorMessage(e) || '加载失败'
   } finally {
     balanceLoading.value = false
   }
@@ -363,8 +364,8 @@ async function handleTestConnection() {
       system_prompt: form.system_prompt,
     })
     NotificationUtil.success('连接成功')
-  } catch (e: any) {
-    NotificationUtil.error('连接失败', e.message)
+  } catch (e) {
+    NotificationUtil.error('连接失败', getErrorMessage(e))
   } finally {
     testing.value = false
   }
@@ -391,8 +392,8 @@ function autoSaveConfig() {
         form.has_key = false
       }
       fetchDeepSeekResources()
-    } catch (e: any) {
-      NotificationUtil.error('自动保存失败', e.message)
+    } catch (e) {
+      NotificationUtil.error('自动保存失败', getErrorMessage(e))
     }
   }, 800)
 }

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { aiApi, type AiMessage as AiMessageApi } from '@/backend/api/ai'
+import { getErrorMessage } from '@/backend/errorHandler'
 
 // ----------------------------------------------------------------
 // Types
@@ -9,9 +10,9 @@ export interface SSEEvent {
   type: 'text_delta' | 'thinking_start' | 'thinking_delta' | 'thinking_done' | 'tool_call' | 'tool_result' | 'done' | 'error'
   delta?: string
   tool?: string
-  args?: Record<string, any>
+  args?: Record<string, unknown>
   summary?: string
-  detail?: any
+  detail?: unknown
   total_tokens?: number
   error?: string
   message?: string
@@ -22,9 +23,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'tool' | 'thinking'
   content: string
   toolName?: string
-  toolArgs?: Record<string, any>
+  toolArgs?: Record<string, unknown>
   toolResult?: string
-  toolDetail?: any
+  toolDetail?: unknown
   toolDone?: boolean
   timestamp: number
   tokens?: number
@@ -93,7 +94,7 @@ export function useAiChat() {
           }
         }
         resolve()
-      } catch (err: any) {
+      } catch (err) {
         reject(err)
       }
     })
@@ -278,8 +279,9 @@ export function useAiChat() {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       await parseSSEStream(reader, decoder, handleEvent)
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err) {
+      const errName = (err as { name?: string } | null)?.name
+      if (errName === 'AbortError') {
         // Add stop marker to assistant message
         const lastAssistant = [...messages.value].reverse().find(m => m.role === 'assistant')
         if (lastAssistant) {
@@ -287,7 +289,7 @@ export function useAiChat() {
         }
       } else {
         const lastAssistant = [...messages.value].reverse().find(m => m.role === 'assistant')
-        const errorMsg = err.message || '请求失败'
+        const errorMsg = getErrorMessage(err) || '请求失败'
         if (!lastAssistant) {
           messages.value.push({
             id: nextMsgId(),

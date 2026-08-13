@@ -49,3 +49,12 @@ export async function withErrorHandling<T, F>(
     return opts.fallback as F;
   }
 }
+
+/**
+ * 从任意抛出值中提取可读的错误信息，替代散落的 `catch (e: any)`。
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return String(error);
+}

@@ -51,7 +51,7 @@ import { ref, watch } from 'vue';
 import type { TransactionType, Category, Tag } from '@/types/billadm';
 import { TransactionTypeToColor } from '@/backend/constant';
 import { useLedgerStore } from '@/stores/ledgerStore';
-import { withErrorHandling } from '@/backend/errorHandler'
+import { withErrorHandling, getErrorMessage } from '@/backend/errorHandler'
 import {
   queryCategory, createCategory, deleteCategory, updateCategorySort, initializeCategories
 } from '@/backend/api/category'
@@ -297,8 +297,8 @@ const handleInitialize = async () => {
     message.success(`已添加 ${result.categories} 个分类、${result.tags} 个标签`);
     hasAnyCategories.value = true;
     await loadCategories();
-  } catch (error: any) {
-    message.error(error?.message || '初始化失败');
+  } catch (error) {
+    message.error(getErrorMessage(error) || '初始化失败');
   } finally {
     initLoading.value = false;
   }

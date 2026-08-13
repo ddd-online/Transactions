@@ -48,7 +48,7 @@ export interface AiRole {
 export interface ToolInfo {
   name: string
   description: string
-  input_schema: Record<string, any>
+  input_schema: Record<string, unknown>
 }
 
 export interface RoleToolsResponse {
@@ -85,7 +85,7 @@ export const aiApi = {
     return api.post('/v1/ai/config/test', body, '测试连接')
   },
 
-  async fetchProvider(action: 'balance' | 'models', apiKey?: string, provider?: string): Promise<any> {
+  async fetchProvider(action: 'balance' | 'models', apiKey?: string, provider?: string): Promise<BalanceResponse | ModelsResponse> {
     const body: ProviderFetchRequest = { action }
     if (apiKey) body.api_key = apiKey
     if (provider) body.provider = provider

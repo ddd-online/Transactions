@@ -13,6 +13,12 @@ export interface SortItem {
   order: 'asc' | 'desc'
 }
 
+export interface TemplateOption {
+  label: string
+  value: string
+  template: TransactionTemplate
+}
+
 export const useTransactionStore = defineStore('transaction', () => {
   const tableData = ref<TransactionRecord[]>([])
   const trTotal = ref(0)
@@ -23,7 +29,7 @@ export const useTransactionStore = defineStore('transaction', () => {
   const sortItems = ref<SortItem[]>([{ field: 'transactionAt', order: 'desc' }])
 
   const templates = ref<TransactionTemplate[]>([])
-  const templateOptions = ref<any[]>([])
+  const templateOptions = ref<TemplateOption[]>([])
 
   const fetchTransactions = async () => {
     const ledgerStore = useLedgerStore()

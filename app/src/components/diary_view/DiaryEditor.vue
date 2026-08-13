@@ -36,7 +36,7 @@
           <textarea ref="textareaRef" class="editor-textarea" :value="localContent" placeholder="写下今天的日记…"
             @input="onInput" @keydown="onKeydown" />
         </div>
-        <div v-if="mode === 'preview'" class="editor-preview" v-html="renderedHtml" />
+        <div v-if="mode === 'preview'" class="editor-preview"><MarkdownViewer :content="localContent" /></div>
       </div>
 
       <!-- 底部：模式切换 + 操作 + 保存状态 -->
@@ -74,7 +74,7 @@ import { computed, ref, watch, onUnmounted } from 'vue'
 import dayjs from 'dayjs'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
-import { renderMarkdown } from '@/utils/markdown'
+import MarkdownViewer from '@/components/common/MarkdownViewer.vue'
 import type { DiaryEntry } from '@/types/billadm'
 
 const props = defineProps<{
@@ -180,8 +180,6 @@ const formattedDate = computed(() => dateDayjs.value?.format('YYYY年M月D日') 
 const weekday = computed(() => dateDayjs.value?.format('dddd') ?? '')
 
 const wordCount = computed(() => [...localContent.value].length)
-
-const renderedHtml = computed(() => renderMarkdown(localContent.value))
 </script>
 
 <style scoped>

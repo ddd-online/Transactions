@@ -175,6 +175,7 @@ import { FolderOpenOutlined, ExportOutlined, CheckCircleOutlined, CheckCircleFil
 import { message } from 'ant-design-vue'
 import { scanDirectory, importFile, exportDiary } from '@/backend/api/diary'
 import { useDiaryStore } from '@/stores/diaryStore'
+import { getErrorMessage } from '@/backend/errorHandler'
 
 // ---- Electron 检测 ----
 const isElectron = computed(() => !!window.electronAPI)
@@ -265,7 +266,7 @@ async function handleImportClick() {
       properties: ['openDirectory'],
     })
     if (result.canceled || !result.filePaths?.length) return
-    directory = result.filePaths[0]
+    directory = result.filePaths[0]!
   } else {
     if (!manualPath.value.trim()) return
     directory = manualPath.value.trim()
@@ -285,8 +286,8 @@ async function doImport(directory: string) {
   try {
     const res = await scanDirectory(directory)
     fileList = res.files || []
-  } catch (e: any) {
-    message.error('扫描目录失败: ' + (e?.message || e))
+  } catch (e) {
+    message.error('扫描目录失败: ' + getErrorMessage(e))
     importState.status = 'idle'
     return
   }
@@ -315,9 +316,9 @@ async function doImport(directory: string) {
       await importFile(item.path, item.date)
       importState.files[i]!.status = 'done'
       importState.completed++
-    } catch (e: any) {
+    } catch (e) {
       importState.files[i]!.status = 'error'
-      importState.files[i]!.errorMessage = e?.message || '未知错误'
+      importState.files[i]!.errorMessage = getErrorMessage(e) || '未知错误'
       hasError = true
     }
   }
@@ -350,7 +351,7 @@ async function handleExportClick() {
       properties: ['openDirectory'],
     })
     if (result.canceled || !result.filePaths?.length) return
-    directory = result.filePaths[0]
+    directory = result.filePaths[0]!
   } else {
     if (!exportManualPath.value.trim()) return
     directory = exportManualPath.value.trim()
@@ -399,9 +400,9 @@ async function doExport(directory: string) {
       exportState.success = 0
       exportState.failed = []
     }, 3000)
-  } catch (e: any) {
+  } catch (e) {
     exportState.status = 'idle'
-    message.error('导出失败: ' + (e?.message || e))
+    message.error('导出失败: ' + getErrorMessage(e))
   }
 }
 </script>

@@ -38,6 +38,7 @@ import { ref, computed, watch } from 'vue'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import type { KeyEventImage } from '@/types/billadm'
 import { getImageUrl } from '@/backend/imageUrl'
+import { getErrorMessage } from '@/backend/errorHandler'
 import { message } from 'ant-design-vue'
 
 const props = defineProps<{
@@ -83,8 +84,8 @@ const handleDownload = async () => {
     } else {
       message.error(result.error || '保存失败')
     }
-  } catch (e: any) {
-    message.error(e?.message || '保存失败')
+  } catch (e) {
+    message.error(getErrorMessage(e) || '保存失败')
   }
 }
 

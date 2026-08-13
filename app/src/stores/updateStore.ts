@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getErrorMessage } from '@/backend/errorHandler'
 
 export type UpdateStatus =
     | 'idle'
@@ -54,9 +55,9 @@ export const useUpdateStore = defineStore('updateStore', () => {
             } else {
                 status.value = 'no-update'
             }
-        } catch (e: any) {
+        } catch (e) {
             status.value = 'error'
-            errorMessage.value = e?.message || '检查更新失败'
+            errorMessage.value = getErrorMessage(e) || '检查更新失败'
         }
     }
 

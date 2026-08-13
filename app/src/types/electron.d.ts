@@ -8,11 +8,15 @@ declare global {
             minimizeWindow: () => void;
             maximizeWindow: () => void;
             closeWindow: () => void;
-            openDialog: (options: any) => Promise<any>;
+            openDialog: (options: { properties?: string[]; title?: string }) => Promise<{
+                canceled: boolean;
+                filePaths: string[];
+                error?: string;
+            }>;
             saveFile: (relativePath: string) => Promise<{ success: boolean; error?: string; canceled?: boolean }>;
             setWorkspace: (workspaceDir: string) => void;
             getWorkspace: () => Promise<string>;
-            getAppInfo: (field: string) => Promise<any>;
+            getAppInfo: (field: string) => Promise<string>;
             getApiServer: () => Promise<string>;
             toggleDevTools: (enabled: boolean) => void;
 

@@ -54,7 +54,7 @@ const handleBrowse = async () => {
     })
 
     if (!result.canceled && result.filePaths && result.filePaths.length > 0) {
-      inputPath.value = result.filePaths[0]
+      inputPath.value = result.filePaths[0]!
     }
   } catch (error) {
     NotificationUtil.error('选择路径失败', `${error}`)
