@@ -50,7 +50,6 @@ web
 
 - `docs/frontend-features.md`：功能说明（部分内容已过时，其中"明暗主题"与当前仅浅色模式的实现不符）
 - `DESIGN.md`：设计系统文档
-- `docs/superpowers/specs/` 与 `docs/superpowers/plans/`：2026-04 至 2026-07 的功能设计与实现记录
 - 未发现任何用户证言、媒体报道、定价或部署证据；不得凭空编造这些内容
 
 ## Product Principles

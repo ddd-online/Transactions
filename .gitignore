@@ -10,4 +10,3 @@ build/target
 # Claude Code (deprecated, migrated to OpenCode)
 node_modules/
 .claude/
-.superpowers
