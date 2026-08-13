@@ -6,7 +6,6 @@ directories:
   buildResources: assets
 files:
   - src/**
-  - node_modules/**
   - package.json
   - dist/**
   - transactions.exe

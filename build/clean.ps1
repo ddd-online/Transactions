@@ -16,6 +16,10 @@ $electronDistDir = Join-Path $projectRoot "electron" "dist"
 $electronLogsDir = Join-Path $projectRoot "electron" "logs"
 $buildTargetDir = Join-Path $projectRoot "build" "target"
 $electronKernelExe = Join-Path $projectRoot "electron" "transactions.exe"
+# 历史遗留产物（旧命名/误生成的 exe）
+$kernelBilladmExe = Join-Path $projectRoot "kernel" "billadm.exe"
+$kernelNulExe = Join-Path $projectRoot "kernel" "nul.exe"
+$electronBilladmKernelExe = Join-Path $projectRoot "electron" "Billadm-Kernel.exe"
 
 # 颜色辅助函数（提升可读性）
 function Write-Info { param($msg) Write-Host "📦 $msg" -ForegroundColor Cyan }
@@ -35,7 +39,10 @@ try {
         $electronDistDir,
         $electronLogsDir,
         $buildTargetDir,
-        $electronKernelExe
+        $electronKernelExe,
+        $kernelBilladmExe,
+        $kernelNulExe,
+        $electronBilladmKernelExe
     )
 
     foreach ($item in $itemsToRemove) {

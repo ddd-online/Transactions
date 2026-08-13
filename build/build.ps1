@@ -165,39 +165,17 @@ try {
 
 
     # ==============================
-    # 4. 裁剪生产依赖 → 装回打包工具 → 打包 → 恢复全量依赖
+    # 4. Electron 打包
     # ==============================
+    # 本应用无运行时 npm 依赖（main.js 仅用 Electron/Node 内置模块），
+    # electron-builder 会自动排除 devDependencies，无需手动 prune/恢复 node_modules，
+    # 避免打包中途失败时 node_modules 停留在被裁剪的坏状态。
     Set-Location $electronDir
-
-    Write-Step "正在裁剪 node_modules（仅保留生产依赖，加速打包）..."
-    & npm prune --omit=dev
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warn "npm prune 返回非零退出码，继续打包..."
-    } else {
-        Write-Success "已裁剪 dev 依赖"
-    }
-
-    Write-Step "正在装回 electron-builder（打包需要）..."
-    & npm install --no-save electron-builder
-    if ($LASTEXITCODE -ne 0) {
-        Write-ErrorCustom "electron-builder 安装失败"
-        & npm install --ignore-scripts
-        exit 1
-    }
-    Write-Success "electron-builder 已就绪"
 
     Write-Step "正在执行 Electron 应用打包..."
     Write-Host "   执行命令: npm run package" -ForegroundColor Yellow
     & npm run package
     $packageExitCode = $LASTEXITCODE
-
-    Write-Step "正在恢复 node_modules 全量依赖..."
-    & npm install --ignore-scripts
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warn "npm install 返回非零退出码，请手动运行 npm install"
-    } else {
-        Write-Success "已恢复全量依赖"
-    }
 
     if ($packageExitCode -ne 0) {
         Write-ErrorCustom "Electron 打包失败，退出码: $packageExitCode"
