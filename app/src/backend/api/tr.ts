@@ -51,6 +51,6 @@ export async function unlinkTrFromKeyEvent(transactionId: string): Promise<strin
     return api.post<string>('/v1/transactions/unlink', { transaction_id: transactionId }, '解除关联');
 }
 
-export async function fetchLinkedTransactions(date: string): Promise<TransactionRecord[]> {
-    return api.get<TransactionRecord[]>(`/v1/transactions/linked/${date}`, '查询关联交易记录');
+export async function fetchLinkedTransactions(ledgerId: string, date: string): Promise<TransactionRecord[]> {
+    return api.get<TransactionRecord[]>(`/v1/transactions/linked/${date}?ledger_id=${encodeURIComponent(ledgerId)}`, '查询关联交易记录');
 }

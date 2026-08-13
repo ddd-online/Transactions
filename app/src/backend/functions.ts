@@ -21,18 +21,23 @@ export function yuanToCents(yuanStr: string): number {
     const isNegative = yuanStr.startsWith('-');
     if (isNegative) yuanStr = yuanStr.slice(1);
 
-    // 拆分整数和小数部分
-    let [integerPart = '0', decimalPart = '00'] = yuanStr.split('.');
+    // 拆分整数和小数部分；空整数部分视为 0（支持 ".5" 输入）
+    let [integerPart = '0', decimalPart = ''] = yuanStr.split('.');
+    if (integerPart === '') integerPart = '0';
 
-    // 小数部分最多取两位，不足补零，超过截断
-    decimalPart = (decimalPart + '00').substring(0, 2);
-
-    // 防止非数字字符
-    if (!/^\d+$/.test(integerPart) || !/^\d{2}$/.test(decimalPart)) {
+    // 只允许数字字符
+    if (!/^\d+$/.test(integerPart) || (decimalPart !== '' && !/^\d+$/.test(decimalPart))) {
         throw new Error('无效的金额格式');
     }
 
-    const totalCents = parseInt(integerPart, 10) * 100 + parseInt(decimalPart, 10);
+    // 小数取前三位：前两位是分，第三位用于四舍五入到分
+    const digits = (decimalPart + '00').slice(0, 3);
+    let cents = parseInt(digits.slice(0, 2), 10);
+    if (parseInt(digits.slice(2, 3) || '0', 10) >= 5) {
+        cents += 1;
+    }
+
+    const totalCents = parseInt(integerPart, 10) * 100 + cents;
     return isNegative ? -totalCents : totalCents;
 }
 

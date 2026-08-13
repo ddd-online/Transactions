@@ -66,6 +66,14 @@ export function useImageUpload(uploadFn: UploadHandler) {
   const pendingFiles = ref<File[]>([])
   let currentFileIndex = 0
   let targetDate = ''
+  let resetTimer: ReturnType<typeof setTimeout> | null = null
+
+  const clearResetTimer = () => {
+    if (resetTimer) {
+      clearTimeout(resetTimer)
+      resetTimer = null
+    }
+  }
 
   const uploadCurrentFile = async () => {
     const files = pendingFiles.value
@@ -74,7 +82,8 @@ export function useImageUpload(uploadFn: UploadHandler) {
       progress.value.completed = doneCount
       progress.value.total = doneCount
       progress.value.status = 'done'
-      setTimeout(() => {
+      clearResetTimer()
+      resetTimer = setTimeout(() => {
         progress.value.status = 'idle'
         pendingFiles.value = []
       }, 2000)
@@ -126,6 +135,7 @@ export function useImageUpload(uploadFn: UploadHandler) {
     targetDate = date
     pendingFiles.value = files
     currentFileIndex = 0
+    clearResetTimer()
 
     progress.value = {
       files: files.map(f => ({ name: f.name, percent: 0, status: 'pending' as const })),
@@ -154,6 +164,7 @@ export function useImageUpload(uploadFn: UploadHandler) {
   }
 
   const reset = () => {
+    clearResetTimer()
     progress.value = { files: [], total: 0, completed: 0, status: 'idle' }
     pendingFiles.value = []
     currentFileIndex = 0

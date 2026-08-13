@@ -505,7 +505,8 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/mixins' as *;
 .setting-list {
   display: flex;
   flex-direction: column;
@@ -744,23 +745,7 @@ onUnmounted(() => {
 }
 
 .prompt-textarea :deep(textarea) {
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-    margin-block: var(--billadm-space-xs);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(141, 127, 111, 0.18);
-    border-radius: 8px;
-  }
-
-  &:hover::-webkit-scrollbar-thumb {
-    background: rgba(141, 127, 111, 0.40);
-  }
+  @include custom-scrollbar;
 }
 
 /* Quick Commands */

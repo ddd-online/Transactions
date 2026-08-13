@@ -8,6 +8,7 @@ import (
 type ChartDao interface {
 	Create(ws *workspace.Workspace, chart *models.Chart) error
 	DeleteById(ws *workspace.Workspace, chartId string) error
+	DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error
 	GetMaxSort(ws *workspace.Workspace, ledgerID string) (int, error)
 	QueryById(ws *workspace.Workspace, chartId string) (*models.Chart, error)
 	QueryByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*models.Chart, error)
@@ -29,6 +30,10 @@ func (d *chartDaoImpl) Create(ws *workspace.Workspace, chart *models.Chart) erro
 
 func (d *chartDaoImpl) DeleteById(ws *workspace.Workspace, chartId string) error {
 	return ws.GetDb().Where("chart_id = ?", chartId).Delete(&models.Chart{}).Error
+}
+
+func (d *chartDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.Chart{}).Error
 }
 
 func (d *chartDaoImpl) GetMaxSort(ws *workspace.Workspace, ledgerID string) (int, error) {

@@ -21,6 +21,7 @@ type TagService interface {
 	DeleteTagsByCategory(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) error
 	UpdateTagSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error
 	CountRecordsByTag(ws *workspace.Workspace, ledgerId string, tag string) (int64, error)
+	CountRecordsByTags(ws *workspace.Workspace, ledgerId string, names []string) (map[string]int64, error)
 }
 
 var _ TagService = &tagServiceImpl{}
@@ -61,16 +62,19 @@ func (t *tagServiceImpl) DeleteTagsByCategory(ws *workspace.Workspace, ledgerID 
 }
 
 func (t *tagServiceImpl) DeleteTag(ws *workspace.Workspace, ledgerId string, name string, categoryTransactionType string) error {
-	if err := t.trTagDao.DeleteByTag(ws, ledgerId, name); err != nil {
-		logrus.Errorf("删除关联 TrTag 失败: %v", err)
-		return err
-	}
-
-	if err := t.tagDao.Delete(ws, ledgerId, name, categoryTransactionType); err != nil {
+	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		if err := t.trTagDao.DeleteByTag(tx, ledgerId, name); err != nil {
+			return err
+		}
+		if err := t.tagDao.Delete(tx, ledgerId, name, categoryTransactionType); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		logrus.Errorf("删除标签失败: %v", err)
 		return err
 	}
-
 	return nil
 }
 
@@ -85,4 +89,29 @@ func (t *tagServiceImpl) UpdateTagSort(ws *workspace.Workspace, ledgerID string,
 
 func (t *tagServiceImpl) CountRecordsByTag(ws *workspace.Workspace, ledgerId string, tag string) (int64, error) {
 	return t.tagDao.CountByTag(ws, ledgerId, tag)
+}
+
+// CountRecordsByTags 批量统计每个标签名下的关联交易数，避免逐标签 COUNT 的 N+1 查询。
+func (t *tagServiceImpl) CountRecordsByTags(ws *workspace.Workspace, ledgerId string, names []string) (map[string]int64, error) {
+	result := make(map[string]int64, len(names))
+	if len(names) == 0 {
+		return result, nil
+	}
+	type row struct {
+		Tag string
+		Cnt int64
+	}
+	var rows []row
+	err := ws.GetDb().Model(&models.TrTag{}).
+		Select("tag, COUNT(*) AS cnt").
+		Where("ledger_id = ? AND tag IN ?", ledgerId, names).
+		Group("tag").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range rows {
+		result[r.Tag] = r.Cnt
+	}
+	return result, nil
 }

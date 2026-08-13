@@ -133,8 +133,10 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
     };
 
     const cacheLinkedTransactions = async (date: string): Promise<void> => {
+        const ledgerId = getLedgerId()
+        if (!ledgerId) return
         const trs = await withErrorHandling(
-            () => fetchLinkedTransactions(date),
+            () => fetchLinkedTransactions(ledgerId, date),
             { errorPrefix: '查询关联交易失败', fallback: [] }
         );
         cache.setTransactions(date, trs);
@@ -162,7 +164,7 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
                 ...eventList.map(async (e) => {
                     try {
                         const trs = await withErrorHandling(
-                            () => fetchLinkedTransactions(e.date),
+                            () => fetchLinkedTransactions(ledgerId, e.date),
                             { errorPrefix: '查询关联交易失败', fallback: [] }
                         );
                         cache.setTransactions(e.date, trs);

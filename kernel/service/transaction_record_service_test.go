@@ -83,3 +83,54 @@ func TestCreateAndBatchCreateTr(t *testing.T) {
 		t.Fatalf("分页错误: totalPages=%d items=%d", result.TotalPages, len(result.Items))
 	}
 }
+
+func TestQueryTrsOnConditionEmptyResultNoPanic(t *testing.T) {
+	trSvc, ws := newTrService(t)
+
+	// 空账本 + 未传 limit（Limit=0）：此前 pageSize=0 会触发整数除零 panic
+	result, err := trSvc.QueryTrsOnCondition(ws, &dto.TrQueryCondition{
+		LedgerID: "empty-ledger",
+	})
+	if err != nil {
+		t.Fatalf("查询失败: %v", err)
+	}
+	if result.Total != 0 || len(result.Items) != 0 {
+		t.Fatalf("空结果应为 total=0/items=0, 实际 total=%d items=%d", result.Total, len(result.Items))
+	}
+	if result.TotalPages != 0 {
+		t.Fatalf("空结果 TotalPages 应为 0, 实际 %d", result.TotalPages)
+	}
+}
+
+func TestQueryLinkedByDateIsLedgerScoped(t *testing.T) {
+	trSvc, ws := newTrService(t)
+
+	// 两个账本在同一日期各关联一条交易
+	for _, ledger := range []string{"ledger-a", "ledger-b"} {
+		id, err := trSvc.CreateTr(ws, &dto.TransactionRecordDto{
+			LedgerID:        ledger,
+			Price:           100,
+			TransactionType: constant.TransactionTypeExpense,
+			Category:        "餐饮",
+			TransactionAt:   1780000000,
+		})
+		if err != nil {
+			t.Fatalf("创建交易失败(%s): %v", ledger, err)
+		}
+		if err := trSvc.LinkToKeyEvent(ws, id, "2026-05-01"); err != nil {
+			t.Fatalf("关联关键事件失败(%s): %v", ledger, err)
+		}
+	}
+
+	// 账本 A 查询同一日期，只能拿到自己的 1 条
+	dtos, err := trSvc.QueryLinkedByDate(ws, "ledger-a", "2026-05-01")
+	if err != nil {
+		t.Fatalf("查询关联交易失败: %v", err)
+	}
+	if len(dtos) != 1 {
+		t.Fatalf("跨账本隔离失败: 期望 1 条, 实际 %d", len(dtos))
+	}
+	if dtos[0].LedgerID != "ledger-a" {
+		t.Fatalf("返回了错误账本的交易: %s", dtos[0].LedgerID)
+	}
+}

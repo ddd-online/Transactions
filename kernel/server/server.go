@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/http"
 	"strings"
 	"time"
 
@@ -10,20 +11,24 @@ import (
 	"github.com/billadm/util"
 )
 
-func NewGinServer() *gin.Engine {
+func NewGinServer(apiToken string) *gin.Engine {
 	server := gin.New()
 	server.Use(gin.Recovery())
 	// 自研请求日志：request-id + 耗时 + 慢请求告警（替换 gin.Default 的默认 Logger）
 	server.Use(requestLogger())
 	// cors
+	// 仅放行本地开发时的 Vite 前端源；生产环境前后端同源，本就不需要 CORS。
+	// 之前的 AllowOrigins:["*"] + AllowCredentials:true 会让任意网页跨域读取本地财务数据。
 	server.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},                                                // 允许的源
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}, // 允许的HTTP方法
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},         // 允许的头部信息
-		ExposeHeaders:    []string{"Content-Length"},                                   // 暴露的头部信息
-		AllowCredentials: true,                                                         // 是否允许发送Cookie
-		MaxAge:           12 * time.Hour,                                               // 预检请求的有效期
+		AllowOrigins:     []string{"http://localhost:31945", "http://127.0.0.1:31945"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "X-Api-Token"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
 	}))
+	// API 令牌鉴权（生产环境由 Electron 注入随机令牌，本地开发令牌为空则跳过）
+	server.Use(apiTokenAuth(apiToken))
 
 	// 静态文件缓存控制：index.html 禁止缓存，带 hash 的 assets 长期缓存
 	distDir := util.GetDistDir()
@@ -44,4 +49,31 @@ func NewGinServer() *gin.Engine {
 	})
 	server.Static("/static", distDir)
 	return server
+}
+
+// apiTokenAuth 校验 X-Api-Token 请求头。令牌为空时跳过（本地开发 go run 无令牌）。
+// 仅保护 /api/ 下的接口；/api/v1/health 由 Electron 主进程探活使用，保持无鉴权；
+// 静态资源（/static/*）必须无鉴权，否则页面无法加载以获取令牌。
+func apiTokenAuth(apiToken string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if apiToken == "" {
+			c.Next()
+			return
+		}
+		p := c.Request.URL.Path
+		// health 供 Electron 探活；static 是 <img> 直接加载的图片，无法携带请求头，均免鉴权
+		if !strings.HasPrefix(p, "/api/") || p == "/api/v1/health" || strings.HasPrefix(p, "/api/v1/static/") {
+			c.Next()
+			return
+		}
+		if c.Request.Method == http.MethodOptions {
+			c.Next()
+			return
+		}
+		if c.GetHeader("X-Api-Token") != apiToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": -1, "msg": "unauthorized"})
+			return
+		}
+		c.Next()
+	}
 }

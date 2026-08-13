@@ -82,16 +82,9 @@ export const useLedgerStore = defineStore('ledger', () => {
 
     // 设置当前账本
     const setCurrentLedger = (id: string) => {
-        if (id === null) {
-            currentLedger.value = null
-            return
-        }
         const ledger: Ledger | undefined = ledgers.value.find(l => l.id === id)
-        if (ledger) {
-            currentLedger.value = JSON.parse(JSON.stringify(ledger)) // 创建副本，避免直接引用
-        } else {
-            currentLedger.value = null
-        }
+        // 浅拷贝副本，避免组件直接引用 store 内部对象
+        currentLedger.value = ledger ? { ...ledger } : null
     }
 
     // 切换工作空间

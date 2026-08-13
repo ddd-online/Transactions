@@ -30,7 +30,7 @@ func main() {
 	}
 	logrus.Info("--------- 启动Billadm ---------")
 	gin.SetMode(util.Config.Mode)
-	ginServer := server.NewGinServer()
+	ginServer := server.NewGinServer(util.Config.APIToken)
 	mgr := workspace.NewWsManager()
 	handlers := server.InitServices(mgr)
 	api.ServeAPI(ginServer, handlers)

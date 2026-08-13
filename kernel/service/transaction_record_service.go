@@ -32,7 +32,7 @@ type TransactionRecordService interface {
 	DeleteTrById(ws *workspace.Workspace, trId string) error
 	LinkToKeyEvent(ws *workspace.Workspace, trId string, date string) error
 	UnlinkFromKeyEvent(ws *workspace.Workspace, trId string) error
-	QueryLinkedByDate(ws *workspace.Workspace, date string) ([]*dto.TransactionRecordDto, error)
+	QueryLinkedByDate(ws *workspace.Workspace, ledgerId string, date string) ([]*dto.TransactionRecordDto, error)
 }
 
 var _ TransactionRecordService = &transactionRecordServiceImpl{}
@@ -158,9 +158,13 @@ func (t *transactionRecordServiceImpl) QueryTrsOnCondition(ws *workspace.Workspa
 	if pageSize <= 0 {
 		pageSize = len(trDtos)
 	}
-	totalPages := int(result.Total)/pageSize + 1
-	if int(result.Total)%pageSize == 0 && result.Total > 0 {
+	// 避免 pageSize=0（Limit<=0 且无结果）触发整数除零 panic
+	totalPages := 0
+	if pageSize > 0 {
 		totalPages = int(result.Total) / pageSize
+		if int(result.Total)%pageSize != 0 {
+			totalPages++
+		}
 	}
 	page := 1
 	if condition.Limit > 0 && condition.Offset >= 0 {
@@ -335,8 +339,8 @@ func (t *transactionRecordServiceImpl) UnlinkFromKeyEvent(ws *workspace.Workspac
 	return nil
 }
 
-func (t *transactionRecordServiceImpl) QueryLinkedByDate(ws *workspace.Workspace, date string) ([]*dto.TransactionRecordDto, error) {
-	trs, err := t.trDao.QueryByKeyEventDate(ws, date)
+func (t *transactionRecordServiceImpl) QueryLinkedByDate(ws *workspace.Workspace, ledgerId string, date string) ([]*dto.TransactionRecordDto, error) {
+	trs, err := t.trDao.QueryByKeyEventDate(ws, ledgerId, date)
 	if err != nil {
 		return nil, fmt.Errorf("query by key event date: %w", err)
 	}

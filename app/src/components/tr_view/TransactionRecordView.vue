@@ -43,7 +43,7 @@
         <FilterOutlined />
       </template>
     </a-float-button>
-    <a-float-button class="float-sort" @click="openSortModal = true">
+    <a-float-button class="float-sort" @click="openSort">
       <template #icon>
         <SortAscendingOutlined v-if="isAscending" />
         <SortDescendingOutlined v-else />
@@ -51,7 +51,7 @@
     </a-float-button>
 
     <!-- 排序弹窗 -->
-    <TrSortModal v-model="openSortModal" @apply="onSortApply" />
+    <TrSortModal ref="sortModalRef" v-model="openSortModal" @apply="onSortApply" />
 
     <!-- 筛选弹窗 -->
     <TransactionRecordFilter v-model="openTrFilterModal" />
@@ -119,6 +119,12 @@ const linkDate = ref<Dayjs>(dayjs());
 // 排序相关状态
 
 const openSortModal = ref(false);
+const sortModalRef = ref<{ setItems: (v: SortItem[]) => void } | null>(null);
+// 打开排序弹窗时回填当前排序，避免弹窗总从默认排序开始
+const openSort = () => {
+  sortModalRef.value?.setItems(sortItemsRef.value);
+  openSortModal.value = true;
+};
 // 判断当前排序是否为升序（用于图标显示）
 const isAscending = computed(() => {
   const first = sortItemsRef.value[0];
@@ -227,7 +233,8 @@ const handleUnlink = async () => {
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/mixins' as *;
 .tr-toolbar-left {
   display: flex;
   align-items: center;
@@ -246,24 +253,7 @@ const handleUnlink = async () => {
   overflow-x: hidden;
   min-height: 0;
 
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-    margin-block: var(--billadm-space-xs);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(141, 127, 111, 0.18);
-    border-radius: 8px;
-    transition: background 0.3s ease;
-  }
-}
-
-.tr-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 127, 111, 0.40);
+  @include custom-scrollbar;
 }
 
 .tr-empty {

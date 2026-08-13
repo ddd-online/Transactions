@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, net, Tray, Menu, nativeImage } = re
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
 const { shell } = require('electron');
 
 process.noAsar = false;
@@ -11,6 +12,10 @@ const appPath = isDev ? path.dirname(__dirname) : app.getAppPath();
 
 const API_PORT = isDev ? '28080' : '31943';
 const API_SERVER = `http://127.0.0.1:${API_PORT}`;
+
+// 本地 API 令牌：Electron 生成随机令牌并注入 kernel，渲染进程通过 IPC 获取后随请求携带，
+// 防止本机任意进程/网页直接读写财务数据（dev 模式下 kernel 由 go run 启动、无令牌，鉴权自动跳过）。
+const apiToken = crypto.randomBytes(32).toString('hex');
 
 const getUiServer = () => {
     if (isDev) {
@@ -143,7 +148,7 @@ const startKernel = () => {
     const kernelExe = path.join(appPath, 'transactions.exe');
     log(`Starting kernel: ${kernelExe}`);
     const cp = require("child_process");
-    const proc = cp.spawn(kernelExe, ['-mode', 'release', '-port', API_PORT], {
+    const proc = cp.spawn(kernelExe, ['-mode', 'release', '-port', API_PORT, '-api_token', apiToken], {
         detached: false,
         windowsHide: true,
     });
@@ -257,7 +262,12 @@ const registerCommonHandlers = () => {
 
     ipcMain.handle('file:save', async (event, relativePath) => {
         try {
-            const srcPath = path.join(transactionsCfg.workspaceDir, 'data', 'assets', relativePath);
+            const assetsRoot = path.resolve(transactionsCfg.workspaceDir, 'data', 'assets');
+            const srcPath = path.resolve(assetsRoot, relativePath);
+            // 防路径遍历：解析后必须仍位于 assets 目录内
+            if (srcPath !== assetsRoot && !srcPath.startsWith(assetsRoot + path.sep)) {
+                return { success: false, error: '非法文件路径' };
+            }
             log(`file:save source: ${srcPath}`);
 
             if (!fs.existsSync(srcPath)) {
@@ -301,12 +311,15 @@ const registerCommonHandlers = () => {
                 return app.getVersion();
             case 'apiServer':
                 return API_SERVER;
+            case 'apiToken':
+                return apiToken;
             default:
                 return '';
         }
     });
 
     ipcMain.on('devtools:toggle', (event, enabled) => {
+        if (!isDev) return; // 生产环境禁止通过渲染进程开关 devtools
         if (mainWindow) {
             if (enabled) {
                 mainWindow.webContents.openDevTools({ mode: 'bottom' });
@@ -329,6 +342,33 @@ const registerCommonHandlers = () => {
         state: kernelStatus,
         detail: kernelStatusDetail,
     }));
+
+    // 窗口控制与工作空间初始化：统一注册一次，避免 create*Window 被多次调用时重复注册监听器
+    ipcMain.on('window-control', async (event, command) => {
+        switch (command) {
+            case 'minimize':
+                if (mainWindow) mainWindow.minimize();
+                break;
+            case 'maximize':
+                if (mainWindow) {
+                    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
+                }
+                break;
+            case 'close':
+                await handleWindowClose();
+                break;
+        }
+    });
+
+    ipcMain.on('workspace:init', (event, workspaceDir) => {
+        transactionsCfg.workspaceDir = workspaceDir;
+        saveTransactionsCfg();
+        if (initWindow) {
+            initWindow.close();
+            initWindow = null;
+        }
+        createMainWindow();
+    });
 
     // ── 更新 ──
     let downloadRequest = null;
@@ -403,6 +443,7 @@ const registerCommonHandlers = () => {
                 hasUpdate: true,
                 latestVersion,
                 downloadUrl,
+                digest: asset?.digest || '',
                 body: data.body || '',
             };
         } catch (e) {
@@ -411,9 +452,19 @@ const registerCommonHandlers = () => {
         }
     });
 
-    ipcMain.handle('update:download', async (event, downloadUrl) => {
+    ipcMain.handle('update:download', async (event, downloadUrl, expectedDigest) => {
         try {
             downloadCancelled = false;
+            // URL 白名单：仅允许 GitHub Releases 域名，防止渲染进程被注入后下载任意 URL
+            let downloadHost = '';
+            try {
+                downloadHost = new URL(downloadUrl).hostname;
+            } catch {
+                return { success: false, error: '无效的下载地址' };
+            }
+            if (!downloadHost.endsWith('github.com') && !downloadHost.endsWith('objects.githubusercontent.com')) {
+                return { success: false, error: '下载地址不在白名单内' };
+            }
             // 中断上一次未完成的下载并清理
             if (downloadRequest) {
                 downloadRequest.destroy();
@@ -438,6 +489,7 @@ const registerCommonHandlers = () => {
             // 流式写入磁盘，避免把整个安装包缓存在内存中
             const writeStream = fs.createWriteStream(tmpPath);
             downloadWriteStream = writeStream;
+            const hash = crypto.createHash('sha256');
 
             await new Promise((resolve, reject) => {
                 let settled = false;
@@ -462,6 +514,14 @@ const registerCommonHandlers = () => {
                     settled = true;
                     downloadRequest = null;
                     downloadWriteStream = null;
+                    // SHA256 校验：GitHub Release 提供 asset.digest（形如 "sha256:..."）
+                    const expected = (expectedDigest || '').replace(/^sha256:/i, '').toLowerCase();
+                    if (expected && hash.digest('hex') !== expected) {
+                        try { fs.unlinkSync(tmpPath); } catch { }
+                        mainWindow.webContents.send('update:download-error', { message: '下载文件校验失败（SHA256 不匹配）' });
+                        resolve();
+                        return;
+                    }
                     fs.renameSync(tmpPath, downloadFilePath);
                     mainWindow.webContents.send('update:download-complete', { filePath: downloadFilePath });
                     resolve();
@@ -486,6 +546,7 @@ const registerCommonHandlers = () => {
 
                     res.on('data', (chunk) => {
                         downloaded += chunk.length;
+                        hash.update(chunk);
                         if (!writeStream.write(chunk)) {
                             res.pause();
                             writeStream.once('drain', () => res.resume());
@@ -588,6 +649,7 @@ app.on('second-instance', () => {
 });
 
 let mainWindow = null;
+let forceClose = false; // 标记真正关闭（绕过 close 事件拦截）
 
 const handleWindowClose = async () => {
     const bounds = mainWindow.getBounds();
@@ -613,6 +675,7 @@ const handleWindowClose = async () => {
 
         if (behavior === 'quit') {
             await quitApp();
+            forceClose = true;
             mainWindow.close();
         } else {
             saveTransactionsCfg();
@@ -625,6 +688,7 @@ const handleWindowClose = async () => {
         mainWindow.setSkipTaskbar(true);
     } else {
         await quitApp();
+        forceClose = true;
         mainWindow.close();
     }
 };
@@ -636,7 +700,10 @@ const stopKernel = async (waitMs = 3000) => {
     if (!proc) return;
     proc.expectedExit = true;
     try {
-        await net.fetch(API_SERVER + "/api/v1/app/exit", { method: "POST" });
+        await net.fetch(API_SERVER + "/api/v1/app/exit", {
+            method: "POST",
+            headers: { 'X-Api-Token': apiToken },
+        });
     } catch (e) {
         log(`请求kernel关闭失败 ${e}`);
     }
@@ -796,18 +863,21 @@ const createMainWindow = () => {
         mainWindow.webContents.openDevTools();
     }
 
-    ipcMain.on('window-control', async (event, command) => {
-        switch (command) {
-            case 'minimize':
-                mainWindow.minimize();
-                break;
-            case 'maximize':
-                mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
-                break;
-            case 'close':
-                await handleWindowClose();
-                break;
+    // 阻止主窗口导航到外部地址或新开窗口（纵深防御）
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        const allowed = url.startsWith(API_SERVER) || (isDev && url.startsWith('http://localhost:31945'));
+        if (!allowed) {
+            event.preventDefault();
+            log(`已拦截外部导航: ${url}`);
         }
+    });
+    mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+    // 统一关闭入口：Alt+F4 / 任务栏关闭也走 handleWindowClose（托盘/退出配置）
+    mainWindow.on('close', (event) => {
+        if (forceClose) return;
+        event.preventDefault();
+        handleWindowClose();
     });
 
     mainWindow.on('maximize', () => {
@@ -835,16 +905,6 @@ const createInitWindow = () => {
     initWindow.loadFile(initHtmlPath);
 
     log(`Init window created: ${initHtmlPath}`);
-
-    ipcMain.on('workspace:init', (event, workspaceDir) => {
-        transactionsCfg.workspaceDir = workspaceDir;
-        saveTransactionsCfg();
-        if (initWindow) {
-            initWindow.close();
-            initWindow = null;
-        }
-        createMainWindow();
-    });
 };
 
 // 单实例锁：确保同一台电脑只能运行一个程序实例

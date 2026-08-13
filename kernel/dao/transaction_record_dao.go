@@ -33,7 +33,7 @@ type TransactionRecordDao interface {
 	QueryById(ws *workspace.Workspace, trId string) (*models.TransactionRecord, error)
 	DeleteById(ws *workspace.Workspace, trId string) error
 	UpdateKeyEventDate(ws *workspace.Workspace, trId string, date string) error
-	QueryByKeyEventDate(ws *workspace.Workspace, date string) ([]*models.TransactionRecord, error)
+	QueryByKeyEventDate(ws *workspace.Workspace, ledgerId string, date string) ([]*models.TransactionRecord, error)
 	CountByLedgerId(ws *workspace.Workspace, ledgerId string) (int64, error)
 	DeleteAllByLedgerId(ws *workspace.Workspace, ledgerId string) error
 	QueryStatistics(ws *workspace.Workspace, ledgerId string, tsRange []int64) (TrStatistics, error)
@@ -85,10 +85,10 @@ func (d *trDaoImpl) UpdateKeyEventDate(ws *workspace.Workspace, trId string, dat
 	return nil
 }
 
-func (d *trDaoImpl) QueryByKeyEventDate(ws *workspace.Workspace, date string) ([]*models.TransactionRecord, error) {
+func (d *trDaoImpl) QueryByKeyEventDate(ws *workspace.Workspace, ledgerId string, date string) ([]*models.TransactionRecord, error) {
 	trs := make([]*models.TransactionRecord, 0)
 	err := ws.GetDb().
-		Where("key_event_date = ?", date).
+		Where("ledger_id = ? AND key_event_date = ?", ledgerId, date).
 		Order("transaction_at desc").
 		Find(&trs).Error
 	return trs, err

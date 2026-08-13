@@ -22,14 +22,20 @@ func (h *Handlers) listTags(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	tagDtos := make([]dto.TagDto, 0)
+	names := make([]string, 0, len(tags))
+	for i := range tags {
+		names = append(names, tags[i].Name)
+	}
+	counts, err := h.TagSvc.CountRecordsByTags(ws, ledgerId, names)
+	if err != nil {
+		return nil, err
+	}
+
+	tagDtos := make([]dto.TagDto, 0, len(tags))
 	for _, tag := range tags {
 		tagDto := dto.TagDto{}
 		tagDto.FromTag(&tag)
-		count, err := h.TagSvc.CountRecordsByTag(ws, ledgerId, tag.Name)
-		if err == nil {
-			tagDto.RecordCount = int(count)
-		}
+		tagDto.RecordCount = int(counts[tag.Name])
 		tagDtos = append(tagDtos, tagDto)
 	}
 

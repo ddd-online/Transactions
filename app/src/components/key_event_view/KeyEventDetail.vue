@@ -179,7 +179,8 @@ const handleCancel = () => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/mixins' as *;
 /* ========== 颜色工具栏 ========== */
 .color-toolbar {
   display: flex;
@@ -270,13 +271,7 @@ const handleCancel = () => {
   padding: var(--billadm-space-md);
   background-color: var(--billadm-color-minor-background);
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
-}
-
-.description-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 127, 111, 0.40);
+  @include custom-scrollbar;
 }
 
 .description-text {

@@ -8,6 +8,7 @@ import (
 type TransactionTemplateDao interface {
 	Create(ws *workspace.Workspace, template *models.TransactionTemplate) error
 	DeleteById(ws *workspace.Workspace, templateId string) error
+	DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error
 	GetMaxSort(ws *workspace.Workspace, ledgerID string) (int, error)
 	QueryByLedgerId(ws *workspace.Workspace, ledgerId string) ([]*models.TransactionTemplate, error)
 	UpdateSort(ws *workspace.Workspace, templateId string, sortOrder int) error
@@ -27,6 +28,10 @@ func (d *trTemplateDaoImpl) Create(ws *workspace.Workspace, template *models.Tra
 
 func (d *trTemplateDaoImpl) DeleteById(ws *workspace.Workspace, templateId string) error {
 	return ws.GetDb().Where("template_id = ?", templateId).Delete(&models.TransactionTemplate{}).Error
+}
+
+func (d *trTemplateDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.TransactionTemplate{}).Error
 }
 
 func (d *trTemplateDaoImpl) GetMaxSort(ws *workspace.Workspace, ledgerID string) (int, error) {

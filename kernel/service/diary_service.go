@@ -47,6 +47,7 @@ func NewDiaryService(diaryDao dao.DiaryDao) DiaryService {
 
 type DiaryService interface {
 	ListDates(ws *workspace.Workspace) ([]models.DiaryDateItem, error)
+	ListDatesByKeyword(ws *workspace.Workspace, keyword string) ([]models.DiaryDateItem, error)
 	GetByDate(ws *workspace.Workspace, date string) (*models.DiaryEntry, error)
 	Upsert(ws *workspace.Workspace, date string, content string, mood string) (*models.DiaryEntry, error)
 	DeleteByDate(ws *workspace.Workspace, date string) error
@@ -66,6 +67,24 @@ type diaryServiceImpl struct {
 
 func (s *diaryServiceImpl) ListDates(ws *workspace.Workspace) ([]models.DiaryDateItem, error) {
 	entries, err := s.diaryDao.ListDates(ws)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]models.DiaryDateItem, len(entries))
+	for i, e := range entries {
+		items[i] = models.DiaryDateItem{
+			Date:      e.Date,
+			WordCount: e.WordCount,
+			Mood:      e.Mood,
+		}
+	}
+	return items, nil
+}
+
+// ListDatesByKeyword 在 SQL 内按关键词过滤日记正文，返回日期列表项，
+// 避免逐日期查询正文的 N+1。
+func (s *diaryServiceImpl) ListDatesByKeyword(ws *workspace.Workspace, keyword string) ([]models.DiaryDateItem, error) {
+	entries, err := s.diaryDao.ListDatesByKeyword(ws, keyword)
 	if err != nil {
 		return nil, err
 	}

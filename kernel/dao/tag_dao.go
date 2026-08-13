@@ -11,6 +11,7 @@ type TagDao interface {
 	Create(ws *workspace.Workspace, tag *models.Tag) error
 	Delete(ws *workspace.Workspace, ledgerId string, name string, categoryTransactionType string) error
 	DeleteByCategory(ws *workspace.Workspace, ledgerID string, categoryTransactionType string) error
+	DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error
 	UpdateSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error
 	CountByTag(ws *workspace.Workspace, ledgerId string, tag string) (int64, error)
 }
@@ -60,6 +61,10 @@ func (d *tagDaoImpl) DeleteByCategory(ws *workspace.Workspace, ledgerID string, 
 	return ws.GetDb().
 		Where("ledger_id = ? AND category_transaction_type = ?", ledgerID, categoryTransactionType).
 		Delete(&models.Tag{}).Error
+}
+
+func (d *tagDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.Tag{}).Error
 }
 
 func (d *tagDaoImpl) UpdateSort(ws *workspace.Workspace, ledgerID string, name string, categoryTransactionType string, sortOrder int) error {

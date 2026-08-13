@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type anthropicProvider struct {
@@ -23,7 +24,7 @@ func NewAnthropicProvider(baseURL, apiKey, model string) LLMProvider {
 		baseURL: baseURL,
 		apiKey:  apiKey,
 		model:   model,
-		client:  &http.Client{},
+		client:  &http.Client{Timeout: 120 * time.Second},
 	}
 }
 
@@ -146,7 +147,9 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 
 	body := anthropicRequest{
 		Model:     p.model,
-		MaxTokens: 4096,
+		// max_tokens 需大于 thinking 预算；二者之差才是可见输出，
+		// 原 4096-4000 仅剩 96 token，导致回答被严重截断。
+		MaxTokens: 8192,
 		System:    req.SystemPrompt,
 		Messages:  messages,
 		Tools:     tools,

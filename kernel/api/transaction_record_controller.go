@@ -128,6 +128,10 @@ func (h *Handlers) listLinkedTransactions(c *gin.Context) (any, error) {
 	if date == "" {
 		return nil, models.NewBadRequest("date is required")
 	}
+	ledgerId := c.Query("ledger_id")
+	if ledgerId == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
 
-	return h.TrSvc.QueryLinkedByDate(ws, date)
+	return h.TrSvc.QueryLinkedByDate(ws, ledgerId, date)
 }

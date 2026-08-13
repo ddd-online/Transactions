@@ -19,6 +19,7 @@ export const useUpdateStore = defineStore('updateStore', () => {
     const filePath = ref<string>('')
     const releaseBody = ref<string>('')
     const downloadUrl = ref<string>('')
+    const downloadDigest = ref<string>('')
 
     let unsubProgress: (() => void) | null = null
     let unsubComplete: (() => void) | null = null
@@ -48,6 +49,7 @@ export const useUpdateStore = defineStore('updateStore', () => {
                 status.value = 'available'
                 latestVersion.value = result.latestVersion
                 downloadUrl.value = result.downloadUrl
+                downloadDigest.value = result.digest || ''
                 releaseBody.value = result.body
             } else {
                 status.value = 'no-update'
@@ -83,7 +85,7 @@ export const useUpdateStore = defineStore('updateStore', () => {
             cleanupListeners()
         })
 
-        const result = await window.electronAPI.downloadUpdate(downloadUrl.value)
+        const result = await window.electronAPI.downloadUpdate(downloadUrl.value, downloadDigest.value)
         if (!result.success && (status.value as UpdateStatus) !== 'error') {
             status.value = 'error'
             errorMessage.value = result.error || '下载失败'
@@ -110,6 +112,7 @@ export const useUpdateStore = defineStore('updateStore', () => {
         filePath.value = ''
         releaseBody.value = ''
         downloadUrl.value = ''
+        downloadDigest.value = ''
     }
 
     return {

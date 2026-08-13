@@ -21,7 +21,7 @@ type ChartLine struct {
 // Chart 图表配置
 type Chart struct {
 	ChartID     string `gorm:"column:chart_id;primaryKey;comment:图表UUID" json:"chart_id"`
-	LedgerID    string `gorm:"column:ledger_id;not null;comment:关联账本ID" json:"ledger_id"`
+	LedgerID    string `gorm:"column:ledger_id;not null;index:idx_chart_ledger;comment:关联账本ID" json:"ledger_id"`
 	Title       string `gorm:"column:title;not null;comment:图表名称" json:"title"`
 	Granularity string `gorm:"column:granularity;not null;comment:时间粒度 year/month" json:"granularity"`
 	ChartLines  string `gorm:"column:chart_lines;not null;comment:曲线配置JSON" json:"chart_lines"`

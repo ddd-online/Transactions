@@ -1,6 +1,8 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 import type { Result } from "@/types/billadm";
 
+const DEFAULT_TIMEOUT = 10000;
+
 let apiClient: AxiosInstance | null = null;
 let cachedBaseUrl = 'http://127.0.0.1:28080';
 
@@ -10,6 +12,7 @@ async function getApiClient(): Promise<AxiosInstance> {
     }
 
     let baseURL = 'http://127.0.0.1:28080/api';
+    let apiToken = '';
 
     // In Electron, get the actual port from the main process
     if (window.electronAPI?.getApiServer) {
@@ -20,13 +23,25 @@ async function getApiClient(): Promise<AxiosInstance> {
             console.warn('Failed to get API server from Electron, using default:', e);
         }
     }
+    // 生产环境携带本地 API 令牌；dev 下 kernel 无令牌，头部会被忽略
+    if (window.electronAPI?.getAppInfo) {
+        try {
+            const token = await window.electronAPI.getAppInfo('apiToken');
+            if (typeof token === 'string' && token) apiToken = token;
+        } catch (e) {
+            console.warn('Failed to get API token from Electron:', e);
+        }
+    }
 
     cachedBaseUrl = baseURL.replace(/\/api$/, '');
 
     apiClient = axios.create({
         baseURL,
-        timeout: 10000,
-        headers: { 'Content-Type': 'application/json' },
+        timeout: DEFAULT_TIMEOUT,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(apiToken ? { 'X-Api-Token': apiToken } : {}),
+        },
     });
 
     return apiClient;
@@ -61,60 +76,43 @@ function extractErrorMessage(error: unknown, errorPrefix?: string): string {
     throw error;
 }
 
+/**
+ * 统一请求核心：获取 client → 发起请求 → 校验 Result 信封 → 返回 data。
+ * 五个动词方法只是传入不同的 axios 调用，避免重复 try/catch 与错误转换。
+ */
+async function request<T>(
+    fn: (client: AxiosInstance) => Promise<AxiosResponse<Result<T>>>,
+    errorPrefix?: string
+): Promise<T> {
+    try {
+        const client = await getApiClient();
+        const response = await fn(client);
+        checkSuccess(response.data, errorPrefix);
+        return response.data.data;
+    } catch (error) {
+        throw new Error(extractErrorMessage(error, errorPrefix));
+    }
+}
+
 const api = {
-    async get<T = any>(url: string, errorPrefix?: string): Promise<T> {
-        try {
-            const client = await getApiClient();
-            const response: AxiosResponse<Result<T>> = await client.get(url);
-            checkSuccess(response.data, errorPrefix);
-            return response.data.data;
-        } catch (error) {
-            throw new Error(extractErrorMessage(error, errorPrefix));
-        }
+    get<T = any>(url: string, errorPrefix?: string): Promise<T> {
+        return request<T>((client) => client.get(url), errorPrefix);
     },
 
-    async post<T = any>(url: string, data: object = {}, errorPrefix?: string, config?: Record<string, unknown>): Promise<T> {
-        try {
-            const client = await getApiClient();
-            const response: AxiosResponse<Result<T>> = await client.post(url, data, config);
-            checkSuccess(response.data, errorPrefix);
-            return response.data.data;
-        } catch (error) {
-            throw new Error(extractErrorMessage(error, errorPrefix));
-        }
+    post<T = any>(url: string, data: object = {}, errorPrefix?: string, config?: Record<string, unknown>): Promise<T> {
+        return request<T>((client) => client.post(url, data, config), errorPrefix);
     },
 
-    async patch<T = any>(url: string, data: object = {}, errorPrefix?: string): Promise<T> {
-        try {
-            const client = await getApiClient();
-            const response: AxiosResponse<Result<T>> = await client.patch(url, data);
-            checkSuccess(response.data, errorPrefix);
-            return response.data.data;
-        } catch (error) {
-            throw new Error(extractErrorMessage(error, errorPrefix));
-        }
+    patch<T = any>(url: string, data: object = {}, errorPrefix?: string): Promise<T> {
+        return request<T>((client) => client.patch(url, data), errorPrefix);
     },
 
-    async put<T = any>(url: string, data: object = {}, errorPrefix?: string): Promise<T> {
-        try {
-            const client = await getApiClient();
-            const response: AxiosResponse<Result<T>> = await client.put(url, data);
-            checkSuccess(response.data, errorPrefix);
-            return response.data.data;
-        } catch (error) {
-            throw new Error(extractErrorMessage(error, errorPrefix));
-        }
+    put<T = any>(url: string, data: object = {}, errorPrefix?: string): Promise<T> {
+        return request<T>((client) => client.put(url, data), errorPrefix);
     },
 
-    async delete<T = any>(url: string, errorPrefix?: string): Promise<T> {
-        try {
-            const client = await getApiClient();
-            const response: AxiosResponse<Result<T>> = await client.delete(url);
-            checkSuccess(response.data, errorPrefix);
-            return response.data.data;
-        } catch (error) {
-            throw new Error(extractErrorMessage(error, errorPrefix));
-        }
+    delete<T = any>(url: string, errorPrefix?: string): Promise<T> {
+        return request<T>((client) => client.delete(url), errorPrefix);
     }
 };
 

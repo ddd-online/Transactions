@@ -3,6 +3,7 @@ package dao
 import (
 	"github.com/billadm/models"
 	"github.com/billadm/workspace"
+	"gorm.io/gorm/clause"
 )
 
 type KeyEventDao interface {
@@ -10,6 +11,8 @@ type KeyEventDao interface {
 	QueryByDate(ws *workspace.Workspace, ledgerID string, date string) (*models.KeyEvent, error)
 	QueryByYear(ws *workspace.Workspace, ledgerID string, year string) ([]models.KeyEvent, error)
 	DeleteByDate(ws *workspace.Workspace, ledgerID string, date string) error
+	DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error
+	ListDatesByLedgerId(ws *workspace.Workspace, ledgerID string) ([]string, error)
 }
 
 var _ KeyEventDao = &keyEventDaoImpl{}
@@ -21,7 +24,11 @@ func NewKeyEventDao() KeyEventDao {
 }
 
 func (d *keyEventDaoImpl) Upsert(ws *workspace.Workspace, event *models.KeyEvent) error {
-	return ws.GetDb().Save(event).Error
+	// 幂等 upsert：以 (ledger_id, date) 复合唯一键冲突时更新字段，避免 select-then-act 竞态
+	return ws.GetDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "ledger_id"}, {Name: "date"}},
+		DoUpdates: clause.AssignmentColumns([]string{"title", "content", "color", "updated_at"}),
+	}).Create(event).Error
 }
 
 func (d *keyEventDaoImpl) QueryByDate(ws *workspace.Workspace, ledgerID string, date string) (*models.KeyEvent, error) {
@@ -41,4 +48,16 @@ func (d *keyEventDaoImpl) QueryByYear(ws *workspace.Workspace, ledgerID string, 
 
 func (d *keyEventDaoImpl) DeleteByDate(ws *workspace.Workspace, ledgerID string, date string) error {
 	return ws.GetDb().Where("ledger_id = ? AND date = ?", ledgerID, date).Delete(&models.KeyEvent{}).Error
+}
+
+func (d *keyEventDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.KeyEvent{}).Error
+}
+
+func (d *keyEventDaoImpl) ListDatesByLedgerId(ws *workspace.Workspace, ledgerID string) ([]string, error) {
+	dates := make([]string, 0)
+	err := ws.GetDb().Model(&models.KeyEvent{}).
+		Where("ledger_id = ?", ledgerID).
+		Pluck("date", &dates).Error
+	return dates, err
 }

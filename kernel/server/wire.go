@@ -38,7 +38,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	categorySvc := service.NewCategoryService(tagSvc, categoryDao)
 	keyEventSvc := service.NewKeyEventService(keyEventImageSvc, keyEventDao)
 	trSvc := service.NewTrService(keyEventSvc, trDao, trTagDao)
-	ledgerSvc := service.NewLedgerService(ledgerDao, trDao, trTagDao)
+	ledgerSvc := service.NewLedgerService(ledgerDao, trDao, trTagDao, categoryDao, tagDao, chartDao, trTemplateDao, keyEventDao, keyEventImageDao)
 
 	// ---- AI module ----
 	aiConfigDao := dao.NewAiConfigDao()

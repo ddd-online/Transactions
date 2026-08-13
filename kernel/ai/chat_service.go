@@ -140,6 +140,16 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 	go func() {
 		defer close(ch)
 
+		// send 在 ctx 取消（客户端断开）时立即返回，避免向已无人消费的 channel 写入而永久阻塞泄漏
+		send := func(ev SSEEvent) bool {
+			select {
+			case ch <- ev:
+				return true
+			case <-ctx.Done():
+				return false
+			}
+		}
+
 		round := 0
 		for round < MaxToolCallRounds {
 			round++
@@ -165,7 +175,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 
 			eventCh, err := llmProvider.ChatStream(ctx, req)
 			if err != nil {
-				ch <- SSEEvent{Type: "error", Message: fmt.Sprintf("调用 AI 失败: %v", err)}
+				send(SSEEvent{Type: "error", Message: fmt.Sprintf("调用 AI 失败: %v", err)})
 				return
 			}
 
@@ -177,21 +187,31 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 				switch event.Type {
 				case "text_delta":
 					assistantContent += event.Delta
-					ch <- SSEEvent{Type: "text_delta", Delta: event.Delta}
+					if !send(SSEEvent{Type: "text_delta", Delta: event.Delta}) {
+						return
+					}
 				case "thinking_delta":
-					ch <- SSEEvent{Type: "thinking_delta", Delta: event.Delta}
+					if !send(SSEEvent{Type: "thinking_delta", Delta: event.Delta}) {
+						return
+					}
 				case "thinking_start":
-					ch <- SSEEvent{Type: "thinking_start"}
+					if !send(SSEEvent{Type: "thinking_start"}) {
+						return
+					}
 				case "thinking_done":
-					ch <- SSEEvent{Type: "thinking_done"}
+					if !send(SSEEvent{Type: "thinking_done"}) {
+						return
+					}
 				case "tool_call":
 					gotToolCalls = true
 					toolCalls = append(toolCalls, event.ToolCalls...)
 					for _, tc := range event.ToolCalls {
-						ch <- SSEEvent{Type: "tool_call", Tool: tc.Name, Args: tc.Arguments}
+						if !send(SSEEvent{Type: "tool_call", Tool: tc.Name, Args: tc.Arguments}) {
+							return
+						}
 					}
 				case "error":
-					ch <- SSEEvent{Type: "error", Message: event.Error.Error()}
+					send(SSEEvent{Type: "error", Message: event.Error.Error()})
 					return
 				case "done":
 					// fall through
@@ -209,7 +229,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 						Content:        assistantContent,
 					})
 				}
-				ch <- SSEEvent{Type: "done"}
+				send(SSEEvent{Type: "done"})
 				return
 			}
 
@@ -235,7 +255,9 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 				t, ok := s.registry.Get(tc.Name)
 				if !ok {
 					errMsg := fmt.Sprintf("工具 %s 不存在", tc.Name)
-					ch <- SSEEvent{Type: "tool_result", Tool: tc.Name, Summary: errMsg}
+					if !send(SSEEvent{Type: "tool_result", Tool: tc.Name, Summary: errMsg}) {
+						return
+					}
 					messages = append(messages, provider.ChatMessage{
 						Role:       "tool",
 						Content:    errMsg,
@@ -262,7 +284,9 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 				// 生成摘要
 				summary := summarizeResult(tc.Name, result)
 
-				ch <- SSEEvent{Type: "tool_result", Tool: tc.Name, Summary: summary, Detail: json.RawMessage(result)}
+				if !send(SSEEvent{Type: "tool_result", Tool: tc.Name, Summary: summary, Detail: json.RawMessage(result)}) {
+					return
+				}
 
 				messages = append(messages, provider.ChatMessage{
 					Role:       "tool",
@@ -284,7 +308,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 
 		// 超过最大轮次（模型仍在调用工具），强制结束并告警
 		logrus.Warnf("AI 工具调用达到最大轮数 %d, 强制结束对话", MaxToolCallRounds)
-		ch <- SSEEvent{Type: "done"}
+		send(SSEEvent{Type: "done"})
 	}()
 
 	return ch, nil

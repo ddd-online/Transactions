@@ -10,11 +10,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewLedgerService(ledgerDao dao.LedgerDao, trDao dao.TransactionRecordDao, trTagDao dao.TrTagDao) LedgerService {
+func NewLedgerService(
+	ledgerDao dao.LedgerDao,
+	trDao dao.TransactionRecordDao,
+	trTagDao dao.TrTagDao,
+	categoryDao dao.CategoryDao,
+	tagDao dao.TagDao,
+	chartDao dao.ChartDao,
+	trTemplateDao dao.TransactionTemplateDao,
+	keyEventDao dao.KeyEventDao,
+	keyEventImageDao dao.KeyEventImageDao,
+) LedgerService {
 	return &ledgerServiceImpl{
-		ledgerDao: ledgerDao,
-		trDao:     trDao,
-		trTagDao:  trTagDao,
+		ledgerDao:        ledgerDao,
+		trDao:            trDao,
+		trTagDao:         trTagDao,
+		categoryDao:      categoryDao,
+		tagDao:           tagDao,
+		chartDao:         chartDao,
+		trTemplateDao:    trTemplateDao,
+		keyEventDao:      keyEventDao,
+		keyEventImageDao: keyEventImageDao,
 	}
 }
 
@@ -30,9 +46,15 @@ type LedgerService interface {
 var _ LedgerService = &ledgerServiceImpl{}
 
 type ledgerServiceImpl struct {
-	ledgerDao dao.LedgerDao
-	trDao     dao.TransactionRecordDao
-	trTagDao  dao.TrTagDao
+	ledgerDao        dao.LedgerDao
+	trDao            dao.TransactionRecordDao
+	trTagDao         dao.TrTagDao
+	categoryDao      dao.CategoryDao
+	tagDao           dao.TagDao
+	chartDao         dao.ChartDao
+	trTemplateDao    dao.TransactionTemplateDao
+	keyEventDao      dao.KeyEventDao
+	keyEventImageDao dao.KeyEventImageDao
 }
 
 func (l *ledgerServiceImpl) CreateLedger(ws *workspace.Workspace, ledgerName string, description string) (string, error) {
@@ -96,21 +118,49 @@ func (l *ledgerServiceImpl) QueryLedgerByName(ws *workspace.Workspace, ledgerNam
 }
 
 func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId string) error {
-	err := ws.Transaction(func(tx *workspace.Workspace) error {
+	// 事务前先收集该账本关键事件的日期与图片文件路径，用于事务提交后的磁盘清理
+	eventDates, err := l.keyEventDao.ListDatesByLedgerId(ws, ledgerId)
+	if err != nil {
+		return fmt.Errorf("list key event dates: %w", err)
+	}
+	var imageFiles [][2]string
+	for _, date := range eventDates {
+		images, err := l.keyEventImageDao.QueryByEventDate(ws, date)
+		if err != nil {
+			return fmt.Errorf("query key event images: %w", err)
+		}
+		for _, img := range images {
+			imageFiles = append(imageFiles, [2]string{img.FilePath, img.ThumbPath})
+		}
+	}
+
+	err = ws.Transaction(func(tx *workspace.Workspace) error {
 		if err := l.trTagDao.DeleteByLedgerId(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete tr tags: %w", err)
 		}
-
-		cnt, err := l.trDao.CountByLedgerId(tx, ledgerId)
-		if err != nil {
-			return fmt.Errorf("count trs: %w", err)
-		}
-		logrus.Infof("将删除账本 %s 下的 %d 条交易记录", ledgerId, cnt)
-
 		if err := l.trDao.DeleteAllByLedgerId(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete trs: %w", err)
 		}
-
+		if err := l.categoryDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete categories: %w", err)
+		}
+		if err := l.tagDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete tags: %w", err)
+		}
+		if err := l.chartDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete charts: %w", err)
+		}
+		if err := l.trTemplateDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete templates: %w", err)
+		}
+		for _, date := range eventDates {
+			if err := l.keyEventImageDao.DeleteByEventDate(tx, date); err != nil {
+				return fmt.Errorf("delete key event images: %w", err)
+			}
+		}
+		if err := l.keyEventDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete key events: %w", err)
+		}
 		if err := l.ledgerDao.DeleteById(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete ledger: %w", err)
 		}
@@ -122,5 +172,9 @@ func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId s
 		return err
 	}
 
+	// 事务提交成功后再删除磁盘上的图片文件，避免删库成功但删文件失败导致记录缺失
+	for _, p := range imageFiles {
+		removeImageFiles(ws.GetDirectory(), p[0], p[1])
+	}
 	return nil
 }

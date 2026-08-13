@@ -86,7 +86,8 @@ defineEmits<{
 }>();
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/mixins' as *;
 .linked-panel {
   display: flex;
   flex-direction: column;
@@ -119,13 +120,7 @@ defineEmits<{
   padding: var(--billadm-space-xs);
   contain: strict;
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
-}
-
-.linked-cards::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 127, 111, 0.40);
+  @include custom-scrollbar;
 }
 
 /* ========== 卡片 ========== */

@@ -63,5 +63,14 @@ func Migrate(db *gorm.DB, migrations []Migration) error {
 // Migrations 返回项目当前的迁移列表。
 // 新增迁移只允许在末尾追加，禁止修改或删除已发布条目。
 func Migrations() []Migration {
-	return []Migration{}
+	return []Migration{
+		{
+			// KeyEvent.date 原为全局唯一索引（gorm:"uniqueIndex" 自动命名为
+			// idx_tbl_billadm_key_event_date），导致不同账本无法在同一天建关键事件。
+			// 现已改为 (ledger_id, date) 复合唯一索引，需删除旧的全局唯一索引。
+			// 使用 IF EXISTS 保证对全新数据库（无旧索引）幂等。
+			ID:  "20260101_key_event_ledger_date_composite_unique",
+			SQL: "DROP INDEX IF EXISTS idx_tbl_billadm_key_event_date",
+		},
+	}
 }

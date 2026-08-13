@@ -99,7 +99,8 @@ const onPreviewChange = (visible: boolean) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/mixins' as *;
 .image-gallery {
   display: flex;
   gap: var(--billadm-space-sm);
@@ -215,13 +216,7 @@ const onPreviewChange = (visible: boolean) => {
   overflow-x: hidden;
   contain: strict;
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; margin-block: var(--billadm-space-xs); }
-  &::-webkit-scrollbar-thumb { background: rgba(141, 127, 111, 0.18); border-radius: 8px; transition: background 0.3s ease; }
-}
-
-.gallery-thumbs::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 127, 111, 0.40);
+  @include custom-scrollbar;
 }
 
 .thumb-item {

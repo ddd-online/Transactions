@@ -22,14 +22,20 @@ func (h *Handlers) listCategories(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	categoryDtos := make([]dto.CategoryDto, 0)
+	names := make([]string, 0, len(categories))
+	for i := range categories {
+		names = append(names, categories[i].Name)
+	}
+	counts, err := h.CategorySvc.CountRecordsByCategories(ws, ledgerId, names)
+	if err != nil {
+		return nil, err
+	}
+
+	categoryDtos := make([]dto.CategoryDto, 0, len(categories))
 	for _, category := range categories {
 		categoryDto := dto.CategoryDto{}
 		categoryDto.FromCategory(&category)
-		count, err := h.CategorySvc.CountRecordsByCategory(ws, ledgerId, category.Name)
-		if err == nil {
-			categoryDto.RecordCount = int(count)
-		}
+		categoryDto.RecordCount = int(counts[category.Name])
 		categoryDtos = append(categoryDtos, categoryDto)
 	}
 

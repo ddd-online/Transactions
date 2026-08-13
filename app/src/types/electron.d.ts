@@ -24,10 +24,11 @@ declare global {
                 hasUpdate: boolean;
                 latestVersion: string;
                 downloadUrl: string;
+                digest?: string;
                 body: string;
                 error?: string;
             }>;
-            downloadUpdate: (url: string) => Promise<{ success: boolean; error?: string }>;
+            downloadUpdate: (url: string, digest?: string) => Promise<{ success: boolean; error?: string }>;
             cancelDownload: () => void;
             installUpdate: () => Promise<{ success: boolean; error?: string }>;
             onDownloadProgress: (cb: (data: {

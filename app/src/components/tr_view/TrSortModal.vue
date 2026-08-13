@@ -1,7 +1,7 @@
 <template>
   <a-modal v-model:open="open" title="排序" :footer="null" centered width="500px">
     <div class="sort-list">
-      <div v-for="(item, index) in items" :key="index" class="sort-item">
+      <div v-for="(item, index) in items" :key="item.field" class="sort-item">
         <span class="sort-priority">{{ index + 1 }}</span>
         <a-select v-model:value="item.field" :options="getAvailableFields(index)" placeholder="选择字段" class="sort-select sort-select-field" />
         <a-select v-model:value="item.order" class="sort-select sort-select-order">

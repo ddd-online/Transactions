@@ -67,6 +67,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useKeyEventStore } from '@/stores/keyEventStore'
 import { useAppDataStore } from '@/stores/appDataStore'
+import { useLedgerStore } from '@/stores/ledgerStore'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { fetchLinkedTransactions, unlinkTrFromKeyEvent } from '@/backend/api/tr'
 import NotificationUtil from '@/backend/notification'
@@ -190,9 +191,14 @@ const handleDeleteImage = async (imageId: string) => {
 const linkedTransactions = ref<TransactionRecord[]>([])
 
 const loadLinkedTransactions = async (date: string) => {
+  const ledgerId = useLedgerStore().currentLedgerId
+  if (!ledgerId) {
+    linkedTransactions.value = []
+    return
+  }
   try {
     linkedTransactions.value = await withErrorHandling(
-      () => fetchLinkedTransactions(date),
+      () => fetchLinkedTransactions(ledgerId, date),
       { errorPrefix: '查询关联交易失败', fallback: [] as TransactionRecord[] }
     )
     // 同步关联交易汇总到全局统计

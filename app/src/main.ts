@@ -7,7 +7,6 @@ import * as echarts from 'echarts/core';
 import {CanvasRenderer} from 'echarts/renderers';
 import {GridComponent, LegendComponent, TitleComponent, TooltipComponent} from 'echarts/components';
 import {BarChart, LineChart, PieChart} from 'echarts/charts';
-import Antd, {ConfigProvider} from 'ant-design-vue';
 import 'ant-design-vue/dist/reset.css';
 import '@/styles/index.scss';
 
@@ -22,7 +21,6 @@ const app = createApp(App);
 
 app.use(pinia);
 app.use(router);
-app.use(Antd);
 echarts.use([
     CanvasRenderer,
     TooltipComponent,
@@ -33,7 +31,6 @@ echarts.use([
     PieChart,
     BarChart]
 );
-app.component('ConfigProvider', ConfigProvider);
 app.component('v-chart', VueECharts);
 
 app.mount('#app');

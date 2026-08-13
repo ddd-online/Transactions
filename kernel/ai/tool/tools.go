@@ -604,23 +604,15 @@ func (t *queryDiaryTool) Execute(ctx context.Context, args map[string]any) (stri
 		return string(b), nil
 	}
 
-	items, err := t.diarySvc.ListDates(ws)
+	keyword := getStringArg(args, "keyword")
+	var items []models.DiaryDateItem
+	if keyword != "" {
+		items, err = t.diarySvc.ListDatesByKeyword(ws, keyword)
+	} else {
+		items, err = t.diarySvc.ListDates(ws)
+	}
 	if err != nil {
 		return "", err
-	}
-
-	if keyword := getStringArg(args, "keyword"); keyword != "" {
-		var filtered []models.DiaryDateItem
-		for _, item := range items {
-			entry, err := t.diarySvc.GetByDate(ws, item.Date)
-			if err != nil {
-				continue
-			}
-			if strings.Contains(entry.Content, keyword) {
-				filtered = append(filtered, item)
-			}
-		}
-		items = filtered
 	}
 
 	if year := getIntArg(args, "year", 0); year > 0 {

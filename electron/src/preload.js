@@ -46,8 +46,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     checkUpdate: async () => {
         return await ipcRenderer.invoke('update:check');
     },
-    downloadUpdate: async (url) => {
-        return await ipcRenderer.invoke('update:download', url);
+    downloadUpdate: async (url, digest) => {
+        return await ipcRenderer.invoke('update:download', url, digest);
     },
     cancelDownload: () => {
         ipcRenderer.send('update:cancel');

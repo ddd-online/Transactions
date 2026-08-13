@@ -10,6 +10,7 @@ type CategoryDao interface {
 	GetMaxSort(ws *workspace.Workspace, ledgerId string, transactionType string) (int, error)
 	Create(ws *workspace.Workspace, category *models.Category) error
 	Delete(ws *workspace.Workspace, ledgerId string, name string, transactionType string) error
+	DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error
 	UpdateSort(ws *workspace.Workspace, ledgerID string, name string, transactionType string, sortOrder int) error
 	CountByLedgerId(ws *workspace.Workspace, ledgerID string) (int64, error)
 }
@@ -53,6 +54,10 @@ func (d *categoryDaoImpl) Delete(ws *workspace.Workspace, ledgerId string, name 
 	return ws.GetDb().
 		Where("ledger_id = ? AND name = ? AND transaction_type = ?", ledgerId, name, transactionType).
 		Delete(&models.Category{}).Error
+}
+
+func (d *categoryDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.Category{}).Error
 }
 
 func (d *categoryDaoImpl) UpdateSort(ws *workspace.Workspace, ledgerID string, name string, transactionType string, sortOrder int) error {

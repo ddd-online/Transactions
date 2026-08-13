@@ -2,13 +2,13 @@ package service
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/billadm/dao"
 	"github.com/billadm/models"
 	"github.com/billadm/util"
 	"github.com/billadm/workspace"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 func NewKeyEventService(imageService KeyEventImageService, keyEventDao dao.KeyEventDao) KeyEventService {
@@ -34,23 +34,12 @@ type keyEventServiceImpl struct {
 }
 
 func (s *keyEventServiceImpl) UpsertKeyEvent(ws *workspace.Workspace, ledgerID string, date string, title string, content string, color string) error {
-	if len(title) > 200 {
-		title = title[:200]
+	// 按 rune 截断，避免在多字节 UTF-8（如中文）中间切断产生非法字符
+	if utf8.RuneCountInString(title) > 200 {
+		title = string([]rune(title)[:200])
 	}
 
-	var existing models.KeyEvent
-	err := ws.GetDb().Where("ledger_id = ? AND date = ?", ledgerID, date).First(&existing).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return err
-	}
-
-	if err == nil {
-		existing.Title = title
-		existing.Content = content
-		existing.Color = color
-		return s.keyEventDao.Upsert(ws, &existing)
-	}
-
+	// DAO 层用 OnConflict 幂等 upsert，无需先查再写
 	event := &models.KeyEvent{
 		ID:       util.GetUUID(),
 		Date:     date,

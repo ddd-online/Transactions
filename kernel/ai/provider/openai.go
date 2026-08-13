@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 )
 
 type openaiProvider struct {
@@ -24,7 +25,7 @@ func NewOpenAIProvider(baseURL, apiKey, model string) LLMProvider {
 		baseURL: baseURL,
 		apiKey:  apiKey,
 		model:   model,
-		client:  &http.Client{},
+		client:  &http.Client{Timeout: 120 * time.Second},
 	}
 }
 
