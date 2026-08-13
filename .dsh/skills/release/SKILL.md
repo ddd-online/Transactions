@@ -132,8 +132,8 @@ git push
 
 ## 维护
 
-- 本 skill 有两份副本：仓库 `.opencode/skills/release/`（源）与 `~/.codex/skills/release/`（Codex 已安装副本）。修改源文件后需重新同步，新副本在下一轮对话生效：
+- 本 skill 的仓库源文件为 `.dsh/skills/release/SKILL.md`。如需安装到 DSH 用户级目录（供其他项目使用），同步到 `~/.dsh/skills/release/SKILL.md`，新副本在下一轮对话生效：
 
   ```powershell
-  Copy-Item -LiteralPath ".opencode\skills\release\SKILL.md" -Destination "$env:USERPROFILE\.codex\skills\release\SKILL.md" -Force
+  Copy-Item -LiteralPath ".dsh\skills\release\SKILL.md" -Destination "$env:USERPROFILE\.dsh\skills\release\SKILL.md" -Force
   ```
