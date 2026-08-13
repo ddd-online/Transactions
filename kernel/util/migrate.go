@@ -72,5 +72,17 @@ func Migrations() []Migration {
 			ID:  "20260101_key_event_ledger_date_composite_unique",
 			SQL: "DROP INDEX IF EXISTS idx_tbl_billadm_key_event_date",
 		},
+		{
+			// KeyEventImage 补充账本维度（ledger_id）：为历史图片回填所属账本。
+			// 历史数据里 date 全局唯一，event_date 能唯一定位到一条 key_event，
+			// 因此用相关子查询回填；找不到对应事件的孤儿图片回填为空串。
+			ID: "20260101_key_event_image_backfill_ledger_id",
+			SQL: `UPDATE tbl_billadm_key_event_image
+SET ledger_id = COALESCE((
+    SELECT ledger_id FROM tbl_billadm_key_event
+    WHERE tbl_billadm_key_event.date = tbl_billadm_key_event_image.event_date
+    LIMIT 1
+), '')`,
+		},
 	}
 }

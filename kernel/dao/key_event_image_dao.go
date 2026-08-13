@@ -7,9 +7,11 @@ import (
 
 type KeyEventImageDao interface {
 	Create(ws *workspace.Workspace, image *models.KeyEventImage) error
-	QueryByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error)
+	QueryByEventDate(ws *workspace.Workspace, ledgerId string, date string) ([]models.KeyEventImage, error)
+	QueryByLedgerId(ws *workspace.Workspace, ledgerId string) ([]models.KeyEventImage, error)
 	DeleteById(ws *workspace.Workspace, imageId string) error
-	DeleteByEventDate(ws *workspace.Workspace, date string) error
+	DeleteByEventDate(ws *workspace.Workspace, ledgerId string, date string) error
+	DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error
 	QueryById(ws *workspace.Workspace, imageId string) (*models.KeyEventImage, error)
 }
 
@@ -34,9 +36,18 @@ func (d *keyEventImageDaoImpl) QueryById(ws *workspace.Workspace, imageId string
 	return &image, nil
 }
 
-func (d *keyEventImageDaoImpl) QueryByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error) {
+func (d *keyEventImageDaoImpl) QueryByEventDate(ws *workspace.Workspace, ledgerId string, date string) ([]models.KeyEventImage, error) {
 	var images []models.KeyEventImage
-	err := ws.GetDb().Where("event_date = ?", date).Order("sort_order ASC").Find(&images).Error
+	err := ws.GetDb().
+		Where("ledger_id = ? AND event_date = ?", ledgerId, date).
+		Order("sort_order ASC").
+		Find(&images).Error
+	return images, err
+}
+
+func (d *keyEventImageDaoImpl) QueryByLedgerId(ws *workspace.Workspace, ledgerId string) ([]models.KeyEventImage, error) {
+	var images []models.KeyEventImage
+	err := ws.GetDb().Where("ledger_id = ?", ledgerId).Order("sort_order ASC").Find(&images).Error
 	return images, err
 }
 
@@ -44,6 +55,10 @@ func (d *keyEventImageDaoImpl) DeleteById(ws *workspace.Workspace, imageId strin
 	return ws.GetDb().Where("id = ?", imageId).Delete(&models.KeyEventImage{}).Error
 }
 
-func (d *keyEventImageDaoImpl) DeleteByEventDate(ws *workspace.Workspace, date string) error {
-	return ws.GetDb().Where("event_date = ?", date).Delete(&models.KeyEventImage{}).Error
+func (d *keyEventImageDaoImpl) DeleteByEventDate(ws *workspace.Workspace, ledgerId string, date string) error {
+	return ws.GetDb().Where("ledger_id = ? AND event_date = ?", ledgerId, date).Delete(&models.KeyEventImage{}).Error
+}
+
+func (d *keyEventImageDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerId string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerId).Delete(&models.KeyEventImage{}).Error
 }

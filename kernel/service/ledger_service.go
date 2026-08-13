@@ -118,20 +118,14 @@ func (l *ledgerServiceImpl) QueryLedgerByName(ws *workspace.Workspace, ledgerNam
 }
 
 func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId string) error {
-	// 事务前先收集该账本关键事件的日期与图片文件路径，用于事务提交后的磁盘清理
-	eventDates, err := l.keyEventDao.ListDatesByLedgerId(ws, ledgerId)
+	// 事务前收集该账本的图片文件路径，用于事务提交后的磁盘清理
+	images, err := l.keyEventImageDao.QueryByLedgerId(ws, ledgerId)
 	if err != nil {
-		return fmt.Errorf("list key event dates: %w", err)
+		return fmt.Errorf("query key event images: %w", err)
 	}
-	var imageFiles [][2]string
-	for _, date := range eventDates {
-		images, err := l.keyEventImageDao.QueryByEventDate(ws, date)
-		if err != nil {
-			return fmt.Errorf("query key event images: %w", err)
-		}
-		for _, img := range images {
-			imageFiles = append(imageFiles, [2]string{img.FilePath, img.ThumbPath})
-		}
+	imageFiles := make([][2]string, 0, len(images))
+	for _, img := range images {
+		imageFiles = append(imageFiles, [2]string{img.FilePath, img.ThumbPath})
 	}
 
 	err = ws.Transaction(func(tx *workspace.Workspace) error {
@@ -153,10 +147,8 @@ func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId s
 		if err := l.trTemplateDao.DeleteByLedgerId(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete templates: %w", err)
 		}
-		for _, date := range eventDates {
-			if err := l.keyEventImageDao.DeleteByEventDate(tx, date); err != nil {
-				return fmt.Errorf("delete key event images: %w", err)
-			}
+		if err := l.keyEventImageDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete key event images: %w", err)
 		}
 		if err := l.keyEventDao.DeleteByLedgerId(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete key events: %w", err)

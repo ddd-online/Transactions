@@ -114,8 +114,12 @@ func (h *Handlers) listKeyEventImages(c *gin.Context) (any, error) {
 	if date == "" {
 		return nil, models.NewBadRequest("missing date parameter")
 	}
+	ledgerID := c.Query("ledger_id")
+	if ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
 
-	return h.KeyEventImgSvc.GetImagesByEventDate(ws, date)
+	return h.KeyEventImgSvc.GetImagesByEventDate(ws, ledgerID, date)
 }
 
 // POST /api/v1/key-events/:date/images  body: { data }
@@ -136,8 +140,12 @@ func (h *Handlers) addKeyEventImage(c *gin.Context) (any, error) {
 	if !ok || data == "" {
 		return nil, models.NewBadRequest("invalid image data")
 	}
+	ledgerID, _ := arg["ledger_id"].(string)
+	if ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
 
-	image, err := h.KeyEventImgSvc.AddImage(ws, date, data)
+	image, err := h.KeyEventImgSvc.AddImage(ws, ledgerID, date, data)
 	if err != nil {
 		return nil, err
 	}

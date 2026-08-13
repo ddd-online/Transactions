@@ -1,6 +1,11 @@
 package service_test
 
 import (
+	"bytes"
+	"encoding/base64"
+	"image"
+	"image/color"
+	"image/png"
 	"strings"
 	"testing"
 
@@ -61,5 +66,48 @@ func TestUpsertKeyEventSameDateAcrossLedgers(t *testing.T) {
 		if event.LedgerID != ledger {
 			t.Fatalf("查询到错误账本的事件: 期望 %s, 实际 %s", ledger, event.LedgerID)
 		}
+	}
+}
+
+func TestKeyEventImageIsLedgerScoped(t *testing.T) {
+	ws, err := workspace.NewWorkspace(t.TempDir())
+	if err != nil {
+		t.Fatalf("创建工作空间失败: %v", err)
+	}
+	t.Cleanup(func() { ws.Close() })
+
+	imgSvc := service.NewKeyEventImageService(dao.NewKeyEventImageDao())
+
+	// 生成一张合法的 1x1 PNG 作为图片数据
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatalf("生成测试图片失败: %v", err)
+	}
+	raw := "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	// 两个账本在同一天各添加一张图片
+	if _, err := imgSvc.AddImage(ws, "ledger-a", "2026-05-01", raw); err != nil {
+		t.Fatalf("账本 A 添加图片失败: %v", err)
+	}
+	if _, err := imgSvc.AddImage(ws, "ledger-b", "2026-05-01", raw); err != nil {
+		t.Fatalf("账本 B 添加图片失败: %v", err)
+	}
+
+	a, err := imgSvc.GetImagesByEventDate(ws, "ledger-a", "2026-05-01")
+	if err != nil {
+		t.Fatalf("查询账本 A 图片失败: %v", err)
+	}
+	if len(a) != 1 || a[0].LedgerID != "ledger-a" {
+		t.Fatalf("账本 A 应只返回自己的 1 张图片, 实际 %d 条", len(a))
+	}
+
+	b, err := imgSvc.GetImagesByEventDate(ws, "ledger-b", "2026-05-01")
+	if err != nil {
+		t.Fatalf("查询账本 B 图片失败: %v", err)
+	}
+	if len(b) != 1 || b[0].LedgerID != "ledger-b" {
+		t.Fatalf("账本 B 应只返回自己的 1 张图片, 实际 %d 条", len(b))
 	}
 }

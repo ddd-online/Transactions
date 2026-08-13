@@ -12,7 +12,6 @@ type KeyEventDao interface {
 	QueryByYear(ws *workspace.Workspace, ledgerID string, year string) ([]models.KeyEvent, error)
 	DeleteByDate(ws *workspace.Workspace, ledgerID string, date string) error
 	DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error
-	ListDatesByLedgerId(ws *workspace.Workspace, ledgerID string) ([]string, error)
 }
 
 var _ KeyEventDao = &keyEventDaoImpl{}
@@ -52,12 +51,4 @@ func (d *keyEventDaoImpl) DeleteByDate(ws *workspace.Workspace, ledgerID string,
 
 func (d *keyEventDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error {
 	return ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.KeyEvent{}).Error
-}
-
-func (d *keyEventDaoImpl) ListDatesByLedgerId(ws *workspace.Workspace, ledgerID string) ([]string, error) {
-	dates := make([]string, 0)
-	err := ws.GetDb().Model(&models.KeyEvent{}).
-		Where("ledger_id = ?", ledgerID).
-		Pluck("date", &dates).Error
-	return dates, err
 }

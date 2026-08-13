@@ -74,13 +74,13 @@ func (s *keyEventServiceImpl) QueryDatesByYear(ws *workspace.Workspace, ledgerID
 func (s *keyEventServiceImpl) DeleteByDate(ws *workspace.Workspace, ledgerID string, date string) error {
 	logrus.Infof("删除关键事件, 日期: %s", date)
 
-	images, err := s.imageService.GetImagesByEventDate(ws, date)
+	images, err := s.imageService.GetImagesByEventDate(ws, ledgerID, date)
 	if err != nil {
 		return fmt.Errorf("query images: %w", err)
 	}
 
 	if err := ws.Transaction(func(tx *workspace.Workspace) error {
-		if err := s.imageService.DeleteImageRecordsByEventDate(tx, date); err != nil {
+		if err := s.imageService.DeleteImageRecordsByEventDate(tx, ledgerID, date); err != nil {
 			return fmt.Errorf("delete image records: %w", err)
 		}
 		if err := s.keyEventDao.DeleteByDate(tx, ledgerID, date); err != nil {

@@ -17,7 +17,8 @@ func (k *KeyEvent) TableName() string {
 
 type KeyEventImage struct {
 	ID        string `gorm:"primaryKey;comment:图片UUID" json:"id"`
-	EventDate string `gorm:"index;not null;comment:关联的关键事件日期" json:"eventDate"`
+	LedgerID  string `gorm:"index:idx_key_event_image_ledger_date,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	EventDate string `gorm:"index:idx_key_event_image_ledger_date,priority:2;not null;comment:关联的关键事件日期" json:"eventDate"`
 	FilePath  string `gorm:"type:varchar(500);not null;default:'';comment:原图相对路径" json:"filePath"`
 	ThumbPath string `gorm:"type:varchar(500);not null;default:'';comment:缩略图相对路径" json:"thumbPath"`
 	SortOrder int    `gorm:"not null;default:0;comment:排序序号" json:"sortOrder"`

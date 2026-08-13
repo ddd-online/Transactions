@@ -19,11 +19,11 @@ func NewKeyEventImageService(keyEventImageDao dao.KeyEventImageDao) KeyEventImag
 }
 
 type KeyEventImageService interface {
-	AddImage(ws *workspace.Workspace, date string, data string) (*models.KeyEventImage, error)
-	GetImagesByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error)
+	AddImage(ws *workspace.Workspace, ledgerId string, date string, data string) (*models.KeyEventImage, error)
+	GetImagesByEventDate(ws *workspace.Workspace, ledgerId string, date string) ([]models.KeyEventImage, error)
 	DeleteImage(ws *workspace.Workspace, imageId string) error
-	DeleteImagesByEventDate(ws *workspace.Workspace, date string) error
-	DeleteImageRecordsByEventDate(ws *workspace.Workspace, date string) error
+	DeleteImagesByEventDate(ws *workspace.Workspace, ledgerId string, date string) error
+	DeleteImageRecordsByEventDate(ws *workspace.Workspace, ledgerId string, date string) error
 }
 
 var _ KeyEventImageService = &keyEventImageServiceImpl{}
@@ -32,7 +32,7 @@ type keyEventImageServiceImpl struct {
 	keyEventImageDao dao.KeyEventImageDao
 }
 
-func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string, data string) (*models.KeyEventImage, error) {
+func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, ledgerId string, date string, data string) (*models.KeyEventImage, error) {
 	imageId := util.GetUUID()
 
 	filePath, thumbPath, err := util.SaveImage(ws.GetDirectory(), date, imageId, data)
@@ -40,7 +40,7 @@ func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string
 		return nil, err
 	}
 
-	images, err := s.keyEventImageDao.QueryByEventDate(ws, date)
+	images, err := s.keyEventImageDao.QueryByEventDate(ws, ledgerId, date)
 	if err != nil {
 		_ = os.Remove(filepath.Join(ws.GetDirectory(), "data", "assets", filePath))
 		_ = os.Remove(filepath.Join(ws.GetDirectory(), "data", "assets", thumbPath))
@@ -56,6 +56,7 @@ func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string
 
 	image := &models.KeyEventImage{
 		ID:        imageId,
+		LedgerID:  ledgerId,
 		EventDate: date,
 		FilePath:  filePath,
 		ThumbPath: thumbPath,
@@ -69,8 +70,8 @@ func (s *keyEventImageServiceImpl) AddImage(ws *workspace.Workspace, date string
 	return image, nil
 }
 
-func (s *keyEventImageServiceImpl) GetImagesByEventDate(ws *workspace.Workspace, date string) ([]models.KeyEventImage, error) {
-	return s.keyEventImageDao.QueryByEventDate(ws, date)
+func (s *keyEventImageServiceImpl) GetImagesByEventDate(ws *workspace.Workspace, ledgerId string, date string) ([]models.KeyEventImage, error) {
+	return s.keyEventImageDao.QueryByEventDate(ws, ledgerId, date)
 }
 
 func (s *keyEventImageServiceImpl) DeleteImage(ws *workspace.Workspace, imageId string) error {
@@ -81,19 +82,19 @@ func (s *keyEventImageServiceImpl) DeleteImage(ws *workspace.Workspace, imageId 
 	return s.keyEventImageDao.DeleteById(ws, imageId)
 }
 
-func (s *keyEventImageServiceImpl) DeleteImagesByEventDate(ws *workspace.Workspace, date string) error {
-	images, err := s.keyEventImageDao.QueryByEventDate(ws, date)
+func (s *keyEventImageServiceImpl) DeleteImagesByEventDate(ws *workspace.Workspace, ledgerId string, date string) error {
+	images, err := s.keyEventImageDao.QueryByEventDate(ws, ledgerId, date)
 	if err != nil {
 		return err
 	}
 	for i := range images {
 		removeImageFiles(ws.GetDirectory(), images[i].FilePath, images[i].ThumbPath)
 	}
-	return s.keyEventImageDao.DeleteByEventDate(ws, date)
+	return s.keyEventImageDao.DeleteByEventDate(ws, ledgerId, date)
 }
 
-func (s *keyEventImageServiceImpl) DeleteImageRecordsByEventDate(ws *workspace.Workspace, date string) error {
-	return s.keyEventImageDao.DeleteByEventDate(ws, date)
+func (s *keyEventImageServiceImpl) DeleteImageRecordsByEventDate(ws *workspace.Workspace, ledgerId string, date string) error {
+	return s.keyEventImageDao.DeleteByEventDate(ws, ledgerId, date)
 }
 
 func removeImageFiles(dir, filePath, thumbPath string) {
