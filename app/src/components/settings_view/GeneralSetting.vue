@@ -45,8 +45,8 @@
         </div>
       </div>
 
-      <!-- DevTools 开关 -->
-      <div class="setting-card">
+      <!-- DevTools 开关（仅开发模式显示，生产环境禁开） -->
+      <div v-if="isDev" class="setting-card">
         <div class="setting-info">
           <span class="setting-title">开发者工具</span>
           <span class="setting-desc">打开 Chromium DevTools，用于调试前端代码</span>
@@ -71,7 +71,7 @@
   </SettingsPageWrapper>
 </template>
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { useAppearanceStore } from '@/stores/appearanceStore'
@@ -115,10 +115,28 @@ const handleSwitchWorkspace = async (newWorkspaceDir: string) => {
 }
 
 // ---- DevTools ----
+// 开关始终同步主进程的真实开合状态（含启动时自动打开、DevTools 自身按钮关闭等场景），
+// 避免开关显示与实际状态脱节导致"拨了没反应"。
+const isDev = ref(false)
 const devToolsEnabled = ref(false)
+let unsubscribeDevToolsState: (() => void) | null = null
 
-const onDevToolsToggle = (checked: boolean | string | number) => {
-  window.electronAPI?.toggleDevTools(Boolean(checked))
+onMounted(async () => {
+  const isDevInfo = await window.electronAPI?.getAppInfo('isDev')
+  isDev.value = isDevInfo === 'true'
+  devToolsEnabled.value = Boolean(await window.electronAPI?.getDevToolsState())
+  unsubscribeDevToolsState = window.electronAPI?.onDevToolsStateChanged((opened) => {
+    devToolsEnabled.value = opened
+  }) ?? null
+})
+
+onBeforeUnmount(() => {
+  unsubscribeDevToolsState?.()
+})
+
+const onDevToolsToggle = async (checked: boolean | string | number) => {
+  const state = await window.electronAPI?.toggleDevTools(Boolean(checked))
+  if (typeof state === 'boolean') devToolsEnabled.value = state
 }
 
 // ---- 关闭行为 ----

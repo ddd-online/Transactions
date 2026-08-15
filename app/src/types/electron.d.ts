@@ -18,7 +18,9 @@ declare global {
             getWorkspace: () => Promise<string>;
             getAppInfo: (field: string) => Promise<string>;
             getApiServer: () => Promise<string>;
-            toggleDevTools: (enabled: boolean) => void;
+            getDevToolsState: () => Promise<boolean>;
+            toggleDevTools: (enabled: boolean) => Promise<boolean>;
+            onDevToolsStateChanged: (cb: (opened: boolean) => void) => () => void;
 
             getCloseBehavior: () => Promise<string>;
             setCloseBehavior: (behavior: string) => Promise<void>;

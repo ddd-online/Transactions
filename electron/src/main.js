@@ -319,20 +319,28 @@ const registerCommonHandlers = () => {
                 return API_SERVER;
             case 'apiToken':
                 return apiToken;
+            case 'isDev':
+                return isDev ? 'true' : 'false';
             default:
                 return '';
         }
     });
 
-    ipcMain.on('devtools:toggle', (event, enabled) => {
-        if (!isDev) return; // 生产环境禁止通过渲染进程开关 devtools
-        if (mainWindow) {
+    // DevTools 开关：handle 返回操作后的真实状态，前端据此校正开关，避免状态脱节。
+    // 生产环境保持禁用（isDev 为 false 时只读状态、不真正开关），设置页在非 dev 下隐藏该入口。
+    ipcMain.handle('devtools:get-state', () => {
+        return mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents.isDevToolsOpened() : false;
+    });
+
+    ipcMain.handle('devtools:toggle', (event, enabled) => {
+        if (isDev && mainWindow && !mainWindow.isDestroyed()) {
             if (enabled) {
                 mainWindow.webContents.openDevTools({ mode: 'bottom' });
             } else {
                 mainWindow.webContents.closeDevTools();
             }
         }
+        return mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents.isDevToolsOpened() : false;
     });
 
     ipcMain.handle('config:get-close-behavior', () => {
@@ -859,6 +867,13 @@ const stopKernelHealthMonitor = () => {
     }
 };
 
+// DevTools 状态广播：无论通过设置开关还是 DevTools 自身的关闭按钮改变开合状态，都同步给渲染进程校正开关
+const broadcastDevToolsState = () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('devtools:state-changed', mainWindow.webContents.isDevToolsOpened());
+    }
+};
+
 const createMainWindow = () => {
     mainWindow = new BrowserWindow({
         width: transactionsCfg.width,
@@ -882,6 +897,10 @@ const createMainWindow = () => {
     if (isDev) {
         mainWindow.webContents.openDevTools();
     }
+
+    // 同步 DevTools 开合状态给渲染进程（设置页开关），覆盖 DevTools 自身按钮关闭的情况
+    mainWindow.webContents.on('devtools-opened', broadcastDevToolsState);
+    mainWindow.webContents.on('devtools-closed', broadcastDevToolsState);
 
     // 阻止主窗口导航到外部地址或新开窗口（纵深防御）
     mainWindow.webContents.on('will-navigate', (event, url) => {

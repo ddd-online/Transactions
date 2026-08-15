@@ -31,8 +31,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getApiServer: async () => {
         return await ipcRenderer.invoke('app', 'apiServer');
     },
-    toggleDevTools: (enabled) => {
-        ipcRenderer.send('devtools:toggle', enabled);
+    getDevToolsState: async () => {
+        return await ipcRenderer.invoke('devtools:get-state');
+    },
+    toggleDevTools: async (enabled) => {
+        return await ipcRenderer.invoke('devtools:toggle', enabled);
+    },
+    onDevToolsStateChanged: (cb) => {
+        const handler = (_event, opened) => cb(opened);
+        ipcRenderer.on('devtools:state-changed', handler);
+        return () => ipcRenderer.removeListener('devtools:state-changed', handler);
     },
 
     getCloseBehavior: async () => {
