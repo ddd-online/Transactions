@@ -214,7 +214,7 @@ async function fetchRoles() {
 
 async function loadProvider() {
   try {
-    const config = await aiApi.getConfig(currentRole.value)
+    const config = await aiApi.getModelConfig()
     currentProvider.value = config.provider || 'deepseek'
   } catch {
     // keep default

@@ -13,14 +13,11 @@ import (
 	"github.com/transactions/models"
 )
 
-// GET /api/v1/ai/config
-func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
+// GET /api/v1/ai/config — 角色配置（系统提示词，与模型配置无关）
+func (h *Handlers) getAiRoleConfig(c *gin.Context) (any, error) {
 	role := c.DefaultQuery("role", "financial_assistant")
-	provider := c.DefaultQuery("provider", "deepseek")
 
 	roleConfig, _ := h.AiConfigDao.Get(ws(c), role)
-	apiConfig, err := h.AiApiConfigDao.Get(ws(c), provider)
-
 	systemPrompt := ""
 	if roleConfig != nil {
 		systemPrompt = roleConfig.SystemPrompt
@@ -30,6 +27,44 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 			systemPrompt = roleDef.DefaultSystemPrompt()
 		}
 	}
+
+	return gin.H{
+		"role":          role,
+		"system_prompt": systemPrompt,
+	}, nil
+}
+
+// PUT /api/v1/ai/config — 保存角色配置（系统提示词）
+func (h *Handlers) updateAiRoleConfig(c *gin.Context) (any, error) {
+	var req struct {
+		Role         string `json:"role"`
+		SystemPrompt string `json:"system_prompt"`
+	}
+	if err := c.BindJSON(&req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+	if req.Role == "" {
+		req.Role = "financial_assistant"
+	}
+	if utf8.RuneCountInString(req.SystemPrompt) > 10000 {
+		return nil, fmt.Errorf("系统提示词不能超过 10000 个字符")
+	}
+
+	roleConfig := &models.AiConfig{
+		Role:         req.Role,
+		SystemPrompt: req.SystemPrompt,
+	}
+	if err := h.AiConfigDao.Save(ws(c), roleConfig); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+// GET /api/v1/ai/model_config — 模型/API 连接配置（按供应商）
+func (h *Handlers) getAiModelConfig(c *gin.Context) (any, error) {
+	provider := c.DefaultQuery("provider", "deepseek")
+
+	apiConfig, err := h.AiApiConfigDao.Get(ws(c), provider)
 
 	baseURL := ""
 	endpoint := ""
@@ -47,40 +82,30 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 	}
 
 	return gin.H{
-		"base_url":      baseURL,
-		"endpoint":      endpoint,
-		"model":         model,
-		"has_key":       hasKey,
-		"thinking":      thinking,
-		"system_prompt": systemPrompt,
-		"provider":      providerName,
-		"role":          role,
+		"provider": providerName,
+		"base_url": baseURL,
+		"endpoint": endpoint,
+		"model":    model,
+		"has_key":  hasKey,
+		"thinking": thinking,
 	}, nil
 }
 
-// PUT /api/v1/ai/config
-func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
+// PUT /api/v1/ai/model_config — 保存模型/API 连接配置（按供应商）
+func (h *Handlers) updateAiModelConfig(c *gin.Context) (any, error) {
 	var req struct {
-		BaseURL      string `json:"base_url"`
-		Endpoint     string `json:"endpoint"`
-		APIKey       string `json:"api_key"`
-		Model        string `json:"model"`
-		SystemPrompt string `json:"system_prompt"`
-		Provider     string `json:"provider"`
-		Role         string `json:"role"`
-		Thinking     string `json:"thinking"`
+		BaseURL  string `json:"base_url"`
+		Endpoint string `json:"endpoint"`
+		APIKey   string `json:"api_key"`
+		Model    string `json:"model"`
+		Provider string `json:"provider"`
+		Thinking string `json:"thinking"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
-	if req.Role == "" {
-		req.Role = "financial_assistant"
-	}
 	if req.Provider == "" {
 		req.Provider = "deepseek"
-	}
-	if utf8.RuneCountInString(req.SystemPrompt) > 10000 {
-		return nil, fmt.Errorf("系统提示词不能超过 10000 个字符")
 	}
 	switch req.Thinking {
 	case "", "auto", "enabled", "disabled":
@@ -112,19 +137,10 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	// 保存角色配置（系统提示词）
-	roleConfig := &models.AiConfig{
-		Role:         req.Role,
-		SystemPrompt: req.SystemPrompt,
-	}
-	if err := h.AiConfigDao.Save(ws(c), roleConfig); err != nil {
-		return nil, err
-	}
-
 	return nil, nil
 }
 
-// POST /api/v1/ai/config/test
+// POST /api/v1/ai/model_config/test
 func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 	var req struct {
 		BaseURL  string `json:"base_url"`

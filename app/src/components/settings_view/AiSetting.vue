@@ -177,7 +177,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { aiApi, type AiConfig, type AiRole, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
+import { aiApi, type AiModelConfig, type AiRole, type BalanceResponse, type ModelsResponse } from '@/backend/api/ai'
 import NotificationUtil from '@/backend/notification'
 import { getErrorMessage } from '@/backend/errorHandler'
 import { DeleteOutlined } from '@ant-design/icons-vue'
@@ -201,8 +201,9 @@ const thinkingOptions = [
 
 const baseUrlPlaceholder = ref('https://api.anthropic.com')
 
-interface FormState extends AiConfig {
+interface FormState extends AiModelConfig {
   has_key: boolean
+  system_prompt: string
 }
 
 const form = reactive<FormState>({
@@ -343,20 +344,27 @@ function fetchProviderResources() {
 async function loadConfig() {
   loaded.value = false
   try {
-    const config = await aiApi.getConfig(currentRole.value, form.provider || 'deepseek')
-    form.provider = config.provider || ''
-    form.base_url = config.base_url || ''
-    form.endpoint = config.endpoint || '/v1/messages'
-    form.model = config.model || ''
-    form.thinking = config.thinking || 'auto'
-    form.system_prompt = config.system_prompt || ''
-    form.has_key = config.has_key
-    if (config.has_key) {
+    // 模型配置（按供应商）与角色配置（系统提示词）语义无关，分别加载
+    const [modelCfg, roleCfg] = await Promise.all([
+      aiApi.getModelConfig(form.provider || 'deepseek'),
+      aiApi.getRoleConfig(currentRole.value),
+    ])
+    form.provider = modelCfg.provider || ''
+    form.base_url = modelCfg.base_url || ''
+    form.endpoint = modelCfg.endpoint || '/v1/messages'
+    form.model = modelCfg.model || ''
+    form.thinking = modelCfg.thinking || 'auto'
+    form.has_key = modelCfg.has_key
+    if (modelCfg.has_key) {
       form.api_key = '••••••••'
       keyPlaceholder.value = true
     }
+    form.system_prompt = roleCfg.system_prompt || ''
+    // 注意：不能调用 onProviderChange —— 它的"DeepSeek 预设"会把已保存的端点强制覆盖为
+    // /v1/messages（仅应在用户手动切换供应商时生效）。这里只按已加载的端点设置占位提示，
+    // 并显式拉取模型/余额。
     onEndpointChange(form.endpoint)
-    onProviderChange(form.provider)
+    fetchProviderResources()
   } catch {
     // 加载失败时保持默认值
   } finally {
@@ -373,8 +381,8 @@ async function loadRoleConfig() {
   }
   loaded.value = false
   try {
-    const config = await aiApi.getConfig(currentRole.value, form.provider || 'deepseek')
-    form.system_prompt = config.system_prompt || ''
+    const roleCfg = await aiApi.getRoleConfig(currentRole.value)
+    form.system_prompt = roleCfg.system_prompt || ''
   } catch {
     // 加载失败时保持当前提示词
   } finally {
@@ -387,14 +395,12 @@ async function handleTestConnection() {
   testing.value = true
   try {
     await aiApi.testConnection({
-      role: currentRole.value,
       provider: form.provider,
       base_url: form.base_url,
       endpoint: form.endpoint,
       api_key: keyPlaceholder.value ? '' : form.api_key,
       model: form.model,
       thinking: form.thinking,
-      system_prompt: form.system_prompt,
     })
     NotificationUtil.success('连接成功')
   } catch (e) {
@@ -411,16 +417,18 @@ function autoSaveConfig() {
   configSaveTimer = setTimeout(async () => {
     try {
       const keyToSave = keyPlaceholder.value ? '' : form.api_key
-      await aiApi.updateConfig({
-        role,
-        provider: form.provider,
-        base_url: form.base_url,
-        endpoint: form.endpoint,
-        api_key: keyToSave,
-        model: form.model,
-        thinking: form.thinking,
-        system_prompt: form.system_prompt,
-      })
+      // 模型配置与角色配置分别保存（两个独立接口）
+      await Promise.all([
+        aiApi.updateModelConfig({
+          provider: form.provider,
+          base_url: form.base_url,
+          endpoint: form.endpoint,
+          api_key: keyToSave,
+          model: form.model,
+          thinking: form.thinking,
+        }),
+        aiApi.updateRoleConfig(role, form.system_prompt),
+      ])
       if (keyToSave) {
         form.has_key = true
         keyPlaceholder.value = false

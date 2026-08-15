@@ -1,23 +1,33 @@
 import api from './api-client';
 
-export interface AiConfig {
+// 模型/API 连接配置（按供应商，与角色配置无关）
+export interface AiModelConfig {
   base_url: string;
   endpoint: string;
   api_key: string;
   model: string;
-  system_prompt: string;
   provider: string;
   thinking: 'auto' | 'enabled' | 'disabled' | string;
 }
 
-export interface AiConfigResponse {
+export interface AiModelConfigResponse {
   base_url: string;
   endpoint: string;
   model: string;
   has_key: boolean;
   thinking: string;
-  system_prompt: string;
   provider: string;
+}
+
+// 角色配置（系统提示词，与模型配置无关）
+export interface AiRoleConfig {
+  role: string;
+  system_prompt: string;
+}
+
+export interface AiRoleConfigResponse {
+  role: string;
+  system_prompt: string;
 }
 
 export interface ProviderFetchRequest {
@@ -82,18 +92,24 @@ export const aiApi = {
     return api.get(`/v1/ai/roles/tools?role=${encodeURIComponent(role)}`, '获取工具列表')
   },
 
-  async getConfig(role: string = 'financial_assistant', provider: string = 'deepseek'): Promise<AiConfigResponse> {
-    return api.get(`/v1/ai/config?role=${encodeURIComponent(role)}&provider=${encodeURIComponent(provider)}`, '获取AI配置')
+  async getModelConfig(provider: string = 'deepseek'): Promise<AiModelConfigResponse> {
+    return api.get(`/v1/ai/model_config?provider=${encodeURIComponent(provider)}`, '获取模型配置')
   },
 
-  async updateConfig(config: AiConfig & { role?: string }): Promise<void> {
-    const body = { ...config, role: config.role || 'financial_assistant' }
-    return api.put('/v1/ai/config', body, '保存AI配置')
+  async updateModelConfig(config: AiModelConfig): Promise<void> {
+    return api.put('/v1/ai/model_config', config, '保存模型配置')
   },
 
-  async testConnection(config: AiConfig & { role?: string; provider?: string }): Promise<void> {
-    const body = { ...config, role: config.role || 'financial_assistant', provider: config.provider || 'deepseek' }
-    return api.post('/v1/ai/config/test', body, '测试连接')
+  async getRoleConfig(role: string = 'financial_assistant'): Promise<AiRoleConfigResponse> {
+    return api.get(`/v1/ai/config?role=${encodeURIComponent(role)}`, '获取角色配置')
+  },
+
+  async updateRoleConfig(role: string, systemPrompt: string): Promise<void> {
+    return api.put('/v1/ai/config', { role, system_prompt: systemPrompt }, '保存角色配置')
+  },
+
+  async testConnection(config: AiModelConfig): Promise<void> {
+    return api.post('/v1/ai/model_config/test', config, '测试连接')
   },
 
   async fetchProvider(action: 'balance' | 'models', apiKey?: string, provider?: string, baseUrl?: string): Promise<BalanceResponse | ModelsResponse> {
