@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func deepSeekError(statusCode int) string {
 	case http.StatusForbidden:
 		return "API Key 无权访问"
 	default:
-		return fmt.Sprintf("DeepSeek API 返回 %d", statusCode)
+		return fmt.Sprintf("API 返回 %d", statusCode)
 	}
 }
 
@@ -28,42 +29,67 @@ func (h *Handlers) fetchProvider(c *gin.Context) (any, error) {
 		APIKey   string `json:"api_key"`
 		Provider string `json:"provider"`
 		Role     string `json:"role"`
+		BaseURL  string `json:"base_url"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// 确定 API Key 和 Provider：优先使用前端传入的，否则从 DB 一次性读取
+	// 确定 API Key、Provider 与 Base URL：优先使用前端传入的（未保存配置时也可用），
+	// 否则从 DB 读取已保存的配置。
 	apiKey := req.APIKey
 	provider := req.Provider
-	if apiKey == "" || provider == "" {
-		if provider == "" {
-			provider = "deepseek"
-		}
-		config, err := h.AiApiConfigDao.Get(ws(c), provider)
-		if err != nil {
-			return nil, fmt.Errorf("未找到 API 配置，请先保存配置")
-		}
-		if apiKey == "" {
-			apiKey = config.APIKey
-		}
-		if provider == "" {
-			provider = config.Provider
+	if provider == "" {
+		provider = "deepseek"
+	}
+	baseURL := strings.TrimRight(req.BaseURL, "/")
+
+	if apiKey == "" || baseURL == "" {
+		cfg, err := h.AiApiConfigDao.Get(ws(c), provider)
+		if err == nil {
+			if apiKey == "" {
+				apiKey = cfg.APIKey
+			}
+			if baseURL == "" {
+				baseURL = strings.TrimRight(cfg.BaseURL, "/")
+			}
 		}
 	}
+	baseURL = providerAPIBase(provider, baseURL)
+
 	if apiKey == "" {
 		return nil, fmt.Errorf("API Key 未设置")
 	}
 
-	switch provider {
-	case "deepseek":
-		return fetchDeepSeek(req.Action, apiKey)
+	client := &http.Client{Timeout: 10 * time.Second}
+	switch req.Action {
+	case "models":
+		return fetchProviderModels(client, baseURL, apiKey)
+	case "balance":
+		if provider != "deepseek" {
+			return nil, fmt.Errorf("当前供应商不支持余额查询")
+		}
+		return fetchProviderBalance(client, baseURL, apiKey)
 	default:
-		return nil, fmt.Errorf("当前供应商不支持此操作")
+		return nil, fmt.Errorf("不支持的操作: %s", req.Action)
 	}
 }
 
-// ---- DeepSeek API 调用 ----
+// providerAPIBase 计算模型列表/余额请求的 API 根路径：
+// 优先使用已配置的 base_url（去除尾部斜杠）；DeepSeek 的 Anthropic 兼容 base（/anthropic 结尾）不提供
+// /models 与 /user/balance 端点，需回退官方根路径；两者皆无时兜底 DeepSeek 官方根路径。
+func providerAPIBase(provider, baseURL string) string {
+	base := strings.TrimRight(baseURL, "/")
+	if provider == "deepseek" && strings.HasSuffix(base, "/anthropic") {
+		return deepseekAPIBase
+	}
+	if base == "" {
+		return deepseekAPIBase
+	}
+	return base
+}
+
+// ---- 模型列表 / 余额查询（OpenAI 兼容 /models + DeepSeek /user/balance） ----
 
 const deepseekAPIBase = "https://api.deepseek.com"
 
@@ -85,21 +111,8 @@ type deepSeekModelsResponse struct {
 	} `json:"data"`
 }
 
-func fetchDeepSeek(action, apiKey string) (any, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
-
-	switch action {
-	case "balance":
-		return fetchDeepSeekBalance(client, apiKey)
-	case "models":
-		return fetchDeepSeekModels(client, apiKey)
-	default:
-		return nil, fmt.Errorf("不支持的操作: %s", action)
-	}
-}
-
-func fetchDeepSeekBalance(client *http.Client, apiKey string) (any, error) {
-	req, err := http.NewRequest("GET", deepseekAPIBase+"/user/balance", nil)
+func fetchProviderBalance(client *http.Client, baseURL, apiKey string) (any, error) {
+	req, err := http.NewRequest("GET", baseURL+"/user/balance", nil)
 	if err != nil {
 		return nil, fmt.Errorf("创建请求失败: %w", err)
 	}
@@ -126,8 +139,8 @@ func fetchDeepSeekBalance(client *http.Client, apiKey string) (any, error) {
 	}, nil
 }
 
-func fetchDeepSeekModels(client *http.Client, apiKey string) (any, error) {
-	req, err := http.NewRequest("GET", deepseekAPIBase+"/models", nil)
+func fetchProviderModels(client *http.Client, baseURL, apiKey string) (any, error) {
+	req, err := http.NewRequest("GET", baseURL+"/models", nil)
 	if err != nil {
 		return nil, fmt.Errorf("创建请求失败: %w", err)
 	}

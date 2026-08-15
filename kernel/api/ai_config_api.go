@@ -35,12 +35,14 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 	endpoint := ""
 	model := ""
 	hasKey := false
+	thinking := "auto"
 	providerName := provider
 	if err == nil {
 		baseURL = apiConfig.BaseURL
 		endpoint = apiConfig.Endpoint
 		model = apiConfig.Model
 		hasKey = apiConfig.APIKey != ""
+		thinking = apiConfig.Thinking
 		providerName = apiConfig.Provider
 	}
 
@@ -49,6 +51,7 @@ func (h *Handlers) getAiConfig(c *gin.Context) (any, error) {
 		"endpoint":      endpoint,
 		"model":         model,
 		"has_key":       hasKey,
+		"thinking":      thinking,
 		"system_prompt": systemPrompt,
 		"provider":      providerName,
 		"role":          role,
@@ -65,6 +68,7 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 		SystemPrompt string `json:"system_prompt"`
 		Provider     string `json:"provider"`
 		Role         string `json:"role"`
+		Thinking     string `json:"thinking"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -78,6 +82,15 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 	if utf8.RuneCountInString(req.SystemPrompt) > 10000 {
 		return nil, fmt.Errorf("系统提示词不能超过 10000 个字符")
 	}
+	switch req.Thinking {
+	case "", "auto", "enabled", "disabled":
+		// 合法值；空串回退为 auto
+		if req.Thinking == "" {
+			req.Thinking = "auto"
+		}
+	default:
+		return nil, fmt.Errorf("思考模式取值无效: %s（应为 auto/enabled/disabled）", req.Thinking)
+	}
 
 	// 保存 API 连接配置（按供应商）
 	apiConfig := &models.AiApiConfig{
@@ -85,6 +98,7 @@ func (h *Handlers) updateAiConfig(c *gin.Context) (any, error) {
 		BaseURL:  req.BaseURL,
 		Endpoint: req.Endpoint,
 		Model:    req.Model,
+		Thinking: req.Thinking,
 	}
 	if req.APIKey != "" {
 		apiConfig.APIKey = req.APIKey

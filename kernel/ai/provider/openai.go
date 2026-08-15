@@ -65,6 +65,14 @@ type openaiRequest struct {
 	Messages []openaiMessage `json:"messages"`
 	Tools    []openaiToolDef `json:"tools,omitempty"`
 	Stream   bool            `json:"stream"`
+	Thinking *openaiThinking `json:"thinking,omitempty"`
+}
+
+// openaiThinking 对应 DeepSeek 的思考模式参数（deepseek-chat V3.x 需显式开启）。
+// deepseek-reasoner 默认思考，无需也不应传此参数；对其他 OpenAI 兼容供应商未知字段可能被忽略或报错，
+// 因此仅在用户显式开启思考模式时发送。
+type openaiThinking struct {
+	Type string `json:"type"`
 }
 
 // openaiToolCallDelta 用于流式增量拼接（带 Index 字段追踪）
@@ -79,9 +87,11 @@ type openaiStreamChunk struct {
 	Choices []struct {
 		Index int `json:"index"`
 		Delta struct {
-			Role      string                `json:"role,omitempty"`
-			Content   string                `json:"content,omitempty"`
-			ToolCalls []openaiToolCallDelta `json:"tool_calls,omitempty"`
+			Role             string                `json:"role,omitempty"`
+			Content          string                `json:"content,omitempty"`
+			ReasoningContent string                `json:"reasoning_content,omitempty"`
+			Reasoning        string                `json:"reasoning,omitempty"`
+			ToolCalls        []openaiToolCallDelta `json:"tool_calls,omitempty"`
 		} `json:"delta"`
 		FinishReason string `json:"finish_reason,omitempty"`
 	} `json:"choices"`
@@ -152,6 +162,9 @@ func (p *openaiProvider) ChatStream(ctx context.Context, req ChatRequest) (<-cha
 		Tools:    tools,
 		Stream:   true,
 	}
+	if req.ThinkingEnabled {
+		body.Thinking = &openaiThinking{Type: "enabled"}
+	}
 
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
@@ -186,6 +199,8 @@ func (p *openaiProvider) ChatStream(ctx context.Context, req ChatRequest) (<-cha
 		scanner := bufio.NewScanner(resp.Body)
 		// 跟踪 tool calls 增量拼接：key = Index
 		toolCallsAccum := make(map[int]*toolCallAccum)
+		// 思考相位跟踪：reasoning 增量出现 → thinking_start；content 或 finish_reason 出现 → thinking_done
+		thinkingActive := false
 
 		for scanner.Scan() {
 			select {
@@ -202,6 +217,10 @@ func (p *openaiProvider) ChatStream(ctx context.Context, req ChatRequest) (<-cha
 			if data == "[DONE]" {
 				// 发送挂起的 tool calls（参数片段已完全接收）
 				flushToolCalls(toolCallsAccum, ch)
+				if thinkingActive {
+					thinkingActive = false
+					ch <- ChatEvent{Type: "thinking_done"}
+				}
 				ch <- ChatEvent{Type: "done"}
 				continue
 			}
@@ -214,8 +233,26 @@ func (p *openaiProvider) ChatStream(ctx context.Context, req ChatRequest) (<-cha
 			for _, choice := range chunk.Choices {
 				delta := choice.Delta
 
-				// 文本 delta
+				// 思考增量：DeepSeek 用 reasoning_content，部分 OpenAI 兼容服务用 reasoning。
+				// 空串容忍：reasoner 首包可能带空的 reasoning_content 标记，非空才触发相位。
+				reasoning := delta.ReasoningContent
+				if reasoning == "" {
+					reasoning = delta.Reasoning
+				}
+				if reasoning != "" {
+					if !thinkingActive {
+						thinkingActive = true
+						ch <- ChatEvent{Type: "thinking_start"}
+					}
+					ch <- ChatEvent{Type: "thinking_delta", Delta: reasoning}
+				}
+
+				// 文本 delta：出现可见内容即视为思考结束（DeepSeek 在 content 开始前不一定发 finish_reason）
 				if delta.Content != "" {
+					if thinkingActive {
+						thinkingActive = false
+						ch <- ChatEvent{Type: "thinking_done"}
+					}
 					ch <- ChatEvent{Type: "text_delta", Delta: delta.Content}
 				}
 
@@ -236,8 +273,12 @@ func (p *openaiProvider) ChatStream(ctx context.Context, req ChatRequest) (<-cha
 					acc.argsBuilder.WriteString(tc.Function.Arguments)
 				}
 
-				// finish_reason 表示本轮工具调用完成
+				// finish_reason 表示本轮工具调用完成；思考后直接调工具（无 content）时在此收尾思考相位
 				if choice.FinishReason == "stop" || choice.FinishReason == "tool_calls" {
+					if thinkingActive {
+						thinkingActive = false
+						ch <- ChatEvent{Type: "thinking_done"}
+					}
 					flushToolCalls(toolCallsAccum, ch)
 				}
 			}

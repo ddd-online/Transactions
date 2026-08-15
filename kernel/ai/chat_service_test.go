@@ -170,3 +170,30 @@ func TestFilterOrphanedToolResults(t *testing.T) {
 		t.Fatalf("Scenario 4: expected 4, got %d", len(filtered4))
 	}
 }
+
+// TestThinkingEnabledFor 验证思考模式配置到 provider 请求参数开关的翻译表。
+func TestThinkingEnabledFor(t *testing.T) {
+	cases := []struct {
+		endpoint string
+		thinking string
+		want     bool
+	}{
+		// anthropic 端点：auto/enabled → 发送 thinking（维持现状）；disabled → 省略
+		{"/v1/messages", "auto", true},
+		{"/v1/messages", "enabled", true},
+		{"/v1/messages", "disabled", false},
+		// openai 兼容端点：仅 enabled 显式发送 thinking 参数；auto 靠模型自动思考
+		{"/chat/completions", "auto", false},
+		{"/chat/completions", "enabled", true},
+		{"/chat/completions", "disabled", false},
+		// 空串/未知值按 auto 处理
+		{"/v1/messages", "", true},
+		{"/chat/completions", "", false},
+		{"/chat/completions", "weird", false},
+	}
+	for _, c := range cases {
+		if got := thinkingEnabledFor(c.endpoint, c.thinking); got != c.want {
+			t.Fatalf("thinkingEnabledFor(%q, %q) = %v, 期望 %v", c.endpoint, c.thinking, got, c.want)
+		}
+	}
+}

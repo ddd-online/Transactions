@@ -6,6 +6,7 @@ type AiMessage struct {
 	AiRole         string `gorm:"column:ai_role;type:text;not null;default:'financial_assistant'" json:"ai_role"`
 	MsgRole        string `gorm:"column:role;type:text;not null" json:"role"`
 	Content        string `gorm:"type:text;not null;default:''" json:"content"`
+	Thinking       string `gorm:"type:text;not null;default:''" json:"thinking,omitempty"`
 	ToolCalls      string `gorm:"type:text" json:"tool_calls,omitempty"`
 	ToolCallID     string `gorm:"type:text" json:"tool_call_id,omitempty"`
 	ToolName       string `gorm:"type:text" json:"tool_name,omitempty"`

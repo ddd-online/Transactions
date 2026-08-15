@@ -154,10 +154,14 @@ func (p *anthropicProvider) ChatStream(ctx context.Context, req ChatRequest) (<-
 		Messages:  messages,
 		Tools:     tools,
 		Stream:    true,
-		Thinking: &anthropicThinking{
+	}
+	// 思考开关：仅当开启时发送 thinking 字段（保持现状的默认行为）；
+	// 关闭时省略该字段，由服务端默认决定（Claude 默认禁用，部分兼容端点按模型而定）。
+	if req.ThinkingEnabled {
+		body.Thinking = &anthropicThinking{
 			Type:         "enabled",
 			BudgetTokens: 4000,
-		},
+		}
 	}
 
 	jsonBody, err := json.Marshal(body)

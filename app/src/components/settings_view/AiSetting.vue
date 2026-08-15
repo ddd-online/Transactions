@@ -54,7 +54,7 @@
             <span class="setting-title">模型</span>
             <span class="setting-desc">使用的模型名称</span>
           </div>
-          <template v-if="form.provider === 'deepseek'">
+          <template v-if="form.endpoint === '/chat/completions'">
             <a-select v-if="!modelsError" v-model:value="form.model" :loading="modelsLoading" :options="modelOptions"
               placeholder="请选择模型" class="setting-input-wide" />
             <div v-else class="model-error-inline">
@@ -64,6 +64,14 @@
           </template>
           <a-input v-else v-model:value="form.model" placeholder="例如: claude-sonnet-4-20250514"
             class="setting-input-wide" />
+        </div>
+
+        <div class="inline-field">
+          <div class="setting-info">
+            <span class="setting-title">思考模式</span>
+            <span class="setting-desc">自动 = 由模型决定（reasoner 模型自动思考）；开启 = 强制请求思考参数（仅部分供应商支持）；关闭 = 禁用</span>
+          </div>
+          <a-select v-model:value="form.thinking" :options="thinkingOptions" class="setting-input-wide" />
         </div>
 
         <template v-if="form.provider === 'deepseek'">
@@ -185,6 +193,12 @@ const endpointOptions = [
   { label: 'OpenAI 兼容 (/chat/completions)', value: '/chat/completions' },
 ]
 
+const thinkingOptions = [
+  { label: '自动', value: 'auto' },
+  { label: '开启', value: 'enabled' },
+  { label: '关闭', value: 'disabled' },
+]
+
 const baseUrlPlaceholder = ref('https://api.anthropic.com')
 
 interface FormState extends AiConfig {
@@ -198,6 +212,7 @@ const form = reactive<FormState>({
   api_key: '',
   model: '',
   system_prompt: '',
+  thinking: 'auto',
   has_key: false,
 })
 
@@ -259,6 +274,8 @@ function onEndpointChange(value: unknown) {
     default:
       baseUrlPlaceholder.value = 'https://api.anthropic.com'
   }
+  // 切换到 OpenAI 兼容端点后尝试加载模型列表
+  if (loaded.value) fetchProviderResources()
 }
 
 function onProviderChange(value: unknown) {
@@ -273,14 +290,14 @@ function onProviderChange(value: unknown) {
       break
   }
   // 切换后触发查询
-  fetchDeepSeekResources()
+  fetchProviderResources()
 }
 
 async function fetchModels() {
   modelsLoading.value = true
   modelsError.value = ''
   try {
-    const res = await aiApi.fetchProvider('models', getEffectiveApiKey(), form.provider) as ModelsResponse
+    const res = await aiApi.fetchProvider('models', getEffectiveApiKey(), form.provider, form.base_url) as ModelsResponse
     modelOptions.value = res.models.map(m => ({ label: m.id, value: m.id }))
   } catch (e) {
     modelsError.value = getErrorMessage(e) || '加载失败'
@@ -293,7 +310,7 @@ async function fetchBalance() {
   balanceLoading.value = true
   balanceError.value = ''
   try {
-    balance.value = await aiApi.fetchProvider('balance', getEffectiveApiKey(), form.provider) as BalanceResponse
+    balance.value = await aiApi.fetchProvider('balance', getEffectiveApiKey(), form.provider, form.base_url) as BalanceResponse
   } catch (e) {
     balance.value = null
     balanceError.value = getErrorMessage(e) || '加载失败'
@@ -302,16 +319,25 @@ async function fetchBalance() {
   }
 }
 
-function fetchDeepSeekResources() {
-  if (form.provider !== 'deepseek' || !form.has_key) {
-    balance.value = null
-    balanceError.value = ''
+// 按当前端点/供应商拉取模型列表与余额：
+// - 模型列表仅对 OpenAI 兼容端点（/chat/completions）可用，任意供应商均可
+// - 余额仅 DeepSeek 供应商支持
+function fetchProviderResources() {
+  const hasAnyKey = form.has_key || !!form.api_key
+  if (form.endpoint !== '/chat/completions' || !hasAnyKey) {
     modelOptions.value = []
     modelsError.value = ''
+    balance.value = null
+    balanceError.value = ''
     return
   }
   fetchModels()
-  fetchBalance()
+  if (form.provider === 'deepseek') {
+    fetchBalance()
+  } else {
+    balance.value = null
+    balanceError.value = ''
+  }
 }
 
 async function loadConfig() {
@@ -322,6 +348,7 @@ async function loadConfig() {
     form.base_url = config.base_url || ''
     form.endpoint = config.endpoint || '/v1/messages'
     form.model = config.model || ''
+    form.thinking = config.thinking || 'auto'
     form.system_prompt = config.system_prompt || ''
     form.has_key = config.has_key
     if (config.has_key) {
@@ -361,6 +388,7 @@ async function handleTestConnection() {
       endpoint: form.endpoint,
       api_key: keyPlaceholder.value ? '' : form.api_key,
       model: form.model,
+      thinking: form.thinking,
       system_prompt: form.system_prompt,
     })
     NotificationUtil.success('连接成功')
@@ -383,6 +411,7 @@ function autoSaveConfig() {
         endpoint: form.endpoint,
         api_key: keyToSave,
         model: form.model,
+        thinking: form.thinking,
         system_prompt: form.system_prompt,
       })
       if (keyToSave) {
@@ -391,7 +420,7 @@ function autoSaveConfig() {
       } else if (!keyPlaceholder.value) {
         form.has_key = false
       }
-      fetchDeepSeekResources()
+      fetchProviderResources()
     } catch (e) {
       NotificationUtil.error('自动保存失败', getErrorMessage(e))
     }
@@ -399,7 +428,7 @@ function autoSaveConfig() {
 }
 
 watch(
-  () => [form.provider, form.base_url, form.endpoint, form.api_key, form.model, form.system_prompt],
+  () => [form.provider, form.base_url, form.endpoint, form.api_key, form.model, form.thinking, form.system_prompt],
   () => {
     if (!loaded.value) return
     autoSaveConfig()

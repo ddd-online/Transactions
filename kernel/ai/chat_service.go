@@ -210,9 +210,10 @@ func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Wo
 			prompt = replacePlaceholders(prompt, ledgerName)
 
 			req := provider.ChatRequest{
-				SystemPrompt: prompt,
-				Messages:     messages,
-				Tools:        s.toolDefsForRole(roleToolNames),
+				SystemPrompt:    prompt,
+				Messages:        messages,
+				Tools:           s.toolDefsForRole(roleToolNames),
+				ThinkingEnabled: thinkingEnabledFor(apiConfig.Endpoint, apiConfig.Thinking),
 			}
 
 			eventCh, err := llmProvider.ChatStream(ctx, req)
@@ -222,6 +223,7 @@ func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Wo
 			}
 
 			var assistantContent string
+			var thinkingContent string
 			var toolCalls []provider.ToolCall
 			gotToolCalls := false
 
@@ -233,6 +235,7 @@ func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Wo
 						return
 					}
 				case "thinking_delta":
+					thinkingContent += event.Delta
 					if !send(SSEEvent{Type: "thinking_delta", Delta: event.Delta}) {
 						return
 					}
@@ -262,13 +265,14 @@ func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Wo
 
 			// 如果 AI 没有调用工具，直接结束
 			if !gotToolCalls || len(toolCalls) == 0 {
-				if assistantContent != "" {
+				if assistantContent != "" || thinkingContent != "" {
 					s.saveMessage(ws, &models.AiMessage{
 						ID:             uuid.NewString(),
 						ConversationID: conversationID,
 						MsgRole:        "assistant",
 						AiRole:         roleName,
 						Content:        assistantContent,
+						Thinking:       thinkingContent,
 					})
 				}
 				send(SSEEvent{Type: "done"})
@@ -276,7 +280,7 @@ func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Wo
 			}
 
 			// 有工具调用：持久化中间 assistant 消息
-			// 供历史加载时 LLM 上下文使用（前端会过滤掉不展示）。
+			// 供历史加载时 LLM 上下文使用（前端会过滤掉不展示，但保留其思考行）。
 			tcsJSON, _ := json.Marshal(toolCalls)
 			s.saveMessage(ws, &models.AiMessage{
 				ID:             uuid.NewString(),
@@ -284,6 +288,7 @@ func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Wo
 				MsgRole:        "assistant",
 				AiRole:         roleName,
 				Content:        assistantContent,
+				Thinking:       thinkingContent,
 				ToolCalls:      string(tcsJSON),
 			})
 			messages = append(messages, provider.ChatMessage{
@@ -541,6 +546,21 @@ func (s *ChatService) toolDefsForRole(roleToolNames map[string]bool) []provider.
 		}
 	}
 	return filtered
+}
+
+// thinkingEnabledFor 将配置的思考模式翻译为 provider 请求参数开关。
+// anthropic 端点：auto/enabled → 发送 thinking:{type:"enabled"}（维持现状）；disabled → 省略该字段。
+// openai 兼容端点：enabled → 发送 thinking:{type:"enabled"}（DeepSeek V3.x chat 模型需要显式开启）；
+// auto/disabled → 不发送参数（deepseek-reasoner 等模型会自动思考，返回的 reasoning_content 仍会被解析展示）。
+func thinkingEnabledFor(endpoint, thinking string) bool {
+	switch thinking {
+	case "enabled":
+		return true
+	case "disabled":
+		return false
+	default: // "auto" 或未知值
+		return endpoint == "/v1/messages"
+	}
 }
 
 // replacePlaceholders 替换系统提示词中的占位符为实际值。

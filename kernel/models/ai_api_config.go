@@ -7,6 +7,7 @@ type AiApiConfig struct {
 	Endpoint  string `gorm:"type:text;not null;default:''" json:"endpoint"`
 	APIKey    string `gorm:"type:text;not null;default:''" json:"api_key"`
 	Model     string `gorm:"type:text;not null;default:''" json:"model"`
+	Thinking  string `gorm:"type:text;not null;default:'auto'" json:"thinking"` // auto | enabled | disabled
 	CreatedAt int64  `gorm:"autoCreateTime:milli" json:"created_at"`
 	UpdatedAt int64  `gorm:"autoUpdateTime:milli" json:"updated_at"`
 }

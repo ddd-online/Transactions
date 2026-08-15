@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { aiApi, type AiMessage as AiMessageApi, type AiConversation } from '@/backend/api/ai'
+import { aiApi, type AiConversation } from '@/backend/api/ai'
 import { getApiToken } from '@/backend/api/api-client'
 import { getErrorMessage } from '@/backend/errorHandler'
 
@@ -367,29 +367,55 @@ export function useAiChat() {
       const apiMessages = await aiApi.getMessages(currentRole.value, currentConversationId.value)
       if (!apiMessages || apiMessages.length === 0) return
 
-      messages.value = apiMessages
-        // 过滤掉上下文摘要消息（role=summary，不展示给用户）
-        .filter((m: AiMessageApi) => m.role !== 'summary')
-        .filter((m: AiMessageApi) => !(m.role === 'assistant' && m.tool_calls))
-        .map((m: AiMessageApi): ChatMessage => {
-          const base: ChatMessage = {
-            id: m.id,
-            role: m.role as ChatMessage['role'],
-            content: m.content,
+      // 恢复历史消息：
+      // - 过滤上下文摘要消息（role=summary，不展示）
+      // - 中间轮次 assistant（带 tool_calls）：仅恢复其思考行，文本/工具调用不展示
+      // - 最终 assistant：先恢复思考行，再恢复回复
+      const mapped: ChatMessage[] = []
+      for (const m of apiMessages) {
+        if (m.role === 'summary') continue
+        if (m.role === 'assistant' && m.tool_calls) {
+          if (m.thinking) {
+            mapped.push({
+              id: `${m.id}-thinking`,
+              role: 'thinking',
+              content: m.thinking,
+              timestamp: m.created_at,
+              thinkingActive: false,
+              thinkingCollapsed: true,
+            })
+          }
+          continue
+        }
+        if (m.role === 'assistant' && m.thinking) {
+          mapped.push({
+            id: `${m.id}-thinking`,
+            role: 'thinking',
+            content: m.thinking,
             timestamp: m.created_at,
+            thinkingActive: false,
+            thinkingCollapsed: true,
+          })
+        }
+        const base: ChatMessage = {
+          id: m.id,
+          role: m.role as ChatMessage['role'],
+          content: m.content,
+          timestamp: m.created_at,
+        }
+        if (m.role === 'tool') {
+          base.toolName = m.tool_name
+          base.toolDone = true
+          base.toolResult = m.content.length > 200
+            ? m.content.substring(0, 200) + '...'
+            : m.content
+          if (m.content) {
+            try { base.toolDetail = JSON.parse(m.content) } catch { /* not JSON */ }
           }
-          if (m.role === 'tool') {
-            base.toolName = m.tool_name
-            base.toolDone = true
-            base.toolResult = m.content.length > 200
-              ? m.content.substring(0, 200) + '...'
-              : m.content
-            if (m.content) {
-              try { base.toolDetail = JSON.parse(m.content) } catch { /* not JSON */ }
-            }
-          }
-          return base
-        })
+        }
+        mapped.push(base)
+      }
+      messages.value = mapped
     } catch {
       // non-critical: show empty state
     }

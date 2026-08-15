@@ -7,6 +7,7 @@ export interface AiConfig {
   model: string;
   system_prompt: string;
   provider: string;
+  thinking: 'auto' | 'enabled' | 'disabled' | string;
 }
 
 export interface AiConfigResponse {
@@ -14,6 +15,7 @@ export interface AiConfigResponse {
   endpoint: string;
   model: string;
   has_key: boolean;
+  thinking: string;
   system_prompt: string;
   provider: string;
 }
@@ -22,6 +24,7 @@ export interface ProviderFetchRequest {
   action: 'balance' | 'models';
   api_key?: string;
   provider?: string;
+  base_url?: string;
 }
 
 export interface BalanceInfo {
@@ -93,10 +96,11 @@ export const aiApi = {
     return api.post('/v1/ai/config/test', body, '测试连接')
   },
 
-  async fetchProvider(action: 'balance' | 'models', apiKey?: string, provider?: string): Promise<BalanceResponse | ModelsResponse> {
+  async fetchProvider(action: 'balance' | 'models', apiKey?: string, provider?: string, baseUrl?: string): Promise<BalanceResponse | ModelsResponse> {
     const body: ProviderFetchRequest = { action }
     if (apiKey) body.api_key = apiKey
     if (provider) body.provider = provider
+    if (baseUrl) body.base_url = baseUrl
     return api.post('/v1/ai/provider/fetch', body, '获取供应商信息')
   },
 
@@ -140,6 +144,7 @@ export interface AiMessage {
   conversation_id: string;
   role: string;
   content: string;
+  thinking?: string;
   tool_calls: string;
   tool_call_id: string;
   tool_name: string;
