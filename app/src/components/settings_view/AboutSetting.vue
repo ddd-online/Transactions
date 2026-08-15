@@ -5,10 +5,8 @@
         <svg width="1024" height="1024" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
           <!-- Background: DeepSeek blue（跟随主题的主色令牌） -->
           <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" style="fill: var(--billadm-color-primary)" />
-          <!-- Letter Tr: Fills ~75% of icon, centered, Inter-style bold sans, color #FFFFFF -->
-          <text x="512" y="540" dominant-baseline="central" text-anchor="middle"
-            font-family="'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif" font-size="800" font-weight="700"
-            fill="#FFFFFF" letter-spacing="-8">Tr</text>
+          <!-- Letter Tr: Segoe UI Bold 矢量路径（与 ICO 字形一致），已按墨迹包围盒居中 -->
+          <path transform="translate(220.909996509552 49.1699676513672)" fill="#FFFFFF" d="M363.01 322.09 L236.22 322.09 L236.22 685.1 L135.78 685.1 L135.78 322.09 L9.61 322.09 L9.61 240.56 L363.01 240.56 Z M572.57 456.01 C560.79 449.6 547.05 446.4 531.34 446.4 C510.05 446.4 493.42 454.2 481.43 469.81 C469.44 485.41 463.45 506.64 463.45 533.51 L463.45 685.1 L365.49 685.1 L365.49 367.66 L463.45 367.66 L463.45 426.56 L464.69 426.56 C480.19 383.57 508.09 362.08 548.39 362.08 C558.72 362.08 566.78 363.32 572.57 365.8 Z" />
         </svg>
       </div>
       <h2 class="app-name">Transactions</h2>
