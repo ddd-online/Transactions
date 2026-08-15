@@ -5,10 +5,10 @@
         <svg width="1024" height="1024" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
           <!-- Background: DeepSeek blue（跟随主题的主色令牌） -->
           <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" style="fill: var(--billadm-color-primary)" />
-          <!-- Letter T: Fills ~75% of icon, centered, Inter-style bold sans, color #FFFFFF -->
+          <!-- Letter Tr: Fills ~75% of icon, centered, Inter-style bold sans, color #FFFFFF -->
           <text x="512" y="540" dominant-baseline="central" text-anchor="middle"
             font-family="'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif" font-size="800" font-weight="700"
-            fill="#FFFFFF" letter-spacing="-8">T</text>
+            fill="#FFFFFF" letter-spacing="-8">Tr</text>
         </svg>
       </div>
       <h2 class="app-name">Transactions</h2>

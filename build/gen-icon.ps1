@@ -38,7 +38,7 @@ foreach ($s in $sizes) {
     $bgBrush = New-Object System.Drawing.SolidBrush($bg)
     $g.FillPath($bgBrush, $path)
 
-    $fontSize = $s * 0.68
+    $fontSize = $s * 0.62
     $font = New-Object System.Drawing.Font('Segoe UI', $fontSize, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
     $fgBrush = New-Object System.Drawing.SolidBrush($fg)
 
@@ -52,7 +52,7 @@ foreach ($s in $sizes) {
 
     # 第 1 遍：在原点绘制，用于测量真实像素墨迹包围盒
     # （GDI+ 的 MeasureCharacterRanges 与光栅化结果存在偏差，直接量像素最可靠）
-    $g.DrawString('T', $font, $fgBrush, $drawRect, $sf)
+    $g.DrawString('Tr', $font, $fgBrush, $drawRect, $sf)
 
     $minX = $s; $maxX = -1; $minY = $s; $maxY = -1
     for ($y = 0; $y -lt $s; $y++) {
@@ -74,7 +74,7 @@ foreach ($s in $sizes) {
         # 第 2 遍：清掉墨迹，按偏移重绘，实现像素级居中
         $g.Clear([System.Drawing.Color]::Transparent)
         $g.FillPath($bgBrush, $path)
-        $g.DrawString('T', $font, $fgBrush, (New-Object System.Drawing.RectangleF($dx, $dy, $s, $s)), $sf)
+        $g.DrawString('Tr', $font, $fgBrush, (New-Object System.Drawing.RectangleF($dx, $dy, $s, $s)), $sf)
     } else {
         Write-Warn "警告: $($s)px 尺寸未检测到字形墨迹，使用默认居中"
     }
