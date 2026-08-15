@@ -366,6 +366,11 @@ async function loadConfig() {
 }
 
 async function loadRoleConfig() {
+  // 切换角色时取消挂起的自动保存，避免旧角色的表单值被写入新角色
+  if (configSaveTimer) {
+    clearTimeout(configSaveTimer)
+    configSaveTimer = null
+  }
   loaded.value = false
   try {
     const config = await aiApi.getConfig(currentRole.value, form.provider || 'deepseek')
@@ -401,11 +406,13 @@ async function handleTestConnection() {
 
 function autoSaveConfig() {
   if (configSaveTimer) clearTimeout(configSaveTimer)
+  // 捕获发起保存时的角色，避免 800ms 内切换角色后把表单写到错误角色下
+  const role = currentRole.value
   configSaveTimer = setTimeout(async () => {
     try {
       const keyToSave = keyPlaceholder.value ? '' : form.api_key
       await aiApi.updateConfig({
-        role: currentRole.value,
+        role,
         provider: form.provider,
         base_url: form.base_url,
         endpoint: form.endpoint,
@@ -421,6 +428,7 @@ function autoSaveConfig() {
         form.has_key = false
       }
       fetchProviderResources()
+      NotificationUtil.success('已自动保存')
     } catch (e) {
       NotificationUtil.error('自动保存失败', getErrorMessage(e))
     }

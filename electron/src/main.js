@@ -327,13 +327,13 @@ const registerCommonHandlers = () => {
     });
 
     // DevTools 开关：handle 返回操作后的真实状态，前端据此校正开关，避免状态脱节。
-    // 生产环境保持禁用（isDev 为 false 时只读状态、不真正开关），设置页在非 dev 下隐藏该入口。
+    // 桌面应用数据全在本机、无远程内容，生产环境同样允许开关 DevTools 便于排查问题。
     ipcMain.handle('devtools:get-state', () => {
         return mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents.isDevToolsOpened() : false;
     });
 
     ipcMain.handle('devtools:toggle', (event, enabled) => {
-        if (isDev && mainWindow && !mainWindow.isDestroyed()) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
             if (enabled) {
                 mainWindow.webContents.openDevTools({ mode: 'bottom' });
             } else {

@@ -173,7 +173,7 @@ const handleRetry = () => {
 
 .update-success .update-text,
 .update-success .update-icon {
-  color: var(--transactions-color-income);
+  color: var(--transactions-color-primary);
 }
 
 .update-error .update-text,

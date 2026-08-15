@@ -36,5 +36,6 @@ func (d *aiApiConfigDaoImpl) Save(ws *workspace.Workspace, config *models.AiApiC
 		"endpoint": config.Endpoint,
 		"api_key":  config.APIKey,
 		"model":    config.Model,
+		"thinking": config.Thinking,
 	}).Error
 }
