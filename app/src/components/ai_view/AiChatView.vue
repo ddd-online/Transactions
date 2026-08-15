@@ -83,23 +83,24 @@
             </div>
           </div>
 
+          <!-- AI Thinking Row (DSH 风格独立行：思考 → 工具 → 回复) -->
+          <div v-else-if="msg.role === 'thinking'" class="chat-message--thinking-row">
+            <div class="thinking-row" :class="{ 'thinking-row--active': msg.thinkingActive }">
+              <button class="thinking-row-toggle" @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
+                :aria-expanded="!msg.thinkingCollapsed || msg.thinkingActive">
+                <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
+                <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
+                <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed || msg.thinkingActive }">▾</span>
+              </button>
+              <div v-if="!msg.thinkingCollapsed || msg.thinkingActive" class="thinking-row-content">
+                {{ msg.content }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span>
+              </div>
+            </div>
+          </div>
+
           <!-- AI Text Message -->
           <div v-else-if="msg.role === 'assistant'" class="msg-assistant-row">
             <div class="msg-assistant">
-              <!-- Inline Thinking -->
-              <div v-if="msg.thinkingContent" class="assistant-thinking"
-                :class="{ 'assistant-thinking--active': msg.thinkingActive }">
-                <button class="assistant-thinking-toggle" @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
-                  :aria-expanded="!msg.thinkingCollapsed || msg.thinkingActive">
-                  <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
-                  <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
-                  <span class="thinking-arrow"
-                    :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed || msg.thinkingActive }">▾</span>
-                </button>
-                <div v-if="!msg.thinkingCollapsed || msg.thinkingActive" class="assistant-thinking-content">
-                  {{ msg.thinkingContent }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span>
-                </div>
-              </div>
               <div class="msg-assistant-content"><MarkdownViewer :content="msg.content" /></div>
               <span v-if="msg.streaming" class="streaming-cursor">|</span>
             </div>
@@ -762,6 +763,10 @@ onUnmounted(() => {
   align-items: flex-start;
 }
 
+.chat-message--thinking {
+  align-items: flex-start;
+}
+
 /* User Message */
 .msg-user-row {
   display: flex;
@@ -804,7 +809,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* AI Assistant Message */
+/* AI Assistant Message — DSH 风格：透明无气泡，markdown 承载视觉重量 */
 .msg-assistant-row {
   display: flex;
   align-items: stretch;
@@ -816,8 +821,8 @@ onUnmounted(() => {
   max-width: 90%;
   background: transparent;
   border: none;
-  border-radius: var(--transactions-radius-chat);
-  padding: var(--transactions-space-xs) var(--transactions-space-sm);
+  border-radius: 0;
+  padding: 0;
 }
 
 .msg-assistant-content {
@@ -1149,18 +1154,6 @@ onUnmounted(() => {
   }
 }
 
-@keyframes msg-assistant-border-glow {
-  0% {
-    border-color: var(--transactions-color-primary-light);
-    box-shadow: 0 0 0 2px rgba(57, 100, 254, 0.12);
-  }
-
-  100% {
-    border-color: var(--transactions-color-divider);
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 @keyframes msg-tool-enter {
   0% {
     opacity: 0;
@@ -1189,11 +1182,12 @@ onUnmounted(() => {
   animation-duration: 300ms;
 }
 
-.chat-message--assistant .msg-assistant {
-  animation: msg-assistant-border-glow 400ms ease-out both;
+.chat-message--tool {
+  animation-name: msg-tool-enter;
+  animation-duration: 200ms;
 }
 
-.chat-message--tool {
+.chat-message--thinking {
   animation-name: msg-tool-enter;
   animation-duration: 200ms;
 }
@@ -1230,40 +1224,55 @@ onUnmounted(() => {
   .chat-empty-chip,
   .chat-send-btn,
   .msg-copy-btn,
-  .assistant-thinking-toggle,
+  .thinking-row-toggle,
   .thinking-arrow,
   .thinking-indicator {
     transition: none;
   }
 }
 
-/* Inline Thinking (inside assistant bubble) */
-.assistant-thinking {
+/* Thinking Row — DSH 风格独立行：点指示器 + 可折叠，active 琥珀块 */
+.chat-message--thinking-row {
   margin-bottom: var(--transactions-space-md);
-  padding-bottom: var(--transactions-space-md);
-  border-bottom: 1px solid var(--transactions-color-divider);
 }
 
-.assistant-thinking-toggle {
+.thinking-row {
+  max-width: 90%;
+  border-radius: var(--transactions-radius-sm);
+  padding: var(--transactions-space-2xs);
+  transition: background var(--transactions-transition-fast);
+}
+
+.thinking-row--active {
+  background: var(--transactions-color-outlier-tint);
+}
+
+.thinking-row-toggle {
   display: flex;
   align-items: center;
   gap: var(--transactions-space-xs);
   border: none;
   background: none;
-  padding: 0;
+  padding: var(--transactions-space-xs) var(--transactions-space-sm);
   cursor: pointer;
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
   width: 100%;
   text-align: left;
+  border-radius: var(--transactions-radius-sm);
+  transition: background var(--transactions-transition-fast);
 }
 
-.assistant-thinking-toggle:hover {
-  color: var(--transactions-color-text-secondary);
+.thinking-row-toggle:hover {
+  background: var(--transactions-color-hover-bg);
 }
 
-.assistant-thinking-toggle:focus-visible {
+.thinking-row--active .thinking-row-toggle:hover {
+  background: transparent;
+}
+
+.thinking-row-toggle:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
   border-radius: var(--transactions-radius-sm);
@@ -1300,21 +1309,15 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 
-.assistant-thinking-content {
-  margin-top: var(--transactions-space-sm);
+.thinking-row-content {
+  margin-top: var(--transactions-space-xs);
+  padding: 0 var(--transactions-space-sm) var(--transactions-space-xs);
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-body-sm);
   color: var(--transactions-color-text-secondary);
   line-height: var(--transactions-height-normal);
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.assistant-thinking--active {
-  background: var(--transactions-color-outlier-tint);
-  border-radius: var(--transactions-radius-sm);
-  margin: calc(-1 * var(--transactions-space-xs));
-  padding: var(--transactions-space-xs);
 }
 
 /* Tools Modal */

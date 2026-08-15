@@ -106,9 +106,11 @@ export function useAiChat() {
 
   function createEventRouter(onChange: () => void) {
     const assistantMsgRef: { current: ChatMessage | null } = { current: null }
+    const thinkingMsgRef: { current: ChatMessage | null } = { current: null }
 
-    // Insert tool cards right before the current turn's assistant.
-    // If the current turn's assistant hasn't been created yet, append to the end.
+    // Insert a message right before the current turn's assistant,
+    // so the flow reads 思考 → 工具 → 回复 (DSH style).
+    // If the assistant hasn't been created yet, append to the end.
     const insertBeforeAssistant = (msg: ChatMessage) => {
       if (assistantMsgRef.current) {
         const asstIdx = messages.value.findIndex(m => m.id === assistantMsgRef.current!.id)
@@ -140,6 +142,26 @@ export function useAiChat() {
       return msg
     }
 
+    // thinking 独立消息行：位于 assistant 之前，先于工具卡片出现
+    const ensureThinking = (): ChatMessage => {
+      let msg = thinkingMsgRef.current
+        ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
+        : undefined
+      if (!msg) {
+        msg = {
+          id: nextMsgId(),
+          role: 'thinking',
+          content: '',
+          timestamp: Date.now(),
+          thinkingActive: true,
+          thinkingCollapsed: false,
+        }
+        insertBeforeAssistant(msg)
+        thinkingMsgRef.current = msg
+      }
+      return msg
+    }
+
     const findLastUndoneTool = (toolName: string): ChatMessage | null => {
       for (let i = messages.value.length - 1; i >= 0; i--) {
         const msg = messages.value[i]
@@ -153,29 +175,31 @@ export function useAiChat() {
     const handleEvent = (event: SSEEvent) => {
       switch (event.type) {
         case 'thinking_start': {
-          const msg = ensureAssistant()
-          msg.thinkingActive = true
-          msg.thinkingCollapsed = false
+          ensureAssistant()
+          const t = ensureThinking()
+          t.thinkingActive = true
+          t.thinkingCollapsed = false
           onChange()
           break
         }
 
         case 'thinking_delta': {
-          const msg = ensureAssistant()
-          msg.thinkingActive = true
-          msg.thinkingContent = (msg.thinkingContent || '') + (event.delta || '')
-          msg.thinkingCollapsed = false
+          const t = ensureThinking()
+          t.thinkingActive = true
+          t.content = (t.content || '') + (event.delta || '')
+          t.thinkingCollapsed = false
           onChange()
           break
         }
 
         case 'thinking_done': {
-          const msg = assistantMsgRef.current
-            ? messages.value.find(m => m.id === assistantMsgRef.current!.id)
+          const t = thinkingMsgRef.current
+            ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
             : undefined
-          if (msg) {
-            msg.thinkingActive = false
+          if (t) {
+            t.thinkingActive = false
           }
+          onChange()
           break
         }
 
@@ -237,6 +261,13 @@ export function useAiChat() {
         assistantMsg.streaming = false
         assistantMsg.thinkingActive = false
         assistantMsg.thinkingCollapsed = true
+      }
+      const thinkingMsg = thinkingMsgRef.current
+        ? messages.value.find(m => m.id === thinkingMsgRef.current!.id)
+        : undefined
+      if (thinkingMsg) {
+        thinkingMsg.thinkingActive = false
+        thinkingMsg.thinkingCollapsed = true
       }
     }
 
