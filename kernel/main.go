@@ -28,6 +28,13 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("初始化日志模块失败 %v", err)
 	}
+	// 启动参数携带工作空间时，立即把日志重定向到工作目录
+	// （Electron 后台启动 stdout 不可见，写文件便于排障）
+	if util.Config.Workspace != "" {
+		if err := logger.RedirectToFile(util.Config.Workspace); err != nil {
+			logrus.Warnf("重定向日志到工作目录失败: %v", err)
+		}
+	}
 	logrus.Info("--------- 启动Transactions ---------")
 	gin.SetMode(util.Config.Mode)
 	ginServer := server.NewGinServer(util.Config.APIToken)

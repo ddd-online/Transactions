@@ -4,11 +4,21 @@ package logger
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 
 	"github.com/sirupsen/logrus"
+)
+
+// logFileMu 保护日志文件输出句柄的并发切换（工作空间打开/切换时）。
+var (
+	logFileMu   sync.RWMutex
+	logFile     *os.File
+	logFileName = "transactions.log"
 )
 
 func init() {
@@ -26,6 +36,46 @@ func Init(level string) error {
 	}
 	logrus.StandardLogger().SetLevel(logLevel)
 	return nil
+}
+
+// RedirectToFile 将日志同时输出到工作目录下的 transactions.log 文件。
+// 保留 stdout 输出（开发模式可见）；重复调用会先关闭旧文件句柄再切换，
+// 工作空间切换时安全。目录不存在会自动创建。
+func RedirectToFile(dir string) error {
+	logFileMu.Lock()
+	defer logFileMu.Unlock()
+
+	if dir == "" {
+		return nil
+	}
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		return fmt.Errorf("创建日志目录失败: %w", err)
+	}
+
+	path := filepath.Join(dir, logFileName)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+	if err != nil {
+		return fmt.Errorf("打开日志文件失败: %w", err)
+	}
+
+	// 切换输出：stdout + 新文件
+	if logFile != nil {
+		_ = logFile.Close()
+	}
+	logFile = f
+	logrus.StandardLogger().SetOutput(io.MultiWriter(os.Stdout, f))
+	return nil
+}
+
+// CloseFile 关闭日志文件句柄并恢复纯 stdout 输出（进程退出时调用）。
+func CloseFile() {
+	logFileMu.Lock()
+	defer logFileMu.Unlock()
+	if logFile != nil {
+		_ = logFile.Close()
+		logFile = nil
+	}
+	logrus.StandardLogger().SetOutput(os.Stdout)
 }
 
 type CustomFormatter struct{}

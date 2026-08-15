@@ -149,7 +149,12 @@ const startKernel = () => {
     const kernelExe = path.join(appPath, 'transactions.exe');
     log(`Starting kernel: ${kernelExe}`);
     const cp = require("child_process");
-    const proc = cp.spawn(kernelExe, ['-mode', 'release', '-port', API_PORT, '-api_token', apiToken], {
+    // 传入上次工作空间目录：kernel 启动即把日志写到工作目录下（后台 stdout 不可见）
+    const kernelArgs = ['-mode', 'release', '-port', API_PORT, '-api_token', apiToken];
+    if (transactionsCfg.workspaceDir) {
+        kernelArgs.push('-workspace', transactionsCfg.workspaceDir);
+    }
+    const proc = cp.spawn(kernelExe, kernelArgs, {
         detached: false,
         windowsHide: true,
     });

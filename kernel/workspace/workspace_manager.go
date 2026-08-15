@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/transactions/logger"
 )
 
 const (
@@ -36,6 +38,11 @@ func (wm *WsManager) OpenWorkspace(directory string) error {
 		return err
 	}
 
+	// 日志重定向到工作目录（后台模式 stdout 不可见，写文件便于排障）
+	if err := logger.RedirectToFile(directory); err != nil {
+		logrus.Warnf("重定向日志到工作目录失败: %v", err)
+	}
+
 	wm.workspace = ws
 	return nil
 }
@@ -55,4 +62,6 @@ func (wm *WsManager) Close() {
 		wm.workspace.Close()
 		wm.workspace = nil
 	}
+	// 应用退出：关闭日志文件句柄，恢复纯 stdout
+	logger.CloseFile()
 }
