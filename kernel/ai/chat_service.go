@@ -36,26 +36,34 @@ type SSEEvent struct {
 }
 
 type ChatService struct {
-	apiConfigDao dao.AiApiConfigDao
-	configDao    dao.AiConfigDao
-	messageDao   dao.AiMessageDao
-	registry     *tool.ToolRegistry
-	roleRegistry *role.Registry
+	apiConfigDao    dao.AiApiConfigDao
+	configDao       dao.AiConfigDao
+	messageDao      dao.AiMessageDao
+	conversationDao dao.AiConversationDao
+	registry        *tool.ToolRegistry
+	roleRegistry    *role.Registry
 }
 
-func NewChatService(apiConfigDao dao.AiApiConfigDao, configDao dao.AiConfigDao, messageDao dao.AiMessageDao, registry *tool.ToolRegistry, roleRegistry *role.Registry) *ChatService {
+func NewChatService(apiConfigDao dao.AiApiConfigDao, configDao dao.AiConfigDao, messageDao dao.AiMessageDao, conversationDao dao.AiConversationDao, registry *tool.ToolRegistry, roleRegistry *role.Registry) *ChatService {
 	return &ChatService{
-		apiConfigDao: apiConfigDao,
-		configDao:    configDao,
-		messageDao:   messageDao,
-		registry:     registry,
-		roleRegistry: roleRegistry,
+		apiConfigDao:    apiConfigDao,
+		configDao:       configDao,
+		messageDao:      messageDao,
+		conversationDao: conversationDao,
+		registry:        registry,
+		roleRegistry:    roleRegistry,
 	}
 }
 
-// Chat 执行一次对话，返回 SSE 事件 channel。
+// Chat 执行一次对话（默认会话），返回 SSE 事件 channel。
 // ws 用于数据库访问，ledgerName 注入到工具执行 context 中，也用于替换系统提示词中的占位符。
 func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleName string, providerName string, ledgerName string, userMessage string) (<-chan SSEEvent, error) {
+	return s.ChatWithConversation(ctx, ws, roleName, providerName, ledgerName, "default", userMessage)
+}
+
+// ChatWithConversation 执行一次对话，消息归属于指定会话（conversationID）。
+// 加载历史时会先应用上下文压缩：超窗口的最旧消息被摘要替代，避免长对话上下文膨胀。
+func (s *ChatService) ChatWithConversation(ctx context.Context, ws *workspace.Workspace, roleName string, providerName string, ledgerName string, conversationID string, userMessage string) (<-chan SSEEvent, error) {
 	// 带工具执行 workspace 和 ledgerName 的 context
 	toolCtx := tool.WithWorkspace(ctx, ws)
 	toolCtx = tool.WithLedgerName(toolCtx, ledgerName)
@@ -99,15 +107,41 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 		return nil, fmt.Errorf("不支持的端点: %s", apiConfig.Endpoint)
 	}
 
-	// 加载历史
-	history, err := s.messageDao.ListRecent(ws, "default", roleName, MaxHistoryMessages)
+	// 加载历史（含摘要过滤：有摘要消息时从摘要起取，避免旧历史撑爆上下文）。
+	// 多取一些以便压缩触发判断（历史窗口 50，预取 70，超出后压缩最旧一批）。
+	history, err := s.messageDao.ListRecentFiltered(ws, conversationID, roleName, MaxHistoryMessages+20)
 	if err != nil {
 		return nil, fmt.Errorf("加载对话历史失败: %w", err)
 	}
 
-	// 构建消息
+	// 上下文压缩：若非摘要消息超出窗口，将最旧的一批压缩为摘要消息（失败不阻塞）
+	summary, err := s.compressHistory(ctx, ws, llmProvider, conversationID, roleName, history)
+	if err != nil {
+		logrus.Warnf("上下文压缩失败（忽略继续）: %v", err)
+	}
+
+	// 构建消息；摘要消息对 LLM 以 system 前缀呈现
 	messages := make([]provider.ChatMessage, 0, len(history)+1)
+	if summary != "" {
+		// 本轮刚生成的新摘要注入一次；历史中的旧摘要不再重复注入
+		messages = append(messages, provider.ChatMessage{
+			Role:    "system",
+			Content: "以下是更早对话的摘要，供你保持上下文：\n" + summary,
+		})
+	}
 	for _, h := range history {
+		if h.MsgRole == dao.AiSummaryRole {
+			// 历史里已有的摘要消息同样以 system 呈现（ListRecentFiltered 会包含它）
+			// 若本轮已生成新摘要则跳过旧的，避免重复
+			if summary != "" {
+				continue
+			}
+			messages = append(messages, provider.ChatMessage{
+				Role:    "system",
+				Content: "以下是更早对话的摘要，供你保持上下文：\n" + h.Content,
+			})
+			continue
+		}
 		msg := provider.ChatMessage{
 			Role:       h.MsgRole,
 			Content:    h.Content,
@@ -128,7 +162,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 	// 保存用户消息
 	userMsg := &models.AiMessage{
 		ID:             uuid.NewString(),
-		ConversationID: "default",
+		ConversationID: conversationID,
 		MsgRole:        "user",
 		AiRole:         roleName,
 		Content:        userMessage,
@@ -139,6 +173,14 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 
 	go func() {
 		defer close(ch)
+		// 对话结束后更新会话活跃时间（用于会话列表排序）
+		defer func() {
+			if conversationID != "" {
+				if err := s.conversationDao.Touch(ws, conversationID); err != nil {
+					logrus.Warnf("更新会话活跃时间失败: %v", err)
+				}
+			}
+		}()
 
 		// send 在 ctx 取消（客户端断开）时立即返回，避免向已无人消费的 channel 写入而永久阻塞泄漏
 		send := func(ev SSEEvent) bool {
@@ -223,7 +265,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 				if assistantContent != "" {
 					s.saveMessage(ws, &models.AiMessage{
 						ID:             uuid.NewString(),
-						ConversationID: "default",
+						ConversationID: conversationID,
 						MsgRole:        "assistant",
 						AiRole:         roleName,
 						Content:        assistantContent,
@@ -238,7 +280,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 			tcsJSON, _ := json.Marshal(toolCalls)
 			s.saveMessage(ws, &models.AiMessage{
 				ID:             uuid.NewString(),
-				ConversationID: "default",
+				ConversationID: conversationID,
 				MsgRole:        "assistant",
 				AiRole:         roleName,
 				Content:        assistantContent,
@@ -265,7 +307,7 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 					})
 					s.saveMessage(ws, &models.AiMessage{
 						ID:             uuid.NewString(),
-						ConversationID: "default",
+						ConversationID: conversationID,
 						MsgRole:        "tool",
 						AiRole:         roleName,
 						Content:        errMsg,
@@ -275,31 +317,33 @@ func (s *ChatService) Chat(ctx context.Context, ws *workspace.Workspace, roleNam
 					continue
 				}
 
-				result, err := t.Execute(toolCtx, tc.Arguments)
+				// 执行工具；结果注入前剪枝，避免超大结果撑爆上下文
+				prunedResult, err := t.Execute(toolCtx, tc.Arguments)
 				if err != nil {
 					logrus.Errorf("工具 %s 执行失败: %v", tc.Name, err)
-					result = fmt.Sprintf("工具执行出错: %v", err)
+					prunedResult = fmt.Sprintf("工具执行出错: %v", err)
 				}
+				prunedResult = pruneToolResult(prunedResult)
 
 				// 生成摘要
-				summary := summarizeResult(tc.Name, result)
+				summary := summarizeResult(tc.Name, prunedResult)
 
-				if !send(SSEEvent{Type: "tool_result", Tool: tc.Name, Summary: summary, Detail: json.RawMessage(result)}) {
+				if !send(SSEEvent{Type: "tool_result", Tool: tc.Name, Summary: summary, Detail: json.RawMessage(prunedResult)}) {
 					return
 				}
 
 				messages = append(messages, provider.ChatMessage{
 					Role:       "tool",
-					Content:    result,
+					Content:    prunedResult,
 					ToolCallID: tc.ID,
 				})
 
 				s.saveMessage(ws, &models.AiMessage{
 					ID:             uuid.NewString(),
-					ConversationID: "default",
+					ConversationID: conversationID,
 					MsgRole:        "tool",
 					AiRole:         roleName,
-					Content:        result,
+					Content:        prunedResult,
 					ToolCallID:     tc.ID,
 					ToolName:       tc.Name,
 				})
@@ -318,6 +362,92 @@ func (s *ChatService) saveMessage(ws *workspace.Workspace, msg *models.AiMessage
 	if err := s.messageDao.Save(ws, msg); err != nil {
 		logrus.Errorf("保存 AI 消息失败: %v", err)
 	}
+}
+
+// compressHistory 在非摘要消息数超过窗口上限时，将最旧的一批消息压缩为一条摘要消息。
+// 压缩结果写入数据库（role=summary），返回摘要文本供本次请求注入；失败返回空串不阻塞对话。
+// 依赖传入的 history 来自 ListRecentFiltered：其包含已有摘要消息（若有）与之后的全部消息。
+func (s *ChatService) compressHistory(ctx context.Context, ws *workspace.Workspace, llmProvider provider.LLMProvider, conversationID string, roleName string, history []*models.AiMessage) (string, error) {
+	// 统计非摘要消息
+	var realMsgs []*models.AiMessage
+	for _, h := range history {
+		if h.MsgRole != dao.AiSummaryRole {
+			realMsgs = append(realMsgs, h)
+		}
+	}
+	if len(realMsgs) <= MaxHistoryMessages {
+		return "", nil // 未超窗口，无需压缩
+	}
+
+	// 取最旧的一批（ListRecentFiltered 升序，头部即最旧）
+	const compressBatch = 20
+	if len(realMsgs) > compressBatch {
+		realMsgs = realMsgs[:compressBatch]
+	}
+
+	// 拼接待压缩内容
+	var sb strings.Builder
+	for _, m := range realMsgs {
+		role := m.MsgRole
+		if role == "tool" {
+			role = "工具结果"
+		}
+		sb.WriteString(fmt.Sprintf("[%s] %s\n", role, truncateString(m.Content)))
+	}
+	prompt := "请用中文总结以下对话历史的关键信息，保留用户询问过的话题、结论与重要数据，控制在 200 字以内：\n\n" + sb.String()
+
+	summary, err := s.generateSummary(ctx, llmProvider, prompt)
+	if err != nil {
+		return "", err
+	}
+	if summary == "" {
+		return "", nil
+	}
+
+	// 删除旧摘要，写入新摘要（每会话最多保留一条）
+	_ = s.messageDao.DeleteSummary(ws, conversationID, roleName)
+	_ = s.messageDao.Save(ws, &models.AiMessage{
+		ID:             uuid.NewString(),
+		ConversationID: conversationID,
+		AiRole:         roleName,
+		MsgRole:        dao.AiSummaryRole,
+		Content:        summary,
+	})
+	return summary, nil
+}
+
+// generateSummary 调用 LLM 生成一段文本摘要（非流式收集，一次性请求）。
+func (s *ChatService) generateSummary(ctx context.Context, llmProvider provider.LLMProvider, prompt string) (string, error) {
+	req := provider.ChatRequest{
+		Messages: []provider.ChatMessage{{Role: "user", Content: prompt}},
+	}
+	eventCh, err := llmProvider.ChatStream(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	var sb strings.Builder
+	for event := range eventCh {
+		switch event.Type {
+		case "text_delta":
+			sb.WriteString(event.Delta)
+		case "error":
+			if event.Error != nil {
+				return "", event.Error
+			}
+		}
+	}
+	return strings.TrimSpace(sb.String()), nil
+}
+
+// maxToolResultLen 工具结果注入 LLM 上下文前的最大长度；超出部分截断，避免撑爆上下文。
+const maxToolResultLen = 8000
+
+// pruneToolResult 截断过大的工具结果，保留头部并附截断提示。
+func pruneToolResult(result string) string {
+	if len(result) <= maxToolResultLen {
+		return result
+	}
+	return result[:maxToolResultLen] + "\n\n（工具结果过长，已截断）"
 }
 
 func filterOrphanedToolResults(messages []provider.ChatMessage) []provider.ChatMessage {

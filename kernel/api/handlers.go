@@ -31,6 +31,7 @@ type Handlers struct {
 	AiConfigDao        dao.AiConfigDao
 	AiApiConfigDao     dao.AiApiConfigDao
 	AiMessageDao       dao.AiMessageDao
+	AiConversationDao  dao.AiConversationDao
 	AiQuickCommandDao  dao.AiQuickCommandDao
 	RoleRegistry       *role.Registry
 }

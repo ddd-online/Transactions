@@ -173,7 +173,8 @@ func (h *Handlers) testAiConnection(c *gin.Context) (any, error) {
 // GET /api/v1/ai/messages
 func (h *Handlers) listAiMessages(c *gin.Context) (any, error) {
 	role := c.DefaultQuery("role", "financial_assistant")
-	msgs, err := h.AiMessageDao.ListRecent(ws(c), "default", role, 30)
+	conversationID := c.DefaultQuery("conversation_id", "default")
+	msgs, err := h.AiMessageDao.ListRecentFiltered(ws(c), conversationID, role, 60)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +200,8 @@ func (h *Handlers) listRoles(c *gin.Context) (any, error) {
 // DELETE /api/v1/ai/messages
 func (h *Handlers) clearAiMessages(c *gin.Context) (any, error) {
 	role := c.DefaultQuery("role", "financial_assistant")
-	if err := h.AiMessageDao.DeleteAll(ws(c), "default", role); err != nil {
+	conversationID := c.DefaultQuery("conversation_id", "default")
+	if err := h.AiMessageDao.DeleteAll(ws(c), conversationID, role); err != nil {
 		return nil, err
 	}
 	return nil, nil

@@ -62,6 +62,14 @@ export interface QuickCommand {
   sort_order: number
 }
 
+export interface AiConversation {
+  id: string
+  role: string
+  title: string
+  created_at: number
+  updated_at?: number
+}
+
 export const aiApi = {
   async fetchRoles(): Promise<AiRole[]> {
     return api.get('/v1/ai/roles', '获取角色列表')
@@ -92,12 +100,26 @@ export const aiApi = {
     return api.post('/v1/ai/provider/fetch', body, '获取供应商信息')
   },
 
-  async getMessages(role: string = 'financial_assistant'): Promise<AiMessage[]> {
-    return api.get(`/v1/ai/messages?role=${encodeURIComponent(role)}`, '获取对话历史')
+  async getMessages(role: string = 'financial_assistant', conversationId?: string): Promise<AiMessage[]> {
+    const q = `role=${encodeURIComponent(role)}&conversation_id=${encodeURIComponent(conversationId || 'default')}`
+    return api.get(`/v1/ai/messages?${q}`, '获取对话历史')
   },
 
-  async clearMessages(role: string = 'financial_assistant'): Promise<void> {
-    return api.delete(`/v1/ai/messages?role=${encodeURIComponent(role)}`, '清空对话')
+  async clearMessages(role: string = 'financial_assistant', conversationId?: string): Promise<void> {
+    const q = `role=${encodeURIComponent(role)}&conversation_id=${encodeURIComponent(conversationId || 'default')}`
+    return api.delete(`/v1/ai/messages?${q}`, '清空对话')
+  },
+
+  async listConversations(role: string = 'financial_assistant'): Promise<AiConversation[]> {
+    return api.get(`/v1/ai/conversations?role=${encodeURIComponent(role)}`, '获取会话列表')
+  },
+
+  async createConversation(role: string = 'financial_assistant', title?: string): Promise<AiConversation> {
+    return api.post('/v1/ai/conversations', { role, title }, '新建会话')
+  },
+
+  async deleteConversation(id: string): Promise<void> {
+    return api.delete(`/v1/ai/conversations/${encodeURIComponent(id)}`, '删除会话')
   },
 
   async getQuickCommands(role: string = 'financial_assistant'): Promise<QuickCommand[]> {

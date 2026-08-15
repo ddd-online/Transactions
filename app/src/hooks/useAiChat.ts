@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { aiApi, type AiMessage as AiMessageApi } from '@/backend/api/ai'
+import { aiApi, type AiMessage as AiMessageApi, type AiConversation } from '@/backend/api/ai'
 import { getErrorMessage } from '@/backend/errorHandler'
 
 // ----------------------------------------------------------------
@@ -44,6 +44,8 @@ export function useAiChat() {
   const streaming = ref(false)
   const currentRole = ref<string>('financial_assistant')
   const currentProvider = ref<string>('deepseek')
+  const conversations = ref<AiConversation[]>([])
+  const currentConversationId = ref<string>('default')
 
   let abortController: AbortController | null = null
   let msgIdCounter = 0
@@ -263,7 +265,7 @@ export function useAiChat() {
       const response = await fetch(`${apiBaseUrl}/api/v1/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName, role: currentRole.value, provider: currentProvider.value }),
+        body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName, role: currentRole.value, provider: currentProvider.value, conversation_id: currentConversationId.value }),
         signal: abortController.signal,
       })
 
@@ -322,10 +324,12 @@ export function useAiChat() {
 
   async function loadHistory(): Promise<void> {
     try {
-      const apiMessages = await aiApi.getMessages(currentRole.value)
+      const apiMessages = await aiApi.getMessages(currentRole.value, currentConversationId.value)
       if (!apiMessages || apiMessages.length === 0) return
 
       messages.value = apiMessages
+        // 过滤掉上下文摘要消息（role=summary，不展示给用户）
+        .filter((m: AiMessageApi) => m.role !== 'summary')
         .filter((m: AiMessageApi) => !(m.role === 'assistant' && m.tool_calls))
         .map((m: AiMessageApi): ChatMessage => {
           const base: ChatMessage = {
@@ -354,7 +358,52 @@ export function useAiChat() {
   async function clear(): Promise<void> {
     messages.value = []
     try {
-      await aiApi.clearMessages(currentRole.value)
+      await aiApi.clearMessages(currentRole.value, currentConversationId.value)
+    } catch {
+      // non-critical
+    }
+  }
+
+  // ---- Conversation management ----
+
+  async function loadConversations(): Promise<void> {
+    try {
+      conversations.value = await aiApi.listConversations(currentRole.value)
+    } catch {
+      conversations.value = []
+    }
+  }
+
+  async function createConversation(): Promise<void> {
+    try {
+      const conv = await aiApi.createConversation(currentRole.value)
+      conversations.value.unshift(conv)
+      currentConversationId.value = conv.id
+      messages.value = []
+      loadHistory()
+    } catch {
+      // non-critical
+    }
+  }
+
+  async function switchConversation(id: string): Promise<void> {
+    if (currentConversationId.value === id) return
+    currentConversationId.value = id
+    messages.value = []
+    await loadHistory()
+  }
+
+  async function deleteConversation(id: string): Promise<void> {
+    try {
+      await aiApi.deleteConversation(id)
+      conversations.value = conversations.value.filter(c => c.id !== id)
+      if (currentConversationId.value === id) {
+        // 删除当前会话后回到默认会话
+        currentConversationId.value = 'default'
+        messages.value = []
+        await loadConversations()
+        await loadHistory()
+      }
     } catch {
       // non-critical
     }
@@ -364,6 +413,8 @@ export function useAiChat() {
     if (currentRole.value === role) return
     currentRole.value = role
     messages.value = []
+    currentConversationId.value = 'default'
+    loadConversations()
     loadHistory()
   }
 
@@ -373,5 +424,10 @@ export function useAiChat() {
     }
   }
 
-  return { messages, streaming, currentRole, currentProvider, send, stop, loadHistory, clear, cleanup, switchRole }
+  return {
+    messages, streaming, currentRole, currentProvider,
+    conversations, currentConversationId,
+    send, stop, loadHistory, clear, cleanup, switchRole,
+    loadConversations, createConversation, switchConversation, deleteConversation,
+  }
 }

@@ -44,6 +44,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	aiConfigDao := dao.NewAiConfigDao()
 	aiApiConfigDao := dao.NewAiApiConfigDao()
 	aiMessageDao := dao.NewAiMessageDao()
+	aiConversationDao := dao.NewAiConversationDao()
 	aiQuickCommandDao := dao.NewAiQuickCommandDao()
 	aiToolRegistry := tool.NewToolRegistry()
 
@@ -63,7 +64,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	roleRegistry.Register(role.NewFinanceRole())
 	roleRegistry.Register(role.NewDiaryRole())
 
-	aiChatService := ai.NewChatService(aiApiConfigDao, aiConfigDao, aiMessageDao, aiToolRegistry, roleRegistry)
+	aiChatService := ai.NewChatService(aiApiConfigDao, aiConfigDao, aiMessageDao, aiConversationDao, aiToolRegistry, roleRegistry)
 
 	return &api.Handlers{
 		WsMgr:          mgr,
@@ -80,6 +81,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 		AiConfigDao:       aiConfigDao,
 		AiApiConfigDao:    aiApiConfigDao,
 		AiMessageDao:      aiMessageDao,
+		AiConversationDao: aiConversationDao,
 		AiQuickCommandDao: aiQuickCommandDao,
 		RoleRegistry:      roleRegistry,
 	}

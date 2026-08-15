@@ -121,6 +121,9 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			ai.POST("/provider/fetch", Handle(h.fetchProvider))
 			ai.GET("/messages", Handle(h.listAiMessages))
 			ai.DELETE("/messages", Handle(h.clearAiMessages))
+			ai.GET("/conversations", Handle(h.listConversations))
+			ai.POST("/conversations", Handle(h.createConversation))
+			ai.DELETE("/conversations/:id", Handle(h.deleteConversation))
 			ai.GET("/quick-commands", Handle(h.listQuickCommands))
 			ai.PUT("/quick-commands", Handle(h.saveQuickCommands))
 		}

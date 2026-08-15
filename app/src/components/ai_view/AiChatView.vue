@@ -22,6 +22,32 @@
               </div>
             </template>
           </a-dropdown>
+          <!-- 会话切换 -->
+          <a-dropdown :trigger="['click']" placement="bottomLeft">
+            <button class="chat-conv-trigger">
+              <span class="chat-conv-trigger-text">{{ currentConversationTitle }}</span>
+              <DownOutlined class="chat-role-trigger-arrow" />
+            </button>
+            <template #overlay>
+              <div class="chat-conv-menu">
+                <div v-if="conversations.length === 0" class="chat-conv-menu-empty">暂无会话</div>
+                <div v-for="conv in conversations" :key="conv.id" class="chat-conv-menu-item"
+                  :class="{ active: currentConversationId === conv.id }" @click="onConversationSelect(conv.id)">
+                  <span class="chat-conv-menu-title">{{ conv.title }}</span>
+                  <button v-if="currentConversationId === conv.id && conv.id !== 'default'" class="chat-conv-menu-del"
+                    title="删除会话" @click.stop="onConversationDelete(conv.id)">
+                    <DeleteOutlined />
+                  </button>
+                </div>
+                <div class="chat-conv-menu-actions">
+                  <a-button size="small" type="text" class="chat-conv-new" @click="onConversationCreate">
+                    <template #icon><PlusOutlined /></template>
+                    新建会话
+                  </a-button>
+                </div>
+              </div>
+            </template>
+          </a-dropdown>
         </div>
         <a-button type="text" :disabled="messages.length === 0 && !streaming" @click="clearConversation"
           class="chat-header-clear">
@@ -142,7 +168,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined, RobotOutlined, DownOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined, RobotOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import MarkdownViewer from '@/components/common/MarkdownViewer.vue'
 import AiToolCard from './AiToolCard.vue'
@@ -151,7 +177,12 @@ import { useAiChat } from '@/hooks/useAiChat'
 import { aiApi, type AiRole, type QuickCommand, type ToolInfo } from '@/backend/api/ai'
 
 // ---- AiChat composable (deep module) ----
-const { messages, streaming, currentRole, currentProvider, send, stop, loadHistory, clear, cleanup, switchRole } = useAiChat()
+const {
+  messages, streaming, currentRole, currentProvider,
+  conversations, currentConversationId,
+  send, stop, loadHistory, clear, cleanup, switchRole,
+  loadConversations, createConversation, switchConversation, deleteConversation,
+} = useAiChat()
 
 // ---- Role management ----
 const availableRoles = ref<AiRole[]>([])
@@ -182,6 +213,28 @@ async function loadProvider() {
 
 function onRoleChange(value: string) {
   if (typeof value === 'string') switchRole(value)
+}
+
+// ---- Conversation management ----
+const currentConversationTitle = computed(() => {
+  const conv = conversations.value.find(c => c.id === currentConversationId.value)
+  return conv?.title ?? '默认会话'
+})
+
+async function onConversationSelect(id: string) {
+  if (streaming.value) return
+  await switchConversation(id)
+}
+
+async function onConversationCreate() {
+  if (streaming.value) return
+  await createConversation()
+}
+
+async function onConversationDelete(id: string) {
+  if (streaming.value) return
+  message.warning('删除会话将同时删除该会话的全部消息')
+  await deleteConversation(id)
 }
 
 const currentRoleDisplay = computed(() => {
@@ -381,6 +434,7 @@ onMounted(() => {
   loadHistory()
   loadQuickCommands()
   loadProvider()
+  loadConversations()
 })
 
 onUnmounted(() => {
@@ -508,6 +562,114 @@ onUnmounted(() => {
   background: var(--transactions-color-active-bg);
   color: var(--transactions-color-primary);
   font-weight: 500;
+}
+
+/* ---- 会话切换下拉 ---- */
+.chat-conv-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  height: 28px;
+  padding: 0 var(--transactions-space-sm);
+  border: 1px solid var(--transactions-color-window-border);
+  background: none;
+  border-radius: var(--transactions-radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transactions-transition-fast), border-color var(--transactions-transition-fast);
+}
+
+.chat-conv-trigger:hover {
+  background: var(--transactions-color-hover-bg);
+  border-color: var(--transactions-color-border-l2);
+}
+
+.chat-conv-trigger-text {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-conv-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  min-width: 220px;
+  max-width: 280px;
+  padding: var(--transactions-space-xs);
+  background: var(--transactions-color-major-background);
+  border-radius: var(--transactions-radius-md);
+  box-shadow: var(--transactions-shadow-lg);
+}
+
+.chat-conv-menu-empty {
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-disabled);
+}
+
+.chat-conv-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-sm);
+  cursor: pointer;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  transition: background var(--transactions-transition-fast);
+}
+
+.chat-conv-menu-item:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.chat-conv-menu-item.active {
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+  font-weight: 500;
+}
+
+.chat-conv-menu-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-conv-menu-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  border-radius: var(--transactions-radius-sm);
+  cursor: pointer;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  flex-shrink: 0;
+  transition: background var(--transactions-transition-fast), color var(--transactions-transition-fast);
+}
+
+.chat-conv-menu-del:hover {
+  background: var(--transactions-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
+}
+
+.chat-conv-menu-actions {
+  border-top: 1px solid var(--transactions-color-divider);
+  padding-top: var(--transactions-space-xs);
+}
+
+.chat-conv-new {
+  width: 100%;
+  justify-content: flex-start;
+  color: var(--transactions-color-primary);
 }
 
 .chat-header-clear {
