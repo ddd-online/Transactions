@@ -48,7 +48,7 @@
   text-overflow: ellipsis;
 }
 
-// Scrollbar — subtle warm stone, hides until hover then fades in
+// Scrollbar — subtle cool-neutral thumb, hides until hover then fades in
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
     width: 5px;
@@ -61,12 +61,12 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(141, 127, 111, 0.18);
+    background: var(--billadm-color-scrollbar-thumb);
     border-radius: 8px;
     transition: background 0.3s ease;
 
     &:hover {
-      background: rgba(141, 127, 111, 0.40);
+      background: var(--billadm-color-scrollbar-thumb-hover);
     }
   }
 }
@@ -80,7 +80,7 @@
   -webkit-app-region: no-drag;
 }
 
-// Card — clean bordered
+// Card — clean bordered, elevation on hover only
 @mixin card-base {
   background-color: var(--billadm-color-major-background);
   border: 1px solid var(--billadm-color-window-border);
@@ -91,7 +91,6 @@
 
   &:hover {
     box-shadow: var(--billadm-shadow-md);
-    border-color: var(--billadm-color-primary);
   }
 }
 
@@ -188,7 +187,7 @@
   &:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--billadm-color-major-background),
-                0 0 0 4px rgba(74, 142, 112, 0.5);
+                0 0 0 4px var(--billadm-color-primary);
   }
 }
 

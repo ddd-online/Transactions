@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TimeSeriesData, ChartLine } from '@/backend/chart'
-import { TransactionTypeToColor } from '@/backend/constant'
+import { useAppearanceStore } from '@/stores/appearanceStore'
 
 import type { EChartsOption } from 'echarts'
 
@@ -24,12 +24,22 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const appearanceStore = useAppearanceStore()
+
 const getThemeColors = () => {
+  // 依赖追踪：主题切换时重算图表配色
+  appearanceStore.effective
   const styles = getComputedStyle(document.documentElement)
   return {
-    labelFill: styles.getPropertyValue('--billadm-color-text-major').trim() || '#1A1A18',
-    titleFill: styles.getPropertyValue('--billadm-color-text-major').trim() || '#1A1A18',
-    bgColor: styles.getPropertyValue('--billadm-color-major-background').trim() || '#FFFFFF',
+    labelFill: styles.getPropertyValue('--billadm-color-text-secondary').trim() || '#61666b',
+    titleFill: styles.getPropertyValue('--billadm-color-text-major').trim() || '#0f1115',
+    textMajor: styles.getPropertyValue('--billadm-color-text-major').trim() || '#0f1115',
+    bgColor: styles.getPropertyValue('--billadm-color-major-background').trim() || '#ffffff',
+    borderColor: styles.getPropertyValue('--billadm-color-window-border').trim() || '#e8eaed',
+    splitColor: styles.getPropertyValue('--billadm-color-divider').trim() || '#eceef1',
+    income: styles.getPropertyValue('--billadm-color-income').trim() || '#16a34a',
+    expense: styles.getPropertyValue('--billadm-color-expense').trim() || '#dc2626',
+    transfer: styles.getPropertyValue('--billadm-color-transfer').trim() || '#3b82f6',
   }
 }
 
@@ -66,7 +76,7 @@ const option = computed<EChartsOption | null>(() => {
 
     const lineType = labelTypeMap.get(label) || ''
     const color = allTypesUnique
-      ? TransactionTypeToColor.get(lineType) || undefined
+      ? themeColors[lineType as 'income'] || undefined
       : undefined
 
     return {
@@ -92,6 +102,13 @@ const option = computed<EChartsOption | null>(() => {
     },
     tooltip: {
       trigger: 'axis',
+      backgroundColor: themeColors.bgColor,
+      borderColor: themeColors.borderColor,
+      borderWidth: 1,
+      textStyle: {
+        color: themeColors.textMajor,
+        fontSize: 12,
+      },
       valueFormatter: (value: unknown) => {
         if (typeof value === 'number') {
           return `¥${value.toFixed(2)}`
@@ -127,6 +144,12 @@ const option = computed<EChartsOption | null>(() => {
         color: themeColors.labelFill,
         fontSize: 12,
       },
+      axisLine: {
+        lineStyle: { color: themeColors.borderColor },
+      },
+      splitLine: {
+        show: false,
+      },
     },
     yAxis: {
       type: 'value',
@@ -139,6 +162,12 @@ const option = computed<EChartsOption | null>(() => {
         color: themeColors.labelFill,
         fontSize: 12,
         formatter: (value: number) => `¥${value}`,
+      },
+      axisLine: {
+        show: false,
+      },
+      splitLine: {
+        lineStyle: { color: themeColors.splitColor },
       },
       min: 0,
     },

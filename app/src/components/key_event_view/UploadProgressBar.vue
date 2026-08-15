@@ -146,24 +146,24 @@ const barClass = computed(() => ({
   gap: 6px;
   font-size: var(--billadm-size-text-body-sm, 13px);
   font-weight: var(--billadm-weight-medium, 500);
-  color: var(--billadm-color-text-major, #1D1D1B);
+  color: var(--billadm-color-text-major, #0f1115);
 }
 
 .summary-icon {
   font-size: var(--billadm-size-text-body);
 
   &.done {
-    color: var(--billadm-color-success, #3D8C5E);
+    color: var(--billadm-color-success, #16a34a);
   }
 
   &.error {
-    color: var(--billadm-color-expense, #D9705A);
+    color: var(--billadm-color-expense, #dc2626);
   }
 }
 
 .summary-percent {
   font-size: var(--billadm-size-text-caption, 12px);
-  color: var(--billadm-color-text-secondary, #5C5C55);
+  color: var(--billadm-color-text-secondary, #61666b);
   font-variant-numeric: tabular-nums;
 }
 
@@ -172,23 +172,23 @@ const barClass = computed(() => ({
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: var(--billadm-color-minor-background, #F3F1ED);
+  background: var(--billadm-color-minor-background, #f3f4f6);
   overflow: hidden;
 }
 
 .summary-bar-fill {
   height: 100%;
   border-radius: 2px;
-  background: var(--billadm-color-primary, #4A8E70);
+  background: var(--billadm-color-primary, #3964fe);
   transform-origin: left;
   transition: transform 200ms ease;
 
   &--done {
-    background: var(--billadm-color-success, #3D8C5E);
+    background: var(--billadm-color-success, #16a34a);
   }
 
   &--error {
-    background: var(--billadm-color-expense, #D9705A);
+    background: var(--billadm-color-expense, #dc2626);
   }
 }
 
@@ -211,11 +211,11 @@ const barClass = computed(() => ({
   transition: background 150ms ease;
 
   &--uploading {
-    background: var(--billadm-color-hover-bg, rgba(74, 142, 112, 0.07));
+    background: var(--billadm-color-hover-bg, rgba(15, 17, 21, 0.06));
   }
 
   &--error {
-    background: var(--billadm-color-danger-hover-bg, rgba(217, 112, 90, 0.10));
+    background: var(--billadm-color-danger-hover-bg, rgba(220, 38, 38, 0.10));
   }
 }
 
@@ -233,15 +233,15 @@ const barClass = computed(() => ({
   font-size: var(--billadm-size-text-body);
 
   &.done {
-    color: var(--billadm-color-success, #3D8C5E);
+    color: var(--billadm-color-success, #16a34a);
   }
 
   &.uploading {
-    color: var(--billadm-color-primary, #4A8E70);
+    color: var(--billadm-color-primary, #3964fe);
   }
 
   &.error {
-    color: var(--billadm-color-expense, #D9705A);
+    color: var(--billadm-color-expense, #dc2626);
   }
 
   &.pending {
@@ -249,7 +249,7 @@ const barClass = computed(() => ({
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--billadm-color-text-disabled, #9E9E96);
+    background: var(--billadm-color-text-disabled, #9aa0a8);
   }
 }
 
@@ -264,7 +264,7 @@ const barClass = computed(() => ({
 
 .file-name {
   font-size: var(--billadm-size-text-body-sm, 13px);
-  color: var(--billadm-color-text-major, #1D1D1B);
+  color: var(--billadm-color-text-major, #0f1115);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -275,14 +275,14 @@ const barClass = computed(() => ({
   width: 100%;
   height: 2px;
   border-radius: 1px;
-  background: var(--billadm-color-minor-background, #F3F1ED);
+  background: var(--billadm-color-minor-background, #f3f4f6);
   overflow: hidden;
 }
 
 .file-bar-fill {
   height: 100%;
   border-radius: 1px;
-  background: var(--billadm-color-primary, #4A8E70);
+  background: var(--billadm-color-primary, #3964fe);
   transform-origin: left;
   transition: transform 150ms ease;
 }
@@ -294,20 +294,20 @@ const barClass = computed(() => ({
   font-variant-numeric: tabular-nums;
 
   &--pending {
-    color: var(--billadm-color-text-disabled, #9E9E96);
+    color: var(--billadm-color-text-disabled, #9aa0a8);
   }
 
   &--uploading {
-    color: var(--billadm-color-primary, #4A8E70);
+    color: var(--billadm-color-primary, #3964fe);
     font-weight: var(--billadm-weight-medium, 500);
   }
 
   &--done {
-    color: var(--billadm-color-success, #3D8C5E);
+    color: var(--billadm-color-success, #16a34a);
   }
 
   &--error {
-    color: var(--billadm-color-expense, #D9705A);
+    color: var(--billadm-color-expense, #dc2626);
   }
 }
 
@@ -322,7 +322,7 @@ const barClass = computed(() => ({
 
 .error-msg {
   font-size: var(--billadm-size-text-caption, 12px);
-  color: var(--billadm-color-expense, #D9705A);
+  color: var(--billadm-color-expense, #dc2626);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -264,7 +264,7 @@ const wordCount = computed(() => [...localContent.value].length)
 .mood-picker {
   display: flex;
   gap: 0;
-  background: rgba(140, 123, 110, 0.07);
+  background: var(--billadm-color-minor-background);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-2xs);
 }

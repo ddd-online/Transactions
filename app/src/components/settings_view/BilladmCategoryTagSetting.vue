@@ -47,9 +47,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import type { TransactionType, Category, Tag } from '@/types/billadm';
-import { TransactionTypeToColor } from '@/backend/constant';
+import { useTransactionTypeColor } from '@/utils/themeColors';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import { withErrorHandling, getErrorMessage } from '@/backend/errorHandler'
 import {
@@ -65,11 +65,13 @@ interface CategoryWithTags extends Category {
   tags: Tag[];
 }
 
-const transactionTypes = [
-  { value: 'expense' as TransactionType, label: '支出', color: TransactionTypeToColor.get('expense') || '#D9705A' },
-  { value: 'income' as TransactionType, label: '收入', color: TransactionTypeToColor.get('income') || '#3D8C5E' },
-  { value: 'transfer' as TransactionType, label: '转账', color: TransactionTypeToColor.get('transfer') || '#5C8DB5' },
-]
+const getTypeColor = useTransactionTypeColor()
+
+const transactionTypes = computed(() => [
+  { value: 'expense' as TransactionType, label: '支出', color: getTypeColor('expense') },
+  { value: 'income' as TransactionType, label: '收入', color: getTypeColor('income') },
+  { value: 'transfer' as TransactionType, label: '转账', color: getTypeColor('transfer') },
+])
 
 const activeType = ref<TransactionType>('expense')
 

@@ -1,71 +1,203 @@
 // ============================================
-// Transactions Design Tokens
-// "Warm Kinpaku Light" — refined, warm, precise
-// Reference: impeccable.style (#f7f4ef ivory, gold accent)
+// Transactions Design Tokens — "DeepSeek Harness" style
+// Cool neutrals + DeepSeek blue · light & dark themes
+// Reference: DeepSeek Harness Web GUI (dsw tokens)
 // ============================================
 @use 'sass:map';
 
 // ============================================
-// Theme Colors
+// Light theme tokens (default)
 // ============================================
-$theme-colors: (
-  'primary': #4A8E70,
-  'primary-light': #6AB08C,
-  'secondary': #8C7B6E,
-  'accent': #C6963A,
-  'accent-light': #D4AE5E,
-  'accent-hover': #B8872E,
-) !default;
+$light: (
+  // Brand — DeepSeek blue
+  'color-primary': #3964fe,
+  'color-primary-light': #5b7fff,
+  'color-primary-hover': #5b7fff,
+  'color-primary-active': #2b52e6,
+  'color-primary-200': #a9bdff,
+  'color-primary-tint': rgba(57, 100, 254, 0.08),
 
-// Semantic colors — distinct, colorblind-friendly
-$semantic-colors: (
-  'income': #3D8C5E,
-  'expense': #D9705A,
-  'transfer': #5C8DB5,
-  'outlier': #C68E30,
-  'success': #3D8C5E,
-) !default;
+  // Secondary / accent (amber = warning role, DSH state-warn)
+  'color-secondary': #61666b,
+  'color-accent': #d97706,
+  'color-accent-light': #f59e0b,
+  'color-accent-hover': #b45309,
 
-// Ledger accent palette
-$ledger-colors: (
-  'forest': #4A8E70,
-  'warm-brown': #8C7B6E,
-  'amber': #C6963A,
-  'vermillion': #D9705A,
-  'slate-blue': #5C8DB5,
-  'ochre': #9E8C7E,
-  'moss': #6B9E7E,
-  'camel': #B89A80,
-) !default;
+  // Semantic — transaction data only (Semantic Silo rule)
+  'color-income': #16a34a,
+  'color-expense': #dc2626,
+  'color-transfer': #3b82f6,
+  'color-outlier': #d97706,
 
-// Background — warm ivory hierarchy (ref: impeccable.style #f7f4ef)
-$background-colors: (
-  'major': #FFFFFF,
-  'major-warm': #F7F4EF,
-  'minor': #F0EDE6,
-  'elevated': #FFFFFF,
-  'window-border': #E2DDD5,
-  'divider': #EBE6DE,
-) !default;
+  // Semantic tints — 10% tag/chip backgrounds
+  'color-income-tint': rgba(22, 163, 74, 0.10),
+  'color-expense-tint': rgba(220, 38, 38, 0.10),
+  'color-transfer-tint': rgba(59, 130, 246, 0.10),
+  'color-outlier-tint': rgba(217, 119, 6, 0.10),
+  'color-outlier-tint-strong': rgba(217, 119, 6, 0.18),
 
-// Text — near-black for maximum readability
-$text-colors: (
-  'major': #1D1D1B,
-  'secondary': #5C5C55,
-  'disabled': #9E9E96,
-  'inverse': #FFFFFF,
-) !default;
+  // UI state
+  'color-success': #16a34a,
+  'color-warning': #d97706,
+  'color-positive': #16a34a,
+  'color-negative': #dc2626,
 
-// Icons
-$icon-colors: (
-  'default': #5C5C55,
-  'hover': #1D1D1B,
-  'active': #4A8E70,
-) !default;
+  // Backgrounds — cool neutral hierarchy
+  'color-bg-base': #f9fafb,
+  'color-major-background': #ffffff,
+  'color-major-warm': #f9fafb,
+  'color-minor-background': #f3f4f6,
+  'color-sidebar-fill': #f3f4f6,
+  'color-elevated': #ffffff,
+
+  // Borders — hairline l1/l2/l3
+  'color-window-border': #e8eaed,
+  'color-divider': #eceef1,
+  'color-border-l1': #e8eaed,
+  'color-border-l2': #e2e4e8,
+  'color-border-l3': #d5d8dd,
+
+  // Text — four levels
+  'color-text-major': #0f1115,
+  'color-text-secondary': #61666b,
+  'color-text-tertiary': #81858c,
+  'color-text-disabled': #9aa0a8,
+  'color-text-inverse': #ffffff,
+
+  // Icons
+  'color-icon': #61666b,
+  'color-icon-hover': #0f1115,
+  'color-icon-active': #3964fe,
+
+  // Interactive fills
+  'color-hover-bg': rgba(15, 17, 21, 0.06),
+  'color-active-bg': rgba(57, 100, 254, 0.10),
+  'color-danger-hover-bg': rgba(220, 38, 38, 0.10),
+
+  // Chat bubble (DSH specific-bubble)
+  'color-bubble': #eef0f4,
+
+  // Code blocks (markdown)
+  'color-markdown-code-block': #f4f5f7,
+
+  // Scrollbar — cool neutral thumb
+  'color-scrollbar-thumb': rgba(15, 17, 21, 0.18),
+  'color-scrollbar-thumb-hover': rgba(15, 17, 21, 0.40),
+
+  // Shadows — lv1..lv4
+  'shadow-sm': 0 1px 2px rgba(0, 0, 0, 0.05),
+  'shadow-md': 0 4px 12px rgba(0, 0, 0, 0.08),
+  'shadow-lg': 0 8px 24px rgba(0, 0, 0, 0.10),
+  'shadow-xl': 0 16px 40px rgba(0, 0, 0, 0.14),
+  'shadow-focus': 0 0 0 2px rgba(57, 100, 254, 0.25),
+  'shadow-lv1': 0 1px 2px rgba(0, 0, 0, 0.05),
+  'shadow-lv2': 0 4px 12px rgba(0, 0, 0, 0.08),
+  'shadow-lv3': 0 8px 24px rgba(0, 0, 0, 0.10),
+  'shadow-lv4': 0 16px 40px rgba(0, 0, 0, 0.14),
+
+  // Ledger identity palette (data identity — 8 natural tones)
+  'ledger-forest': #4a8e70,
+  'ledger-warm-brown': #8c7b6e,
+  'ledger-amber': #c6963a,
+  'ledger-vermillion': #d9705a,
+  'ledger-slate-blue': #5c8db5,
+  'ledger-ochre': #9e8c7e,
+  'ledger-moss': #6b9e7e,
+  'ledger-camel': #b89a80,
+);
 
 // ============================================
-// Typography
+// Dark theme tokens ([data-theme="dark"])
 // ============================================
+$dark: (
+  'color-primary': #3964fe,
+  'color-primary-light': #6b8aff,
+  'color-primary-hover': #6b8aff,
+  'color-primary-active': #2b52e6,
+  'color-primary-200': #a9bdff,
+  'color-primary-tint': rgba(57, 100, 254, 0.16),
+
+  'color-secondary': #b6bcc6,
+  'color-accent': #fbbf24,
+  'color-accent-light': #fcd34d,
+  'color-accent-hover': #f59e0b,
+
+  'color-income': #4ade80,
+  'color-expense': #f87171,
+  'color-transfer': #60a5fa,
+  'color-outlier': #fbbf24,
+
+  'color-income-tint': rgba(74, 222, 128, 0.14),
+  'color-expense-tint': rgba(248, 113, 113, 0.14),
+  'color-transfer-tint': rgba(96, 165, 250, 0.14),
+  'color-outlier-tint': rgba(251, 191, 36, 0.14),
+  'color-outlier-tint-strong': rgba(251, 191, 36, 0.22),
+
+  'color-success': #4ade80,
+  'color-warning': #fbbf24,
+  'color-positive': #4ade80,
+  'color-negative': #f87171,
+
+  'color-bg-base': #0f1115,
+  'color-major-background': #16181d,
+  'color-major-warm': #0f1115,
+  'color-minor-background': #14161a,
+  'color-sidebar-fill': #14161a,
+  'color-elevated': #1d2026,
+
+  'color-window-border': rgba(255, 255, 255, 0.08),
+  'color-divider': rgba(255, 255, 255, 0.08),
+  'color-border-l1': rgba(255, 255, 255, 0.08),
+  'color-border-l2': rgba(255, 255, 255, 0.12),
+  'color-border-l3': rgba(255, 255, 255, 0.18),
+
+  'color-text-major': #f2f4f8,
+  'color-text-secondary': #b6bcc6,
+  'color-text-tertiary': #8a919c,
+  'color-text-disabled': #6b7280,
+  'color-text-inverse': #ffffff,
+
+  'color-icon': #b6bcc6,
+  'color-icon-hover': #f2f4f8,
+  'color-icon-active': #6b8aff,
+
+  'color-hover-bg': rgba(255, 255, 255, 0.08),
+  'color-active-bg': rgba(57, 100, 254, 0.22),
+  'color-danger-hover-bg': rgba(248, 113, 113, 0.14),
+
+  'color-bubble': #24282f,
+
+  'color-markdown-code-block': #1d2026,
+
+  'color-scrollbar-thumb': rgba(255, 255, 255, 0.18),
+  'color-scrollbar-thumb-hover': rgba(255, 255, 255, 0.40),
+
+  'shadow-sm': 0 1px 2px rgba(0, 0, 0, 0.30),
+  'shadow-md': 0 4px 12px rgba(0, 0, 0, 0.35),
+  'shadow-lg': 0 8px 24px rgba(0, 0, 0, 0.45),
+  'shadow-xl': 0 16px 40px rgba(0, 0, 0, 0.55),
+  'shadow-focus': 0 0 0 2px rgba(57, 100, 254, 0.45),
+  'shadow-lv1': 0 1px 2px rgba(0, 0, 0, 0.30),
+  'shadow-lv2': 0 4px 12px rgba(0, 0, 0, 0.35),
+  'shadow-lv3': 0 8px 24px rgba(0, 0, 0, 0.45),
+  'shadow-lv4': 0 16px 40px rgba(0, 0, 0, 0.55),
+
+  // Ledger identity — lightened for dark-surface legibility
+  'ledger-forest': #5d9e80,
+  'ledger-warm-brown': #a2907f,
+  'ledger-amber': #d4ae5e,
+  'ledger-vermillion': #e08a74,
+  'ledger-slate-blue': #74a0c8,
+  'ledger-ochre': #b0a092,
+  'ledger-moss': #82b096,
+  'ledger-camel': #c8ae94,
+);
+
+// ============================================
+// Theme-independent tokens
+// ============================================
+
+// Typography sizes
 $font-sizes: (
   'display-xl': 36px,
   'display': 28px,
@@ -93,9 +225,7 @@ $line-heights: (
   'relaxed': 1.8,
 ) !default;
 
-// ============================================
 // Spacing (8px base)
-// ============================================
 $spacing: (
   '2xs': 2px,
   'xs': 4px,
@@ -107,9 +237,7 @@ $spacing: (
   '3xl': 48px,
 ) !default;
 
-// ============================================
 // Layout
-// ============================================
 $layout-sizes: (
   'header-height': 48px,
   'sider-width': 56px,
@@ -117,9 +245,7 @@ $layout-sizes: (
   'content-padding': 20px,
 ) !default;
 
-// ============================================
-// Border Radius — moderate, clean
-// ============================================
+// Border radius
 $border-radius: (
   'sm': 6px,
   'md': 8px,
@@ -128,9 +254,7 @@ $border-radius: (
   'full': 9999px,
 ) !default;
 
-// ============================================
-// Transitions
-// ============================================
+// Transitions — fast, product-paced (DSH 150–250ms)
 $transitions: (
   'fast': 150ms ease,
   'normal': 200ms ease,
@@ -139,59 +263,16 @@ $transitions: (
 ) !default;
 
 // ============================================
-// Shadows — clean, layered depth
-// ============================================
-$shadow-sm-color: rgba(0, 0, 0, 0.05);
-$shadow-md-color: rgba(0, 0, 0, 0.07);
-$shadow-lg-color: rgba(0, 0, 0, 0.09);
-$shadow-xl-color: rgba(0, 0, 0, 0.12);
-
-// ============================================
 // CSS Custom Properties
 // ============================================
+@mixin emit-theme($map) {
+  @each $key, $value in $map {
+    --billadm-#{$key}: #{$value};
+  }
+}
+
 :root {
-  // Theme
-  --billadm-color-primary: #{map.get($theme-colors, 'primary')};
-  --billadm-color-primary-light: #{map.get($theme-colors, 'primary-light')};
-  --billadm-color-secondary: #{map.get($theme-colors, 'secondary')};
-  --billadm-color-accent: #{map.get($theme-colors, 'accent')};
-  --billadm-color-accent-light: #{map.get($theme-colors, 'accent-light')};
-  --billadm-color-accent-hover: #{map.get($theme-colors, 'accent-hover')};
-
-  // Semantic
-  --billadm-color-income: #{map.get($semantic-colors, 'income')};
-  --billadm-color-expense: #{map.get($semantic-colors, 'expense')};
-  --billadm-color-transfer: #{map.get($semantic-colors, 'transfer')};
-  --billadm-color-outlier: #{map.get($semantic-colors, 'outlier')};
-  --billadm-color-success: #{map.get($semantic-colors, 'success')};
-  --billadm-color-warning: #{map.get($semantic-colors, 'outlier')};
-  --billadm-color-positive: #{map.get($semantic-colors, 'income')};
-  --billadm-color-negative: #{map.get($semantic-colors, 'expense')};
-
-  // Background
-  --billadm-color-major-background: #{map.get($background-colors, 'major')};
-  --billadm-color-major-warm: #{map.get($background-colors, 'major-warm')};
-  --billadm-color-minor-background: #{map.get($background-colors, 'minor')};
-  --billadm-color-elevated: #{map.get($background-colors, 'elevated')};
-  --billadm-color-window-border: #{map.get($background-colors, 'window-border')};
-  --billadm-color-divider: #{map.get($background-colors, 'divider')};
-
-  // Text
-  --billadm-color-text-major: #{map.get($text-colors, 'major')};
-  --billadm-color-text-secondary: #{map.get($text-colors, 'secondary')};
-  --billadm-color-text-disabled: #{map.get($text-colors, 'disabled')};
-  --billadm-color-text-inverse: #{map.get($text-colors, 'inverse')};
-
-  // Icons
-  --billadm-color-icon: #{map.get($icon-colors, 'default')};
-  --billadm-color-icon-hover: #{map.get($icon-colors, 'hover')};
-  --billadm-color-icon-active: #{map.get($icon-colors, 'active')};
-
-  // Shadows
-  --billadm-shadow-sm: 0 1px 3px #{$shadow-sm-color};
-  --billadm-shadow-md: 0 2px 8px #{$shadow-md-color};
-  --billadm-shadow-lg: 0 4px 16px #{$shadow-lg-color};
-  --billadm-shadow-xl: 0 8px 32px #{$shadow-xl-color};
+  @include emit-theme($light);
 
   // Typography
   --billadm-size-text-display-xl: #{map.get($font-sizes, 'display-xl')};
@@ -237,20 +318,13 @@ $shadow-xl-color: rgba(0, 0, 0, 0.12);
   --billadm-radius-lg: #{map.get($border-radius, 'lg')};
   --billadm-radius-xl: #{map.get($border-radius, 'xl')};
   --billadm-radius-full: #{map.get($border-radius, 'full')};
+  --billadm-radius-chat: 20px;
 
   // Transitions
   --billadm-transition-fast: #{map.get($transitions, 'fast')};
   --billadm-transition-normal: #{map.get($transitions, 'normal')};
   --billadm-transition-slow: #{map.get($transitions, 'slow')};
   --billadm-transition-smooth: #{map.get($transitions, 'smooth')};
-
-  // Hover / active states
-  --billadm-color-hover-bg: rgba(74, 142, 112, 0.08);
-  --billadm-color-active-bg: rgba(74, 142, 112, 0.14);
-  --billadm-color-danger-hover-bg: rgba(217, 112, 90, 0.10);
-
-  // Shadows
-  --billadm-shadow-focus: 0 0 0 2px rgba(74, 142, 112, 0.15);
 
   // Button
   --billadm-btn-height-sm: 28px;
@@ -263,14 +337,18 @@ $shadow-xl-color: rgba(0, 0, 0, 0.12);
   --billadm-btn-font-size-sm: 13px;
   --billadm-btn-font-size-md: 14px;
   --billadm-btn-font-size-lg: 16px;
+}
 
-  // Ledger accents
-  --billadm-ledger-forest: #{map.get($ledger-colors, 'forest')};
-  --billadm-ledger-warm-brown: #{map.get($ledger-colors, 'warm-brown')};
-  --billadm-ledger-amber: #{map.get($ledger-colors, 'amber')};
-  --billadm-ledger-vermillion: #{map.get($ledger-colors, 'vermillion')};
-  --billadm-ledger-slate-blue: #{map.get($ledger-colors, 'slate-blue')};
-  --billadm-ledger-ochre: #{map.get($ledger-colors, 'ochre')};
-  --billadm-ledger-moss: #{map.get($ledger-colors, 'moss')};
-  --billadm-ledger-camel: #{map.get($ledger-colors, 'camel')};
+// Dark theme — same variable names, dark values.
+// Applied by the appearance store via `data-theme` on <html>.
+[data-theme='dark'] {
+  @include emit-theme($dark);
+}
+
+// System-follow fallback: when no explicit data-theme is set yet
+// (e.g. the init window), honor the OS preference directly.
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    @include emit-theme($dark);
+  }
 }

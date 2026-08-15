@@ -2,6 +2,7 @@ import {createApp} from 'vue';
 import {createPinia} from 'pinia';
 import router from '@/router/router';
 import App from '@/App.vue';
+import {useAppearanceStore} from '@/stores/appearanceStore';
 import VueECharts from 'vue-echarts';
 import * as echarts from 'echarts/core';
 import {CanvasRenderer} from 'echarts/renderers';
@@ -33,4 +34,7 @@ echarts.use([
 );
 app.component('v-chart', VueECharts);
 
-app.mount('#app');
+// 挂载前先应用外观（避免首帧主题闪烁），随后立即挂载
+useAppearanceStore(pinia).init().finally(() => {
+    app.mount('#app');
+});

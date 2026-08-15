@@ -104,9 +104,9 @@ onUnmounted(() => {
   width: 200px;
   min-width: 200px;
   height: 100%;
-  background-color: var(--billadm-color-minor-background);
+  background-color: var(--billadm-color-sidebar-fill);
   flex-shrink: 0;
-  border-right: 1px solid var(--billadm-color-divider);
+  border-right: 1px solid var(--billadm-color-border-l1);
   display: flex;
   flex-direction: column;
 }
@@ -116,7 +116,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-bg-base);
   overflow: hidden;
   position: relative;
 }
@@ -140,8 +140,8 @@ onUnmounted(() => {
 /* 底部状态栏 */
 .app-footer {
   height: var(--billadm-size-footer-height);
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-bg-base);
   flex-shrink: 0;
-  border-top: 1px solid var(--billadm-color-divider);
+  border-top: 1px solid var(--billadm-color-border-l1);
 }
 </style>

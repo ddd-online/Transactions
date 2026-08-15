@@ -5,9 +5,9 @@ export const TransactionTypeToLabel = new Map([
 ]);
 
 export const TransactionTypeToColor = new Map([
-    ['income', '#3D8C5E'],
-    ['expense', '#D9705A'],
-    ['transfer', '#5C8DB5']
+    ['income', '#16a34a'],
+    ['expense', '#dc2626'],
+    ['transfer', '#3b82f6']
 ]);
 
 export const TimeRangeValueToLabel = {

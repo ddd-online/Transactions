@@ -76,7 +76,8 @@ import type { TransactionTemplate } from '@/types/billadm'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { queryTemplates, deleteTemplate, updateTemplateSort } from '@/backend/api/template'
 import { useLedgerStore } from '@/stores/ledgerStore.ts'
-import { TransactionTypeToLabel, TransactionTypeToColor } from '@/backend/constant.ts'
+import { TransactionTypeToLabel } from '@/backend/constant.ts'
+import { useTransactionTypeColor } from '@/utils/themeColors'
 import Sortable from 'sortablejs'
 
 const ledgerStore = useLedgerStore()
@@ -219,9 +220,7 @@ const getTypeLabel = (type: string) => {
   return TransactionTypeToLabel.get(type) || type
 }
 
-const getTypeColor = (type: string) => {
-  return TransactionTypeToColor.get(type) || '#9E9E96'
-}
+const getTypeColor = useTransactionTypeColor()
 
 onMounted(() => {
   loadTemplates()

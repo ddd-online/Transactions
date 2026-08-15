@@ -54,7 +54,7 @@ import { ref, watch, computed } from 'vue'
 import BilladmChart from '@/components/da_view/BilladmChart.vue'
 import BilladmChartLines from '@/components/da_view/BilladmChartLines.vue'
 import type { TimeSeriesData, ChartLine } from '@/backend/chart'
-import { TransactionTypeToColor } from '@/backend/constant'
+import { useTransactionTypeColor } from '@/utils/themeColors'
 
 interface Props {
   title: string
@@ -79,7 +79,7 @@ const emit = defineEmits<{
 const editGranularity = ref(props.granularity)
 watch(() => props.granularity, (v) => { editGranularity.value = v })
 
-const getTypeColor = (type: string) => TransactionTypeToColor.get(type) || 'var(--billadm-color-text-secondary)'
+const getTypeColor = useTransactionTypeColor()
 
 const handleGranularityChange = () => {
   if (!props.chartId) return

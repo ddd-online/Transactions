@@ -276,7 +276,7 @@ useListDragSort(listRef, dragEnabled, {
 
 .action-icon.delete:hover:not(:disabled) {
   color: var(--billadm-color-negative);
-  background-color: rgba(199, 62, 58, 0.08);
+  background-color: var(--billadm-color-danger-hover-bg);
 }
 
 .action-icon:disabled {

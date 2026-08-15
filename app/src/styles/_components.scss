@@ -66,7 +66,7 @@
 .tag {
   // Income
   &-income {
-    background-color: rgba(61, 140, 94, 0.10);
+    background-color: var(--billadm-color-income-tint);
     color: var(--billadm-color-income);
     border: none;
     font-weight: 500;
@@ -74,7 +74,7 @@
 
   // Expense
   &-expense {
-    background-color: rgba(217, 112, 90, 0.10);
+    background-color: var(--billadm-color-expense-tint);
     color: var(--billadm-color-expense);
     border: none;
     font-weight: 500;
@@ -82,7 +82,7 @@
 
   // Transfer
   &-transfer {
-    background-color: rgba(92, 141, 181, 0.10);
+    background-color: var(--billadm-color-transfer-tint);
     color: var(--billadm-color-transfer);
     border: none;
     font-weight: 500;
@@ -90,7 +90,7 @@
 
   // Outlier
   &-outlier {
-    background-color: rgba(198, 142, 48, 0.10);
+    background-color: var(--billadm-color-outlier-tint);
     color: var(--billadm-color-outlier);
     border: none;
     font-weight: 500;

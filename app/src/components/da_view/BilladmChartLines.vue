@@ -90,7 +90,8 @@ import { ref, watch } from 'vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { ChartLine } from '@/backend/chart'
-import { TransactionTypeToColor, TransactionTypeToLabel } from '@/backend/constant'
+import { TransactionTypeToLabel } from '@/backend/constant'
+import { useTransactionTypeColor } from '@/utils/themeColors'
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useLedgerStore } from '@/stores/ledgerStore'
 
@@ -140,7 +141,7 @@ const newLineForm = ref<NewLineForm>({
 
 watch(() => props.lines, (v) => { localLines.value = [...v] }, { deep: true })
 
-const getTypeColor = (type: string) => TransactionTypeToColor.get(type) || 'var(--billadm-color-text-secondary)'
+const getTypeColor = useTransactionTypeColor()
 const getTypeLabel = (type: string) => TransactionTypeToLabel.get(type) || type
 
 const handleSave = () => {

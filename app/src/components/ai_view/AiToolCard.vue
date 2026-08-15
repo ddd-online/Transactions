@@ -36,11 +36,11 @@ function formatArgValue(val: unknown): string {
 </script>
 
 <style scoped>
-/* Tool Card */
+/* Tool Card — 进行中琥珀语义，完成后翻转成功绿 */
 .msg-tool {
   max-width: 90%;
-  background: rgba(198, 150, 58, 0.04);
-  border: 1px solid rgba(198, 150, 58, 0.18);
+  background: var(--billadm-color-outlier-tint);
+  border: 1px solid var(--billadm-color-outlier-tint-strong);
   border-radius: var(--billadm-radius-md);
   padding: var(--billadm-space-sm) var(--billadm-space-md);
   margin-bottom: var(--billadm-space-xs);
@@ -48,7 +48,7 @@ function formatArgValue(val: unknown): string {
 }
 
 .msg-tool--done {
-  background: rgba(61, 140, 94, 0.05);
+  background: var(--billadm-color-income-tint);
   border-color: var(--billadm-color-success);
 }
 

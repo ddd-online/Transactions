@@ -59,7 +59,7 @@ import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { ChartDto } from '@/backend/api/chart'
 import { deleteChart as deleteChartApi } from '@/backend/api/chart'
-import { TransactionTypeToColor } from '@/backend/constant'
+import { useTransactionTypeColor } from '@/utils/themeColors'
 
 interface Props {
   allCharts: ChartDto[]
@@ -78,12 +78,14 @@ const selectedId = ref<string>('')
 const showCreateModal = ref(false)
 const createLoading = ref(false)
 
+const getTypeColor = useTransactionTypeColor()
+
 // 每个图表的曲线类型颜色（去重，最多 3 个），用于列表项的色彩区分
 const lineColors = (chart: ChartDto): string[] => {
   const seen = new Set<string>()
   const colors: string[] = []
   for (const line of chart.lines) {
-    const color = TransactionTypeToColor.get(line.transactionType)
+    const color = getTypeColor(line.transactionType)
     if (color && !seen.has(color)) {
       seen.add(color)
       colors.push(color)

@@ -23,6 +23,9 @@ declare global {
             getCloseBehavior: () => Promise<string>;
             setCloseBehavior: (behavior: string) => Promise<void>;
 
+            getAppearance: () => Promise<'light' | 'dark' | 'system'>;
+            setAppearance: (appearance: 'light' | 'dark' | 'system') => Promise<void>;
+
             // ── 更新 ──
             checkUpdate: () => Promise<{
                 hasUpdate: boolean;

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, net, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, net, Tray, Menu, nativeImage, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -79,6 +79,7 @@ const log = (message) => {
 let transactionsCfg = {
     width: 1400, height: 1000, x: undefined, y: undefined, workspaceDir: '',
     closeBehavior: '',
+    appearance: 'system', // 'light' | 'dark' | 'system'
 };
 
 function transactionsCfgPath() {
@@ -335,6 +336,19 @@ const registerCommonHandlers = () => {
 
     ipcMain.handle('config:set-close-behavior', (event, behavior) => {
         transactionsCfg.closeBehavior = behavior;
+        saveTransactionsCfg();
+    });
+
+    // 外观（浅色/深色/跟随系统）：与 close-behavior 同一持久化模式（~/.transactions.json）。
+    // nativeTheme.themeSource 同时驱动系统对话框与渲染进程的 prefers-color-scheme 媒体查询。
+    ipcMain.handle('config:get-appearance', () => {
+        return transactionsCfg.appearance || 'system';
+    });
+
+    ipcMain.handle('config:set-appearance', (event, appearance) => {
+        if (!['light', 'dark', 'system'].includes(appearance)) return;
+        transactionsCfg.appearance = appearance;
+        nativeTheme.themeSource = appearance;
         saveTransactionsCfg();
     });
 
@@ -847,6 +861,7 @@ const createMainWindow = () => {
         x: transactionsCfg.x,
         y: transactionsCfg.y,
         frame: false,
+        backgroundColor: nativeTheme.shouldUseDarkColors ? '#0f1115' : '#f9fafb',
         webPreferences: {
             nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js'),
         },
@@ -896,6 +911,7 @@ const createInitWindow = () => {
         height: 560,
         resizable: false,
         frame: false,
+        backgroundColor: nativeTheme.shouldUseDarkColors ? '#0f1115' : '#f9fafb',
         webPreferences: {
             nodeIntegration: false, contextIsolation: true, preload: path.join(__dirname, 'preload.js'),
         },
@@ -917,6 +933,7 @@ if (!gotTheLock) {
 
 app.whenReady().then(() => {
     readTransactionsCfg();
+    nativeTheme.themeSource = transactionsCfg.appearance || 'system';
     startKernel();
     startKernelHealthMonitor();
     registerCommonHandlers();

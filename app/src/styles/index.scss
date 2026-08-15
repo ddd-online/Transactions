@@ -1,6 +1,6 @@
 // ============================================
 // Transactions Global Styles
-// "Clean Editorial Light" Design
+// "DeepSeek Harness" design — cool neutrals, blue accent
 // ============================================
 
 // 1. Variables (must be first, other files depend on it)
@@ -34,30 +34,10 @@ body {
   font-size: var(--billadm-size-text-body);
   line-height: var(--billadm-height-normal);
   color: var(--billadm-color-text-major);
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-// ============================================
-// Atmospheric Background
-// ============================================
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: -1;
-  // Subtle warm atmosphere
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(74, 142, 112, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(198, 150, 58, 0.02) 0%, transparent 50%);
-}
-
 
 // ============================================
 // Ant Design Vue Global Overrides
@@ -65,7 +45,7 @@ body::before {
 
 // Layout
 .ant-layout {
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--billadm-color-bg-base);
 }
 
 .ant-layout-header,
@@ -111,21 +91,21 @@ body::before {
     font-size: var(--billadm-btn-font-size-lg);
   }
 
-  // ========== Primary (实心主按钮) ==========
+  // ========== Primary (实心主按钮, DeepSeek blue) ==========
   &-primary {
     background-color: var(--billadm-color-primary);
     border-color: var(--billadm-color-primary);
     color: var(--billadm-color-text-inverse);
 
     &:hover {
-      background-color: var(--billadm-color-primary-light);
-      border-color: var(--billadm-color-primary-light);
+      background-color: var(--billadm-color-primary-hover);
+      border-color: var(--billadm-color-primary-hover);
       color: var(--billadm-color-text-inverse);
     }
 
     &:active {
-      background-color: var(--billadm-color-primary);
-      border-color: var(--billadm-color-primary);
+      background-color: var(--billadm-color-primary-active);
+      border-color: var(--billadm-color-primary-active);
     }
   }
 
@@ -136,13 +116,15 @@ body::before {
     background-color: transparent;
 
     &:hover {
-      border-color: var(--billadm-color-primary);
-      color: var(--billadm-color-primary);
+      border-color: var(--billadm-color-border-l2);
+      background-color: var(--billadm-color-hover-bg);
+      color: var(--billadm-color-text-major);
     }
 
     &:active {
-      border-color: var(--billadm-color-primary);
-      color: var(--billadm-color-primary);
+      border-color: var(--billadm-color-border-l2);
+      background-color: var(--billadm-color-hover-bg);
+      color: var(--billadm-color-text-major);
     }
   }
 
@@ -153,7 +135,7 @@ body::before {
 
     &:hover {
       background-color: var(--billadm-color-hover-bg);
-      color: var(--billadm-color-primary);
+      color: var(--billadm-color-text-major);
     }
 
     // Text danger (文字危险按钮，如行内删除)
@@ -174,7 +156,7 @@ body::before {
     padding: 0;
 
     &:hover {
-      color: var(--billadm-color-primary-light);
+      color: var(--billadm-color-primary-hover);
     }
   }
 
@@ -185,8 +167,8 @@ body::before {
     color: var(--billadm-color-text-inverse);
 
     &:hover {
-      background-color: rgba(217, 112, 90, 0.85);
-      border-color: rgba(217, 112, 90, 0.85);
+      background-color: rgba(220, 38, 38, 0.85);
+      border-color: rgba(220, 38, 38, 0.85);
       color: var(--billadm-color-text-inverse);
     }
   }
@@ -200,6 +182,7 @@ body::before {
     &:hover {
       border-color: var(--billadm-color-primary);
       color: var(--billadm-color-primary);
+      background-color: var(--billadm-color-primary-tint);
     }
   }
 
@@ -237,7 +220,6 @@ body::before {
 
   &-hoverable:hover {
     box-shadow: var(--billadm-shadow-md);
-    border-color: var(--billadm-color-primary);
   }
 }
 
@@ -264,9 +246,9 @@ body::before {
   }
 
   &-title {
-    font-family: var(--billadm-font-display);
+    font-family: var(--billadm-font-body);
     font-size: var(--billadm-size-text-title-sm);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--billadm-color-text-major);
   }
 }
@@ -292,7 +274,7 @@ body::before {
   transition: all var(--billadm-transition-fast);
 
   &:hover {
-    border-color: var(--billadm-color-primary);
+    border-color: var(--billadm-color-border-l2);
   }
 
   &:focus,
@@ -310,7 +292,7 @@ body::before {
   transition: all var(--billadm-transition-fast);
 
   &:hover {
-    border-color: var(--billadm-color-primary);
+    border-color: var(--billadm-color-border-l2);
   }
 
   input {
@@ -328,7 +310,7 @@ body::before {
   transition: all var(--billadm-transition-fast);
 
   &:hover {
-    border-color: var(--billadm-color-primary);
+    border-color: var(--billadm-color-border-l2);
   }
 }
 
@@ -342,7 +324,7 @@ body::before {
   color: var(--billadm-color-primary) !important;
 
   &:hover {
-    color: var(--billadm-color-primary-light) !important;
+    color: var(--billadm-color-primary-hover) !important;
   }
 }
 
@@ -358,7 +340,7 @@ body::before {
 
 // DatePicker panel — range selection in-range cells
 .ant-picker-cell-in-view.ant-picker-cell-in-range .ant-picker-cell-inner {
-  background-color: var(--billadm-color-hover-bg) !important;
+  background-color: var(--billadm-color-primary-tint) !important;
 }
 
 // DatePicker panel — range selection start/end
@@ -380,9 +362,7 @@ body::before {
   .ant-table-thead>tr>th {
     font-family: var(--billadm-font-body);
     font-size: var(--billadm-size-text-caption);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-weight: 500;
     color: var(--billadm-color-text-secondary);
     background-color: var(--billadm-color-minor-background);
     border-bottom: 1px solid var(--billadm-color-window-border);
@@ -413,20 +393,26 @@ body::before {
 
   // Income tag
   &-income {
-    background-color: rgba(61, 140, 94, 0.10);
+    background-color: var(--billadm-color-income-tint);
     color: var(--billadm-color-income);
   }
 
   // Expense tag
   &-expense {
-    background-color: rgba(217, 112, 90, 0.10);
+    background-color: var(--billadm-color-expense-tint);
     color: var(--billadm-color-expense);
   }
 
   // Transfer tag
   &-transfer {
-    background-color: rgba(92, 141, 181, 0.10);
+    background-color: var(--billadm-color-transfer-tint);
     color: var(--billadm-color-transfer);
+  }
+
+  // Outlier tag
+  &-outlier {
+    background-color: var(--billadm-color-outlier-tint);
+    color: var(--billadm-color-outlier);
   }
 }
 
@@ -465,7 +451,7 @@ body::before {
     padding: var(--billadm-space-sm) 0;
 
     &:hover {
-      color: var(--billadm-color-primary);
+      color: var(--billadm-color-text-major);
     }
 
     &-active .ant-tabs-tab-btn {
@@ -485,6 +471,25 @@ body::before {
   .ant-popover-inner {
     border-radius: var(--billadm-radius-lg);
     box-shadow: var(--billadm-shadow-lg);
+  }
+}
+
+// Dropdown menus — DSH: 8px radius menu, hover fill
+.ant-dropdown-menu {
+  border-radius: var(--billadm-radius-md);
+  box-shadow: var(--billadm-shadow-lg);
+
+  .ant-dropdown-menu-item {
+    border-radius: var(--billadm-radius-sm);
+
+    &:hover {
+      background-color: var(--billadm-color-hover-bg);
+    }
+
+    &-selected {
+      background-color: var(--billadm-color-active-bg);
+      color: var(--billadm-color-primary);
+    }
   }
 }
 
@@ -511,13 +516,16 @@ body::before {
   }
 }
 
-// Segmented Control
+// Segmented Control — DSH toggle: neutral track, elevated selected
 .ant-segmented {
   font-family: var(--billadm-font-body);
   border-radius: var(--billadm-radius-md);
+  background-color: var(--billadm-color-minor-background);
+  padding: 2px;
 
   .ant-segmented-item {
-    border-radius: var(--billadm-radius-md);
+    border-radius: var(--billadm-radius-sm);
+    transition: all var(--billadm-transition-fast);
 
     &:hover {
       color: var(--billadm-color-primary);
@@ -525,8 +533,10 @@ body::before {
   }
 
   .ant-segmented-item-selected {
-    background-color: var(--billadm-color-primary);
-    color: #fff;
+    background-color: var(--billadm-color-major-background);
+    box-shadow: var(--billadm-shadow-sm);
+    color: var(--billadm-color-primary);
+    font-weight: 500;
   }
 }
 
@@ -550,8 +560,8 @@ body::before {
     border-color: var(--billadm-color-primary);
 
     &:hover {
-      background-color: var(--billadm-color-primary-light);
-      border-color: var(--billadm-color-primary-light);
+      background-color: var(--billadm-color-primary-hover);
+      border-color: var(--billadm-color-primary-hover);
     }
   }
 }
@@ -576,9 +586,9 @@ body::before {
   }
 
   &-title {
-    font-family: var(--billadm-font-display);
+    font-family: var(--billadm-font-body);
     font-size: var(--billadm-size-text-title-sm);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--billadm-color-text-major);
   }
 
@@ -595,7 +605,7 @@ body::before {
     background-color: var(--billadm-color-primary);
 
     &:hover {
-      background-color: var(--billadm-color-primary-light);
+      background-color: var(--billadm-color-primary-hover);
     }
   }
 }
@@ -849,4 +859,11 @@ body::before {
 
 .fade-leave-active {
   animation: fadeOut var(--billadm-transition-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active {
+    animation: none;
+  }
 }

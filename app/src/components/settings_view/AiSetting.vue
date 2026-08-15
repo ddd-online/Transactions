@@ -635,7 +635,7 @@ onUnmounted(() => {
 .prompt-textarea:focus {
   background: var(--billadm-color-major-background);
   border-color: var(--billadm-color-primary);
-  box-shadow: 0 0 0 2px rgba(74, 142, 112, 0.12);
+  box-shadow: var(--billadm-shadow-focus);
 }
 
 .setting-action-full {

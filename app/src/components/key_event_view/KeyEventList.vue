@@ -220,7 +220,7 @@ const truncate = (text: string, max: number): string => {
   width: 26px;
   height: 26px;
   border: none;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--billadm-color-elevated);
   color: var(--billadm-color-text-secondary);
   cursor: pointer;
   border-radius: var(--billadm-radius-full);
@@ -238,7 +238,7 @@ const truncate = (text: string, max: number): string => {
 
 .event-card-delete:hover {
   color: var(--billadm-color-expense);
-  background: rgba(217, 112, 90, 0.12);
+  background: var(--billadm-color-danger-hover-bg);
   transform: scale(1.1);
 }
 

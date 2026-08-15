@@ -15,6 +15,21 @@
         </div>
       </div>
 
+      <!-- 外观 -->
+      <div class="setting-card">
+        <div class="setting-info">
+          <span class="setting-title">外观</span>
+          <span class="setting-desc">界面颜色方案，可跟随系统</span>
+        </div>
+        <div class="setting-action">
+          <a-segmented
+            v-model:value="appearance"
+            :options="appearanceOptions"
+            @change="onAppearanceChange"
+          />
+        </div>
+      </div>
+
       <!-- 关闭行为 -->
       <div class="setting-card">
         <div class="setting-info">
@@ -57,10 +72,29 @@
 </template>
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useLedgerStore } from '@/stores/ledgerStore'
+import { useAppearanceStore } from '@/stores/appearanceStore'
 import NotificationUtil from '@/backend/notification'
 
 const ledgerStore = useLedgerStore()
+
+// ---- 外观 ----
+const appearanceStore = useAppearanceStore()
+const { appearance } = storeToRefs(appearanceStore)
+
+const appearanceOptions = [
+  { value: 'light', label: '浅色' },
+  { value: 'dark', label: '深色' },
+  { value: 'system', label: '跟随系统' },
+]
+
+const onAppearanceChange = (value: string | number) => {
+  const mode = String(value)
+  if (mode === 'light' || mode === 'dark' || mode === 'system') {
+    appearanceStore.setAppearance(mode)
+  }
+}
 
 // ---- 工作空间 ----
 const showFileSelect = ref(false)

@@ -291,7 +291,7 @@ const handleUnlink = async () => {
 
 .float-secondary:hover :deep(.ant-float-btn-body) {
   background-color: var(--billadm-color-major-background);
-  border-color: var(--billadm-color-primary-light);
+  border-color: var(--billadm-color-border-l2);
   box-shadow: var(--billadm-shadow-md);
 }
 
@@ -311,7 +311,7 @@ const handleUnlink = async () => {
 
 .float-sort:hover :deep(.ant-float-btn-body) {
   background-color: var(--billadm-color-major-background);
-  border-color: var(--billadm-color-primary-light);
+  border-color: var(--billadm-color-border-l2);
   box-shadow: var(--billadm-shadow-md);
 }
 

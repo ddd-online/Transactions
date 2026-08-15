@@ -190,7 +190,7 @@ const handleDeleteLedger = (id: string, name: string) => {
 }
 
 .ledger-btn:hover {
-  border-color: var(--billadm-color-primary);
+  border-color: var(--billadm-color-border-l2);
   background: var(--billadm-color-hover-bg);
 }
 
@@ -221,6 +221,7 @@ const handleDeleteLedger = (id: string, name: string) => {
   min-width: 180px;
   padding: var(--billadm-space-xs);
   background: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-window-border);
   border-radius: var(--billadm-radius-md);
   box-shadow: var(--billadm-shadow-lg);
 }
@@ -318,17 +319,6 @@ const handleDeleteLedger = (id: string, name: string) => {
   background-color: var(--billadm-color-active-bg);
   color: var(--billadm-color-primary);
   font-weight: 500;
-}
-
-.nav-btn.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  background: var(--billadm-color-primary);
-  border-radius: 0 2px 2px 0;
 }
 
 /* 次级导航按钮 — 设置等工具项，视觉降权 */

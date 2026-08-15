@@ -87,27 +87,29 @@ onUnmounted(() => {
 <style scoped>
 .window-controls {
   position: absolute;
-  top: 12px;
+  top: 10px;
   right: 12px;
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
   z-index: 100;
   -webkit-app-region: no-drag;
 }
 
 .window-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: var(--billadm-radius-md);
+  background: transparent;
+  border-radius: var(--billadm-radius-full);
   color: var(--billadm-color-icon);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all var(--billadm-transition-fast);
+  font-size: 13px;
+  transition: background var(--billadm-transition-fast),
+              color var(--billadm-transition-fast);
 }
 
 .window-btn:hover {
@@ -116,7 +118,7 @@ onUnmounted(() => {
 }
 
 .window-btn--close:hover {
-  background: rgba(217, 112, 90, 0.12);
+  background: var(--billadm-color-danger-hover-bg);
   color: var(--billadm-color-expense);
 }
 
@@ -125,9 +127,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 32px;
-  border-radius: var(--billadm-radius-md);
+  width: 24px;
+  height: 28px;
+  border-radius: var(--billadm-radius-full);
   cursor: default;
   transition: background var(--billadm-transition-fast);
 }
@@ -137,20 +139,21 @@ onUnmounted(() => {
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: var(--billadm-radius-full);
-  background: var(--billadm-color-divider);
-  transition: background var(--billadm-transition-fast), box-shadow var(--billadm-transition-fast);
+  background: var(--billadm-color-border-l3);
+  transition: background var(--billadm-transition-fast),
+              box-shadow var(--billadm-transition-fast);
 }
 
 .kernel-status--ok .status-dot {
   background: var(--billadm-color-success);
-  box-shadow: 0 0 5px rgba(61, 140, 94, 0.4);
+  box-shadow: 0 0 5px rgba(22, 163, 74, 0.4);
 }
 
 .kernel-status:not(.kernel-status--ok) .status-dot {
   background: var(--billadm-color-negative);
-  box-shadow: 0 0 5px rgba(217, 112, 90, 0.4);
+  box-shadow: 0 0 5px rgba(220, 38, 38, 0.4);
 }
 </style>

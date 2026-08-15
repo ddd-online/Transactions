@@ -220,9 +220,7 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 .transaction-table :deep(.ant-table-thead > tr > th) {
   font-family: var(--billadm-font-body);
   font-size: var(--billadm-size-text-caption);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 500;
   color: var(--billadm-color-text-secondary);
   background-color: var(--billadm-color-minor-background);
   border-bottom: 1px solid var(--billadm-color-divider);
@@ -245,15 +243,15 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 .transaction-table :deep(.row-type-income > td) {
-  background-color: rgba(61, 140, 94, 0.05);
+  background-color: var(--billadm-color-income-tint);
 }
 
 .transaction-table :deep(.row-type-expense > td) {
-  background-color: rgba(217, 112, 90, 0.05);
+  background-color: var(--billadm-color-expense-tint);
 }
 
 .transaction-table :deep(.row-type-transfer > td) {
-  background-color: rgba(92, 141, 181, 0.05);
+  background-color: var(--billadm-color-transfer-tint);
 }
 
 .cell-date {
@@ -301,23 +299,23 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 .tags-income .tag-item {
-  background-color: rgba(61, 140, 94, 0.08);
+  background-color: var(--billadm-color-income-tint);
   color: var(--billadm-color-income);
 }
 
 .tags-expense .tag-item {
-  background-color: rgba(217, 112, 90, 0.08);
+  background-color: var(--billadm-color-expense-tint);
   color: var(--billadm-color-expense);
 }
 
 .tags-transfer .tag-item {
-  background-color: rgba(92, 141, 181, 0.08);
+  background-color: var(--billadm-color-transfer-tint);
   color: var(--billadm-color-transfer);
 }
 
 .tag-outlier {
   font-size: var(--billadm-size-text-caption);
-  background-color: rgba(184, 134, 11, 0.1);
+  background-color: var(--billadm-color-outlier-tint);
   color: var(--billadm-color-warning);
   border: none;
 }

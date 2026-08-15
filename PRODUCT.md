@@ -38,13 +38,13 @@ web
 约束：
 
 - 所有数据存于本地工作空间；无账号体系、无云端同步（仓库中有 sync 相关规划文档，但未发现已实现的功能）
-- 仅浅色模式（设计系统 DESIGN.md 明确不支持深色）
+- 浅色 / 深色 / 跟随系统三种外观（外观选择持久化在本地配置，默认跟随系统；视觉规范见 DESIGN.md）
 - 工程栈：Electron + Vue 3 + Go/Gin，SQLite 纯 Go 驱动（无需 CGO）
 - 首次启动双窗口流程：先选择工作空间，再进入主界面；无系统原生窗口边框（frameless）
 
 ## Brand Commitments
 
-产品名 **Transactions**。品牌人格：**calm, restrained, precise**（宁静、克制、精确），这是已确认的身份承诺。视觉身份约束由 DESIGN.md 确立：仅浅色模式、单一主色 muted-teal（#4A8E70）、语义色（收入/支出/转账）只出现在交易数据处。工程标识使用 `--billadm-` 前缀（内部命名，非用户可见品牌）。
+产品名 **Transactions**。品牌人格：**calm, restrained, precise**（宁静、克制、精确），这是已确认的身份承诺。视觉身份约束由 DESIGN.md 确立：浅色/深色双主题、单一主色 DeepSeek 蓝（#3964FE，视觉语言参考 DeepSeek Harness Web GUI）、语义色（收入/支出/转账）只出现在交易数据处。工程标识使用 `--billadm-` 前缀（内部命名，非用户可见品牌）。
 
 ## Evidence on Hand
 

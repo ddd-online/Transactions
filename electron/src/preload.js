@@ -42,6 +42,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return await ipcRenderer.invoke('config:set-close-behavior', behavior);
     },
 
+    getAppearance: async () => {
+        return await ipcRenderer.invoke('config:get-appearance');
+    },
+    setAppearance: async (appearance) => {
+        return await ipcRenderer.invoke('config:set-appearance', appearance);
+    },
+
     // ── 更新 ──
     checkUpdate: async () => {
         return await ipcRenderer.invoke('update:check');
