@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { aiApi, type AiMessage as AiMessageApi, type AiConversation } from '@/backend/api/ai'
+import { getApiToken } from '@/backend/api/api-client'
 import { getErrorMessage } from '@/backend/errorHandler'
 
 // ----------------------------------------------------------------
@@ -295,9 +296,15 @@ export function useAiChat() {
     const { handleEvent, finalize } = createEventRouter(onChange)
 
     try {
+      // 生产环境 kernel 启用令牌鉴权，SSE 走原生 fetch，必须手动带上 X-Api-Token
+      // （api-client 的 axios 实例会自动带，但此处是流式请求，无法复用）
+      const apiToken = await getApiToken()
       const response = await fetch(`${apiBaseUrl}/api/v1/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiToken ? { 'X-Api-Token': apiToken } : {}),
+        },
         body: JSON.stringify({ message: text, ledger_id: ledgerId, ledger_name: ledgerName, role: currentRole.value, provider: currentProvider.value, conversation_id: currentConversationId.value }),
         signal: abortController.signal,
       })

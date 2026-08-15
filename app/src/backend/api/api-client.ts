@@ -5,6 +5,22 @@ const DEFAULT_TIMEOUT = 10000;
 
 let apiClient: AxiosInstance | null = null;
 let cachedBaseUrl = 'http://127.0.0.1:28080';
+let cachedApiToken = '';
+
+// 生产环境从 Electron 主进程获取本地 API 令牌（dev 下 kernel 无令牌，返回空串）。
+// 导出供不走 axios 的请求（如 AI 对话 SSE 原生 fetch）复用同一令牌。
+export async function getApiToken(): Promise<string> {
+    if (cachedApiToken) return cachedApiToken;
+    if (window.electronAPI?.getAppInfo) {
+        try {
+            const token = await window.electronAPI.getAppInfo('apiToken');
+            if (typeof token === 'string' && token) cachedApiToken = token;
+        } catch (e) {
+            console.warn('Failed to get API token from Electron:', e);
+        }
+    }
+    return cachedApiToken;
+}
 
 async function getApiClient(): Promise<AxiosInstance> {
     if (apiClient) {
@@ -12,7 +28,6 @@ async function getApiClient(): Promise<AxiosInstance> {
     }
 
     let baseURL = 'http://127.0.0.1:28080/api';
-    let apiToken = '';
 
     // In Electron, get the actual port from the main process
     if (window.electronAPI?.getApiServer) {
@@ -23,17 +38,10 @@ async function getApiClient(): Promise<AxiosInstance> {
             console.warn('Failed to get API server from Electron, using default:', e);
         }
     }
-    // 生产环境携带本地 API 令牌；dev 下 kernel 无令牌，头部会被忽略
-    if (window.electronAPI?.getAppInfo) {
-        try {
-            const token = await window.electronAPI.getAppInfo('apiToken');
-            if (typeof token === 'string' && token) apiToken = token;
-        } catch (e) {
-            console.warn('Failed to get API token from Electron:', e);
-        }
-    }
 
     cachedBaseUrl = baseURL.replace(/\/api$/, '');
+
+    const apiToken = await getApiToken();
 
     apiClient = axios.create({
         baseURL,
