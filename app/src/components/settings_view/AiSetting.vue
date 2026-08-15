@@ -574,6 +574,11 @@ onUnmounted(() => {
   background-color: var(--transactions-color-hover-bg);
 }
 
+// 卡片 hover 变灰时，分割线转为表面色（白），与灰背景形成对比保持可见
+.setting-card:hover .card-section-divider {
+  background: var(--transactions-color-major-background);
+}
+
 .setting-info {
   display: flex;
   flex-direction: column;
@@ -664,6 +669,7 @@ onUnmounted(() => {
   height: 1px;
   background: var(--transactions-color-divider);
   margin: var(--transactions-space-lg) 0;
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .prompt-textarea {

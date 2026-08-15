@@ -113,7 +113,9 @@ body {
   &-default {
     border-color: var(--transactions-color-window-border);
     color: var(--transactions-color-text-major);
-    background-color: transparent;
+    // 不透明表面色（而非透明）：避免悬浮卡片/内容区时透出卡片灰背景。
+    // 按钮自身的悬浮态仍通过 hover 填充表现（仅悬浮按钮时变化）。
+    background-color: var(--transactions-color-major-background);
 
     &:hover {
       border-color: var(--transactions-color-border-l2);
@@ -177,7 +179,8 @@ body {
   &-dashed {
     border-color: var(--transactions-color-window-border);
     color: var(--transactions-color-text-secondary);
-    background-color: transparent;
+    // 同 default：不透明表面色，避免透出卡片灰背景
+    background-color: var(--transactions-color-major-background);
 
     &:hover {
       border-color: var(--transactions-color-primary);
