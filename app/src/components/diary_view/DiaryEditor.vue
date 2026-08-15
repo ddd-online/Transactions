@@ -328,6 +328,10 @@ const wordCount = computed(() => [...localContent.value].length)
 
 .editor-textarea-wrap {
   height: 100%;
+  /* 编辑态浅色底 + 发丝边框，与预览态（页面底色）区分 */
+  background-color: var(--billadm-color-major-background);
+  border: 1px solid var(--billadm-color-border-l1);
+  border-radius: var(--billadm-radius-md);
 }
 
 .editor-textarea {
