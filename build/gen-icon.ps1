@@ -34,22 +34,50 @@ foreach ($s in $sizes) {
     $g.Clear([System.Drawing.Color]::Transparent)
 
     $r = [Math]::Max(2.0, $s * 0.195)  # 与 1024 图标的 rx=200 一致（约 19.5%）
+    $path = New-RoundedRectPath 0 0 $s $s $r
     $bgBrush = New-Object System.Drawing.SolidBrush($bg)
-    $g.FillPath($bgBrush, (New-RoundedRectPath 0 0 $s $s $r))
+    $g.FillPath($bgBrush, $path)
 
     $fontSize = $s * 0.68
     $font = New-Object System.Drawing.Font('Segoe UI', $fontSize, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
     $fgBrush = New-Object System.Drawing.SolidBrush($fg)
+
+    # Near 对齐绘制 + 测量：避免 Center 对齐把墨迹平移到测量矩形中央
     $sf = New-Object System.Drawing.StringFormat
-    $sf.Alignment = [System.Drawing.StringAlignment]::Center
-    $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
-    # 大写字母光学居中：上移约 10% 行高抵消 descender 空间
-    $rect = [System.Drawing.RectangleF]::new(
-        [single]0,
-        [single](-$s * 0.10),
-        [single]$s,
-        [single]$s)
-    $g.DrawString('T', $font, $fgBrush, $rect, $sf)
+    $sf.Alignment = [System.Drawing.StringAlignment]::Near
+    $sf.LineAlignment = [System.Drawing.StringAlignment]::Near
+    $sf.Trimming = [System.Drawing.StringTrimming]::None
+    $sf.FormatFlags = $sf.FormatFlags -bor [System.Drawing.StringFormatFlags]::NoWrap
+    $drawRect = New-Object System.Drawing.RectangleF(0, 0, $s, $s)
+
+    # 第 1 遍：在原点绘制，用于测量真实像素墨迹包围盒
+    # （GDI+ 的 MeasureCharacterRanges 与光栅化结果存在偏差，直接量像素最可靠）
+    $g.DrawString('T', $font, $fgBrush, $drawRect, $sf)
+
+    $minX = $s; $maxX = -1; $minY = $s; $maxY = -1
+    for ($y = 0; $y -lt $s; $y++) {
+        for ($x = 0; $x -lt $s; $x++) {
+            $p = $bmp.GetPixel($x, $y)
+            if ($p.A -gt 40 -and $p.R -gt 200 -and $p.G -gt 200 -and $p.B -gt 200) {
+                if ($x -lt $minX) { $minX = $x }
+                if ($x -gt $maxX) { $maxX = $x }
+                if ($y -lt $minY) { $minY = $y }
+                if ($y -gt $maxY) { $maxY = $y }
+            }
+        }
+    }
+
+    if ($maxX -ge 0 -and $maxY -ge 0) {
+        # 计算居中偏移（整数像素）
+        $dx = [single][math]::Round(($s - ($maxX - $minX + 1)) / 2.0 - $minX)
+        $dy = [single][math]::Round(($s - ($maxY - $minY + 1)) / 2.0 - $minY)
+        # 第 2 遍：清掉墨迹，按偏移重绘，实现像素级居中
+        $g.Clear([System.Drawing.Color]::Transparent)
+        $g.FillPath($bgBrush, $path)
+        $g.DrawString('T', $font, $fgBrush, (New-Object System.Drawing.RectangleF($dx, $dy, $s, $s)), $sf)
+    } else {
+        Write-Warn "警告: $($s)px 尺寸未检测到字形墨迹，使用默认居中"
+    }
 
     $ms = New-Object System.IO.MemoryStream
     $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
