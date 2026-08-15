@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -46,6 +47,34 @@ func (h *Handlers) createConversation(c *gin.Context) (any, error) {
 	if err := h.AiConversationDao.Create(ws(c), conv); err != nil {
 		return nil, err
 	}
+	return conv, nil
+}
+
+// PUT /api/v1/ai/conversations/:id
+// 更新会话标题（发送首条消息后自动生成）。
+func (h *Handlers) updateConversation(c *gin.Context) (any, error) {
+	id := c.Param("id")
+	if id == "" {
+		return nil, fmt.Errorf("会话 ID 不能为空")
+	}
+	var req struct {
+		Title string `json:"title"`
+	}
+	if err := c.BindJSON(&req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+	title := strings.TrimSpace(req.Title)
+	if title == "" {
+		return nil, fmt.Errorf("标题不能为空")
+	}
+	conv, err := h.AiConversationDao.Get(ws(c), id)
+	if err != nil {
+		return nil, fmt.Errorf("会话不存在: %w", err)
+	}
+	if err := h.AiConversationDao.UpdateTitle(ws(c), id, title); err != nil {
+		return nil, err
+	}
+	conv.Title = title
 	return conv, nil
 }
 

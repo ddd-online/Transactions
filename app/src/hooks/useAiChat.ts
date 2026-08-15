@@ -154,7 +154,7 @@ export function useAiChat() {
           content: '',
           timestamp: Date.now(),
           thinkingActive: true,
-          thinkingCollapsed: false,
+          thinkingCollapsed: true,
         }
         insertBeforeAssistant(msg)
         thinkingMsgRef.current = msg
@@ -178,7 +178,7 @@ export function useAiChat() {
           ensureAssistant()
           const t = ensureThinking()
           t.thinkingActive = true
-          t.thinkingCollapsed = false
+          t.thinkingCollapsed = true // 默认折叠，点击展开查看
           onChange()
           break
         }
@@ -187,7 +187,6 @@ export function useAiChat() {
           const t = ensureThinking()
           t.thinkingActive = true
           t.content = (t.content || '') + (event.delta || '')
-          t.thinkingCollapsed = false
           onChange()
           break
         }
@@ -288,6 +287,9 @@ export function useAiChat() {
     }
     messages.value.push(userMsg)
     streaming.value = true
+
+    // 会话首条消息：自动生成标题（仅当当前标题还是默认的"新对话"时）
+    maybeAutoTitle(text)
 
     abortController = new AbortController()
     const { handleEvent, finalize } = createEventRouter(onChange)
@@ -399,7 +401,18 @@ export function useAiChat() {
 
   async function loadConversations(): Promise<void> {
     try {
-      conversations.value = await aiApi.listConversations(currentRole.value)
+      const list = await aiApi.listConversations(currentRole.value)
+      // 补充隐式 default 会话（旧数据所在），保证侧边栏始终可见历史对话
+      const hasDefault = list.some(c => c.id === 'default')
+      if (!hasDefault) {
+        list.unshift({
+          id: 'default',
+          role: currentRole.value,
+          title: '默认会话',
+          created_at: 0,
+        } as AiConversation)
+      }
+      conversations.value = list
     } catch {
       conversations.value = []
     }
@@ -415,6 +428,25 @@ export function useAiChat() {
     } catch {
       // non-critical
     }
+  }
+
+  // maybeAutoTitle 会话首条消息时用消息内容自动生成标题。
+  // 仅在标题仍为默认"新对话"时触发，避免覆盖已有命名；失败静默。
+  function maybeAutoTitle(text: string): void {
+    const conv = conversations.value.find(c => c.id === currentConversationId.value)
+    if (!conv || conv.title !== '新对话') return
+
+    const trimmed = text.replace(/\s+/g, ' ').trim()
+    if (!trimmed) return
+    const title = trimmed.length > 20 ? trimmed.slice(0, 20) + '…' : trimmed
+    conv.title = title // 本地乐观更新，侧边栏立即显示
+
+    aiApi.updateConversationTitle(conv.id, title).then(() => {
+      // 后端成功后保持本地一致（无需额外处理）
+    }).catch(() => {
+      // 失败回滚本地标题，下次首条消息再试
+      conv.title = '新对话'
+    })
   }
 
   async function switchConversation(id: string): Promise<void> {

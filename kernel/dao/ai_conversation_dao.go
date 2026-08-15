@@ -17,6 +17,7 @@ type AiConversationDao interface {
 	Get(ws *workspace.Workspace, id string) (*models.AiConversation, error)
 	Delete(ws *workspace.Workspace, id string) error
 	Touch(ws *workspace.Workspace, id string) error
+	UpdateTitle(ws *workspace.Workspace, id string, title string) error
 }
 
 var _ AiConversationDao = &aiConversationDaoImpl{}
@@ -55,4 +56,10 @@ func (d *aiConversationDaoImpl) Touch(ws *workspace.Workspace, id string) error 
 	return ws.GetDb().Model(&models.AiConversation{}).
 		Where("id = ?", id).
 		Update("updated_at", time.Now().Unix()).Error
+}
+
+func (d *aiConversationDaoImpl) UpdateTitle(ws *workspace.Workspace, id string, title string) error {
+	return ws.GetDb().Model(&models.AiConversation{}).
+		Where("id = ?", id).
+		Update("title", title).Error
 }

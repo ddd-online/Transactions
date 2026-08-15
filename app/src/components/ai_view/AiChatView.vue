@@ -5,58 +5,65 @@
     </div>
 
     <div class="chat-card">
-      <!-- Header -->
-      <div class="chat-header">
-        <div class="chat-header-left">
-          <a-dropdown :trigger="['click']" placement="bottomLeft">
-            <button class="chat-role-trigger">
-              <RobotOutlined class="chat-role-trigger-icon" />
-              <span class="chat-role-trigger-text">{{ currentRoleDisplay }}</span>
-              <DownOutlined class="chat-role-trigger-arrow" />
-            </button>
-            <template #overlay>
-              <div class="chat-role-menu">
-                <div v-for="role in availableRoles" :key="role.name" class="chat-role-menu-item"
-                  :class="{ active: currentRole === role.name }" @click="onRoleChange(role.name)">{{ role.display_name
-                  }}</div>
-              </div>
-            </template>
-          </a-dropdown>
-          <!-- 会话切换 -->
-          <a-dropdown :trigger="['click']" placement="bottomLeft">
-            <button class="chat-conv-trigger">
-              <span class="chat-conv-trigger-text">{{ currentConversationTitle }}</span>
-              <DownOutlined class="chat-role-trigger-arrow" />
-            </button>
-            <template #overlay>
-              <div class="chat-conv-menu">
-                <div v-if="conversations.length === 0" class="chat-conv-menu-empty">暂无会话</div>
-                <div v-for="conv in conversations" :key="conv.id" class="chat-conv-menu-item"
-                  :class="{ active: currentConversationId === conv.id }" @click="onConversationSelect(conv.id)">
-                  <span class="chat-conv-menu-title">{{ conv.title }}</span>
-                  <button v-if="currentConversationId === conv.id && conv.id !== 'default'" class="chat-conv-menu-del"
-                    title="删除会话" @click.stop="onConversationDelete(conv.id)">
-                    <DeleteOutlined />
-                  </button>
-                </div>
-                <div class="chat-conv-menu-actions">
-                  <a-button size="small" type="text" class="chat-conv-new" @click="onConversationCreate">
-                    <template #icon><PlusOutlined /></template>
-                    新建会话
-                  </a-button>
-                </div>
-              </div>
-            </template>
-          </a-dropdown>
+      <!-- 左侧会话侧边栏（可折叠） -->
+      <aside class="chat-conv-sidebar" :class="{ 'chat-conv-sidebar--collapsed': sidebarCollapsed }">
+        <div class="chat-conv-sidebar-header">
+          <span v-if="!sidebarCollapsed" class="chat-conv-sidebar-title">会话</span>
+          <button class="chat-conv-sidebar-toggle" :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
+            @click="sidebarCollapsed = !sidebarCollapsed">
+            <MenuFoldOutlined v-if="!sidebarCollapsed" />
+            <MenuUnfoldOutlined v-else />
+          </button>
         </div>
-        <a-button type="text" :disabled="messages.length === 0 && !streaming" @click="clearConversation"
-          class="chat-header-clear">
-          <template #icon>
-            <DeleteOutlined />
-          </template>
-          清空对话
-        </a-button>
-      </div>
+
+        <div v-if="!sidebarCollapsed" class="chat-conv-sidebar-body">
+          <a-button type="primary" block class="chat-conv-new" @click="onConversationCreate">
+            <template #icon><PlusOutlined /></template>
+            新建会话
+          </a-button>
+
+          <div class="chat-conv-list">
+            <div v-if="conversations.length === 0" class="chat-conv-empty">暂无会话</div>
+            <div v-for="conv in conversations" :key="conv.id" class="chat-conv-item"
+              :class="{ active: currentConversationId === conv.id }" @click="onConversationSelect(conv.id)">
+              <span class="chat-conv-item-title">{{ conv.title }}</span>
+              <button v-if="currentConversationId === conv.id && conv.id !== 'default'" class="chat-conv-item-del"
+                title="删除会话" @click.stop="onConversationDelete(conv.id)">
+                <DeleteOutlined />
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 右侧对话主区 -->
+      <div class="chat-main">
+        <!-- Header -->
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <a-dropdown :trigger="['click']" placement="bottomLeft">
+              <button class="chat-role-trigger">
+                <RobotOutlined class="chat-role-trigger-icon" />
+                <span class="chat-role-trigger-text">{{ currentRoleDisplay }}</span>
+                <DownOutlined class="chat-role-trigger-arrow" />
+              </button>
+              <template #overlay>
+                <div class="chat-role-menu">
+                  <div v-for="role in availableRoles" :key="role.name" class="chat-role-menu-item"
+                    :class="{ active: currentRole === role.name }" @click="onRoleChange(role.name)">{{ role.display_name
+                    }}</div>
+                </div>
+              </template>
+            </a-dropdown>
+          </div>
+          <a-button type="text" :disabled="messages.length === 0 && !streaming" @click="clearConversation"
+            class="chat-header-clear">
+            <template #icon>
+              <DeleteOutlined />
+            </template>
+            清空对话
+          </a-button>
+        </div>
 
       <!-- Messages Area -->
       <div class="chat-messages" ref="messageListRef" @scroll="onScroll">
@@ -83,18 +90,19 @@
             </div>
           </div>
 
-          <!-- AI Thinking Row (DSH 风格独立行：思考 → 工具 → 回复) -->
+          <!-- AI Thinking Row (DSH 风格：与工具调用同构的紧凑行，默认折叠) -->
           <div v-else-if="msg.role === 'thinking'" class="chat-message--thinking-row">
-            <div class="thinking-row" :class="{ 'thinking-row--active': msg.thinkingActive }">
-              <button class="thinking-row-toggle" @click="msg.thinkingCollapsed = !msg.thinkingCollapsed"
-                :aria-expanded="!msg.thinkingCollapsed || msg.thinkingActive">
-                <span class="thinking-indicator" :class="{ 'thinking-indicator--active': msg.thinkingActive }"></span>
-                <span>{{ msg.thinkingActive ? '正在思考...' : '已思考' }}</span>
-                <span class="thinking-arrow" :class="{ 'thinking-arrow--open': !msg.thinkingCollapsed || msg.thinkingActive }">▾</span>
-              </button>
-              <div v-if="!msg.thinkingCollapsed || msg.thinkingActive" class="thinking-row-content">
-                {{ msg.content }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span>
-              </div>
+            <div class="thinking-row" :class="thinkingRowClass(msg)" role="button" tabindex="0"
+              :aria-expanded="!msg.thinkingCollapsed" @click="toggleThinking(msg)"
+              @keydown.enter="toggleThinking(msg)" @keydown.space.prevent="toggleThinking(msg)">
+              <span class="thinking-row-indicator" :class="{ 'thinking-row-indicator--pulse': msg.thinkingActive }" />
+              <BulbOutlined class="thinking-row-icon" />
+              <span class="thinking-row-name">{{ msg.thinkingActive ? '正在思考' : '已思考' }}</span>
+              <span class="thinking-row-summary">{{ thinkingSummary(msg) }}</span>
+              <span class="thinking-row-arrow" :class="{ 'thinking-row-arrow--open': !msg.thinkingCollapsed }">▾</span>
+            </div>
+            <div v-if="!msg.thinkingCollapsed" class="thinking-row-body">
+              <div class="thinking-row-content">{{ msg.content }}<span v-if="msg.thinkingActive" class="streaming-cursor">|</span></div>
             </div>
           </div>
 
@@ -146,6 +154,7 @@
           </button>
         </div>
       </div>
+      </div>
     </div>
 
     <a-modal v-model:open="toolsModalVisible" title="可用工具" :footer="null" centered :width="520">
@@ -169,12 +178,12 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
-import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined, RobotOutlined, DownOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined, RobotOutlined, DownOutlined, PlusOutlined, BulbOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import MarkdownViewer from '@/components/common/MarkdownViewer.vue'
 import AiToolCard from './AiToolCard.vue'
 import { message } from 'ant-design-vue'
-import { useAiChat } from '@/hooks/useAiChat'
+import { useAiChat, type ChatMessage } from '@/hooks/useAiChat'
 import { aiApi, type AiRole, type QuickCommand, type ToolInfo } from '@/backend/api/ai'
 
 // ---- AiChat composable (deep module) ----
@@ -217,11 +226,6 @@ function onRoleChange(value: string) {
 }
 
 // ---- Conversation management ----
-const currentConversationTitle = computed(() => {
-  const conv = conversations.value.find(c => c.id === currentConversationId.value)
-  return conv?.title ?? '默认会话'
-})
-
 async function onConversationSelect(id: string) {
   if (streaming.value) return
   await switchConversation(id)
@@ -266,6 +270,7 @@ interface ToolWithExpanded extends ToolInfo {
 const toolsModalVisible = ref(false)
 const currentRoleTools = ref<ToolWithExpanded[]>([])
 const toolsLoading = ref(false)
+const sidebarCollapsed = ref(false)
 
 async function openToolsModal() {
   toolsModalVisible.value = true
@@ -350,6 +355,24 @@ function toggleToolDetail(msgId: string) {
     expandedToolDetails.value.delete(msgId)
   } else {
     expandedToolDetails.value.add(msgId)
+  }
+}
+
+// ---- Thinking row（与工具行同构：单行摘要 + 点击展开）----
+function toggleThinking(msg: ChatMessage) {
+  msg.thinkingCollapsed = !msg.thinkingCollapsed
+}
+
+function thinkingSummary(msg: ChatMessage): string {
+  const content = msg.content || ''
+  const firstLine = content.split('\n')[0] || ''
+  return firstLine.length > 60 ? firstLine.slice(0, 60) + '…' : firstLine
+}
+
+function thinkingRowClass(msg: ChatMessage) {
+  return {
+    'thinking-row--running': msg.thinkingActive,
+    'thinking-row--done': !msg.thinkingActive,
   }
 }
 
@@ -475,12 +498,166 @@ onUnmounted(() => {
 .chat-card {
   flex: 1;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
   background-color: var(--transactions-color-major-background);
   border: 1px solid var(--transactions-color-divider);
   border-radius: var(--transactions-radius-lg);
   box-shadow: var(--transactions-shadow-sm);
+}
+
+/* ---- 左侧会话侧边栏 ---- */
+.chat-conv-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-major-warm);
+  transition: width var(--transactions-transition-normal);
+}
+
+.chat-conv-sidebar--collapsed {
+  width: 40px;
+}
+
+.chat-conv-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--transactions-size-header-height);
+  padding: var(--transactions-space-sm) var(--transactions-space-sm);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.chat-conv-sidebar-title {
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-title);
+  font-weight: 600;
+  color: var(--transactions-color-text-major);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.chat-conv-sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  border-radius: var(--transactions-radius-sm);
+  cursor: pointer;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  flex-shrink: 0;
+  transition: background var(--transactions-transition-fast), color var(--transactions-transition-fast);
+}
+
+.chat-conv-sidebar-toggle:hover {
+  background: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
+}
+
+.chat-conv-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.chat-conv-sidebar--collapsed .chat-conv-sidebar-header {
+  justify-content: center;
+  padding: var(--transactions-space-sm) var(--transactions-space-2xs);
+}
+
+.chat-conv-sidebar-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+
+  @include custom-scrollbar;
+}
+
+.chat-conv-new {
+  flex-shrink: 0;
+}
+
+.chat-conv-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  flex: 1;
+  min-height: 0;
+}
+
+.chat-conv-empty {
+  padding: var(--transactions-space-md) var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-disabled);
+  text-align: center;
+}
+
+.chat-conv-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-sm);
+  cursor: pointer;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  transition: background var(--transactions-transition-fast);
+}
+
+.chat-conv-item:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.chat-conv-item.active {
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+  font-weight: 500;
+}
+
+.chat-conv-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-conv-item-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  border-radius: var(--transactions-radius-sm);
+  cursor: pointer;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  flex-shrink: 0;
+  transition: background var(--transactions-transition-fast), color var(--transactions-transition-fast);
+}
+
+.chat-conv-item-del:hover {
+  background: var(--transactions-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
+}
+
+/* ---- 右侧对话主区 ---- */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .chat-header {
@@ -563,114 +740,6 @@ onUnmounted(() => {
   background: var(--transactions-color-active-bg);
   color: var(--transactions-color-primary);
   font-weight: 500;
-}
-
-/* ---- 会话切换下拉 ---- */
-.chat-conv-trigger {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  height: 28px;
-  padding: 0 var(--transactions-space-sm);
-  border: 1px solid var(--transactions-color-window-border);
-  background: none;
-  border-radius: var(--transactions-radius-md);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background var(--transactions-transition-fast), border-color var(--transactions-transition-fast);
-}
-
-.chat-conv-trigger:hover {
-  background: var(--transactions-color-hover-bg);
-  border-color: var(--transactions-color-border-l2);
-}
-
-.chat-conv-trigger-text {
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chat-conv-menu {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  min-width: 220px;
-  max-width: 280px;
-  padding: var(--transactions-space-xs);
-  background: var(--transactions-color-major-background);
-  border-radius: var(--transactions-radius-md);
-  box-shadow: var(--transactions-shadow-lg);
-}
-
-.chat-conv-menu-empty {
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-disabled);
-}
-
-.chat-conv-menu-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border-radius: var(--transactions-radius-sm);
-  cursor: pointer;
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-major);
-  transition: background var(--transactions-transition-fast);
-}
-
-.chat-conv-menu-item:hover {
-  background: var(--transactions-color-hover-bg);
-}
-
-.chat-conv-menu-item.active {
-  background: var(--transactions-color-active-bg);
-  color: var(--transactions-color-primary);
-  font-weight: 500;
-}
-
-.chat-conv-menu-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chat-conv-menu-del {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: none;
-  border-radius: var(--transactions-radius-sm);
-  cursor: pointer;
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-caption);
-  flex-shrink: 0;
-  transition: background var(--transactions-transition-fast), color var(--transactions-transition-fast);
-}
-
-.chat-conv-menu-del:hover {
-  background: var(--transactions-color-danger-hover-bg);
-  color: var(--transactions-color-expense);
-}
-
-.chat-conv-menu-actions {
-  border-top: 1px solid var(--transactions-color-divider);
-  padding-top: var(--transactions-space-xs);
-}
-
-.chat-conv-new {
-  width: 100%;
-  justify-content: flex-start;
-  color: var(--transactions-color-primary);
 }
 
 .chat-header-clear {
@@ -1014,6 +1083,12 @@ onUnmounted(() => {
   animation: thinking-spin 0.8s linear infinite;
 }
 
+@keyframes thinking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .chat-streaming-text {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
@@ -1210,9 +1285,8 @@ onUnmounted(() => {
     animation: none;
   }
 
-  .thinking-indicator--active {
+  .thinking-row-indicator--pulse {
     animation: none;
-    border-top-color: var(--transactions-color-accent);
   }
 
   .streaming-bar-fade-enter-active,
@@ -1224,94 +1298,139 @@ onUnmounted(() => {
   .chat-empty-chip,
   .chat-send-btn,
   .msg-copy-btn,
-  .thinking-row-toggle,
-  .thinking-arrow,
-  .thinking-indicator {
+  .thinking-row,
+  .thinking-row-arrow {
     transition: none;
+  }
+
+  .thinking-row-body {
+    animation: none;
   }
 }
 
-/* Thinking Row — DSH 风格独立行：点指示器 + 可折叠，active 琥珀块 */
+/* Thinking Row — DSH 风格：与工具调用同构的紧凑行，默认折叠 */
 .chat-message--thinking-row {
   margin-bottom: var(--transactions-space-md);
 }
 
 .thinking-row {
-  max-width: 90%;
-  border-radius: var(--transactions-radius-sm);
-  padding: var(--transactions-space-2xs);
-  transition: background var(--transactions-transition-fast);
-}
-
-.thinking-row--active {
-  background: var(--transactions-color-outlier-tint);
-}
-
-.thinking-row-toggle {
   display: flex;
   align-items: center;
-  gap: var(--transactions-space-xs);
-  border: none;
-  background: none;
-  padding: var(--transactions-space-xs) var(--transactions-space-sm);
-  cursor: pointer;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  width: 100%;
-  text-align: left;
+  gap: var(--transactions-space-sm);
+  max-width: 90%;
+  padding: var(--transactions-space-2xs) var(--transactions-space-sm);
   border-radius: var(--transactions-radius-sm);
+  cursor: pointer;
+  user-select: none;
   transition: background var(--transactions-transition-fast);
 }
 
-.thinking-row-toggle:hover {
+.thinking-row:hover {
   background: var(--transactions-color-hover-bg);
 }
 
-.thinking-row--active .thinking-row-toggle:hover {
-  background: transparent;
-}
-
-.thinking-row-toggle:focus-visible {
+.thinking-row:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
-  border-radius: var(--transactions-radius-sm);
 }
 
-.thinking-indicator {
-  width: 12px;
-  height: 12px;
+.thinking-row-indicator {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--transactions-color-text-disabled);
+  background: var(--transactions-color-accent);
   flex-shrink: 0;
-  transition: all var(--transactions-transition-fast);
 }
 
-.thinking-indicator--active {
-  background: transparent;
-  border: 2px solid var(--transactions-color-divider);
-  border-top-color: var(--transactions-color-accent);
-  animation: thinking-spin 0.8s linear infinite;
+.thinking-row-indicator--pulse {
+  animation: thinking-pulse 1s ease-in-out infinite;
 }
 
-@keyframes thinking-spin {
-  to {
-    transform: rotate(360deg);
+.thinking-row--done .thinking-row-indicator {
+  background: var(--transactions-color-text-disabled);
+  animation: none;
+}
+
+@keyframes thinking-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
-.thinking-arrow {
+.thinking-row-icon {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.thinking-row--done .thinking-row-icon {
+  color: var(--transactions-color-text-disabled);
+}
+
+.thinking-row-name {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.thinking-row-summary {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.thinking-row-arrow {
   margin-left: auto;
+  font-size: 10px;
+  color: var(--transactions-color-text-secondary);
+  flex-shrink: 0;
   transition: transform var(--transactions-transition-fast);
 }
 
-.thinking-arrow--open {
+.thinking-row-arrow--open {
   transform: rotate(180deg);
 }
 
+/* 展开区：思考全文 */
+.thinking-row-body {
+  max-width: 90%;
+  margin: 0 0 var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  background: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  animation: thinking-body-enter 150ms ease-out both;
+}
+
+@keyframes thinking-body-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .thinking-row-content {
-  margin-top: var(--transactions-space-xs);
-  padding: 0 var(--transactions-space-sm) var(--transactions-space-xs);
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-body-sm);
   color: var(--transactions-color-text-secondary);

@@ -122,6 +122,10 @@ export const aiApi = {
     return api.delete(`/v1/ai/conversations/${encodeURIComponent(id)}`, '删除会话')
   },
 
+  async updateConversationTitle(id: string, title: string): Promise<AiConversation> {
+    return api.put(`/v1/ai/conversations/${encodeURIComponent(id)}`, { title }, '更新会话标题')
+  },
+
   async getQuickCommands(role: string = 'financial_assistant'): Promise<QuickCommand[]> {
     return api.get(`/v1/ai/quick-commands?role=${encodeURIComponent(role)}`, '获取快捷命令')
   },
