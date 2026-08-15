@@ -122,12 +122,12 @@ onUnmounted(() => {
   color: var(--billadm-color-expense);
 }
 
-/* 内核状态指示灯：正常绿、异常红 */
+/* 内核状态指示灯：与窗口控制按钮一致的圆形，正常绿、异常红 */
 .kernel-status {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  width: 28px;
   height: 28px;
   border-radius: var(--billadm-radius-full);
   cursor: default;
