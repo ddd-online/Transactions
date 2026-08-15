@@ -5,7 +5,7 @@
    viewBox="0 0 1024 1024"
    version="1.1"
    xmlns="http://www.w3.org/2000/svg">
-  <!-- Background: Primary green #2D5A27 -->
+  <!-- Background: DeepSeek blue #3964fe -->
   <rect
      x="0"
      y="0"
@@ -13,16 +13,16 @@
      height="1024"
      rx="200"
      ry="200"
-     fill="#2D5A27" />
-  <!-- Letter T: Fills ~75% of icon, centered, Playfair Display font, color #FAFAF8 -->
+     fill="#3964FE" />
+  <!-- Letter T: Fills ~75% of icon, centered, Inter-style bold sans, color #FFFFFF -->
   <text
      x="512"
      y="540"
      dominant-baseline="central"
      text-anchor="middle"
-     font-family="Playfair Display, Georgia, 'Times New Roman', serif"
-     font-size="820"
-     font-weight="600"
-     fill="#FAFAF8"
+     font-family="Inter, Segoe UI, system-ui, -apple-system, 'PingFang SC', sans-serif"
+     font-size="800"
+     font-weight="700"
+     fill="#FFFFFF"
      letter-spacing="-8">T</text>
 </svg>
