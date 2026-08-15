@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 func (h *Handlers) serveStaticFile(c *gin.Context) {

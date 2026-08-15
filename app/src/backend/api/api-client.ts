@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
-import type { Result } from "@/types/billadm";
+import type { Result } from "@/types/transactions";
 
 const DEFAULT_TIMEOUT = 10000;
 

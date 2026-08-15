@@ -1,5 +1,5 @@
 import dayjs, {Dayjs} from 'dayjs';
-import type {RangeValue, TimeRangeTypeLabel, TimeRangeTypeValue} from "@/types/billadm";
+import type {RangeValue, TimeRangeTypeLabel, TimeRangeTypeValue} from "@/types/transactions";
 
 /**
  * 设置日期为当天的开始: 00:00:00.000

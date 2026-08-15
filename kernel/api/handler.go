@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
-	"github.com/billadm/workspace"
+	"github.com/transactions/models"
+	"github.com/transactions/workspace"
 )
 
-const ctxWorkspaceKey = "billadm_workspace"
+const ctxWorkspaceKey = "transactions_workspace"
 
 // Handle wraps a handler function that returns (data, error) into a gin.HandlerFunc.
 // It creates the Result envelope, writes data on success or error message on failure,

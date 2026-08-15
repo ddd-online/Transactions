@@ -58,7 +58,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import type { FormInstance } from 'ant-design-vue/es/form'
 import type { Rule } from 'ant-design-vue/es/form'
 import { message } from 'ant-design-vue'
-import type { TransactionRecord, TrForm } from '@/types/billadm'
+import type { TransactionRecord, TrForm } from '@/types/transactions'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { createTrForLedger, deleteTrById } from '@/backend/api/tr'
 import { createTemplate } from '@/backend/api/template'
@@ -255,7 +255,7 @@ const handleConfirmSaveTemplate = async () => {
 <style scoped>
 .template-select-row {
   display: flex;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   align-items: center;
 }
 

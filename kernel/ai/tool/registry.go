@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/billadm/ai/provider"
+	"github.com/transactions/ai/provider"
 )
 
 // Tool defines the interface that every AI tool must implement.

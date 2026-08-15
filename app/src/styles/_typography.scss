@@ -1,5 +1,5 @@
 // ============================================
-// Billadm Typography
+// transactions Typography
 // "Clean Geometric Sans" — modern, readable, calm
 // Reference: impeccable.style (Albert Sans + Alumni Sans)
 // ============================================
@@ -20,9 +20,9 @@
 // ============================================
 
 :root {
-  --billadm-font-display: 'Inter', system-ui, -apple-system, sans-serif;
-  --billadm-font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --billadm-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
+  --transactions-font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --transactions-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --transactions-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
 }
 
 // ============================================
@@ -32,91 +32,91 @@
 .typography {
   // Display XL - Hero numbers and key metrics
   &-display-xl {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-display-xl);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-display-xl);
     font-weight: 700;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-tight);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-tight);
     margin: 0;
     letter-spacing: -0.02em;
   }
 
   // Display - Geometric sans for major headings
   &-display {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-display);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-display);
     font-weight: 700;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-tight);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-tight);
     margin: 0;
     letter-spacing: -0.015em;
   }
 
   &-display-sm {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-display-sm);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-display-sm);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-tight);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-tight);
     margin: 0;
   }
 
   // Title - Sans for section headers
   &-title {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-title);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-title);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-snug);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-snug);
     margin: 0;
   }
 
   &-title-sm {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-title-sm);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-title-sm);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-snug);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-snug);
     margin: 0;
   }
 
   // Section - Sans-serif for UI labels
   &-section {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-section);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-section);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-normal);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-normal);
     margin: 0;
   }
 
   // Body - Clean sans-serif for content
   &-body {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-body);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-body);
     font-weight: 400;
-    color: var(--billadm-color-text-major);
-    line-height: var(--billadm-height-normal);
+    color: var(--transactions-color-text-major);
+    line-height: var(--transactions-height-normal);
     margin: 0;
   }
 
   // Caption - Smaller body text
   &-caption {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-caption);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-caption);
     font-weight: 400;
-    color: var(--billadm-color-text-secondary);
-    line-height: var(--billadm-height-normal);
+    color: var(--transactions-color-text-secondary);
+    line-height: var(--transactions-height-normal);
     margin: 0;
   }
 
   // Small - Labels and badges
   &-small {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-small);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-small);
     font-weight: 500;
-    color: var(--billadm-color-text-secondary);
-    line-height: var(--billadm-height-tight);
+    color: var(--transactions-color-text-secondary);
+    line-height: var(--transactions-height-tight);
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -124,24 +124,24 @@
 
   // Amount - Monospace for financial data
   &-amount {
-    font-family: var(--billadm-font-mono);
-    font-size: var(--billadm-size-text-title);
+    font-family: var(--transactions-font-mono);
+    font-size: var(--transactions-size-text-title);
     font-weight: 500;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
   }
 
   &-amount-large {
-    font-family: var(--billadm-font-mono);
-    font-size: var(--billadm-size-text-display);
+    font-family: var(--transactions-font-mono);
+    font-size: var(--transactions-size-text-display);
     font-weight: 600;
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
   }
 
   &-amount-small {
-    font-family: var(--billadm-font-mono);
-    font-size: var(--billadm-size-text-body);
+    font-family: var(--transactions-font-mono);
+    font-size: var(--transactions-size-text-body);
     font-weight: 500;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
@@ -149,42 +149,42 @@
 
   // Labels - Uppercase small text
   &-label {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-caption);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-caption);
     font-weight: 500;
-    color: var(--billadm-color-text-secondary);
+    color: var(--transactions-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
 
   // Semantic variants
   &-secondary {
-    color: var(--billadm-color-text-secondary);
+    color: var(--transactions-color-text-secondary);
   }
 
   &-disabled {
-    color: var(--billadm-color-text-disabled);
+    color: var(--transactions-color-text-disabled);
   }
 
   &-success {
-    color: var(--billadm-color-success);
+    color: var(--transactions-color-success);
   }
 
   &-danger {
-    color: var(--billadm-color-negative);
+    color: var(--transactions-color-negative);
   }
 
   // Income/Expense/Transfer
   &-income {
-    color: var(--billadm-color-income);
+    color: var(--transactions-color-income);
   }
 
   &-expense {
-    color: var(--billadm-color-expense);
+    color: var(--transactions-color-expense);
   }
 
   &-transfer {
-    color: var(--billadm-color-transfer);
+    color: var(--transactions-color-transfer);
   }
 }
 
@@ -193,23 +193,23 @@
 // ============================================
 
 .ant-typography {
-  font-family: var(--billadm-font-body);
-  color: var(--billadm-color-text-major);
+  font-family: var(--transactions-font-body);
+  color: var(--transactions-color-text-major);
 
   &-secondary {
-    color: var(--billadm-color-text-secondary);
+    color: var(--transactions-color-text-secondary);
   }
 
   &-disabled {
-    color: var(--billadm-color-text-disabled);
+    color: var(--transactions-color-text-disabled);
   }
 
   &.ant-typography-success {
-    color: var(--billadm-color-success);
+    color: var(--transactions-color-success);
   }
 
   &.ant-typography-danger {
-    color: var(--billadm-color-negative);
+    color: var(--transactions-color-negative);
   }
 }
 
@@ -219,39 +219,39 @@
 
 .statistic {
   &-value {
-    font-family: var(--billadm-font-mono);
-    font-size: var(--billadm-size-text-display);
+    font-family: var(--transactions-font-mono);
+    font-size: var(--transactions-size-text-display);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
   }
 
   &-label {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-caption);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-caption);
     font-weight: 500;
-    color: var(--billadm-color-text-secondary);
+    color: var(--transactions-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin: var(--billadm-space-xs) 0 0 0;
+    margin: var(--transactions-space-xs) 0 0 0;
   }
 
   &-income {
     .statistic-value {
-      color: var(--billadm-color-income);
+      color: var(--transactions-color-income);
     }
   }
 
   &-expense {
     .statistic-value {
-      color: var(--billadm-color-expense);
+      color: var(--transactions-color-expense);
     }
   }
 
   &-transfer {
     .statistic-value {
-      color: var(--billadm-color-transfer);
+      color: var(--transactions-color-transfer);
     }
   }
 }
@@ -261,7 +261,7 @@
 // ============================================
 
 .mono-number {
-  font-family: var(--billadm-font-mono);
+  font-family: var(--transactions-font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }

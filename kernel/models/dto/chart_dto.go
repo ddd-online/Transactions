@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 // Re-export ChartLine from models for convenience

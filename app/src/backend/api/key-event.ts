@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { KeyEvent, KeyEventImage } from "@/types/billadm";
+import type { KeyEvent, KeyEventImage } from "@/types/transactions";
 
 export async function queryKeyEventsByYear(year: number, ledgerId: string): Promise<KeyEvent[]> {
     return api.get<KeyEvent[]>(`/v1/key-events/year/${year}?ledger_id=${ledgerId}`, '查询关键事件列表');

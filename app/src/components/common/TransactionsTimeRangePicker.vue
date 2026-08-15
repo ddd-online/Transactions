@@ -1,6 +1,6 @@
-<!-- @/components/BilladmTimeRangePicker.vue -->
+<!-- @/components/TransactionsTimeRangePicker.vue -->
 <template>
-  <div class="billadm-time-range-picker">
+  <div class="transactions-time-range-picker">
     <a-segmented
         v-model:value="timeRangeTypeLabel"
         :options="Object.keys(TimeRangeLabelToValue)"
@@ -42,7 +42,7 @@ import {
   normalizeTimeRange
 } from '@/backend/timerange.ts';
 import {LeftOutlined, RightOutlined} from '@ant-design/icons-vue';
-import type {RangeValue, TimeRangeTypeLabel, TimeRangeTypeValue} from '@/types/billadm';
+import type {RangeValue, TimeRangeTypeLabel, TimeRangeTypeValue} from '@/types/transactions';
 import type {SegmentedValue} from "ant-design-vue/es/segmented/src/segmented";
 import dayjs, {type Dayjs} from "dayjs";
 
@@ -118,7 +118,7 @@ const handleTimeRangeChange = (val: [string, string] | [Dayjs, Dayjs], _: [strin
 </script>
 
 <style scoped>
-.billadm-time-range-picker {
+.transactions-time-range-picker {
   display: flex;
   align-items: center;
   gap: 8px;

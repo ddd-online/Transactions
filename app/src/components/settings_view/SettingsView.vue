@@ -71,7 +71,7 @@ import {
   RobotOutlined,
   BookOutlined,
 } from "@ant-design/icons-vue";
-import BilladmTemplateSetting from './BilladmTemplateSetting.vue';
+import TransactionsTemplateSetting from './TransactionsTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
 import AiSetting from './AiSetting.vue';
@@ -81,7 +81,7 @@ const activeComponent = ref('general');
 
 const componentMap = {
   'general': GeneralSetting,
-  'template': BilladmTemplateSetting,
+  'template': TransactionsTemplateSetting,
   'diary': DiarySetting,
   'about': AboutSetting,
   'ai': AiSetting,
@@ -96,7 +96,7 @@ const currentComponent = computed(() => {
 .settings-view {
   height: 100%;
   display: flex;
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--transactions-color-major-warm);
   position: relative;
 }
 
@@ -116,8 +116,8 @@ const currentComponent = computed(() => {
 .settings-sidebar {
   width: 200px;
   flex-shrink: 0;
-  background-color: var(--billadm-color-major-background);
-  border-right: 1px solid var(--billadm-color-divider);
+  background-color: var(--transactions-color-major-background);
+  border-right: 1px solid var(--transactions-color-divider);
   display: flex;
   flex-direction: column;
 }
@@ -125,40 +125,40 @@ const currentComponent = computed(() => {
 .settings-nav {
   display: flex;
   flex-direction: column;
-  padding: var(--billadm-space-sm);
-  gap: var(--billadm-space-2xs);
+  padding: var(--transactions-space-sm);
+  gap: var(--transactions-space-2xs);
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  border-radius: var(--billadm-radius-md);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
   width: 100%;
-  transition: all var(--billadm-transition-fast);
+  transition: all var(--transactions-transition-fast);
 }
 
 .nav-item:hover {
-  background-color: var(--billadm-color-hover-bg);
-  color: var(--billadm-color-text-major);
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
 }
 
 .nav-item.active {
-  background-color: var(--billadm-color-active-bg);
-  color: var(--billadm-color-primary);
+  background-color: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
   font-weight: 500;
 }
 
 .nav-item:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
@@ -167,7 +167,7 @@ const currentComponent = computed(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: var(--billadm-size-text-section);
+  font-size: var(--transactions-size-text-section);
 }
 
 .nav-text {
@@ -184,7 +184,7 @@ const currentComponent = computed(() => {
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  background-color: var(--billadm-color-major-warm);
+  background-color: var(--transactions-color-major-warm);
 }
 
 .content-inner {

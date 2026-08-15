@@ -1,5 +1,5 @@
 <template>
-  <BilladmPageLayout>
+  <TransactionsPageLayout>
     <template #toolbar>
       <div class="key-event-toolbar-left">
         <a-button type="text" @click="goToPrevYear">
@@ -58,7 +58,7 @@
       @confirm="handleAddEvent"
       @close="addModalOpen = false"
     />
-  </BilladmPageLayout>
+  </TransactionsPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -73,7 +73,7 @@ import { fetchLinkedTransactions, unlinkTrFromKeyEvent } from '@/backend/api/tr'
 import NotificationUtil from '@/backend/notification'
 import { useTransactionStats } from '@/hooks/useTransactionStats'
 import { useImageUpload } from '@/hooks/useImageUpload'
-import type { KeyEvent, TransactionRecord } from '@/types/billadm'
+import type { KeyEvent, TransactionRecord } from '@/types/transactions'
 
 const keyEventStore = useKeyEventStore()
 const appDataStore = useAppDataStore()
@@ -276,13 +276,13 @@ onMounted(async () => {
 .key-event-toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .year-display {
-  font-size: var(--billadm-size-text-display-sm);
+  font-size: var(--transactions-size-text-display-sm);
   font-weight: 600;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
   min-width: 80px;
   text-align: center;
   line-height: 32px;
@@ -296,16 +296,16 @@ onMounted(async () => {
   gap: 0;
   min-height: 0;
   overflow: hidden;
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
 }
 
 .key-event-body .panel-left {
   height: 100%;
   overflow: hidden;
   contain: layout style;
-  border-right: 1px solid var(--billadm-color-divider);
+  border-right: 1px solid var(--transactions-color-divider);
   border-radius: 0;
 }
 
@@ -321,7 +321,7 @@ onMounted(async () => {
   height: 100%;
   overflow: hidden;
   contain: layout style;
-  border-left: 1px solid var(--billadm-color-divider);
+  border-left: 1px solid var(--transactions-color-divider);
   border-radius: 0;
 }
 

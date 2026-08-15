@@ -3,7 +3,7 @@ package binding
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models/dto"
+	"github.com/transactions/models/dto"
 )
 
 func JsonTransactionRecordDto(c *gin.Context) (*dto.TransactionRecordDto, bool) {

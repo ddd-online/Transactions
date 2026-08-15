@@ -23,7 +23,7 @@
     <div class="chart-body">
       <div class="chart-view-content">
         <Transition name="chart-fade" mode="out-in">
-          <BilladmChart v-if="data.length > 0" key="chart" class="chart-canvas" :data="data" x-field="time" y-field="amount" :title="title" :lines="lines" />
+          <TransactionsChart v-if="data.length > 0" key="chart" class="chart-canvas" :data="data" x-field="time" y-field="amount" :title="title" :lines="lines" />
           <a-empty v-else key="empty" class="chart-empty" description="暂无数据" />
         </Transition>
       </div>
@@ -39,7 +39,7 @@
     </div>
 
     <!-- 曲线详情 -->
-    <BilladmChartLines
+    <TransactionsChartLines
       :lines="lines"
       :is-preset="isPreset"
       :chart-id="chartId"
@@ -51,8 +51,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import BilladmChart from '@/components/da_view/BilladmChart.vue'
-import BilladmChartLines from '@/components/da_view/BilladmChartLines.vue'
+import TransactionsChart from '@/components/da_view/TransactionsChart.vue'
+import TransactionsChartLines from '@/components/da_view/TransactionsChartLines.vue'
 import type { TimeSeriesData, ChartLine } from '@/backend/chart'
 import { useTransactionTypeColor } from '@/utils/themeColors'
 
@@ -118,24 +118,24 @@ const formatAmount = (amount: number) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-lg) var(--billadm-space-xl);
+  padding: var(--transactions-space-lg) var(--transactions-space-xl);
   flex-shrink: 0;
-  background-color: var(--billadm-color-major-background);
-  border-bottom: 1px solid var(--billadm-color-divider);
+  background-color: var(--transactions-color-major-background);
+  border-bottom: 1px solid var(--transactions-color-divider);
 }
 
 .chart-view-title {
   margin: 0;
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-title);
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-title);
   font-weight: 600;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
 }
 
 .header-controls {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .granularity-select {
@@ -148,17 +148,17 @@ const formatAmount = (amount: number) => {
   min-height: 0;
   display: flex;
   overflow: hidden;
-  border-radius: 0 0 var(--billadm-radius-lg) var(--billadm-radius-lg);
+  border-radius: 0 0 var(--transactions-radius-lg) var(--transactions-radius-lg);
 }
 
 .chart-view-content {
   flex: 1;
   min-width: 0;
-  padding: var(--billadm-space-xl);
+  padding: var(--transactions-space-xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
 }
 
 .chart-canvas {
@@ -182,31 +182,31 @@ const formatAmount = (amount: number) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
-  border-left: 1px solid var(--billadm-color-divider);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-lg);
+  background-color: var(--transactions-color-major-background);
+  border-left: 1px solid var(--transactions-color-divider);
   overflow-y: auto;
 }
 
 .stat-row {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  border-radius: var(--billadm-radius-md);
-  transition: background-color var(--billadm-transition-fast);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .stat-dot {
   width: 8px;
   height: 8px;
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--transactions-radius-full);
   flex-shrink: 0;
 }
 
 .stat-row:hover {
-  background-color: var(--billadm-color-minor-background);
+  background-color: var(--transactions-color-minor-background);
 }
 
 .stat-text {
@@ -216,15 +216,15 @@ const formatAmount = (amount: number) => {
 }
 
 .stat-label {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   line-height: 1.3;
 }
 
 .stat-value {
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--transactions-size-text-body);
   font-weight: 600;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
   font-variant-numeric: tabular-nums;
   line-height: 1.3;
 }
@@ -232,7 +232,7 @@ const formatAmount = (amount: number) => {
 /* 图表过渡 */
 .chart-fade-enter-active,
 .chart-fade-leave-active {
-  transition: opacity var(--billadm-transition-fast);
+  transition: opacity var(--transactions-transition-fast);
 }
 .chart-fade-enter-from,
 .chart-fade-leave-to {

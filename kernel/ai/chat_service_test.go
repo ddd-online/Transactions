@@ -3,7 +3,7 @@ package ai
 import (
 	"testing"
 
-	"github.com/billadm/ai/provider"
+	"github.com/transactions/ai/provider"
 )
 
 func TestFilterOrphanedToolResults(t *testing.T) {

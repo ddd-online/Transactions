@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { Ledger } from "@/types/billadm";
+import type { Ledger } from "@/types/transactions";
 
 export async function queryAllLedgers(): Promise<Ledger[]> {
     return api.get<Ledger[]>('/v1/ledgers?id=all', '查询账本');

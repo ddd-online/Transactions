@@ -6,8 +6,8 @@
           :percent="updateStore.downloadPercent"
           :show-info="false"
           size="small"
-          stroke-color="var(--billadm-color-primary)"
-          trail-color="var(--billadm-color-divider)"
+          stroke-color="var(--transactions-color-primary)"
+          trail-color="var(--transactions-color-divider)"
           style="width: 160px"
         />
         <span class="download-text">
@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="bottom-bar-right">
-      <billadm-statistics-footer v-if="showStatistics" />
+      <transactions-statistics-footer v-if="showStatistics" />
     </div>
   </div>
 </template>
@@ -25,7 +25,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUpdateStore } from '@/stores/updateStore'
-import BilladmStatisticsFooter from '@/components/common/BilladmStatisticsFooter.vue'
+import TransactionsStatisticsFooter from '@/components/common/TransactionsStatisticsFooter.vue'
 
 const route = useRoute()
 const updateStore = useUpdateStore()
@@ -62,13 +62,13 @@ const showStatistics = computed(() => {
 .download-progress {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .download-text {
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }

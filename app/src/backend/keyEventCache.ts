@@ -1,4 +1,4 @@
-import type { KeyEventImage, TransactionRecord } from '@/types/billadm'
+import type { KeyEventImage, TransactionRecord } from '@/types/transactions'
 
 export class KeyEventCache {
   readonly trCache = new Map<string, TransactionRecord[]>()

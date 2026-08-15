@@ -1,8 +1,8 @@
 <template>
-  <BilladmPageLayout>
+  <TransactionsPageLayout>
     <template #toolbar>
       <div class="tr-toolbar-left">
-        <BilladmTimeRangePicker v-model:time-range="trQueryConditionStore.timeRange"
+        <TransactionsTimeRangePicker v-model:time-range="trQueryConditionStore.timeRange"
           v-model:time-range-type="trQueryConditionStore.timeRangeType" />
       </div>
       <div class="tr-toolbar-right">
@@ -38,7 +38,7 @@
       </template>
     </a-float-button>
     <a-float-button class="float-secondary" @click="openTrFilterModal = true"
-      :badge="{ count: trQueryConditionStore.conditionLen, color: 'var(--billadm-color-primary)' }">
+      :badge="{ count: trQueryConditionStore.conditionLen, color: 'var(--transactions-color-primary)' }">
       <template #icon>
         <FilterOutlined />
       </template>
@@ -74,7 +74,7 @@
         <a-button type="primary" @click="confirmLink">确认关联</a-button>
       </template>
     </a-modal>
-  </BilladmPageLayout>
+  </TransactionsPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -82,7 +82,7 @@ import { ref, watch, computed } from 'vue';
 import TransactionRecordTable from '@/components/tr_view/TransactionRecordTable.vue';
 import TrSortModal from './TrSortModal.vue'
 import type { SortItem } from './TrSortModal.vue'
-import type { TransactionRecord } from "@/types/billadm";
+import type { TransactionRecord } from "@/types/transactions";
 import { withErrorHandling } from "@/backend/errorHandler"
 import { deleteTrById, linkTrToKeyEvent, unlinkTrFromKeyEvent } from "@/backend/api/tr"
 import { useLedgerStore } from "@/stores/ledgerStore.ts";
@@ -238,13 +238,13 @@ const handleUnlink = async () => {
 .tr-toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .tr-toolbar-right {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .tr-content {
@@ -267,7 +267,7 @@ const handleUnlink = async () => {
   flex-shrink: 0;
   display: flex;
   justify-content: center;
-  padding: var(--billadm-space-lg) 0 var(--billadm-space-sm);
+  padding: var(--transactions-space-lg) 0 var(--transactions-space-sm);
 }
 
 .float-primary {
@@ -281,18 +281,18 @@ const handleUnlink = async () => {
 }
 
 .float-secondary :deep(.ant-float-btn-body) {
-  background-color: var(--billadm-color-minor-background);
-  box-shadow: var(--billadm-shadow-sm);
+  background-color: var(--transactions-color-minor-background);
+  box-shadow: var(--transactions-shadow-sm);
   border: 1px solid transparent;
-  transition: background-color var(--billadm-transition-fast),
-              box-shadow var(--billadm-transition-fast),
-              border-color var(--billadm-transition-fast);
+  transition: background-color var(--transactions-transition-fast),
+              box-shadow var(--transactions-transition-fast),
+              border-color var(--transactions-transition-fast);
 }
 
 .float-secondary:hover :deep(.ant-float-btn-body) {
-  background-color: var(--billadm-color-major-background);
-  border-color: var(--billadm-color-border-l2);
-  box-shadow: var(--billadm-shadow-md);
+  background-color: var(--transactions-color-major-background);
+  border-color: var(--transactions-color-border-l2);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 .float-sort {
@@ -301,18 +301,18 @@ const handleUnlink = async () => {
 }
 
 .float-sort :deep(.ant-float-btn-body) {
-  background-color: var(--billadm-color-minor-background);
-  box-shadow: var(--billadm-shadow-sm);
+  background-color: var(--transactions-color-minor-background);
+  box-shadow: var(--transactions-shadow-sm);
   border: 1px solid transparent;
-  transition: background-color var(--billadm-transition-fast),
-              box-shadow var(--billadm-transition-fast),
-              border-color var(--billadm-transition-fast);
+  transition: background-color var(--transactions-transition-fast),
+              box-shadow var(--transactions-transition-fast),
+              border-color var(--transactions-transition-fast);
 }
 
 .float-sort:hover :deep(.ant-float-btn-body) {
-  background-color: var(--billadm-color-major-background);
-  border-color: var(--billadm-color-border-l2);
-  box-shadow: var(--billadm-shadow-md);
+  background-color: var(--transactions-color-major-background);
+  border-color: var(--transactions-color-border-l2);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 /* tr-body 作为 page-content 的 flex 子项，确保 tr-footer 始终在底部 */

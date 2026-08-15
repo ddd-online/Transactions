@@ -61,7 +61,7 @@
     </div>
 
     <!-- 工作空间选择弹窗 -->
-    <billadm-file-select
+    <transactions-file-select
       v-model="showFileSelect"
       title="选择工作目录"
       placeholder="请输入或选择工作目录路径"
@@ -142,55 +142,55 @@ const onCloseBehaviorChange = (value: string | number) => {
 .setting-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .setting-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-md);
-  transition: background-color var(--billadm-transition-fast);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .setting-card:hover {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .setting-info {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-2xs);
+  gap: var(--transactions-space-2xs);
   min-width: 0;
 }
 
 .setting-title {
-  font-size: var(--billadm-size-text-body);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
 }
 
 .setting-desc {
-  font-size: var(--billadm-size-text-caption);
-  font-family: var(--billadm-font-mono);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  font-family: var(--transactions-font-mono);
+  color: var(--transactions-color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .setting-desc.empty {
-  color: var(--billadm-color-text-disabled);
+  color: var(--transactions-color-text-disabled);
   font-style: italic;
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
 }
 
 .setting-action {
   flex-shrink: 0;
-  margin-left: var(--billadm-space-lg);
+  margin-left: var(--transactions-space-lg);
 }
 
 @media (prefers-reduced-motion: reduce) {

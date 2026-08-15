@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { DiaryEntry, DiaryDateItem } from "@/types/billadm";
+import type { DiaryEntry, DiaryDateItem } from "@/types/transactions";
 
 /** 获取所有有日记的日期列表（含字数、心情） */
 export async function fetchDates(): Promise<DiaryDateItem[]> {

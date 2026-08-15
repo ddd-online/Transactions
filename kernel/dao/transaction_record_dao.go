@@ -6,10 +6,10 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/billadm/constant"
-	"github.com/billadm/models"
-	"github.com/billadm/models/dto"
-	"github.com/billadm/workspace"
+	"github.com/transactions/constant"
+	"github.com/transactions/models"
+	"github.com/transactions/models/dto"
+	"github.com/transactions/workspace"
 )
 
 // TrStatistics holds aggregate price sums by transaction type.

@@ -224,11 +224,11 @@ const resetNewLineForm = () => {
 <style scoped>
 .chart-lines {
   flex-shrink: 0;
-  margin-top: var(--billadm-space-xl);
+  margin-top: var(--transactions-space-xl);
 }
 
 .chart-lines-section {
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
   border-radius: 0;
   overflow: hidden;
 }
@@ -245,19 +245,19 @@ const resetNewLineForm = () => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  border-top: 1px solid var(--billadm-color-divider);
-  background-color: var(--billadm-color-major-background);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-top: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-major-background);
 }
 
 .conditions-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .text-disabled {
-  color: var(--billadm-color-text-disabled);
+  color: var(--transactions-color-text-disabled);
 }
 </style>

@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {ref} from "vue";
-import type {TrStatistics} from "@/types/billadm";
+import type {TrStatistics} from "@/types/transactions";
 
 export const useAppDataStore = defineStore('appDataStore', () => {
 

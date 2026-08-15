@@ -1,7 +1,7 @@
 import {computed, ref} from "vue"
 import {defineStore} from 'pinia'
 import {getThisMonthRange} from "@/backend/timerange.ts"
-import type {TrQueryConditionItem, RangeValue, TimeRangeTypeValue} from "@/types/billadm"
+import type {TrQueryConditionItem, RangeValue, TimeRangeTypeValue} from "@/types/transactions"
 
 export const useTrQueryConditionStore = defineStore('trQueryCondition', () => {
 

@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/billadm/models"
-	"github.com/billadm/workspace"
+	"github.com/transactions/models"
+	"github.com/transactions/workspace"
 )
 
 type ChartDao interface {

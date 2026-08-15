@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { TransactionRecord, Ledger } from '@/types/billadm';
+import type { TransactionRecord, Ledger } from '@/types/transactions';
 import { centsToYuan, formatTimestamp } from "@/backend/functions";
 import { TransactionTypeToLabel } from "@/backend/constant";
 import type { ColumnsType } from "ant-design-vue/es/table";
@@ -218,136 +218,136 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 .transaction-table :deep(.ant-table-thead > tr > th) {
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-caption);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
   font-weight: 500;
-  color: var(--billadm-color-text-secondary);
-  background-color: var(--billadm-color-minor-background);
-  border-bottom: 1px solid var(--billadm-color-divider);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 .transaction-table :deep(.ant-table-tbody > tr > td) {
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
-  border-bottom: 1px solid var(--billadm-color-divider);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
 }
 
 .transaction-table :deep(.ant-table-tbody > tr:hover > td) {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .transaction-table :deep(.row-type-income > td) {
-  background-color: var(--billadm-color-income-tint);
+  background-color: var(--transactions-color-income-tint);
 }
 
 .transaction-table :deep(.row-type-expense > td) {
-  background-color: var(--billadm-color-expense-tint);
+  background-color: var(--transactions-color-expense-tint);
 }
 
 .transaction-table :deep(.row-type-transfer > td) {
-  background-color: var(--billadm-color-transfer-tint);
+  background-color: var(--transactions-color-transfer-tint);
 }
 
 .cell-date {
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .cell-type {
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .cell-type.type-income {
-  color: var(--billadm-color-income);
+  color: var(--transactions-color-income);
 }
 
 .cell-type.type-expense {
-  color: var(--billadm-color-expense);
+  color: var(--transactions-color-expense);
 }
 
 .cell-type.type-transfer {
-  color: var(--billadm-color-transfer);
+  color: var(--transactions-color-transfer);
 }
 
 .cell-category {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
 }
 
 .cell-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .tag-item {
-  font-size: var(--billadm-size-text-caption);
-  background-color: var(--billadm-color-minor-background);
+  font-size: var(--transactions-size-text-caption);
+  background-color: var(--transactions-color-minor-background);
   border: none;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
 }
 
 .tags-income .tag-item {
-  background-color: var(--billadm-color-income-tint);
-  color: var(--billadm-color-income);
+  background-color: var(--transactions-color-income-tint);
+  color: var(--transactions-color-income);
 }
 
 .tags-expense .tag-item {
-  background-color: var(--billadm-color-expense-tint);
-  color: var(--billadm-color-expense);
+  background-color: var(--transactions-color-expense-tint);
+  color: var(--transactions-color-expense);
 }
 
 .tags-transfer .tag-item {
-  background-color: var(--billadm-color-transfer-tint);
-  color: var(--billadm-color-transfer);
+  background-color: var(--transactions-color-transfer-tint);
+  color: var(--transactions-color-transfer);
 }
 
 .tag-outlier {
-  font-size: var(--billadm-size-text-caption);
-  background-color: var(--billadm-color-outlier-tint);
-  color: var(--billadm-color-warning);
+  font-size: var(--transactions-size-text-caption);
+  background-color: var(--transactions-color-outlier-tint);
+  color: var(--transactions-color-warning);
   border: none;
 }
 
 .cell-description {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
 }
 
 .cell-price {
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-body);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
 
 .cell-price.price-income {
-  color: var(--billadm-color-income);
+  color: var(--transactions-color-income);
 }
 
 .cell-price.price-expense {
-  color: var(--billadm-color-expense);
+  color: var(--transactions-color-expense);
 }
 
 .cell-price.price-transfer {
-  color: var(--billadm-color-transfer);
+  color: var(--transactions-color-transfer);
 }
 
 .cell-actions {
   display: flex;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
   justify-content: center;
 }
 
@@ -356,22 +356,22 @@ const handleSyncTarget = async (record: TransactionRecord, targetLedgerId: strin
 }
 
 .sync-ledger-item {
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
   cursor: pointer;
-  border-radius: var(--billadm-radius-sm);
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
-  transition: background-color var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-sm);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .sync-ledger-item:hover {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .sync-empty {
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  color: var(--billadm-color-text-secondary);
-  font-size: var(--billadm-size-text-caption);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { TransactionRecord, TrQueryCondition, TrQueryResult, TrStatistics } from "@/types/billadm";
+import type { TransactionRecord, TrQueryCondition, TrQueryResult, TrStatistics } from "@/types/transactions";
 import type { ChartLine } from '@/backend/chart';
 
 export async function queryTrOnCondition(condition: TrQueryCondition): Promise<TrQueryResult> {

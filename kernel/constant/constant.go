@@ -1,8 +1,8 @@
 package constant
 
 const (
-	LogName = "billadm.log"
-	DbName  = "billadm.db"
+	LogName = "transactions.log"
+	DbName  = "transactions.db"
 	All     = "all"
 )
 

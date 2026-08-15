@@ -1,4 +1,4 @@
-# clean.ps1 - 清理 Billadm 项目中的构建产物与临时文件
+# clean.ps1 - 清理 transactions 项目中的构建产物与临时文件
 
 # 设置输出编码为 UTF-8（防止中文乱码）
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -16,10 +16,8 @@ $electronDistDir = Join-Path $projectRoot "electron" "dist"
 $electronLogsDir = Join-Path $projectRoot "electron" "logs"
 $buildTargetDir = Join-Path $projectRoot "build" "target"
 $electronKernelExe = Join-Path $projectRoot "electron" "transactions.exe"
-# 历史遗留产物（旧命名/误生成的 exe）
-$kernelBilladmExe = Join-Path $projectRoot "kernel" "billadm.exe"
+# 历史遗留产物（误生成的 exe）
 $kernelNulExe = Join-Path $projectRoot "kernel" "nul.exe"
-$electronBilladmKernelExe = Join-Path $projectRoot "electron" "Billadm-Kernel.exe"
 
 # 颜色辅助函数（提升可读性）
 function Write-Info { param($msg) Write-Host "📦 $msg" -ForegroundColor Cyan }
@@ -40,9 +38,7 @@ try {
         $electronLogsDir,
         $buildTargetDir,
         $electronKernelExe,
-        $kernelBilladmExe,
-        $kernelNulExe,
-        $electronBilladmKernelExe
+        $kernelNulExe
     )
 
     foreach ($item in $itemsToRemove) {

@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/ai"
+	"github.com/transactions/ai"
 )
 
 // POST /api/v1/ai/chat

@@ -71,7 +71,7 @@
 <script setup lang="ts">
 import { DeleteOutlined } from "@ant-design/icons-vue";
 import { centsToYuan } from "@/backend/functions";
-import type { TransactionRecord } from "@/types/billadm";
+import type { TransactionRecord } from "@/types/transactions";
 
 interface Props {
   transactions: TransactionRecord[];
@@ -92,9 +92,9 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--billadm-space-md);
-  background-color: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-lg);
+  padding: var(--transactions-space-md);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-lg);
   overflow: hidden;
   position: relative;
 }
@@ -109,15 +109,15 @@ defineEmits<{
 }
 
 .panel-empty-text {
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
 }
 
 /* ========== 卡片列表 ========== */
 .linked-cards {
   flex: 1;
   overflow-y: auto;
-  padding: var(--billadm-space-xs);
+  padding: var(--transactions-space-xs);
   contain: strict;
 
   @include custom-scrollbar;
@@ -128,13 +128,13 @@ defineEmits<{
   position: relative;
   display: flex;
   align-items: flex-start;
-  padding: var(--billadm-space-sm);
-  margin-bottom: var(--billadm-space-xs);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-md);
-  background-color: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-sm);
-  transition: box-shadow var(--billadm-transition-smooth);
+  padding: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-xs);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-major-background);
+  box-shadow: var(--transactions-shadow-sm);
+  transition: box-shadow var(--transactions-transition-smooth);
   min-height: 68px;
   box-sizing: border-box;
   content-visibility: auto;
@@ -142,7 +142,7 @@ defineEmits<{
 }
 
 .linked-card:hover {
-  box-shadow: var(--billadm-shadow-md);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 /* ========== 卡片 staggered 入场 ========== */
@@ -166,7 +166,7 @@ defineEmits<{
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 /* ========== 主行：分类 + 金额 ========== */
@@ -174,21 +174,21 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 /* ========== 副行：标签 + 描述 ========== */
 .linked-card-row--meta {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   min-height: 20px;
 }
 
 .linked-card-value {
-  font-size: var(--billadm-size-text-body-sm);
+  font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
 }
 
 /* ========== 标签 ========== */
@@ -200,16 +200,16 @@ defineEmits<{
 }
 
 .tag-item {
-  font-size: var(--billadm-size-text-caption);
-  background-color: var(--billadm-color-hover-bg);
+  font-size: var(--transactions-size-text-caption);
+  background-color: var(--transactions-color-hover-bg);
   border: none;
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 /* ========== 描述 ========== */
 .linked-card-desc {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -219,44 +219,44 @@ defineEmits<{
 
 /* ========== 金额 ========== */
 .linked-card-amount {
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-body);
-  font-weight: var(--billadm-weight-semibold);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 
 .linked-card-amount.amount-income {
-  color: var(--billadm-color-income);
+  color: var(--transactions-color-income);
 }
 
 .linked-card-amount.amount-expense {
-  color: var(--billadm-color-expense);
+  color: var(--transactions-color-expense);
 }
 
 .linked-card-amount.amount-transfer {
-  color: var(--billadm-color-transfer);
+  color: var(--transactions-color-transfer);
 }
 
 /* ========== 删除按钮 ========== */
 .linked-card-delete {
   position: absolute;
-  bottom: var(--billadm-space-xs);
-  right: var(--billadm-space-xs);
+  bottom: var(--transactions-space-xs);
+  right: var(--transactions-space-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
   border: none;
-  background: var(--billadm-color-elevated);
-  color: var(--billadm-color-text-secondary);
+  background: var(--transactions-color-elevated);
+  color: var(--transactions-color-text-secondary);
   cursor: pointer;
-  border-radius: var(--billadm-radius-full);
-  transition: color var(--billadm-transition-fast),
-              background-color var(--billadm-transition-fast),
-              transform var(--billadm-transition-fast);
-  font-size: var(--billadm-size-text-caption);
+  border-radius: var(--transactions-radius-full);
+  transition: color var(--transactions-transition-fast),
+              background-color var(--transactions-transition-fast),
+              transform var(--transactions-transition-fast);
+  font-size: var(--transactions-size-text-caption);
   opacity: 0;
 }
 
@@ -265,21 +265,21 @@ defineEmits<{
 }
 
 .linked-card-delete:hover {
-  color: var(--billadm-color-expense);
-  background: var(--billadm-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
+  background: var(--transactions-color-danger-hover-bg);
   transform: scale(1.1);
 }
 
 .linked-card-delete:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
   opacity: 1;
 }
 
 .linked-card:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
-  box-shadow: var(--billadm-shadow-md);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 @media (prefers-reduced-motion: reduce) {

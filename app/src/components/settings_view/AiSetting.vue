@@ -511,40 +511,40 @@ onUnmounted(() => {
 .setting-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .setting-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-md);
-  transition: background-color var(--billadm-transition-fast);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .setting-card:hover {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .setting-info {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-2xs);
+  gap: var(--transactions-space-2xs);
   min-width: 0;
 }
 
 .setting-title {
-  font-size: var(--billadm-size-text-body);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
 }
 
 .setting-desc {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -552,7 +552,7 @@ onUnmounted(() => {
 
 .setting-action {
   flex-shrink: 0;
-  margin-left: var(--billadm-space-lg);
+  margin-left: var(--transactions-space-lg);
 }
 
 .setting-input-wide {
@@ -565,7 +565,7 @@ onUnmounted(() => {
 
 .setting-action-row {
   display: flex;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .inline-field {
@@ -573,7 +573,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--billadm-space-sm) 0;
+  padding: var(--transactions-space-sm) 0;
 }
 
 .inline-field:first-of-type {
@@ -590,7 +590,7 @@ onUnmounted(() => {
 }
 
 .setting-section {
-  margin-top: var(--billadm-space-xl);
+  margin-top: var(--transactions-space-xl);
 }
 
 .setting-header-row {
@@ -603,66 +603,66 @@ onUnmounted(() => {
 .role-selector-row {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   width: 100%;
 }
 
 .role-selector-label {
-  font-size: var(--billadm-size-text-body);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
   flex-shrink: 0;
 }
 
 .card-section-divider {
   width: 100%;
   height: 1px;
-  background: var(--billadm-color-divider);
-  margin: var(--billadm-space-lg) 0;
+  background: var(--transactions-color-divider);
+  margin: var(--transactions-space-lg) 0;
 }
 
 .prompt-textarea {
   width: 100%;
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-body-sm);
-  line-height: var(--billadm-height-normal);
-  color: var(--billadm-color-text-major);
-  background: var(--billadm-color-minor-background);
-  border-color: var(--billadm-color-divider);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-normal);
+  color: var(--transactions-color-text-major);
+  background: var(--transactions-color-minor-background);
+  border-color: var(--transactions-color-divider);
   resize: vertical;
 }
 
 .prompt-textarea:focus {
-  background: var(--billadm-color-major-background);
-  border-color: var(--billadm-color-primary);
-  box-shadow: var(--billadm-shadow-focus);
+  background: var(--transactions-color-major-background);
+  border-color: var(--transactions-color-primary);
+  box-shadow: var(--transactions-shadow-focus);
 }
 
 .setting-action-full {
   margin-left: 0;
-  margin-top: var(--billadm-space-sm);
+  margin-top: var(--transactions-space-sm);
   width: 100%;
 }
 
 .balance-hint {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
 }
 
 .model-error-inline {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .balance-error {
-  color: var(--billadm-color-expense);
+  color: var(--transactions-color-expense);
 }
 
 .balance-info {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
   width: 100%;
 }
 
@@ -687,11 +687,11 @@ onUnmounted(() => {
 .balance-status {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-xs);
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-major);
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-major);
   flex-shrink: 0;
-  margin-left: var(--billadm-space-lg);
+  margin-left: var(--transactions-space-lg);
 }
 
 .balance-dot {
@@ -701,47 +701,47 @@ onUnmounted(() => {
 }
 
 .dot-available {
-  background-color: var(--billadm-color-success);
+  background-color: var(--transactions-color-success);
 }
 
 .dot-unavailable {
-  background-color: var(--billadm-color-expense);
+  background-color: var(--transactions-color-expense);
 }
 
 .balance-row {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--billadm-space-sm);
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
 }
 
 .balance-currency {
-  font-weight: var(--billadm-weight-semibold);
+  font-weight: var(--transactions-weight-semibold);
   min-width: 36px;
 }
 
 .balance-value {
   display: flex;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .balance-sub {
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
 }
 
 .placeholder-hint {
-  margin-top: var(--billadm-space-xs);
-  color: var(--billadm-color-text-secondary);
-  font-size: var(--billadm-size-text-caption);
+  margin-top: var(--transactions-space-xs);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
 }
 
 .placeholder-hint code {
-  background: var(--billadm-color-minor-background);
-  padding: var(--billadm-space-2xs) var(--billadm-space-xs);
-  border-radius: var(--billadm-radius-sm);
-  font-family: var(--billadm-font-mono);
+  background: var(--transactions-color-minor-background);
+  padding: var(--transactions-space-2xs) var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
+  font-family: var(--transactions-font-mono);
   font-size: inherit;
 }
 
@@ -753,13 +753,13 @@ onUnmounted(() => {
 .quick-commands-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .quick-command-item {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .drag-handle {
@@ -768,7 +768,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   cursor: grab;
   margin-right: 2px;
 }
@@ -779,7 +779,7 @@ onUnmounted(() => {
 }
 
 .drag-handle:hover {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 .drag-handle:active {
@@ -788,17 +788,17 @@ onUnmounted(() => {
 
 .cmd-delete-btn {
   flex-shrink: 0;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
 }
 
 .cmd-delete-btn:hover {
-  color: var(--billadm-color-expense);
+  color: var(--transactions-color-expense);
 }
 
 .quick-commands-empty {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
-  padding: var(--billadm-space-sm) 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  padding: var(--transactions-space-sm) 0;
 }
 
 .sortable-ghost {
@@ -806,15 +806,15 @@ onUnmounted(() => {
 }
 
 .sortable-chosen {
-  background: var(--billadm-color-hover-bg);
-  border-radius: var(--billadm-radius-sm);
+  background: var(--transactions-color-hover-bg);
+  border-radius: var(--transactions-radius-sm);
 }
 
 .sortable-drag {
   opacity: 0.8;
-  background: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-md);
-  border-radius: var(--billadm-radius-sm);
+  background: var(--transactions-color-major-background);
+  box-shadow: var(--transactions-shadow-md);
+  border-radius: var(--transactions-radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {

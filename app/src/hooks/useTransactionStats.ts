@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { TransactionRecord } from '@/types/billadm'
+import type { TransactionRecord } from '@/types/transactions'
 
 export interface TransactionStats {
   income: number

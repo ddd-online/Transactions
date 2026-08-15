@@ -1,11 +1,11 @@
 package api
 
 import (
-	"github.com/billadm/ai"
-	"github.com/billadm/ai/role"
-	"github.com/billadm/dao"
-	"github.com/billadm/service"
-	"github.com/billadm/workspace"
+	"github.com/transactions/ai"
+	"github.com/transactions/ai/role"
+	"github.com/transactions/dao"
+	"github.com/transactions/service"
+	"github.com/transactions/workspace"
 )
 
 // Handlers holds all service interfaces and AI dependencies,

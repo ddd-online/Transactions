@@ -12,7 +12,7 @@
 
 // Content area
 .layout-content {
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
   overflow-y: auto;
   margin-bottom: auto;
   @include custom-scrollbar;
@@ -21,18 +21,18 @@
 // Header area
 .layout-header {
   height: auto;
-  background-color: var(--billadm-color-major-background);
-  padding: 0 0 var(--billadm-space-lg) 0;
+  background-color: var(--transactions-color-major-background);
+  padding: 0 0 var(--transactions-space-lg) 0;
   @include flex-start;
   flex-wrap: wrap;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 // Footer area
 .layout-footer {
   height: auto;
-  background-color: var(--billadm-color-major-background);
-  padding: var(--billadm-space-lg) 0 0 0;
+  background-color: var(--transactions-color-major-background);
+  padding: var(--transactions-space-lg) 0 0 0;
   display: flex;
   justify-content: flex-end;
 }
@@ -44,14 +44,14 @@
 .toolbar {
   @include flex-between;
   flex-wrap: wrap;
-  gap: var(--billadm-space-md);
-  padding: var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
-  border-bottom: 1px solid var(--billadm-color-divider);
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-lg);
+  background-color: var(--transactions-color-major-background);
+  border-bottom: 1px solid var(--transactions-color-divider);
 
   &-left {
     @include flex-start;
-    gap: var(--billadm-space-md);
+    gap: var(--transactions-space-md);
   }
 
   &-center {
@@ -59,12 +59,12 @@
     left: 50%;
     transform: translateX(-50%);
     @include flex-start;
-    gap: var(--billadm-space-md);
+    gap: var(--transactions-space-md);
   }
 
   &-right {
     @include flex-end;
-    gap: var(--billadm-space-md);
+    gap: var(--transactions-space-md);
   }
 }
 
@@ -75,49 +75,49 @@
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: var(--billadm-space-xl);
-  padding: var(--billadm-space-xl);
+  gap: var(--transactions-space-xl);
+  padding: var(--transactions-space-xl);
 }
 
 // ============================================
-// Statistics Footer (BilladmStatisticsFooter)
+// Statistics Footer (TransactionsStatisticsFooter)
 // ============================================
 
 .statistics-footer {
   @include flex-start;
-  gap: var(--billadm-space-2xl);
+  gap: var(--transactions-space-2xl);
 
   &-item {
     @include flex-start;
-    gap: var(--billadm-space-md);
+    gap: var(--transactions-space-md);
 
     &-label {
-      font-family: var(--billadm-font-body);
-      font-size: var(--billadm-size-text-caption);
+      font-family: var(--transactions-font-body);
+      font-size: var(--transactions-size-text-caption);
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      color: var(--billadm-color-text-secondary);
+      color: var(--transactions-color-text-secondary);
       margin: 0;
     }
 
     &-value {
-      font-family: var(--billadm-font-mono);
-      font-size: var(--billadm-size-text-body);
+      font-family: var(--transactions-font-mono);
+      font-size: var(--transactions-size-text-body);
       font-weight: 500;
       font-variant-numeric: tabular-nums;
       margin: 0;
 
       &.income {
-        color: var(--billadm-color-income);
+        color: var(--transactions-color-income);
       }
 
       &.expense {
-        color: var(--billadm-color-expense);
+        color: var(--transactions-color-expense);
       }
 
       &.transfer {
-        color: var(--billadm-color-transfer);
+        color: var(--transactions-color-transfer);
       }
     }
   }
@@ -129,15 +129,15 @@
 
 .modal-form {
   &-item {
-    margin-bottom: var(--billadm-space-lg);
+    margin-bottom: var(--transactions-space-lg);
   }
 
   &-label {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-section);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-section);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
-    margin: 0 0 var(--billadm-space-sm) 0;
+    color: var(--transactions-color-text-major);
+    margin: 0 0 var(--transactions-space-sm) 0;
   }
 }
 
@@ -168,7 +168,7 @@
 
 .pagination-wrapper {
   @include flex-center;
-  padding-top: var(--billadm-space-xl);
+  padding-top: var(--transactions-space-xl);
 }
 
 // ============================================
@@ -176,11 +176,11 @@
 // ============================================
 
 .page-title {
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-display-sm);
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-display-sm);
   font-weight: 500;
-  color: var(--billadm-color-text-major);
-  margin: 0 0 var(--billadm-space-lg) 0;
+  color: var(--transactions-color-text-major);
+  margin: 0 0 var(--transactions-space-lg) 0;
   letter-spacing: -0.01em;
 }
 
@@ -190,18 +190,18 @@
 
 .section-header {
   @include flex-between;
-  margin-bottom: var(--billadm-space-lg);
+  margin-bottom: var(--transactions-space-lg);
 
   &-title {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-section);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-section);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
     margin: 0;
   }
 
   &-action {
     @include flex-start;
-    gap: var(--billadm-space-sm);
+    gap: var(--transactions-space-sm);
   }
 }

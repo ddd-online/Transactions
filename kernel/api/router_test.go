@@ -3,7 +3,7 @@ package api_test
 import (
 	"testing"
 
-	"github.com/billadm/api"
+	"github.com/transactions/api"
 	"github.com/gin-gonic/gin"
 )
 

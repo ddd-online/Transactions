@@ -4,7 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 var defaultData = map[string]map[string][]string{

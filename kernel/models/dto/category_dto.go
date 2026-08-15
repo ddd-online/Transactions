@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/billadm/models"
+import "github.com/transactions/models"
 
 type CategoryDto struct {
 	LedgerID        string `json:"ledgerId"`

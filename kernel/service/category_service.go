@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 
-	"github.com/billadm/dao"
-	"github.com/billadm/models"
-	"github.com/billadm/workspace"
+	"github.com/transactions/dao"
+	"github.com/transactions/models"
+	"github.com/transactions/workspace"
 	"github.com/sirupsen/logrus"
 )
 

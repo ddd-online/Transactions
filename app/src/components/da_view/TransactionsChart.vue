@@ -3,7 +3,7 @@
     v-if="option"
     :option="option"
     :autoresize="true"
-    class="billadm-chart"
+    class="transactions-chart"
   />
 </template>
 
@@ -31,15 +31,15 @@ const getThemeColors = () => {
   appearanceStore.effective
   const styles = getComputedStyle(document.documentElement)
   return {
-    labelFill: styles.getPropertyValue('--billadm-color-text-secondary').trim() || '#61666b',
-    titleFill: styles.getPropertyValue('--billadm-color-text-major').trim() || '#0f1115',
-    textMajor: styles.getPropertyValue('--billadm-color-text-major').trim() || '#0f1115',
-    bgColor: styles.getPropertyValue('--billadm-color-major-background').trim() || '#ffffff',
-    borderColor: styles.getPropertyValue('--billadm-color-window-border').trim() || '#e8eaed',
-    splitColor: styles.getPropertyValue('--billadm-color-divider').trim() || '#eceef1',
-    income: styles.getPropertyValue('--billadm-color-income').trim() || '#16a34a',
-    expense: styles.getPropertyValue('--billadm-color-expense').trim() || '#dc2626',
-    transfer: styles.getPropertyValue('--billadm-color-transfer').trim() || '#3b82f6',
+    labelFill: styles.getPropertyValue('--transactions-color-text-secondary').trim() || '#61666b',
+    titleFill: styles.getPropertyValue('--transactions-color-text-major').trim() || '#0f1115',
+    textMajor: styles.getPropertyValue('--transactions-color-text-major').trim() || '#0f1115',
+    bgColor: styles.getPropertyValue('--transactions-color-major-background').trim() || '#ffffff',
+    borderColor: styles.getPropertyValue('--transactions-color-window-border').trim() || '#e8eaed',
+    splitColor: styles.getPropertyValue('--transactions-color-divider').trim() || '#eceef1',
+    income: styles.getPropertyValue('--transactions-color-income').trim() || '#16a34a',
+    expense: styles.getPropertyValue('--transactions-color-expense').trim() || '#dc2626',
+    transfer: styles.getPropertyValue('--transactions-color-transfer').trim() || '#3b82f6',
   }
 }
 
@@ -177,7 +177,7 @@ const option = computed<EChartsOption | null>(() => {
 </script>
 
 <style scoped>
-.billadm-chart {
+.transactions-chart {
   width: 100%;
   height: 100%;
 }

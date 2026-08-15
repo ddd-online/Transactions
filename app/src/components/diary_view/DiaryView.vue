@@ -1,5 +1,5 @@
 <template>
-  <BilladmPageLayout>
+  <TransactionsPageLayout>
     <template #toolbar>
       <div class="diary-toolbar">
         <div class="toolbar-left">
@@ -18,7 +18,7 @@
       <DiaryEditor class="panel-right" :entry="store.currentEntry" :save-status="store.saveStatus" @save="onSave"
         @delete="onDelete" />
     </div>
-  </BilladmPageLayout>
+  </TransactionsPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -81,14 +81,14 @@ const onDelete = async (date: string) => {
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .diary-body {
   flex: 1;
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
   min-height: 0;
   overflow: hidden;
 }
@@ -96,8 +96,8 @@ const onDelete = async (date: string) => {
 .panel-left {
   height: 100%;
   overflow: hidden;
-  border-right: 1px solid var(--billadm-color-divider);
-  padding-right: var(--billadm-space-sm);
+  border-right: 1px solid var(--transactions-color-divider);
+  padding-right: var(--transactions-space-sm);
 }
 
 .panel-right {

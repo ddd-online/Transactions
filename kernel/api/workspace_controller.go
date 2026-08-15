@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 // POST /workspace

@@ -3,11 +3,11 @@ package service_test
 import (
 	"testing"
 
-	"github.com/billadm/constant"
-	"github.com/billadm/dao"
-	"github.com/billadm/models/dto"
-	"github.com/billadm/service"
-	"github.com/billadm/workspace"
+	"github.com/transactions/constant"
+	"github.com/transactions/dao"
+	"github.com/transactions/models/dto"
+	"github.com/transactions/service"
+	"github.com/transactions/workspace"
 )
 
 func newTrService(t *testing.T) (service.TransactionRecordService, *workspace.Workspace) {

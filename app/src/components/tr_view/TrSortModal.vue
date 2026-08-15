@@ -82,24 +82,24 @@ defineExpose({ setItems: (v: SortItem[]) => { items.value = [...v] } })
 .sort-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-md);
-  margin-bottom: var(--billadm-space-lg);
+  gap: var(--transactions-space-md);
+  margin-bottom: var(--transactions-space-lg);
 }
 .sort-item {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 .sort-priority {
   width: 24px;
   height: 24px;
-  border-radius: var(--billadm-radius-full);
-  background-color: var(--billadm-color-primary);
-  color: var(--billadm-color-text-inverse);
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-primary);
+  color: var(--transactions-color-text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -116,6 +116,6 @@ defineExpose({ setItems: (v: SortItem[]) => { items.value = [...v] } })
 .sort-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 </style>

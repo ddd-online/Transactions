@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { fetchDates, fetchDiary, saveDiary as apiSaveDiary, deleteDiary as apiDeleteDiary } from '@/backend/api/diary'
 import { tryOrFallback, withErrorHandling } from '@/backend/errorHandler'
 import NotificationUtil from '@/backend/notification'
-import type { DiaryEntry, DiaryDateItem } from '@/types/billadm'
+import type { DiaryEntry, DiaryDateItem } from '@/types/transactions'
 
 export const useDiaryStore = defineStore('diary', () => {
     // ---- Reactive state ----

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { TransactionRecord, TrQueryCondition, TransactionTemplate } from '@/types/billadm'
+import type { TransactionRecord, TrQueryCondition, TransactionTemplate } from '@/types/transactions'
 import { queryTrOnCondition } from '@/backend/api/tr'
 import { queryTemplates } from '@/backend/api/template'
 import { withErrorHandling } from '@/backend/errorHandler'

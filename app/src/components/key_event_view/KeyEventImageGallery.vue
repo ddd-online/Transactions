@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons-vue'
-import type { KeyEventImage } from '@/types/billadm'
+import type { KeyEventImage } from '@/types/transactions'
 import { getImageUrl } from '@/backend/imageUrl'
 import { getErrorMessage } from '@/backend/errorHandler'
 import { message } from 'ant-design-vue'
@@ -104,10 +104,10 @@ const onPreviewChange = (visible: boolean) => {
 @use '@/styles/mixins' as *;
 .image-gallery {
   display: flex;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   flex: 1;
   min-height: 0;
-  margin-bottom: var(--billadm-space-md);
+  margin-bottom: var(--transactions-space-md);
 }
 
 /* 空状态 */
@@ -116,8 +116,8 @@ const onPreviewChange = (visible: boolean) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--billadm-color-text-disabled);
-  font-size: var(--billadm-size-text-body-sm);
+  color: var(--transactions-color-text-disabled);
+  font-size: var(--transactions-size-text-body-sm);
 }
 
 /* 左侧大图 */
@@ -125,11 +125,11 @@ const onPreviewChange = (visible: boolean) => {
   position: relative;
   flex: 1;
   min-width: 0;
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
   overflow: hidden;
   cursor: pointer;
-  background-color: var(--billadm-color-major-warm);
-  border: 1px dashed var(--billadm-color-window-border);
+  background-color: var(--transactions-color-major-warm);
+  border: 1px dashed var(--transactions-color-window-border);
 }
 
 .gallery-main :deep(.ant-image) {
@@ -151,7 +151,7 @@ const onPreviewChange = (visible: boolean) => {
   height: 32px;
   padding: 0;
   background: rgba(255, 255, 255, 0.88);
-  border-radius: var(--billadm-radius-sm);
+  border-radius: var(--transactions-radius-sm);
   border: none;
   display: flex;
   align-items: center;
@@ -161,9 +161,9 @@ const onPreviewChange = (visible: boolean) => {
               0 1px 3px rgba(0, 0, 0, 0.12);
   line-height: 1;
   z-index: 1;
-  transition: background var(--billadm-transition-fast),
-              transform var(--billadm-transition-fast),
-              box-shadow var(--billadm-transition-fast);
+  transition: background var(--transactions-transition-fast),
+              transform var(--transactions-transition-fast),
+              box-shadow var(--transactions-transition-fast);
 }
 
 .download-btn:hover {
@@ -174,25 +174,25 @@ const onPreviewChange = (visible: boolean) => {
 }
 
 .download-btn:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
 .download-btn:active {
   transform: scale(0.95);
-  background: var(--billadm-color-minor-background);
+  background: var(--transactions-color-minor-background);
 }
 
 .download-btn :deep(.anticon) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--transactions-size-text-body);
   color: rgba(0, 0, 0, 0.65);
 }
 
 .download-btn:hover :deep(.anticon) {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 @keyframes main-fade-in {
@@ -212,7 +212,7 @@ const onPreviewChange = (visible: boolean) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
   overflow-y: auto;
   overflow-x: hidden;
   contain: strict;
@@ -225,13 +225,13 @@ const onPreviewChange = (visible: boolean) => {
   width: 100%;
   height: 90px;
   flex-shrink: 0;
-  border-radius: var(--billadm-radius-sm);
+  border-radius: var(--transactions-radius-sm);
   overflow: hidden;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color var(--billadm-transition-smooth),
-              box-shadow var(--billadm-transition-smooth),
-              transform var(--billadm-transition-fast),
+  transition: border-color var(--transactions-transition-smooth),
+              box-shadow var(--transactions-transition-smooth),
+              transform var(--transactions-transition-fast),
               opacity 300ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -252,12 +252,12 @@ const onPreviewChange = (visible: boolean) => {
 }
 
 .thumb-item.is-selected {
-  border-color: var(--billadm-color-primary);
-  box-shadow: var(--billadm-shadow-md);
+  border-color: var(--transactions-color-primary);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 .thumb-item:hover {
-  border-color: var(--billadm-color-primary-light);
+  border-color: var(--transactions-color-primary-light);
   transform: scale(1.03);
 }
 
@@ -266,12 +266,12 @@ const onPreviewChange = (visible: boolean) => {
 }
 
 .thumb-item.is-selected:hover {
-  border-color: var(--billadm-color-primary);
+  border-color: var(--transactions-color-primary);
   transform: none;
 }
 
 .thumb-item:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
@@ -296,8 +296,8 @@ const onPreviewChange = (visible: boolean) => {
   justify-content: center;
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--billadm-transition-fast),
-              transform var(--billadm-transition-fast);
+  transition: opacity var(--transactions-transition-fast),
+              transform var(--transactions-transition-fast);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06),
               0 1px 3px rgba(0, 0, 0, 0.12);
   line-height: 1;
@@ -315,7 +315,7 @@ const onPreviewChange = (visible: boolean) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
   color: rgba(0, 0, 0, 0.65);
 }
 

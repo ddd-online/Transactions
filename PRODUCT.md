@@ -44,7 +44,7 @@ web
 
 ## Brand Commitments
 
-产品名 **Transactions**。品牌人格：**calm, restrained, precise**（宁静、克制、精确），这是已确认的身份承诺。视觉身份约束由 DESIGN.md 确立：浅色/深色双主题、单一主色 DeepSeek 蓝（#3964FE，视觉语言参考 DeepSeek Harness Web GUI）、语义色（收入/支出/转账）只出现在交易数据处。工程标识使用 `--billadm-` 前缀（内部命名，非用户可见品牌）。
+产品名 **Transactions**。品牌人格：**calm, restrained, precise**（宁静、克制、精确），这是已确认的身份承诺。视觉身份约束由 DESIGN.md 确立：浅色/深色双主题、单一主色 DeepSeek 蓝（#3964FE，视觉语言参考 DeepSeek Harness Web GUI）、语义色（收入/支出/转账）只出现在交易数据处。工程标识使用 `--transactions-` 前缀（内部命名，非用户可见品牌）。
 
 ## Evidence on Hand
 

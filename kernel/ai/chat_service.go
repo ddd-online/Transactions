@@ -9,12 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/ai/provider"
-	"github.com/billadm/ai/role"
-	"github.com/billadm/ai/tool"
-	"github.com/billadm/dao"
-	"github.com/billadm/models"
-	"github.com/billadm/workspace"
+	"github.com/transactions/ai/provider"
+	"github.com/transactions/ai/role"
+	"github.com/transactions/ai/tool"
+	"github.com/transactions/dao"
+	"github.com/transactions/models"
+	"github.com/transactions/workspace"
 )
 
 const (

@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/billadm/constant"
-	"github.com/billadm/models"
-	"github.com/billadm/models/dto"
-	"github.com/billadm/workspace"
+	"github.com/transactions/constant"
+	"github.com/transactions/models"
+	"github.com/transactions/models/dto"
+	"github.com/transactions/workspace"
 )
 
 func newTestWorkspace(t *testing.T) *workspace.Workspace {

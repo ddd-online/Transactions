@@ -52,7 +52,7 @@ git commit -m "chore: bump version to X.Y.Z"
 $paths = @(
   'app/dist', 'kernel/transactions.exe', 'electron/dist', 'electron/logs',
   'build/target', 'electron/transactions.exe',
-  'kernel/billadm.exe', 'kernel/nul.exe', 'electron/Billadm-Kernel.exe'
+  'kernel/nul.exe'
 )
 foreach ($p in $paths) { if (Test-Path $p) { Remove-Item $p -Recurse -Force } }
 ```

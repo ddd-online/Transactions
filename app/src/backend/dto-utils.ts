@@ -1,4 +1,4 @@
-import type {TransactionRecord, TrForm} from "@/types/billadm";
+import type {TransactionRecord, TrForm} from "@/types/transactions";
 import dayjs from "dayjs";
 import {centsToYuan, yuanToCents} from "@/backend/functions.ts";
 

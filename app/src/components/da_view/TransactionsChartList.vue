@@ -134,12 +134,12 @@ const handleDelete = async (chart: ChartDto) => {
 .chart-list {
   display: flex;
   flex-direction: column;
-  padding: var(--billadm-space-md);
+  padding: var(--transactions-space-md);
 }
 
 .chart-list-add {
-  padding: 0 var(--billadm-space-xs);
-  margin-bottom: var(--billadm-space-md);
+  padding: 0 var(--transactions-space-xs);
+  margin-bottom: var(--transactions-space-md);
 }
 
 .chart-list-section {
@@ -149,12 +149,12 @@ const handleDelete = async (chart: ChartDto) => {
 .chart-list-item {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm);
   cursor: pointer;
-  transition: all var(--billadm-transition-fast);
-  color: var(--billadm-color-text-secondary);
-  border-radius: var(--billadm-radius-md);
+  transition: all var(--transactions-transition-fast);
+  color: var(--transactions-color-text-secondary);
+  border-radius: var(--transactions-radius-md);
 }
 
 .chart-list-dots {
@@ -168,35 +168,35 @@ const handleDelete = async (chart: ChartDto) => {
 .chart-list-dot {
   width: 8px;
   height: 8px;
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--transactions-radius-full);
   flex-shrink: 0;
 }
 
 .chart-list-dot--empty {
   background: transparent;
-  border: 1px dashed var(--billadm-color-text-disabled);
+  border: 1px dashed var(--transactions-color-text-disabled);
 }
 
 .chart-list-item:hover {
-  background-color: var(--billadm-color-hover-bg);
-  color: var(--billadm-color-text-major);
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
 }
 
 .chart-list-item:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: -2px;
 }
 
 .chart-list-item.active {
-  background-color: var(--billadm-color-hover-bg);
-  color: var(--billadm-color-primary);
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-primary);
   font-weight: 500;
 }
 
 .chart-list-item-title {
   flex: 1;
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-body-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

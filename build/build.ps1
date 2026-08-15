@@ -1,4 +1,4 @@
-# build.ps1 - 一键构建整个 Billadm 应用（Vue + Go + Electron）
+# build.ps1 - 一键构建整个 transactions 应用（Vue + Go + Electron）
 
 # 设置输出编码为 UTF-8（防止中文乱码）
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

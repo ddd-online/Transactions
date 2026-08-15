@@ -1,4 +1,4 @@
-import type { TrQueryConditionItem } from '@/types/billadm'
+import type { TrQueryConditionItem } from '@/types/transactions'
 
 /**
  * 按时间聚合的交易记录数据

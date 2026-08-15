@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/billadm/dao"
-	"github.com/billadm/service"
-	"github.com/billadm/workspace"
+	"github.com/transactions/dao"
+	"github.com/transactions/service"
+	"github.com/transactions/workspace"
 )
 
 func newDiaryService(t *testing.T) (service.DiaryService, *workspace.Workspace) {

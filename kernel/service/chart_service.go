@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/billadm/dao"
-	"github.com/billadm/models"
-	"github.com/billadm/models/dto"
-	"github.com/billadm/util"
-	"github.com/billadm/workspace"
+	"github.com/transactions/dao"
+	"github.com/transactions/models"
+	"github.com/transactions/models/dto"
+	"github.com/transactions/util"
+	"github.com/transactions/workspace"
 	"github.com/sirupsen/logrus"
 )
 

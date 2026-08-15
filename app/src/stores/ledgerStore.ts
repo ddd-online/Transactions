@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { createLedger, deleteLedgerById, modifyLedger, queryAllLedgers } from "@/backend/api/ledger.ts"
 import { openWorkspace } from "@/backend/api/workspace.ts"
 import NotificationUtil from "@/backend/notification"
-import type { Ledger } from "@/types/billadm"
+import type { Ledger } from "@/types/transactions"
 
 
 export const useLedgerStore = defineStore('ledger', () => {

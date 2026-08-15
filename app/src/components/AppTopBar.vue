@@ -101,25 +101,25 @@ onUnmounted(() => {
   height: 28px;
   border: none;
   background: transparent;
-  border-radius: var(--billadm-radius-full);
-  color: var(--billadm-color-icon);
+  border-radius: var(--transactions-radius-full);
+  color: var(--transactions-color-icon);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  transition: background var(--billadm-transition-fast),
-              color var(--billadm-transition-fast);
+  transition: background var(--transactions-transition-fast),
+              color var(--transactions-transition-fast);
 }
 
 .window-btn:hover {
-  background: var(--billadm-color-hover-bg);
-  color: var(--billadm-color-text-major);
+  background: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
 }
 
 .window-btn--close:hover {
-  background: var(--billadm-color-danger-hover-bg);
-  color: var(--billadm-color-expense);
+  background: var(--transactions-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
 }
 
 /* 内核状态指示灯：与窗口控制按钮一致的圆形，正常绿、异常红 */
@@ -129,31 +129,31 @@ onUnmounted(() => {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--transactions-radius-full);
   cursor: default;
-  transition: background var(--billadm-transition-fast);
+  transition: background var(--transactions-transition-fast);
 }
 
 .kernel-status:hover {
-  background: var(--billadm-color-hover-bg);
+  background: var(--transactions-color-hover-bg);
 }
 
 .status-dot {
   width: 9px;
   height: 9px;
-  border-radius: var(--billadm-radius-full);
-  background: var(--billadm-color-border-l3);
-  transition: background var(--billadm-transition-fast),
-              box-shadow var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-border-l3);
+  transition: background var(--transactions-transition-fast),
+              box-shadow var(--transactions-transition-fast);
 }
 
 .kernel-status--ok .status-dot {
-  background: var(--billadm-color-success);
+  background: var(--transactions-color-success);
   box-shadow: 0 0 5px rgba(22, 163, 74, 0.4);
 }
 
 .kernel-status:not(.kernel-status--ok) .status-dot {
-  background: var(--billadm-color-negative);
+  background: var(--transactions-color-negative);
   box-shadow: 0 0 5px rgba(220, 38, 38, 0.4);
 }
 </style>

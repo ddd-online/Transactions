@@ -30,11 +30,11 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-body);
-  line-height: var(--billadm-height-normal);
-  color: var(--billadm-color-text-major);
-  background-color: var(--billadm-color-bg-base);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-normal);
+  color: var(--transactions-color-text-major);
+  background-color: var(--transactions-color-bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -45,106 +45,106 @@ body {
 
 // Layout
 .ant-layout {
-  background-color: var(--billadm-color-bg-base);
+  background-color: var(--transactions-color-bg-base);
 }
 
 .ant-layout-header,
 .ant-layout-footer {
-  background-color: var(--billadm-color-minor-background);
-  color: var(--billadm-color-text-major);
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-major);
 }
 
 .ant-layout-sider {
-  background-color: var(--billadm-color-minor-background);
+  background-color: var(--transactions-color-minor-background);
 }
 
 .ant-layout-content {
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
 }
 
 // Buttons — unified button system
 // Variants: primary → secondary → text → text-danger → primary-danger
 // Sizes: small (28px) → default (36px) → large (44px)
 .ant-btn {
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
   font-weight: 500;
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
   box-shadow: none;
-  transition: all var(--billadm-transition-fast);
-  height: var(--billadm-btn-height-md);
-  min-width: var(--billadm-btn-min-width);
-  padding: 0 var(--billadm-btn-padding-h-md);
-  font-size: var(--billadm-btn-font-size-md);
+  transition: all var(--transactions-transition-fast);
+  height: var(--transactions-btn-height-md);
+  min-width: var(--transactions-btn-min-width);
+  padding: 0 var(--transactions-btn-padding-h-md);
+  font-size: var(--transactions-btn-font-size-md);
   line-height: 1;
 
   // ========== Size variants ==========
   &-sm {
-    height: var(--billadm-btn-height-sm);
-    padding: 0 var(--billadm-btn-padding-h-sm);
-    font-size: var(--billadm-btn-font-size-sm);
+    height: var(--transactions-btn-height-sm);
+    padding: 0 var(--transactions-btn-padding-h-sm);
+    font-size: var(--transactions-btn-font-size-sm);
     min-width: auto;
   }
 
   &-lg {
-    height: var(--billadm-btn-height-lg);
-    padding: 0 var(--billadm-btn-padding-h-lg);
-    font-size: var(--billadm-btn-font-size-lg);
+    height: var(--transactions-btn-height-lg);
+    padding: 0 var(--transactions-btn-padding-h-lg);
+    font-size: var(--transactions-btn-font-size-lg);
   }
 
   // ========== Primary (实心主按钮, DeepSeek blue) ==========
   &-primary {
-    background-color: var(--billadm-color-primary);
-    border-color: var(--billadm-color-primary);
-    color: var(--billadm-color-text-inverse);
+    background-color: var(--transactions-color-primary);
+    border-color: var(--transactions-color-primary);
+    color: var(--transactions-color-text-inverse);
 
     &:hover {
-      background-color: var(--billadm-color-primary-hover);
-      border-color: var(--billadm-color-primary-hover);
-      color: var(--billadm-color-text-inverse);
+      background-color: var(--transactions-color-primary-hover);
+      border-color: var(--transactions-color-primary-hover);
+      color: var(--transactions-color-text-inverse);
     }
 
     &:active {
-      background-color: var(--billadm-color-primary-active);
-      border-color: var(--billadm-color-primary-active);
+      background-color: var(--transactions-color-primary-active);
+      border-color: var(--transactions-color-primary-active);
     }
   }
 
   // ========== Secondary / Default (描边次要按钮) ==========
   &-default {
-    border-color: var(--billadm-color-window-border);
-    color: var(--billadm-color-text-major);
+    border-color: var(--transactions-color-window-border);
+    color: var(--transactions-color-text-major);
     background-color: transparent;
 
     &:hover {
-      border-color: var(--billadm-color-border-l2);
-      background-color: var(--billadm-color-hover-bg);
-      color: var(--billadm-color-text-major);
+      border-color: var(--transactions-color-border-l2);
+      background-color: var(--transactions-color-hover-bg);
+      color: var(--transactions-color-text-major);
     }
 
     &:active {
-      border-color: var(--billadm-color-border-l2);
-      background-color: var(--billadm-color-hover-bg);
-      color: var(--billadm-color-text-major);
+      border-color: var(--transactions-color-border-l2);
+      background-color: var(--transactions-color-hover-bg);
+      color: var(--transactions-color-text-major);
     }
   }
 
   // ========== Text button (纯文字按钮) ==========
   &-text {
     min-width: auto;
-    color: var(--billadm-color-text-secondary);
+    color: var(--transactions-color-text-secondary);
 
     &:hover {
-      background-color: var(--billadm-color-hover-bg);
-      color: var(--billadm-color-text-major);
+      background-color: var(--transactions-color-hover-bg);
+      color: var(--transactions-color-text-major);
     }
 
     // Text danger (文字危险按钮，如行内删除)
     &.ant-btn-dangerous {
-      color: var(--billadm-color-expense);
+      color: var(--transactions-color-expense);
 
       &:hover {
-        background-color: var(--billadm-color-danger-hover-bg);
-        color: var(--billadm-color-expense);
+        background-color: var(--transactions-color-danger-hover-bg);
+        color: var(--transactions-color-expense);
       }
     }
   }
@@ -152,37 +152,37 @@ body {
   // ========== Link button (链接按钮) — treated as text variant ==========
   &-link {
     min-width: auto;
-    color: var(--billadm-color-primary);
+    color: var(--transactions-color-primary);
     padding: 0;
 
     &:hover {
-      color: var(--billadm-color-primary-hover);
+      color: var(--transactions-color-primary-hover);
     }
   }
 
   // ========== Primary danger (实心危险按钮) ==========
   &.ant-btn-dangerous.ant-btn-primary {
-    background-color: var(--billadm-color-expense);
-    border-color: var(--billadm-color-expense);
-    color: var(--billadm-color-text-inverse);
+    background-color: var(--transactions-color-expense);
+    border-color: var(--transactions-color-expense);
+    color: var(--transactions-color-text-inverse);
 
     &:hover {
       background-color: rgba(220, 38, 38, 0.85);
       border-color: rgba(220, 38, 38, 0.85);
-      color: var(--billadm-color-text-inverse);
+      color: var(--transactions-color-text-inverse);
     }
   }
 
   // ========== Dashed (虚线按钮) — mapped to secondary style ==========
   &-dashed {
-    border-color: var(--billadm-color-window-border);
-    color: var(--billadm-color-text-secondary);
+    border-color: var(--transactions-color-window-border);
+    color: var(--transactions-color-text-secondary);
     background-color: transparent;
 
     &:hover {
-      border-color: var(--billadm-color-primary);
-      color: var(--billadm-color-primary);
-      background-color: var(--billadm-color-primary-tint);
+      border-color: var(--transactions-color-primary);
+      color: var(--transactions-color-primary);
+      background-color: var(--transactions-color-primary-tint);
     }
   }
 
@@ -190,21 +190,21 @@ body {
   &.btn-icon-only {
     min-width: auto;
     padding: 0;
-    width: var(--billadm-btn-height-md);
+    width: var(--transactions-btn-height-md);
     justify-content: center;
 
     &.ant-btn-sm {
-      width: var(--billadm-btn-height-sm);
+      width: var(--transactions-btn-height-sm);
     }
 
     &.ant-btn-lg {
-      width: var(--billadm-btn-height-lg);
+      width: var(--transactions-btn-height-lg);
     }
   }
 
   // ========== Focus ring ==========
   &:focus-visible {
-    outline: 2px solid var(--billadm-color-primary);
+    outline: 2px solid var(--transactions-color-primary);
     outline-offset: 2px;
   }
 }
@@ -212,87 +212,87 @@ body {
 
 // Cards — clean, bordered
 .ant-card {
-  border-radius: var(--billadm-radius-lg);
-  border: 1px solid var(--billadm-color-window-border);
-  background-color: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-sm);
-  transition: box-shadow var(--billadm-transition-normal);
+  border-radius: var(--transactions-radius-lg);
+  border: 1px solid var(--transactions-color-window-border);
+  background-color: var(--transactions-color-major-background);
+  box-shadow: var(--transactions-shadow-sm);
+  transition: box-shadow var(--transactions-transition-normal);
 
   &-hoverable:hover {
-    box-shadow: var(--billadm-shadow-md);
+    box-shadow: var(--transactions-shadow-md);
   }
 }
 
 // Modals
 .ant-modal {
   &-content {
-    border-radius: var(--billadm-radius-xl);
+    border-radius: var(--transactions-radius-xl);
     overflow: hidden;
-    box-shadow: var(--billadm-shadow-xl);
+    box-shadow: var(--transactions-shadow-xl);
   }
 
   &-header {
-    border-bottom: 1px solid var(--billadm-color-divider);
-    padding: var(--billadm-space-lg) var(--billadm-space-xl);
+    border-bottom: 1px solid var(--transactions-color-divider);
+    padding: var(--transactions-space-lg) var(--transactions-space-xl);
   }
 
   &-body {
-    padding: var(--billadm-space-xl);
+    padding: var(--transactions-space-xl);
   }
 
   &-footer {
-    border-top: 1px solid var(--billadm-color-divider);
-    padding: var(--billadm-space-lg) var(--billadm-space-xl);
+    border-top: 1px solid var(--transactions-color-divider);
+    padding: var(--transactions-space-lg) var(--transactions-space-xl);
   }
 
   &-title {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-title-sm);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-title-sm);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
   }
 }
 
 // Form
 .ant-form {
   &-item {
-    margin-bottom: var(--billadm-space-lg);
+    margin-bottom: var(--transactions-space-lg);
   }
 
   &-item-label>label {
-    font-family: var(--billadm-font-body);
+    font-family: var(--transactions-font-body);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
   }
 }
 
 // Input
 .ant-input {
-  border-radius: var(--billadm-radius-md);
-  border-color: var(--billadm-color-window-border);
-  font-family: var(--billadm-font-body);
-  transition: all var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-md);
+  border-color: var(--transactions-color-window-border);
+  font-family: var(--transactions-font-body);
+  transition: all var(--transactions-transition-fast);
 
   &:hover {
-    border-color: var(--billadm-color-border-l2);
+    border-color: var(--transactions-color-border-l2);
   }
 
   &:focus,
   &.ant-input-focused {
-    border-color: var(--billadm-color-primary);
-    box-shadow: var(--billadm-shadow-focus);
+    border-color: var(--transactions-color-primary);
+    box-shadow: var(--transactions-shadow-focus);
   }
 }
 
 // DatePicker — 高度统一为按钮主高度
 .ant-picker {
-  border-radius: var(--billadm-radius-md) !important;
-  border-color: var(--billadm-color-window-border) !important;
-  font-family: var(--billadm-font-body);
-  transition: all var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-md) !important;
+  border-color: var(--transactions-color-window-border) !important;
+  font-family: var(--transactions-font-body);
+  transition: all var(--transactions-transition-fast);
 
   &:hover {
-    border-color: var(--billadm-color-border-l2);
+    border-color: var(--transactions-color-border-l2);
   }
 
   input {
@@ -304,164 +304,164 @@ body {
 // Select — 高度统一为按钮主高度
 // 注意：align-items 仅用于 single-select，multi-select 由 Ant Design 内部 overflow flex 容器自行管理
 .ant-select-selector {
-  border-radius: var(--billadm-radius-md) !important;
-  border-color: var(--billadm-color-window-border) !important;
-  font-family: var(--billadm-font-body);
-  transition: all var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-md) !important;
+  border-color: var(--transactions-color-window-border) !important;
+  font-family: var(--transactions-font-body);
+  transition: all var(--transactions-transition-fast);
 
   &:hover {
-    border-color: var(--billadm-color-border-l2);
+    border-color: var(--transactions-color-border-l2);
   }
 }
 
 .ant-select-focused .ant-select-selector {
-  border-color: var(--billadm-color-primary) !important;
-  box-shadow: var(--billadm-shadow-focus) !important;
+  border-color: var(--transactions-color-primary) !important;
+  box-shadow: var(--transactions-shadow-focus) !important;
 }
 
 // DatePicker panel "today" button
 .ant-picker-today-btn {
-  color: var(--billadm-color-primary) !important;
+  color: var(--transactions-color-primary) !important;
 
   &:hover {
-    color: var(--billadm-color-primary-hover) !important;
+    color: var(--transactions-color-primary-hover) !important;
   }
 }
 
 // DatePicker panel — selected date background
 .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
-  background-color: var(--billadm-color-primary) !important;
+  background-color: var(--transactions-color-primary) !important;
 }
 
 // DatePicker panel — today marker border
 .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
-  border-color: var(--billadm-color-primary) !important;
+  border-color: var(--transactions-color-primary) !important;
 }
 
 // DatePicker panel — range selection in-range cells
 .ant-picker-cell-in-view.ant-picker-cell-in-range .ant-picker-cell-inner {
-  background-color: var(--billadm-color-primary-tint) !important;
+  background-color: var(--transactions-color-primary-tint) !important;
 }
 
 // DatePicker panel — range selection start/end
 .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
 .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
-  background-color: var(--billadm-color-primary) !important;
+  background-color: var(--transactions-color-primary) !important;
 }
 
 // DatePicker panel — month/year header hover
 .ant-picker-header-view button:hover {
-  color: var(--billadm-color-primary) !important;
+  color: var(--transactions-color-primary) !important;
 }
 
 
 // Tables
 .ant-table {
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
 
   .ant-table-thead>tr>th {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-caption);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-caption);
     font-weight: 500;
-    color: var(--billadm-color-text-secondary);
-    background-color: var(--billadm-color-minor-background);
-    border-bottom: 1px solid var(--billadm-color-window-border);
-    padding: var(--billadm-space-md) var(--billadm-space-lg);
+    color: var(--transactions-color-text-secondary);
+    background-color: var(--transactions-color-minor-background);
+    border-bottom: 1px solid var(--transactions-color-window-border);
+    padding: var(--transactions-space-md) var(--transactions-space-lg);
   }
 
   .ant-table-tbody>tr>td {
-    border-bottom: 1px solid var(--billadm-color-divider);
-    padding: var(--billadm-space-md) var(--billadm-space-lg);
+    border-bottom: 1px solid var(--transactions-color-divider);
+    padding: var(--transactions-space-md) var(--transactions-space-lg);
   }
 
   .ant-table-tbody>tr:hover>td {
-    background-color: var(--billadm-color-hover-bg);
+    background-color: var(--transactions-color-hover-bg);
   }
 
   .ant-table-tbody>tr.ant-table-row-selected>td {
-    background-color: var(--billadm-color-active-bg);
+    background-color: var(--transactions-color-active-bg);
   }
 }
 
 // Tags
 .ant-tag {
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-caption);
-  border-radius: var(--billadm-radius-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  border-radius: var(--transactions-radius-sm);
   padding: 2px 8px;
   border: none;
 
   // Income tag
   &-income {
-    background-color: var(--billadm-color-income-tint);
-    color: var(--billadm-color-income);
+    background-color: var(--transactions-color-income-tint);
+    color: var(--transactions-color-income);
   }
 
   // Expense tag
   &-expense {
-    background-color: var(--billadm-color-expense-tint);
-    color: var(--billadm-color-expense);
+    background-color: var(--transactions-color-expense-tint);
+    color: var(--transactions-color-expense);
   }
 
   // Transfer tag
   &-transfer {
-    background-color: var(--billadm-color-transfer-tint);
-    color: var(--billadm-color-transfer);
+    background-color: var(--transactions-color-transfer-tint);
+    color: var(--transactions-color-transfer);
   }
 
   // Outlier tag
   &-outlier {
-    background-color: var(--billadm-color-outlier-tint);
-    color: var(--billadm-color-outlier);
+    background-color: var(--transactions-color-outlier-tint);
+    color: var(--transactions-color-outlier);
   }
 }
 
 // Pagination
 .ant-pagination {
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
 
   .ant-pagination-item-active {
-    border-color: var(--billadm-color-primary);
+    border-color: var(--transactions-color-primary);
 
     a {
-      color: var(--billadm-color-primary);
+      color: var(--transactions-color-primary);
     }
   }
 
   .ant-pagination-item:hover {
-    border-color: var(--billadm-color-primary);
+    border-color: var(--transactions-color-primary);
 
     a {
-      color: var(--billadm-color-primary);
+      color: var(--transactions-color-primary);
     }
   }
 }
 
 // Tabs
 .ant-tabs {
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
 
   &-nav {
-    margin-bottom: var(--billadm-space-xl);
+    margin-bottom: var(--transactions-space-xl);
   }
 
   &-tab {
     font-weight: 500;
-    color: var(--billadm-color-text-secondary);
-    padding: var(--billadm-space-sm) 0;
+    color: var(--transactions-color-text-secondary);
+    padding: var(--transactions-space-sm) 0;
 
     &:hover {
-      color: var(--billadm-color-text-major);
+      color: var(--transactions-color-text-major);
     }
 
     &-active .ant-tabs-tab-btn {
-      color: var(--billadm-color-primary);
+      color: var(--transactions-color-primary);
       font-weight: 600;
     }
   }
 
   &-ink-bar {
-    background-color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-primary);
     height: 2px;
   }
 }
@@ -469,99 +469,99 @@ body {
 // Popover
 .ant-popover {
   .ant-popover-inner {
-    border-radius: var(--billadm-radius-lg);
-    box-shadow: var(--billadm-shadow-lg);
+    border-radius: var(--transactions-radius-lg);
+    box-shadow: var(--transactions-shadow-lg);
   }
 }
 
 // Dropdown menus — DSH: 8px radius menu, hover fill
 .ant-dropdown-menu {
-  border-radius: var(--billadm-radius-md);
-  box-shadow: var(--billadm-shadow-lg);
+  border-radius: var(--transactions-radius-md);
+  box-shadow: var(--transactions-shadow-lg);
 
   .ant-dropdown-menu-item {
-    border-radius: var(--billadm-radius-sm);
+    border-radius: var(--transactions-radius-sm);
 
     &:hover {
-      background-color: var(--billadm-color-hover-bg);
+      background-color: var(--transactions-color-hover-bg);
     }
 
     &-selected {
-      background-color: var(--billadm-color-active-bg);
-      color: var(--billadm-color-primary);
+      background-color: var(--transactions-color-active-bg);
+      color: var(--transactions-color-primary);
     }
   }
 }
 
 // Message
 .ant-message {
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
   top: auto !important;
-  bottom: var(--billadm-size-header-height);
+  bottom: var(--transactions-size-header-height);
 
   &-notice-content {
-    border-radius: var(--billadm-radius-lg);
-    box-shadow: var(--billadm-shadow-lg);
-    padding: var(--billadm-space-md) var(--billadm-space-xl);
+    border-radius: var(--transactions-radius-lg);
+    box-shadow: var(--transactions-shadow-lg);
+    padding: var(--transactions-space-md) var(--transactions-space-xl);
   }
 }
 
 // Notification
 .ant-notification {
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
 
   &-notice {
-    border-radius: var(--billadm-radius-lg);
-    box-shadow: var(--billadm-shadow-lg);
+    border-radius: var(--transactions-radius-lg);
+    box-shadow: var(--transactions-shadow-lg);
   }
 }
 
 // Segmented Control — DSH toggle: neutral track, elevated selected
 .ant-segmented {
-  font-family: var(--billadm-font-body);
-  border-radius: var(--billadm-radius-md);
-  background-color: var(--billadm-color-minor-background);
+  font-family: var(--transactions-font-body);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-minor-background);
   padding: 2px;
 
   .ant-segmented-item {
-    border-radius: var(--billadm-radius-sm);
-    transition: all var(--billadm-transition-fast);
+    border-radius: var(--transactions-radius-sm);
+    transition: all var(--transactions-transition-fast);
 
     &:hover {
-      color: var(--billadm-color-primary);
+      color: var(--transactions-color-primary);
     }
   }
 
   .ant-segmented-item-selected {
-    background-color: var(--billadm-color-major-background);
-    box-shadow: var(--billadm-shadow-sm);
-    color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-major-background);
+    box-shadow: var(--transactions-shadow-sm);
+    color: var(--transactions-color-primary);
     font-weight: 500;
   }
 }
 
 // Switch
 .ant-switch {
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--transactions-radius-full);
 
   &:checked {
-    background-color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-primary);
   }
 }
 
 // Radio Button Group
 .ant-radio-group-solid .ant-radio-button-wrapper {
   &:hover {
-    color: var(--billadm-color-primary);
+    color: var(--transactions-color-primary);
   }
 
   &.ant-radio-button-wrapper-checked {
-    background-color: var(--billadm-color-primary);
-    border-color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-primary);
+    border-color: var(--transactions-color-primary);
 
     &:hover {
-      background-color: var(--billadm-color-primary-hover);
-      border-color: var(--billadm-color-primary-hover);
+      background-color: var(--transactions-color-primary-hover);
+      border-color: var(--transactions-color-primary-hover);
     }
   }
 }
@@ -569,43 +569,43 @@ body {
 // Checkbox
 .ant-checkbox {
   &:checked .ant-checkbox-inner {
-    background-color: var(--billadm-color-primary);
-    border-color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-primary);
+    border-color: var(--transactions-color-primary);
   }
 
   &:hover:not(.ant-checkbox-disabled) .ant-checkbox-inner {
-    border-color: var(--billadm-color-primary);
+    border-color: var(--transactions-color-primary);
   }
 }
 
 // Drawer
 .ant-drawer {
   &-header {
-    border-bottom: 1px solid var(--billadm-color-divider);
-    padding: var(--billadm-space-lg) var(--billadm-space-xl);
+    border-bottom: 1px solid var(--transactions-color-divider);
+    padding: var(--transactions-space-lg) var(--transactions-space-xl);
   }
 
   &-title {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-title-sm);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-title-sm);
     font-weight: 600;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
   }
 
   &-body {
-    padding: var(--billadm-space-xl);
+    padding: var(--transactions-space-xl);
   }
 }
 
 // Float Button
 .ant-float-button {
-  border-radius: var(--billadm-radius-lg);
+  border-radius: var(--transactions-radius-lg);
 
   &-primary {
-    background-color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-primary);
 
     &:hover {
-      background-color: var(--billadm-color-primary-hover);
+      background-color: var(--transactions-color-primary-hover);
     }
   }
 }
@@ -617,53 +617,53 @@ body {
 // Text colors
 .text {
   &-primary {
-    color: var(--billadm-color-primary);
+    color: var(--transactions-color-primary);
   }
 
   &-positive,
   &-income {
-    color: var(--billadm-color-income);
+    color: var(--transactions-color-income);
   }
 
   &-negative,
   &-expense {
-    color: var(--billadm-color-expense);
+    color: var(--transactions-color-expense);
   }
 
   &-transfer {
-    color: var(--billadm-color-transfer);
+    color: var(--transactions-color-transfer);
   }
 
   &-secondary {
-    color: var(--billadm-color-text-secondary);
+    color: var(--transactions-color-text-secondary);
   }
 
   &-success {
-    color: var(--billadm-color-success);
+    color: var(--transactions-color-success);
   }
 
   &-danger,
   &-error {
-    color: var(--billadm-color-negative);
+    color: var(--transactions-color-negative);
   }
 
   &-warning {
-    color: var(--billadm-color-warning);
+    color: var(--transactions-color-warning);
   }
 }
 
 // Background
 .bg {
   &-major {
-    background-color: var(--billadm-color-major-background);
+    background-color: var(--transactions-color-major-background);
   }
 
   &-minor {
-    background-color: var(--billadm-color-minor-background);
+    background-color: var(--transactions-color-minor-background);
   }
 
   &-elevated {
-    background-color: var(--billadm-color-elevated);
+    background-color: var(--transactions-color-elevated);
   }
 }
 
@@ -678,59 +678,59 @@ body {
   }
 
   &t-sm {
-    margin-top: var(--billadm-space-sm);
+    margin-top: var(--transactions-space-sm);
   }
 
   &b-sm {
-    margin-bottom: var(--billadm-space-sm);
+    margin-bottom: var(--transactions-space-sm);
   }
 
   &l-sm {
-    margin-left: var(--billadm-space-sm);
+    margin-left: var(--transactions-space-sm);
   }
 
   &r-sm {
-    margin-right: var(--billadm-space-sm);
+    margin-right: var(--transactions-space-sm);
   }
 
   &t-md {
-    margin-top: var(--billadm-space-md);
+    margin-top: var(--transactions-space-md);
   }
 
   &b-md {
-    margin-bottom: var(--billadm-space-md);
+    margin-bottom: var(--transactions-space-md);
   }
 
   &l-md {
-    margin-left: var(--billadm-space-md);
+    margin-left: var(--transactions-space-md);
   }
 
   &r-md {
-    margin-right: var(--billadm-space-md);
+    margin-right: var(--transactions-space-md);
   }
 
   &t-lg {
-    margin-top: var(--billadm-space-lg);
+    margin-top: var(--transactions-space-lg);
   }
 
   &b-lg {
-    margin-bottom: var(--billadm-space-lg);
+    margin-bottom: var(--transactions-space-lg);
   }
 
   &l-lg {
-    margin-left: var(--billadm-space-lg);
+    margin-left: var(--transactions-space-lg);
   }
 
   &r-lg {
-    margin-right: var(--billadm-space-lg);
+    margin-right: var(--transactions-space-lg);
   }
 
   &t-xl {
-    margin-top: var(--billadm-space-xl);
+    margin-top: var(--transactions-space-xl);
   }
 
   &b-xl {
-    margin-bottom: var(--billadm-space-xl);
+    margin-bottom: var(--transactions-space-xl);
   }
 }
 
@@ -740,67 +740,67 @@ body {
   }
 
   &-sm {
-    padding: var(--billadm-space-sm);
+    padding: var(--transactions-space-sm);
   }
 
   &-md {
-    padding: var(--billadm-space-md);
+    padding: var(--transactions-space-md);
   }
 
   &-lg {
-    padding: var(--billadm-space-lg);
+    padding: var(--transactions-space-lg);
   }
 
   &-xl {
-    padding: var(--billadm-space-xl);
+    padding: var(--transactions-space-xl);
   }
 
   &t-sm {
-    padding-top: var(--billadm-space-sm);
+    padding-top: var(--transactions-space-sm);
   }
 
   &b-sm {
-    padding-bottom: var(--billadm-space-sm);
+    padding-bottom: var(--transactions-space-sm);
   }
 
   &l-sm {
-    padding-left: var(--billadm-space-sm);
+    padding-left: var(--transactions-space-sm);
   }
 
   &r-sm {
-    padding-right: var(--billadm-space-sm);
+    padding-right: var(--transactions-space-sm);
   }
 
   &t-md {
-    padding-top: var(--billadm-space-md);
+    padding-top: var(--transactions-space-md);
   }
 
   &b-md {
-    padding-bottom: var(--billadm-space-md);
+    padding-bottom: var(--transactions-space-md);
   }
 
   &l-md {
-    padding-left: var(--billadm-space-md);
+    padding-left: var(--transactions-space-md);
   }
 
   &r-md {
-    padding-right: var(--billadm-space-md);
+    padding-right: var(--transactions-space-md);
   }
 
   &t-lg {
-    padding-top: var(--billadm-space-lg);
+    padding-top: var(--transactions-space-lg);
   }
 
   &b-lg {
-    padding-bottom: var(--billadm-space-lg);
+    padding-bottom: var(--transactions-space-lg);
   }
 
   &l-lg {
-    padding-left: var(--billadm-space-lg);
+    padding-left: var(--transactions-space-lg);
   }
 
   &r-lg {
-    padding-right: var(--billadm-space-lg);
+    padding-right: var(--transactions-space-lg);
   }
 }
 
@@ -810,17 +810,17 @@ body {
 
 .tr-type {
   &-income {
-    color: var(--billadm-color-income);
+    color: var(--transactions-color-income);
     font-weight: 500;
   }
 
   &-expense {
-    color: var(--billadm-color-expense);
+    color: var(--transactions-color-expense);
     font-weight: 500;
   }
 
   &-transfer {
-    color: var(--billadm-color-transfer);
+    color: var(--transactions-color-transfer);
     font-weight: 500;
   }
 }
@@ -854,11 +854,11 @@ body {
 }
 
 .fade-enter-active {
-  animation: fadeIn var(--billadm-transition-normal);
+  animation: fadeIn var(--transactions-transition-normal);
 }
 
 .fade-leave-active {
-  animation: fadeOut var(--billadm-transition-fast);
+  animation: fadeOut var(--transactions-transition-fast);
 }
 
 @media (prefers-reduced-motion: reduce) {

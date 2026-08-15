@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { Tag } from "@/types/billadm";
+import type { Tag } from "@/types/transactions";
 
 export async function queryTags(categoryTransactionType: string, ledgerId?: string): Promise<Tag[]> {
     let url = `/v1/tags?categoryTransactionType=${encodeURIComponent(categoryTransactionType)}`;

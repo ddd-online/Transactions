@@ -39,33 +39,33 @@ function formatArgValue(val: unknown): string {
 /* Tool Card — 进行中琥珀语义，完成后翻转成功绿 */
 .msg-tool {
   max-width: 90%;
-  background: var(--billadm-color-outlier-tint);
-  border: 1px solid var(--billadm-color-outlier-tint-strong);
-  border-radius: var(--billadm-radius-md);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  margin-bottom: var(--billadm-space-xs);
-  transition: background var(--billadm-transition-normal), border-color var(--billadm-transition-normal);
+  background: var(--transactions-color-outlier-tint);
+  border: 1px solid var(--transactions-color-outlier-tint-strong);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  margin-bottom: var(--transactions-space-xs);
+  transition: background var(--transactions-transition-normal), border-color var(--transactions-transition-normal);
 }
 
 .msg-tool--done {
-  background: var(--billadm-color-income-tint);
-  border-color: var(--billadm-color-success);
+  background: var(--transactions-color-income-tint);
+  border-color: var(--transactions-color-success);
 }
 
 .msg-tool-header {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  gap: var(--transactions-space-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
 }
 
 .msg-tool-indicator {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--billadm-color-accent);
+  background: var(--transactions-color-accent);
   flex-shrink: 0;
   animation: msg-tool-dot-pop 300ms ease-out both;
 }
@@ -106,39 +106,39 @@ function formatArgValue(val: unknown): string {
 }
 
 .msg-tool--done .msg-tool-indicator {
-  background: var(--billadm-color-success);
+  background: var(--transactions-color-success);
   animation: none;
 }
 
 .msg-tool-name {
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
   font-weight: 500;
 }
 
 .msg-tool-args {
-  margin-top: var(--billadm-space-xs);
+  margin-top: var(--transactions-space-xs);
   display: flex;
   flex-wrap: wrap;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .msg-tool-arg {
   display: inline-flex;
   align-items: center;
-  gap: var(--billadm-space-2xs);
-  background: var(--billadm-color-minor-background);
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-sm);
+  gap: var(--transactions-space-2xs);
+  background: var(--transactions-color-minor-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-sm);
   padding: 1px 6px;
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
   line-height: 1.6;
 }
 
 .msg-tool-arg-key {
-  color: var(--billadm-color-text-secondary);
-  font-family: var(--billadm-font-body);
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-body);
 }
 
 .msg-tool-arg-key::after {
@@ -146,8 +146,8 @@ function formatArgValue(val: unknown): string {
 }
 
 .msg-tool-arg-val {
-  color: var(--billadm-color-text-major);
-  font-family: var(--billadm-font-mono);
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
   max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -155,33 +155,33 @@ function formatArgValue(val: unknown): string {
 }
 
 .msg-tool-summary {
-  margin-top: var(--billadm-space-sm);
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
-  line-height: var(--billadm-height-normal);
+  margin-top: var(--transactions-space-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-normal);
 }
 
 .msg-tool-detail {
-  margin-top: var(--billadm-space-sm);
+  margin-top: var(--transactions-space-sm);
 }
 
 .msg-tool-detail-toggle {
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
   padding: 0;
   height: auto;
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 .msg-tool-detail-json {
-  margin-top: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  background: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-sm);
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
-  line-height: var(--billadm-height-normal);
+  margin-top: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  background: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-sm);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  line-height: var(--transactions-height-normal);
   overflow-x: auto;
   white-space: pre;
 }

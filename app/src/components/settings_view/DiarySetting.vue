@@ -411,59 +411,59 @@ async function doExport(directory: string) {
 .setting-list {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .setting-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-md);
-  transition: background-color var(--billadm-transition-fast);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .setting-card:hover {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .setting-info {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-2xs);
+  gap: var(--transactions-space-2xs);
   min-width: 0;
 }
 
 .setting-card-title {
-  font-size: var(--billadm-size-text-body);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
 }
 
 .setting-desc {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
 }
 
 .setting-action {
   flex-shrink: 0;
-  margin-left: var(--billadm-space-lg);
+  margin-left: var(--transactions-space-lg);
 }
 
 .export-summary-title {
-  font-size: var(--billadm-size-text-body-sm);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
-  margin-bottom: var(--billadm-space-sm);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+  margin-bottom: var(--transactions-space-sm);
 }
 
 .export-scope-row {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  margin-top: var(--billadm-space-xs);
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-xs);
 }
 
 .export-scope-picker {
@@ -471,7 +471,7 @@ async function doExport(directory: string) {
 }
 
 .dev-path-row {
-  margin-top: var(--billadm-space-xs);
+  margin-top: var(--transactions-space-xs);
 }
 
 .dev-path-input {
@@ -480,61 +480,61 @@ async function doExport(directory: string) {
 
 /* ---- 进度卡片 ---- */
 .import-progress-card {
-  margin-top: var(--billadm-space-md);
-  background: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-md);
-  padding: var(--billadm-space-md);
+  margin-top: var(--transactions-space-md);
+  background: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-md);
 }
 
 /* 总进度 */
 .progress-summary {
-  margin-bottom: var(--billadm-space-sm);
+  margin-bottom: var(--transactions-space-sm);
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--billadm-space-sm);
+  margin-bottom: var(--transactions-space-sm);
 }
 
 .summary-text {
   display: inline-flex;
   align-items: center;
-  gap: var(--billadm-space-xs);
-  font-size: var(--billadm-size-text-body-sm);
-  font-weight: var(--billadm-weight-medium);
-  color: var(--billadm-color-text-major);
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
 }
 
-.status-icon.done { color: var(--billadm-color-success); }
-.status-icon.error { color: var(--billadm-color-expense); }
+.status-icon.done { color: var(--transactions-color-success); }
+.status-icon.error { color: var(--transactions-color-expense); }
 
 .summary-percent {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .summary-bar-track {
   width: 100%;
   height: 4px;
-  border-radius: var(--billadm-space-2xs);
-  background: var(--billadm-color-minor-background);
+  border-radius: var(--transactions-space-2xs);
+  background: var(--transactions-color-minor-background);
   overflow: hidden;
 }
 
 .summary-bar-fill {
   height: 100%;
-  border-radius: var(--billadm-space-2xs);
-  background: var(--billadm-color-primary);
+  border-radius: var(--transactions-space-2xs);
+  background: var(--transactions-color-primary);
   transform-origin: left;
   transition: transform 200ms ease;
 }
 
-.summary-bar-fill--done { background: var(--billadm-color-success); }
-.summary-bar-fill--error { background: var(--billadm-color-expense); }
+.summary-bar-fill--done { background: var(--transactions-color-success); }
+.summary-bar-fill--error { background: var(--transactions-color-expense); }
 
 /* 文件列表 */
 .file-list {
@@ -548,22 +548,22 @@ async function doExport(directory: string) {
 .file-row {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-xs) var(--billadm-space-xs);
-  border-radius: var(--billadm-radius-sm);
-  font-size: var(--billadm-size-text-body-sm);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-xs) var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
+  font-size: var(--transactions-size-text-body-sm);
 }
 
 .file-row:hover {
-  background: var(--billadm-color-hover-bg);
+  background: var(--transactions-color-hover-bg);
 }
 
 .file-row--importing {
-  background: var(--billadm-color-hover-bg);
+  background: var(--transactions-color-hover-bg);
 }
 
 .file-row--error {
-  background: var(--billadm-color-danger-hover-bg);
+  background: var(--transactions-color-danger-hover-bg);
 }
 
 .file-dot {
@@ -576,35 +576,35 @@ async function doExport(directory: string) {
 }
 
 .dot-icon {
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--transactions-size-text-body);
 }
-.dot-icon.done { color: var(--billadm-color-success); }
-.dot-icon.importing { color: var(--billadm-color-primary); }
-.dot-icon.error { color: var(--billadm-color-expense); }
+.dot-icon.done { color: var(--transactions-color-success); }
+.dot-icon.importing { color: var(--transactions-color-primary); }
+.dot-icon.error { color: var(--transactions-color-expense); }
 
 .dot-dot {
   display: block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--billadm-color-text-disabled);
+  background: var(--transactions-color-text-disabled);
 }
 
 .file-date {
   flex: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
 }
 
 .file-status-text {
   flex-shrink: 0;
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
 }
 
 .status--pending,
-.status--importing { color: var(--billadm-color-text-disabled); }
-.status--done { color: var(--billadm-color-success); }
-.status--error { color: var(--billadm-color-expense); }
+.status--importing { color: var(--transactions-color-text-disabled); }
+.status--done { color: var(--transactions-color-success); }
+.status--error { color: var(--transactions-color-expense); }
 
 @media (prefers-reduced-motion: reduce) {
   .summary-bar-fill { transition: none; }

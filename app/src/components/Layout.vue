@@ -1,7 +1,7 @@
 <template>
   <div class="app-shell">
     <!-- 工作空间选择弹窗 -->
-    <billadm-file-select v-model="showWorkspaceSelect" title="新建工作目录或打开已存在的工作目录" @confirm="handleOpenWorkspace" />
+    <transactions-file-select v-model="showWorkspaceSelect" title="新建工作目录或打开已存在的工作目录" @confirm="handleOpenWorkspace" />
 
     <!-- 主布局 -->
     <div class="app-shell-body">
@@ -88,7 +88,7 @@ onUnmounted(() => {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -104,9 +104,9 @@ onUnmounted(() => {
   width: 200px;
   min-width: 200px;
   height: 100%;
-  background-color: var(--billadm-color-sidebar-fill);
+  background-color: var(--transactions-color-sidebar-fill);
   flex-shrink: 0;
-  border-right: 1px solid var(--billadm-color-border-l1);
+  border-right: 1px solid var(--transactions-color-border-l1);
   display: flex;
   flex-direction: column;
 }
@@ -116,7 +116,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  background-color: var(--billadm-color-bg-base);
+  background-color: var(--transactions-color-bg-base);
   overflow: hidden;
   position: relative;
 }
@@ -139,9 +139,9 @@ onUnmounted(() => {
 
 /* 底部状态栏 */
 .app-footer {
-  height: var(--billadm-size-footer-height);
-  background-color: var(--billadm-color-bg-base);
+  height: var(--transactions-size-footer-height);
+  background-color: var(--transactions-color-bg-base);
   flex-shrink: 0;
-  border-top: 1px solid var(--billadm-color-border-l1);
+  border-top: 1px solid var(--transactions-color-border-l1);
 }
 </style>

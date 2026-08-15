@@ -9,48 +9,48 @@
   <script src="vendor/vue.global.prod.js"></script>
   <style>
     :root {
-      --billadm-color-primary: #3964fe;
-      --billadm-color-primary-light: #5b7fff;
-      --billadm-color-secondary: #61666b;
-      --billadm-color-accent: #d97706;
-      --billadm-color-positive: #16a34a;
-      --billadm-color-negative: #dc2626;
-      --billadm-color-major-background: #ffffff;
-      --billadm-color-major-warm: #f9fafb;
-      --billadm-color-minor-background: #f3f4f6;
-      --billadm-color-divider: #eceef1;
-      --billadm-color-text-major: #0f1115;
-      --billadm-color-text-secondary: #61666b;
-      --billadm-color-window-border: #e8eaed;
-      --billadm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-      --billadm-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-      --billadm-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
-      --billadm-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14);
-      --billadm-radius-md: 8px;
-      --billadm-radius-lg: 12px;
-      --billadm-radius-xl: 16px;
-      --billadm-transition-fast: 150ms ease;
-      --billadm-transition-normal: 200ms ease;
-      --billadm-color-hover-bg: rgba(15, 17, 21, 0.06);
+      --transactions-color-primary: #3964fe;
+      --transactions-color-primary-light: #5b7fff;
+      --transactions-color-secondary: #61666b;
+      --transactions-color-accent: #d97706;
+      --transactions-color-positive: #16a34a;
+      --transactions-color-negative: #dc2626;
+      --transactions-color-major-background: #ffffff;
+      --transactions-color-major-warm: #f9fafb;
+      --transactions-color-minor-background: #f3f4f6;
+      --transactions-color-divider: #eceef1;
+      --transactions-color-text-major: #0f1115;
+      --transactions-color-text-secondary: #61666b;
+      --transactions-color-window-border: #e8eaed;
+      --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --transactions-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+      --transactions-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14);
+      --transactions-radius-md: 8px;
+      --transactions-radius-lg: 12px;
+      --transactions-radius-xl: 16px;
+      --transactions-transition-fast: 150ms ease;
+      --transactions-transition-normal: 200ms ease;
+      --transactions-color-hover-bg: rgba(15, 17, 21, 0.06);
     }
 
     /* 深色外观：跟随系统（nativeTheme.themeSource 驱动 prefers-color-scheme） */
     @media (prefers-color-scheme: dark) {
       :root {
-        --billadm-color-primary: #6b8aff;
-        --billadm-color-primary-light: #8aa3ff;
-        --billadm-color-secondary: #b6bcc6;
-        --billadm-color-accent: #fbbf24;
-        --billadm-color-positive: #4ade80;
-        --billadm-color-negative: #f87171;
-        --billadm-color-major-background: #16181d;
-        --billadm-color-major-warm: #0f1115;
-        --billadm-color-minor-background: #14161a;
-        --billadm-color-divider: rgba(255, 255, 255, 0.08);
-        --billadm-color-text-major: #f2f4f8;
-        --billadm-color-text-secondary: #b6bcc6;
-        --billadm-color-window-border: rgba(255, 255, 255, 0.08);
-        --billadm-color-hover-bg: rgba(255, 255, 255, 0.08);
+        --transactions-color-primary: #6b8aff;
+        --transactions-color-primary-light: #8aa3ff;
+        --transactions-color-secondary: #b6bcc6;
+        --transactions-color-accent: #fbbf24;
+        --transactions-color-positive: #4ade80;
+        --transactions-color-negative: #f87171;
+        --transactions-color-major-background: #16181d;
+        --transactions-color-major-warm: #0f1115;
+        --transactions-color-minor-background: #14161a;
+        --transactions-color-divider: rgba(255, 255, 255, 0.08);
+        --transactions-color-text-major: #f2f4f8;
+        --transactions-color-text-secondary: #b6bcc6;
+        --transactions-color-window-border: rgba(255, 255, 255, 0.08);
+        --transactions-color-hover-bg: rgba(255, 255, 255, 0.08);
       }
     }
 
@@ -62,7 +62,7 @@
 
     body {
       font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-      background: var(--billadm-color-major-warm);
+      background: var(--transactions-color-major-warm);
       min-height: 100vh;
       overflow: hidden;
       display: flex;
@@ -121,8 +121,8 @@
       justify-content: center;
       align-items: center;
       padding: 80px 64px;
-      background: var(--billadm-color-major-background);
-      border-left: 1px solid var(--billadm-color-divider);
+      background: var(--transactions-color-major-background);
+      border-left: 1px solid var(--transactions-color-divider);
       position: relative;
       text-align: center;
     }
@@ -155,7 +155,7 @@
     .brand-title {
       font-size: 32px;
       font-weight: 600;
-      color: var(--billadm-color-text-major);
+      color: var(--transactions-color-text-major);
       margin-bottom: 12px;
       letter-spacing: -1px;
       animation: floatIn 0.8s ease 0.3s both;
@@ -163,7 +163,7 @@
 
     .brand-tagline {
       font-size: 15px;
-      color: var(--billadm-color-text-secondary);
+      color: var(--transactions-color-text-secondary);
       line-height: 1.7;
       max-width: 300px;
       animation: floatIn 0.8s ease 0.4s both;
@@ -183,19 +183,19 @@
     }
 
     .accent-bar:nth-child(1) {
-      background: var(--billadm-color-primary);
+      background: var(--transactions-color-primary);
     }
 
     .accent-bar:nth-child(2) {
-      background: var(--billadm-color-negative);
+      background: var(--transactions-color-negative);
     }
 
     .accent-bar:nth-child(3) {
-      background: var(--billadm-color-accent);
+      background: var(--transactions-color-accent);
     }
 
     .accent-bar:nth-child(4) {
-      background: var(--billadm-color-secondary);
+      background: var(--transactions-color-secondary);
     }
 
     /* Primary CTA Button - "开始使用" */
@@ -205,18 +205,18 @@
       justify-content: center;
       gap: 10px;
       padding: 14px 36px;
-      background: var(--billadm-color-primary);
+      background: var(--transactions-color-primary);
       color: #fff;
       font-size: 15px;
       font-weight: 600;
       border: none;
-      border-radius: var(--billadm-radius-lg);
+      border-radius: var(--transactions-radius-lg);
       cursor: pointer;
       transition:
-        transform var(--billadm-transition-normal),
-        box-shadow var(--billadm-transition-normal),
-        background var(--billadm-transition-fast);
-      box-shadow: var(--billadm-shadow-md);
+        transform var(--transactions-transition-normal),
+        box-shadow var(--transactions-transition-normal),
+        background var(--transactions-transition-fast);
+      box-shadow: var(--transactions-shadow-md);
       opacity: 0;
       animation: fadeIn 0.6s ease 0.6s forwards;
       position: relative;
@@ -236,9 +236,9 @@
     }
 
     .cta-button:hover {
-      background: var(--billadm-color-primary-light);
+      background: var(--transactions-color-primary-light);
       transform: translateY(-2px);
-      box-shadow: var(--billadm-shadow-lg), 0 0 24px rgba(57, 100, 254, 0.15);
+      box-shadow: var(--transactions-shadow-lg), 0 0 24px rgba(57, 100, 254, 0.15);
     }
 
     .cta-button:active {
@@ -246,7 +246,7 @@
     }
 
     .cta-button svg {
-      transition: transform var(--billadm-transition-normal);
+      transition: transform var(--transactions-transition-normal);
       flex-shrink: 0;
     }
 
@@ -258,11 +258,11 @@
     .workspace-path-box {
       margin-top: 20px;
       padding: 12px 18px;
-      background: var(--billadm-color-minor-background);
-      border: 1px solid var(--billadm-color-window-border);
-      border-radius: var(--billadm-radius-md);
+      background: var(--transactions-color-minor-background);
+      border: 1px solid var(--transactions-color-window-border);
+      border-radius: var(--transactions-radius-md);
       font-size: 12px;
-      color: var(--billadm-color-text-secondary);
+      color: var(--transactions-color-text-secondary);
       font-family: 'SF Mono', 'Consolas', monospace;
       word-break: break-all;
       max-width: 300px;
@@ -332,7 +332,7 @@
 
       .action-panel {
         border-left: none;
-        border-top: 1px solid var(--billadm-color-divider);
+        border-top: 1px solid var(--transactions-color-divider);
         padding: 48px 32px;
       }
 

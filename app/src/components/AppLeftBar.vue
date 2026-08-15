@@ -168,35 +168,35 @@ const handleDeleteLedger = (id: string, name: string) => {
 
 /* 账本切换区域 — 顶部锚点，充裕呼吸空间 */
 .sidebar-ledger {
-  padding: var(--billadm-space-lg);
-  padding-bottom: var(--billadm-space-lg);
+  padding: var(--transactions-space-lg);
+  padding-bottom: var(--transactions-space-lg);
 }
 
 .ledger-btn {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   width: 100%;
   height: 32px;
-  padding: 0 var(--billadm-space-md);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-md);
-  background: var(--billadm-color-major-background);
+  padding: 0 var(--transactions-space-md);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background: var(--transactions-color-major-background);
   cursor: pointer;
   font-family: inherit;
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-major);
-  transition: all var(--billadm-transition-fast);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  transition: all var(--transactions-transition-fast);
 }
 
 .ledger-btn:hover {
-  border-color: var(--billadm-color-border-l2);
-  background: var(--billadm-color-hover-bg);
+  border-color: var(--transactions-color-border-l2);
+  background: var(--transactions-color-hover-bg);
 }
 
 .ledger-btn-icon {
   font-size: 16px;
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
   flex-shrink: 0;
 }
 
@@ -209,7 +209,7 @@ const handleDeleteLedger = (id: string, name: string) => {
 
 .ledger-btn-arrow {
   font-size: 10px;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   flex-shrink: 0;
 }
 
@@ -217,39 +217,39 @@ const handleDeleteLedger = (id: string, name: string) => {
 .ledger-menu {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-2xs);
+  gap: var(--transactions-space-2xs);
   min-width: 180px;
-  padding: var(--billadm-space-xs);
-  background: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-md);
-  box-shadow: var(--billadm-shadow-lg);
+  padding: var(--transactions-space-xs);
+  background: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  box-shadow: var(--transactions-shadow-lg);
 }
 
 .ledger-menu-item {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  border-radius: var(--billadm-radius-sm);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-sm);
   cursor: pointer;
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-major);
-  transition: background var(--billadm-transition-fast);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  transition: background var(--transactions-transition-fast);
 }
 
 .ledger-menu-item:hover {
-  background: var(--billadm-color-hover-bg);
+  background: var(--transactions-color-hover-bg);
 }
 
 .ledger-menu-item.active {
-  background: var(--billadm-color-active-bg);
-  color: var(--billadm-color-primary);
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
   font-weight: 500;
 }
 
 .ledger-menu-create {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
   font-weight: 500;
 }
 
@@ -262,7 +262,7 @@ const handleDeleteLedger = (id: string, name: string) => {
 
 .ledger-menu-delete {
   opacity: 0;
-  transition: opacity var(--billadm-transition-fast);
+  transition: opacity var(--transactions-transition-fast);
 }
 
 .ledger-menu-item:hover .ledger-menu-delete {
@@ -273,9 +273,9 @@ const handleDeleteLedger = (id: string, name: string) => {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-2xs);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  padding-bottom: var(--billadm-space-md);
+  gap: var(--transactions-space-2xs);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  padding-bottom: var(--transactions-space-md);
 }
 
 .sidebar-spacer {
@@ -286,38 +286,38 @@ const handleDeleteLedger = (id: string, name: string) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: var(--billadm-size-footer-height);
-  padding: 0 var(--billadm-space-md);
-  border-top: 1px solid var(--billadm-color-divider);
+  height: var(--transactions-size-footer-height);
+  padding: 0 var(--transactions-space-md);
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 /* 导航按钮 */
 .nav-btn {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   width: 100%;
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
   border: none;
   background: none;
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
   cursor: pointer;
   font-family: inherit;
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
   text-align: left;
-  transition: all var(--billadm-transition-fast);
+  transition: all var(--transactions-transition-fast);
   position: relative;
 }
 
 .nav-btn:hover {
-  background-color: var(--billadm-color-hover-bg);
-  color: var(--billadm-color-text-major);
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
 }
 
 .nav-btn.active {
-  background-color: var(--billadm-color-active-bg);
-  color: var(--billadm-color-primary);
+  background-color: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
   font-weight: 500;
 }
 
@@ -327,7 +327,7 @@ const handleDeleteLedger = (id: string, name: string) => {
 }
 
 .nav-btn-secondary .nav-btn-text {
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
 }
 
 .nav-btn-secondary:hover .nav-btn-text,

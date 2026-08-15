@@ -110,7 +110,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons-vue';
-import type { KeyEvent, KeyEventImage } from '@/types/billadm';
+import type { KeyEvent, KeyEventImage } from '@/types/transactions';
 import type { UploadProgress } from './UploadProgressBar.vue';
 import UploadProgressBar from './UploadProgressBar.vue';
 
@@ -185,11 +185,11 @@ const handleCancel = () => {
 .color-toolbar {
   display: flex;
   flex-direction: row;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   flex-wrap: wrap;
-  padding-bottom: var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
-  margin-bottom: var(--billadm-space-md);
+  padding-bottom: var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  margin-bottom: var(--transactions-space-md);
   flex-shrink: 0;
 }
 
@@ -199,8 +199,8 @@ const handleCancel = () => {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: box-shadow var(--billadm-transition-fast),
-              border-color var(--billadm-transition-fast);
+  transition: box-shadow var(--transactions-transition-fast),
+              border-color var(--transactions-transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -212,7 +212,7 @@ const handleCancel = () => {
 }
 
 .color-swatch:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
@@ -221,7 +221,7 @@ const handleCancel = () => {
 }
 
 .color-swatch-empty {
-  border: 2px dashed var(--billadm-color-text-disabled);
+  border: 2px dashed var(--transactions-color-text-disabled);
   background-color: transparent;
 }
 
@@ -234,10 +234,10 @@ const handleCancel = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--billadm-space-lg);
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
+  padding: var(--transactions-space-lg);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
   overflow: hidden;
 }
 
@@ -250,8 +250,8 @@ const handleCancel = () => {
 }
 
 .panel-empty-text {
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
 }
 
 /* ========== 描述区域 ========== */
@@ -267,9 +267,9 @@ const handleCancel = () => {
   flex: 1;
   overflow-y: auto;
   border: none;
-  border-radius: var(--billadm-radius-md);
-  padding: var(--billadm-space-md);
-  background-color: var(--billadm-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-md);
+  background-color: var(--transactions-color-minor-background);
 
   @include custom-scrollbar;
 }
@@ -277,17 +277,17 @@ const handleCancel = () => {
 .description-text {
   margin: 0;
   max-width: 72ch;
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
-  line-height: var(--billadm-height-relaxed);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-relaxed);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .description-placeholder {
   margin: 0;
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
   font-style: italic;
 }
 
@@ -317,8 +317,8 @@ const handleCancel = () => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm);
   flex-shrink: 0;
 }
 
@@ -351,13 +351,13 @@ const handleCancel = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-md);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-md);
 }
 
 .skeleton-block {
-  border-radius: var(--billadm-radius-md);
-  background: var(--billadm-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  background: var(--transactions-color-minor-background);
   animation: panel-shimmer 1.5s ease-in-out infinite;
 }
 
@@ -369,14 +369,14 @@ const handleCancel = () => {
 .skeleton-gallery {
   flex: 1;
   display: flex;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   min-height: 0;
 }
 
 .skeleton-gallery-main {
   flex: 1;
-  border-radius: var(--billadm-radius-md);
-  background: var(--billadm-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  background: var(--transactions-color-minor-background);
   animation: panel-shimmer 1.5s ease-in-out infinite;
 }
 
@@ -384,13 +384,13 @@ const handleCancel = () => {
   width: 160px;
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .skeleton-thumb {
   height: 90px;
-  border-radius: var(--billadm-radius-sm);
-  background: var(--billadm-color-minor-background);
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
   animation: panel-shimmer 1.5s ease-in-out infinite;
 }
 

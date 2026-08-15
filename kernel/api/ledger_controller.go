@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/constant"
-	"github.com/billadm/models"
-	"github.com/billadm/models/dto"
+	"github.com/transactions/constant"
+	"github.com/transactions/models"
+	"github.com/transactions/models/dto"
 )
 
 // GET /ledgers?id=all or id=uuid1,uuid2

@@ -57,16 +57,16 @@
 
   &::-webkit-scrollbar-track {
     background: transparent;
-    margin-block: var(--billadm-space-xs);
+    margin-block: var(--transactions-space-xs);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--billadm-color-scrollbar-thumb);
+    background: var(--transactions-color-scrollbar-thumb);
     border-radius: 8px;
     transition: background 0.3s ease;
 
     &:hover {
-      background: var(--billadm-color-scrollbar-thumb-hover);
+      background: var(--transactions-color-scrollbar-thumb-hover);
     }
   }
 }
@@ -82,26 +82,26 @@
 
 // Card — clean bordered, elevation on hover only
 @mixin card-base {
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
-  box-shadow: var(--billadm-shadow-sm);
-  transition: box-shadow var(--billadm-transition-normal),
-              border-color var(--billadm-transition-normal);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+  box-shadow: var(--transactions-shadow-sm);
+  transition: box-shadow var(--transactions-transition-normal),
+              border-color var(--transactions-transition-normal);
 
   &:hover {
-    box-shadow: var(--billadm-shadow-md);
+    box-shadow: var(--transactions-shadow-md);
   }
 }
 
 // Elevated card
 @mixin card-elevated {
   @include card-base;
-  background-color: var(--billadm-color-elevated);
-  box-shadow: var(--billadm-shadow-md);
+  background-color: var(--transactions-color-elevated);
+  box-shadow: var(--transactions-shadow-md);
 
   &:hover {
-    box-shadow: var(--billadm-shadow-lg);
+    box-shadow: var(--transactions-shadow-lg);
   }
 }
 
@@ -118,21 +118,21 @@
 // Input focus
 @mixin input-focus {
   &:focus-within {
-    border-color: var(--billadm-color-primary);
-    box-shadow: var(--billadm-shadow-focus);
+    border-color: var(--transactions-color-primary);
+    box-shadow: var(--transactions-shadow-focus);
   }
 }
 
 // Page container
 @mixin page-container {
   height: 100%;
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
   overflow-y: auto;
   @include custom-scrollbar;
 }
 
 @mixin section-gap {
-  margin-bottom: var(--billadm-space-xl);
+  margin-bottom: var(--transactions-space-xl);
 }
 
 // Icon button
@@ -141,17 +141,17 @@
   @include flex-center;
   width: 36px;
   height: 36px;
-  border-radius: var(--billadm-radius-md);
-  color: var(--billadm-color-icon);
-  transition: all var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-md);
+  color: var(--transactions-color-icon);
+  transition: all var(--transactions-transition-fast);
 
   &:hover {
-    background-color: var(--billadm-color-hover-bg);
-    color: var(--billadm-color-icon-hover);
+    background-color: var(--transactions-color-hover-bg);
+    color: var(--transactions-color-icon-hover);
   }
 
   &:active {
-    background-color: var(--billadm-color-active-bg);
+    background-color: var(--transactions-color-active-bg);
   }
 }
 
@@ -161,23 +161,23 @@
   @include flex-center;
   width: 40px;
   height: 40px;
-  border-radius: var(--billadm-radius-md);
-  color: var(--billadm-color-icon);
-  transition: background-color var(--billadm-transition-fast),
-              color var(--billadm-transition-fast);
+  border-radius: var(--transactions-radius-md);
+  color: var(--transactions-color-icon);
+  transition: background-color var(--transactions-transition-fast),
+              color var(--transactions-transition-fast);
 
   &:hover {
-    background-color: var(--billadm-color-hover-bg);
-    color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-hover-bg);
+    color: var(--transactions-color-primary);
   }
 
   &.active {
-    background-color: var(--billadm-color-active-bg);
-    color: var(--billadm-color-primary);
+    background-color: var(--transactions-color-active-bg);
+    color: var(--transactions-color-primary);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--billadm-color-primary);
+    outline: 2px solid var(--transactions-color-primary);
     outline-offset: 2px;
   }
 }
@@ -186,8 +186,8 @@
 @mixin focus-ring {
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--billadm-color-major-background),
-                0 0 0 4px var(--billadm-color-primary);
+    box-shadow: 0 0 0 2px var(--transactions-color-major-background),
+                0 0 0 4px var(--transactions-color-primary);
   }
 }
 

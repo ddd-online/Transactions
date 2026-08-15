@@ -48,7 +48,7 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
-import type { Tag } from '@/types/billadm'
+import type { Tag } from '@/types/transactions'
 import { useListDragSort } from '@/hooks/useListDragSort'
 
 const props = defineProps<{
@@ -80,12 +80,12 @@ useListDragSort(listRef, dragEnabled, {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  font-size: var(--billadm-size-text-body-sm);
+  font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
   border: none;
   cursor: pointer;
-  transition: all var(--billadm-transition-fast);
+  transition: all var(--transactions-transition-fast);
 }
 
 .add-btn__icon {
@@ -94,14 +94,14 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .add-btn--secondary {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
   background-color: transparent;
-  border: 1px solid var(--billadm-color-primary);
+  border: 1px solid var(--transactions-color-primary);
 }
 
 .add-btn--secondary:hover:not(:disabled) {
-  background-color: var(--billadm-color-primary);
-  color: var(--billadm-color-text-inverse);
+  background-color: var(--transactions-color-primary);
+  color: var(--transactions-color-text-inverse);
 }
 
 .add-btn:disabled {
@@ -110,7 +110,7 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .add-btn:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
@@ -119,20 +119,20 @@ useListDragSort(listRef, dragEnabled, {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-divider);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
 }
 
 .column-tags {
-  border-radius: 0 var(--billadm-radius-lg) var(--billadm-radius-lg) 0;
+  border-radius: 0 var(--transactions-radius-lg) var(--transactions-radius-lg) 0;
 }
 
 .column-header {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
-  border-bottom: 1px solid var(--billadm-color-divider);
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
   flex-shrink: 0;
 }
 
@@ -141,23 +141,23 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .column-title {
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--transactions-size-text-body);
   font-weight: 600;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
 }
 
 .column-count {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
-  background-color: var(--billadm-color-minor-background);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
   padding: 1px 6px;
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--transactions-radius-full);
 }
 
 .column-body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--billadm-space-xs);
+  padding: var(--transactions-space-xs);
 }
 
 .column-empty {
@@ -165,8 +165,8 @@ useListDragSort(listRef, dragEnabled, {
   align-items: center;
   justify-content: center;
   flex: 1;
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
 }
 
 /* Drag Handle — 始终可见 */
@@ -176,9 +176,9 @@ useListDragSort(listRef, dragEnabled, {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   cursor: grab;
-  transition: color var(--billadm-transition-fast);
+  transition: color var(--transactions-transition-fast);
   margin-right: 2px;
   touch-action: none;
 }
@@ -189,7 +189,7 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .drag-handle:hover {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 .drag-handle:active {
@@ -200,48 +200,48 @@ useListDragSort(listRef, dragEnabled, {
 .list-item {
   display: flex;
   align-items: center;
-  padding: var(--billadm-space-sm) var(--billadm-space-sm);
-  border-radius: var(--billadm-radius-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-sm);
+  border-radius: var(--transactions-radius-md);
   cursor: pointer;
-  transition: background-color var(--billadm-transition-fast);
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .list-item:hover {
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .list-item:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
 .action-icon:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
 .item-main {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
   min-width: 0;
   flex: 1;
 }
 
 .item-name {
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .item-badge {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
-  background-color: var(--billadm-color-minor-background);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
   padding: 1px 5px;
-  border-radius: var(--billadm-radius-full);
+  border-radius: var(--transactions-radius-full);
   flex-shrink: 0;
 }
 
@@ -261,12 +261,12 @@ useListDragSort(listRef, dragEnabled, {
   justify-content: center;
   width: 28px;
   height: 28px;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   background: transparent;
   border: none;
-  border-radius: var(--billadm-radius-sm);
+  border-radius: var(--transactions-radius-sm);
   cursor: pointer;
-  transition: all var(--billadm-transition-fast);
+  transition: all var(--transactions-transition-fast);
 }
 
 .action-icon .delete-icon {
@@ -275,8 +275,8 @@ useListDragSort(listRef, dragEnabled, {
 }
 
 .action-icon.delete:hover:not(:disabled) {
-  color: var(--billadm-color-negative);
-  background-color: var(--billadm-color-danger-hover-bg);
+  color: var(--transactions-color-negative);
+  background-color: var(--transactions-color-danger-hover-bg);
 }
 
 .action-icon:disabled {
@@ -287,12 +287,12 @@ useListDragSort(listRef, dragEnabled, {
 /* SortableJS 拖拽状态 */
 .sortable-ghost {
   opacity: 0.3;
-  background-color: var(--billadm-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
 .sortable-chosen {
-  background-color: var(--billadm-color-active-bg);
-  box-shadow: var(--billadm-shadow-md);
+  background-color: var(--transactions-color-active-bg);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 .sortable-drag {

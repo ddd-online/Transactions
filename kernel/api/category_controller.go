@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
-	"github.com/billadm/models/dto"
+	"github.com/transactions/models"
+	"github.com/transactions/models/dto"
 )
 
 // GET /categories?type=all|income|expense|transfer&ledgerId=xxx

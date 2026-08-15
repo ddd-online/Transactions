@@ -1,10 +1,10 @@
 <template>
   <div class="settings-page-wrapper">
-    <BilladmPageHeader :title="title">
+    <TransactionsPageHeader :title="title">
       <template v-if="$slots.extra" #extra>
         <slot name="extra" />
       </template>
-    </BilladmPageHeader>
+    </TransactionsPageHeader>
     <div class="page-body">
       <slot />
     </div>
@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import BilladmPageHeader from '@/components/common/BilladmPageHeader.vue'
+import TransactionsPageHeader from '@/components/common/TransactionsPageHeader.vue'
 
 defineProps<{
   title: string
@@ -26,10 +26,10 @@ defineProps<{
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--billadm-space-xl) var(--billadm-space-lg) 0;
+  padding: var(--transactions-space-xl) var(--transactions-space-lg) 0;
 
-  --settings-card-gap: var(--billadm-space-sm);
-  --settings-section-gap: var(--billadm-space-xl);
+  --settings-card-gap: var(--transactions-space-sm);
+  --settings-section-gap: var(--transactions-space-xl);
 }
 
 .page-body {
@@ -37,9 +37,9 @@ defineProps<{
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   min-height: 0;
-  padding-bottom: var(--billadm-space-xl);
+  padding-bottom: var(--transactions-space-xl);
 
   @include custom-scrollbar;
 }

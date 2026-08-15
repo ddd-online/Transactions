@@ -267,7 +267,7 @@ $transitions: (
 // ============================================
 @mixin emit-theme($map) {
   @each $key, $value in $map {
-    --billadm-#{$key}: #{$value};
+    --transactions-#{$key}: #{$value};
   }
 }
 
@@ -275,68 +275,68 @@ $transitions: (
   @include emit-theme($light);
 
   // Typography
-  --billadm-size-text-display-xl: #{map.get($font-sizes, 'display-xl')};
-  --billadm-size-text-display: #{map.get($font-sizes, 'display')};
-  --billadm-size-text-display-sm: #{map.get($font-sizes, 'display-sm')};
-  --billadm-size-text-title: #{map.get($font-sizes, 'title')};
-  --billadm-size-text-title-sm: #{map.get($font-sizes, 'title-sm')};
-  --billadm-size-text-section: #{map.get($font-sizes, 'section')};
-  --billadm-size-text-body: #{map.get($font-sizes, 'body')};
-  --billadm-size-text-body-sm: #{map.get($font-sizes, 'body-sm')};
-  --billadm-size-text-caption: #{map.get($font-sizes, 'caption')};
-  --billadm-size-text-small: #{map.get($font-sizes, 'small')};
+  --transactions-size-text-display-xl: #{map.get($font-sizes, 'display-xl')};
+  --transactions-size-text-display: #{map.get($font-sizes, 'display')};
+  --transactions-size-text-display-sm: #{map.get($font-sizes, 'display-sm')};
+  --transactions-size-text-title: #{map.get($font-sizes, 'title')};
+  --transactions-size-text-title-sm: #{map.get($font-sizes, 'title-sm')};
+  --transactions-size-text-section: #{map.get($font-sizes, 'section')};
+  --transactions-size-text-body: #{map.get($font-sizes, 'body')};
+  --transactions-size-text-body-sm: #{map.get($font-sizes, 'body-sm')};
+  --transactions-size-text-caption: #{map.get($font-sizes, 'caption')};
+  --transactions-size-text-small: #{map.get($font-sizes, 'small')};
 
-  --billadm-weight-regular: #{map.get($font-weights, 'regular')};
-  --billadm-weight-medium: #{map.get($font-weights, 'medium')};
-  --billadm-weight-semibold: #{map.get($font-weights, 'semibold')};
-  --billadm-weight-bold: #{map.get($font-weights, 'bold')};
+  --transactions-weight-regular: #{map.get($font-weights, 'regular')};
+  --transactions-weight-medium: #{map.get($font-weights, 'medium')};
+  --transactions-weight-semibold: #{map.get($font-weights, 'semibold')};
+  --transactions-weight-bold: #{map.get($font-weights, 'bold')};
 
-  --billadm-height-tight: #{map.get($line-heights, 'tight')};
-  --billadm-height-snug: #{map.get($line-heights, 'snug')};
-  --billadm-height-normal: #{map.get($line-heights, 'normal')};
-  --billadm-height-relaxed: #{map.get($line-heights, 'relaxed')};
+  --transactions-height-tight: #{map.get($line-heights, 'tight')};
+  --transactions-height-snug: #{map.get($line-heights, 'snug')};
+  --transactions-height-normal: #{map.get($line-heights, 'normal')};
+  --transactions-height-relaxed: #{map.get($line-heights, 'relaxed')};
 
   // Spacing
-  --billadm-space-2xs: #{map.get($spacing, '2xs')};
-  --billadm-space-xs: #{map.get($spacing, 'xs')};
-  --billadm-space-sm: #{map.get($spacing, 'sm')};
-  --billadm-space-md: #{map.get($spacing, 'md')};
-  --billadm-space-lg: #{map.get($spacing, 'lg')};
-  --billadm-space-xl: #{map.get($spacing, 'xl')};
-  --billadm-space-2xl: #{map.get($spacing, '2xl')};
-  --billadm-space-3xl: #{map.get($spacing, '3xl')};
+  --transactions-space-2xs: #{map.get($spacing, '2xs')};
+  --transactions-space-xs: #{map.get($spacing, 'xs')};
+  --transactions-space-sm: #{map.get($spacing, 'sm')};
+  --transactions-space-md: #{map.get($spacing, 'md')};
+  --transactions-space-lg: #{map.get($spacing, 'lg')};
+  --transactions-space-xl: #{map.get($spacing, 'xl')};
+  --transactions-space-2xl: #{map.get($spacing, '2xl')};
+  --transactions-space-3xl: #{map.get($spacing, '3xl')};
 
   // Layout
-  --billadm-size-header-height: #{map.get($layout-sizes, 'header-height')};
-  --billadm-size-sider-width: #{map.get($layout-sizes, 'sider-width')};
-  --billadm-size-footer-height: #{map.get($layout-sizes, 'footer-height')};
-  --billadm-size-content-padding: #{map.get($layout-sizes, 'content-padding')};
+  --transactions-size-header-height: #{map.get($layout-sizes, 'header-height')};
+  --transactions-size-sider-width: #{map.get($layout-sizes, 'sider-width')};
+  --transactions-size-footer-height: #{map.get($layout-sizes, 'footer-height')};
+  --transactions-size-content-padding: #{map.get($layout-sizes, 'content-padding')};
 
   // Border radius
-  --billadm-radius-sm: #{map.get($border-radius, 'sm')};
-  --billadm-radius-md: #{map.get($border-radius, 'md')};
-  --billadm-radius-lg: #{map.get($border-radius, 'lg')};
-  --billadm-radius-xl: #{map.get($border-radius, 'xl')};
-  --billadm-radius-full: #{map.get($border-radius, 'full')};
-  --billadm-radius-chat: 20px;
+  --transactions-radius-sm: #{map.get($border-radius, 'sm')};
+  --transactions-radius-md: #{map.get($border-radius, 'md')};
+  --transactions-radius-lg: #{map.get($border-radius, 'lg')};
+  --transactions-radius-xl: #{map.get($border-radius, 'xl')};
+  --transactions-radius-full: #{map.get($border-radius, 'full')};
+  --transactions-radius-chat: 20px;
 
   // Transitions
-  --billadm-transition-fast: #{map.get($transitions, 'fast')};
-  --billadm-transition-normal: #{map.get($transitions, 'normal')};
-  --billadm-transition-slow: #{map.get($transitions, 'slow')};
-  --billadm-transition-smooth: #{map.get($transitions, 'smooth')};
+  --transactions-transition-fast: #{map.get($transitions, 'fast')};
+  --transactions-transition-normal: #{map.get($transitions, 'normal')};
+  --transactions-transition-slow: #{map.get($transitions, 'slow')};
+  --transactions-transition-smooth: #{map.get($transitions, 'smooth')};
 
   // Button
-  --billadm-btn-height-sm: 28px;
-  --billadm-btn-height-md: 36px;
-  --billadm-btn-height-lg: 44px;
-  --billadm-btn-min-width: 72px;
-  --billadm-btn-padding-h-sm: 12px;
-  --billadm-btn-padding-h-md: 16px;
-  --billadm-btn-padding-h-lg: 24px;
-  --billadm-btn-font-size-sm: 13px;
-  --billadm-btn-font-size-md: 14px;
-  --billadm-btn-font-size-lg: 16px;
+  --transactions-btn-height-sm: 28px;
+  --transactions-btn-height-md: 36px;
+  --transactions-btn-height-lg: 44px;
+  --transactions-btn-min-width: 72px;
+  --transactions-btn-padding-h-sm: 12px;
+  --transactions-btn-padding-h-md: 16px;
+  --transactions-btn-padding-h-lg: 24px;
+  --transactions-btn-font-size-sm: 13px;
+  --transactions-btn-font-size-md: 14px;
+  --transactions-btn-font-size-lg: 16px;
 }
 
 // Dark theme — same variable names, dark values.

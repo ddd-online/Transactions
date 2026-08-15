@@ -1,5 +1,5 @@
 <template>
-  <BilladmPageLayout>
+  <TransactionsPageLayout>
     <template #toolbar>
       <!-- 类型切换导航 -->
       <nav class="type-nav">
@@ -43,12 +43,12 @@
       @ok="executeDelete" ok-text="删除" ok-type="danger" cancel-text="取消" centered :width="360">
       <p>{{ deleteTarget.message }}</p>
     </a-modal>
-  </BilladmPageLayout>
+  </TransactionsPageLayout>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch, computed } from 'vue';
-import type { TransactionType, Category, Tag } from '@/types/billadm';
+import type { TransactionType, Category, Tag } from '@/types/transactions';
 import { useTransactionTypeColor } from '@/utils/themeColors';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import { withErrorHandling, getErrorMessage } from '@/backend/errorHandler'
@@ -323,42 +323,42 @@ watch(
 .type-nav {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .type-card {
   display: flex;
   align-items: center;
   height: 36px;
-  padding: 0 var(--billadm-space-md);
-  font-family: var(--billadm-font-body);
-  font-size: var(--billadm-size-text-body-sm);
+  padding: 0 var(--transactions-space-md);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
-  color: var(--billadm-color-text-secondary);
-  background: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-divider);
-  border-radius: var(--billadm-radius-md);
+  color: var(--transactions-color-text-secondary);
+  background: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
   cursor: pointer;
   user-select: none;
-  transition: background-color var(--billadm-transition-smooth),
-    box-shadow var(--billadm-transition-smooth),
-    color var(--billadm-transition-fast);
+  transition: background-color var(--transactions-transition-smooth),
+    box-shadow var(--transactions-transition-smooth),
+    color var(--transactions-transition-fast);
 }
 
 .type-card:hover:not(.is-active) {
-  color: var(--billadm-color-text-major);
-  box-shadow: var(--billadm-shadow-sm);
+  color: var(--transactions-color-text-major);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
 .type-card.is-active {
   color: var(--c);
-  background-color: color-mix(in srgb, var(--c) 8%, var(--billadm-color-major-background));
+  background-color: color-mix(in srgb, var(--c) 8%, var(--transactions-color-major-background));
   border-color: color-mix(in srgb, var(--c) 30%, transparent);
-  box-shadow: var(--billadm-shadow-sm);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
 .type-card:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
@@ -375,12 +375,12 @@ watch(
 .modal-form {
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .form-label {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
 }
 
 @media (prefers-reduced-motion: reduce) {

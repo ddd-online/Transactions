@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { TransactionTemplate } from "@/types/billadm";
+import type { TransactionTemplate } from "@/types/transactions";
 
 export interface TransactionTemplateDto {
     template_id?: string;

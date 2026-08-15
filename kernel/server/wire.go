@@ -1,13 +1,13 @@
 package server
 
 import (
-	"github.com/billadm/ai"
-	"github.com/billadm/ai/role"
-	"github.com/billadm/ai/tool"
-	"github.com/billadm/api"
-	"github.com/billadm/dao"
-	"github.com/billadm/service"
-	"github.com/billadm/workspace"
+	"github.com/transactions/ai"
+	"github.com/transactions/ai/role"
+	"github.com/transactions/ai/tool"
+	"github.com/transactions/api"
+	"github.com/transactions/dao"
+	"github.com/transactions/service"
+	"github.com/transactions/workspace"
 )
 
 // InitServices creates all service instances and wires them together.

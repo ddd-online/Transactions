@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/util"
+	"github.com/transactions/util"
 )
 
 // slowRequestThreshold 超过该耗时的请求按 Warn 记录，便于定位性能回归。

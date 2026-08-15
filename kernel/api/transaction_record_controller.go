@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/api/binding"
-	"github.com/billadm/models"
+	"github.com/transactions/api/binding"
+	"github.com/transactions/models"
 )
 
 // POST /transactions/query

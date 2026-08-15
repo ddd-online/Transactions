@@ -72,7 +72,7 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
-import type { TransactionTemplate } from '@/types/billadm'
+import type { TransactionTemplate } from '@/types/transactions'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { queryTemplates, deleteTemplate, updateTemplateSort } from '@/backend/api/template'
 import { useLedgerStore } from '@/stores/ledgerStore.ts'
@@ -249,9 +249,9 @@ watch(() => ledgerStore.currentLedgerId, () => {
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   cursor: grab;
-  transition: color var(--billadm-transition-fast);
+  transition: color var(--transactions-transition-fast);
   vertical-align: middle;
   touch-action: none;
 }
@@ -262,7 +262,7 @@ watch(() => ledgerStore.currentLedgerId, () => {
 }
 
 .drag-handle:hover {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 .drag-handle:active {
@@ -275,7 +275,7 @@ watch(() => ledgerStore.currentLedgerId, () => {
 }
 
 .sortable-chosen {
-  background-color: var(--billadm-color-active-bg);
+  background-color: var(--transactions-color-active-bg);
 }
 
 .sortable-drag {
@@ -288,12 +288,12 @@ watch(() => ledgerStore.currentLedgerId, () => {
   justify-content: center;
   width: 32px;
   height: 32px;
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   background: transparent;
   border: none;
-  border-radius: var(--billadm-radius-sm);
+  border-radius: var(--transactions-radius-sm);
   cursor: pointer;
-  transition: all var(--billadm-transition-fast);
+  transition: all var(--transactions-transition-fast);
 }
 
 .action-icon .delete-icon {
@@ -302,8 +302,8 @@ watch(() => ledgerStore.currentLedgerId, () => {
 }
 
 .action-icon.delete:hover:not(:disabled) {
-  color: var(--billadm-color-negative);
-  background-color: var(--billadm-color-danger-hover-bg);
+  color: var(--transactions-color-negative);
+  background-color: var(--transactions-color-danger-hover-bg);
 }
 
 .action-icon:disabled {
@@ -312,13 +312,13 @@ watch(() => ledgerStore.currentLedgerId, () => {
 }
 
 .action-icon:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
 /* 表头列间分割线 */
 :deep(.ant-table-thead > tr > th) {
-  border-right: 1px solid var(--billadm-color-divider);
+  border-right: 1px solid var(--transactions-color-divider);
 }
 
 :deep(.ant-table-thead > tr > th:last-child) {

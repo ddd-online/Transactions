@@ -4,7 +4,7 @@ import type { DefaultOptionType } from 'ant-design-vue/es/vc-cascader'
 import { withErrorHandling } from '@/backend/errorHandler'
 import { queryCategory } from '@/backend/api/category'
 import { queryTags } from '@/backend/api/tag'
-import type { Category, Tag } from '@/types/billadm'
+import type { Category, Tag } from '@/types/transactions'
 
 export function useCategoryTags(getLedgerId: () => string | undefined | null) {
   const categoryOptions = ref<DefaultOptionType[]>([])

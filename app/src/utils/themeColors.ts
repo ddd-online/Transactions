@@ -5,7 +5,7 @@ import { TransactionTypeToColor } from '@/backend/constant';
  * 主题感知的交易类型颜色。
  *
  * 交易语义色（收入/支出/转账）随浅色/深色主题变化，且只在交易数据处使用。
- * CSS 侧直接用 `--billadm-color-income/expense/transfer` 变量即可；
+ * CSS 侧直接用 `--transactions-color-income/expense/transfer` 变量即可；
  * 但 canvas 图表（ECharts）与部分 JS 内联样式读不到 CSS 变量，
  * 需要通过 getComputedStyle 解析当前主题下的实际色值。
  */
@@ -17,9 +17,9 @@ function readCssVar(name: string, fallback: string): string {
 
 export function resolveTransactionTypeColor(type: string): string {
     const fallback = TransactionTypeToColor.get(type) || '#61666b';
-    if (type === 'income') return readCssVar('--billadm-color-income', fallback);
-    if (type === 'expense') return readCssVar('--billadm-color-expense', fallback);
-    if (type === 'transfer') return readCssVar('--billadm-color-transfer', fallback);
+    if (type === 'income') return readCssVar('--transactions-color-income', fallback);
+    if (type === 'expense') return readCssVar('--transactions-color-expense', fallback);
+    if (type === 'transfer') return readCssVar('--transactions-color-transfer', fallback);
     return fallback;
 }
 

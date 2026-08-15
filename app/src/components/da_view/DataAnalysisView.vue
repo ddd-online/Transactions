@@ -1,8 +1,8 @@
 <template>
-  <BilladmPageLayout>
+  <TransactionsPageLayout>
     <template #toolbar>
       <div class="da-toolbar-left">
-        <BilladmTimeRangePicker
+        <TransactionsTimeRangePicker
           v-model:time-range="trQueryConditionStore.timeRange"
           v-model:time-range-type="trQueryConditionStore.timeRangeType"
         />
@@ -15,7 +15,7 @@
     <div class="da-main">
       <!-- 左侧图表列表 -->
       <div class="da-sidebar">
-        <billadm-chart-list
+        <transactions-chart-list
           :all-charts="allCharts"
           @select="onChartSelect"
           @create="onChartCreate"
@@ -27,7 +27,7 @@
 
       <!-- 右侧图表显示 -->
       <div class="da-content">
-        <billadm-chart-view
+        <transactions-chart-view
           v-if="selectedChart"
           :title="selectedChart.title"
           :data="selectedChart.data"
@@ -43,15 +43,15 @@
         </div>
       </div>
     </div>
-  </BilladmPageLayout>
+  </TransactionsPageLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import BilladmTimeRangePicker from '@/components/common/BilladmTimeRangePicker.vue'
-import BilladmChartList from '@/components/da_view/BilladmChartList.vue'
-import BilladmChartView from '@/components/da_view/BilladmChartView.vue'
+import TransactionsTimeRangePicker from '@/components/common/TransactionsTimeRangePicker.vue'
+import TransactionsChartList from '@/components/da_view/TransactionsChartList.vue'
+import TransactionsChartView from '@/components/da_view/TransactionsChartView.vue'
 import { useLedgerStore } from '@/stores/ledgerStore.ts'
 import { useTrQueryConditionStore } from '@/stores/trQueryConditionStore.ts'
 import { useAppDataStore } from '@/stores/appDataStore.ts'
@@ -60,7 +60,7 @@ import { withErrorHandling } from '@/backend/errorHandler'
 import { queryChartData, queryTrOnCondition as queryTrOnConditionRaw } from '@/backend/api/tr.ts'
 import { queryCharts, createChart as createChartApi, updateChart as updateChartApi, type ChartDto } from '@/backend/api/chart'
 import { chartLinePointsToTimeSeries, type ChartLine, type TimeSeriesData } from '@/backend/chart'
-import type { TrStatistics } from '@/types/billadm'
+import type { TrStatistics } from '@/types/transactions'
 
 const ledgerStore = useLedgerStore()
 const trQueryConditionStore = useTrQueryConditionStore()
@@ -226,7 +226,7 @@ const onChartCreate = async (request: { title: string; granularity: 'year' | 'mo
 // 编辑图表
 const onChartEdit = async (chart: ChartDto) => {
   // 打开编辑弹窗 — 使用 updateChart 接口
-  // 编辑功能由 BilladmChartView 的 @update 事件处理
+  // 编辑功能由 TransactionsChartView 的 @update 事件处理
   // 这里只是选中图表，编辑按钮在图表视图中
   selectedChart.value = chartDataCache.value.get(chart.chartId) || null
   selectedChartId.value = chart.chartId
@@ -290,13 +290,13 @@ watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true
 .da-toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .da-toolbar-right {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .da-main {
@@ -305,15 +305,15 @@ watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true
   overflow: hidden;
   display: flex;
   gap: 0;
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
 }
 
 .da-sidebar {
   flex: 0 0 220px;
-  background-color: var(--billadm-color-major-background);
-  border-right: 1px solid var(--billadm-color-divider);
+  background-color: var(--transactions-color-major-background);
+  border-right: 1px solid var(--transactions-color-divider);
   overflow-y: auto;
 }
 
@@ -321,7 +321,7 @@ watch(() => trQueryConditionStore.timeRange, () => loadAllCharts(), { deep: true
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background-color: var(--billadm-color-major-background);
+  background-color: var(--transactions-color-major-background);
 }
 
 .da-empty {

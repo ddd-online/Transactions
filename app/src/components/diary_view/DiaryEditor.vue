@@ -75,7 +75,7 @@ import dayjs from 'dayjs'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import MarkdownViewer from '@/components/common/MarkdownViewer.vue'
-import type { DiaryEntry } from '@/types/billadm'
+import type { DiaryEntry } from '@/types/transactions'
 
 const props = defineProps<{
   entry: DiaryEntry | null
@@ -202,23 +202,23 @@ const wordCount = computed(() => [...localContent.value].length)
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
 }
 
 .empty-icon {
   font-size: 32px;
   opacity: 0.6;
-  margin-bottom: var(--billadm-space-xs);
+  margin-bottom: var(--transactions-space-xs);
 }
 
 .empty-text {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
 }
 
 .empty-hint {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-disabled);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-disabled);
 }
 
 /* ---- 头部 ---- */
@@ -226,37 +226,37 @@ const wordCount = computed(() => [...localContent.value].length)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: var(--billadm-space-lg);
-  border-bottom: 1px solid var(--billadm-color-divider);
+  padding-bottom: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
   flex-shrink: 0;
 }
 
 .editor-date-group {
   display: flex;
   align-items: baseline;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   min-width: 0;
 }
 
 .date-text {
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-display-sm);
-  font-weight: var(--billadm-weight-semibold);
-  color: var(--billadm-color-text-major);
-  line-height: var(--billadm-height-tight);
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-display-sm);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-tight);
   white-space: nowrap;
 }
 
 .date-weekday {
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
   white-space: nowrap;
 }
 
 .editor-meta {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
   flex-shrink: 0;
 }
 
@@ -264,9 +264,9 @@ const wordCount = computed(() => [...localContent.value].length)
 .mood-picker {
   display: flex;
   gap: 0;
-  background: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-md);
-  padding: var(--billadm-space-2xs);
+  background: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-2xs);
 }
 
 .mood-btn {
@@ -274,47 +274,47 @@ const wordCount = computed(() => [...localContent.value].length)
   height: 32px;
   border: none;
   background: none;
-  border-radius: var(--billadm-radius-sm);
+  border-radius: var(--transactions-radius-sm);
   cursor: pointer;
-  font-size: var(--billadm-size-text-body);
+  font-size: var(--transactions-size-text-body);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform var(--billadm-transition-fast),
-    opacity var(--billadm-transition-fast),
-    background var(--billadm-transition-fast);
+  transition: transform var(--transactions-transition-fast),
+    opacity var(--transactions-transition-fast),
+    background var(--transactions-transition-fast);
   opacity: 0.35;
   line-height: 1;
 }
 
 .mood-btn:hover {
   opacity: 0.65;
-  background: var(--billadm-color-hover-bg);
+  background: var(--transactions-color-hover-bg);
 }
 
 .mood-btn.active {
   opacity: 1;
-  background: var(--billadm-color-active-bg);
+  background: var(--transactions-color-active-bg);
   transform: scale(1.1);
 }
 
 .mood-btn.is-none {
   font-size: 11px;
-  font-weight: var(--billadm-weight-semibold);
-  color: var(--billadm-color-text-disabled);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-disabled);
   opacity: 0.5;
 }
 
 .mood-btn:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: -1px;
 }
 
 /* ---- 字数 ---- */
 .word-count {
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-disabled);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-disabled);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -323,15 +323,15 @@ const wordCount = computed(() => [...localContent.value].length)
 .editor-body {
   flex: 1;
   overflow: hidden;
-  padding: var(--billadm-space-md) 0;
+  padding: var(--transactions-space-md) 0;
 }
 
 .editor-textarea-wrap {
   height: 100%;
   /* 编辑态浅色底 + 发丝边框，与预览态（页面底色）区分 */
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-border-l1);
-  border-radius: var(--billadm-radius-md);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-border-l1);
+  border-radius: var(--transactions-radius-md);
 }
 
 .editor-textarea {
@@ -341,52 +341,52 @@ const wordCount = computed(() => [...localContent.value].length)
   outline: none;
   resize: none;
   background: none;
-  font-family: var(--billadm-font-mono);
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
-  line-height: var(--billadm-height-relaxed);
-  padding: var(--billadm-space-md);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-relaxed);
+  padding: var(--transactions-space-md);
   tab-size: 4;
 }
 
 .editor-textarea::placeholder {
-  color: var(--billadm-color-text-disabled);
+  color: var(--transactions-color-text-disabled);
   font-style: italic;
-  font-family: var(--billadm-font-body);
+  font-family: var(--transactions-font-body);
 }
 
 .editor-textarea:focus {
-  box-shadow: inset 0 0 0 1px var(--billadm-color-primary-light);
-  border-radius: var(--billadm-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--transactions-color-primary-light);
+  border-radius: var(--transactions-radius-sm);
 }
 
 /* ---- 预览区 ---- */
 .editor-preview {
   height: 100%;
   overflow-y: auto;
-  padding: var(--billadm-space-md);
-  line-height: var(--billadm-height-relaxed);
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-major);
+  padding: var(--transactions-space-md);
+  line-height: var(--transactions-height-relaxed);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
 }
 
 /* Markdown 预览基础样式 */
 .editor-preview :deep(h1) {
   font-size: 1.6em;
   margin: 1em 0 0.5em;
-  font-weight: var(--billadm-weight-bold);
+  font-weight: var(--transactions-weight-bold);
 }
 
 .editor-preview :deep(h2) {
   font-size: 1.35em;
   margin: 0.9em 0 0.45em;
-  font-weight: var(--billadm-weight-semibold);
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .editor-preview :deep(h3) {
   font-size: 1.15em;
   margin: 0.8em 0 0.4em;
-  font-weight: var(--billadm-weight-semibold);
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .editor-preview :deep(p) {
@@ -404,24 +404,24 @@ const wordCount = computed(() => [...localContent.value].length)
 }
 
 .editor-preview :deep(blockquote) {
-  border-left: 2px solid var(--billadm-color-primary);
+  border-left: 2px solid var(--transactions-color-primary);
   margin: 0.6em 0;
-  padding-left: var(--billadm-space-md);
-  color: var(--billadm-color-text-secondary);
+  padding-left: var(--transactions-space-md);
+  color: var(--transactions-color-text-secondary);
 }
 
 .editor-preview :deep(code) {
-  font-family: var(--billadm-font-mono);
+  font-family: var(--transactions-font-mono);
   font-size: 0.92em;
-  background: var(--billadm-color-minor-background);
-  padding: var(--billadm-space-2xs) var(--billadm-space-xs);
-  border-radius: var(--billadm-radius-sm);
+  background: var(--transactions-color-minor-background);
+  padding: var(--transactions-space-2xs) var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
 }
 
 .editor-preview :deep(pre) {
-  background: var(--billadm-color-minor-background);
-  padding: var(--billadm-space-md);
-  border-radius: var(--billadm-radius-md);
+  background: var(--transactions-color-minor-background);
+  padding: var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
   overflow-x: auto;
   margin: 0.6em 0;
 }
@@ -433,17 +433,17 @@ const wordCount = computed(() => [...localContent.value].length)
 
 .editor-preview :deep(img) {
   max-width: 100%;
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
 }
 
 .editor-preview :deep(hr) {
   border: none;
-  border-top: 1px solid var(--billadm-color-divider);
+  border-top: 1px solid var(--transactions-color-divider);
   margin: 1em 0;
 }
 
 .editor-preview :deep(a) {
-  color: var(--billadm-color-primary);
+  color: var(--transactions-color-primary);
 }
 
 /* ---- 底部 ---- */
@@ -451,40 +451,40 @@ const wordCount = computed(() => [...localContent.value].length)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: var(--billadm-space-sm);
-  border-top: 1px solid var(--billadm-color-divider);
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
   flex-shrink: 0;
-  min-height: var(--billadm-btn-height-md);
+  min-height: var(--transactions-btn-height-md);
 }
 
 .footer-left,
 .footer-right {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 
 .footer-hint {
-  font-size: var(--billadm-size-text-small);
-  color: var(--billadm-color-text-disabled);
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-disabled);
 }
 
 .save-status {
-  font-size: var(--billadm-size-text-caption);
-  transition: opacity var(--billadm-transition-fast);
+  font-size: var(--transactions-size-text-caption);
+  transition: opacity var(--transactions-transition-fast);
 }
 
 .save-status.is-saving {
-  color: var(--billadm-color-text-disabled);
+  color: var(--transactions-color-text-disabled);
 }
 
 .save-status.is-saved {
-  color: var(--billadm-color-primary);
-  font-weight: var(--billadm-weight-medium);
+  color: var(--transactions-color-primary);
+  font-weight: var(--transactions-weight-medium);
 }
 
 .save-status.is-error {
-  color: var(--billadm-color-expense);
-  font-weight: var(--billadm-weight-medium);
+  color: var(--transactions-color-expense);
+  font-weight: var(--transactions-weight-medium);
 }
 </style>

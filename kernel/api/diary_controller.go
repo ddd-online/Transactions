@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 // GET /api/v1/diary/dates

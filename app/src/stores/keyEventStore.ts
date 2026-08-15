@@ -14,7 +14,7 @@ import { withErrorHandling } from "@/backend/errorHandler"
 import { useLedgerStore } from '@/stores/ledgerStore'
 import NotificationUtil from "@/backend/notification"
 import { KeyEventCache } from '@/backend/keyEventCache'
-import type { KeyEvent, KeyEventImage } from "@/types/billadm"
+import type { KeyEvent, KeyEventImage } from "@/types/transactions"
 
 export const useKeyEventStore = defineStore('keyEvent', () => {
     const getLedgerId = () => useLedgerStore().currentLedgerId

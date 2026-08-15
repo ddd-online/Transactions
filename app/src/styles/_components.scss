@@ -15,9 +15,9 @@
 // Close button with danger hover
 .close-button {
   &.ant-btn:hover {
-    background-color: var(--billadm-color-danger-hover-bg);
-    color: var(--billadm-color-expense);
-    border-color: var(--billadm-color-expense);
+    background-color: var(--transactions-color-danger-hover-bg);
+    color: var(--transactions-color-expense);
+    border-color: var(--transactions-color-expense);
   }
 }
 
@@ -28,34 +28,34 @@
 .card {
   @include card-base;
   height: 100%;
-  padding: var(--billadm-space-xl);
+  padding: var(--transactions-space-xl);
 
   &-title {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-title-sm);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-title-sm);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
-    margin: 0 0 var(--billadm-space-md) 0;
+    color: var(--transactions-color-text-major);
+    margin: 0 0 var(--transactions-space-md) 0;
   }
 
   &-subtitle {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-caption);
-    color: var(--billadm-color-text-secondary);
-    margin: 0 0 var(--billadm-space-sm) 0;
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-caption);
+    color: var(--transactions-color-text-secondary);
+    margin: 0 0 var(--transactions-space-sm) 0;
   }
 
   &-content {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-body);
-    color: var(--billadm-color-text-major);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-body);
+    color: var(--transactions-color-text-major);
   }
 
   &-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: var(--billadm-space-xl);
-    padding: var(--billadm-space-xl);
+    gap: var(--transactions-space-xl);
+    padding: var(--transactions-space-xl);
   }
 }
 
@@ -66,32 +66,32 @@
 .tag {
   // Income
   &-income {
-    background-color: var(--billadm-color-income-tint);
-    color: var(--billadm-color-income);
+    background-color: var(--transactions-color-income-tint);
+    color: var(--transactions-color-income);
     border: none;
     font-weight: 500;
   }
 
   // Expense
   &-expense {
-    background-color: var(--billadm-color-expense-tint);
-    color: var(--billadm-color-expense);
+    background-color: var(--transactions-color-expense-tint);
+    color: var(--transactions-color-expense);
     border: none;
     font-weight: 500;
   }
 
   // Transfer
   &-transfer {
-    background-color: var(--billadm-color-transfer-tint);
-    color: var(--billadm-color-transfer);
+    background-color: var(--transactions-color-transfer-tint);
+    color: var(--transactions-color-transfer);
     border: none;
     font-weight: 500;
   }
 
   // Outlier
   &-outlier {
-    background-color: var(--billadm-color-outlier-tint);
-    color: var(--billadm-color-outlier);
+    background-color: var(--transactions-color-outlier-tint);
+    color: var(--transactions-color-outlier);
     border: none;
     font-weight: 500;
   }
@@ -105,25 +105,25 @@
   .ant-table {
     // Header row
     .ant-table-thead > tr > th {
-      font-family: var(--billadm-font-body);
-      font-size: var(--billadm-size-text-caption);
+      font-family: var(--transactions-font-body);
+      font-size: var(--transactions-size-text-caption);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      background-color: var(--billadm-color-minor-background);
-      color: var(--billadm-color-text-secondary);
+      background-color: var(--transactions-color-minor-background);
+      color: var(--transactions-color-text-secondary);
     }
 
     // Body rows
     .ant-table-tbody > tr > td {
-      font-family: var(--billadm-font-body);
-      font-size: var(--billadm-size-text-body);
-      color: var(--billadm-color-text-major);
+      font-family: var(--transactions-font-body);
+      font-size: var(--transactions-size-text-body);
+      color: var(--transactions-color-text-major);
     }
 
     // Hover effect
     .ant-table-tbody > tr:hover > td {
-      background-color: var(--billadm-color-hover-bg);
+      background-color: var(--transactions-color-hover-bg);
     }
   }
 }
@@ -134,30 +134,30 @@
 
 .form-wrapper {
   .ant-form-item {
-    margin-bottom: var(--billadm-space-lg);
+    margin-bottom: var(--transactions-space-lg);
   }
 
   .ant-form-item-label > label {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-section);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-section);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
     height: auto;
   }
 
   .ant-input,
   .ant-select-selector,
   .ant-picker {
-    border-radius: var(--billadm-radius-md);
+    border-radius: var(--transactions-radius-md);
 
     &:hover {
-      border-color: var(--billadm-color-primary);
+      border-color: var(--transactions-color-primary);
     }
 
     &:focus,
     &.ant-input-focused {
-      border-color: var(--billadm-color-primary);
-      box-shadow: var(--billadm-shadow-focus);
+      border-color: var(--transactions-color-primary);
+      box-shadow: var(--transactions-shadow-focus);
     }
   }
 }
@@ -167,23 +167,23 @@
 // ============================================
 
 .filter-card {
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
-  background-color: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-sm);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+  background-color: var(--transactions-color-major-background);
+  box-shadow: var(--transactions-shadow-sm);
 
   .ant-card-head {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-body);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-body);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
+    color: var(--transactions-color-text-major);
     min-height: auto;
-    padding: var(--billadm-space-md) var(--billadm-space-lg);
-    border-bottom: 1px solid var(--billadm-color-divider);
+    padding: var(--transactions-space-md) var(--transactions-space-lg);
+    border-bottom: 1px solid var(--transactions-color-divider);
   }
 
   .ant-card-body {
-    padding: var(--billadm-space-lg);
+    padding: var(--transactions-space-lg);
   }
 }
 
@@ -194,20 +194,20 @@
 .empty-state {
   @include flex-center;
   flex-direction: column;
-  padding: var(--billadm-space-3xl);
-  color: var(--billadm-color-text-secondary);
+  padding: var(--transactions-space-3xl);
+  color: var(--transactions-color-text-secondary);
 
   &-icon {
     font-size: 48px;
-    margin-bottom: var(--billadm-space-xl);
+    margin-bottom: var(--transactions-space-xl);
     opacity: 0.4;
-    color: var(--billadm-color-primary);
+    color: var(--transactions-color-primary);
   }
 
   &-text {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-body);
-    color: var(--billadm-color-text-secondary);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-body);
+    color: var(--transactions-color-text-secondary);
     text-align: center;
   }
 }
@@ -218,7 +218,7 @@
 
 .loading-state {
   @include flex-center;
-  padding: var(--billadm-space-3xl);
+  padding: var(--transactions-space-3xl);
 }
 
 // ============================================
@@ -243,35 +243,35 @@
 // ============================================
 
 .amount {
-  font-family: var(--billadm-font-mono);
+  font-family: var(--transactions-font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 
   &-large {
-    font-size: var(--billadm-size-text-display);
+    font-size: var(--transactions-size-text-display);
     font-weight: 600;
   }
 
   &-medium {
-    font-size: var(--billadm-size-text-title);
+    font-size: var(--transactions-size-text-title);
     font-weight: 500;
   }
 
   &-small {
-    font-size: var(--billadm-size-text-body);
+    font-size: var(--transactions-size-text-body);
     font-weight: 500;
   }
 
   &-income {
-    color: var(--billadm-color-income);
+    color: var(--transactions-color-income);
   }
 
   &-expense {
-    color: var(--billadm-color-expense);
+    color: var(--transactions-color-expense);
   }
 
   &-transfer {
-    color: var(--billadm-color-transfer);
+    color: var(--transactions-color-transfer);
   }
 }
 
@@ -284,26 +284,26 @@
   cursor: pointer;
 
   &-name {
-    font-family: var(--billadm-font-display);
-    font-size: var(--billadm-size-text-title-sm);
+    font-family: var(--transactions-font-display);
+    font-size: var(--transactions-size-text-title-sm);
     font-weight: 500;
-    color: var(--billadm-color-text-major);
-    margin: 0 0 var(--billadm-space-sm) 0;
+    color: var(--transactions-color-text-major);
+    margin: 0 0 var(--transactions-space-sm) 0;
   }
 
   &-description {
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-body);
-    color: var(--billadm-color-text-secondary);
-    margin: 0 0 var(--billadm-space-lg) 0;
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-body);
+    color: var(--transactions-color-text-secondary);
+    margin: 0 0 var(--transactions-space-lg) 0;
   }
 
   &-meta {
     display: flex;
-    gap: var(--billadm-space-lg);
-    font-family: var(--billadm-font-body);
-    font-size: var(--billadm-size-text-caption);
-    color: var(--billadm-color-text-secondary);
+    gap: var(--transactions-space-lg);
+    font-family: var(--transactions-font-body);
+    font-size: var(--transactions-size-text-caption);
+    color: var(--transactions-color-text-secondary);
   }
 
   &:hover {
@@ -316,21 +316,21 @@
 // ============================================
 
 .chart-container {
-  background-color: var(--billadm-color-major-background);
-  border: 1px solid var(--billadm-color-window-border);
-  border-radius: var(--billadm-radius-lg);
-  padding: var(--billadm-space-xl);
-  box-shadow: var(--billadm-shadow-sm);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+  padding: var(--transactions-space-xl);
+  box-shadow: var(--transactions-shadow-sm);
 
   &-header {
     @include flex-between;
-    margin-bottom: var(--billadm-space-lg);
+    margin-bottom: var(--transactions-space-lg);
 
     &-title {
-      font-family: var(--billadm-font-display);
-      font-size: var(--billadm-size-text-title-sm);
+      font-family: var(--transactions-font-display);
+      font-size: var(--transactions-size-text-title-sm);
       font-weight: 500;
-      color: var(--billadm-color-text-major);
+      color: var(--transactions-color-text-major);
       margin: 0;
     }
   }

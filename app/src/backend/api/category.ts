@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { Category } from "@/types/billadm";
+import type { Category } from "@/types/transactions";
 
 export async function queryCategory(trType: string, ledgerId?: string): Promise<Category[]> {
     let url = `/v1/categories?type=${encodeURIComponent(trType)}`;

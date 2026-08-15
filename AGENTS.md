@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Transactions is a desktop personal finance app (Electron + Vue 3 + Go/Gin). Each workspace is an independent SQLite database. Go module: `github.com/billadm`; product name: "Transactions"; CSS vars: `--billadm-`.
+Transactions is a desktop personal finance app (Electron + Vue 3 + Go/Gin). Each workspace is an independent SQLite database. Go module: `github.com/transactions`; product name: "Transactions"; CSS vars: `--transactions-`.
 
 See also: `PRODUCT.md` (product context), `DESIGN.md` (design system + do's/don'ts).
 
@@ -61,7 +61,7 @@ cd app && npx vue-tsc -b          # Type-check only (project references, no emit
 - **Electron frame: false** — custom title bar via `window-control` IPC, not OS native chrome. Drag regions via `@include drag-region` mixin.
 - **No frontend tests** — vitest is in dependencies but no test files exist.
 - **Design system is enforced by DESIGN.md** — only light mode, one accent color (`#4A8E70`), semantic colors never leak outside transaction data. Read `DESIGN.md` before any UI work.
-- **CSS variables use `--billadm-` prefix** — defined in SCSS, mapped from DESIGN.md tokens.
+- **CSS variables use `--transactions-` prefix** — defined in SCSS, mapped from DESIGN.md tokens.
 - **API response envelope**: `{ code: number, msg: string, data: T }`. `code === 0` means success (default in `models.NewResult()`). Frontend `api.post/get/put/patch/delete` helpers throw on `code !== 0`.
 - **Error handling in frontend**: use `withErrorHandling(fn, { errorPrefix, fallback })` for queries, or `{ errorPrefix, rethrow: true }` for mutations. Prefer `tryOrFallback` for non-critical data.
 - **`api-client.ts` auto-detects workspace errors**: when backend returns `msg: "未打开工作空间"`, it dispatches `window.dispatchEvent(new CustomEvent('workspace-required'))` — the Layout component listens for this and triggers workspace re-open flow.
@@ -70,7 +70,7 @@ cd app && npx vue-tsc -b          # Type-check only (project references, no emit
 - **Go API handlers**: all new endpoints are wrapped through `api.Handle()` which creates the `Result` envelope. Handler functions return `(any, error)`. Middleware `RequireWorkspace` injects the opened workspace into the gin context.
 - **Single instance lock**: Electron's `app.requestSingleInstanceLock()` ensures only one app instance.
 - **Auto-migration on workspace open**: GORM `AutoMigrate` is called when a workspace opens (`kernel/util/database.go`). Adding a model field requires no migration scripts.
-- **Go import paths** all use `github.com/billadm/...` prefix — the compose root is `kernel/server/wire.go`.
+- **Go import paths** all use `github.com/transactions/...` prefix — the compose root is `kernel/server/wire.go`.
 
 ## Release
 

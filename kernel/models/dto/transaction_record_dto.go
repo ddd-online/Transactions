@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/billadm/constant"
-	"github.com/billadm/models"
+	"github.com/transactions/constant"
+	"github.com/transactions/models"
 )
 
 type TransactionRecordDto struct {

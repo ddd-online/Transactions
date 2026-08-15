@@ -8,9 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/billadm/ai"
-	"github.com/billadm/ai/provider"
-	"github.com/billadm/models"
+	"github.com/transactions/ai"
+	"github.com/transactions/ai/provider"
+	"github.com/transactions/models"
 )
 
 // GET /api/v1/ai/config

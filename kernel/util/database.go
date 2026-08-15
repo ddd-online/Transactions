@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 // NewDbInstance creates a new GORM DB instance and auto-migrates the schema.

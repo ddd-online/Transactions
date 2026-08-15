@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type BilladmConfig struct {
+type TransactionsConfig struct {
 	Port      string // 服务器监听端口
 	LogLevel  string // 日志级别
 	Mode      string // 运行模式
@@ -15,7 +15,7 @@ type BilladmConfig struct {
 	APIToken  string // API 访问令牌（空表示不鉴权，用于本地开发）
 }
 
-var Config = BilladmConfig{
+var Config = TransactionsConfig{
 	Port:      "28080",
 	LogLevel:  "debug",
 	Mode:      "debug",
@@ -23,17 +23,17 @@ var Config = BilladmConfig{
 	APIToken:  "",
 }
 
-// NewBilladmConfigFromFlags 解析命令行标志并返回一个配置对象
-func NewBilladmConfigFromFlags() error {
+// NewTransactionsConfigFromFlags 解析命令行标志并返回一个配置对象
+func NewTransactionsConfigFromFlags() error {
 	portPtr := flag.String("port", "28080", "服务器监听端口 (默认: 28080)")
 	logLevelPtr := flag.String("log_level", "info", "日志级别 (debug, info, warn, warning, error) (默认: info)")
-	modePtr := flag.String("mode", "debug", "billadm的运行模式 (debug, release) (默认: debug)")
-	workspacePtr := flag.String("workspace", "", "billadm的工作空间目录")
+	modePtr := flag.String("mode", "debug", "transactions的运行模式 (debug, release) (默认: debug)")
+	workspacePtr := flag.String("workspace", "", "transactions的工作空间目录")
 	apiTokenPtr := flag.String("api_token", "", "API 访问令牌（空表示不鉴权）")
 
 	flag.Parse()
 
-	Config = BilladmConfig{
+	Config = TransactionsConfig{
 		Port:      *portPtr,
 		LogLevel:  strings.ToLower(*logLevelPtr),
 		Mode:      *modePtr,

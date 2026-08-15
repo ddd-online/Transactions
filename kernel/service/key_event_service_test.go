@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/billadm/dao"
-	"github.com/billadm/service"
-	"github.com/billadm/workspace"
+	"github.com/transactions/dao"
+	"github.com/transactions/service"
+	"github.com/transactions/workspace"
 )
 
 func newKeyEventService(t *testing.T) (service.KeyEventService, *workspace.Workspace) {

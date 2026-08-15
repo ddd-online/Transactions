@@ -12,7 +12,7 @@
         :key="event.date"
         class="event-card"
         :class="{ 'is-active': event.date === selectedDate }"
-        :style="{ '--event-color': event.color || 'var(--billadm-color-primary)' }"
+        :style="{ '--event-color': event.color || 'var(--transactions-color-primary)' }"
         role="button"
         tabindex="0"
         :aria-selected="event.date === selectedDate"
@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { CloseOutlined } from '@ant-design/icons-vue';
-import type { KeyEvent } from '@/types/billadm';
+import type { KeyEvent } from '@/types/transactions';
 
 interface Props {
   events: KeyEvent[];
@@ -95,9 +95,9 @@ const truncate = (text: string, max: number): string => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--billadm-space-md);
-  background-color: var(--billadm-color-minor-background);
-  border-radius: var(--billadm-radius-lg);
+  padding: var(--transactions-space-md);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-lg);
   overflow: hidden;
 }
 
@@ -110,8 +110,8 @@ const truncate = (text: string, max: number): string => {
 }
 
 .panel-empty-text {
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
 }
 
 /* ========== 事件列表 ========== */
@@ -121,7 +121,7 @@ const truncate = (text: string, max: number): string => {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
   contain: strict;
 
   @include custom-scrollbar;
@@ -132,45 +132,45 @@ const truncate = (text: string, max: number): string => {
   position: relative;
   display: flex;
   flex-direction: row;
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
   cursor: pointer;
-  transition: background-color var(--billadm-transition-smooth),
-              box-shadow var(--billadm-transition-smooth),
-              transform var(--billadm-transition-smooth);
-  background-color: var(--billadm-color-major-background);
+  transition: background-color var(--transactions-transition-smooth),
+              box-shadow var(--transactions-transition-smooth),
+              transform var(--transactions-transition-smooth);
+  background-color: var(--transactions-color-major-background);
   content-visibility: auto;
   contain-intrinsic-size: auto 56px;
 }
 
 .event-card:hover {
-  background-color: var(--billadm-color-major-background);
-  box-shadow: var(--billadm-shadow-sm);
+  background-color: var(--transactions-color-major-background);
+  box-shadow: var(--transactions-shadow-sm);
   transform: translateX(2px);
 }
 
 .event-card.is-active {
-  background-color: var(--billadm-color-active-bg);
-  box-shadow: var(--billadm-shadow-sm);
+  background-color: var(--transactions-color-active-bg);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
 .event-card.is-active:hover {
-  box-shadow: var(--billadm-shadow-md);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 .event-card:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
-  box-shadow: var(--billadm-shadow-md);
+  box-shadow: var(--transactions-shadow-md);
 }
 
 .event-card-bar {
   width: 4px;
   flex-shrink: 0;
-  background-color: var(--event-color, var(--billadm-color-primary));
+  background-color: var(--event-color, var(--transactions-color-primary));
   border-radius: 2px;
-  margin: var(--billadm-space-sm) 0;
+  margin: var(--transactions-space-sm) 0;
   transform-origin: left;
-  transition: transform var(--billadm-transition-smooth);
+  transition: transform var(--transactions-transition-smooth);
 }
 
 .event-card.is-active .event-card-bar {
@@ -179,55 +179,55 @@ const truncate = (text: string, max: number): string => {
 
 .event-card-body {
   flex: 1;
-  padding: var(--billadm-space-sm) var(--billadm-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
 .event-card-name {
-  font-size: var(--billadm-size-text-body-sm);
+  font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .event-card-date {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .event-card-desc {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: var(--billadm-space-2xs);
+  margin-top: var(--transactions-space-2xs);
 }
 
 /* ========== 删除按钮 ========== */
 .event-card-delete {
   position: absolute;
-  top: var(--billadm-space-xs);
-  right: var(--billadm-space-xs);
+  top: var(--transactions-space-xs);
+  right: var(--transactions-space-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
   border: none;
-  background: var(--billadm-color-elevated);
-  color: var(--billadm-color-text-secondary);
+  background: var(--transactions-color-elevated);
+  color: var(--transactions-color-text-secondary);
   cursor: pointer;
-  border-radius: var(--billadm-radius-full);
-  transition: color var(--billadm-transition-fast),
-              background-color var(--billadm-transition-fast),
-              transform var(--billadm-transition-fast);
-  font-size: var(--billadm-size-text-caption);
+  border-radius: var(--transactions-radius-full);
+  transition: color var(--transactions-transition-fast),
+              background-color var(--transactions-transition-fast),
+              transform var(--transactions-transition-fast);
+  font-size: var(--transactions-size-text-caption);
   opacity: 0;
 }
 
@@ -237,13 +237,13 @@ const truncate = (text: string, max: number): string => {
 }
 
 .event-card-delete:hover {
-  color: var(--billadm-color-expense);
-  background: var(--billadm-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
+  background: var(--transactions-color-danger-hover-bg);
   transform: scale(1.1);
 }
 
 .event-card-delete:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
   opacity: 1;
 }

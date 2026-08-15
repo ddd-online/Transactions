@@ -4,7 +4,7 @@
       <div class="app-logo">
         <svg width="1024" height="1024" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
           <!-- Background: DeepSeek blue（跟随主题的主色令牌） -->
-          <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" style="fill: var(--billadm-color-primary)" />
+          <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" style="fill: var(--transactions-color-primary)" />
           <!-- Letter Tr: Segoe UI Bold 矢量路径（与 ICO 字形一致），已按墨迹包围盒居中 -->
           <path transform="translate(220.909996509552 49.1699676513672)" fill="#FFFFFF" d="M363.01 322.09 L236.22 322.09 L236.22 685.1 L135.78 685.1 L135.78 322.09 L9.61 322.09 L9.61 240.56 L363.01 240.56 Z M572.57 456.01 C560.79 449.6 547.05 446.4 531.34 446.4 C510.05 446.4 493.42 454.2 481.43 469.81 C469.44 485.41 463.45 506.64 463.45 533.51 L463.45 685.1 L365.49 685.1 L365.49 367.66 L463.45 367.66 L463.45 426.56 L464.69 426.56 C480.19 383.57 508.09 362.08 548.39 362.08 C558.72 362.08 566.78 363.32 572.57 365.8 Z" />
         </svg>
@@ -39,8 +39,8 @@
           :percent="updateStore.downloadPercent"
           :show-info="false"
           size="small"
-          stroke-color="var(--billadm-color-primary)"
-          trail-color="var(--billadm-color-divider)"
+          stroke-color="var(--transactions-color-primary)"
+          trail-color="var(--transactions-color-divider)"
           style="width: 200px"
         />
         <span class="update-text">{{ updateStore.downloadPercent }}%</span>
@@ -110,15 +110,15 @@ const handleRetry = () => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: var(--billadm-space-lg);
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
+  gap: var(--transactions-space-lg);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
 }
 
 .about-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .app-logo {
@@ -135,16 +135,16 @@ const handleRetry = () => {
 }
 
 .app-name {
-  font-family: var(--billadm-font-display);
-  font-size: var(--billadm-size-text-display-sm);
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-display-sm);
   font-weight: 600;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
   margin: 0;
 }
 
 .app-version {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
   margin: 0;
 }
 
@@ -159,48 +159,48 @@ const handleRetry = () => {
 .update-row {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-md);
+  gap: var(--transactions-space-md);
 }
 
 .update-icon {
-  font-size: var(--billadm-size-text-section);
+  font-size: var(--transactions-size-text-section);
 }
 
 .update-text {
-  font-size: var(--billadm-size-text-body-sm);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
 }
 
 .update-success .update-text,
 .update-success .update-icon {
-  color: var(--billadm-color-income);
+  color: var(--transactions-color-income);
 }
 
 .update-error .update-text,
 .update-error .update-icon {
-  color: var(--billadm-color-expense);
+  color: var(--transactions-color-expense);
 }
 
 .about-release-body {
   max-width: 420px;
   max-height: 120px;
   overflow-y: auto;
-  padding: var(--billadm-space-md) var(--billadm-space-lg);
-  background: var(--billadm-color-hover-bg);
-  border-radius: var(--billadm-radius-md);
-  border: 1px solid var(--billadm-color-divider);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  background: var(--transactions-color-hover-bg);
+  border-radius: var(--transactions-radius-md);
+  border: 1px solid var(--transactions-color-divider);
 }
 
 .release-body-content {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
   white-space: pre-wrap;
   line-height: 1.5;
 }
 
 .about-copyright {
   text-align: center;
-  color: var(--billadm-color-text-secondary);
-  font-size: var(--billadm-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
 }
 </style>

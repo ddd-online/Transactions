@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { TrQueryConditionItem } from '@/types/billadm';
+import type { TrQueryConditionItem } from '@/types/transactions';
 
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { useTrQueryConditionStore } from '@/stores/trQueryConditionStore';
@@ -247,7 +247,7 @@ function getTypeColor(type: string): string {
 
 .form-label {
   font-size: 13px;
-  color: var(--billadm-color-text-minor);
+  color: var(--transactions-color-text-minor);
 }
 
 .form-select {
@@ -275,11 +275,11 @@ function getTypeColor(type: string): string {
 }
 
 .condition-separator {
-  color: var(--billadm-color-text-disabled);
+  color: var(--transactions-color-text-disabled);
 }
 
 .condition-desc {
-  color: var(--billadm-color-text-secondary);
+  color: var(--transactions-color-text-secondary);
   font-style: italic;
 }
 
@@ -288,6 +288,6 @@ function getTypeColor(type: string): string {
 }
 
 :deep(.ant-list-bordered) {
-  border-radius: var(--billadm-radius-md);
+  border-radius: var(--transactions-radius-md);
 }
 </style>

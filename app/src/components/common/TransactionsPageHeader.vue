@@ -19,19 +19,19 @@ defineProps<{
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  margin-bottom: var(--billadm-space-md);
+  margin-bottom: var(--transactions-space-md);
 }
 
 .page-header-title {
-  font-size: var(--billadm-size-text-title-sm);
+  font-size: var(--transactions-size-text-title-sm);
   font-weight: 600;
-  color: var(--billadm-color-text-major);
+  color: var(--transactions-color-text-major);
   margin: 0;
 }
 
 .page-header-extra {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-sm);
+  gap: var(--transactions-space-sm);
 }
 </style>

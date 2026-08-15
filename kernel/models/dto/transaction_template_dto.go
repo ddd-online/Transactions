@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/billadm/constant"
-	"github.com/billadm/models"
+	"github.com/transactions/constant"
+	"github.com/transactions/models"
 )
 
 type TransactionTemplateDto struct {

@@ -60,7 +60,7 @@
 import dayjs from 'dayjs'
 import { computed, ref, watch } from 'vue'
 import { CaretRightOutlined } from '@ant-design/icons-vue'
-import type { DiaryDateItem } from '@/types/billadm'
+import type { DiaryDateItem } from '@/types/transactions'
 
 const props = defineProps<{
   dates: DiaryDateItem[]
@@ -225,33 +225,33 @@ defineExpose({ collapseAll, goToToday })
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--billadm-space-xs);
+  gap: var(--transactions-space-xs);
   height: 100%;
-  padding: var(--billadm-space-xl);
+  padding: var(--transactions-space-xl);
 }
 
 .tree-empty-text {
-  font-size: var(--billadm-size-text-body);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
 }
 
 .tree-empty-hint {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-disabled);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-disabled);
 }
 
 /* ---- 滚动区 ---- */
 .tree-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: var(--billadm-space-xs) var(--billadm-space-sm) var(--billadm-space-xs) 0;
+  padding: var(--transactions-space-xs) var(--transactions-space-sm) var(--transactions-space-xs) 0;
 
   @include custom-scrollbar;
 }
 
 /* 年份分组之间留白 — 2:1 节奏：组间 > 组内 */
 .tree-year-group + .tree-year-group {
-  margin-top: var(--billadm-space-sm);
+  margin-top: var(--transactions-space-sm);
 }
 
 /* 子节点缩进容器 */
@@ -263,58 +263,58 @@ defineExpose({ collapseAll, goToToday })
 .tree-node {
   display: flex;
   align-items: center;
-  gap: var(--billadm-space-2xs);
+  gap: var(--transactions-space-2xs);
   width: 100%;
-  padding: var(--billadm-space-xs) var(--billadm-space-xs);
+  padding: var(--transactions-space-xs) var(--transactions-space-xs);
   border: none;
   background: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: var(--billadm-size-text-body-sm);
-  font-weight: var(--billadm-weight-regular);
-  color: var(--billadm-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-regular);
+  color: var(--transactions-color-text-secondary);
   text-align: left;
-  transition: background var(--billadm-transition-fast),
-              color var(--billadm-transition-fast);
-  border-radius: var(--billadm-radius-sm);
-  line-height: var(--billadm-height-snug);
+  transition: background var(--transactions-transition-fast),
+              color var(--transactions-transition-fast);
+  border-radius: var(--transactions-radius-sm);
+  line-height: var(--transactions-height-snug);
 }
 
 .tree-node:hover {
-  background: var(--billadm-color-hover-bg);
+  background: var(--transactions-color-hover-bg);
 }
 
 .tree-node:active {
-  background: var(--billadm-color-active-bg);
+  background: var(--transactions-color-active-bg);
 }
 
 .tree-node:focus-visible {
-  outline: 2px solid var(--billadm-color-primary);
+  outline: 2px solid var(--transactions-color-primary);
   outline-offset: -2px;
 }
 
 /* 年份节点 */
 .tree-node-year {
-  font-weight: var(--billadm-weight-semibold);
-  color: var(--billadm-color-text-major);
-  padding: var(--billadm-space-sm) var(--billadm-space-xs);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  padding: var(--transactions-space-sm) var(--transactions-space-xs);
 }
 
 /* 月份节点 */
 .tree-node-month {
-  padding-left: calc(var(--billadm-space-lg) + var(--billadm-space-xs) + var(--diary-tree-caret-width));
-  font-weight: var(--billadm-weight-medium);
+  padding-left: calc(var(--transactions-space-lg) + var(--transactions-space-xs) + var(--diary-tree-caret-width));
+  font-weight: var(--transactions-weight-medium);
 }
 
 /* 日期节点 — 常规字重 vs 月份的 medium，眯眼测试中可区分 */
 .tree-node-day {
-  padding-left: calc(var(--billadm-space-lg) + var(--billadm-space-lg) + var(--billadm-space-lg) + var(--diary-tree-caret-width));
+  padding-left: calc(var(--transactions-space-lg) + var(--transactions-space-lg) + var(--transactions-space-lg) + var(--diary-tree-caret-width));
 }
 
 .tree-node-day.active {
-  background: var(--billadm-color-active-bg);
-  color: var(--billadm-color-primary);
-  font-weight: var(--billadm-weight-medium);
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+  font-weight: var(--transactions-weight-medium);
 }
 
 /* ---- 展开箭头 ---- */
@@ -322,8 +322,8 @@ defineExpose({ collapseAll, goToToday })
   font-size: 10px;
   flex-shrink: 0;
   width: var(--diary-tree-caret-width);
-  color: var(--billadm-color-text-disabled);
-  transition: transform var(--billadm-transition-fast);
+  color: var(--transactions-color-text-disabled);
+  transition: transform var(--transactions-transition-fast);
 }
 
 .tree-caret.rotated {
@@ -349,21 +349,21 @@ defineExpose({ collapseAll, goToToday })
 
 /* ---- 元数据 ---- */
 .tree-count {
-  font-size: var(--billadm-size-text-caption);
-  color: var(--billadm-color-text-disabled);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-disabled);
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .tree-mood {
-  font-size: var(--billadm-size-text-caption);
+  font-size: var(--transactions-size-text-caption);
   flex-shrink: 0;
   line-height: 1;
 }
 
 .tree-word-count {
-  font-size: var(--billadm-size-text-small);
-  color: var(--billadm-color-text-disabled);
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-disabled);
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }

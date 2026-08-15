@@ -11,16 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/api"
-	"github.com/billadm/logger"
-	"github.com/billadm/server"
-	"github.com/billadm/util"
-	"github.com/billadm/workspace"
+	"github.com/transactions/api"
+	"github.com/transactions/logger"
+	"github.com/transactions/server"
+	"github.com/transactions/util"
+	"github.com/transactions/workspace"
 )
 
 func main() {
 	var err error
-	err = util.NewBilladmConfigFromFlags()
+	err = util.NewTransactionsConfigFromFlags()
 	if err != nil {
 		logrus.Fatalf("解析命令行选项 %v", err)
 	}
@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("初始化日志模块失败 %v", err)
 	}
-	logrus.Info("--------- 启动Billadm ---------")
+	logrus.Info("--------- 启动Transactions ---------")
 	gin.SetMode(util.Config.Mode)
 	ginServer := server.NewGinServer(util.Config.APIToken)
 	mgr := workspace.NewWsManager()
@@ -43,7 +43,7 @@ func main() {
 	var closeOnce sync.Once
 	gracefulExit := func(reason string) {
 		closeOnce.Do(func() {
-			logrus.Infof("--------- 退出Billadm (%s) ---------", reason)
+			logrus.Infof("--------- 退出Transactions (%s) ---------", reason)
 			mgr.Close()
 			// 给 HTTP 响应与在途请求一点收尾时间
 			time.Sleep(500 * time.Millisecond)
@@ -57,7 +57,7 @@ func main() {
 	}()
 
 	if err := ginServer.Run("127.0.0.1:" + util.Config.Port); err != nil {
-		logrus.Errorf("启动Billadm失败 %v", err)
+		logrus.Errorf("启动Transactions失败 %v", err)
 		gracefulExit("HTTP 服务退出")
 	}
 }

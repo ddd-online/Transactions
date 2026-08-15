@@ -1,4 +1,4 @@
-<!-- @/components/BilladmFileSelect.vue -->
+<!-- @/components/TransactionsFileSelect.vue -->
 <template>
   <a-modal v-model:open="open" :title="title" ok-text="确认" cancel-text="取消" @ok="handleOk" @cancel="handleCancel"
     :closable="false" :esc-to-close="false" :mask-closable="false" centered>

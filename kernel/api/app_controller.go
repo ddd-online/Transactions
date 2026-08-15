@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/billadm/models"
+	"github.com/transactions/models"
 )
 
 // exitOnce 保证重复收到 /api/v1/app/exit 请求时只执行一次退出流程。
@@ -30,7 +30,7 @@ func (h *Handlers) exitApp(c *gin.Context) {
 	}
 
 	exitOnce.Do(func() {
-		logrus.Infof("--------- 退出Billadm ---------")
+		logrus.Infof("--------- 退出Transactions ---------")
 		h.WsMgr.Close()
 		time.Sleep(500 * time.Millisecond)
 		os.Exit(0)
