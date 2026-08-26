@@ -108,7 +108,11 @@
 
       <!-- 右栏：资金变化记录 -->
       <section class="records-panel">
-        <h3 class="panel-title">资金变化记录</h3>
+        <div class="panel-title-row">
+          <div class="panel-title-left">
+            <h3 class="panel-title">资金变化记录</h3>
+          </div>
+        </div>
         <a-table :columns="columns" :data-source="fundRecords.items" :loading="recordsLoading" row-key="id"
           size="middle" :pagination="pagination" :scroll="{ x: 730 }" @change="handleTableChange">
           <template #emptyText>
@@ -320,10 +324,6 @@ watch(
   white-space: nowrap;
 }
 
-.overview-panel .panel-title-row {
-  margin-bottom: 0;
-}
-
 .overview-lead-value {
   color: var(--transactions-color-text-major);
 }
@@ -339,7 +339,7 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
-  padding: var(--transactions-space-sm) 0;
+  padding: var(--transactions-space-xs) 0;
   min-width: 0;
 }
 
@@ -411,6 +411,7 @@ watch(
   min-height: 0;
   display: flex;
   flex-direction: column;
+  margin-top: var(--transactions-space-lg);
 }
 
 .panel-title-row {
@@ -418,7 +419,9 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
-  margin-bottom: var(--transactions-space-lg);
+  margin-bottom: 0;
+  padding-bottom: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
 }
 
 .panel-title-left {
@@ -430,8 +433,9 @@ watch(
 
 .panel-title {
   margin: 0;
-  font-size: var(--transactions-size-text-section);
-  font-weight: var(--transactions-weight-medium);
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-title);
+  font-weight: 600;
   color: var(--transactions-color-text-major);
   line-height: var(--transactions-height-snug);
 }
@@ -486,15 +490,12 @@ watch(
   padding: var(--transactions-space-xl);
 }
 
-.records-panel .panel-title {
-  margin-bottom: var(--transactions-space-lg);
-}
-
 .records-panel :deep(.ant-table-wrapper) {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  margin-top: var(--transactions-space-lg);
 }
 
 .records-panel :deep(.ant-table-wrapper .ant-spin-nested-loading) {
