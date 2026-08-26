@@ -25,6 +25,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	keyEventImageDao := dao.NewKeyEventImageDao()
 	diaryDao := dao.NewDiaryDao()
 	trTemplateDao := dao.NewTransactionTemplateDao()
+	stockDao := dao.NewStockDao()
 
 	// ---- Service layer ----
 	// Leaf services (no service deps)
@@ -32,13 +33,14 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	chartSvc := service.NewChartService(chartDao)
 	trTemplateSvc := service.NewTrTemplateService(trTemplateDao)
 	diarySvc := service.NewDiaryService(diaryDao)
+	stockSvc := service.NewStockService(stockDao)
 
 	// Services with service+dao deps
 	tagSvc := service.NewTagService(tagDao, trTagDao)
 	categorySvc := service.NewCategoryService(tagSvc, categoryDao)
 	keyEventSvc := service.NewKeyEventService(keyEventImageSvc, keyEventDao)
 	trSvc := service.NewTrService(keyEventSvc, trDao, trTagDao)
-	ledgerSvc := service.NewLedgerService(ledgerDao, trDao, trTagDao, categoryDao, tagDao, chartDao, trTemplateDao, keyEventDao, keyEventImageDao)
+	ledgerSvc := service.NewLedgerService(ledgerDao, trDao, trTagDao, categoryDao, tagDao, chartDao, trTemplateDao, keyEventDao, keyEventImageDao, stockDao)
 
 	// ---- AI module ----
 	aiConfigDao := dao.NewAiConfigDao()
@@ -67,16 +69,17 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	aiChatService := ai.NewChatService(aiApiConfigDao, aiConfigDao, aiMessageDao, aiConversationDao, aiToolRegistry, roleRegistry)
 
 	return &api.Handlers{
-		WsMgr:          mgr,
-		LedgerSvc:      ledgerSvc,
-		TrSvc:          trSvc,
-		CategorySvc:    categorySvc,
-		TagSvc:         tagSvc,
-		ChartSvc:       chartSvc,
-		KeyEventSvc:    keyEventSvc,
-		KeyEventImgSvc: keyEventImageSvc,
-		TrTemplateSvc:  trTemplateSvc,
-		DiarySvc:       diarySvc,
+		WsMgr:             mgr,
+		LedgerSvc:         ledgerSvc,
+		TrSvc:             trSvc,
+		CategorySvc:       categorySvc,
+		TagSvc:            tagSvc,
+		ChartSvc:          chartSvc,
+		KeyEventSvc:       keyEventSvc,
+		KeyEventImgSvc:    keyEventImageSvc,
+		TrTemplateSvc:     trTemplateSvc,
+		DiarySvc:          diarySvc,
+		StockSvc:          stockSvc,
 		ChatService:       aiChatService,
 		AiConfigDao:       aiConfigDao,
 		AiApiConfigDao:    aiApiConfigDao,

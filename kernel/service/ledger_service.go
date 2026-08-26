@@ -3,11 +3,11 @@ package service
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/transactions/dao"
 	"github.com/transactions/models"
 	"github.com/transactions/util"
 	"github.com/transactions/workspace"
-	"github.com/sirupsen/logrus"
 )
 
 func NewLedgerService(
@@ -20,6 +20,7 @@ func NewLedgerService(
 	trTemplateDao dao.TransactionTemplateDao,
 	keyEventDao dao.KeyEventDao,
 	keyEventImageDao dao.KeyEventImageDao,
+	stockDao dao.StockDao,
 ) LedgerService {
 	return &ledgerServiceImpl{
 		ledgerDao:        ledgerDao,
@@ -31,6 +32,7 @@ func NewLedgerService(
 		trTemplateDao:    trTemplateDao,
 		keyEventDao:      keyEventDao,
 		keyEventImageDao: keyEventImageDao,
+		stockDao:         stockDao,
 	}
 }
 
@@ -55,6 +57,7 @@ type ledgerServiceImpl struct {
 	trTemplateDao    dao.TransactionTemplateDao
 	keyEventDao      dao.KeyEventDao
 	keyEventImageDao dao.KeyEventImageDao
+	stockDao         dao.StockDao
 }
 
 func (l *ledgerServiceImpl) CreateLedger(ws *workspace.Workspace, ledgerName string, description string) (string, error) {
@@ -152,6 +155,9 @@ func (l *ledgerServiceImpl) DeleteLedgerById(ws *workspace.Workspace, ledgerId s
 		}
 		if err := l.keyEventDao.DeleteByLedgerId(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete key events: %w", err)
+		}
+		if err := l.stockDao.DeleteByLedgerId(tx, ledgerId); err != nil {
+			return fmt.Errorf("delete stock data: %w", err)
 		}
 		if err := l.ledgerDao.DeleteById(tx, ledgerId); err != nil {
 			return fmt.Errorf("delete ledger: %w", err)

@@ -230,11 +230,27 @@
 
   .ant-tabs-content-holder {
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     @include custom-scrollbar;
   }
 
+  .ant-tabs-content {
+    flex: 1;
+  }
+
+  .ant-tabs-tabpane {
+    height: 100%;
+  }
+
   .ant-tabs-nav {
-    margin-bottom: 0;
+    margin-bottom: var(--transactions-space-lg);
+    @include drag-region;
+  }
+
+  .ant-tabs-tab,
+  .ant-tabs-nav-more {
+    @include no-drag-region;
   }
 }
 

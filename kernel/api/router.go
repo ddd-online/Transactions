@@ -87,6 +87,17 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			keyEventImages.DELETE("/:id", Handle(h.deleteKeyEventImage))
 		}
 
+		// Stock trading account
+		stockAccount := v1.Group("/stock/account")
+		{
+			stockAccount.GET("/overview", Handle(h.getStockOverview))
+			stockAccount.POST("/principal", Handle(h.setStockPrincipal))
+			stockAccount.POST("/principal/add", Handle(h.addStockPrincipal))
+			stockAccount.GET("/fee-settings", Handle(h.getStockFeeSettings))
+			stockAccount.PUT("/fee-settings", Handle(h.updateStockFeeSettings))
+			stockAccount.GET("/fund-records", Handle(h.listStockFundRecords))
+		}
+
 		// Static assets (served from workspace data/assets/ directory)
 		v1.GET("/static/*filepath", h.serveStaticFile)
 

@@ -25,13 +25,14 @@ type Handlers struct {
 	KeyEventImgSvc service.KeyEventImageService
 	TrTemplateSvc  service.TransactionTemplateService
 	DiarySvc       service.DiaryService
+	StockSvc       service.StockService
 
 	// AI
-	ChatService        *ai.ChatService
-	AiConfigDao        dao.AiConfigDao
-	AiApiConfigDao     dao.AiApiConfigDao
-	AiMessageDao       dao.AiMessageDao
-	AiConversationDao  dao.AiConversationDao
-	AiQuickCommandDao  dao.AiQuickCommandDao
-	RoleRegistry       *role.Registry
+	ChatService       *ai.ChatService
+	AiConfigDao       dao.AiConfigDao
+	AiApiConfigDao    dao.AiApiConfigDao
+	AiMessageDao      dao.AiMessageDao
+	AiConversationDao dao.AiConversationDao
+	AiQuickCommandDao dao.AiQuickCommandDao
+	RoleRegistry      *role.Registry
 }

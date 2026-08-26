@@ -23,6 +23,11 @@ const routes = [
         component: () => import('@/components/da_view/DataAnalysisView.vue')
       },
       {
+        name: '股票交易',
+        path: 'stock_view',
+        component: () => import('@/components/stock_view/StockTradingView.vue')
+      },
+      {
         name: '关键事件',
         path: 'key_event_view',
         component: () => import('@/components/key_event_view/KeyEventView.vue')
