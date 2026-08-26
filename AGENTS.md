@@ -74,4 +74,4 @@ cd app && npx vue-tsc -b          # Type-check only (project references, no emit
 
 ## Release
 
-See `.dsh/skills/release/SKILL.md` — 需要发版时通过 `skill` 工具加载（skill 名：`release`）。
+See `.codex/skills/release/SKILL.md` — 需要发版时通过 `skill` 工具加载（skill 名：`release`）。
