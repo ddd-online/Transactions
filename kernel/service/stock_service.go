@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,11 @@ type StockService interface {
 	GetFeeSettings(ws *workspace.Workspace, ledgerID string) (*models.StockFeeSetting, error)
 	SaveFeeSettings(ws *workspace.Workspace, ledgerID string, commissionRate float64, minCommission int64, stampDutyRate float64, transferFeeRate float64) (*models.StockFeeSetting, error)
 	ListFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) (*dto.StockFundRecordPage, error)
+	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
+	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
+	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error)
+	GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockJournalDto, error)
+	SaveJournal(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, rules string, plan string, review string) (*dto.StockJournalDto, error)
 }
 
 var _ StockService = &stockServiceImpl{}
@@ -244,6 +250,231 @@ func (s *stockServiceImpl) ListFundRecords(ws *workspace.Workspace, ledgerID str
 		Page:     page,
 		PageSize: pageSize,
 	}, nil
+}
+
+func (s *stockServiceImpl) ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error) {
+	positions, err := s.stockDao.ListPositions(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]dto.StockPositionDto, 0, len(positions))
+	for i := range positions {
+		if positions[i].Quantity <= 0 {
+			continue // 已清仓的股票不再出现在持仓列表
+		}
+		items = append(items, dto.FromStockPosition(&positions[i]))
+	}
+	return items, nil
+}
+
+func (s *stockServiceImpl) ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error) {
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	trades, err := s.stockDao.ListTrades(ws, ledgerID, stockCode)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]dto.StockTradeDto, 0, len(trades))
+	for i := range trades {
+		items = append(items, dto.FromStockTrade(&trades[i]))
+	}
+	return items, nil
+}
+
+// CreateTrade 记录一笔买卖交易：原子更新持仓、现金资金记录与交易流水。
+// 买入（建仓/加仓）：现金减少 成交金额+费用；卖出（减仓/清仓）：现金增加 成交金额-费用，
+// 并按平均成本结转已实现盈亏到资金记录（netPnl），使账户总盈亏自动汇总。
+func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error) {
+	if priceCents <= 0 {
+		return nil, models.NewBadRequest("成交价必须大于 0")
+	}
+	if lots <= 0 {
+		return nil, models.NewBadRequest("手数必须大于 0")
+	}
+	if tradeTime <= 0 {
+		tradeTime = time.Now().Unix()
+	}
+
+	isBuy := tradeType == models.StockTradeOpen || tradeType == models.StockTradeAdd
+	isSell := tradeType == models.StockTradeReduce || tradeType == models.StockTradeClose
+	if !isBuy && !isSell {
+		return nil, models.NewBadRequest("无效的交易类型")
+	}
+
+	shares := lots * 100
+	amount := priceCents * shares
+	isSH := strings.HasPrefix(stockCode, "60")
+
+	trade := &models.StockTrade{
+		ID:        util.GetUUID(),
+		LedgerID:  ledgerID,
+		StockCode: stockCode,
+		StockName: stockName,
+		TradeType: tradeType,
+		Price:     priceCents,
+		Lots:      lots,
+		Shares:    shares,
+		Amount:    amount,
+		TradeTime: tradeTime,
+		Remark:    remark,
+	}
+
+	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		feeSetting, err := s.getOrCreateFeeSetting(tx, ledgerID)
+		if err != nil {
+			return err
+		}
+
+		var fee int64
+		if isBuy {
+			fee = ComputeBuyFee(amount, isSH, feeSetting).Total
+		} else {
+			fee = ComputeSellFee(amount, isSH, feeSetting).Total
+		}
+		trade.Fee = fee
+
+		position, err := s.stockDao.GetPosition(tx, ledgerID, stockCode)
+		if dao.IsNotFound(err) {
+			position = &models.StockPosition{
+				ID:        util.GetUUID(),
+				LedgerID:  ledgerID,
+				StockCode: stockCode,
+				StockName: stockName,
+			}
+			if err := s.stockDao.CreatePosition(tx, position); err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		}
+		position.StockName = stockName
+
+		// 当前现金：末条资金记录余额，无记录则为本金
+		account, err := s.getOrCreateAccount(tx, ledgerID)
+		if err != nil {
+			return err
+		}
+		prevCash := account.Principal
+		if latest, err := s.stockDao.QueryLatestFundRecord(tx, ledgerID); err == nil && latest != nil {
+			prevCash = latest.CashBalance
+		} else if err != nil && !dao.IsNotFound(err) {
+			return err
+		}
+
+		var amountChange int64
+		var eventType string
+		var eventText string
+		var netPnl *int64
+		if isBuy {
+			amountChange = -(amount + fee)
+			eventType = models.StockEventBuy
+			eventText = fmt.Sprintf("买入 %s %d手", stockName, lots)
+
+			position.Quantity += shares
+			position.TotalCost += amount + fee
+			position.AvgCost = position.TotalCost / position.Quantity
+		} else {
+			if shares > position.Quantity {
+				return models.NewBadRequest(fmt.Sprintf("卖出数量超过持仓（当前 %d 股）", position.Quantity))
+			}
+			amountChange = amount - fee
+			eventType = models.StockEventSell
+			eventText = fmt.Sprintf("卖出 %s %d手", stockName, lots)
+
+			costBasis := position.AvgCost * shares
+			realized := amount - fee - costBasis
+			netPnl = &realized
+
+			position.Quantity -= shares
+			position.TotalCost -= costBasis
+			position.RealizedPnl += realized
+			if position.Quantity == 0 {
+				position.AvgCost = 0
+				position.TotalCost = 0
+			}
+		}
+		trade.RealizedPnl = netPnl
+
+		if err := s.stockDao.UpdatePosition(tx, position); err != nil {
+			return err
+		}
+
+		record := &models.StockFundRecord{
+			ID:           util.GetUUID(),
+			LedgerID:     ledgerID,
+			RecordDate:   time.Unix(tradeTime, 0).Format("2006-01-02"),
+			EventType:    eventType,
+			EventText:    eventText,
+			AmountChange: amountChange,
+			CashBalance:  prevCash + amountChange,
+			NetPnl:       netPnl,
+			Remark:       fmt.Sprintf("%s %d手 @ %s", stockName, lots, centsToYuanStr(priceCents)),
+		}
+		if err := s.stockDao.CreateFundRecord(tx, record); err != nil {
+			return err
+		}
+
+		return s.stockDao.CreateTrade(tx, trade)
+	})
+	if err != nil {
+		logrus.Errorf("记录股票交易失败, ledger: %s, code: %s, err: %v", ledgerID, stockCode, err)
+		return nil, err
+	}
+	dto := dto.FromStockTrade(trade)
+	return &dto, nil
+}
+
+// getOrCreateJournal 获取股票交易日志，不存在则创建空记录。
+func (s *stockServiceImpl) getOrCreateJournal(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) (*models.StockJournal, error) {
+	journal, err := s.stockDao.GetJournal(ws, ledgerID, stockCode)
+	if err == nil {
+		return journal, nil
+	}
+	if !dao.IsNotFound(err) {
+		return nil, err
+	}
+	journal = &models.StockJournal{
+		ID:        util.GetUUID(),
+		LedgerID:  ledgerID,
+		StockCode: stockCode,
+		StockName: stockName,
+	}
+	if err := s.stockDao.CreateJournal(ws, journal); err != nil {
+		return nil, err
+	}
+	return journal, nil
+}
+
+func (s *stockServiceImpl) GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockJournalDto, error) {
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	journal, err := s.getOrCreateJournal(ws, ledgerID, stockCode, "")
+	if err != nil {
+		return nil, err
+	}
+	dto := dto.FromStockJournal(journal)
+	return &dto, nil
+}
+
+func (s *stockServiceImpl) SaveJournal(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, rules string, plan string, review string) (*dto.StockJournalDto, error) {
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	journal, err := s.getOrCreateJournal(ws, ledgerID, stockCode, stockName)
+	if err != nil {
+		return nil, err
+	}
+	journal.StockName = stockName
+	journal.Rules = rules
+	journal.Plan = plan
+	journal.Review = review
+	if err := s.stockDao.UpdateJournal(ws, journal); err != nil {
+		return nil, err
+	}
+	dto := dto.FromStockJournal(journal)
+	return &dto, nil
 }
 
 // FeeBreakdown 一笔交易的费用明细（单位：分）。

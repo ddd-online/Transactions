@@ -242,3 +242,49 @@ export interface StockFundRecordPage {
     page: number;
     pageSize: number;
 }
+
+/**
+ * 股票持仓
+ */
+export interface StockPosition {
+    id: string;
+    ledgerId: string;
+    stockCode: string;
+    stockName: string;
+    quantity: number;            // 持仓数量（股）
+    avgCost: number;             // 平均成本（分/股，含买入费用）
+    totalCost: number;           // 持仓总成本（分）
+    realizedPnl: number;         // 该股累计已实现盈亏（分）
+}
+
+/**
+ * 股票交易记录
+ */
+export interface StockTrade {
+    id: string;
+    ledgerId: string;
+    stockCode: string;
+    stockName: string;
+    tradeType: 'open' | 'add' | 'reduce' | 'close';
+    price: number;               // 成交价（分/股）
+    lots: number;                // 手数
+    shares: number;              // 股数
+    amount: number;              // 成交金额（分）
+    fee: number;                 // 交易费用（分）
+    realizedPnl: number | null;  // 卖出净盈亏（分），仅减仓/清仓非空
+    tradeTime: number;           // 成交时间（Unix 秒）
+    remark: string;
+}
+
+/**
+ * 股票交易日志（规则/计划/复盘）
+ */
+export interface StockJournal {
+    id: string;
+    ledgerId: string;
+    stockCode: string;
+    stockName: string;
+    rules: string;
+    plan: string;
+    review: string;
+}

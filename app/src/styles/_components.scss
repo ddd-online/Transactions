@@ -255,6 +255,47 @@
 }
 
 // ============================================
+// Section Title Band（无方块区块的标题带，账户/持仓等页共用）
+// ============================================
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  margin-bottom: 0;
+  padding-bottom: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.panel-title-left {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+}
+
+.panel-title {
+  margin: 0;
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-title);
+  font-weight: 600;
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-snug);
+}
+
+.panel-title-tip {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-tertiary);
+  cursor: help;
+  transition: color var(--transactions-transition-fast);
+}
+
+.panel-title-tip:hover {
+  color: var(--transactions-color-text-secondary);
+}
+
+// ============================================
 // Amount Display (Monospace)
 // ============================================
 

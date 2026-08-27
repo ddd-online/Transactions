@@ -414,43 +414,6 @@ watch(
   margin-top: var(--transactions-space-lg);
 }
 
-.panel-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-md);
-  margin-bottom: 0;
-  padding-bottom: var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.panel-title-left {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  min-width: 0;
-}
-
-.panel-title {
-  margin: 0;
-  font-family: var(--transactions-font-display);
-  font-size: var(--transactions-size-text-title);
-  font-weight: 600;
-  color: var(--transactions-color-text-major);
-  line-height: var(--transactions-height-snug);
-}
-
-.panel-title-tip {
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-tertiary);
-  cursor: help;
-  transition: color var(--transactions-transition-fast);
-}
-
-.panel-title-tip:hover {
-  color: var(--transactions-color-text-secondary);
-}
-
 /* 费用设置表单 */
 .fee-form :deep(.ant-form-item) {
   margin-bottom: var(--transactions-space-md);

@@ -10,6 +10,18 @@ const (
 	StockEventSell = "sell"
 )
 
+// 持仓交易类型
+const (
+	// StockTradeOpen 建仓
+	StockTradeOpen = "open"
+	// StockTradeAdd 加仓
+	StockTradeAdd = "add"
+	// StockTradeReduce 减仓
+	StockTradeReduce = "reduce"
+	// StockTradeClose 清仓
+	StockTradeClose = "close"
+)
+
 // StockAccount 股票账户（每个账本一个），本金以整数分存储。
 type StockAccount struct {
 	ID        string `gorm:"primaryKey;comment:账户UUID" json:"id"`
@@ -57,4 +69,62 @@ type StockFundRecord struct {
 
 func (StockFundRecord) TableName() string {
 	return "tbl_billadm_stock_fund_record"
+}
+
+// StockPosition 股票持仓（每笔买卖实时维护，卖出时按平均成本结转已实现盈亏）。
+type StockPosition struct {
+	ID          string `gorm:"primaryKey;comment:持仓UUID" json:"id"`
+	LedgerID    string `gorm:"uniqueIndex:idx_stock_position_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	StockCode   string `gorm:"uniqueIndex:idx_stock_position_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
+	StockName   string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
+	Quantity    int64  `gorm:"not null;default:0;comment:持仓数量（股）" json:"quantity"`
+	AvgCost     int64  `gorm:"not null;default:0;comment:平均成本（分/股，含买入费用）" json:"avgCost"`
+	TotalCost   int64  `gorm:"not null;default:0;comment:持仓总成本（分）" json:"totalCost"`
+	RealizedPnl int64  `gorm:"not null;default:0;comment:已实现盈亏（分，该股累计）" json:"realizedPnl"`
+	CreatedAt   int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+	UpdatedAt   int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
+}
+
+func (StockPosition) TableName() string {
+	return "tbl_billadm_stock_position"
+}
+
+// StockTrade 股票交易记录（建仓/加仓/减仓/清仓）。
+// Price/Amount/Fee 单位均为分；Lots 手数，Shares = Lots × 100。
+type StockTrade struct {
+	ID         string `gorm:"primaryKey;comment:交易UUID" json:"id"`
+	LedgerID   string `gorm:"index:idx_stock_trade_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	StockCode  string `gorm:"index:idx_stock_trade_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
+	StockName  string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
+	TradeType  string `gorm:"type:varchar(16);not null;default:'';comment:交易类型 open/add/reduce/close" json:"tradeType"`
+	Price      int64  `gorm:"not null;default:0;comment:成交价（分/股）" json:"price"`
+	Lots       int64  `gorm:"not null;default:0;comment:手数" json:"lots"`
+	Shares     int64  `gorm:"not null;default:0;comment:股数（手数×100）" json:"shares"`
+	Amount     int64  `gorm:"not null;default:0;comment:成交金额（分，价×股数）" json:"amount"`
+	Fee        int64  `gorm:"not null;default:0;comment:交易费用（分）" json:"fee"`
+	RealizedPnl *int64 `gorm:"comment:卖出净盈亏（分），仅减仓/清仓非空" json:"realizedPnl"`
+	TradeTime  int64  `gorm:"not null;default:0;comment:成交时间（Unix 秒）" json:"tradeTime"`
+	Remark     string `gorm:"type:varchar(500);not null;default:'';comment:备注" json:"remark"`
+	CreatedAt  int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+}
+
+func (StockTrade) TableName() string {
+	return "tbl_billadm_stock_trade"
+}
+
+// StockJournal 股票交易日志：每只股票一份，保存交易规则/交易计划/交易复盘文本。
+type StockJournal struct {
+	ID        string `gorm:"primaryKey;comment:日志UUID" json:"id"`
+	LedgerID  string `gorm:"uniqueIndex:idx_stock_journal_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	StockCode string `gorm:"uniqueIndex:idx_stock_journal_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
+	StockName string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
+	Rules     string `gorm:"type:text;comment:交易规则" json:"rules"`
+	Plan      string `gorm:"type:text;comment:交易计划" json:"plan"`
+	Review    string `gorm:"type:text;comment:交易复盘" json:"review"`
+	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+	UpdatedAt int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
+}
+
+func (StockJournal) TableName() string {
+	return "tbl_billadm_stock_journal"
 }

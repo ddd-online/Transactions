@@ -1,6 +1,7 @@
 package api
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -79,6 +80,76 @@ func (h *Handlers) listStockFundRecords(c *gin.Context) (any, error) {
 	page := parsePositiveInt(c.Query("page"), 1)
 	pageSize := parsePositiveInt(c.Query("page_size"), 10)
 	return h.StockSvc.ListFundRecords(ws(c), ledgerID, page, pageSize)
+}
+
+// GET /api/v1/stock/positions?ledger_id=
+func (h *Handlers) getStockPositions(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.ListPositions(ws(c), ledgerID)
+}
+
+// GET /api/v1/stock/trades?ledger_id=&stock_code=
+func (h *Handlers) listStockTrades(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.ListTrades(ws(c), ledgerID, c.Query("stock_code"))
+}
+
+// POST /api/v1/stock/trades  body: { ledger_id, stock_code, stock_name, trade_type, price(元), lots, trade_time(秒), remark }
+func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	stockCode, _ := arg["stock_code"].(string)
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	stockName, _ := arg["stock_name"].(string)
+	tradeType, _ := arg["trade_type"].(string)
+	priceYuan, _ := arg["price"].(float64)
+	lots, _ := arg["lots"].(float64)
+	tradeTime, _ := arg["trade_time"].(float64)
+	remark, _ := arg["remark"].(string)
+
+	priceCents := int64(math.Round(priceYuan * 100))
+	return h.StockSvc.CreateTrade(ws(c), ledgerID, stockCode, stockName, tradeType, priceCents, int64(lots), int64(tradeTime), remark)
+}
+
+// GET /api/v1/stock/journal?ledger_id=&stock_code=
+func (h *Handlers) getStockJournal(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.GetJournal(ws(c), ledgerID, c.Query("stock_code"))
+}
+
+// PUT /api/v1/stock/journal  body: { ledger_id, stock_code, stock_name, rules, plan, review }
+func (h *Handlers) saveStockJournal(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	stockCode, _ := arg["stock_code"].(string)
+	stockName, _ := arg["stock_name"].(string)
+	rules, _ := arg["rules"].(string)
+	plan, _ := arg["plan"].(string)
+	review, _ := arg["review"].(string)
+	return h.StockSvc.SaveJournal(ws(c), ledgerID, stockCode, stockName, rules, plan, review)
 }
 
 // requireLedgerID 从 query 取 ledger_id。

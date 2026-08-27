@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { StockFeeSetting, StockFundRecordPage, StockOverview } from "@/types/transactions";
+import type { StockFeeSetting, StockFundRecordPage, StockJournal, StockOverview, StockPosition, StockTrade } from "@/types/transactions";
 
 export async function fetchStockOverview(ledgerId: string): Promise<StockOverview> {
     return api.get<StockOverview>(`/v1/stock/account/overview?ledger_id=${encodeURIComponent(ledgerId)}`, '查询股票账户总览');
@@ -38,4 +38,62 @@ export async function fetchStockFundRecords(ledgerId: string, page: number, page
         `/v1/stock/account/fund-records?ledger_id=${encodeURIComponent(ledgerId)}&page=${page}&page_size=${pageSize}`,
         '查询资金变化记录'
     );
+}
+
+export async function fetchStockPositions(ledgerId: string): Promise<StockPosition[]> {
+    return api.get<StockPosition[]>(`/v1/stock/positions?ledger_id=${encodeURIComponent(ledgerId)}`, '查询持仓');
+}
+
+export async function fetchStockTrades(ledgerId: string, stockCode: string): Promise<StockTrade[]> {
+    return api.get<StockTrade[]>(
+        `/v1/stock/trades?ledger_id=${encodeURIComponent(ledgerId)}&stock_code=${encodeURIComponent(stockCode)}`,
+        '查询交易记录'
+    );
+}
+
+export async function createStockTrade(
+    ledgerId: string,
+    stockCode: string,
+    stockName: string,
+    tradeType: string,
+    price: number,
+    lots: number,
+    tradeTime: number,
+    remark: string
+): Promise<StockTrade> {
+    return api.post<StockTrade>('/v1/stock/trades', {
+        ledger_id: ledgerId,
+        stock_code: stockCode,
+        stock_name: stockName,
+        trade_type: tradeType,
+        price,
+        lots,
+        trade_time: tradeTime,
+        remark,
+    }, '记录交易');
+}
+
+export async function fetchStockJournal(ledgerId: string, stockCode: string): Promise<StockJournal> {
+    return api.get<StockJournal>(
+        `/v1/stock/journal?ledger_id=${encodeURIComponent(ledgerId)}&stock_code=${encodeURIComponent(stockCode)}`,
+        '查询交易日志'
+    );
+}
+
+export async function saveStockJournal(
+    ledgerId: string,
+    stockCode: string,
+    stockName: string,
+    rules: string,
+    plan: string,
+    review: string
+): Promise<StockJournal> {
+    return api.put<StockJournal>('/v1/stock/journal', {
+        ledger_id: ledgerId,
+        stock_code: stockCode,
+        stock_name: stockName,
+        rules,
+        plan,
+        review,
+    }, '保存交易日志');
 }

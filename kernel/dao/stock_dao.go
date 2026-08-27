@@ -22,6 +22,15 @@ type StockDao interface {
 	QueryFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) ([]models.StockFundRecord, int64, error)
 	SumNetPnl(ws *workspace.Workspace, ledgerID string) (int64, error)
 	CountFundRecords(ws *workspace.Workspace, ledgerID string) (int64, error)
+	GetPosition(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockPosition, error)
+	CreatePosition(ws *workspace.Workspace, position *models.StockPosition) error
+	UpdatePosition(ws *workspace.Workspace, position *models.StockPosition) error
+	ListPositions(ws *workspace.Workspace, ledgerID string) ([]models.StockPosition, error)
+	CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
+	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
+	GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockJournal, error)
+	CreateJournal(ws *workspace.Workspace, journal *models.StockJournal) error
+	UpdateJournal(ws *workspace.Workspace, journal *models.StockJournal) error
 	DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error
 }
 
@@ -123,11 +132,89 @@ func (d *stockDaoImpl) CountFundRecords(ws *workspace.Workspace, ledgerID string
 	return total, err
 }
 
+func (d *stockDaoImpl) GetPosition(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockPosition, error) {
+	var position models.StockPosition
+	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).First(&position).Error
+	if err != nil {
+		return nil, err
+	}
+	return &position, nil
+}
+
+func (d *stockDaoImpl) CreatePosition(ws *workspace.Workspace, position *models.StockPosition) error {
+	return ws.GetDb().Create(position).Error
+}
+
+func (d *stockDaoImpl) UpdatePosition(ws *workspace.Workspace, position *models.StockPosition) error {
+	return ws.GetDb().Model(position).
+		Select("quantity", "avg_cost", "total_cost", "realized_pnl", "stock_name").
+		Updates(map[string]any{
+			"quantity":      position.Quantity,
+			"avg_cost":      position.AvgCost,
+			"total_cost":    position.TotalCost,
+			"realized_pnl":  position.RealizedPnl,
+			"stock_name":    position.StockName,
+		}).Error
+}
+
+func (d *stockDaoImpl) ListPositions(ws *workspace.Workspace, ledgerID string) ([]models.StockPosition, error) {
+	positions := make([]models.StockPosition, 0)
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
+		Order("quantity DESC, created_at ASC").
+		Find(&positions).Error
+	return positions, err
+}
+
+func (d *stockDaoImpl) CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error {
+	return ws.GetDb().Create(trade).Error
+}
+
+func (d *stockDaoImpl) ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error) {
+	trades := make([]models.StockTrade, 0)
+	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).
+		Order("trade_time DESC, created_at DESC").
+		Find(&trades).Error
+	return trades, err
+}
+
+func (d *stockDaoImpl) GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockJournal, error) {
+	var journal models.StockJournal
+	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).First(&journal).Error
+	if err != nil {
+		return nil, err
+	}
+	return &journal, nil
+}
+
+func (d *stockDaoImpl) CreateJournal(ws *workspace.Workspace, journal *models.StockJournal) error {
+	return ws.GetDb().Create(journal).Error
+}
+
+func (d *stockDaoImpl) UpdateJournal(ws *workspace.Workspace, journal *models.StockJournal) error {
+	return ws.GetDb().Model(journal).
+		Select("rules", "plan", "review", "stock_name").
+		Updates(map[string]any{
+			"rules":      journal.Rules,
+			"plan":       journal.Plan,
+			"review":     journal.Review,
+			"stock_name": journal.StockName,
+		}).Error
+}
+
 func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error {
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockFundRecord{}).Error; err != nil {
 		return err
 	}
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockFeeSetting{}).Error; err != nil {
+		return err
+	}
+	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTrade{}).Error; err != nil {
+		return err
+	}
+	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockPosition{}).Error; err != nil {
+		return err
+	}
+	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockJournal{}).Error; err != nil {
 		return err
 	}
 	return ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockAccount{}).Error
