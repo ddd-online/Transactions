@@ -100,7 +100,7 @@ func (d *stockDaoImpl) QueryFundRecords(ws *workspace.Workspace, ledgerID string
 
 	records := make([]models.StockFundRecord, 0)
 	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
-		Order("record_date ASC, created_at ASC, id ASC").
+		Order("record_date DESC, created_at DESC, id DESC").
 		Offset((page - 1) * pageSize).
 		Limit(pageSize).
 		Find(&records).Error
