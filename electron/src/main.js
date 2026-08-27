@@ -19,7 +19,7 @@ const apiToken = crypto.randomBytes(32).toString('hex');
 
 const getUiServer = () => {
     if (isDev) {
-        return 'http://localhost:31945/static';
+        return 'http://localhost:38080/static';
     } else {
         return `${API_SERVER}/static/index.html`;
     }
@@ -150,7 +150,9 @@ const startKernel = () => {
     log(`Starting kernel: ${kernelExe}`);
     const cp = require("child_process");
     // 传入上次工作空间目录：kernel 启动即把日志写到工作目录下（后台 stdout 不可见）
-    const kernelArgs = ['-mode', 'release', '-port', API_PORT, '-api_token', apiToken];
+    // 生产环境使用 Go 程序默认端口（31943）与默认运行模式（release），无需显式传 -port/-mode；
+    // 开发环境由 npm run dev 显式传 -port 28080 -mode debug
+    const kernelArgs = ['-api_token', apiToken];
     if (transactionsCfg.workspaceDir) {
         kernelArgs.push('-workspace', transactionsCfg.workspaceDir);
     }
@@ -904,7 +906,7 @@ const createMainWindow = () => {
 
     // 阻止主窗口导航到外部地址或新开窗口（纵深防御）
     mainWindow.webContents.on('will-navigate', (event, url) => {
-        const allowed = url.startsWith(API_SERVER) || (isDev && url.startsWith('http://localhost:31945'));
+        const allowed = url.startsWith(API_SERVER) || (isDev && url.startsWith('http://localhost:38080'));
         if (!allowed) {
             event.preventDefault();
             log(`已拦截外部导航: ${url}`);

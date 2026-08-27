@@ -11,7 +11,7 @@ export default defineConfig({
     },
     base: '/static',
     server: {
-        port: 31945,
+        port: 38080,
     },
     plugins: [
         vue(),

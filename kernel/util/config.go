@@ -16,18 +16,18 @@ type TransactionsConfig struct {
 }
 
 var Config = TransactionsConfig{
-	Port:      "28080",
+	Port:      "31943",
 	LogLevel:  "debug",
-	Mode:      "debug",
+	Mode:      "release",
 	Workspace: "",
 	APIToken:  "",
 }
 
 // NewTransactionsConfigFromFlags 解析命令行标志并返回一个配置对象
 func NewTransactionsConfigFromFlags() error {
-	portPtr := flag.String("port", "28080", "服务器监听端口 (默认: 28080)")
+	portPtr := flag.String("port", "31943", "服务器监听端口 (默认: 31943)")
 	logLevelPtr := flag.String("log_level", "info", "日志级别 (debug, info, warn, warning, error) (默认: info)")
-	modePtr := flag.String("mode", "debug", "transactions的运行模式 (debug, release) (默认: debug)")
+	modePtr := flag.String("mode", "release", "transactions的运行模式 (debug, release) (默认: release)")
 	workspacePtr := flag.String("workspace", "", "transactions的工作空间目录")
 	apiTokenPtr := flag.String("api_token", "", "API 访问令牌（空表示不鉴权）")
 

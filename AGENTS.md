@@ -17,12 +17,12 @@ build/           # PowerShell build scripts (clean.ps1 → build.ps1 → release
 
 **Dev (one command — Go has no hot reload):**
 ```bash
-npm run dev                       # Starts kernel (:28080) + Vite (:31945) + Electron concurrently
+npm run dev                       # Starts kernel (:28080) + Vite (:38080) + Electron concurrently
 ```
 Or individually if needed:
 ```bash
-cd kernel && go run main.go       # API server on :28080
-cd app && npm run dev             # Vite HMR on :31945, base=/static
+cd kernel && go run main.go -port 28080 -mode debug   # API server on :28080 (dev 显式传端口与模式)
+cd app && npm run dev             # Vite HMR on :38080, base=/static
 cd electron && npm run dev        # Electron window
 ```
 
@@ -43,7 +43,7 @@ cd app && npx vue-tsc -b          # Type-check only (project references, no emit
 ## Critical Gotchas
 
 - **CGO is NOT required** — `github.com/glebarez/sqlite` (pure Go SQLite). Production builds use `CGO_ENABLED=0`, `go build -ldflags '-s -w'`.
-- **Kernel port differs by mode**: `:28080` in dev (`go run`), `:31943` in production (launched by Electron with `-port 31943`). The frontend API client auto-detects via `electronAPI.getApiServer()`.
+- **Kernel port differs by mode**: `:28080` in dev (通过 `-port 28080` 显式传入), `:31943` 为 Go 程序默认端口（生产环境 Electron 直接使用默认端口）。The frontend API client auto-detects via `electronAPI.getApiServer()`.
 - **Kernel lifecycle**: In dev, kernel runs independently via `go run`. In production, Electron spawns `transactions.exe` as a child process on startup (`electron/src/main.js:82`). The child process is killed on app quit.
 - **Two-window flow**: First run shows `initWindow` (workspace selection, `electron/src/init.html`). After workspace is chosen, it switches to `mainWindow`. Both are frameless.
 - **System tray**: Minimize-to-tray supported. Close behavior (quit vs. tray) is configurable, persisted in `~/.transactions.json` (`~/.transactions-dev.json` in dev).

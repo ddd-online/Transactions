@@ -14,13 +14,11 @@ import (
 func NewGinServer(apiToken string) *gin.Engine {
 	server := gin.New()
 	server.Use(gin.Recovery())
-	// 自研请求日志：request-id + 耗时 + 慢请求告警（替换 gin.Default 的默认 Logger）
-	server.Use(requestLogger())
 	// cors
 	// 仅放行本地开发时的 Vite 前端源；生产环境前后端同源，本就不需要 CORS。
 	// 之前的 AllowOrigins:["*"] + AllowCredentials:true 会让任意网页跨域读取本地财务数据。
 	server.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:31945", "http://127.0.0.1:31945"},
+		AllowOrigins:     []string{"http://localhost:38080", "http://127.0.0.1:38080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "X-Api-Token"},
 		ExposeHeaders:    []string{"Content-Length"},
