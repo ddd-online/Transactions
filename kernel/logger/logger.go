@@ -2,13 +2,10 @@
 package logger
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strconv"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -84,18 +81,9 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	timestamp := entry.Time.Format("2006-01-02 15:04:05")
 	var logLine string
 	if entry.HasCaller() {
-		logLine = fmt.Sprintf("[%s] [%s] [goroutine-%d] [%s:%d] %s\n", timestamp, entry.Level.String(), getGoID(), entry.Caller.File, entry.Caller.Line, entry.Message)
+		logLine = fmt.Sprintf("[%s] [%s] [%s:%d] %s\n", timestamp, entry.Level.String(), entry.Caller.File, entry.Caller.Line, entry.Message)
 	} else {
-		logLine = fmt.Sprintf("[%s] [%s] [goroutine-%d] %s\n", timestamp, entry.Level.String(), getGoID(), entry.Message)
+		logLine = fmt.Sprintf("[%s] [%s] %s\n", timestamp, entry.Level.String(), entry.Message)
 	}
 	return []byte(logLine), nil
-}
-
-func getGoID() uint64 {
-	b := make([]byte, 64)
-	b = b[:runtime.Stack(b, false)]
-	b = bytes.TrimPrefix(b, []byte("goroutine "))
-	b = b[:bytes.IndexByte(b, ' ')]
-	n, _ := strconv.ParseUint(string(b), 10, 64)
-	return n
 }
