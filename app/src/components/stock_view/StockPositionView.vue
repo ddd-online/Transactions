@@ -364,6 +364,8 @@ onMounted(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: var(--transactions-space-xs);
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-sm);

@@ -119,6 +119,7 @@ const truncate = (text: string, max: number): string => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-right: var(--transactions-space-xs);
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-sm);
