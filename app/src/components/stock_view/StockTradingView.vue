@@ -8,8 +8,11 @@
       <a-tab-pane key="position" tab="我的持仓">
         <StockPositionView />
       </a-tab-pane>
-      <a-tab-pane key="trade" tab="交易记录">
+      <a-tab-pane key="trade" tab="交易历史">
         <StockTradeRecordView />
+      </a-tab-pane>
+      <a-tab-pane key="statistics" tab="交易统计">
+        <StockStatisticsView />
       </a-tab-pane>
     </a-tabs>
   </TransactionsPageLayout>

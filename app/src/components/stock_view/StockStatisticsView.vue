@@ -1,6 +1,6 @@
 <template>
   <div class="stock-tab-placeholder">
-    <a-empty description="交易历史功能开发中，敬请期待" />
+    <a-empty description="交易统计功能开发中，敬请期待" />
   </div>
 </template>
 
