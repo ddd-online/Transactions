@@ -1,20 +1,19 @@
 <template>
   <div class="stock-account">
-    <!-- ========== 两栏主体：左栏（总资产 + 交易费用设置）/ 右栏（资金变化记录） ========== -->
+    <!-- ========== 主体：总览跨栏置顶，下方左（资金记录）右（费用设置） ========== -->
     <div class="account-body">
-      <div class="account-left">
-        <!-- ========== 资产总览 ========== -->
-        <section class="overview-panel">
-          <div class="panel-title-row">
-            <div class="panel-title-left">
-              <h3 class="panel-title">总资产</h3>
-            </div>
-            <a-button type="primary" :loading="mutating" @click="openPrincipalModal()">追加本金</a-button>
+      <!-- 顶部：资产总览（跨栏） -->
+      <section class="overview-panel">
+        <div class="panel-title-row">
+          <div class="panel-title-left">
+            <h3 class="panel-title">总资产</h3>
           </div>
-          <div class="overview-lead-value amount amount-large">
-            <template v-if="!overviewLoading">{{ centsToYuan(overview.totalAssets) }}</template>
-            <span v-else class="skeleton-bar skeleton-lg" aria-hidden="true" />
-          </div>
+          <a-button type="primary" :loading="mutating" @click="openPrincipalModal()">追加本金</a-button>
+        </div>
+        <div class="overview-lead-value amount amount-large">
+          <template v-if="!overviewLoading">{{ centsToYuan(overview.totalAssets) }}</template>
+          <span v-else class="skeleton-bar skeleton-lg" aria-hidden="true" />
+        </div>
 
         <div class="overview-stats">
           <div class="overview-stat">
@@ -52,94 +51,96 @@
         </div>
 
         <p v-if="!overviewLoading && overview.principal === 0" class="overview-hint">
-          还没有资金记录 — 先「追加本金」，之后每一笔资金变动都会显示在「资金变化记录」中。
+          还没有资金记录 — 先「追加本金」，之后的每一笔资金变动都会显示在「资金变化记录」中。
         </p>
+      </section>
+
+      <!-- 下方两栏：资金变化记录（主） / 交易费用设置（配置） -->
+      <div class="account-grid">
+        <!-- 资金变化记录 -->
+        <section class="records-panel">
+          <div class="panel-title-row">
+            <div class="panel-title-left">
+              <h3 class="panel-title">资金变化记录</h3>
+            </div>
+          </div>
+          <a-table :columns="columns" :data-source="fundRecords.items" :loading="recordsLoading" row-key="id"
+            size="middle" :pagination="pagination" :scroll="{ x: 730 }" @change="handleTableChange">
+            <template #emptyText>
+              <a-empty description="暂无资金变化记录 — 追加本金或买入/卖出后，每一笔资金变动都会显示在这里" />
+            </template>
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'amountChange'">
+                <span class="amount amount-small" :class="signedClass(record.amountChange)">
+                  {{ formatSignedYuan(record.amountChange) }}
+                </span>
+              </template>
+              <template v-else-if="column.dataIndex === 'cashBalance'">
+                <span class="amount amount-small">{{ centsToYuan(record.cashBalance) }}</span>
+              </template>
+              <template v-else-if="column.dataIndex === 'remark'">
+                <a-tooltip :title="record.remark || '-'">
+                  <span class="cell-ellipsis">{{ record.remark || '-' }}</span>
+                </a-tooltip>
+              </template>
+              <template v-else-if="column.dataIndex === 'eventText'">
+                <a-tooltip :title="record.eventText">
+                  <span class="cell-ellipsis">{{ record.eventText }}</span>
+                </a-tooltip>
+              </template>
+            </template>
+          </a-table>
         </section>
 
-        <!-- 左栏下：交易费用设置 -->
+        <!-- 交易费用设置 -->
         <section class="fee-panel">
-        <div class="panel-title-row">
-          <div class="panel-title-left">
-            <h3 class="panel-title">交易费用设置</h3>
-            <a-tooltip :overlay-style="{ maxWidth: '320px' }">
-              <template #title>
-                佣金：成交金额 × 费率，不足最低佣金时按最低佣金收取（买卖双向）<br />
-                买入实际成本 = 成交金额 + 佣金 + 过户费
-              </template>
-              <QuestionCircleOutlined class="panel-title-tip" aria-label="查看交易费用说明" />
-            </a-tooltip>
+          <div class="panel-title-row">
+            <div class="panel-title-left">
+              <h3 class="panel-title">交易费用设置</h3>
+              <a-tooltip :overlay-style="{ maxWidth: '320px' }">
+                <template #title>
+                  佣金：成交金额 × 费率，不足最低佣金时按最低佣金收取（买卖双向）<br />
+                  买入实际成本 = 成交金额 + 佣金 + 过户费
+                </template>
+                <QuestionCircleOutlined class="panel-title-tip" aria-label="查看交易费用说明" />
+              </a-tooltip>
+            </div>
+            <a-button type="primary" :loading="feeSaving" @click="handleSaveFeeSettings">保存</a-button>
           </div>
-          <a-button type="primary" :loading="feeSaving" @click="handleSaveFeeSettings">保存</a-button>
-        </div>
-        <a-form layout="vertical" class="fee-form">
-          <a-form-item label="佣金费率">
-            <a-input v-model:value="feeForm.commissionRate" addon-after="万分之" placeholder="如 2.354" />
-          </a-form-item>
-          <a-form-item label="最低佣金">
-            <a-input v-model:value="feeForm.minCommission" addon-after="元/笔" placeholder="如 5" />
-          </a-form-item>
-          <a-form-item>
-            <template #label>
-              <span class="fee-label">
-                印花税
-                <a-tooltip>
-                  <template #title>卖出时按成交金额 × 费率收取</template>
-                  <QuestionCircleOutlined class="fee-label-tip" aria-label="印花税说明" />
-                </a-tooltip>
-              </span>
-            </template>
-            <a-input v-model:value="feeForm.stampDutyRate" addon-after="%" placeholder="如 0.05" />
-          </a-form-item>
-          <a-form-item>
-            <template #label>
-              <span class="fee-label">
-                过户费
-                <a-tooltip>
-                  <template #title>买卖双向收取，仅沪市（60/68 开头）适用</template>
-                  <QuestionCircleOutlined class="fee-label-tip" aria-label="过户费说明" />
-                </a-tooltip>
-              </span>
-            </template>
-            <a-input v-model:value="feeForm.transferFeeRate" addon-after="%" placeholder="如 0.001" />
-          </a-form-item>
-        </a-form>
+          <a-form layout="vertical" class="fee-form">
+            <a-form-item label="佣金费率">
+              <a-input v-model:value="feeForm.commissionRate" addon-after="万分之" placeholder="如 2.354" />
+            </a-form-item>
+            <a-form-item label="最低佣金">
+              <a-input v-model:value="feeForm.minCommission" addon-after="元/笔" placeholder="如 5" />
+            </a-form-item>
+            <a-form-item>
+              <template #label>
+                <span class="fee-label">
+                  印花税
+                  <a-tooltip>
+                    <template #title>卖出时按成交金额 × 费率收取</template>
+                    <QuestionCircleOutlined class="fee-label-tip" aria-label="印花税说明" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-input v-model:value="feeForm.stampDutyRate" addon-after="%" placeholder="如 0.05" />
+            </a-form-item>
+            <a-form-item>
+              <template #label>
+                <span class="fee-label">
+                  过户费
+                  <a-tooltip>
+                    <template #title>买卖双向收取，仅沪市（60/68 开头）适用</template>
+                    <QuestionCircleOutlined class="fee-label-tip" aria-label="过户费说明" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-input v-model:value="feeForm.transferFeeRate" addon-after="%" placeholder="如 0.001" />
+            </a-form-item>
+          </a-form>
         </section>
       </div>
-
-      <!-- 右栏：资金变化记录 -->
-      <section class="records-panel">
-        <div class="panel-title-row">
-          <div class="panel-title-left">
-            <h3 class="panel-title">资金变化记录</h3>
-          </div>
-        </div>
-        <a-table :columns="columns" :data-source="fundRecords.items" :loading="recordsLoading" row-key="id"
-          size="middle" :pagination="pagination" :scroll="{ x: 730 }" @change="handleTableChange">
-          <template #emptyText>
-            <a-empty description="暂无资金变化记录 — 追加本金或买入/卖出后，每一笔资金变动都会显示在这里" />
-          </template>
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'amountChange'">
-              <span class="amount amount-small" :class="signedClass(record.amountChange)">
-                {{ formatSignedYuan(record.amountChange) }}
-              </span>
-            </template>
-            <template v-else-if="column.dataIndex === 'cashBalance'">
-              <span class="amount amount-small">{{ centsToYuan(record.cashBalance) }}</span>
-            </template>
-            <template v-else-if="column.dataIndex === 'remark'">
-              <a-tooltip :title="record.remark || '-'">
-                <span class="cell-ellipsis">{{ record.remark || '-' }}</span>
-              </a-tooltip>
-            </template>
-            <template v-else-if="column.dataIndex === 'eventText'">
-              <a-tooltip :title="record.eventText">
-                <span class="cell-ellipsis">{{ record.eventText }}</span>
-              </a-tooltip>
-            </template>
-          </template>
-        </a-table>
-      </section>
     </div>
 
     <!-- ========== 设置 / 追加本金弹窗 ========== -->
@@ -301,7 +302,6 @@ watch(
 .stock-account {
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-xl);
   height: 100%;
   min-height: 0;
 }
@@ -329,18 +329,21 @@ watch(
 }
 
 .overview-stats {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--transactions-color-divider);
 }
 
 .overview-stat {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-md);
-  padding: var(--transactions-space-xs) 0;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  padding: var(--transactions-space-lg) var(--transactions-space-md) 0;
   min-width: 0;
+}
+
+.overview-stat + .overview-stat {
+  border-left: 1px solid var(--transactions-color-divider);
 }
 
 .overview-stat-label {
@@ -361,10 +364,6 @@ watch(
   color: var(--transactions-color-text-secondary);
 }
 
-.overview-stat + .overview-stat {
-  border-top: 1px solid var(--transactions-color-divider);
-}
-
 .overview-stat-value {
   color: var(--transactions-color-text-major);
   white-space: nowrap;
@@ -379,28 +378,27 @@ watch(
 
 /* ========== 两栏主体 ========== */
 .account-body {
-  display: grid;
-  grid-template-columns: 380px minmax(0, 1fr);
-  gap: 0;
-  align-items: stretch;
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background-color: var(--transactions-color-major-background);
   border: 1px solid var(--transactions-color-window-border);
   border-radius: var(--transactions-radius-lg);
 }
 
-.account-left {
-  display: flex;
-  flex-direction: column;
+.account-grid {
+  flex: 1;
   min-height: 0;
-  border-right: 1px solid var(--transactions-color-divider);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 0;
 }
 
 .fee-panel {
-  flex: 1;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   padding: var(--transactions-space-xl);
@@ -449,8 +447,9 @@ watch(
 .records-panel {
   display: flex;
   flex-direction: column;
-  min-height: 320px;
+  min-height: 0;
   padding: var(--transactions-space-xl);
+  border-right: 1px solid var(--transactions-color-divider);
 }
 
 .records-panel :deep(.ant-table-wrapper) {
@@ -484,16 +483,17 @@ watch(
   margin-bottom: 0;
 }
 
-/* 窄窗口：费用设置与记录改为上下堆叠，表格保持列宽并内部横向滚动 */
-@media (max-width: 1365px) {
-  .account-body {
+/* 窄窗口：资金记录与费用设置改为上下堆叠 */
+@media (max-width: 1080px) {
+  .account-grid {
     grid-template-columns: minmax(0, 1fr);
     overflow: visible;
   }
 
-  .account-left {
+  .records-panel {
     border-right: none;
     border-bottom: 1px solid var(--transactions-color-divider);
+    min-height: 320px;
   }
 
   .fee-form {

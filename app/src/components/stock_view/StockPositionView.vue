@@ -4,7 +4,13 @@
     <div class="position-body">
       <!-- 左栏：当前持仓卡片列表（参考关键事件页左栏） -->
       <aside class="position-left">
-        <div v-if="positions.length" class="position-cards">
+        <div v-if="positionsLoading && !positions.length" class="position-cards" aria-hidden="true">
+          <div v-for="i in 3" :key="i" class="position-card position-card-skeleton">
+            <span class="skeleton-bar skeleton-name" />
+            <span class="skeleton-bar skeleton-meta" />
+          </div>
+        </div>
+        <div v-else-if="positions.length" class="position-cards">
           <div
             v-for="p in positions"
             :key="p.stockCode"
@@ -76,7 +82,7 @@
                       </template>
                     </template>
                     <template v-else>
-                      手续费 ¥{{ centsToYuan(record.fee) }}
+                      ¥{{ centsToYuan(record.fee) }}
                     </template>
                   </span>
                 </template>
@@ -110,7 +116,7 @@
           </a-form-item>
         </div>
         <div class="trade-form-row">
-          <a-form-item label="股价（元/股）" required>
+          <a-form-item label="成交价（元/股）" required>
             <a-input v-model:value="tradeModal.price" />
           </a-form-item>
           <a-form-item :label="lotsLabel" required>
@@ -139,7 +145,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
 const stockStore = useStockPositionStore()
-const { positions, selectedCode, trades, tradesLoading, mutating } = storeToRefs(stockStore)
+const { positions, positionsLoading, selectedCode, trades, tradesLoading, mutating } = storeToRefs(stockStore)
 
 const currentPosition = computed(() =>
   positions.value.find((p) => p.stockCode === selectedCode.value) ?? null
@@ -180,7 +186,7 @@ const changeOf = (t: TradeCell) =>
 const columns: ColumnsType = [
   { title: '时间', dataIndex: 'tradeTime', width: 150, align: 'center' },
   { title: '类型', dataIndex: 'tradeType', width: 90, align: 'center' },
-  { title: '价格', dataIndex: 'price', width: 100, align: 'right' },
+  { title: '成交价', dataIndex: 'price', width: 100, align: 'right' },
   { title: '手数', dataIndex: 'lots', width: 80, align: 'center' },
   { title: '成交金额', dataIndex: 'amount', width: 120, align: 'right' },
   { title: '手续费', dataIndex: 'fee', minWidth: 220 },
@@ -245,7 +251,7 @@ const handleTradeSubmit = async () => {
     return
   }
   if (!/^(60|68|00|30)\d{4}$/.test(tradeModal.stockCode.trim())) {
-    message.error('请输入有效的沪深股票代码（沪 60/68 开头，深 00/30 开头）')
+    message.error('请输入有效的沪深股票代码（沪 60/68、深 00/30 开头）')
     return
   }
   if (isNaN(price) || price <= 0) {
@@ -375,6 +381,7 @@ onMounted(() => {
 /* 左栏底部主按钮（对应关键事件页「添加事件」） */
 .panel-footer {
   flex-shrink: 0;
+  border-top: 1px solid var(--transactions-color-divider);
   padding-top: var(--transactions-space-md);
 }
 
@@ -467,16 +474,52 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+/* 持仓列表加载骨架 */
+.position-card-skeleton {
+  cursor: default;
+  pointer-events: none;
+  justify-content: center;
+  gap: var(--transactions-space-md);
+}
+
+.position-card-skeleton:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.skeleton-bar {
+  display: block;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-name {
+  width: 60%;
+  height: 14px;
+}
+
+.skeleton-meta {
+  width: 80%;
+  height: 12px;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
 /* ========== 中栏：交易记录表格 ========== */
 .trade-table-wrap {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: auto;
   @include custom-scrollbar;
 }
 
 .trade-table {
   width: 100%;
+  min-width: 880px;
 }
 
 .trade-table :deep(.ant-table) {
@@ -580,6 +623,11 @@ onMounted(() => {
 
   .position-card:hover {
     transform: none;
+  }
+
+  .skeleton-bar {
+    animation: none;
+    opacity: 0.6;
   }
 }
 </style>
