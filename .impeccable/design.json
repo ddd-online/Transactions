@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-01T00:00:00+08:00",
+  "title": "Design System: Transactions",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Clarity Blue", "canonical": "#3964fe", "tonalRamp": ["oklch(0.15 0.20 245)", "oklch(0.25 0.22 243)", "oklch(0.35 0.24 240)", "oklch(0.45 0.25 238)", "oklch(0.55 0.25 235)", "oklch(0.65 0.22 232)", "oklch(0.78 0.16 230)", "oklch(0.92 0.06 228)"] },
+      "income": { "role": "semantic", "displayName": "Income Green", "canonical": "#16a34a", "tonalRamp": ["oklch(0.25 0.12 150)", "oklch(0.35 0.13 150)", "oklch(0.45 0.14 150)", "oklch(0.55 0.14 150)", "oklch(0.65 0.13 150)", "oklch(0.75 0.10 150)", "oklch(0.85 0.07 150)", "oklch(0.94 0.03 150)"] },
+      "expense": { "role": "semantic", "displayName": "Expense Red", "canonical": "#dc2626", "tonalRamp": ["oklch(0.25 0.14 25)", "oklch(0.35 0.16 25)", "oklch(0.45 0.17 25)", "oklch(0.55 0.18 25)", "oklch(0.65 0.16 25)", "oklch(0.75 0.13 25)", "oklch(0.85 0.09 25)", "oklch(0.94 0.04 25)"] },
+      "transfer": { "role": "semantic", "displayName": "Transfer Blue", "canonical": "#3b82f6", "tonalRamp": ["oklch(0.25 0.14 255)", "oklch(0.35 0.15 255)", "oklch(0.45 0.16 255)", "oklch(0.55 0.16 255)", "oklch(0.65 0.14 255)", "oklch(0.75 0.11 255)", "oklch(0.85 0.07 255)", "oklch(0.94 0.03 255)"] },
+      "outlier": { "role": "semantic", "displayName": "Outlier Amber", "canonical": "#d97706", "tonalRamp": ["oklch(0.25 0.10 65)", "oklch(0.35 0.12 65)", "oklch(0.45 0.13 65)", "oklch(0.55 0.14 65)", "oklch(0.65 0.13 65)", "oklch(0.75 0.11 65)", "oklch(0.85 0.08 65)", "oklch(0.94 0.04 65)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles and key metrics (28px; 36px for hero figures)." },
+      "title": { "displayName": "Title", "purpose": "Panel and card titles (20px; 18px for sub-headers)." },
+      "body": { "displayName": "Body", "purpose": "Default content, table rows, dense lists (14px; 13px)." },
+      "label": { "displayName": "Label", "purpose": "Table headers, statistic labels, badges — uppercase with tracking." },
+      "amount": { "displayName": "Amount", "purpose": "All monetary values — JetBrains Mono, tabular-nums, tight tracking." }
+    },
+    "shadows": [
+      { "name": "sm", "value": "0 1px 2px rgba(0,0,0,0.05)", "purpose": "Resting cards, chips, segmented selection." },
+      { "name": "md", "value": "0 4px 12px rgba(0,0,0,0.08)", "purpose": "Hovered cards, dropdowns." },
+      { "name": "lg", "value": "0 8px 24px rgba(0,0,0,0.10)", "purpose": "Popovers, messages, notifications." },
+      { "name": "xl", "value": "0 16px 40px rgba(0,0,0,0.14)", "purpose": "Modals and drawers." },
+      { "name": "focus", "value": "0 0 0 2px rgba(57,100,254,0.25)", "purpose": "Keyboard focus ring on inputs and controls." }
+    ],
+    "motion": [
+      { "name": "fast", "value": "150ms ease", "purpose": "State transitions on buttons, inputs, nav items." },
+      { "name": "normal", "value": "200ms ease", "purpose": "Default card and panel transitions." },
+      { "name": "slow", "value": "300ms ease", "purpose": "Larger transitions." },
+      { "name": "smooth", "value": "300ms cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Decorative motion such as entry fades." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "1080px", "purpose": "Two-column surfaces stack to a single column." },
+      { "name": "wide", "value": "1365px", "purpose": "Wider three-column layouts collapse." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single loud action on a surface.",
+      "html": "<button class=\"ds-btn-primary\">记一笔</button>",
+      "css": ".ds-btn-primary { font-family: var(--transactions-font-body); font-weight: 500; height: 36px; min-width: 72px; padding: 0 16px; border: none; border-radius: 8px; background: var(--transactions-color-primary); color: var(--transactions-color-text-inverse); cursor: pointer; transition: all 150ms ease; } .ds-btn-primary:hover { background: var(--transactions-color-primary-hover); } .ds-btn-primary:active { background: var(--transactions-color-primary-active); } .ds-btn-primary:focus-visible { outline: 2px solid var(--transactions-color-primary); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default secondary action with a hairline border.",
+      "html": "<button class=\"ds-btn-secondary\">取消</button>",
+      "css": ".ds-btn-secondary { font-family: var(--transactions-font-body); font-weight: 500; height: 36px; min-width: 72px; padding: 0 16px; border: 1px solid var(--transactions-color-window-border); border-radius: 8px; background: var(--transactions-color-major-background); color: var(--transactions-color-text-major); cursor: pointer; transition: all 150ms ease; } .ds-btn-secondary:hover { border-color: var(--transactions-color-border-l2); background: var(--transactions-color-hover-bg); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--transactions-color-primary); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Danger Button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Inline destructive action; quiet until hovered.",
+      "html": "<button class=\"ds-btn-text-danger\">删除</button>",
+      "css": ".ds-btn-text-danger { font-family: var(--transactions-font-body); font-weight: 500; height: 36px; padding: 0 12px; border: none; border-radius: 8px; background: none; color: var(--transactions-color-expense); cursor: pointer; transition: all 150ms ease; } .ds-btn-text-danger:hover { background: var(--transactions-color-danger-hover-bg); } .ds-btn-text-danger:focus-visible { outline: 2px solid var(--transactions-color-primary); outline-offset: 2px; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text field with hairline border and focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"金额\" />",
+      "css": ".ds-input { height: 36px; padding: 0 12px; border: 1px solid var(--transactions-color-window-border); border-radius: 8px; font-family: var(--transactions-font-body); font-size: 14px; color: var(--transactions-color-text-major); background: var(--transactions-color-major-background); transition: all 150ms ease; } .ds-input::placeholder { color: var(--transactions-color-text-disabled); } .ds-input:hover { border-color: var(--transactions-color-border-l2); } .ds-input:focus { border-color: var(--transactions-color-primary); box-shadow: 0 0 0 2px rgba(57, 100, 254, 0.25); outline: none; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat Paper surface with a hairline border and an amount in mono.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">本月支出</div><div class=\"ds-card-amount\">¥1,234.56</div></div>",
+      "css": ".ds-card { background: var(--transactions-color-major-background); border: 1px solid var(--transactions-color-window-border); border-radius: 12px; padding: 24px; box-shadow: var(--transactions-shadow-sm); } .ds-card-title { margin: 0 0 8px; font-family: var(--transactions-font-display); font-size: 16px; font-weight: 500; color: var(--transactions-color-text-major); } .ds-card-amount { margin: 0; font-family: var(--transactions-font-mono); font-size: 28px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--transactions-color-text-major); }"
+    },
+    {
+      "name": "Income Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Semantic chip: 10% tint fill, semantic text, no border.",
+      "html": "<span class=\"ds-tag\">收入</span>",
+      "css": ".ds-tag { display: inline-flex; align-items: center; padding: 2px 8px; border: none; border-radius: 6px; background: var(--transactions-color-income-tint); color: var(--transactions-color-income); font-family: var(--transactions-font-body); font-size: 12px; font-weight: 500; }"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Left-rail nav item with quiet default and tinted active state.",
+      "html": "<button class=\"ds-nav ds-nav-active\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M3 3v18h18\"/><path d=\"M7 14l4-4 3 3 5-6\"/></svg><span>消费记录</span></button>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 16px; border: none; border-radius: 8px; background: none; color: var(--transactions-color-text-secondary); font-family: var(--transactions-font-body); font-size: 13px; text-align: left; cursor: pointer; transition: all 150ms ease; } .ds-nav:hover { background: var(--transactions-color-hover-bg); color: var(--transactions-color-text-major); } .ds-nav-active { background: var(--transactions-color-active-bg); color: var(--transactions-color-primary); font-weight: 500; } .ds-nav:focus-visible { outline: 2px solid var(--transactions-color-primary); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Focus Desk",
+    "overview": "Transactions is a desktop workstation for personal finance. The interface stays clean and airy — cool neutral surfaces, generous white space, and a single blue accent — so the numbers are the loudest thing on screen. Trustworthiness comes from precision: every amount is set in monospace with tabular figures, every layer is separated by a hairline or a tone rather than a heavy shadow, and every interactive element announces itself with a clear focus ring. The system is refined and restrained by design: components are small, consistent, and quiet, built for dense data work rather than spectacle. Nothing competes with the ledger. Depth is expressed through light layering — surface tone plus 1px borders — with shadows reserved for genuine lift: hovers, popovers, and modals.",
+    "keyCharacteristics": [
+      "One accent voice (Clarity Blue) across actions, focus, and selection.",
+      "Cool neutral hierarchy (Canvas / Paper / Soft Gray) with hairline dividers.",
+      "Inter for UI, JetBrains Mono with tabular-nums for every monetary value.",
+      "8px-based spacing rhythm; compact 36px controls at the heart of the system.",
+      "Light layering: tone and hairlines first, shadows only where surfaces truly lift.",
+      "Dual theme (light + dark) over the same token names; dark values are tuned for contrast, never re-themed."
+    ],
+    "rules": [
+      { "name": "The Semantic Silo Rule", "body": "Income/expense/transfer/outlier colors appear only on transaction or stock data — never on chrome, navigation, or brand surfaces.", "section": "colors" },
+      { "name": "The One Accent Rule", "body": "Clarity Blue is the system's only accent color. There is no secondary accent; emphasis comes from weight and placement.", "section": "colors" },
+      { "name": "The Mono Money Rule", "body": "Every monetary amount renders in JetBrains Mono with tabular-nums and slightly negative letter-spacing. Never typeset money in the body face.", "section": "typography" },
+      { "name": "The Hairline Layering Rule", "body": "Separate surfaces with tone and a 1px hairline first; add shadows only when a surface actually needs to lift (hover, popover, modal).", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the `--transactions-*` tokens for every color, size, and spacing value; never introduce one-off hex values.",
+      "Do set every monetary amount in JetBrains Mono with tabular-nums and tight tracking.",
+      "Do confine income/expense/transfer/outlier colors to transaction and stock data.",
+      "Do layer surfaces with tone and 1px hairlines before reaching for shadows.",
+      "Do add a 2px Clarity Blue focus ring to every interactive element.",
+      "Do honor `prefers-reduced-motion` and use the project's custom scrollbar mixin."
+    ],
+    "donts": [
+      "Don't use browser-default scrollbars or OS-native window chrome (the frameless window keeps its custom title bar).",
+      "Don't paint chrome or navigation with income/expense/transfer/outlier colors.",
+      "Don't add a second accent color.",
+      "Don't use shadows to create hierarchy where a hairline and a tone will do."
+    ]
+  }
+}
