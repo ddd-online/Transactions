@@ -34,6 +34,15 @@
         </button>
         <button
           class="nav-item"
+          :class="{ active: activeComponent === 'stock' }"
+          @click="activeComponent = 'stock'"
+          aria-label="股票交易"
+        >
+          <StockOutlined class="nav-icon"/>
+          <span class="nav-text">股票交易</span>
+        </button>
+        <button
+          class="nav-item"
           :class="{ active: activeComponent === 'ai' }"
           @click="activeComponent = 'ai'"
           aria-label="智能助手"
@@ -70,12 +79,14 @@ import {
   InfoCircleOutlined,
   RobotOutlined,
   BookOutlined,
+  StockOutlined,
 } from "@ant-design/icons-vue";
 import TransactionsTemplateSetting from './TransactionsTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
 import AiSetting from './AiSetting.vue';
 import DiarySetting from './DiarySetting.vue';
+import StockTradingSetting from './StockTradingSetting.vue';
 
 const activeComponent = ref('general');
 
@@ -83,6 +94,7 @@ const componentMap = {
   'general': GeneralSetting,
   'template': TransactionsTemplateSetting,
   'diary': DiarySetting,
+  'stock': StockTradingSetting,
   'about': AboutSetting,
   'ai': AiSetting,
 };
