@@ -125,6 +125,27 @@ func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
 	return h.StockSvc.CreateTrade(ws(c), ledgerID, stockCode, stockName, tradeType, priceCents, int64(lots), int64(tradeTime), remark)
 }
 
+// GET /api/v1/stock/name?stock_code=
+func (h *Handlers) getStockName(c *gin.Context) (any, error) {
+	return h.StockSvc.LookupStockName(ws(c), c.Query("stock_code"))
+}
+
+// POST /api/v1/stock/reset  body: { ledger_id }  清空指定账本的全部股票交易数据。
+func (h *Handlers) resetStockData(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	if err := h.StockSvc.ResetData(ws(c), ledgerID); err != nil {
+		return nil, err
+	}
+	return true, nil
+}
+
 // requireLedgerID 从 query 取 ledger_id。
 func requireLedgerID(c *gin.Context) (string, error) {
 	ledgerID := c.Query("ledger_id")

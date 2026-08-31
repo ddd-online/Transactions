@@ -95,7 +95,7 @@
               <span class="fee-label">
                 过户费
                 <a-tooltip>
-                  <template #title>买卖双向收取，仅沪市（60xxxx）适用</template>
+                  <template #title>买卖双向收取，仅沪市（60/68 开头）适用</template>
                   <QuestionCircleOutlined class="fee-label-tip" aria-label="过户费说明" />
                 </a-tooltip>
               </span>

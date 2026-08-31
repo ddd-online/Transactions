@@ -28,7 +28,9 @@ type StockDao interface {
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]models.StockPosition, error)
 	CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
+	QueryStockName(ws *workspace.Workspace, stockCode string) (string, error)
 	DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error
+	ResetByLedgerId(ws *workspace.Workspace, ledgerID string) error
 }
 
 var _ StockDao = &stockDaoImpl{}
@@ -144,13 +146,12 @@ func (d *stockDaoImpl) CreatePosition(ws *workspace.Workspace, position *models.
 
 func (d *stockDaoImpl) UpdatePosition(ws *workspace.Workspace, position *models.StockPosition) error {
 	return ws.GetDb().Model(position).
-		Select("quantity", "avg_cost", "total_cost", "realized_pnl", "stock_name").
+		Select("quantity", "total_cost", "realized_pnl", "stock_name").
 		Updates(map[string]any{
-			"quantity":      position.Quantity,
-			"avg_cost":      position.AvgCost,
-			"total_cost":    position.TotalCost,
-			"realized_pnl":  position.RealizedPnl,
-			"stock_name":    position.StockName,
+			"quantity":     position.Quantity,
+			"total_cost":   position.TotalCost,
+			"realized_pnl": position.RealizedPnl,
+			"stock_name":   position.StockName,
 		}).Error
 }
 
@@ -174,6 +175,22 @@ func (d *stockDaoImpl) ListTrades(ws *workspace.Workspace, ledgerID string, stoc
 	return trades, err
 }
 
+// QueryStockName 从已有交易记录查询股票名称（跨账本，按最近成交优先）。
+func (d *stockDaoImpl) QueryStockName(ws *workspace.Workspace, stockCode string) (string, error) {
+	var name string
+	if err := ws.GetDb().Model(&models.StockTrade{}).
+		Where("stock_code = ?", stockCode).
+		Order("created_at DESC, id DESC").
+		Limit(1).
+		Pluck("stock_name", &name).Error; err != nil {
+		return "", err
+	}
+	if name == "" {
+		return "", gorm.ErrRecordNotFound
+	}
+	return name, nil
+}
+
 func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error {
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockFundRecord{}).Error; err != nil {
 		return err
@@ -188,6 +205,31 @@ func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string
 		return err
 	}
 	return ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockAccount{}).Error
+}
+
+// ResetByLedgerId 清空指定账本的全部股票交易数据（账户、持仓、交易、资金记录、费用设置），用于设置页「重置」。
+// 历史工作空间可能残留已下线功能的日志表，存在则一并清空。
+func (d *stockDaoImpl) ResetByLedgerId(ws *workspace.Workspace, ledgerID string) error {
+	return ws.Transaction(func(tx *workspace.Workspace) error {
+		tables := []string{
+			"tbl_billadm_stock_fund_record",
+			"tbl_billadm_stock_fee_setting",
+			"tbl_billadm_stock_trade",
+			"tbl_billadm_stock_position",
+			"tbl_billadm_stock_account",
+		}
+		for _, table := range tables {
+			if err := tx.GetDb().Exec("DELETE FROM "+table+" WHERE ledger_id = ?", ledgerID).Error; err != nil {
+				return err
+			}
+		}
+		if tx.GetDb().Migrator().HasTable("tbl_billadm_stock_journal") {
+			if err := tx.GetDb().Exec("DELETE FROM tbl_billadm_stock_journal WHERE ledger_id = ?", ledgerID).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // IsNotFound 判断 GORM 查询错误是否为"记录不存在"。

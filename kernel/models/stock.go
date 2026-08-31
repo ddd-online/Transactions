@@ -71,14 +71,13 @@ func (StockFundRecord) TableName() string {
 	return "tbl_billadm_stock_fund_record"
 }
 
-// StockPosition 股票持仓（每笔买卖实时维护，卖出时按平均成本结转已实现盈亏）。
+// StockPosition 股票持仓（每笔买卖实时维护，卖出时按总成本比例结转已实现盈亏）。
 type StockPosition struct {
 	ID          string `gorm:"primaryKey;comment:持仓UUID" json:"id"`
 	LedgerID    string `gorm:"uniqueIndex:idx_stock_position_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
 	StockCode   string `gorm:"uniqueIndex:idx_stock_position_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
 	StockName   string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
 	Quantity    int64  `gorm:"not null;default:0;comment:持仓数量（股）" json:"quantity"`
-	AvgCost     int64  `gorm:"not null;default:0;comment:平均成本（分/股，含买入费用）" json:"avgCost"`
 	TotalCost   int64  `gorm:"not null;default:0;comment:持仓总成本（分）" json:"totalCost"`
 	RealizedPnl int64  `gorm:"not null;default:0;comment:已实现盈亏（分，该股累计）" json:"realizedPnl"`
 	CreatedAt   int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`

@@ -2,12 +2,17 @@ package service
 
 import (
 	"fmt"
+	"io"
 	"math"
+	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 
 	"github.com/transactions/dao"
 	"github.com/transactions/models"
@@ -27,6 +32,8 @@ type StockService interface {
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error)
+	LookupStockName(ws *workspace.Workspace, stockCode string) (*dto.StockNameDto, error)
+	ResetData(ws *workspace.Workspace, ledgerID string) error
 }
 
 var _ StockService = &stockServiceImpl{}
@@ -302,7 +309,8 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 
 	shares := lots * 100
 	amount := priceCents * shares
-	isSH := strings.HasPrefix(stockCode, "60")
+	// 沪市：60（主板）/ 68（科创板）开头
+	isSH := strings.HasPrefix(stockCode, "60") || strings.HasPrefix(stockCode, "68")
 
 	trade := &models.StockTrade{
 		ID:        util.GetUUID(),
@@ -374,7 +382,6 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 
 			position.Quantity += shares
 			position.TotalCost += amount + feeBreakdown.Total
-			position.AvgCost = position.TotalCost / position.Quantity
 		} else {
 			if shares > position.Quantity {
 				return models.NewBadRequest(fmt.Sprintf("卖出数量超过持仓（当前 %d 股）", position.Quantity))
@@ -383,7 +390,8 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 			eventType = models.StockEventSell
 			eventText = fmt.Sprintf("卖出 %s %d手", stockName, lots)
 
-			costBasis := position.AvgCost * shares
+			// 按剩余总成本的比例结转（四舍五入到分），避免整除截断造成已实现盈亏偏差
+			costBasis := int64(math.Round(float64(position.TotalCost) * float64(shares) / float64(position.Quantity)))
 			realized := amount - feeBreakdown.Total - costBasis
 			netPnl = &realized
 
@@ -391,7 +399,6 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 			position.TotalCost -= costBasis
 			position.RealizedPnl += realized
 			if position.Quantity == 0 {
-				position.AvgCost = 0
 				position.TotalCost = 0
 			}
 		}
@@ -424,6 +431,68 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 	}
 	dto := dto.FromStockTrade(trade)
 	return &dto, nil
+}
+
+var (
+	stockCodePattern = regexp.MustCompile(`^(60|68|00|30)\d{4}$`)
+	quoteFieldPattern = regexp.MustCompile(`"([^"]*)"`)
+)
+
+// LookupStockName 按股票代码查询股票名称：优先本地已有交易记录，未命中时走外部行情接口兜底。
+func (s *stockServiceImpl) LookupStockName(ws *workspace.Workspace, stockCode string) (*dto.StockNameDto, error) {
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	name, err := s.stockDao.QueryStockName(ws, stockCode)
+	if err == nil && name != "" {
+		return &dto.StockNameDto{StockCode: stockCode, StockName: name}, nil
+	}
+	if err != nil && !dao.IsNotFound(err) {
+		logrus.Warnf("查询本地股票名称失败, code: %s, err: %v", stockCode, err)
+	}
+	return &dto.StockNameDto{StockCode: stockCode, StockName: fetchStockNameExternal(stockCode)}, nil
+}
+
+// fetchStockNameExternal 从腾讯行情接口查询 A 股股票名称，失败返回空串（不阻塞录入流程）。
+func fetchStockNameExternal(stockCode string) string {
+	// 仅支持 A 股六位代码（沪 60/68、深 00/30），避免非法入参打到外部接口
+	if !stockCodePattern.MatchString(stockCode) {
+		return ""
+	}
+	market := "sz"
+	if strings.HasPrefix(stockCode, "60") || strings.HasPrefix(stockCode, "68") {
+		market = "sh"
+	}
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get(fmt.Sprintf("http://qt.gtimg.cn/q=%s%s", market, stockCode))
+	if err != nil {
+		logrus.Warnf("查询股票名称失败(网络), code: %s, err: %v", stockCode, err)
+		return ""
+	}
+	defer resp.Body.Close()
+	decoded, err := io.ReadAll(transform.NewReader(resp.Body, simplifiedchinese.GBK.NewDecoder()))
+	if err != nil {
+		logrus.Warnf("查询股票名称失败(解码), code: %s, err: %v", stockCode, err)
+		return ""
+	}
+	matches := quoteFieldPattern.FindSubmatch(decoded)
+	if len(matches) < 2 {
+		return ""
+	}
+	parts := strings.Split(string(matches[1]), "~")
+	if len(parts) < 2 {
+		return ""
+	}
+	return strings.TrimSpace(parts[1])
+}
+
+// ResetData 清空指定账本的全部股票交易数据。
+func (s *stockServiceImpl) ResetData(ws *workspace.Workspace, ledgerID string) error {
+	if err := s.stockDao.ResetByLedgerId(ws, ledgerID); err != nil {
+		logrus.Errorf("重置股票交易数据失败, err: %v", err)
+		return err
+	}
+	return nil
 }
 
 // FeeBreakdown 一笔交易的费用明细（单位：分）。

@@ -56,7 +56,6 @@ type StockPositionDto struct {
 	StockCode   string `json:"stockCode"`
 	StockName   string `json:"stockName"`
 	Quantity    int64  `json:"quantity"`    // 持仓数量（股）
-	AvgCost     int64  `json:"avgCost"`     // 平均成本（分/股，含买入费用）
 	TotalCost   int64  `json:"totalCost"`   // 持仓总成本（分）
 	RealizedPnl int64  `json:"realizedPnl"` // 该股累计已实现盈亏（分）
 }
@@ -68,10 +67,15 @@ func FromStockPosition(p *models.StockPosition) StockPositionDto {
 		StockCode:   p.StockCode,
 		StockName:   p.StockName,
 		Quantity:    p.Quantity,
-		AvgCost:     p.AvgCost,
 		TotalCost:   p.TotalCost,
 		RealizedPnl: p.RealizedPnl,
 	}
+}
+
+// StockNameDto 股票名称查询结果。
+type StockNameDto struct {
+	StockCode string `json:"stockCode"`
+	StockName string `json:"stockName"`
 }
 
 // StockTradeDto 股票交易记录。

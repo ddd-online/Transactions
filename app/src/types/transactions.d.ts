@@ -252,7 +252,6 @@ export interface StockPosition {
     stockCode: string;
     stockName: string;
     quantity: number;            // 持仓数量（股）
-    avgCost: number;             // 平均成本（分/股，含买入费用）
     totalCost: number;           // 持仓总成本（分）
     realizedPnl: number;         // 该股累计已实现盈亏（分）
 }
@@ -277,4 +276,12 @@ export interface StockTrade {
     realizedPnl: number | null;  // 卖出净盈亏（分），仅减仓/清仓非空
     tradeTime: number;           // 成交时间（Unix 秒）
     remark: string;
+}
+
+/**
+ * 股票名称查询结果
+ */
+export interface StockNameResult {
+    stockCode: string;
+    stockName: string;
 }

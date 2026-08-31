@@ -8,10 +8,12 @@ import {
 import { withErrorHandling } from '@/backend/errorHandler'
 import NotificationUtil from '@/backend/notification'
 import { useLedgerStore } from '@/stores/ledgerStore'
+import { useStockAccountStore } from '@/stores/stockAccountStore'
 import type { StockPosition, StockTrade } from '@/types/transactions'
 
 export const useStockPositionStore = defineStore('stockPosition', () => {
   const ledgerStore = useLedgerStore()
+  const stockAccountStore = useStockAccountStore()
 
   const positions = ref<StockPosition[]>([])
   const positionsLoading = ref(false)
@@ -116,6 +118,8 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
       } else if (selectedCode.value) {
         await loadTrades(selectedCode.value)
       }
+      // 同步刷新「我的账户」总览与资金变化记录（每笔交易都会产生资金记录）
+      await stockAccountStore.reloadAll()
       return true
     } catch {
       return false

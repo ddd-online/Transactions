@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { StockFeeSetting, StockFundRecordPage, StockOverview, StockPosition, StockTrade } from "@/types/transactions";
+import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockTrade } from "@/types/transactions";
 
 export async function fetchStockOverview(ledgerId: string): Promise<StockOverview> {
     return api.get<StockOverview>(`/v1/stock/account/overview?ledger_id=${encodeURIComponent(ledgerId)}`, '查询股票账户总览');
@@ -51,6 +51,14 @@ export async function fetchStockTrades(ledgerId: string, stockCode: string): Pro
     );
 }
 
+export async function fetchStockName(stockCode: string): Promise<string> {
+    const data = await api.get<StockNameResult>(
+        `/v1/stock/name?stock_code=${encodeURIComponent(stockCode)}`,
+        '查询股票名称'
+    );
+    return data?.stockName ?? '';
+}
+
 export async function createStockTrade(
     ledgerId: string,
     stockCode: string,
@@ -71,4 +79,8 @@ export async function createStockTrade(
         trade_time: tradeTime,
         remark,
     }, '记录交易');
+}
+
+export async function resetStockData(ledgerId: string): Promise<boolean> {
+    return api.post<boolean>('/v1/stock/reset', { ledger_id: ledgerId }, '重置股票交易数据');
 }

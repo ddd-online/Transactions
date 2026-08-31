@@ -16,11 +16,7 @@
             @keydown.enter.self="stockStore.selectStock(p.stockCode)"
             @keydown.space.self.prevent="stockStore.selectStock(p.stockCode)"
           >
-            <div class="position-card-head">
-              <span class="position-card-name">{{ p.stockName }}</span>
-              <a-button class="position-card-close" size="small" type="primary" danger
-                @click.stop="openTradeModal('close', p)">清仓</a-button>
-            </div>
+            <span class="position-card-name">{{ p.stockName }}</span>
             <div class="position-card-code-row">
               <span class="position-card-code">{{ p.stockCode }}</span>
               <span class="position-card-lots">持仓 {{ lotsText(p.quantity) }}</span>
@@ -42,8 +38,9 @@
             <span class="stock-identity-name">{{ centerStock.stockName }}</span>
             <span class="stock-identity-code">{{ centerStock.stockCode }}</span>
             <div v-if="currentPosition" class="stock-identity-actions">
-              <a-button size="small" type="primary" @click="openTradeModal('add')">加仓</a-button>
-              <a-button size="small" @click="openTradeModal('reduce')">减仓</a-button>
+              <a-button danger @click="openTradeModal('close')">清仓</a-button>
+              <a-button @click="openTradeModal('reduce')">减仓</a-button>
+              <a-button type="primary" @click="openTradeModal('add')">加仓</a-button>
             </div>
           </div>
           <div class="trade-table-wrap">
@@ -108,7 +105,8 @@
             <a-input v-model:value="tradeModal.stockName" :disabled="tradeModal.tradeType !== 'open'" />
           </a-form-item>
           <a-form-item label="股票代码" required>
-            <a-input v-model:value="tradeModal.stockCode" :disabled="tradeModal.tradeType !== 'open'" />
+            <a-input v-model:value="tradeModal.stockCode" :disabled="tradeModal.tradeType !== 'open'"
+              @blur="handleStockCodeBlur" />
           </a-form-item>
         </div>
         <div class="trade-form-row">
@@ -132,6 +130,8 @@ import { computed, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
 import { useStockPositionStore } from '@/stores/stockPositionStore'
+import { fetchStockName } from '@/backend/api/stock'
+import { tryOrFallback } from '@/backend/errorHandler'
 import { centsToYuan } from '@/backend/functions'
 import type { StockPosition } from '@/types/transactions'
 import type { ColumnsType } from 'ant-design-vue/es/table'
@@ -172,9 +172,9 @@ const signedYuan = (cents: number) => {
 }
 const pnlClass = (cents: number) => (cents > 0 ? 'amount-income' : cents < 0 ? 'amount-expense' : '')
 const formatTime = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD HH:mm')
-// 交易历史金额：买入为现金流出（负）、卖出为现金流入（正）
+// 交易历史金额：买入现金流出 = -(成交金额 + 费用)，卖出现金流入 = 成交金额 - 费用
 const changeOf = (t: TradeCell) =>
-  (isBuy(t.tradeType) ? -1 : 1) * (t.amount - t.fee)
+  isBuy(t.tradeType) ? -(t.amount + t.fee) : t.amount - t.fee
 
 // ---------- 交易记录表格 ----------
 const columns: ColumnsType = [
@@ -224,6 +224,17 @@ const resetTradeModal = (tradeType: TradeType, position: StockPosition | null) =
 const openTradeModal = (tradeType: TradeType, position?: StockPosition) => {
   resetTradeModal(tradeType, position ?? currentPosition.value ?? null)
   tradeModal.open = true
+}
+
+// 建仓时输入股票代码后自动查询并填充股票名称（查询失败保持为空，可手动填写）
+const handleStockCodeBlur = async () => {
+  const code = tradeModal.stockCode.trim()
+  if (tradeModal.tradeType !== 'open' || !code || tradeModal.stockName.trim()) return
+  if (!/^(60|68|00|30)\d{4}$/.test(code)) return
+  const name = await tryOrFallback(() => fetchStockName(code), '')
+  if (name && !tradeModal.stockName.trim()) {
+    tradeModal.stockName = name
+  }
 }
 
 const handleTradeSubmit = async () => {
@@ -421,14 +432,6 @@ onMounted(() => {
   box-shadow: var(--transactions-shadow-md);
 }
 
-.position-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-  min-width: 0;
-}
-
 .position-card-code-row {
   display: flex;
   align-items: baseline;
@@ -436,11 +439,6 @@ onMounted(() => {
   gap: var(--transactions-space-sm);
   min-width: 0;
   margin-top: auto;
-}
-
-.position-card-close {
-  flex-shrink: 0;
-  font-size: var(--transactions-size-text-caption);
 }
 
 .position-card-name {
