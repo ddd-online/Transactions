@@ -28,9 +28,6 @@ type StockDao interface {
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]models.StockPosition, error)
 	CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
-	GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockJournal, error)
-	CreateJournal(ws *workspace.Workspace, journal *models.StockJournal) error
-	UpdateJournal(ws *workspace.Workspace, journal *models.StockJournal) error
 	DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error
 }
 
@@ -177,30 +174,6 @@ func (d *stockDaoImpl) ListTrades(ws *workspace.Workspace, ledgerID string, stoc
 	return trades, err
 }
 
-func (d *stockDaoImpl) GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockJournal, error) {
-	var journal models.StockJournal
-	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).First(&journal).Error
-	if err != nil {
-		return nil, err
-	}
-	return &journal, nil
-}
-
-func (d *stockDaoImpl) CreateJournal(ws *workspace.Workspace, journal *models.StockJournal) error {
-	return ws.GetDb().Create(journal).Error
-}
-
-func (d *stockDaoImpl) UpdateJournal(ws *workspace.Workspace, journal *models.StockJournal) error {
-	return ws.GetDb().Model(journal).
-		Select("rules", "plan", "review", "stock_name").
-		Updates(map[string]any{
-			"rules":      journal.Rules,
-			"plan":       journal.Plan,
-			"review":     journal.Review,
-			"stock_name": journal.StockName,
-		}).Error
-}
-
 func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error {
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockFundRecord{}).Error; err != nil {
 		return err
@@ -212,9 +185,6 @@ func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string
 		return err
 	}
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockPosition{}).Error; err != nil {
-		return err
-	}
-	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockJournal{}).Error; err != nil {
 		return err
 	}
 	return ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockAccount{}).Error

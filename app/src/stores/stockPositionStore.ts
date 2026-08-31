@@ -2,15 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import {
   createStockTrade,
-  fetchStockJournal,
   fetchStockPositions,
   fetchStockTrades,
-  saveStockJournal,
 } from '@/backend/api/stock'
 import { withErrorHandling } from '@/backend/errorHandler'
 import NotificationUtil from '@/backend/notification'
 import { useLedgerStore } from '@/stores/ledgerStore'
-import type { StockJournal, StockPosition, StockTrade } from '@/types/transactions'
+import type { StockPosition, StockTrade } from '@/types/transactions'
 
 export const useStockPositionStore = defineStore('stockPosition', () => {
   const ledgerStore = useLedgerStore()
@@ -20,8 +18,6 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
   const selectedCode = ref('')
   const trades = ref<StockTrade[]>([])
   const tradesLoading = ref(false)
-  const journal = ref<StockJournal | null>(null)
-  const journalLoading = ref(false)
   const mutating = ref(false)
 
   const currentLedgerId = () => ledgerStore.currentLedgerId
@@ -43,10 +39,9 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
         if (target !== selectedCode.value) {
           selectedCode.value = target
           if (target) {
-            await Promise.all([loadTrades(target), loadJournal(target)])
+            await loadTrades(target)
           } else {
             trades.value = []
-            journal.value = null
           }
         }
       }
@@ -65,7 +60,7 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     try {
       const data = await withErrorHandling(
         () => fetchStockTrades(ledgerId, stockCode),
-        { errorPrefix: '查询交易记录失败', fallback: [] as StockTrade[] }
+        { errorPrefix: '查询交易历史失败', fallback: [] as StockTrade[] }
       )
       trades.value = data ?? []
     } finally {
@@ -73,34 +68,16 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     }
   }
 
-  const loadJournal = async (stockCode = selectedCode.value) => {
-    const ledgerId = currentLedgerId()
-    if (!ledgerId || !stockCode) {
-      journal.value = null
-      return
-    }
-    journalLoading.value = true
-    try {
-      const data = await withErrorHandling(
-        () => fetchStockJournal(ledgerId, stockCode),
-        { errorPrefix: '查询交易日志失败', fallback: null as StockJournal | null }
-      )
-      journal.value = data
-    } finally {
-      journalLoading.value = false
-    }
-  }
-
   const selectStock = async (stockCode: string) => {
     if (stockCode === selectedCode.value) return
     selectedCode.value = stockCode
-    await Promise.all([loadTrades(stockCode), loadJournal(stockCode)])
+    await loadTrades(stockCode)
   }
 
   const reloadAll = async () => {
     await loadPositions()
     if (selectedCode.value) {
-      await Promise.all([loadTrades(), loadJournal()])
+      await loadTrades()
     }
   }
 
@@ -132,27 +109,13 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
       )
       NotificationUtil.success('交易已记录')
       await loadPositions(input.stockCode)
-      return true
-    } catch {
-      return false
-    } finally {
-      mutating.value = false
-    }
-  }
-
-  const saveJournal = async (rules: string, plan: string, review: string): Promise<boolean> => {
-    const ledgerId = currentLedgerId()
-    if (!ledgerId || !selectedCode.value || !journal.value) return false
-    mutating.value = true
-    try {
-      const position = positions.value.find((p) => p.stockCode === selectedCode.value)
-      const stockName = position?.stockName ?? journal.value.stockName
-      const data = await withErrorHandling(
-        () => saveStockJournal(ledgerId, selectedCode.value, stockName, rules, plan, review),
-        { errorPrefix: '保存交易日志失败', rethrow: true }
-      )
-      journal.value = data
-      NotificationUtil.success('交易日志已保存')
+      // 清仓后该股不在持仓，切到该股查看最终交易历史；否则保持选中并刷新
+      if (input.stockCode && !positions.value.some((p) => p.stockCode === input.stockCode)) {
+        selectedCode.value = input.stockCode
+        await loadTrades(input.stockCode)
+      } else if (selectedCode.value) {
+        await loadTrades(selectedCode.value)
+      }
       return true
     } catch {
       return false
@@ -177,15 +140,11 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     selectedCode,
     trades,
     tradesLoading,
-    journal,
-    journalLoading,
     mutating,
     loadPositions,
     loadTrades,
-    loadJournal,
     selectStock,
     reloadAll,
     recordTrade,
-    saveJournal,
   }
 })

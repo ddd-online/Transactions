@@ -27,8 +27,6 @@ type StockService interface {
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error)
-	GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockJournalDto, error)
-	SaveJournal(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, rules string, plan string, review string) (*dto.StockJournalDto, error)
 }
 
 var _ StockService = &stockServiceImpl{}
@@ -326,13 +324,16 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 			return err
 		}
 
-		var fee int64
+		var feeBreakdown FeeBreakdown
 		if isBuy {
-			fee = ComputeBuyFee(amount, isSH, feeSetting).Total
+			feeBreakdown = ComputeBuyFee(amount, isSH, feeSetting)
 		} else {
-			fee = ComputeSellFee(amount, isSH, feeSetting).Total
+			feeBreakdown = ComputeSellFee(amount, isSH, feeSetting)
 		}
-		trade.Fee = fee
+		trade.Fee = feeBreakdown.Total
+		trade.Commission = feeBreakdown.Commission
+		trade.StampDuty = feeBreakdown.StampDuty
+		trade.TransferFee = feeBreakdown.TransferFee
 
 		position, err := s.stockDao.GetPosition(tx, ledgerID, stockCode)
 		if dao.IsNotFound(err) {
@@ -367,23 +368,23 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 		var eventText string
 		var netPnl *int64
 		if isBuy {
-			amountChange = -(amount + fee)
+			amountChange = -(amount + feeBreakdown.Total)
 			eventType = models.StockEventBuy
 			eventText = fmt.Sprintf("买入 %s %d手", stockName, lots)
 
 			position.Quantity += shares
-			position.TotalCost += amount + fee
+			position.TotalCost += amount + feeBreakdown.Total
 			position.AvgCost = position.TotalCost / position.Quantity
 		} else {
 			if shares > position.Quantity {
 				return models.NewBadRequest(fmt.Sprintf("卖出数量超过持仓（当前 %d 股）", position.Quantity))
 			}
-			amountChange = amount - fee
+			amountChange = amount - feeBreakdown.Total
 			eventType = models.StockEventSell
 			eventText = fmt.Sprintf("卖出 %s %d手", stockName, lots)
 
 			costBasis := position.AvgCost * shares
-			realized := amount - fee - costBasis
+			realized := amount - feeBreakdown.Total - costBasis
 			netPnl = &realized
 
 			position.Quantity -= shares
@@ -422,58 +423,6 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 		return nil, err
 	}
 	dto := dto.FromStockTrade(trade)
-	return &dto, nil
-}
-
-// getOrCreateJournal 获取股票交易日志，不存在则创建空记录。
-func (s *stockServiceImpl) getOrCreateJournal(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) (*models.StockJournal, error) {
-	journal, err := s.stockDao.GetJournal(ws, ledgerID, stockCode)
-	if err == nil {
-		return journal, nil
-	}
-	if !dao.IsNotFound(err) {
-		return nil, err
-	}
-	journal = &models.StockJournal{
-		ID:        util.GetUUID(),
-		LedgerID:  ledgerID,
-		StockCode: stockCode,
-		StockName: stockName,
-	}
-	if err := s.stockDao.CreateJournal(ws, journal); err != nil {
-		return nil, err
-	}
-	return journal, nil
-}
-
-func (s *stockServiceImpl) GetJournal(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockJournalDto, error) {
-	if stockCode == "" {
-		return nil, models.NewBadRequest("stock_code is required")
-	}
-	journal, err := s.getOrCreateJournal(ws, ledgerID, stockCode, "")
-	if err != nil {
-		return nil, err
-	}
-	dto := dto.FromStockJournal(journal)
-	return &dto, nil
-}
-
-func (s *stockServiceImpl) SaveJournal(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, rules string, plan string, review string) (*dto.StockJournalDto, error) {
-	if stockCode == "" {
-		return nil, models.NewBadRequest("stock_code is required")
-	}
-	journal, err := s.getOrCreateJournal(ws, ledgerID, stockCode, stockName)
-	if err != nil {
-		return nil, err
-	}
-	journal.StockName = stockName
-	journal.Rules = rules
-	journal.Plan = plan
-	journal.Review = review
-	if err := s.stockDao.UpdateJournal(ws, journal); err != nil {
-		return nil, err
-	}
-	dto := dto.FromStockJournal(journal)
 	return &dto, nil
 }
 

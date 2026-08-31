@@ -81,11 +81,14 @@ type StockTradeDto struct {
 	StockCode   string `json:"stockCode"`
 	StockName   string `json:"stockName"`
 	TradeType   string `json:"tradeType"`
-	Price       int64  `json:"price"`  // 成交价（分/股）
-	Lots        int64  `json:"lots"`   // 手数
-	Shares      int64  `json:"shares"` // 股数
-	Amount      int64  `json:"amount"` // 成交金额（分）
-	Fee         int64  `json:"fee"`    // 交易费用（分）
+	Price       int64  `json:"price"`       // 成交价（分/股）
+	Lots        int64  `json:"lots"`        // 手数
+	Shares      int64  `json:"shares"`      // 股数
+	Amount      int64  `json:"amount"`      // 成交金额（分）
+	Fee         int64  `json:"fee"`         // 交易费用（分）
+	Commission  int64  `json:"commission"`  // 佣金（分）
+	StampDuty   int64  `json:"stampDuty"`   // 印花税（分，仅卖出）
+	TransferFee int64  `json:"transferFee"` // 过户费（分，仅沪市）
 	RealizedPnl *int64 `json:"realizedPnl"`
 	TradeTime   int64  `json:"tradeTime"`
 	Remark      string `json:"remark"`
@@ -103,31 +106,11 @@ func FromStockTrade(t *models.StockTrade) StockTradeDto {
 		Shares:      t.Shares,
 		Amount:      t.Amount,
 		Fee:         t.Fee,
+		Commission:  t.Commission,
+		StampDuty:   t.StampDuty,
+		TransferFee: t.TransferFee,
 		RealizedPnl: t.RealizedPnl,
 		TradeTime:   t.TradeTime,
 		Remark:      t.Remark,
-	}
-}
-
-// StockJournalDto 股票交易日志。
-type StockJournalDto struct {
-	ID        string `json:"id"`
-	LedgerID  string `json:"ledgerId"`
-	StockCode string `json:"stockCode"`
-	StockName string `json:"stockName"`
-	Rules     string `json:"rules"`
-	Plan      string `json:"plan"`
-	Review    string `json:"review"`
-}
-
-func FromStockJournal(j *models.StockJournal) StockJournalDto {
-	return StockJournalDto{
-		ID:        j.ID,
-		LedgerID:  j.LedgerID,
-		StockCode: j.StockCode,
-		StockName: j.StockName,
-		Rules:     j.Rules,
-		Plan:      j.Plan,
-		Review:    j.Review,
 	}
 }

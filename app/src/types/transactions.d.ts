@@ -271,20 +271,10 @@ export interface StockTrade {
     shares: number;              // 股数
     amount: number;              // 成交金额（分）
     fee: number;                 // 交易费用（分）
+    commission: number;          // 佣金（分）
+    stampDuty: number;           // 印花税（分），仅卖出非 0
+    transferFee: number;         // 过户费（分），仅沪市非 0
     realizedPnl: number | null;  // 卖出净盈亏（分），仅减仓/清仓非空
     tradeTime: number;           // 成交时间（Unix 秒）
     remark: string;
-}
-
-/**
- * 股票交易日志（规则/计划/复盘）
- */
-export interface StockJournal {
-    id: string;
-    ledgerId: string;
-    stockCode: string;
-    stockName: string;
-    rules: string;
-    plan: string;
-    review: string;
 }

@@ -1,129 +1,126 @@
 <template>
   <div class="position-page">
-    <!-- 左中右三栏：参考关键事件页 -->
+    <!-- 两栏：左持仓列表 + 中股票详情/交易记录 -->
     <div class="position-body">
       <!-- 左栏：当前持仓卡片列表（参考关键事件页左栏） -->
       <aside class="position-left">
         <div v-if="positions.length" class="position-cards">
-          <button
+          <div
             v-for="p in positions"
             :key="p.stockCode"
             class="position-card"
             :class="{ active: p.stockCode === selectedCode }"
+            role="button"
+            tabindex="0"
             @click="stockStore.selectStock(p.stockCode)"
+            @keydown.enter.self="stockStore.selectStock(p.stockCode)"
+            @keydown.space.self.prevent="stockStore.selectStock(p.stockCode)"
           >
-            <span class="position-card-name">{{ p.stockName }}</span>
-            <span class="position-card-code">{{ p.stockCode }}</span>
-            <span class="position-card-meta">
-              {{ lotsText(p.quantity) }} · 成本 ¥{{ centsToYuan(p.totalCost) }} · 盈亏
-              <span :class="pnlClass(p.realizedPnl)">{{ signedYuan(p.realizedPnl) }}</span>
-            </span>
-          </button>
+            <div class="position-card-head">
+              <span class="position-card-name">{{ p.stockName }}</span>
+              <a-button class="position-card-close" size="small" type="primary" danger
+                @click.stop="openTradeModal('close', p)">清仓</a-button>
+            </div>
+            <div class="position-card-code-row">
+              <span class="position-card-code">{{ p.stockCode }}</span>
+              <span class="position-card-lots">持仓 {{ lotsText(p.quantity) }}</span>
+            </div>
+          </div>
         </div>
         <div v-else class="column-empty">
           <span class="panel-empty-text">暂无持仓</span>
         </div>
         <div class="panel-footer">
-          <a-button type="primary" block @click="openTradeModal()">记录交易</a-button>
+          <a-button type="primary" block @click="openTradeModal('open')">建仓</a-button>
         </div>
       </aside>
 
-      <!-- 中栏：交易规则 / 交易计划 / 交易复盘（参考关键事件页中栏） -->
+      <!-- 中栏：股票详情 + 交易记录表格 -->
       <div class="position-center">
-        <template v-if="currentPosition">
+        <template v-if="centerStock">
           <div class="stock-identity">
-            <span class="stock-identity-name">{{ currentPosition.stockName }}</span>
-            <span class="stock-identity-code">{{ currentPosition.stockCode }}</span>
+            <span class="stock-identity-name">{{ centerStock.stockName }}</span>
+            <span class="stock-identity-code">{{ centerStock.stockCode }}</span>
+            <div v-if="currentPosition" class="stock-identity-actions">
+              <a-button size="small" type="primary" @click="openTradeModal('add')">加仓</a-button>
+              <a-button size="small" @click="openTradeModal('reduce')">减仓</a-button>
+            </div>
           </div>
-          <div class="journal-tabs">
-            <a-tabs v-model:activeKey="activeTab" class="journal-tabs-nav">
-              <a-tab-pane v-for="tab in journalTabs" :key="tab.key" :tab="tab.label">
-                <div v-if="editingTab === tab.key" class="journal-edit">
-                  <a-textarea v-model:value="drafts[tab.key]" :rows="16" class="journal-textarea"
-                    placeholder="支持 Markdown（表格/列表/加粗等）" />
-                  <div class="journal-edit-actions">
-                    <a-button @click="cancelEdit">取消</a-button>
-                    <a-button type="primary" :loading="mutating" @click="saveEdit">保存</a-button>
-                  </div>
-                </div>
-                <div v-else class="journal-view">
-                  <MarkdownViewer v-if="(journal?.[tab.key] || '').trim()" :content="journal?.[tab.key] ?? ''" class="journal-md" />
-                  <p v-else class="journal-empty">暂无内容，点击「编辑」开始记录</p>
-                  <div class="journal-actions">
-                    <a-button type="text" @click="startEdit(tab.key)">
-                      <template #icon><EditOutlined /></template>
-                      编辑
-                    </a-button>
-                  </div>
-                </div>
-              </a-tab-pane>
-            </a-tabs>
+          <div class="trade-table-wrap">
+            <a-table :columns="columns" :data-source="trades" row-key="id"
+              :pagination="false" :loading="tradesLoading" size="middle" class="trade-table"
+              :locale="{ emptyText: currentPosition ? '暂无交易历史，点击「建仓」开始' : '暂无交易历史' }">
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'tradeTime'">
+                  <span class="cell-date">{{ formatTime(record.tradeTime) }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'tradeType'">
+                  <a-tag :class="isBuy(record.tradeType) ? 'tag-buy' : 'tag-sell'">
+                    {{ tradeTypeLabel(record.tradeType) }}
+                  </a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'price'">
+                  <span class="cell-amount">{{ centsToYuan(record.price) }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'lots'">
+                  <span class="cell-lots">{{ record.lots }}手</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'amount'">
+                  <span class="cell-amount">{{ centsToYuan(record.amount) }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'fee'">
+                  <span class="cell-fee">
+                    <template v-if="hasFeeBreakdown(record)">
+                      <template v-if="isBuy(record.tradeType)">
+                        佣金 ¥{{ centsToYuan(record.commission) }} + 过户费 ¥{{ centsToYuan(record.transferFee) }}
+                      </template>
+                      <template v-else>
+                        佣金 ¥{{ centsToYuan(record.commission) }} + 印花税 ¥{{ centsToYuan(record.stampDuty) }} + 过户费 ¥{{ centsToYuan(record.transferFee) }}
+                      </template>
+                    </template>
+                    <template v-else>
+                      手续费 ¥{{ centsToYuan(record.fee) }}
+                    </template>
+                  </span>
+                </template>
+                <template v-else-if="column.dataIndex === 'change'">
+                  <span class="cell-change amount" :class="pnlClass(changeOf(record))">
+                    {{ signedYuan(changeOf(record)) }}
+                  </span>
+                </template>
+              </template>
+            </a-table>
           </div>
         </template>
         <div v-else class="column-empty">
           <span class="panel-empty-text">选择左侧持仓查看详情</span>
         </div>
       </div>
-
-      <!-- 右栏：交易记录卡片（参考关键事件页右栏） -->
-      <aside class="position-right">
-        <div v-if="trades.length" class="trade-cards">
-          <div v-for="t in trades" :key="t.id" class="trade-card">
-            <div class="trade-card-head">
-              <a-tag :class="isBuy(t.tradeType) ? 'tag-buy' : 'tag-sell'">{{ tradeTypeLabel(t.tradeType) }}</a-tag>
-              <span class="trade-card-time">{{ formatTime(t.tradeTime) }}</span>
-            </div>
-            <div class="trade-card-main">
-              <span class="trade-card-price amount">{{ centsToYuan(t.price) }}</span>
-              <span class="trade-card-lots">× {{ t.lots }}手</span>
-              <span class="trade-card-amount amount" :class="pnlClass(changeOf(t))">{{ signedYuan(changeOf(t)) }}</span>
-            </div>
-            <div class="trade-card-sub">
-              {{ t.stockName }} {{ t.stockCode }}
-              <template v-if="t.realizedPnl !== null"> · 盈亏 <span :class="pnlClass(t.realizedPnl)">{{ signedYuan(t.realizedPnl) }}</span></template>
-              <template v-if="t.remark"> · {{ t.remark }}</template>
-            </div>
-          </div>
-        </div>
-        <div v-else class="column-empty">
-          <span class="panel-empty-text">{{ currentPosition ? '暂无交易记录，点击「记录交易」建仓' : '暂无交易记录' }}</span>
-        </div>
-      </aside>
     </div>
 
-    <!-- 记录交易弹窗 -->
-    <a-modal v-model:open="tradeModal.open" title="记录交易" ok-text="记录" cancel-text="取消" centered
+    <!-- 记录交易弹窗：交易类型由入口按钮决定 -->
+    <a-modal v-model:open="tradeModal.open" :title="`记录${tradeTypeLabel(tradeModal.tradeType)}`"
+      :ok-text="tradeTypeLabel(tradeModal.tradeType)" cancel-text="取消" centered
       :width="480" :confirm-loading="mutating" @ok="handleTradeSubmit">
       <a-form layout="vertical">
-        <a-form-item label="交易类型" required>
-          <a-select v-model:value="tradeModal.tradeType">
-            <a-select-option value="open">建仓</a-select-option>
-            <a-select-option value="add">加仓</a-select-option>
-            <a-select-option value="reduce">减仓</a-select-option>
-            <a-select-option value="close">清仓</a-select-option>
-          </a-select>
-        </a-form-item>
         <div class="trade-form-row">
           <a-form-item label="股票名称" required>
-            <a-input v-model:value="tradeModal.stockName" placeholder="如 贵州茅台" />
+            <a-input v-model:value="tradeModal.stockName" :disabled="tradeModal.tradeType !== 'open'" />
           </a-form-item>
           <a-form-item label="股票代码" required>
-            <a-input v-model:value="tradeModal.stockCode" placeholder="如 600519" />
+            <a-input v-model:value="tradeModal.stockCode" :disabled="tradeModal.tradeType !== 'open'" />
           </a-form-item>
         </div>
         <div class="trade-form-row">
           <a-form-item label="股价（元/股）" required>
-            <a-input v-model:value="tradeModal.price" placeholder="如 11.01" />
+            <a-input v-model:value="tradeModal.price" />
           </a-form-item>
-          <a-form-item label="手数" required>
-            <a-input v-model:value="tradeModal.lots" placeholder="如 1" />
+          <a-form-item :label="lotsLabel" required>
+            <a-input v-model:value="tradeModal.lots" :disabled="tradeModal.tradeType === 'close'" />
           </a-form-item>
         </div>
         <a-form-item label="成交时间" required>
           <a-date-picker v-model:value="tradeModal.tradeTime" style="width: 100%" />
-        </a-form-item>
-        <a-form-item label="备注">
-          <a-input v-model:value="tradeModal.remark" placeholder="选填" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -131,21 +128,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
-import { EditOutlined } from '@ant-design/icons-vue'
 import { useStockPositionStore } from '@/stores/stockPositionStore'
 import { centsToYuan } from '@/backend/functions'
+import type { StockPosition } from '@/types/transactions'
+import type { ColumnsType } from 'ant-design-vue/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
 const stockStore = useStockPositionStore()
-const { positions, selectedCode, trades, journal, mutating } = storeToRefs(stockStore)
+const { positions, selectedCode, trades, tradesLoading, mutating } = storeToRefs(stockStore)
 
 const currentPosition = computed(() =>
   positions.value.find((p) => p.stockCode === selectedCode.value) ?? null
 )
+
+// 清仓后选中股不在持仓中，仍用最近一条交易记录展示股票详情
+const centerStock = computed(() => {
+  if (currentPosition.value) return currentPosition.value
+  const first = trades.value[0]
+  return first ? { stockName: first.stockName, stockCode: first.stockCode } : null
+})
 
 // ---------- 展示 ----------
 const tradeTypeLabels: Record<string, string> = {
@@ -157,72 +162,67 @@ const tradeTypeLabels: Record<string, string> = {
 const tradeTypeLabel = (t: string) => tradeTypeLabels[t] || t
 const isBuy = (t: string) => t === 'open' || t === 'add'
 const lotsText = (shares: number) => `${Math.floor(shares / 100)}手`
+// 新记录的交易带费用明细；历史交易无明细时退回仅显示手续费合计
+type TradeCell = Record<string, any>
+const hasFeeBreakdown = (t: TradeCell) =>
+  t.commission + t.stampDuty + t.transferFee > 0
 const signedYuan = (cents: number) => {
   const sign = cents > 0 ? '+' : cents < 0 ? '-' : ''
   return `${sign}¥${centsToYuan(Math.abs(cents))}`
 }
 const pnlClass = (cents: number) => (cents > 0 ? 'amount-income' : cents < 0 ? 'amount-expense' : '')
 const formatTime = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD HH:mm')
-// 交易记录金额：买入为现金流出（负）、卖出为现金流入（正）
-const changeOf = (t: { tradeType: string; amount: number; fee: number }) =>
+// 交易历史金额：买入为现金流出（负）、卖出为现金流入（正）
+const changeOf = (t: TradeCell) =>
   (isBuy(t.tradeType) ? -1 : 1) * (t.amount - t.fee)
 
-// ---------- 中栏日志 ----------
-const journalTabs = [
-  { key: 'rules', label: '交易规则' },
-  { key: 'plan', label: '交易计划' },
-  { key: 'review', label: '交易复盘' },
-] as const
-type JournalKey = (typeof journalTabs)[number]['key']
-
-const activeTab = ref<JournalKey>('rules')
-const editingTab = ref<JournalKey | ''>('')
-const drafts = reactive({ rules: '', plan: '', review: '' })
-
-watch(
-  () => journal.value,
-  (j) => {
-    if (j) {
-      drafts.rules = j.rules
-      drafts.plan = j.plan
-      drafts.review = j.review
-    }
-  },
-  { immediate: true }
-)
-
-const startEdit = (key: JournalKey) => {
-  drafts[key] = journal.value?.[key] ?? ''
-  editingTab.value = key
-}
-const cancelEdit = () => {
-  editingTab.value = ''
-}
-const saveEdit = async () => {
-  const ok = await stockStore.saveJournal(drafts.rules, drafts.plan, drafts.review)
-  if (ok) editingTab.value = ''
-}
+// ---------- 交易记录表格 ----------
+const columns: ColumnsType = [
+  { title: '时间', dataIndex: 'tradeTime', width: 150, align: 'center' },
+  { title: '类型', dataIndex: 'tradeType', width: 90, align: 'center' },
+  { title: '价格', dataIndex: 'price', width: 100, align: 'right' },
+  { title: '手数', dataIndex: 'lots', width: 80, align: 'center' },
+  { title: '成交金额', dataIndex: 'amount', width: 120, align: 'right' },
+  { title: '手续费', dataIndex: 'fee', minWidth: 220 },
+  { title: '资金变动', dataIndex: 'change', width: 120, align: 'right' },
+]
 
 // ---------- 记录交易 ----------
+type TradeType = 'open' | 'add' | 'reduce' | 'close'
+
 const tradeModal = reactive({
   open: false,
-  tradeType: 'open' as 'open' | 'add' | 'reduce' | 'close',
+  tradeType: 'open' as TradeType,
   stockName: '',
   stockCode: '',
   price: '',
   lots: '',
   tradeTime: dayjs() as Dayjs,
-  remark: '',
+  availableLots: 0,
 })
 
-const openTradeModal = () => {
-  tradeModal.tradeType = currentPosition.value ? 'add' : 'open'
-  tradeModal.stockName = currentPosition.value?.stockName ?? ''
-  tradeModal.stockCode = currentPosition.value?.stockCode ?? ''
+// 手数列标签：加仓/减仓展示可用手数，清仓展示全仓手数
+const lotsLabel = computed(() => {
+  if (tradeModal.tradeType === 'open' || tradeModal.availableLots <= 0) return '手数'
+  return tradeModal.tradeType === 'close'
+    ? `手数（全仓 ${tradeModal.availableLots} 手）`
+    : `手数（可用 ${tradeModal.availableLots} 手）`
+})
+
+const resetTradeModal = (tradeType: TradeType, position: StockPosition | null) => {
+  tradeModal.tradeType = tradeType
+  // 建仓始终从空白开始；加仓/减仓/清仓自动带入对应股票
+  const prefill = tradeType === 'open' ? null : position
+  tradeModal.stockName = prefill?.stockName ?? ''
+  tradeModal.stockCode = prefill?.stockCode ?? ''
   tradeModal.price = ''
-  tradeModal.lots = ''
+  tradeModal.lots = tradeType === 'close' && prefill ? String(Math.floor(prefill.quantity / 100)) : ''
+  tradeModal.availableLots = prefill ? Math.floor(prefill.quantity / 100) : 0
   tradeModal.tradeTime = dayjs()
-  tradeModal.remark = ''
+}
+
+const openTradeModal = (tradeType: TradeType, position?: StockPosition) => {
+  resetTradeModal(tradeType, position ?? currentPosition.value ?? null)
   tradeModal.open = true
 }
 
@@ -233,8 +233,8 @@ const handleTradeSubmit = async () => {
     message.error('请输入股票名称')
     return
   }
-  if (!/^\d{6}$/.test(tradeModal.stockCode.trim())) {
-    message.error('请输入 6 位股票代码')
+  if (!/^(60|68|00|30)\d{4}$/.test(tradeModal.stockCode.trim())) {
+    message.error('请输入有效的沪深股票代码（沪 60/68 开头，深 00/30 开头）')
     return
   }
   if (isNaN(price) || price <= 0) {
@@ -245,14 +245,23 @@ const handleTradeSubmit = async () => {
     message.error('请输入有效手数')
     return
   }
+  if (tradeModal.tradeType === 'reduce' && lots > tradeModal.availableLots) {
+    message.error(`减仓手数不能超过可用手数（${tradeModal.availableLots} 手）`)
+    return
+  }
+  // 减仓手数等于可用手数即为清仓
+  const submitType: TradeType =
+    tradeModal.tradeType === 'reduce' && tradeModal.availableLots > 0 && lots === tradeModal.availableLots
+      ? 'close'
+      : tradeModal.tradeType
   const ok = await stockStore.recordTrade({
     stockCode: tradeModal.stockCode.trim(),
     stockName: tradeModal.stockName.trim(),
-    tradeType: tradeModal.tradeType,
+    tradeType: submitType,
     price,
     lots,
     tradeTime: tradeModal.tradeTime.unix(),
-    remark: tradeModal.remark.trim(),
+    remark: '',
   })
   if (ok) tradeModal.open = false
 }
@@ -272,12 +281,12 @@ onMounted(() => {
   min-height: 0;
 }
 
-/* ========== 三栏主体（参考关键事件页：统一容器 + hairline 分隔） ========== */
+/* ========== 两栏主体（左持仓列表 + 中股票详情/交易记录） ========== */
 .position-body {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
   background-color: var(--transactions-color-major-background);
@@ -285,22 +294,14 @@ onMounted(() => {
   border-radius: var(--transactions-radius-lg);
 }
 
-.position-left,
-.position-right {
+.position-left {
   display: flex;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
   padding: var(--transactions-space-md);
   background-color: var(--transactions-color-minor-background);
-}
-
-.position-left {
   border-right: 1px solid var(--transactions-color-divider);
-}
-
-.position-right {
-  border-left: 1px solid var(--transactions-color-divider);
 }
 
 .position-center {
@@ -329,7 +330,7 @@ onMounted(() => {
 /* 中栏：选中股标识行（对应关键事件页顶部功能行） */
 .stock-identity {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--transactions-space-sm);
   flex-shrink: 0;
   margin-bottom: var(--transactions-space-md);
@@ -351,6 +352,13 @@ onMounted(() => {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
+}
+
+.stock-identity-actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
 }
 
 /* 左栏底部主按钮（对应关键事件页「添加事件」） */
@@ -377,6 +385,7 @@ onMounted(() => {
   flex-direction: column;
   gap: var(--transactions-space-xs);
   padding: var(--transactions-space-sm) var(--transactions-space-md);
+  min-height: 72px;
   border: none;
   border-radius: var(--transactions-radius-md);
   background-color: var(--transactions-color-major-background);
@@ -388,7 +397,7 @@ onMounted(() => {
               box-shadow var(--transactions-transition-smooth),
               transform var(--transactions-transition-smooth);
   content-visibility: auto;
-  contain-intrinsic-size: auto 64px;
+  contain-intrinsic-size: auto 72px;
 }
 
 .position-card:hover {
@@ -412,6 +421,28 @@ onMounted(() => {
   box-shadow: var(--transactions-shadow-md);
 }
 
+.position-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.position-card-code-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+  margin-top: auto;
+}
+
+.position-card-close {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-caption);
+}
+
 .position-card-name {
   font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
@@ -425,195 +456,94 @@ onMounted(() => {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
-}
-
-.position-card-meta {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  white-space: nowrap;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* ========== 中栏：交易日志 Tab ========== */
-.journal-tabs {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.journal-tabs-nav {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.journal-tabs-nav :deep(.ant-tabs-content-holder) {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  @include custom-scrollbar;
-}
-
-.journal-view {
-  padding: var(--transactions-space-md) 0 0;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.journal-empty {
-  margin: 0;
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-}
-
-.journal-md {
-  flex: 1;
-}
-
-.journal-md :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: var(--transactions-space-md) 0;
-  font-size: var(--transactions-size-text-body-sm);
-}
-
-.journal-md :deep(th),
-.journal-md :deep(td) {
-  border: 1px solid var(--transactions-color-divider);
-  padding: var(--transactions-space-xs) var(--transactions-space-sm);
-  text-align: left;
-  vertical-align: top;
-  line-height: var(--transactions-height-snug);
-}
-
-.journal-md :deep(th) {
-  background-color: var(--transactions-color-minor-background);
-  font-weight: 500;
   white-space: nowrap;
 }
 
-.journal-md :deep(p) {
-  margin: 0 0 var(--transactions-space-md);
-  line-height: var(--transactions-height-relaxed);
+.position-card-lots {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
 }
 
-.journal-md :deep(ul),
-.journal-md :deep(ol) {
-  margin: 0 0 var(--transactions-space-md);
-  padding-left: var(--transactions-space-xl);
-}
-
-.journal-md :deep(li) {
-  line-height: var(--transactions-height-relaxed);
-}
-
-.journal-md :deep(strong) {
-  font-weight: 600;
-}
-
-.journal-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: auto;
-  padding-top: var(--transactions-space-md);
-}
-
-.journal-edit {
-  padding: var(--transactions-space-md) 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-md);
-}
-
-.journal-textarea {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-body-sm);
-  line-height: var(--transactions-height-normal);
-}
-
-.journal-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--transactions-space-sm);
-}
-
-/* ========== 右栏：交易记录卡片 ========== */
-.trade-cards {
+/* ========== 中栏：交易记录表格 ========== */
+.trade-table-wrap {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-sm);
   @include custom-scrollbar;
 }
 
-.trade-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-xs);
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  background-color: var(--transactions-color-major-background);
-  box-shadow: var(--transactions-shadow-sm);
-  transition: box-shadow var(--transactions-transition-smooth);
-  min-height: 68px;
-  box-sizing: border-box;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 68px;
+.trade-table {
+  width: 100%;
 }
 
-.trade-card:hover {
-  box-shadow: var(--transactions-shadow-md);
+.trade-table :deep(.ant-table) {
+  background: transparent;
 }
 
-.trade-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-}
-
-.trade-card-time {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-small);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.trade-card-main {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-sm);
-  min-width: 0;
-}
-
-.trade-card-price {
-  font-size: var(--transactions-size-text-body);
+.trade-table :deep(.ant-table-thead > tr > th) {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
   font-weight: 500;
-  color: var(--transactions-color-text-major);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.trade-card-lots {
+.trade-table :deep(.ant-table-tbody > tr > td) {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+}
+
+.trade-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.cell-date {
+  font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.trade-card-amount {
-  margin-left: auto;
+.cell-amount {
+  font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-body);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
-.trade-card-sub {
+.cell-lots {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+}
+
+.cell-fee {
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
   line-height: var(--transactions-height-snug);
   overflow-wrap: anywhere;
+}
+
+.cell-change {
+  font-size: var(--transactions-size-text-body);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .tag-buy {
@@ -633,7 +563,7 @@ onMounted(() => {
   gap: var(--transactions-space-md);
 }
 
-@media (max-width: 1365px) {
+@media (max-width: 1080px) {
   .position-body {
     grid-template-columns: minmax(0, 1fr);
     overflow: visible;
@@ -643,16 +573,10 @@ onMounted(() => {
     border-right: none;
     border-bottom: 1px solid var(--transactions-color-divider);
   }
-
-  .position-right {
-    border-left: none;
-    border-top: 1px solid var(--transactions-color-divider);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .position-card,
-  .trade-card {
+  .position-card {
     transition: none;
   }
 

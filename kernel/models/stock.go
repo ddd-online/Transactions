@@ -92,39 +92,25 @@ func (StockPosition) TableName() string {
 // StockTrade 股票交易记录（建仓/加仓/减仓/清仓）。
 // Price/Amount/Fee 单位均为分；Lots 手数，Shares = Lots × 100。
 type StockTrade struct {
-	ID         string `gorm:"primaryKey;comment:交易UUID" json:"id"`
-	LedgerID   string `gorm:"index:idx_stock_trade_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
-	StockCode  string `gorm:"index:idx_stock_trade_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
-	StockName  string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
-	TradeType  string `gorm:"type:varchar(16);not null;default:'';comment:交易类型 open/add/reduce/close" json:"tradeType"`
-	Price      int64  `gorm:"not null;default:0;comment:成交价（分/股）" json:"price"`
-	Lots       int64  `gorm:"not null;default:0;comment:手数" json:"lots"`
-	Shares     int64  `gorm:"not null;default:0;comment:股数（手数×100）" json:"shares"`
-	Amount     int64  `gorm:"not null;default:0;comment:成交金额（分，价×股数）" json:"amount"`
-	Fee        int64  `gorm:"not null;default:0;comment:交易费用（分）" json:"fee"`
+	ID          string `gorm:"primaryKey;comment:交易UUID" json:"id"`
+	LedgerID    string `gorm:"index:idx_stock_trade_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	StockCode   string `gorm:"index:idx_stock_trade_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
+	StockName   string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
+	TradeType   string `gorm:"type:varchar(16);not null;default:'';comment:交易类型 open/add/reduce/close" json:"tradeType"`
+	Price       int64  `gorm:"not null;default:0;comment:成交价（分/股）" json:"price"`
+	Lots        int64  `gorm:"not null;default:0;comment:手数" json:"lots"`
+	Shares      int64  `gorm:"not null;default:0;comment:股数（手数×100）" json:"shares"`
+	Amount      int64  `gorm:"not null;default:0;comment:成交金额（分，价×股数）" json:"amount"`
+	Fee         int64  `gorm:"not null;default:0;comment:交易费用（分）" json:"fee"`
+	Commission  int64  `gorm:"not null;default:0;comment:佣金（分）" json:"commission"`
+	StampDuty   int64  `gorm:"not null;default:0;comment:印花税（分，仅卖出收取）" json:"stampDuty"`
+	TransferFee int64  `gorm:"not null;default:0;comment:过户费（分，仅沪市收取）" json:"transferFee"`
 	RealizedPnl *int64 `gorm:"comment:卖出净盈亏（分），仅减仓/清仓非空" json:"realizedPnl"`
-	TradeTime  int64  `gorm:"not null;default:0;comment:成交时间（Unix 秒）" json:"tradeTime"`
-	Remark     string `gorm:"type:varchar(500);not null;default:'';comment:备注" json:"remark"`
-	CreatedAt  int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+	TradeTime   int64  `gorm:"not null;default:0;comment:成交时间（Unix 秒）" json:"tradeTime"`
+	Remark      string `gorm:"type:varchar(500);not null;default:'';comment:备注" json:"remark"`
+	CreatedAt   int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
 }
 
 func (StockTrade) TableName() string {
 	return "tbl_billadm_stock_trade"
-}
-
-// StockJournal 股票交易日志：每只股票一份，保存交易规则/交易计划/交易复盘文本。
-type StockJournal struct {
-	ID        string `gorm:"primaryKey;comment:日志UUID" json:"id"`
-	LedgerID  string `gorm:"uniqueIndex:idx_stock_journal_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
-	StockCode string `gorm:"uniqueIndex:idx_stock_journal_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
-	StockName string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
-	Rules     string `gorm:"type:text;comment:交易规则" json:"rules"`
-	Plan      string `gorm:"type:text;comment:交易计划" json:"plan"`
-	Review    string `gorm:"type:text;comment:交易复盘" json:"review"`
-	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
-	UpdatedAt int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
-}
-
-func (StockJournal) TableName() string {
-	return "tbl_billadm_stock_journal"
 }

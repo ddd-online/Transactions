@@ -125,33 +125,6 @@ func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
 	return h.StockSvc.CreateTrade(ws(c), ledgerID, stockCode, stockName, tradeType, priceCents, int64(lots), int64(tradeTime), remark)
 }
 
-// GET /api/v1/stock/journal?ledger_id=&stock_code=
-func (h *Handlers) getStockJournal(c *gin.Context) (any, error) {
-	ledgerID, err := requireLedgerID(c)
-	if err != nil {
-		return nil, err
-	}
-	return h.StockSvc.GetJournal(ws(c), ledgerID, c.Query("stock_code"))
-}
-
-// PUT /api/v1/stock/journal  body: { ledger_id, stock_code, stock_name, rules, plan, review }
-func (h *Handlers) saveStockJournal(c *gin.Context) (any, error) {
-	arg, ok := JsonArg(c)
-	if !ok {
-		return nil, models.NewBadRequest("parses request failed")
-	}
-	ledgerID, ok := arg["ledger_id"].(string)
-	if !ok || ledgerID == "" {
-		return nil, models.NewBadRequest("ledger_id is required")
-	}
-	stockCode, _ := arg["stock_code"].(string)
-	stockName, _ := arg["stock_name"].(string)
-	rules, _ := arg["rules"].(string)
-	plan, _ := arg["plan"].(string)
-	review, _ := arg["review"].(string)
-	return h.StockSvc.SaveJournal(ws(c), ledgerID, stockCode, stockName, rules, plan, review)
-}
-
 // requireLedgerID 从 query 取 ledger_id。
 func requireLedgerID(c *gin.Context) (string, error) {
 	ledgerID := c.Query("ledger_id")

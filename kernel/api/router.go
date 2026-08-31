@@ -104,8 +104,6 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			stockTrade.GET("/positions", Handle(h.getStockPositions))
 			stockTrade.GET("/trades", Handle(h.listStockTrades))
 			stockTrade.POST("/trades", Handle(h.createStockTrade))
-			stockTrade.GET("/journal", Handle(h.getStockJournal))
-			stockTrade.PUT("/journal", Handle(h.saveStockJournal))
 		}
 
 		// Static assets (served from workspace data/assets/ directory)
