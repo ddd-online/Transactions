@@ -91,9 +91,6 @@
                     {{ signedYuan(changeOf(record)) }}
                   </span>
                 </template>
-                <template v-else-if="column.key === 'action'">
-                  <a-button size="small" type="text" @click="openEditTrade(record as StockTrade)">修改</a-button>
-                </template>
               </template>
             </a-table>
           </div>
@@ -131,14 +128,6 @@
         </a-form-item>
       </a-form>
     </a-modal>
-
-    <!-- 修改交易弹窗 -->
-    <stock-trade-edit-modal
-      v-model:open="editModal.open"
-      :trade="editModal.trade"
-      :saving="mutating"
-      @save="handleEditSave"
-    />
   </div>
 </template>
 
@@ -150,7 +139,7 @@ import { useStockPositionStore } from '@/stores/stockPositionStore'
 import { fetchStockName } from '@/backend/api/stock'
 import { tryOrFallback } from '@/backend/errorHandler'
 import { centsToYuan } from '@/backend/functions'
-import type { StockPosition, StockTrade } from '@/types/transactions'
+import type { StockPosition } from '@/types/transactions'
 import type { ColumnsType } from 'ant-design-vue/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -202,7 +191,6 @@ const columns: ColumnsType = [
   { title: '成交金额', dataIndex: 'amount', width: 120, align: 'right' },
   { title: '手续费', dataIndex: 'fee', minWidth: 220 },
   { title: '资金变动', dataIndex: 'change', width: 120, align: 'right' },
-  { title: '操作', key: 'action', width: 72, align: 'center' },
 ]
 
 // ---------- 记录交易 ----------
@@ -293,30 +281,6 @@ const handleTradeSubmit = async () => {
     remark: '',
   })
   if (ok) tradeModal.open = false
-}
-
-// ---------- 修改交易 ----------
-const editModal = reactive({
-  open: false,
-  trade: null as StockTrade | null,
-})
-
-const openEditTrade = (trade: StockTrade) => {
-  editModal.trade = trade
-  editModal.open = true
-}
-
-const handleEditSave = async (payload: { tradeId: string; price: number; lots: number; tradeTime: number }) => {
-  const ok = await stockStore.updateTrade({
-    tradeId: payload.tradeId,
-    stockCode: editModal.trade?.stockCode ?? '',
-    price: payload.price,
-    lots: payload.lots,
-    tradeTime: payload.tradeTime,
-  })
-  if (ok) {
-    editModal.open = false
-  }
 }
 
 onMounted(() => {

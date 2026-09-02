@@ -36,7 +36,6 @@ type StockService interface {
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error)
-	UpdateTrade(ws *workspace.Workspace, ledgerID string, tradeID string, priceCents int64, lots int64, tradeTime int64) (*dto.StockTradeDto, error)
 	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error)
 	GetTradeHistoryDetail(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockTradeHistoryDetailDto, error)
 	GetTradeHistorySummary(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeHistorySummaryDto, error)

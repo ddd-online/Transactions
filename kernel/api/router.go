@@ -110,7 +110,6 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			stockTrade.GET("/statistics", Handle(h.getStockStatistics))
 			stockTrade.GET("/name", Handle(h.getStockName))
 			stockTrade.POST("/trades", Handle(h.createStockTrade))
-			stockTrade.PATCH("/trades/:id", Handle(h.updateStockTrade))
 			stockTrade.POST("/reset", Handle(h.resetStockData))
 		}
 

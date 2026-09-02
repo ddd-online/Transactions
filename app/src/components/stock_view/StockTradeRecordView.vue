@@ -140,7 +140,6 @@
                       <th>手数</th>
                       <th class="align-right">成交金额</th>
                       <th class="align-right">费用</th>
-                      <th>操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -155,9 +154,6 @@
                       <td class="cell-lots">{{ t.lots }}手</td>
                       <td class="cell-amount align-right">{{ centsToYuan(t.amount) }}</td>
                       <td class="cell-fee align-right">{{ centsToYuan(t.fee) }}</td>
-                      <td>
-                        <a-button size="small" type="text" @click="openEditTrade(t)">修改</a-button>
-                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -171,30 +167,18 @@
         </div>
       </div>
     </div>
-
-    <!-- 修改交易弹窗 -->
-    <stock-trade-edit-modal
-      v-model:open="editModal.open"
-      :trade="editModal.trade"
-      :saving="mutating"
-      @save="handleEditSave"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive } from 'vue'
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
-import { useStockPositionStore } from '@/stores/stockPositionStore'
 import { centsToYuan } from '@/backend/functions'
 import dayjs from 'dayjs'
-import type { StockTrade } from '@/types/transactions'
 
 const historyStore = useStockHistoryStore()
 const { histories, historiesLoading, summary, detail, detailLoading } = storeToRefs(historyStore)
-const positionStore = useStockPositionStore()
-const { mutating } = storeToRefs(positionStore)
 
 // ---------- 展示 ----------
 const tradeTypeLabels: Record<string, string> = {
@@ -223,30 +207,6 @@ const formatDate = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD')
 onMounted(() => {
   historyStore.loadHistories()
 })
-
-// ---------- 修改交易 ----------
-const editModal = reactive({
-  open: false,
-  trade: null as StockTrade | null,
-})
-
-const openEditTrade = (trade: StockTrade) => {
-  editModal.trade = trade
-  editModal.open = true
-}
-
-const handleEditSave = async (payload: { tradeId: string; price: number; lots: number; tradeTime: number }) => {
-  const ok = await positionStore.updateTrade({
-    tradeId: payload.tradeId,
-    stockCode: editModal.trade?.stockCode ?? '',
-    price: payload.price,
-    lots: payload.lots,
-    tradeTime: payload.tradeTime,
-  })
-  if (ok) {
-    editModal.open = false
-  }
-}
 </script>
 
 <style scoped lang="scss">
