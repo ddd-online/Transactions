@@ -142,6 +142,7 @@ type StockTradeRound struct {
 	RoundNo   int64  `gorm:"uniqueIndex:idx_stock_trade_round_history_no,priority:2;not null;comment:轮次序号（该股从1起）" json:"roundNo"`
 	OpenedAt  int64  `gorm:"not null;default:0;comment:本轮首次建仓时间（Unix 秒）" json:"openedAt"`
 	ClosedAt  int64  `gorm:"not null;default:0;comment:本轮清仓时间（Unix 秒）" json:"closedAt"`
+	Review    string `gorm:"type:varchar(2000);not null;default:'';comment:本轮交易复盘（500字以内）" json:"review"`
 	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
 }
 

@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import { fetchStockTradeHistories, fetchStockTradeHistoryDetail, fetchStockTradeHistorySummary } from '@/backend/api/stock'
+import {
+  fetchStockTradeHistories,
+  fetchStockTradeHistoryDetail,
+  fetchStockTradeHistorySummary,
+  updateStockRoundReview,
+} from '@/backend/api/stock'
 import { withErrorHandling } from '@/backend/errorHandler'
+import NotificationUtil from '@/backend/notification'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import type { StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary } from '@/types/transactions'
 
@@ -15,6 +21,7 @@ export const useStockHistoryStore = defineStore('stockHistory', () => {
   const detailLoading = ref(false)
   const summary = ref<StockTradeHistorySummary | null>(null)
   const summaryLoading = ref(false)
+  const reviewSaving = ref(false)
 
   const currentLedgerId = () => ledgerStore.currentLedgerId
 
@@ -79,6 +86,25 @@ export const useStockHistoryStore = defineStore('stockHistory', () => {
     await loadDetail(stockCode)
   }
 
+  const saveRoundReview = async (roundId: string, review: string): Promise<boolean> => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId || !roundId) return false
+    reviewSaving.value = true
+    try {
+      const data = await withErrorHandling(
+        () => updateStockRoundReview(ledgerId, roundId, review),
+        { errorPrefix: '保存交易复盘失败', rethrow: true }
+      )
+      detail.value = data
+      NotificationUtil.success('交易复盘已保存')
+      return true
+    } catch {
+      return false
+    } finally {
+      reviewSaving.value = false
+    }
+  }
+
   const reload = async (preferCode = '') => {
     await loadHistories(preferCode)
     if (selectedCode.value) {
@@ -101,12 +127,14 @@ export const useStockHistoryStore = defineStore('stockHistory', () => {
     historiesLoading,
     summary,
     summaryLoading,
+    reviewSaving,
     selectedCode,
     detail,
     detailLoading,
     loadHistories,
     loadDetail,
     selectStock,
+    saveRoundReview,
     reload,
   }
 })

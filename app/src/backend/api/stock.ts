@@ -76,6 +76,14 @@ export async function fetchStockTradeHistorySummary(ledgerId: string): Promise<S
     );
 }
 
+export async function updateStockRoundReview(ledgerId: string, roundId: string, review: string): Promise<StockTradeHistoryDetail> {
+    return api.put<StockTradeHistoryDetail>(
+        `/v1/stock/history/rounds/${encodeURIComponent(roundId)}/review`,
+        { ledger_id: ledgerId, review },
+        '保存交易复盘'
+    );
+}
+
 export async function fetchStockStatistics(ledgerId: string): Promise<StockStatistics> {
     return api.get<StockStatistics>(
         `/v1/stock/statistics?ledger_id=${encodeURIComponent(ledgerId)}`,

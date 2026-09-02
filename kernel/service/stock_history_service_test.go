@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/transactions/dao"
@@ -366,5 +367,62 @@ func TestTradeHistorySummaryAcrossStocks(t *testing.T) {
 	}
 	if summary.TotalPnlRate <= 0 {
 		t.Fatalf("整体盈利时总盈亏率应大于 0, 实际 %.2f", summary.TotalPnlRate)
+	}
+}
+
+func TestUpdateRoundReview(t *testing.T) {
+	svc, ws := newStockService(t)
+
+	// 先完成一轮交易，得到轮次
+	if _, err := svc.CreateTrade(ws, testLedgerID, testCode, testName, models.StockTradeOpen, 1000, 10, 1700000000, ""); err != nil {
+		t.Fatalf("建仓失败: %v", err)
+	}
+	if _, err := svc.CreateTrade(ws, testLedgerID, testCode, testName, models.StockTradeClose, 1200, 10, 1700000100, ""); err != nil {
+		t.Fatalf("清仓失败: %v", err)
+	}
+	detail, err := svc.GetTradeHistoryDetail(ws, testLedgerID, testCode)
+	if err != nil {
+		t.Fatalf("查询历史详情失败: %v", err)
+	}
+	if len(detail.Rounds) != 1 {
+		t.Fatalf("轮次数应为 1, 实际 %d", len(detail.Rounds))
+	}
+	roundID := detail.Rounds[0].ID
+	if detail.Rounds[0].Review != "" {
+		t.Fatalf("新轮次复盘应为空, 实际 %q", detail.Rounds[0].Review)
+	}
+
+	// 保存复盘：去除首尾空白后随详情返回
+	detail, err = svc.UpdateRoundReview(ws, testLedgerID, roundID, "  建仓太急，未等回调；止损执行到位。  ")
+	if err != nil {
+		t.Fatalf("保存复盘失败: %v", err)
+	}
+	if len(detail.Rounds) != 1 || detail.Rounds[0].Review != "建仓太急，未等回调；止损执行到位。" {
+		t.Fatalf("复盘保存结果错误: %+v", detail.Rounds)
+	}
+
+	// 超过 500 字拒绝
+	if _, err := svc.UpdateRoundReview(ws, testLedgerID, roundID, strings.Repeat("复", 501)); err == nil {
+		t.Fatal("超过 500 字的复盘应被拒绝")
+	} else if !strings.Contains(err.Error(), "不能超过 500 字") {
+		t.Fatalf("超长复盘错误文案错误: %v", err)
+	}
+	// 恰好 500 字通过
+	if _, err := svc.UpdateRoundReview(ws, testLedgerID, roundID, strings.Repeat("复", 500)); err != nil {
+		t.Fatalf("500 字复盘应保存成功: %v", err)
+	}
+
+	// 其他账本不可操作该轮次
+	if _, err := svc.UpdateRoundReview(ws, "other-ledger", roundID, "越权写入"); err == nil {
+		t.Fatal("其他账本写入复盘应被拒绝")
+	}
+
+	// 空串/纯空白 = 清空
+	detail, err = svc.UpdateRoundReview(ws, testLedgerID, roundID, "   ")
+	if err != nil {
+		t.Fatalf("清空复盘失败: %v", err)
+	}
+	if len(detail.Rounds) != 1 || detail.Rounds[0].Review != "" {
+		t.Fatalf("复盘应被清空: %+v", detail.Rounds)
 	}
 }

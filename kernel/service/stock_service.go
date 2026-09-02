@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/simplifiedchinese"
@@ -38,6 +39,7 @@ type StockService interface {
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error)
 	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error)
 	GetTradeHistoryDetail(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockTradeHistoryDetailDto, error)
+	UpdateRoundReview(ws *workspace.Workspace, ledgerID string, roundID string, review string) (*dto.StockTradeHistoryDetailDto, error)
 	GetTradeHistorySummary(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeHistorySummaryDto, error)
 	GetStatistics(ws *workspace.Workspace, ledgerID string) (*dto.StockStatisticsDto, error)
 	LookupStockName(ws *workspace.Workspace, stockCode string) (*dto.StockNameDto, error)
@@ -695,6 +697,7 @@ func (s *stockServiceImpl) GetTradeHistoryDetail(ws *workspace.Workspace, ledger
 			RoundNo:    round.RoundNo,
 			OpenedAt:   round.OpenedAt,
 			ClosedAt:   round.ClosedAt,
+			Review:     round.Review,
 			Pnl:        pnl,
 			PnlRate:    pnlRate,
 			TradeCount: int64(len(trades)),
@@ -707,6 +710,36 @@ func (s *stockServiceImpl) GetTradeHistoryDetail(ws *workspace.Workspace, ledger
 		detail.TotalPnlRate = math.Round(float64(totalPnl)/float64(totalBuyCost)*10000) / 100
 	}
 	return detail, nil
+}
+
+// UpdateRoundReview 更新某一已完成轮次的交易复盘（500 字以内，空串清空），
+// 校验轮次属于当前账本后保存，并返回该股最新的历史详情。
+func (s *stockServiceImpl) UpdateRoundReview(ws *workspace.Workspace, ledgerID string, roundID string, review string) (*dto.StockTradeHistoryDetailDto, error) {
+	if roundID == "" {
+		return nil, models.NewBadRequest("round_id is required")
+	}
+	review = strings.TrimSpace(review)
+	if utf8.RuneCountInString(review) > 500 {
+		return nil, models.NewBadRequest("交易复盘不能超过 500 字")
+	}
+
+	round, err := s.stockDao.GetTradeRound(ws, roundID)
+	if err != nil {
+		if dao.IsNotFound(err) {
+			return nil, models.NewNotFound("轮次不存在")
+		}
+		return nil, err
+	}
+	if round.LedgerID != ledgerID {
+		return nil, models.NewNotFound("轮次不存在")
+	}
+
+	if err := s.stockDao.UpdateTradeRoundReview(ws, roundID, review); err != nil {
+		logrus.Errorf("保存轮次复盘失败, ledger: %s, round: %s, err: %v", ledgerID, roundID, err)
+		return nil, err
+	}
+	logrus.Infof("保存轮次复盘, ledger: %s, round: %s", ledgerID, roundID)
+	return s.GetTradeHistoryDetail(ws, ledgerID, round.StockCode)
 }
 
 // GetTradeHistorySummary 汇总该账本全部已清仓股票：总盈亏、胜负轮次与总轮次。

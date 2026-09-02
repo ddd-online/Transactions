@@ -305,6 +305,7 @@ export interface StockTradeRound {
     roundNo: number;
     openedAt: number;              // 本轮首次建仓时间（Unix 秒）
     closedAt: number;              // 本轮清仓时间（Unix 秒）
+    review: string;                // 本轮交易复盘（500 字以内）
     pnl: number;                   // 本轮盈亏（分）
     pnlRate: number;               // 本轮盈亏率（%）
     tradeCount: number;

@@ -140,6 +140,21 @@ func (h *Handlers) getStockTradeHistorySummary(c *gin.Context) (any, error) {
 	return h.StockSvc.GetTradeHistorySummary(ws(c), ledgerID)
 }
 
+// PUT /api/v1/stock/history/rounds/:id/review  body: { ledger_id, review }  保存某轮次的交易复盘（500字以内）
+func (h *Handlers) updateStockRoundReview(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	roundID := c.Param("id")
+	review, _ := arg["review"].(string)
+	return h.StockSvc.UpdateRoundReview(ws(c), ledgerID, roundID, review)
+}
+
 // GET /api/v1/stock/statistics?ledger_id=  逐笔结算统计（自第 1 笔起）
 func (h *Handlers) getStockStatistics(c *gin.Context) (any, error) {
 	ledgerID, err := requireLedgerID(c)

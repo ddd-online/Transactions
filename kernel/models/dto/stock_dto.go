@@ -148,6 +148,7 @@ type StockTradeRoundDto struct {
 	RoundNo    int64           `json:"roundNo"`
 	OpenedAt   int64           `json:"openedAt"`
 	ClosedAt   int64           `json:"closedAt"`
+	Review     string          `json:"review"`  // 本轮交易复盘（500字以内）
 	Pnl        int64           `json:"pnl"`     // 本轮盈亏（分）
 	PnlRate    float64         `json:"pnlRate"` // 本轮盈亏率（%）
 	TradeCount int64           `json:"tradeCount"`
