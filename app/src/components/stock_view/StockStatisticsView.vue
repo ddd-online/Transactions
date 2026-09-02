@@ -113,8 +113,13 @@
         <section class="stats-panel stats-chart-panel">
           <header class="stats-panel-head">
             <div class="stats-heading">
-              <h3 class="stats-subtitle">统计曲线</h3>
-              <span class="stats-desc">每个点都是一次结算后的累计计算点，从第 {{ firstPointSequence }} 笔开始</span>
+              <div class="stats-subtitle-row">
+                <h3 class="stats-subtitle">统计曲线</h3>
+                <a-tooltip :overlay-style="{ maxWidth: '340px' }">
+                  <template #title>每个点都是一次结算后的累计计算点，从第 {{ firstPointSequence }} 笔开始。</template>
+                  <QuestionCircleOutlined class="stats-tip-icon" aria-label="统计曲线说明" />
+                </a-tooltip>
+              </div>
             </div>
             <div class="stats-chart-controls">
               <a-segmented
@@ -135,8 +140,13 @@
         <section class="stats-panel stats-table-panel">
           <header class="stats-panel-head">
             <div class="stats-heading">
-              <h3 class="stats-subtitle">逐笔结算明细</h3>
-              <span class="stats-desc">每一行 = 结算到第 N 笔时的累计结果</span>
+              <div class="stats-subtitle-row">
+                <h3 class="stats-subtitle">逐笔结算明细</h3>
+                <a-tooltip :overlay-style="{ maxWidth: '340px' }">
+                  <template #title>每一行 = 结算到第 N 笔时的累计结果</template>
+                  <QuestionCircleOutlined class="stats-tip-icon" aria-label="逐笔明细说明" />
+                </a-tooltip>
+              </div>
             </div>
           </header>
           <div class="stats-table-scroll">
@@ -500,6 +510,12 @@ onMounted(() => {
   font-weight: 500;
   color: var(--transactions-color-text-major);
   line-height: var(--transactions-height-normal);
+}
+
+.stats-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
 }
 
 .stats-desc {
