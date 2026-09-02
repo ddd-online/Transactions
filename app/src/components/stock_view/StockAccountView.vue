@@ -81,7 +81,7 @@
         </div>
 
         <p v-if="!overviewLoading && overview.principal === 0" class="overview-hint">
-          还没有资金记录 — 先「追加本金」，之后的每一笔资金变动都会显示在「资金变化记录」中。
+          还没有资金记录 — 先「追加本金」开始
         </p>
       </section>
 
@@ -180,10 +180,18 @@
         <a-form-item label="追加金额" required>
           <a-input v-model:value="principalModal.amount" prefix="￥" placeholder="请输入金额（支持两位小数）" />
         </a-form-item>
-        <a-form-item label="发生日期" required>
+        <a-form-item required>
+          <template #label>
+            <span class="fee-label">
+              发生日期
+              <a-tooltip>
+                <template #title>追加后本金随之增加；资金变化按所选日期记录，用于该时点之后的统计口径。</template>
+                <QuestionCircleOutlined class="fee-label-tip" aria-label="发生日期说明" />
+              </a-tooltip>
+            </span>
+          </template>
           <a-date-picker v-model:value="principalModal.date" style="width: 100%" />
         </a-form-item>
-        <p class="modal-hint">追加后本金随之增加；资金变化按所选日期记录，用于该时点之后的统计口径。</p>
       </a-form>
     </a-modal>
 
@@ -194,10 +202,18 @@
         <a-form-item label="支取金额" required>
           <a-input v-model:value="withdrawModal.amount" prefix="￥" placeholder="请输入金额（支持两位小数）" />
         </a-form-item>
-        <a-form-item label="发生日期" required>
+        <a-form-item required>
+          <template #label>
+            <span class="fee-label">
+              发生日期
+              <a-tooltip>
+                <template #title>支取从可用现金中扣除，本金不变；资金变化按所选日期记录，用于该时点之后的统计口径。</template>
+                <QuestionCircleOutlined class="fee-label-tip" aria-label="发生日期说明" />
+              </a-tooltip>
+            </span>
+          </template>
           <a-date-picker v-model:value="withdrawModal.date" style="width: 100%" />
         </a-form-item>
-        <p class="modal-hint">支取从可用现金中扣除，本金不变；资金变化按所选日期记录，用于该时点之后的统计口径。</p>
       </a-form>
     </a-modal>
   </div>
@@ -636,11 +652,4 @@ watch(
   }
 }
 
-/* 弹窗提示 */
-.modal-hint {
-  margin: 0;
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-  line-height: var(--transactions-height-normal);
-}
 </style>

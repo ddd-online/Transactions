@@ -71,8 +71,13 @@
         <!-- 全空态 -->
         <div v-if="!histories.length && !historiesLoading" class="column-empty history-empty">
           <div class="history-empty-inner">
-            <span class="history-empty-title">还没有交易历史</span>
-            <span class="history-empty-hint">持仓股票清仓后，这一轮从建仓到清仓的每一笔交易会自动归档到这里</span>
+            <div class="history-empty-head">
+              <span class="history-empty-title">还没有交易历史</span>
+              <a-tooltip :overlay-style="{ maxWidth: '340px' }">
+                <template #title>持仓股票清仓后，这一轮从建仓到清仓的每一笔交易会自动归档到这里</template>
+                <QuestionCircleOutlined class="history-empty-tip" aria-label="交易历史说明" />
+              </a-tooltip>
+            </div>
           </div>
         </div>
 
@@ -173,6 +178,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
 import { centsToYuan } from '@/backend/functions'
 import dayjs from 'dayjs'
@@ -423,9 +429,20 @@ onMounted(() => {
   color: var(--transactions-color-text-major);
 }
 
-.history-empty-hint {
-  font-size: var(--transactions-size-text-body-sm);
-  line-height: var(--transactions-height-relaxed);
+.history-empty-head {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.history-empty-tip {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-tertiary);
+  cursor: help;
+  transition: color var(--transactions-transition-fast);
+}
+
+.history-empty-tip:hover {
   color: var(--transactions-color-text-secondary);
 }
 

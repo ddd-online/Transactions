@@ -11,11 +11,15 @@
       <!-- 无结算 -->
       <section v-if="stats.roundCount === 0" class="stats-empty-panel">
         <div class="stats-empty-inner">
-          <span class="stats-empty-title">还没有结算记录</span>
-          <span class="stats-empty-hint">
-            股票清仓后，这一轮从建仓到清仓的完整交易会自动成为一笔结算；<br />
-            完成第 1 笔结算后即可看到逐笔累计的统计与曲线。
-          </span>
+          <div class="stats-empty-head">
+            <span class="stats-empty-title">还没有结算记录</span>
+            <a-tooltip :overlay-style="{ maxWidth: '360px' }">
+              <template #title>
+                股票清仓后，这一轮从建仓到清仓的完整交易会自动成为一笔结算；完成第 1 笔结算后即可看到逐笔累计的统计与曲线。
+              </template>
+              <QuestionCircleOutlined class="stats-tip-icon" aria-label="如何开始交易统计" />
+            </a-tooltip>
+          </div>
         </div>
       </section>
 
@@ -786,10 +790,10 @@ onMounted(() => {
   color: var(--transactions-color-text-major);
 }
 
-.stats-empty-hint {
-  font-size: var(--transactions-size-text-body-sm);
-  line-height: var(--transactions-height-relaxed);
-  color: var(--transactions-color-text-secondary);
+.stats-empty-head {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
 }
 
 .stats-loading {
