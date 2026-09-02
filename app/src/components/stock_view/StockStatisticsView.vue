@@ -148,7 +148,7 @@
               <div class="stats-subtitle-row">
                 <h3 class="stats-subtitle">逐笔结算明细</h3>
                 <a-tooltip :overlay-style="{ maxWidth: '340px' }">
-                  <template #title>每一行 = 结算到第 N 笔时的累计结果</template>
+                  <template #title>按结算时间倒序排列，每一行 = 结算到第 N 笔时的累计结果</template>
                   <QuestionCircleOutlined class="stats-tip-icon" aria-label="逐笔明细说明" />
                 </a-tooltip>
               </div>
@@ -172,7 +172,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="p in points" :key="p.sequence" :class="{ 'row-latest': p.sequence === latestPoint.sequence }">
+                <tr v-for="p in detailRows" :key="p.sequence" :class="{ 'row-latest': p.sequence === latestPoint.sequence }">
                   <td :title="`${p.stockName} ${p.stockCode} · 该股第 ${p.stockRoundNo} 轮`">
                     <span class="cell-seq amount">第 {{ p.sequence }} 笔</span>
                     <span class="cell-note amount">{{ p.stockName }} 第 {{ p.stockRoundNo }} 轮</span>
@@ -233,6 +233,7 @@ const { stats, loading } = storeToRefs(statsStore)
 const appearanceStore = useAppearanceStore()
 
 const points = computed(() => stats.value?.points ?? [])
+const detailRows = computed(() => [...points.value].reverse())
 const latestPoint = computed<StockStatisticsPoint | null>(() => points.value[points.value.length - 1] ?? null)
 const firstPointSequence = computed(() => points.value[0]?.sequence ?? 1)
 
