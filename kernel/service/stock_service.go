@@ -27,7 +27,9 @@ type StockService interface {
 	GetOverview(ws *workspace.Workspace, ledgerID string) (*dto.StockOverviewDto, error)
 	SetPrincipal(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error)
 	AddPrincipal(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error)
+	AddPrincipalAtDate(ws *workspace.Workspace, ledgerID string, amount int64, recordDate string) (*dto.StockOverviewDto, error)
 	AddWithdraw(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error)
+	AddWithdrawAtDate(ws *workspace.Workspace, ledgerID string, amount int64, recordDate string) (*dto.StockOverviewDto, error)
 	GetFeeSettings(ws *workspace.Workspace, ledgerID string) (*models.StockFeeSetting, error)
 	SaveFeeSettings(ws *workspace.Workspace, ledgerID string, commissionRate float64, minCommission int64, stampDutyRate float64, transferFeeRate float64) (*models.StockFeeSetting, error)
 	ListFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) (*dto.StockFundRecordPage, error)
@@ -168,11 +170,20 @@ func (s *stockServiceImpl) SetPrincipal(ws *workspace.Workspace, ledgerID string
 }
 
 func (s *stockServiceImpl) AddPrincipal(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error) {
+	return s.AddPrincipalAtDate(ws, ledgerID, amount, "")
+}
+
+// AddPrincipalAtDate 追加本金并指定资金变化的发生日期；date 为空时按当天记录。
+func (s *stockServiceImpl) AddPrincipalAtDate(ws *workspace.Workspace, ledgerID string, amount int64, date string) (*dto.StockOverviewDto, error) {
 	if amount <= 0 {
 		return nil, models.NewBadRequest("追加金额必须大于 0")
 	}
+	recordDate, err := normalizeStockRecordDate(date)
+	if err != nil {
+		return nil, err
+	}
 
-	err := ws.Transaction(func(tx *workspace.Workspace) error {
+	err = ws.Transaction(func(tx *workspace.Workspace) error {
 		account, err := s.getOrCreateAccount(tx, ledgerID)
 		if err != nil {
 			return err
@@ -194,7 +205,7 @@ func (s *stockServiceImpl) AddPrincipal(ws *workspace.Workspace, ledgerID string
 		record := &models.StockFundRecord{
 			ID:           util.GetUUID(),
 			LedgerID:     ledgerID,
-			RecordDate:   time.Now().Format("2006-01-02"),
+			RecordDate:   recordDate,
 			EventType:    models.StockEventAddPrincipal,
 			EventText:    "追加本金",
 			AmountChange: amount,
@@ -217,11 +228,21 @@ func (s *stockServiceImpl) AddPrincipal(ws *workspace.Workspace, ledgerID string
 // AddWithdraw 从股票账户支取：现金减少 amount，本金保持不变（本金始终是"累计投入"）。
 // 总资产 = 本金 + 总盈亏 − 累计支取，支取会相应减少总资产。
 func (s *stockServiceImpl) AddWithdraw(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error) {
+	return s.AddWithdrawAtDate(ws, ledgerID, amount, "")
+}
+
+// AddWithdrawAtDate 从股票账户支取并指定资金变化的发生日期；date 为空时按当天记录。
+// 总资产 = 本金 + 总盈亏 − 累计支取，支取会相应减少总资产。
+func (s *stockServiceImpl) AddWithdrawAtDate(ws *workspace.Workspace, ledgerID string, amount int64, date string) (*dto.StockOverviewDto, error) {
 	if amount <= 0 {
 		return nil, models.NewBadRequest("支取金额必须大于 0")
 	}
+	recordDate, err := normalizeStockRecordDate(date)
+	if err != nil {
+		return nil, err
+	}
 
-	err := ws.Transaction(func(tx *workspace.Workspace) error {
+	err = ws.Transaction(func(tx *workspace.Workspace) error {
 		account, err := s.getOrCreateAccount(tx, ledgerID)
 		if err != nil {
 			return err
@@ -243,7 +264,7 @@ func (s *stockServiceImpl) AddWithdraw(ws *workspace.Workspace, ledgerID string,
 		record := &models.StockFundRecord{
 			ID:           util.GetUUID(),
 			LedgerID:     ledgerID,
-			RecordDate:   time.Now().Format("2006-01-02"),
+			RecordDate:   recordDate,
 			EventType:    models.StockEventWithdraw,
 			EventText:    "支取",
 			AmountChange: -amount,
@@ -1011,4 +1032,16 @@ func ComputeSellFee(amount int64, isSH bool, setting *models.StockFeeSetting) Fe
 // centsToYuanStr 分 → 保留两位小数的元字符串，用于资金记录备注。
 func centsToYuanStr(cents int64) string {
 	return strconv.FormatFloat(float64(cents)/100, 'f', 2, 64)
+}
+
+// normalizeStockRecordDate 归一化资金变化的发生日期；空值按当天记录，非法格式直接报错。
+func normalizeStockRecordDate(date string) (string, error) {
+	if date == "" {
+		return time.Now().Format("2006-01-02"), nil
+	}
+	parsed, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return "", models.NewBadRequest("日期格式应为 YYYY-MM-DD")
+	}
+	return parsed.Format("2006-01-02"), nil
 }

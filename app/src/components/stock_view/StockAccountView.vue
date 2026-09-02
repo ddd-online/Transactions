@@ -180,7 +180,10 @@
         <a-form-item label="追加金额" required>
           <a-input v-model:value="principalModal.amount" prefix="￥" placeholder="请输入金额（支持两位小数）" />
         </a-form-item>
-        <p class="modal-hint">追加后本金随之增加，并生成一条资金变化记录。</p>
+        <a-form-item label="发生日期" required>
+          <a-date-picker v-model:value="principalModal.date" style="width: 100%" />
+        </a-form-item>
+        <p class="modal-hint">追加后本金随之增加；资金变化按所选日期记录，用于该时点之后的统计口径。</p>
       </a-form>
     </a-modal>
 
@@ -191,7 +194,10 @@
         <a-form-item label="支取金额" required>
           <a-input v-model:value="withdrawModal.amount" prefix="￥" placeholder="请输入金额（支持两位小数）" />
         </a-form-item>
-        <p class="modal-hint">支取从可用现金中扣除，本金不变，并生成一条资金变化记录。</p>
+        <a-form-item label="发生日期" required>
+          <a-date-picker v-model:value="withdrawModal.date" style="width: 100%" />
+        </a-form-item>
+        <p class="modal-hint">支取从可用现金中扣除，本金不变；资金变化按所选日期记录，用于该时点之后的统计口径。</p>
       </a-form>
     </a-modal>
   </div>
@@ -203,6 +209,8 @@ import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
 import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import type { ColumnsType } from 'ant-design-vue/es/table'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { centsToYuan, yuanToCents } from '@/backend/functions'
 import { useStockAccountStore } from '@/stores/stockAccountStore'
 import type { StockFeeSetting } from '@/types/transactions'
@@ -297,10 +305,12 @@ const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
 const principalModal = reactive({
   open: false,
   amount: '',
+  date: dayjs() as Dayjs,
 })
 
 const openPrincipalModal = () => {
   principalModal.amount = ''
+  principalModal.date = dayjs()
   principalModal.open = true
 }
 
@@ -316,7 +326,7 @@ const handlePrincipalModalOk = async () => {
     message.error('金额必须大于 0')
     return
   }
-  const ok = await stockStore.addPrincipal(cents)
+  const ok = await stockStore.addPrincipal(cents, principalModal.date.format('YYYY-MM-DD'))
   if (ok !== null) {
     principalModal.open = false
   }
@@ -326,10 +336,12 @@ const handlePrincipalModalOk = async () => {
 const withdrawModal = reactive({
   open: false,
   amount: '',
+  date: dayjs() as Dayjs,
 })
 
 const openWithdrawModal = () => {
   withdrawModal.amount = ''
+  withdrawModal.date = dayjs()
   withdrawModal.open = true
 }
 
@@ -345,7 +357,7 @@ const handleWithdrawModalOk = async () => {
     message.error('金额必须大于 0')
     return
   }
-  const ok = await stockStore.withdraw(cents)
+  const ok = await stockStore.withdraw(cents, withdrawModal.date.format('YYYY-MM-DD'))
   if (ok !== null) {
     withdrawModal.open = false
   }

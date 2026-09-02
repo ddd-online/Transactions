@@ -185,3 +185,49 @@ func TestAvailableCashSubtractsPositionCost(t *testing.T) {
 		t.Fatalf("清仓后可用现金应等于总资产, 可用现金 %d, 总资产 %d", after.AvailableCash, after.TotalAssets)
 	}
 }
+
+func TestAddWithdrawSupportsRecordDate(t *testing.T) {
+	svc, ws := newStockService(t)
+
+	if _, err := svc.SetPrincipal(ws, testLedgerID, 5000000); err != nil {
+		t.Fatalf("设置本金失败: %v", err)
+	}
+	if _, err := svc.AddPrincipalAtDate(ws, testLedgerID, 1000000, "2026-01-05"); err != nil {
+		t.Fatalf("按日期追加本金失败: %v", err)
+	}
+	if _, err := svc.AddWithdrawAtDate(ws, testLedgerID, 200000, "2026-01-10"); err != nil {
+		t.Fatalf("按日期支取失败: %v", err)
+	}
+
+	page, err := svc.ListFundRecords(ws, testLedgerID, 1, 10)
+	if err != nil {
+		t.Fatalf("查询资金记录失败: %v", err)
+	}
+	if page.Total != 2 {
+		t.Fatalf("资金记录应为 2 条, 实际 %d", page.Total)
+	}
+	// 列表按日期由近及远：支取 2026-01-10 在前，追加本金 2026-01-05 在后
+	if page.Items[0].RecordDate != "2026-01-10" || page.Items[0].EventType != models.StockEventWithdraw {
+		t.Fatalf("最新记录应为 2026-01-10 的支取, 实际 %+v", page.Items[0])
+	}
+	if page.Items[1].RecordDate != "2026-01-05" || page.Items[1].EventType != models.StockEventAddPrincipal {
+		t.Fatalf("历史记录应为 2026-01-05 的追加本金, 实际 %+v", page.Items[1])
+	}
+
+	overview, err := svc.GetOverview(ws, testLedgerID)
+	if err != nil {
+		t.Fatalf("查询总览失败: %v", err)
+	}
+	if overview.Principal != 6000000 || overview.WithdrawnTotal != 200000 {
+		t.Fatalf("本金/累计支取错误: %+v", overview)
+	}
+
+	if _, err := svc.AddPrincipalAtDate(ws, testLedgerID, 100000, "2026/01/05"); err == nil {
+		t.Fatalf("非法日期格式应报错")
+	} else if !strings.Contains(err.Error(), "日期格式") {
+		t.Fatalf("错误信息应说明日期格式, 实际: %v", err)
+	}
+	if _, err := svc.AddWithdrawAtDate(ws, testLedgerID, 100000, "not-a-date"); err == nil {
+		t.Fatalf("非法支取日期应报错")
+	}
+}

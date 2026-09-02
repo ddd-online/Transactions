@@ -9,12 +9,12 @@ export async function setStockPrincipal(ledgerId: string, amount: number): Promi
     return api.post<StockOverview>('/v1/stock/account/principal', { ledger_id: ledgerId, amount }, '设置本金');
 }
 
-export async function addStockPrincipal(ledgerId: string, amount: number): Promise<StockOverview> {
-    return api.post<StockOverview>('/v1/stock/account/principal/add', { ledger_id: ledgerId, amount }, '追加本金');
+export async function addStockPrincipal(ledgerId: string, amount: number, date = ''): Promise<StockOverview> {
+    return api.post<StockOverview>('/v1/stock/account/principal/add', { ledger_id: ledgerId, amount, date }, '追加本金');
 }
 
-export async function withdrawStockPrincipal(ledgerId: string, amount: number): Promise<StockOverview> {
-    return api.post<StockOverview>('/v1/stock/account/withdraw', { ledger_id: ledgerId, amount }, '支取');
+export async function withdrawStockPrincipal(ledgerId: string, amount: number, date = ''): Promise<StockOverview> {
+    return api.post<StockOverview>('/v1/stock/account/withdraw', { ledger_id: ledgerId, amount, date }, '支取');
 }
 
 export async function fetchStockFeeSettings(ledgerId: string): Promise<StockFeeSetting> {

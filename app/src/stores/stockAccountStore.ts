@@ -106,11 +106,11 @@ export const useStockAccountStore = defineStore('stockAccount', () => {
   const setPrincipal = (amount: number) =>
     runMutation(() => setStockPrincipal(currentLedgerId(), amount), '设置本金成功', '设置本金失败')
 
-  const addPrincipal = (amount: number) =>
-    runMutation(() => addStockPrincipal(currentLedgerId(), amount), '追加本金成功', '追加本金失败')
+  const addPrincipal = (amount: number, date = '') =>
+    runMutation(() => addStockPrincipal(currentLedgerId(), amount, date), '追加本金成功', '追加本金失败')
 
-  const withdraw = (amount: number) =>
-    runMutation(() => withdrawStockPrincipal(currentLedgerId(), amount), '支取成功', '支取失败')
+  const withdraw = (amount: number, date = '') =>
+    runMutation(() => withdrawStockPrincipal(currentLedgerId(), amount, date), '支取成功', '支取失败')
 
   const saveFeeSettingsAction = (commissionRate: number, minCommission: number, stampDutyRate: number, transferFeeRate: number) =>
     runMutation(
