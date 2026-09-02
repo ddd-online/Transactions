@@ -41,8 +41,7 @@ func (s *stockServiceImpl) UpdateTrade(ws *workspace.Workspace, ledgerID string,
 		if err != nil {
 			return err
 		}
-		// 持仓与盈亏按实际录入顺序重建；成交时间的修改只改变记录/统计时点，不改变持仓校验顺序
-		trades, err := s.stockDao.ListAllTradesEntryAsc(tx, ledgerID)
+		trades, err := s.stockDao.ListAllTradesAsc(tx, ledgerID)
 		if err != nil {
 			return err
 		}
@@ -207,8 +206,8 @@ func (s *stockServiceImpl) UpdateTrade(ws *workspace.Workspace, ledgerID string,
 			}
 		}
 
-		// 重建轮次与交易历史（按录入顺序归档，保持与当初录入时一致）
-		return s.rebuildHistoryByEntry(tx, ledgerID, trades)
+		// 重建轮次与交易历史（幂等回填，把完整轮次挂回 round_id）
+		return s.ensureTradeHistoryBackfill(tx, ledgerID)
 	})
 	if err != nil {
 		return nil, err
@@ -220,55 +219,6 @@ func (s *stockServiceImpl) UpdateTrade(ws *workspace.Workspace, ledgerID string,
 	}
 	item := dto.FromStockTrade(updated)
 	return &item, nil
-}
-
-// rebuildHistoryByEntry 按录入顺序把完整轮次归档为交易历史集合与轮次。
-// 与通用回填不同：不以成交时间排序切轮次，避免修改时间导致轮次结构漂移。
-func (s *stockServiceImpl) rebuildHistoryByEntry(ws *workspace.Workspace, ledgerID string, trades []models.StockTrade) error {
-	byCode := make(map[string][]models.StockTrade)
-	codes := make([]string, 0)
-	for i := range trades {
-		code := trades[i].StockCode
-		if _, ok := byCode[code]; !ok {
-			codes = append(codes, code)
-		}
-		byCode[code] = append(byCode[code], trades[i])
-	}
-	for _, code := range codes {
-		entries := byCode[code]
-		cycles := deriveTradeCycles(entries)
-		if len(cycles) == 0 {
-			continue
-		}
-		history := &models.StockTradeHistory{
-			ID:        util.GetUUID(),
-			LedgerID:  ledgerID,
-			StockCode: code,
-			StockName: entries[0].StockName,
-		}
-		if err := s.stockDao.CreateTradeHistory(ws, history); err != nil {
-			return err
-		}
-		for i := range cycles {
-			cycle := &cycles[i]
-			round := &models.StockTradeRound{
-				ID:        util.GetUUID(),
-				LedgerID:  ledgerID,
-				StockCode: code,
-				HistoryID: history.ID,
-				RoundNo:   int64(i + 1),
-				OpenedAt:  cycle.openedAt,
-				ClosedAt:  cycle.closedAt,
-			}
-			if err := s.stockDao.CreateTradeRound(ws, round); err != nil {
-				return err
-			}
-			if err := s.stockDao.UpdateTradesRoundID(ws, round.ID, cycle.ids); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // rebuildCashEvent 资金链重建中的一个事件（本金追加/支取或一笔买卖）。

@@ -32,7 +32,6 @@ type StockDao interface {
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
 	ListTradesAsc(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
 	ListAllTradesAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error)
-	ListAllTradesEntryAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error)
 	GetTradeByID(ws *workspace.Workspace, ledgerID string, tradeID string) (*models.StockTrade, error)
 	UpdateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
 	ClearTradeRoundsByLedger(ws *workspace.Workspace, ledgerID string) error
@@ -230,16 +229,6 @@ func (d *stockDaoImpl) ListAllTradesAsc(ws *workspace.Workspace, ledgerID string
 	trades := make([]models.StockTrade, 0)
 	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
 		Order("trade_time ASC, created_at ASC, id ASC").
-		Find(&trades).Error
-	return trades, err
-}
-
-// ListAllTradesEntryAsc 返回账本全部交易（按录入顺序 created_at/id 升序）。
-// 持仓/盈亏的校验与结转以实际录入顺序为准，成交时间仅用于展示与归档。
-func (d *stockDaoImpl) ListAllTradesEntryAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error) {
-	trades := make([]models.StockTrade, 0)
-	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
-		Order("created_at ASC, id ASC").
 		Find(&trades).Error
 	return trades, err
 }
