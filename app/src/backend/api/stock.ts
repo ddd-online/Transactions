@@ -113,6 +113,21 @@ export async function createStockTrade(
     }, '记录交易');
 }
 
+export async function updateStockTrade(
+    ledgerId: string,
+    tradeId: string,
+    price: number,
+    lots: number,
+    tradeTime: number
+): Promise<StockTrade> {
+    return api.patch<StockTrade>(`/v1/stock/trades/${encodeURIComponent(tradeId)}`, {
+        ledger_id: ledgerId,
+        price,
+        lots,
+        trade_time: tradeTime,
+    }, '修改交易');
+}
+
 export async function resetStockData(ledgerId: string): Promise<boolean> {
     return api.post<boolean>('/v1/stock/reset', { ledger_id: ledgerId }, '重置股票交易数据');
 }

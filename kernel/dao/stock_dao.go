@@ -31,6 +31,11 @@ type StockDao interface {
 	CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
 	ListTradesAsc(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
+	ListAllTradesAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error)
+	GetTradeByID(ws *workspace.Workspace, ledgerID string, tradeID string) (*models.StockTrade, error)
+	UpdateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
+	ClearTradeRoundsByLedger(ws *workspace.Workspace, ledgerID string) error
+	DeleteStockDerivedByLedger(ws *workspace.Workspace, ledgerID string) error
 	GetTradeHistory(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockTradeHistory, error)
 	CreateTradeHistory(ws *workspace.Workspace, history *models.StockTradeHistory) error
 	UpdateTradeHistoryName(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) error
@@ -217,6 +222,71 @@ func (d *stockDaoImpl) ListTradesAsc(ws *workspace.Workspace, ledgerID string, s
 		Order("trade_time ASC, created_at ASC, id ASC").
 		Find(&trades).Error
 	return trades, err
+}
+
+// ListAllTradesAsc 返回账本全部交易（按成交时间、创建时间、ID 升序），用于整链重建。
+func (d *stockDaoImpl) ListAllTradesAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error) {
+	trades := make([]models.StockTrade, 0)
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
+		Order("trade_time ASC, created_at ASC, id ASC").
+		Find(&trades).Error
+	return trades, err
+}
+
+func (d *stockDaoImpl) GetTradeByID(ws *workspace.Workspace, ledgerID string, tradeID string) (*models.StockTrade, error) {
+	var trade models.StockTrade
+	err := ws.GetDb().Where("id = ? AND ledger_id = ?", tradeID, ledgerID).First(&trade).Error
+	if err != nil {
+		return nil, err
+	}
+	return &trade, nil
+}
+
+// UpdateTrade 更新交易的全部业务字段（编辑后整链重建时重算金额/费用/已实现盈亏）。
+func (d *stockDaoImpl) UpdateTrade(ws *workspace.Workspace, trade *models.StockTrade) error {
+	return ws.GetDb().Model(&models.StockTrade{}).
+		Where("id = ? AND ledger_id = ?", trade.ID, trade.LedgerID).
+		Updates(map[string]any{
+			"stock_code":   trade.StockCode,
+			"stock_name":   trade.StockName,
+			"trade_type":   trade.TradeType,
+			"round_id":     trade.RoundID,
+			"price":        trade.Price,
+			"lots":         trade.Lots,
+			"shares":       trade.Shares,
+			"amount":       trade.Amount,
+			"fee":          trade.Fee,
+			"commission":   trade.Commission,
+			"stamp_duty":   trade.StampDuty,
+			"transfer_fee": trade.TransferFee,
+			"realized_pnl": trade.RealizedPnl,
+			"trade_time":   trade.TradeTime,
+			"remark":       trade.Remark,
+		}).Error
+}
+
+// ClearTradeRoundsByLedger 清空账本全部交易的轮次挂接（重建轮次前调用）。
+func (d *stockDaoImpl) ClearTradeRoundsByLedger(ws *workspace.Workspace, ledgerID string) error {
+	return ws.GetDb().Model(&models.StockTrade{}).
+		Where("ledger_id = ?", ledgerID).
+		Update("round_id", "").Error
+}
+
+// DeleteStockDerivedByLedger 删除可从交易流重建的派生数据：资金记录、轮次、历史集合、持仓。
+// 保留账户、费用设置与原始交易，供修改交易后整链重建使用。
+func (d *stockDaoImpl) DeleteStockDerivedByLedger(ws *workspace.Workspace, ledgerID string) error {
+	tables := []string{
+		"tbl_billadm_stock_fund_record",
+		"tbl_billadm_stock_trade_round",
+		"tbl_billadm_stock_trade_history",
+		"tbl_billadm_stock_position",
+	}
+	for _, table := range tables {
+		if err := ws.GetDb().Exec("DELETE FROM "+table+" WHERE ledger_id = ?", ledgerID).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (d *stockDaoImpl) GetTradeHistory(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockTradeHistory, error) {

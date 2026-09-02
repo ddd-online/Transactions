@@ -174,6 +174,28 @@ func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
 	return h.StockSvc.CreateTrade(ws(c), ledgerID, stockCode, stockName, tradeType, priceCents, int64(lots), int64(tradeTime), remark)
 }
 
+// PATCH /api/v1/stock/trades/:id  body: { ledger_id, price(元), lots, trade_time(秒) }
+// 只允许修改成交时间/价格/手数，修改后自动重建持仓、资金链与轮次归档。
+func (h *Handlers) updateStockTrade(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, _ := arg["ledger_id"].(string)
+	if ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	tradeID := c.Param("id")
+	if tradeID == "" {
+		return nil, models.NewBadRequest("trade id is required")
+	}
+	priceYuan, _ := arg["price"].(float64)
+	lots, _ := arg["lots"].(float64)
+	tradeTime, _ := arg["trade_time"].(float64)
+	priceCents := int64(math.Round(priceYuan * 100))
+	return h.StockSvc.UpdateTrade(ws(c), ledgerID, tradeID, priceCents, int64(lots), int64(tradeTime))
+}
+
 // GET /api/v1/stock/name?stock_code=
 func (h *Handlers) getStockName(c *gin.Context) (any, error) {
 	return h.StockSvc.LookupStockName(ws(c), c.Query("stock_code"))

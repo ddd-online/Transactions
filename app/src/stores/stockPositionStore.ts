@@ -4,6 +4,7 @@ import {
   createStockTrade,
   fetchStockPositions,
   fetchStockTrades,
+  updateStockTrade,
 } from '@/backend/api/stock'
 import { withErrorHandling } from '@/backend/errorHandler'
 import NotificationUtil from '@/backend/notification'
@@ -135,6 +136,41 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     }
   }
 
+  const updateTrade = async (input: {
+    tradeId: string
+    stockCode: string
+    price: number
+    lots: number
+    tradeTime: number
+  }): Promise<boolean> => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId) return false
+    mutating.value = true
+    try {
+      await withErrorHandling(
+        () => updateStockTrade(ledgerId, input.tradeId, input.price, input.lots, input.tradeTime),
+        { errorPrefix: '修改交易失败', rethrow: true }
+      )
+      NotificationUtil.success('交易已修改')
+      await loadPositions(input.stockCode)
+      // 修改可能把某只股票变成在建/已清仓，统一刷新持仓与历史/统计/账户
+      if (!positions.value.some((p) => p.stockCode === input.stockCode)) {
+        selectedCode.value = input.stockCode
+        await loadTrades(input.stockCode)
+      } else if (selectedCode.value) {
+        await loadTrades(selectedCode.value)
+      }
+      await stockHistoryStore.reload(input.stockCode)
+      await stockStatisticsStore.loadStats()
+      await stockAccountStore.reloadAll()
+      return true
+    } catch {
+      return false
+    } finally {
+      mutating.value = false
+    }
+  }
+
   watch(
     () => ledgerStore.currentLedgerId,
     () => {
@@ -157,5 +193,6 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     selectStock,
     reloadAll,
     recordTrade,
+    updateTrade,
   }
 })
