@@ -14,17 +14,7 @@
           <span class="stats-empty-title">还没有结算记录</span>
           <span class="stats-empty-hint">
             股票清仓后，这一轮从建仓到清仓的完整交易会自动成为一笔结算；<br />
-            完成第 2 笔结算后开始生成交易统计。
-          </span>
-        </div>
-      </section>
-
-      <!-- 仅 1 笔：说明统计起点 -->
-      <section v-else-if="stats.roundCount === 1" class="stats-empty-panel">
-        <div class="stats-empty-inner">
-          <span class="stats-empty-title">已有 1 笔结算</span>
-          <span class="stats-empty-hint">
-            交易统计从第 2 笔开始。再完成一笔清仓，即可看到胜率、盈亏比、期望值与最大回撤的累计变化。
+            完成第 1 笔结算后即可看到逐笔累计的统计与曲线。
           </span>
         </div>
       </section>
@@ -35,7 +25,7 @@
           <header class="stats-panel-head stats-overview-head">
             <div class="stats-heading">
               <h3 class="stats-title">结算统计</h3>
-              <span class="stats-desc">已结算 {{ stats.roundCount }} 笔 · 每完成一笔结算，自第 2 笔起按累计口径统计一次</span>
+              <span class="stats-desc">已结算 {{ stats.roundCount }} 笔 · 每完成一笔结算，自第 1 笔起按累计口径统计一次</span>
             </div>
             <div class="stats-head-actions">
               <a-tooltip :overlay-style="{ maxWidth: '380px' }">
@@ -225,7 +215,7 @@ const appearanceStore = useAppearanceStore()
 
 const points = computed(() => stats.value?.points ?? [])
 const latestPoint = computed<StockStatisticsPoint | null>(() => points.value[points.value.length - 1] ?? null)
-const firstPointSequence = computed(() => points.value[0]?.sequence ?? 2)
+const firstPointSequence = computed(() => points.value[0]?.sequence ?? 1)
 
 // ---------- 展示 ----------
 const signedYuan = (cents: number): string => {

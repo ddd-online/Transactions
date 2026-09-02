@@ -343,12 +343,12 @@ export interface StockTradeHistorySummary {
 /**
  * 交易统计总览：本金 + 逐笔结算统计点。
  * 统计口径：一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次），
- * 全部股票按清仓时间合成结算序列，从第 2 笔起按累计口径逐笔统计。
+ * 全部股票按清仓时间合成结算序列，自第 1 笔起按累计口径逐笔统计。
  */
 export interface StockStatistics {
     principal: number;                     // 当前本金（分）
     roundCount: number;                    // 已结算笔数（全部已完成轮次）
-    points: StockStatisticsPoint[];        // 第 2 笔起的统计点
+    points: StockStatisticsPoint[];        // 第 1 笔起的统计点
 }
 
 /**

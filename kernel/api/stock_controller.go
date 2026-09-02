@@ -140,7 +140,7 @@ func (h *Handlers) getStockTradeHistorySummary(c *gin.Context) (any, error) {
 	return h.StockSvc.GetTradeHistorySummary(ws(c), ledgerID)
 }
 
-// GET /api/v1/stock/statistics?ledger_id=  逐笔结算统计（自第 2 笔起）
+// GET /api/v1/stock/statistics?ledger_id=  逐笔结算统计（自第 1 笔起）
 func (h *Handlers) getStockStatistics(c *gin.Context) (any, error) {
 	ledgerID, err := requireLedgerID(c)
 	if err != nil {

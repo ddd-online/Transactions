@@ -19,7 +19,7 @@ type settleEvent struct {
 }
 
 // GetStatistics 返回交易统计：把全部已清仓轮次按清仓时间合成结算序列，
-// 从第 2 笔起每结算一笔按累计口径计算一次胜率/平均盈亏/盈亏比/期望值与最大回撤。
+// 自第 1 笔起每结算一笔按累计口径计算一次胜率/平均盈亏/盈亏比/期望值与最大回撤。
 //
 // 派生口径：
 //   - 胜率 = 盈利笔数 ÷ 总笔数（平局计入总笔数，不计胜负）；
@@ -78,7 +78,7 @@ func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID strin
 		RoundCount: int64(len(events)),
 		Points:     make([]dto.StockStatisticsPointDto, 0),
 	}
-	if len(events) < 2 {
+	if len(events) == 0 {
 		return result, nil
 	}
 
@@ -110,10 +110,6 @@ func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID strin
 		if drawdown > maxDrawdown {
 			maxDrawdown = drawdown
 		}
-		if totalCount < 2 {
-			continue
-		}
-
 		point := dto.StockStatisticsPointDto{
 			Sequence:     totalCount,
 			ClosedAt:     ev.round.ClosedAt,

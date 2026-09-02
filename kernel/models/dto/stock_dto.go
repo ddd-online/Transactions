@@ -181,11 +181,11 @@ type StockTradeHistorySummaryDto struct {
 
 // StockStatisticsDto 交易统计总览：本金（供最大回撤占本金比例）与逐笔结算统计点。
 // 统计口径：一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次），
-// 全部股票按清仓时间合成一条结算序列，从第 2 笔起按累计口径逐笔生成统计点。
+// 全部股票按清仓时间合成一条结算序列，自第 1 笔起按累计口径逐笔生成统计点。
 type StockStatisticsDto struct {
 	Principal  int64                     `json:"principal"`  // 当前本金（分）
 	RoundCount int64                     `json:"roundCount"` // 已结算笔数（全部已完成轮次）
-	Points     []StockStatisticsPointDto `json:"points"`     // 第 2 笔起的统计点（无或不足 2 笔为空）
+	Points     []StockStatisticsPointDto `json:"points"`     // 第 1 笔起的统计点（无结算时为空）
 }
 
 // StockStatisticsPointDto 一个结算统计点：截至第 N 笔清仓的累计口径指标。

@@ -36,7 +36,7 @@ func seedCleanRound(t *testing.T, ws *workspace.Workspace, svcStockDao dao.Stock
 	writeLegacy(models.StockTradeClose, closePrice)
 }
 
-func TestStatisticsStartsFromSecondSettlement(t *testing.T) {
+func TestStatisticsStartsFromFirstSettlement(t *testing.T) {
 	svc, ws := newStockService(t)
 	stockDao := dao.NewStockDao()
 	if _, err := svc.SetPrincipal(ws, testLedgerID, 10000000); err != nil {
@@ -58,51 +58,68 @@ func TestStatisticsStartsFromSecondSettlement(t *testing.T) {
 	if stats.RoundCount != 3 {
 		t.Fatalf("已结算笔数应为 3, 实际 %d", stats.RoundCount)
 	}
-	if len(stats.Points) != 2 {
-		t.Fatalf("应从第 2 笔起生成 2 个统计点, 实际 %d", len(stats.Points))
+	if len(stats.Points) != 3 {
+		t.Fatalf("应自第 1 笔起生成 3 个统计点, 实际 %d", len(stats.Points))
 	}
 
 	p1 := stats.Points[0]
-	if p1.Sequence != 2 || p1.StockCode != testCodeB || p1.ClosedAt != 1690001000 {
-		t.Fatalf("第 2 笔统计点结算信息错误: %+v", p1)
+	if p1.Sequence != 1 || p1.StockCode != testCode || p1.ClosedAt != 1690000000 {
+		t.Fatalf("第 1 笔统计点结算信息错误: %+v", p1)
 	}
-	if p1.Pnl != 50000 || p1.TotalPnl != 150000 {
-		t.Fatalf("第 2 笔该笔/累计盈亏错误: %+v", p1)
+	if p1.Pnl != 100000 || p1.TotalPnl != 100000 {
+		t.Fatalf("第 1 笔该笔/累计盈亏错误: %+v", p1)
 	}
-	if p1.WinCount != 2 || p1.LossCount != 0 || p1.WinRate != 100 {
-		t.Fatalf("第 2 笔胜负/胜率错误: %+v", p1)
+	if p1.WinCount != 1 || p1.LossCount != 0 || p1.WinRate != 100 {
+		t.Fatalf("第 1 笔胜负/胜率错误: %+v", p1)
 	}
-	if p1.AvgWin != 75000 || p1.AvgLoss != 0 || p1.PnlRatio != nil {
-		t.Fatalf("第 2 笔平均盈亏错误: %+v", p1)
+	if p1.AvgWin != 100000 || p1.AvgLoss != 0 || p1.PnlRatio != nil {
+		t.Fatalf("第 1 笔平均盈亏错误: %+v", p1)
 	}
-	if p1.Expectancy != 75000 || p1.MaxDrawdown != 0 || p1.MaxDrawdownPct != 0 {
-		t.Fatalf("第 2 笔期望值/回撤错误: %+v", p1)
+	if p1.Expectancy != 100000 || p1.MaxDrawdown != 0 || p1.MaxDrawdownPct != 0 {
+		t.Fatalf("第 1 笔期望值/回撤错误: %+v", p1)
 	}
 
 	p2 := stats.Points[1]
-	if p2.Sequence != 3 || p2.StockCode != testCode || p2.ClosedAt != 1690002000 {
-		t.Fatalf("第 3 笔统计点结算信息错误: %+v", p2)
+	if p2.Sequence != 2 || p2.StockCode != testCodeB || p2.ClosedAt != 1690001000 {
+		t.Fatalf("第 2 笔统计点结算信息错误: %+v", p2)
 	}
-	if p2.Pnl != -80000 || p2.TotalPnl != 70000 {
-		t.Fatalf("第 3 笔该笔/累计盈亏错误: %+v", p2)
+	if p2.Pnl != 50000 || p2.TotalPnl != 150000 {
+		t.Fatalf("第 2 笔该笔/累计盈亏错误: %+v", p2)
 	}
-	if p2.WinCount != 2 || p2.LossCount != 1 {
-		t.Fatalf("第 3 笔胜负计数错误: %+v", p2)
+	if p2.WinCount != 2 || p2.LossCount != 0 || p2.WinRate != 100 {
+		t.Fatalf("第 2 笔胜负/胜率错误: %+v", p2)
 	}
-	if math.Abs(p2.WinRate-66.67) > 0.01 {
-		t.Fatalf("第 3 笔胜率应为 66.67%%, 实际 %.2f", p2.WinRate)
+	if p2.AvgWin != 75000 || p2.AvgLoss != 0 || p2.PnlRatio != nil {
+		t.Fatalf("第 2 笔平均盈亏错误: %+v", p2)
 	}
-	if p2.AvgWin != 75000 || p2.AvgLoss != 80000 {
-		t.Fatalf("第 3 笔平均盈亏错误: avgWin=%d avgLoss=%d", p2.AvgWin, p2.AvgLoss)
+	if p2.Expectancy != 75000 || p2.MaxDrawdown != 0 || p2.MaxDrawdownPct != 0 {
+		t.Fatalf("第 2 笔期望值/回撤错误: %+v", p2)
 	}
-	if p2.PnlRatio == nil || math.Abs(*p2.PnlRatio-0.9375) > 0.0001 {
-		t.Fatalf("第 3 笔实际盈亏比应为 0.9375, 实际 %v", p2.PnlRatio)
+
+	p3 := stats.Points[2]
+	if p3.Sequence != 3 || p3.StockCode != testCode || p3.ClosedAt != 1690002000 {
+		t.Fatalf("第 3 笔统计点结算信息错误: %+v", p3)
 	}
-	if p2.Expectancy != 23333 {
-		t.Fatalf("第 3 笔期望值应为 23333, 实际 %d", p2.Expectancy)
+	if p3.Pnl != -80000 || p3.TotalPnl != 70000 {
+		t.Fatalf("第 3 笔该笔/累计盈亏错误: %+v", p3)
 	}
-	if p2.MaxDrawdown != 80000 || math.Abs(p2.MaxDrawdownPct-0.8) > 0.001 {
-		t.Fatalf("第 3 笔最大回撤错误: %+v", p2)
+	if p3.WinCount != 2 || p3.LossCount != 1 {
+		t.Fatalf("第 3 笔胜负计数错误: %+v", p3)
+	}
+	if math.Abs(p3.WinRate-66.67) > 0.01 {
+		t.Fatalf("第 3 笔胜率应为 66.67%%, 实际 %.2f", p3.WinRate)
+	}
+	if p3.AvgWin != 75000 || p3.AvgLoss != 80000 {
+		t.Fatalf("第 3 笔平均盈亏错误: avgWin=%d avgLoss=%d", p3.AvgWin, p3.AvgLoss)
+	}
+	if p3.PnlRatio == nil || math.Abs(*p3.PnlRatio-0.9375) > 0.0001 {
+		t.Fatalf("第 3 笔实际盈亏比应为 0.9375, 实际 %v", p3.PnlRatio)
+	}
+	if p3.Expectancy != 23333 {
+		t.Fatalf("第 3 笔期望值应为 23333, 实际 %d", p3.Expectancy)
+	}
+	if p3.MaxDrawdown != 80000 || math.Abs(p3.MaxDrawdownPct-0.8) > 0.001 {
+		t.Fatalf("第 3 笔最大回撤错误: %+v", p3)
 	}
 }
 
@@ -122,37 +139,48 @@ func TestStatisticsCountsBreakevenInTotal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("查询交易统计失败: %v", err)
 	}
-	if stats.RoundCount != 3 || len(stats.Points) != 2 {
+	if stats.RoundCount != 3 || len(stats.Points) != 3 {
 		t.Fatalf("统计点数量错误: %+v", stats)
 	}
 
 	p1 := stats.Points[0]
-	if p1.WinCount != 1 || p1.LossCount != 0 || p1.WinRate != 50 {
-		t.Fatalf("平局计入总笔数后第 2 笔胜率应为 50%%, 实际 %+v", p1)
+	if p1.WinCount != 1 || p1.LossCount != 0 || p1.WinRate != 100 {
+		t.Fatalf("第 1 笔胜率应为 100%%, 实际 %+v", p1)
 	}
-	if p1.AvgWin != 100000 || p1.Expectancy != 50000 {
-		t.Fatalf("第 2 笔平均盈利/期望值错误: %+v", p1)
+	if p1.AvgWin != 100000 || p1.Expectancy != 100000 {
+		t.Fatalf("第 1 笔平均盈利/期望值错误: %+v", p1)
 	}
 
 	p2 := stats.Points[1]
-	if p2.TotalPnl != 40000 || p2.WinCount != 1 || p2.LossCount != 1 {
-		t.Fatalf("第 3 笔累计盈亏/胜负错误: %+v", p2)
+	if p2.Sequence != 2 || p2.TotalPnl != 100000 || p2.WinCount != 1 || p2.LossCount != 0 {
+		t.Fatalf("平局计入总笔数后第 2 笔累计盈亏/胜负错误: %+v", p2)
 	}
-	if math.Abs(p2.WinRate-33.33) > 0.01 {
-		t.Fatalf("第 3 笔胜率应为 33.33%%, 实际 %.2f", p2.WinRate)
+	if math.Abs(p2.WinRate-50) > 0.01 {
+		t.Fatalf("第 2 笔胜率应为 50%%, 实际 %.2f", p2.WinRate)
 	}
-	if p2.AvgLoss != 60000 || p2.PnlRatio == nil || math.Abs(*p2.PnlRatio-1.6667) > 0.001 {
-		t.Fatalf("第 3 笔平均亏损/盈亏比错误: %+v", p2)
+	if p2.AvgWin != 100000 || p2.Expectancy != 50000 {
+		t.Fatalf("第 2 笔平均盈利/期望值错误: %+v", p2)
 	}
-	if p2.Expectancy != 13333 {
-		t.Fatalf("第 3 笔期望值应为 13333, 实际 %d", p2.Expectancy)
+
+	p3 := stats.Points[2]
+	if p3.TotalPnl != 40000 || p3.WinCount != 1 || p3.LossCount != 1 {
+		t.Fatalf("第 3 笔累计盈亏/胜负错误: %+v", p3)
 	}
-	if p2.MaxDrawdown != 60000 || math.Abs(p2.MaxDrawdownPct-0.6) > 0.001 {
-		t.Fatalf("第 3 笔最大回撤错误: %+v", p2)
+	if math.Abs(p3.WinRate-33.33) > 0.01 {
+		t.Fatalf("第 3 笔胜率应为 33.33%%, 实际 %.2f", p3.WinRate)
+	}
+	if p3.AvgLoss != 60000 || p3.PnlRatio == nil || math.Abs(*p3.PnlRatio-1.6667) > 0.001 {
+		t.Fatalf("第 3 笔平均亏损/盈亏比错误: %+v", p3)
+	}
+	if p3.Expectancy != 13333 {
+		t.Fatalf("第 3 笔期望值应为 13333, 实际 %d", p3.Expectancy)
+	}
+	if p3.MaxDrawdown != 60000 || math.Abs(p3.MaxDrawdownPct-0.6) > 0.001 {
+		t.Fatalf("第 3 笔最大回撤错误: %+v", p3)
 	}
 }
 
-func TestStatisticsNeedsAtLeastTwoSettlements(t *testing.T) {
+func TestStatisticsNeedsAtLeastOneSettlement(t *testing.T) {
 	svc, ws := newStockService(t)
 	stockDao := dao.NewStockDao()
 
@@ -164,12 +192,19 @@ func TestStatisticsNeedsAtLeastTwoSettlements(t *testing.T) {
 		t.Fatalf("无交易时应返回空统计, 实际 %+v", empty)
 	}
 
+	if _, err := svc.SetPrincipal(ws, testLedgerID, 10000000); err != nil {
+		t.Fatalf("设置本金失败: %v", err)
+	}
 	seedCleanRound(t, ws, stockDao, testCode, testName, 1000, 1100, 10, 1690000000)
 	one, err := svc.GetStatistics(ws, testLedgerID)
 	if err != nil {
 		t.Fatalf("单笔结算查询统计失败: %v", err)
 	}
-	if one.RoundCount != 1 || len(one.Points) != 0 {
-		t.Fatalf("仅 1 笔结算时不应生成统计点, 实际 %+v", one)
+	if one.RoundCount != 1 || len(one.Points) != 1 {
+		t.Fatalf("仅 1 笔结算时应生成 1 个统计点, 实际 %+v", one)
+	}
+	p := one.Points[0]
+	if p.Sequence != 1 || p.TotalPnl != 100000 || p.WinRate != 100 || p.AvgWin != 100000 {
+		t.Fatalf("第 1 笔统计点数值错误: %+v", p)
 	}
 }
