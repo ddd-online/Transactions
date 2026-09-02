@@ -158,54 +158,58 @@
             <table class="stats-table">
               <thead>
                 <tr>
-                  <th>结算点</th>
-                  <th>结算日期</th>
-                  <th>本笔盈亏</th>
-                  <th>累计盈亏</th>
-                  <th>胜负</th>
-                  <th>胜率</th>
-                  <th>平均盈利</th>
-                  <th>平均亏损</th>
-                  <th>实际盈亏比</th>
-                  <th>期望值</th>
-                  <th>最大回撤</th>
+                  <th class="align-center">结算点</th>
+                  <th class="align-center">结算日期</th>
+                  <th class="align-center">本笔盈亏</th>
+                  <th class="align-center">累计盈亏</th>
+                  <th class="align-center">胜负</th>
+                  <th class="align-center">胜率</th>
+                  <th class="align-center">平均盈利</th>
+                  <th class="align-center">平均亏损</th>
+                  <th class="align-center">实际盈亏比</th>
+                  <th class="align-center">期望值</th>
+                  <th class="align-center">最大回撤</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="p in detailRows" :key="p.sequence" :class="{ 'row-latest': p.sequence === latestPoint.sequence }">
-                  <td :title="`${p.stockName} ${p.stockCode} · 该股第 ${p.stockRoundNo} 轮`">
+                  <td class="align-center" :title="`${p.stockName} ${p.stockCode} · 该股第 ${p.stockRoundNo} 轮`">
                     <span class="cell-seq amount">第 {{ p.sequence }} 笔</span>
                     <span class="cell-note amount">{{ p.stockName }} 第 {{ p.stockRoundNo }} 轮</span>
                   </td>
-                  <td class="cell-date">{{ formatDate(p.closedAt) }}</td>
-                  <td>
-                    <span class="cell-money amount" :class="pnlClass(p.pnl)">{{ signedYuan(p.pnl) }}</span>
-                    <span class="cell-note amount">{{ rateText(p.pnlRate) }}</span>
+                  <td class="cell-date align-center">{{ formatDate(p.closedAt) }}</td>
+                  <td class="align-center">
+                    <span class="cell-pair">
+                      <span class="cell-money amount" :class="pnlClass(p.pnl)">{{ signedYuan(p.pnl) }}</span>
+                      <span class="cell-note amount">{{ rateText(p.pnlRate) }}</span>
+                    </span>
                   </td>
-                  <td>
+                  <td class="align-right">
                     <span class="cell-money amount" :class="pnlClass(p.totalPnl)">{{ signedYuan(p.totalPnl) }}</span>
                   </td>
-                  <td>
+                  <td class="align-center">
                     <span class="cell-winloss">{{ p.winCount }} 胜 {{ p.lossCount }} 负</span>
                   </td>
-                  <td>
+                  <td class="align-right">
                     <span class="cell-money amount">{{ rateText(p.winRate) }}</span>
                   </td>
-                  <td>
+                  <td class="align-right">
                     <span class="cell-money amount" :class="p.avgWin > 0 ? 'amount-income' : ''">{{ winAvgText(p.avgWin) }}</span>
                   </td>
-                  <td>
+                  <td class="align-right">
                     <span class="cell-money amount" :class="p.avgLoss > 0 ? 'amount-expense' : ''">{{ lossAvgText(p.avgLoss) }}</span>
                   </td>
-                  <td>
+                  <td class="align-right">
                     <span class="cell-money amount">{{ ratioText(p) }}</span>
                   </td>
-                  <td>
+                  <td class="align-right">
                     <span class="cell-money amount" :class="pnlClass(p.expectancy)">{{ signedYuan(p.expectancy) }}</span>
                   </td>
-                  <td>
-                    <span class="cell-money amount" :class="p.maxDrawdownPct > 0 ? 'amount-expense' : ''">{{ rateText(p.maxDrawdownPct) }}</span>
-                    <span class="cell-note amount">{{ yuanText(p.maxDrawdown) }}</span>
+                  <td class="align-center">
+                    <span class="cell-pair cell-pair--drawdown">
+                      <span class="cell-note amount">{{ rateText(p.maxDrawdownPct) }}</span>
+                      <span class="cell-money amount" :class="p.maxDrawdownPct > 0 ? 'amount-expense' : ''">{{ yuanText(p.maxDrawdown) }}</span>
+                    </span>
                   </td>
                 </tr>
               </tbody>
@@ -740,6 +744,15 @@ onMounted(() => {
   vertical-align: middle;
 }
 
+.stats-table th.align-center,
+.stats-table td.align-center {
+  text-align: center;
+}
+
+.stats-table td.align-right {
+  text-align: right;
+}
+
 .stats-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -778,6 +791,38 @@ onMounted(() => {
   font-size: var(--transactions-size-text-body);
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* 金额 + 百分比同格展示：两个数值各自右对齐，形成稳定的金额列与百分比列 */
+.cell-pair {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+}
+
+.cell-pair .cell-money,
+.cell-pair .cell-note {
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cell-pair .cell-note {
+  margin-left: 0;
+}
+
+.cell-pair .cell-money {
+  min-width: 10ch;
+}
+
+.cell-pair .cell-note {
+  min-width: 7ch;
+}
+
+/* 最大回撤：金额在百分比右侧，收窄金额列避免两数之间空隙过大 */
+.cell-pair--drawdown .cell-money {
+  min-width: 7ch;
 }
 
 /* ========== 空态 / 骨架 ========== */
