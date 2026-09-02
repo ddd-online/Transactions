@@ -245,6 +245,9 @@
 
   .ant-tabs-nav {
     margin-bottom: var(--transactions-space-lg);
+    /* 为右上角窗口控制区（状态灯 26px + 3个32px按钮 + 3个6px间隙 = 140px）留出空间，
+       避免整条 tab 拖拽区盖住窗口按钮导致无法点击 */
+    margin-right: calc(26px + 3 * 32px + 3 * 6px);
     @include drag-region;
   }
 
