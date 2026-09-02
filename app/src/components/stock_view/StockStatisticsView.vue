@@ -57,53 +57,60 @@
             </div>
           </header>
 
-          <div class="stats-metrics">
-            <div class="stats-metric stats-metric-lead">
+          <div class="stats-overview-body">
+            <!-- 主结果：总盈亏领衔 -->
+            <div class="stats-metric stats-lead">
               <span class="stats-metric-label">总盈亏</span>
-              <span class="stats-metric-value amount amount-medium" :class="pnlClass(latestPoint.totalPnl)">
+              <span class="stats-lead-value amount" :class="pnlClass(latestPoint.totalPnl)">
                 {{ signedYuan(latestPoint.totalPnl) }}
               </span>
-              <span class="stats-metric-sub">截至第 {{ latestPoint.sequence }} 笔结算</span>
+              <span class="stats-metric-sub">截至 {{ formatDate(latestPoint.closedAt) }} · 第 {{ latestPoint.sequence }} 笔结算</span>
             </div>
-            <div class="stats-metric">
-              <span class="stats-metric-label">胜率</span>
-              <span class="stats-metric-value amount amount-medium">{{ rateText(latestPoint.winRate) }}</span>
-              <span class="stats-metric-sub">
-                {{ latestPoint.winCount }} 胜 · {{ latestPoint.lossCount }} 负
-              </span>
+
+            <!-- 关键绩效：胜负形态、赔率、期望、回撤 -->
+            <div class="stats-kpis">
+              <div class="stats-metric stats-kpi">
+                <span class="stats-metric-label">胜率</span>
+                <span class="stats-metric-value amount">{{ rateText(latestPoint.winRate) }}</span>
+                <span class="stats-metric-sub">{{ latestPoint.winCount }} 胜 · {{ latestPoint.lossCount }} 负</span>
+              </div>
+              <div class="stats-metric stats-kpi">
+                <span class="stats-metric-label">实际盈亏比</span>
+                <span class="stats-metric-value amount">{{ ratioText(latestPoint) }}</span>
+                <span class="stats-metric-sub">平均盈利 ÷ 平均亏损</span>
+              </div>
+              <div class="stats-metric stats-kpi">
+                <span class="stats-metric-label">期望值</span>
+                <span class="stats-metric-value amount" :class="pnlClass(latestPoint.expectancy)">
+                  {{ signedYuan(latestPoint.expectancy) }}
+                </span>
+                <span class="stats-metric-sub">平均每笔</span>
+              </div>
+              <div class="stats-metric stats-kpi">
+                <span class="stats-metric-label">最大回撤</span>
+                <span class="stats-metric-value amount" :class="latestPoint.maxDrawdown > 0 ? 'amount-expense' : ''">
+                  {{ yuanText(latestPoint.maxDrawdown) }}
+                </span>
+                <span class="stats-metric-sub">占本金 {{ rateText(latestPoint.maxDrawdownPct) }}</span>
+              </div>
             </div>
-            <div class="stats-metric">
-              <span class="stats-metric-label">平均盈利</span>
-              <span class="stats-metric-value amount amount-medium" :class="latestPoint.avgWin > 0 ? 'amount-income' : ''">
+          </div>
+
+          <!-- 均值样本：构成盈亏比的两端 -->
+          <div class="stats-averages">
+            <div class="stats-metric stats-average">
+              <span class="stats-average-label">平均盈利</span>
+              <span class="stats-average-value amount" :class="latestPoint.avgWin > 0 ? 'amount-income' : ''">
                 {{ winAvgText(latestPoint.avgWin) }}
               </span>
-              <span class="stats-metric-sub">盈利笔 {{ latestPoint.winCount }} 笔</span>
+              <span class="stats-average-sub">{{ latestPoint.winCount }} 笔盈利</span>
             </div>
-            <div class="stats-metric">
-              <span class="stats-metric-label">平均亏损</span>
-              <span class="stats-metric-value amount amount-medium" :class="latestPoint.avgLoss > 0 ? 'amount-expense' : ''">
+            <div class="stats-metric stats-average">
+              <span class="stats-average-label">平均亏损</span>
+              <span class="stats-average-value amount" :class="latestPoint.avgLoss > 0 ? 'amount-expense' : ''">
                 {{ lossAvgText(latestPoint.avgLoss) }}
               </span>
-              <span class="stats-metric-sub">亏损笔 {{ latestPoint.lossCount }} 笔</span>
-            </div>
-            <div class="stats-metric">
-              <span class="stats-metric-label">实际盈亏比</span>
-              <span class="stats-metric-value amount amount-medium">{{ ratioText(latestPoint) }}</span>
-              <span class="stats-metric-sub">平均盈利 ÷ 平均亏损</span>
-            </div>
-            <div class="stats-metric">
-              <span class="stats-metric-label">期望值</span>
-              <span class="stats-metric-value amount amount-medium" :class="pnlClass(latestPoint.expectancy)">
-                {{ signedYuan(latestPoint.expectancy) }}
-              </span>
-              <span class="stats-metric-sub">平均每笔</span>
-            </div>
-            <div class="stats-metric">
-              <span class="stats-metric-label">最大回撤</span>
-              <span class="stats-metric-value amount amount-medium" :class="latestPoint.maxDrawdown > 0 ? 'amount-expense' : ''">
-                {{ yuanText(latestPoint.maxDrawdown) }}
-              </span>
-              <span class="stats-metric-sub">占本金 {{ rateText(latestPoint.maxDrawdownPct) }}</span>
+              <span class="stats-average-sub">{{ latestPoint.lossCount }} 笔亏损</span>
             </div>
           </div>
         </section>
@@ -451,7 +458,7 @@ onMounted(() => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-lg);
+  gap: var(--transactions-space-xl);
   padding-right: var(--transactions-space-2xs);
   @include custom-scrollbar;
 }
@@ -532,31 +539,12 @@ onMounted(() => {
 }
 
 /* ========== 顶部汇总 ========== */
-.stats-overview-head {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.stats-metrics {
-  display: grid;
-  grid-template-columns: 1.5fr repeat(6, 1fr);
-  border-top: 1px solid var(--transactions-color-divider);
-  padding-top: var(--transactions-space-lg);
-}
-
 .stats-metric {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--transactions-space-2xs);
   min-width: 0;
-  padding: 0 var(--transactions-space-lg);
-  border-left: 1px solid var(--transactions-color-divider);
-}
-
-.stats-metric:first-child {
-  border-left: none;
-  padding-left: 0;
 }
 
 .stats-metric-label {
@@ -567,21 +555,112 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.stats-metric-value {
-  color: var(--transactions-color-text-major);
+.stats-lead-value,
+.stats-metric-value,
+.stats-average-value {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
 }
 
-.stats-metric-sub {
+.stats-metric-sub,
+.stats-average-sub {
   font-size: var(--transactions-size-text-small);
   color: var(--transactions-color-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+/* 主区：左结果 + 右关键绩效 */
+.stats-overview-body {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0 var(--transactions-space-xl);
+  padding: var(--transactions-space-lg) var(--transactions-space-xl) var(--transactions-space-xl);
+}
+
+.stats-lead {
+  justify-content: center;
+  padding-right: var(--transactions-space-xl);
+  border-right: 1px solid var(--transactions-color-divider);
+}
+
+.stats-lead-value {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-display-sm);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: var(--transactions-height-tight);
+}
+
+.stats-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+}
+
+.stats-kpi {
+  justify-content: center;
+  align-self: stretch;
+  padding-left: var(--transactions-space-xl);
+}
+
+.stats-kpi + .stats-kpi {
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+.stats-metric-value {
+  color: var(--transactions-color-text-major);
+}
+
+/* 均值样本带：次要层级，底色与主区区分 */
+.stats-averages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--transactions-color-window-border);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.stats-average {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'label value'
+    'label sub';
+  column-gap: var(--transactions-space-lg);
+  row-gap: var(--transactions-space-2xs);
+  align-items: center;
+  padding: var(--transactions-space-md) var(--transactions-space-xl);
+}
+
+.stats-average + .stats-average {
+  border-left: 1px solid var(--transactions-color-window-border);
+}
+
+.stats-average-label {
+  grid-area: label;
+  font-size: var(--transactions-size-text-caption);
+  font-weight: 500;
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+}
+
+.stats-average-value {
+  grid-area: value;
+  justify-self: end;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.stats-average-sub {
+  grid-area: sub;
+  justify-self: end;
 }
 
 /* ========== 统计曲线 ========== */
@@ -742,7 +821,7 @@ onMounted(() => {
 }
 
 .stats-skeleton-head {
-  height: 168px;
+  height: 232px;
 }
 
 .stats-skeleton-chart {
@@ -750,20 +829,32 @@ onMounted(() => {
 }
 
 @media (max-width: 1280px) {
-  .stats-metrics {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    row-gap: var(--transactions-space-xl);
+  .stats-overview-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--transactions-space-xl) 0;
   }
 
-  .stats-metric {
-    border-left: none;
-    padding-left: 0;
+  .stats-lead {
+    padding-right: 0;
+    padding-bottom: var(--transactions-space-lg);
+    border-right: none;
+    border-bottom: 1px solid var(--transactions-color-divider);
   }
 }
 
 @media (max-width: 1080px) {
-  .stats-metrics {
+  .stats-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--transactions-space-xl);
+  }
+
+  .stats-kpi {
+    padding-left: 0;
+  }
+
+  .stats-kpi:nth-child(even) {
+    padding-left: var(--transactions-space-xl);
+    border-left: 1px solid var(--transactions-color-divider);
   }
 
   .stats-chart {
