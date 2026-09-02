@@ -1,38 +1,40 @@
 <template>
   <div class="history-page">
-    <!-- 全局汇总：全部已清仓股票的盈亏、胜负与轮次 -->
-    <section v-if="summary && histories.length" class="history-summary history-summary-global">
-      <div class="history-summary-identity">
-        <span class="history-summary-title">全部已清仓股票</span>
-      </div>
-      <div class="history-summary-stats">
-        <div class="summary-stat summary-stat-total">
-          <span class="summary-stat-label">总盈亏</span>
-          <span class="summary-stat-value summary-stat-total-value amount" :class="pnlClass(summary.totalPnl)">
-            {{ signedYuan(summary.totalPnl) }}
-          </span>
+    <!-- 单面板：全局汇总条 + 两栏明细，均以分隔线衔接 -->
+    <section class="history-board">
+      <!-- 全局汇总：全部已清仓股票的盈亏、胜负与轮次 -->
+      <section v-if="summary && histories.length" class="history-summary history-summary-global">
+        <div class="history-summary-identity">
+          <span class="history-summary-title">全部已清仓股票</span>
         </div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">累计盈亏率</span>
-          <span class="summary-stat-value amount" :class="pnlClass(summary.totalPnl)">{{ rateText(summary.totalPnlRate) }}</span>
+        <div class="history-summary-stats">
+          <div class="summary-stat summary-stat-total">
+            <span class="summary-stat-label">总盈亏</span>
+            <span class="summary-stat-value summary-stat-total-value amount" :class="pnlClass(summary.totalPnl)">
+              {{ signedYuan(summary.totalPnl) }}
+            </span>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat-label">累计盈亏率</span>
+            <span class="summary-stat-value amount" :class="pnlClass(summary.totalPnl)">{{ rateText(summary.totalPnlRate) }}</span>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat-label">胜负轮次</span>
+            <span class="summary-stat-value">
+              <span class="amount" :class="summary.winCount ? 'amount-income' : ''">{{ summary.winCount }} 胜</span>
+              <span class="summary-stat-divider">·</span>
+              <span class="amount" :class="summary.lossCount ? 'amount-expense' : ''">{{ summary.lossCount }} 负</span>
+            </span>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat-label">总轮次</span>
+            <span class="summary-stat-value">{{ summary.roundCount }} 轮</span>
+          </div>
         </div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">胜负轮次</span>
-          <span class="summary-stat-value">
-            <span class="amount" :class="summary.winCount ? 'amount-income' : ''">{{ summary.winCount }} 胜</span>
-            <span class="summary-stat-divider">·</span>
-            <span class="amount" :class="summary.lossCount ? 'amount-expense' : ''">{{ summary.lossCount }} 负</span>
-          </span>
-        </div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">总轮次</span>
-          <span class="summary-stat-value">{{ summary.roundCount }} 轮</span>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 两栏：左股票集合 + 右轮次明细 -->
-    <div class="history-body">
+      <!-- 两栏：左股票集合 + 右轮次明细 -->
+      <div class="history-body">
       <!-- 左栏：已清仓股票集合 -->
       <aside class="history-left">
         <div class="history-left-head">
@@ -152,24 +154,24 @@
                   <table class="round-table">
                     <thead>
                       <tr>
-                        <th>时间</th>
-                        <th>类型</th>
+                        <th class="align-center">时间</th>
+                        <th class="align-center">类型</th>
                         <th class="align-right">成交价</th>
-                        <th>手数</th>
+                        <th class="align-right">手数</th>
                         <th class="align-right">成交金额</th>
                         <th class="align-right">费用</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="t in round.trades" :key="t.id">
-                        <td class="cell-date">{{ formatTime(t.tradeTime) }}</td>
-                        <td>
+                        <td class="cell-date align-center">{{ formatTime(t.tradeTime) }}</td>
+                        <td class="align-center">
                           <span class="trade-type" :class="isBuy(t.tradeType) ? 'type-buy' : 'type-sell'">
                             {{ tradeTypeLabel(t.tradeType) }}
                           </span>
                         </td>
                         <td class="cell-amount align-right">{{ centsToYuan(t.price) }}</td>
-                        <td class="cell-lots">{{ t.lots }}手</td>
+                        <td class="cell-lots align-right">{{ t.lots }}手</td>
                         <td class="cell-amount align-right">{{ centsToYuan(t.amount) }}</td>
                         <td class="cell-fee align-right">{{ centsToYuan(t.fee) }}</td>
                       </tr>
@@ -231,7 +233,8 @@
           <span class="panel-empty-text">选择左侧股票查看交易历史</span>
         </div>
       </div>
-    </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -368,10 +371,16 @@ onMounted(() => {
   min-height: 0;
 }
 
-/* ========== 全局汇总条 ========== */
-.history-summary-global {
-  flex-shrink: 0;
-  margin-bottom: var(--transactions-space-lg);
+/* ========== 单面板容器：全局汇总条 + 两栏明细共用一张面板，内部以分隔线衔接 ========== */
+.history-board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
 }
 
 .history-summary-title {
@@ -390,9 +399,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   overflow: hidden;
-  background-color: var(--transactions-color-major-background);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-lg);
 }
 
 .history-left {
@@ -410,8 +416,6 @@ onMounted(() => {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: var(--transactions-space-lg);
-  gap: var(--transactions-space-lg);
 }
 
 .panel-empty-text {
@@ -595,11 +599,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: var(--transactions-space-xl);
-  padding: var(--transactions-space-lg) var(--transactions-space-xl);
-  background-color: var(--transactions-color-major-background);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-lg);
-  box-shadow: var(--transactions-shadow-sm);
+  padding: var(--transactions-space-md) var(--transactions-space-xl);
+  border-bottom: 1px solid var(--transactions-color-divider);
 }
 
 .history-summary-identity {
@@ -607,7 +608,7 @@ onMounted(() => {
   align-items: baseline;
   gap: var(--transactions-space-sm);
   min-width: 0;
-  flex-shrink: 0;
+  flex-shrink: 1;
 }
 
 .stock-identity-name {
@@ -628,16 +629,21 @@ onMounted(() => {
 }
 
 .history-summary-stats {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-2xl);
+  width: 640px;
+  max-width: 100%;
   margin-left: auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--transactions-space-lg);
 }
 
+/* 每个子格：标签靠左、数值靠右 */
 .summary-stat {
   display: flex;
   align-items: baseline;
-  gap: var(--transactions-space-sm);
+  justify-content: space-between;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
   white-space: nowrap;
 }
 
@@ -653,12 +659,13 @@ onMounted(() => {
   color: var(--transactions-color-text-major);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .summary-stat-total-value {
-  font-size: var(--transactions-size-text-title);
+  font-size: var(--transactions-size-text-section);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .summary-stat-divider {
@@ -675,18 +682,17 @@ onMounted(() => {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-lg);
-  padding-right: var(--transactions-space-2xs);
+  gap: 0;
+  padding: var(--transactions-space-lg);
   @include custom-scrollbar;
 }
 
 .round-card {
   flex-shrink: 0;
-  background-color: var(--transactions-color-major-background);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-lg);
-  box-shadow: var(--transactions-shadow-sm);
-  overflow: hidden;
+}
+
+.round-card + .round-card {
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 .round-head {
@@ -938,8 +944,14 @@ onMounted(() => {
   margin-top: var(--transactions-space-sm);
 }
 
-.align-right {
+.round-table th.align-right,
+.round-table td.align-right {
   text-align: right;
+}
+
+.round-table th.align-center,
+.round-table td.align-center {
+  text-align: center;
 }
 
 .cell-date {
@@ -959,7 +971,6 @@ onMounted(() => {
 
 .cell-lots {
   color: var(--transactions-color-text-secondary);
-  text-align: center;
 }
 
 .cell-fee {
@@ -1005,6 +1016,10 @@ onMounted(() => {
 }
 
 @media (max-width: 1080px) {
+  .history-board {
+    overflow: visible;
+  }
+
   .history-body {
     grid-template-columns: minmax(0, 1fr);
     overflow: visible;
@@ -1021,9 +1036,11 @@ onMounted(() => {
   }
 
   .history-summary-stats {
+    width: 100%;
+    max-width: none;
     margin-left: 0;
-    flex-wrap: wrap;
-    gap: var(--transactions-space-lg) var(--transactions-space-xl);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--transactions-space-lg);
   }
 }
 
