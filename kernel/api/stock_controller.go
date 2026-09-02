@@ -140,6 +140,15 @@ func (h *Handlers) getStockTradeHistorySummary(c *gin.Context) (any, error) {
 	return h.StockSvc.GetTradeHistorySummary(ws(c), ledgerID)
 }
 
+// GET /api/v1/stock/statistics?ledger_id=  逐笔结算统计（自第 2 笔起）
+func (h *Handlers) getStockStatistics(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.GetStatistics(ws(c), ledgerID)
+}
+
 // POST /api/v1/stock/trades  body: { ledger_id, stock_code, stock_name, trade_type, price(元), lots, trade_time(秒), remark }
 func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
 	arg, ok := JsonArg(c)

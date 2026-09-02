@@ -341,6 +341,41 @@ export interface StockTradeHistorySummary {
 }
 
 /**
+ * 交易统计总览：本金 + 逐笔结算统计点。
+ * 统计口径：一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次），
+ * 全部股票按清仓时间合成结算序列，从第 2 笔起按累计口径逐笔统计。
+ */
+export interface StockStatistics {
+    principal: number;                     // 当前本金（分）
+    roundCount: number;                    // 已结算笔数（全部已完成轮次）
+    points: StockStatisticsPoint[];        // 第 2 笔起的统计点
+}
+
+/**
+ * 一个结算统计点：截至第 N 笔清仓的累计口径指标（金额单位：分）。
+ */
+export interface StockStatisticsPoint {
+    sequence: number;                      // 全局结算序号（第 N 笔）
+    closedAt: number;                      // 结算时间（该笔清仓时间，Unix 秒）
+    stockCode: string;                     // 触发本统计点的股票代码
+    stockName: string;                     // 触发本统计点的股票名称
+    stockRoundNo: number;                  // 该股第几轮
+    pnl: number;                           // 本笔盈亏（分）
+    pnlRate: number;                       // 本笔盈亏率（%）
+    tradeCount: number;                    // 本笔包含的成交笔数
+    totalPnl: number;                      // 累计盈亏（分）
+    winCount: number;                      // 累计盈利笔数
+    lossCount: number;                     // 累计亏损笔数
+    winRate: number;                       // 胜率（%）
+    avgWin: number;                        // 平均盈利（分）
+    avgLoss: number;                       // 平均亏损（分，正数）
+    pnlRatio: number | null;               // 实际盈亏比（无亏损样本时为 null）
+    expectancy: number;                    // 期望值（分/笔）
+    maxDrawdown: number;                   // 最大回撤（分）
+    maxDrawdownPct: number;                // 最大回撤占本金比例（%）
+}
+
+/**
  * 股票名称查询结果
  */
 export interface StockNameResult {

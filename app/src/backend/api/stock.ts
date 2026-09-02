@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockTrade, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary } from "@/types/transactions";
+import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockStatistics, StockTrade, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary } from "@/types/transactions";
 
 export async function fetchStockOverview(ledgerId: string): Promise<StockOverview> {
     return api.get<StockOverview>(`/v1/stock/account/overview?ledger_id=${encodeURIComponent(ledgerId)}`, '查询股票账户总览');
@@ -73,6 +73,13 @@ export async function fetchStockTradeHistorySummary(ledgerId: string): Promise<S
     return api.get<StockTradeHistorySummary>(
         `/v1/stock/history/summary?ledger_id=${encodeURIComponent(ledgerId)}`,
         '查询交易历史总览'
+    );
+}
+
+export async function fetchStockStatistics(ledgerId: string): Promise<StockStatistics> {
+    return api.get<StockStatistics>(
+        `/v1/stock/statistics?ledger_id=${encodeURIComponent(ledgerId)}`,
+        '查询交易统计'
     );
 }
 

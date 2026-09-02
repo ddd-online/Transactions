@@ -37,6 +37,7 @@ type StockService interface {
 	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error)
 	GetTradeHistoryDetail(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockTradeHistoryDetailDto, error)
 	GetTradeHistorySummary(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeHistorySummaryDto, error)
+	GetStatistics(ws *workspace.Workspace, ledgerID string) (*dto.StockStatisticsDto, error)
 	LookupStockName(ws *workspace.Workspace, stockCode string) (*dto.StockNameDto, error)
 	ResetData(ws *workspace.Workspace, ledgerID string) error
 }
@@ -734,13 +735,13 @@ func (s *stockServiceImpl) buildHistoryDto(ws *workspace.Workspace, history *mod
 		return dto.StockTradeHistoryDto{}, err
 	}
 	item := dto.StockTradeHistoryDto{
-		ID:        history.ID,
-		LedgerID:  history.LedgerID,
-		StockCode: history.StockCode,
-		StockName: history.StockName,
+		ID:         history.ID,
+		LedgerID:   history.LedgerID,
+		StockCode:  history.StockCode,
+		StockName:  history.StockName,
 		RoundCount: int64(len(rounds)),
-		CreatedAt: history.CreatedAt,
-		UpdatedAt: history.UpdatedAt,
+		CreatedAt:  history.CreatedAt,
+		UpdatedAt:  history.UpdatedAt,
 	}
 	var totalPnl, totalBuyCost int64
 	for i := range rounds {
@@ -892,7 +893,7 @@ func deriveTradeCycles(trades []models.StockTrade) []tradeCycle {
 }
 
 var (
-	stockCodePattern = regexp.MustCompile(`^(60|68|00|30)\d{4}$`)
+	stockCodePattern  = regexp.MustCompile(`^(60|68|00|30)\d{4}$`)
 	quoteFieldPattern = regexp.MustCompile(`"([^"]*)"`)
 )
 

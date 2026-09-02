@@ -10,12 +10,14 @@ import NotificationUtil from '@/backend/notification'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { useStockAccountStore } from '@/stores/stockAccountStore'
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
+import { useStockStatisticsStore } from '@/stores/stockStatisticsStore'
 import type { StockPosition, StockTrade } from '@/types/transactions'
 
 export const useStockPositionStore = defineStore('stockPosition', () => {
   const ledgerStore = useLedgerStore()
   const stockAccountStore = useStockAccountStore()
   const stockHistoryStore = useStockHistoryStore()
+  const stockStatisticsStore = useStockStatisticsStore()
 
   const positions = ref<StockPosition[]>([])
   const positionsLoading = ref(false)
@@ -117,8 +119,9 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
       if (input.stockCode && !positions.value.some((p) => p.stockCode === input.stockCode)) {
         selectedCode.value = input.stockCode
         await loadTrades(input.stockCode)
-        // 清仓会生成一笔新的交易历史轮次，同步刷新历史页
+        // 清仓会生成一笔新的交易历史轮次，同步刷新历史页与交易统计
         await stockHistoryStore.reload(input.stockCode)
+        await stockStatisticsStore.loadStats()
       } else if (selectedCode.value) {
         await loadTrades(selectedCode.value)
       }

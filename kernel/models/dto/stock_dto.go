@@ -129,29 +129,29 @@ func FromStockTrade(t *models.StockTrade) StockTradeDto {
 // StockTradeHistoryDto 股票交易历史集合（左栏列表项）。
 // 盈亏与轮次数均为派生值，按需从轮次交易计算。
 type StockTradeHistoryDto struct {
-	ID          string  `json:"id"`
-	LedgerID    string  `json:"ledgerId"`
-	StockCode   string  `json:"stockCode"`
-	StockName   string  `json:"stockName"`
-	RoundCount  int64   `json:"roundCount"`  // 已完成轮次数
-	TotalPnl    int64   `json:"totalPnl"`    // 该股累计已实现盈亏（分）
+	ID           string  `json:"id"`
+	LedgerID     string  `json:"ledgerId"`
+	StockCode    string  `json:"stockCode"`
+	StockName    string  `json:"stockName"`
+	RoundCount   int64   `json:"roundCount"`   // 已完成轮次数
+	TotalPnl     int64   `json:"totalPnl"`     // 该股累计已实现盈亏（分）
 	TotalPnlRate float64 `json:"totalPnlRate"` // 累计盈亏率（%，相对全部建仓成本）
-	LastClosedAt int64  `json:"lastClosedAt"` // 最近一次清仓时间
-	CreatedAt   int64   `json:"createdAt"`
-	UpdatedAt   int64   `json:"updatedAt"`
+	LastClosedAt int64   `json:"lastClosedAt"` // 最近一次清仓时间
+	CreatedAt    int64   `json:"createdAt"`
+	UpdatedAt    int64   `json:"updatedAt"`
 }
 
 // StockTradeRoundDto 一次完整轮次：从建仓到清仓的全部交易 + 本轮盈亏。
 type StockTradeRoundDto struct {
-	ID        string          `json:"id"`
-	HistoryID string          `json:"historyId"`
-	RoundNo   int64           `json:"roundNo"`
-	OpenedAt  int64           `json:"openedAt"`
-	ClosedAt  int64           `json:"closedAt"`
-	Pnl       int64           `json:"pnl"`       // 本轮盈亏（分）
-	PnlRate   float64         `json:"pnlRate"`   // 本轮盈亏率（%）
-	TradeCount int64          `json:"tradeCount"`
-	Trades    []StockTradeDto `json:"trades"`
+	ID         string          `json:"id"`
+	HistoryID  string          `json:"historyId"`
+	RoundNo    int64           `json:"roundNo"`
+	OpenedAt   int64           `json:"openedAt"`
+	ClosedAt   int64           `json:"closedAt"`
+	Pnl        int64           `json:"pnl"`     // 本轮盈亏（分）
+	PnlRate    float64         `json:"pnlRate"` // 本轮盈亏率（%）
+	TradeCount int64           `json:"tradeCount"`
+	Trades     []StockTradeDto `json:"trades"`
 }
 
 // StockTradeHistoryDetailDto 单只股票的交易历史详情（右栏）。
@@ -177,6 +177,38 @@ type StockTradeHistorySummaryDto struct {
 	LossCount    int64   `json:"lossCount"`    // 亏损轮次
 	TotalPnl     int64   `json:"totalPnl"`     // 总盈亏（分）
 	TotalPnlRate float64 `json:"totalPnlRate"` // 总盈亏率（%）
+}
+
+// StockStatisticsDto 交易统计总览：本金（供最大回撤占本金比例）与逐笔结算统计点。
+// 统计口径：一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次），
+// 全部股票按清仓时间合成一条结算序列，从第 2 笔起按累计口径逐笔生成统计点。
+type StockStatisticsDto struct {
+	Principal  int64                     `json:"principal"`  // 当前本金（分）
+	RoundCount int64                     `json:"roundCount"` // 已结算笔数（全部已完成轮次）
+	Points     []StockStatisticsPointDto `json:"points"`     // 第 2 笔起的统计点（无或不足 2 笔为空）
+}
+
+// StockStatisticsPointDto 一个结算统计点：截至第 N 笔清仓的累计口径指标。
+// 金额单位：分；百分比与比率以小数百分比/倍数表示；平均亏损为亏损金额（正数）。
+type StockStatisticsPointDto struct {
+	Sequence       int64    `json:"sequence"`       // 全局结算序号（第 N 笔）
+	ClosedAt       int64    `json:"closedAt"`       // 本统计点的结算时间（该笔清仓时间，Unix 秒）
+	StockCode      string   `json:"stockCode"`      // 触发本统计点的股票代码
+	StockName      string   `json:"stockName"`      // 触发本统计点的股票名称
+	StockRoundNo   int64    `json:"stockRoundNo"`   // 该股第几轮（该股自己的轮次序号）
+	Pnl            int64    `json:"pnl"`            // 本笔盈亏（分）
+	PnlRate        float64  `json:"pnlRate"`        // 本笔盈亏率（%）
+	TradeCount     int64    `json:"tradeCount"`     // 本笔包含的成交笔数（建仓到清仓的全部交易）
+	TotalPnl       int64    `json:"totalPnl"`       // 累计盈亏（分）
+	WinCount       int64    `json:"winCount"`       // 累计盈利笔数
+	LossCount      int64    `json:"lossCount"`      // 累计亏损笔数
+	WinRate        float64  `json:"winRate"`        // 胜率（%，盈利笔数 ÷ 总笔数）
+	AvgWin         int64    `json:"avgWin"`         // 平均盈利（分，盈利总和 ÷ 盈利笔数）
+	AvgLoss        int64    `json:"avgLoss"`        // 平均亏损（分，亏损金额总和 ÷ 亏损笔数，正数）
+	PnlRatio       *float64 `json:"pnlRatio"`       // 实际盈亏比（平均盈利 ÷ 平均亏损），尚无亏损样本时为 null
+	Expectancy     int64    `json:"expectancy"`     // 期望值（分/笔，胜率 × 平均盈利 − 亏损率 × 平均亏损）
+	MaxDrawdown    int64    `json:"maxDrawdown"`    // 最大回撤（分，账户净值从高点到低点的最大跌幅）
+	MaxDrawdownPct float64  `json:"maxDrawdownPct"` // 最大回撤占本金比例（%）
 }
 
 // RoundPnl 由一轮交易推导本轮盈亏与盈亏率（不存储冗余派生值）。
