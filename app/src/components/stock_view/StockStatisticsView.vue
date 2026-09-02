@@ -48,7 +48,7 @@
                     平均亏损 = 亏损总和 ÷ 亏损笔数<br />
                     实际盈亏比 = 平均盈利 ÷ 平均亏损<br />
                     期望值 = 胜率 × 平均盈利 − 亏损率 × 平均亏损<br />
-                    最大回撤 = 账户净值（本金 + 累计已结算盈亏）从高点的最大跌幅，占本金% 按当前本金口径。
+                    最大回撤 = 总资产（本金 + 累计已结算盈亏）从高点的最大回落，以占本金百分比表示。
                   </div>
                 </template>
                 <QuestionCircleOutlined class="stats-tip-icon" aria-label="统计口径说明" />
@@ -88,10 +88,10 @@
               </div>
               <div class="stats-metric stats-kpi">
                 <span class="stats-metric-label">最大回撤</span>
-                <span class="stats-metric-value amount" :class="latestPoint.maxDrawdown > 0 ? 'amount-expense' : ''">
-                  {{ yuanText(latestPoint.maxDrawdown) }}
+                <span class="stats-metric-value amount" :class="latestPoint.maxDrawdownPct > 0 ? 'amount-expense' : ''">
+                  {{ rateText(latestPoint.maxDrawdownPct) }}
                 </span>
-                <span class="stats-metric-sub">占本金 {{ rateText(latestPoint.maxDrawdownPct) }}</span>
+                <span class="stats-metric-sub">从高点回落 {{ yuanText(latestPoint.maxDrawdown) }}</span>
               </div>
             </div>
           </div>
@@ -195,8 +195,8 @@
                     <span class="cell-money amount" :class="pnlClass(p.expectancy)">{{ signedYuan(p.expectancy) }}</span>
                   </td>
                   <td>
-                    <span class="cell-money amount" :class="p.maxDrawdown > 0 ? 'amount-expense' : ''">{{ yuanText(p.maxDrawdown) }}</span>
-                    <span class="cell-note amount">占本金 {{ rateText(p.maxDrawdownPct) }}</span>
+                    <span class="cell-money amount" :class="p.maxDrawdownPct > 0 ? 'amount-expense' : ''">{{ rateText(p.maxDrawdownPct) }}</span>
+                    <span class="cell-note amount">{{ yuanText(p.maxDrawdown) }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -260,7 +260,7 @@ const metricDefs: MetricDef[] = [
   { key: 'avgLoss', label: '平均亏损', kind: 'money' },
   { key: 'pnlRatio', label: '实际盈亏比', kind: 'ratio' },
   { key: 'expectancy', label: '期望值', kind: 'money', signed: true },
-  { key: 'maxDrawdown', label: '最大回撤', kind: 'money' },
+  { key: 'maxDrawdown', label: '最大回撤', kind: 'percent' },
 ]
 const selectedMetric = ref<MetricKey>('totalPnl')
 const activeMetric = computed<MetricDef>(
@@ -285,7 +285,7 @@ const metricValue = (p: StockStatisticsPoint, key: MetricKey): number | null => 
     case 'expectancy':
       return p.expectancy
     case 'maxDrawdown':
-      return p.maxDrawdown
+      return p.maxDrawdownPct
   }
 }
 
@@ -390,7 +390,7 @@ const chartOption = computed<EChartsOption | null>(() => {
           ${row('平均亏损', `<span style="${mono}color:${colors.expense}">-¥${centsToYuan(p.avgLoss)}</span>`)}
           ${row('实际盈亏比', `<span style="${mono}">${p.pnlRatio === null ? '∞' : p.pnlRatio.toFixed(2)}</span>`)}
           ${row('期望值', `<span style="${mono}${signedStyle(p.expectancy)}">${money(p.expectancy)}</span>`)}
-          ${row('最大回撤', `<span style="${mono}color:${colors.expense}">¥${centsToYuan(p.maxDrawdown)}（占本金 ${p.maxDrawdownPct.toFixed(2)}%）</span>`)}
+          ${row('最大回撤', `<span style="${mono}color:${colors.expense}">${p.maxDrawdownPct.toFixed(2)}%（¥${centsToYuan(p.maxDrawdown)}）</span>`)}
         `
       },
     },
