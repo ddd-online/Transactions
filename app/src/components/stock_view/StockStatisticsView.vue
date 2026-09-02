@@ -28,8 +28,13 @@
         <section class="stats-panel stats-overview">
           <header class="stats-panel-head stats-overview-head">
             <div class="stats-heading">
-              <h3 class="stats-title">结算统计</h3>
-              <span class="stats-desc">已结算 {{ stats.roundCount }} 笔 · 每完成一笔结算，自第 1 笔起按累计口径统计一次</span>
+              <div class="stats-subtitle-row">
+                <h3 class="stats-title">结算统计</h3>
+                <a-tooltip :overlay-style="{ maxWidth: '380px' }">
+                  <template #title>已结算 {{ stats.roundCount }} 笔 · 每完成一笔结算，自第 1 笔起按累计口径统计一次。</template>
+                  <QuestionCircleOutlined class="stats-tip-icon" aria-label="结算统计说明" />
+                </a-tooltip>
+              </div>
             </div>
             <div class="stats-head-actions">
               <a-tooltip :overlay-style="{ maxWidth: '380px' }">
@@ -516,12 +521,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: var(--transactions-space-sm);
-}
-
-.stats-desc {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-  line-height: var(--transactions-height-normal);
 }
 
 .stats-head-actions {
