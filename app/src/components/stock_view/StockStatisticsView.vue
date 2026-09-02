@@ -323,10 +323,12 @@ const readThemeColors = () => {
 }
 
 const moneyAxisText = (value: number): string => {
-  const abs = Math.abs(value)
-  if (abs >= 100000000) return `¥${(value / 100000000).toFixed(1)}亿`
-  if (abs >= 10000) return `¥${(value / 10000).toFixed(1)}万`
-  return `¥${value}`
+  // 图表数据单位为分，先换算为元再压缩刻度
+  const yuan = value / 100
+  const abs = Math.abs(yuan)
+  if (abs >= 100000000) return `¥${(yuan / 100000000).toFixed(1)}亿`
+  if (abs >= 10000) return `¥${(yuan / 10000).toFixed(1)}万`
+  return `¥${yuan.toFixed(0)}`
 }
 
 const formatAxisValue = (value: number, metric: MetricDef): string => {
