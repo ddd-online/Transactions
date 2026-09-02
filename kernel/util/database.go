@@ -46,6 +46,8 @@ func NewDbInstance(dbPath string) (*gorm.DB, error) {
 		&models.StockFundRecord{},
 		&models.StockPosition{},
 		&models.StockTrade{},
+		&models.StockTradeHistory{},
+		&models.StockTradeRound{},
 		&models.AiConfig{},
 		&models.AiApiConfig{},
 		&models.AiMessage{},

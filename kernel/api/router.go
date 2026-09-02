@@ -93,6 +93,7 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			stockAccount.GET("/overview", Handle(h.getStockOverview))
 			stockAccount.POST("/principal", Handle(h.setStockPrincipal))
 			stockAccount.POST("/principal/add", Handle(h.addStockPrincipal))
+			stockAccount.POST("/withdraw", Handle(h.withdrawStockAccount))
 			stockAccount.GET("/fee-settings", Handle(h.getStockFeeSettings))
 			stockAccount.PUT("/fee-settings", Handle(h.updateStockFeeSettings))
 			stockAccount.GET("/fund-records", Handle(h.listStockFundRecords))
@@ -103,6 +104,9 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 		{
 			stockTrade.GET("/positions", Handle(h.getStockPositions))
 			stockTrade.GET("/trades", Handle(h.listStockTrades))
+			stockTrade.GET("/history", Handle(h.listStockTradeHistory))
+			stockTrade.GET("/history/detail", Handle(h.getStockTradeHistoryDetail))
+			stockTrade.GET("/history/summary", Handle(h.getStockTradeHistorySummary))
 			stockTrade.GET("/name", Handle(h.getStockName))
 			stockTrade.POST("/trades", Handle(h.createStockTrade))
 			stockTrade.POST("/reset", Handle(h.resetStockData))

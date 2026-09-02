@@ -7,8 +7,18 @@
         <div class="panel-title-row">
           <div class="panel-title-left">
             <h3 class="panel-title">总资产</h3>
+            <a-tooltip>
+              <template #title>
+                总资产 = 本金 + 总盈亏 − 累计支取<br />
+                本金为累计投入，支取不改变本金
+              </template>
+              <QuestionCircleOutlined class="panel-title-tip" aria-label="总资产计算说明" />
+            </a-tooltip>
           </div>
-          <a-button type="primary" :loading="mutating" @click="openPrincipalModal()">追加本金</a-button>
+          <div class="overview-actions">
+            <a-button :loading="mutating" @click="openWithdrawModal()">支取</a-button>
+            <a-button type="primary" :loading="mutating" @click="openPrincipalModal()">追加本金</a-button>
+          </div>
         </div>
         <div class="overview-lead-value amount amount-large">
           <template v-if="!overviewLoading">{{ centsToYuan(overview.totalAssets) }}</template>
@@ -20,14 +30,6 @@
             <span class="overview-label">本金</span>
             <div class="overview-stat-value amount amount-medium">
               <template v-if="!overviewLoading">{{ centsToYuan(overview.principal) }}</template>
-              <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
-            </div>
-          </div>
-
-          <div class="overview-stat">
-            <span class="overview-label">当前现金</span>
-            <div class="overview-stat-value amount amount-medium">
-              <template v-if="!overviewLoading">{{ centsToYuan(overview.currentCash) }}</template>
               <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
             </div>
           </div>
@@ -45,6 +47,34 @@
             </div>
             <div class="overview-stat-value amount amount-medium" :class="pnlClass">
               <template v-if="!overviewLoading">{{ formatSignedYuan(overview.realizedPnl) }}</template>
+              <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div class="overview-stat">
+            <div class="overview-stat-label">
+              <span class="overview-label">累计支取</span>
+              <a-tooltip>
+                <template #title>从股票账户支取出的累计金额，支取会相应减少总资产</template>
+                <QuestionCircleOutlined class="overview-stat-tip" aria-label="累计支取说明" />
+              </a-tooltip>
+            </div>
+            <div class="overview-stat-value amount amount-medium">
+              <template v-if="!overviewLoading">{{ centsToYuan(overview.withdrawnTotal) }}</template>
+              <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div class="overview-stat">
+            <div class="overview-stat-label">
+              <span class="overview-label">可用现金</span>
+              <a-tooltip>
+                <template #title>可用现金 = 总资产 − 当前持仓成本</template>
+                <QuestionCircleOutlined class="overview-stat-tip" aria-label="可用现金计算说明" />
+              </a-tooltip>
+            </div>
+            <div class="overview-stat-value amount amount-medium">
+              <template v-if="!overviewLoading">{{ centsToYuan(overview.availableCash) }}</template>
               <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
             </div>
           </div>
@@ -151,6 +181,17 @@
           <a-input v-model:value="principalModal.amount" prefix="￥" placeholder="请输入金额（支持两位小数）" />
         </a-form-item>
         <p class="modal-hint">追加后本金随之增加，并生成一条资金变化记录。</p>
+      </a-form>
+    </a-modal>
+
+    <!-- ========== 支取弹窗 ========== -->
+    <a-modal v-model:open="withdrawModal.open" title="支取" ok-text="支取" cancel-text="取消" centered
+      :width="400" :confirm-loading="mutating" @ok="handleWithdrawModalOk">
+      <a-form layout="vertical">
+        <a-form-item label="支取金额" required>
+          <a-input v-model:value="withdrawModal.amount" prefix="￥" placeholder="请输入金额（支持两位小数）" />
+        </a-form-item>
+        <p class="modal-hint">支取从可用现金中扣除，本金不变，并生成一条资金变化记录。</p>
       </a-form>
     </a-modal>
   </div>
@@ -281,6 +322,35 @@ const handlePrincipalModalOk = async () => {
   }
 }
 
+// ---------- 支取弹窗 ----------
+const withdrawModal = reactive({
+  open: false,
+  amount: '',
+})
+
+const openWithdrawModal = () => {
+  withdrawModal.amount = ''
+  withdrawModal.open = true
+}
+
+const handleWithdrawModalOk = async () => {
+  let cents: number
+  try {
+    cents = yuanToCents(withdrawModal.amount)
+  } catch {
+    message.error('请输入有效的金额')
+    return
+  }
+  if (cents <= 0) {
+    message.error('金额必须大于 0')
+    return
+  }
+  const ok = await stockStore.withdraw(cents)
+  if (ok !== null) {
+    withdrawModal.open = false
+  }
+}
+
 // ---------- 初始化 ----------
 onMounted(() => {
   stockStore.reloadAll()
@@ -328,9 +398,15 @@ watch(
   color: var(--transactions-color-text-major);
 }
 
+.overview-actions {
+  display: flex;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+}
+
 .overview-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-top: 1px solid var(--transactions-color-divider);
 }
 
@@ -488,6 +564,15 @@ watch(
   .account-grid {
     grid-template-columns: minmax(0, 1fr);
     overflow: visible;
+  }
+
+  .overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--transactions-space-lg);
+  }
+
+  .overview-stat:nth-child(3) {
+    border-left: none;
   }
 
   .records-panel {

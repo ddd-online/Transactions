@@ -21,6 +21,8 @@ type StockDao interface {
 	QueryLatestFundRecord(ws *workspace.Workspace, ledgerID string) (*models.StockFundRecord, error)
 	QueryFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) ([]models.StockFundRecord, int64, error)
 	SumNetPnl(ws *workspace.Workspace, ledgerID string) (int64, error)
+	SumWithdrawn(ws *workspace.Workspace, ledgerID string) (int64, error)
+	SumPositionCost(ws *workspace.Workspace, ledgerID string) (int64, error)
 	CountFundRecords(ws *workspace.Workspace, ledgerID string) (int64, error)
 	GetPosition(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockPosition, error)
 	CreatePosition(ws *workspace.Workspace, position *models.StockPosition) error
@@ -28,6 +30,19 @@ type StockDao interface {
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]models.StockPosition, error)
 	CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
+	ListTradesAsc(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
+	GetTradeHistory(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockTradeHistory, error)
+	CreateTradeHistory(ws *workspace.Workspace, history *models.StockTradeHistory) error
+	UpdateTradeHistoryName(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) error
+	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]models.StockTradeHistory, error)
+	ListTradeStocks(ws *workspace.Workspace, ledgerID string) ([]string, error)
+	CountTradeRounds(ws *workspace.Workspace, historyID string) (int64, error)
+	CreateTradeRound(ws *workspace.Workspace, round *models.StockTradeRound) error
+	ListTradeRoundsByStock(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTradeRound, error)
+	ListTradesByRound(ws *workspace.Workspace, roundID string) ([]models.StockTrade, error)
+	MinUnattachedTradeTime(ws *workspace.Workspace, ledgerID string, stockCode string) (int64, error)
+	AttachUnattachedTrades(ws *workspace.Workspace, ledgerID string, stockCode string, roundID string) error
+	UpdateTradesRoundID(ws *workspace.Workspace, roundID string, ids []string) error
 	QueryStockName(ws *workspace.Workspace, stockCode string) (string, error)
 	DeleteByLedgerId(ws *workspace.Workspace, ledgerID string) error
 	ResetByLedgerId(ws *workspace.Workspace, ledgerID string) error
@@ -124,6 +139,26 @@ func (d *stockDaoImpl) SumNetPnl(ws *workspace.Workspace, ledgerID string) (int6
 	return sum, err
 }
 
+// SumWithdrawn 累计支取金额（amount_change 存储为负数，取反求和）。
+func (d *stockDaoImpl) SumWithdrawn(ws *workspace.Workspace, ledgerID string) (int64, error) {
+	var sum int64
+	err := ws.GetDb().Model(&models.StockFundRecord{}).
+		Select("COALESCE(SUM(-amount_change), 0)").
+		Where("ledger_id = ? AND event_type = ?", ledgerID, models.StockEventWithdraw).
+		Scan(&sum).Error
+	return sum, err
+}
+
+// SumPositionCost 当前持仓成本：Σ 持仓中股票的总成本（已清仓的 quantity=0，不计入）。
+func (d *stockDaoImpl) SumPositionCost(ws *workspace.Workspace, ledgerID string) (int64, error) {
+	var sum int64
+	err := ws.GetDb().Model(&models.StockPosition{}).
+		Select("COALESCE(SUM(total_cost), 0)").
+		Where("ledger_id = ? AND quantity > 0", ledgerID).
+		Scan(&sum).Error
+	return sum, err
+}
+
 func (d *stockDaoImpl) CountFundRecords(ws *workspace.Workspace, ledgerID string) (int64, error) {
 	var total int64
 	err := ws.GetDb().Model(&models.StockFundRecord{}).
@@ -175,6 +210,106 @@ func (d *stockDaoImpl) ListTrades(ws *workspace.Workspace, ledgerID string, stoc
 	return trades, err
 }
 
+// ListTradesAsc 按成交时间升序返回某只股票的全部交易（历史回填/轮次归并使用）。
+func (d *stockDaoImpl) ListTradesAsc(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error) {
+	trades := make([]models.StockTrade, 0)
+	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).
+		Order("trade_time ASC, created_at ASC, id ASC").
+		Find(&trades).Error
+	return trades, err
+}
+
+func (d *stockDaoImpl) GetTradeHistory(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockTradeHistory, error) {
+	var history models.StockTradeHistory
+	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).First(&history).Error
+	if err != nil {
+		return nil, err
+	}
+	return &history, nil
+}
+
+func (d *stockDaoImpl) CreateTradeHistory(ws *workspace.Workspace, history *models.StockTradeHistory) error {
+	return ws.GetDb().Create(history).Error
+}
+
+func (d *stockDaoImpl) UpdateTradeHistoryName(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) error {
+	return ws.GetDb().Model(&models.StockTradeHistory{}).
+		Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).
+		Update("stock_name", stockName).Error
+}
+
+func (d *stockDaoImpl) ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]models.StockTradeHistory, error) {
+	histories := make([]models.StockTradeHistory, 0)
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
+		Order("updated_at DESC, created_at DESC").
+		Find(&histories).Error
+	return histories, err
+}
+
+// ListTradeStocks 返回存在交易记录的股票代码列表（历史回填使用）。
+func (d *stockDaoImpl) ListTradeStocks(ws *workspace.Workspace, ledgerID string) ([]string, error) {
+	codes := make([]string, 0)
+	err := ws.GetDb().Model(&models.StockTrade{}).
+		Where("ledger_id = ?", ledgerID).
+		Distinct().
+		Pluck("stock_code", &codes).Error
+	return codes, err
+}
+
+func (d *stockDaoImpl) CountTradeRounds(ws *workspace.Workspace, historyID string) (int64, error) {
+	var count int64
+	err := ws.GetDb().Model(&models.StockTradeRound{}).
+		Where("history_id = ?", historyID).Count(&count).Error
+	return count, err
+}
+
+func (d *stockDaoImpl) CreateTradeRound(ws *workspace.Workspace, round *models.StockTradeRound) error {
+	return ws.GetDb().Create(round).Error
+}
+
+func (d *stockDaoImpl) ListTradeRoundsByStock(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTradeRound, error) {
+	rounds := make([]models.StockTradeRound, 0)
+	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).
+		Order("round_no ASC").
+		Find(&rounds).Error
+	return rounds, err
+}
+
+func (d *stockDaoImpl) ListTradesByRound(ws *workspace.Workspace, roundID string) ([]models.StockTrade, error) {
+	trades := make([]models.StockTrade, 0)
+	err := ws.GetDb().Where("round_id = ?", roundID).
+		Order("trade_time ASC, created_at ASC, id ASC").
+		Find(&trades).Error
+	return trades, err
+}
+
+// MinUnattachedTradeTime 返回某股尚未挂接轮次的最小成交时间；全部已挂接时返回 0。
+func (d *stockDaoImpl) MinUnattachedTradeTime(ws *workspace.Workspace, ledgerID string, stockCode string) (int64, error) {
+	var minTime int64
+	err := ws.GetDb().Model(&models.StockTrade{}).
+		Select("COALESCE(MIN(trade_time), 0)").
+		Where("ledger_id = ? AND stock_code = ? AND (round_id = '' OR round_id IS NULL)", ledgerID, stockCode).
+		Scan(&minTime).Error
+	return minTime, err
+}
+
+// AttachUnattachedTrades 把某股全部未挂接的交易挂到指定轮次（清仓时收尾）。
+func (d *stockDaoImpl) AttachUnattachedTrades(ws *workspace.Workspace, ledgerID string, stockCode string, roundID string) error {
+	return ws.GetDb().Model(&models.StockTrade{}).
+		Where("ledger_id = ? AND stock_code = ? AND (round_id = '' OR round_id IS NULL)", ledgerID, stockCode).
+		Update("round_id", roundID).Error
+}
+
+// UpdateTradesRoundID 批量把指定交易挂到轮次（历史回填使用）。
+func (d *stockDaoImpl) UpdateTradesRoundID(ws *workspace.Workspace, roundID string, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return ws.GetDb().Model(&models.StockTrade{}).
+		Where("id IN ?", ids).
+		Update("round_id", roundID).Error
+}
+
 // QueryStockName 从已有交易记录查询股票名称（跨账本，按最近成交优先）。
 func (d *stockDaoImpl) QueryStockName(ws *workspace.Workspace, stockCode string) (string, error) {
 	var name string
@@ -201,6 +336,12 @@ func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTrade{}).Error; err != nil {
 		return err
 	}
+	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTradeRound{}).Error; err != nil {
+		return err
+	}
+	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTradeHistory{}).Error; err != nil {
+		return err
+	}
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockPosition{}).Error; err != nil {
 		return err
 	}
@@ -215,6 +356,8 @@ func (d *stockDaoImpl) ResetByLedgerId(ws *workspace.Workspace, ledgerID string)
 			"tbl_billadm_stock_fund_record",
 			"tbl_billadm_stock_fee_setting",
 			"tbl_billadm_stock_trade",
+			"tbl_billadm_stock_trade_round",
+			"tbl_billadm_stock_trade_history",
 			"tbl_billadm_stock_position",
 			"tbl_billadm_stock_account",
 		}

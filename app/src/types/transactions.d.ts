@@ -198,9 +198,10 @@ export interface DiaryDateItem {
  */
 export interface StockOverview {
     principal: number;            // 本金
-    currentCash: number;          // 当前现金（末条资金记录余额，无记录时=本金）
+    availableCash: number;        // 可用现金 = 总资产 − 当前持仓成本
     positionMarketValue: number;  // 持仓市值（持仓模块接入后填充）
-    totalAssets: number;          // 总资产 = 当前现金 + 持仓市值
+    withdrawnTotal: number;       // 累计支取（分）
+    totalAssets: number;          // 总资产 = 本金 + 总盈亏 − 累计支取
     realizedPnl: number;          // 已实现总盈亏（Σ 卖出净盈亏）
     totalPnlPercent: number;      // 总盈亏占本金百分比（%）
 }
@@ -265,6 +266,7 @@ export interface StockTrade {
     stockCode: string;
     stockName: string;
     tradeType: 'open' | 'add' | 'reduce' | 'close';
+    roundId: string;               // 所属轮次ID（清仓时挂接到交易历史）
     price: number;               // 成交价（分/股）
     lots: number;                // 手数
     shares: number;              // 股数
@@ -276,6 +278,66 @@ export interface StockTrade {
     realizedPnl: number | null;  // 卖出净盈亏（分），仅减仓/清仓非空
     tradeTime: number;           // 成交时间（Unix 秒）
     remark: string;
+}
+
+/**
+ * 股票交易历史集合（左栏列表项，金额单位：分）
+ */
+export interface StockTradeHistory {
+    id: string;
+    ledgerId: string;
+    stockCode: string;
+    stockName: string;
+    roundCount: number;            // 已完成轮次数
+    totalPnl: number;              // 该股累计已实现盈亏（分）
+    totalPnlRate: number;          // 累计盈亏率（%）
+    lastClosedAt: number;          // 最近一次清仓时间（Unix 秒）
+    createdAt: number;
+    updatedAt: number;
+}
+
+/**
+ * 一次完整轮次：从建仓到清仓的全部交易 + 本轮盈亏
+ */
+export interface StockTradeRound {
+    id: string;
+    historyId: string;
+    roundNo: number;
+    openedAt: number;              // 本轮首次建仓时间（Unix 秒）
+    closedAt: number;              // 本轮清仓时间（Unix 秒）
+    pnl: number;                   // 本轮盈亏（分）
+    pnlRate: number;               // 本轮盈亏率（%）
+    tradeCount: number;
+    trades: StockTrade[];
+}
+
+/**
+ * 单只股票交易历史详情（右栏）
+ */
+export interface StockTradeHistoryDetail {
+    id: string;
+    ledgerId: string;
+    stockCode: string;
+    stockName: string;
+    roundCount: number;
+    totalPnl: number;
+    totalPnlRate: number;
+    winCount: number;              // 盈利轮数
+    lossCount: number;             // 亏损轮数
+    lastClosedAt: number;
+    rounds: StockTradeRound[];
+}
+
+/**
+ * 交易历史总览：全部已清仓股票的盈亏、胜负与轮次汇总
+ */
+export interface StockTradeHistorySummary {
+    stockCount: number;            // 已清仓股票数
+    roundCount: number;            // 总轮次
+    winCount: number;              // 盈利轮次
+    lossCount: number;             // 亏损轮次
+    totalPnl: number;              // 总盈亏（分）
+    totalPnlRate: number;          // 总盈亏率（%）
 }
 
 /**

@@ -7,6 +7,7 @@ import {
   fetchStockOverview,
   saveStockFeeSettings,
   setStockPrincipal,
+  withdrawStockPrincipal,
 } from '@/backend/api/stock'
 import { withErrorHandling } from '@/backend/errorHandler'
 import NotificationUtil from '@/backend/notification'
@@ -15,8 +16,9 @@ import type { StockFeeSetting, StockFundRecordPage, StockOverview } from '@/type
 
 const EMPTY_OVERVIEW: StockOverview = {
   principal: 0,
-  currentCash: 0,
+  availableCash: 0,
   positionMarketValue: 0,
+  withdrawnTotal: 0,
   totalAssets: 0,
   realizedPnl: 0,
   totalPnlPercent: 0,
@@ -107,6 +109,9 @@ export const useStockAccountStore = defineStore('stockAccount', () => {
   const addPrincipal = (amount: number) =>
     runMutation(() => addStockPrincipal(currentLedgerId(), amount), '追加本金成功', '追加本金失败')
 
+  const withdraw = (amount: number) =>
+    runMutation(() => withdrawStockPrincipal(currentLedgerId(), amount), '支取成功', '支取失败')
+
   const saveFeeSettingsAction = (commissionRate: number, minCommission: number, stampDutyRate: number, transferFeeRate: number) =>
     runMutation(
       () => saveStockFeeSettings(currentLedgerId(), commissionRate, minCommission, stampDutyRate, transferFeeRate),
@@ -138,6 +143,7 @@ export const useStockAccountStore = defineStore('stockAccount', () => {
     reloadAll,
     setPrincipal,
     addPrincipal,
+    withdraw,
     saveFeeSettings: saveFeeSettingsAction,
   }
 })

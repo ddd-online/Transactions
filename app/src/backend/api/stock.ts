@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockTrade } from "@/types/transactions";
+import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockTrade, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary } from "@/types/transactions";
 
 export async function fetchStockOverview(ledgerId: string): Promise<StockOverview> {
     return api.get<StockOverview>(`/v1/stock/account/overview?ledger_id=${encodeURIComponent(ledgerId)}`, '查询股票账户总览');
@@ -11,6 +11,10 @@ export async function setStockPrincipal(ledgerId: string, amount: number): Promi
 
 export async function addStockPrincipal(ledgerId: string, amount: number): Promise<StockOverview> {
     return api.post<StockOverview>('/v1/stock/account/principal/add', { ledger_id: ledgerId, amount }, '追加本金');
+}
+
+export async function withdrawStockPrincipal(ledgerId: string, amount: number): Promise<StockOverview> {
+    return api.post<StockOverview>('/v1/stock/account/withdraw', { ledger_id: ledgerId, amount }, '支取');
 }
 
 export async function fetchStockFeeSettings(ledgerId: string): Promise<StockFeeSetting> {
@@ -48,6 +52,27 @@ export async function fetchStockTrades(ledgerId: string, stockCode: string): Pro
     return api.get<StockTrade[]>(
         `/v1/stock/trades?ledger_id=${encodeURIComponent(ledgerId)}&stock_code=${encodeURIComponent(stockCode)}`,
         '查询交易历史'
+    );
+}
+
+export async function fetchStockTradeHistories(ledgerId: string): Promise<StockTradeHistory[]> {
+    return api.get<StockTradeHistory[]>(
+        `/v1/stock/history?ledger_id=${encodeURIComponent(ledgerId)}`,
+        '查询交易历史'
+    );
+}
+
+export async function fetchStockTradeHistoryDetail(ledgerId: string, stockCode: string): Promise<StockTradeHistoryDetail> {
+    return api.get<StockTradeHistoryDetail>(
+        `/v1/stock/history/detail?ledger_id=${encodeURIComponent(ledgerId)}&stock_code=${encodeURIComponent(stockCode)}`,
+        '查询交易历史详情'
+    );
+}
+
+export async function fetchStockTradeHistorySummary(ledgerId: string): Promise<StockTradeHistorySummary> {
+    return api.get<StockTradeHistorySummary>(
+        `/v1/stock/history/summary?ledger_id=${encodeURIComponent(ledgerId)}`,
+        '查询交易历史总览'
     );
 }
 

@@ -6,6 +6,7 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -26,12 +27,16 @@ type StockService interface {
 	GetOverview(ws *workspace.Workspace, ledgerID string) (*dto.StockOverviewDto, error)
 	SetPrincipal(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error)
 	AddPrincipal(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error)
+	AddWithdraw(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error)
 	GetFeeSettings(ws *workspace.Workspace, ledgerID string) (*models.StockFeeSetting, error)
 	SaveFeeSettings(ws *workspace.Workspace, ledgerID string, commissionRate float64, minCommission int64, stampDutyRate float64, transferFeeRate float64) (*models.StockFeeSetting, error)
 	ListFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) (*dto.StockFundRecordPage, error)
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string) (*dto.StockTradeDto, error)
+	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error)
+	GetTradeHistoryDetail(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockTradeHistoryDetailDto, error)
+	GetTradeHistorySummary(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeHistorySummaryDto, error)
 	LookupStockName(ws *workspace.Workspace, stockCode string) (*dto.StockNameDto, error)
 	ResetData(ws *workspace.Workspace, ledgerID string) error
 }
@@ -94,24 +99,28 @@ func (s *stockServiceImpl) GetOverview(ws *workspace.Workspace, ledgerID string)
 		return nil, err
 	}
 
-	// 当前现金：末条资金记录余额；无记录时全部为本金
-	currentCash := account.Principal
-	latest, err := s.stockDao.QueryLatestFundRecord(ws, ledgerID)
-	if err == nil && latest != nil {
-		currentCash = latest.CashBalance
-	} else if err != nil && !dao.IsNotFound(err) {
-		return nil, err
-	}
-
 	// 已实现总盈亏：Σ 卖出净盈亏（未实现盈亏不计入）
 	realizedPnl, err := s.stockDao.SumNetPnl(ws, ledgerID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 总资产 = 当前现金 + 持仓市值（持仓模块接入后填充）
+	// 累计支取：Σ 支取事件金额
+	withdrawnTotal, err := s.stockDao.SumWithdrawn(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 总资产 = 本金 + 总盈亏 − 累计支取（本金不因支取减少，保持"累计投入"语义）
+	totalAssets := account.Principal + realizedPnl - withdrawnTotal
+	// 可用现金 = 总资产 − 当前持仓成本（持仓按成本计价，与资金链现金余额一致）
+	positionCost, err := s.stockDao.SumPositionCost(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	availableCash := totalAssets - positionCost
+	// 持仓市值预留：接入行情后用于展示浮盈资产（当前恒为 0）
 	positionMarketValue := int64(0)
-	totalAssets := currentCash + positionMarketValue
 
 	// 总盈亏占本金百分比，本金为 0 时按 0 处理（防除零）
 	var totalPnlPercent float64
@@ -121,8 +130,9 @@ func (s *stockServiceImpl) GetOverview(ws *workspace.Workspace, ledgerID string)
 
 	return &dto.StockOverviewDto{
 		Principal:           account.Principal,
-		CurrentCash:         currentCash,
+		AvailableCash:       availableCash,
 		PositionMarketValue: positionMarketValue,
+		WithdrawnTotal:      withdrawnTotal,
 		TotalAssets:         totalAssets,
 		RealizedPnl:         realizedPnl,
 		TotalPnlPercent:     totalPnlPercent,
@@ -203,6 +213,55 @@ func (s *stockServiceImpl) AddPrincipal(ws *workspace.Workspace, ledgerID string
 	return s.GetOverview(ws, ledgerID)
 }
 
+// AddWithdraw 从股票账户支取：现金减少 amount，本金保持不变（本金始终是"累计投入"）。
+// 总资产 = 本金 + 总盈亏 − 累计支取，支取会相应减少总资产。
+func (s *stockServiceImpl) AddWithdraw(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error) {
+	if amount <= 0 {
+		return nil, models.NewBadRequest("支取金额必须大于 0")
+	}
+
+	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		account, err := s.getOrCreateAccount(tx, ledgerID)
+		if err != nil {
+			return err
+		}
+
+		// 当前现金：末条资金记录余额，无记录时为本金
+		prevCash := account.Principal
+		if latest, err := s.stockDao.QueryLatestFundRecord(tx, ledgerID); err == nil && latest != nil {
+			prevCash = latest.CashBalance
+		} else if err != nil && !dao.IsNotFound(err) {
+			return err
+		}
+
+		if amount > prevCash {
+			return models.NewBadRequest(fmt.Sprintf("支取金额不能超过可用现金（%s 元）", centsToYuanStr(prevCash)))
+		}
+
+		afterCash := prevCash - amount
+		record := &models.StockFundRecord{
+			ID:           util.GetUUID(),
+			LedgerID:     ledgerID,
+			RecordDate:   time.Now().Format("2006-01-02"),
+			EventType:    models.StockEventWithdraw,
+			EventText:    "支取",
+			AmountChange: -amount,
+			CashBalance:  afterCash,
+			Remark:       fmt.Sprintf("现金 %s → %s", centsToYuanStr(prevCash), centsToYuanStr(afterCash)),
+		}
+		if err := s.stockDao.CreateFundRecord(tx, record); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		logrus.Errorf("支取失败, ledger: %s, amount: %d, err: %v", ledgerID, amount, err)
+		return nil, err
+	}
+	logrus.Infof("股票账户支取, ledger: %s, amount: %d", ledgerID, amount)
+	return s.GetOverview(ws, ledgerID)
+}
+
 func (s *stockServiceImpl) GetFeeSettings(ws *workspace.Workspace, ledgerID string) (*models.StockFeeSetting, error) {
 	return s.getOrCreateFeeSetting(ws, ledgerID)
 }
@@ -280,11 +339,54 @@ func (s *stockServiceImpl) ListTrades(ws *workspace.Workspace, ledgerID string, 
 	if err != nil {
 		return nil, err
 	}
+
+	// 持仓中的股票只展示本轮（最近一次清仓之后）的交易，历史轮次留在「交易历史」页
+	position, err := s.stockDao.GetPosition(ws, ledgerID, stockCode)
+	if err == nil && position.Quantity > 0 {
+		asc := make([]models.StockTrade, len(trades))
+		for i := range trades {
+			asc[len(trades)-1-i] = trades[i]
+		}
+		current := currentRoundTrades(asc)
+		items := make([]dto.StockTradeDto, 0, len(current))
+		for i := len(current) - 1; i >= 0; i-- {
+			items = append(items, dto.FromStockTrade(&current[i]))
+		}
+		return items, nil
+	}
+	if err != nil && !dao.IsNotFound(err) {
+		return nil, err
+	}
+
 	items := make([]dto.StockTradeDto, 0, len(trades))
 	for i := range trades {
 		items = append(items, dto.FromStockTrade(&trades[i]))
 	}
 	return items, nil
+}
+
+// currentRoundTrades 从按时间升序的交易流中切出当前在建轮次（最近一次清仓之后）的交易。
+// 卖出把持仓数量归零时结束一轮，该笔卖出属于已完成的轮次，不计入当前轮。
+func currentRoundTrades(trades []models.StockTrade) []models.StockTrade {
+	var result []models.StockTrade
+	var shares int64
+	for i := range trades {
+		t := &trades[i]
+		switch t.TradeType {
+		case models.StockTradeOpen, models.StockTradeAdd:
+			shares += t.Shares
+			result = append(result, *t)
+		case models.StockTradeReduce, models.StockTradeClose:
+			shares -= t.Shares
+			if shares > 0 {
+				result = append(result, *t)
+			} else {
+				shares = 0
+				result = result[:0]
+			}
+		}
+	}
+	return result
 }
 
 // CreateTrade 记录一笔买卖交易：原子更新持仓、现金资金记录与交易流水。
@@ -404,6 +506,15 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 		}
 		trade.RealizedPnl = netPnl
 
+		// 清仓：把本轮「建仓 → 清仓」的全部交易归档到交易历史
+		if isSell && position.Quantity == 0 {
+			roundID, err := s.closeRound(tx, ledgerID, stockCode, stockName, tradeTime)
+			if err != nil {
+				return err
+			}
+			trade.RoundID = roundID
+		}
+
 		if err := s.stockDao.UpdatePosition(tx, position); err != nil {
 			return err
 		}
@@ -431,6 +542,353 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 	}
 	dto := dto.FromStockTrade(trade)
 	return &dto, nil
+}
+
+// closeRound 清仓收尾：确保历史集合存在（首次清仓创建，之后复用），
+// 创建本轮次并把该股从建仓到清仓的全部未归档交易挂接进来。
+func (s *stockServiceImpl) closeRound(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, closedAt int64) (string, error) {
+	// 兼容存量数据：先归档历史上已完成但未挂接的轮次，避免与当前轮次混淆
+	if err := s.ensureStockHistoryBackfill(ws, ledgerID, stockCode); err != nil {
+		return "", err
+	}
+
+	history, err := s.stockDao.GetTradeHistory(ws, ledgerID, stockCode)
+	if dao.IsNotFound(err) {
+		history = &models.StockTradeHistory{
+			ID:        util.GetUUID(),
+			LedgerID:  ledgerID,
+			StockCode: stockCode,
+			StockName: stockName,
+		}
+		if err := s.stockDao.CreateTradeHistory(ws, history); err != nil {
+			return "", err
+		}
+	} else if err != nil {
+		return "", err
+	} else if history.StockName != stockName {
+		if err := s.stockDao.UpdateTradeHistoryName(ws, ledgerID, stockCode, stockName); err != nil {
+			return "", err
+		}
+	}
+
+	count, err := s.stockDao.CountTradeRounds(ws, history.ID)
+	if err != nil {
+		return "", err
+	}
+	openedAt, err := s.stockDao.MinUnattachedTradeTime(ws, ledgerID, stockCode)
+	if err != nil {
+		return "", err
+	}
+	if openedAt == 0 {
+		openedAt = closedAt
+	}
+	round := &models.StockTradeRound{
+		ID:        util.GetUUID(),
+		LedgerID:  ledgerID,
+		StockCode: stockCode,
+		HistoryID: history.ID,
+		RoundNo:   count + 1,
+		OpenedAt:  openedAt,
+		ClosedAt:  closedAt,
+	}
+	if err := s.stockDao.CreateTradeRound(ws, round); err != nil {
+		return "", err
+	}
+	// 本轮交易此时尚未入库，CreateTrade 末尾会把当前清仓单直接带上 round_id
+	if err := s.stockDao.AttachUnattachedTrades(ws, ledgerID, stockCode, round.ID); err != nil {
+		return "", err
+	}
+	return round.ID, nil
+}
+
+// ListTradeHistories 返回全部已完成轮次的股票集合（左栏），按最近清仓时间倒序。
+func (s *stockServiceImpl) ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error) {
+	if err := s.ensureTradeHistoryBackfill(ws, ledgerID); err != nil {
+		return nil, err
+	}
+	histories, err := s.stockDao.ListTradeHistories(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]dto.StockTradeHistoryDto, 0, len(histories))
+	for i := range histories {
+		item, err := s.buildHistoryDto(ws, &histories[i])
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		return items[i].LastClosedAt > items[j].LastClosedAt
+	})
+	return items, nil
+}
+
+// GetTradeHistoryDetail 返回单只股票的交易历史详情（右栏）：全部轮次 + 每轮交易 + 汇总盈亏。
+func (s *stockServiceImpl) GetTradeHistoryDetail(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockTradeHistoryDetailDto, error) {
+	history, err := s.stockDao.GetTradeHistory(ws, ledgerID, stockCode)
+	if dao.IsNotFound(err) {
+		return nil, models.NewNotFound("该股票暂无交易历史")
+	}
+	if err != nil {
+		return nil, err
+	}
+	rounds, err := s.stockDao.ListTradeRoundsByStock(ws, ledgerID, stockCode)
+	if err != nil {
+		return nil, err
+	}
+
+	detail := &dto.StockTradeHistoryDetailDto{
+		ID:        history.ID,
+		LedgerID:  history.LedgerID,
+		StockCode: history.StockCode,
+		StockName: history.StockName,
+	}
+	var totalPnl, totalBuyCost int64
+	for i := range rounds {
+		round := &rounds[i]
+		trades, err := s.stockDao.ListTradesByRound(ws, round.ID)
+		if err != nil {
+			return nil, err
+		}
+		pnl, pnlRate, buyCost := dto.RoundPnl(trades)
+		totalPnl += pnl
+		totalBuyCost += buyCost
+		if round.ClosedAt > detail.LastClosedAt {
+			detail.LastClosedAt = round.ClosedAt
+		}
+		if pnl > 0 {
+			detail.WinCount++
+		} else if pnl < 0 {
+			detail.LossCount++
+		}
+
+		items := make([]dto.StockTradeDto, 0, len(trades))
+		for j := range trades {
+			items = append(items, dto.FromStockTrade(&trades[j]))
+		}
+		detail.Rounds = append(detail.Rounds, dto.StockTradeRoundDto{
+			ID:         round.ID,
+			HistoryID:  round.HistoryID,
+			RoundNo:    round.RoundNo,
+			OpenedAt:   round.OpenedAt,
+			ClosedAt:   round.ClosedAt,
+			Pnl:        pnl,
+			PnlRate:    pnlRate,
+			TradeCount: int64(len(trades)),
+			Trades:     items,
+		})
+	}
+	detail.RoundCount = int64(len(rounds))
+	detail.TotalPnl = totalPnl
+	if totalBuyCost > 0 {
+		detail.TotalPnlRate = math.Round(float64(totalPnl)/float64(totalBuyCost)*10000) / 100
+	}
+	return detail, nil
+}
+
+// GetTradeHistorySummary 汇总该账本全部已清仓股票：总盈亏、胜负轮次与总轮次。
+func (s *stockServiceImpl) GetTradeHistorySummary(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeHistorySummaryDto, error) {
+	if err := s.ensureTradeHistoryBackfill(ws, ledgerID); err != nil {
+		return nil, err
+	}
+	histories, err := s.stockDao.ListTradeHistories(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &dto.StockTradeHistorySummaryDto{}
+	var totalBuyCost int64
+	for i := range histories {
+		summary.StockCount++
+		rounds, err := s.stockDao.ListTradeRoundsByStock(ws, ledgerID, histories[i].StockCode)
+		if err != nil {
+			return nil, err
+		}
+		for j := range rounds {
+			trades, err := s.stockDao.ListTradesByRound(ws, rounds[j].ID)
+			if err != nil {
+				return nil, err
+			}
+			pnl, _, buyCost := dto.RoundPnl(trades)
+			summary.RoundCount++
+			summary.TotalPnl += pnl
+			totalBuyCost += buyCost
+			if pnl > 0 {
+				summary.WinCount++
+			} else if pnl < 0 {
+				summary.LossCount++
+			}
+		}
+	}
+	if totalBuyCost > 0 {
+		summary.TotalPnlRate = math.Round(float64(summary.TotalPnl)/float64(totalBuyCost)*10000) / 100
+	}
+	return summary, nil
+}
+
+// buildHistoryDto 汇总单只股票的轮次数、累计盈亏与最近清仓时间。
+func (s *stockServiceImpl) buildHistoryDto(ws *workspace.Workspace, history *models.StockTradeHistory) (dto.StockTradeHistoryDto, error) {
+	rounds, err := s.stockDao.ListTradeRoundsByStock(ws, history.LedgerID, history.StockCode)
+	if err != nil {
+		return dto.StockTradeHistoryDto{}, err
+	}
+	item := dto.StockTradeHistoryDto{
+		ID:        history.ID,
+		LedgerID:  history.LedgerID,
+		StockCode: history.StockCode,
+		StockName: history.StockName,
+		RoundCount: int64(len(rounds)),
+		CreatedAt: history.CreatedAt,
+		UpdatedAt: history.UpdatedAt,
+	}
+	var totalPnl, totalBuyCost int64
+	for i := range rounds {
+		trades, err := s.stockDao.ListTradesByRound(ws, rounds[i].ID)
+		if err != nil {
+			return dto.StockTradeHistoryDto{}, err
+		}
+		pnl, _, buyCost := dto.RoundPnl(trades)
+		totalPnl += pnl
+		totalBuyCost += buyCost
+		if rounds[i].ClosedAt > item.LastClosedAt {
+			item.LastClosedAt = rounds[i].ClosedAt
+		}
+	}
+	item.TotalPnl = totalPnl
+	if totalBuyCost > 0 {
+		item.TotalPnlRate = math.Round(float64(totalPnl)/float64(totalBuyCost)*10000) / 100
+	}
+	return item, nil
+}
+
+// ensureTradeHistoryBackfill 为有交易记录但尚无历史集合的股票补齐历史（幂等）。
+func (s *stockServiceImpl) ensureTradeHistoryBackfill(ws *workspace.Workspace, ledgerID string) error {
+	stocks, err := s.stockDao.ListTradeStocks(ws, ledgerID)
+	if err != nil {
+		return err
+	}
+	for _, code := range stocks {
+		if err := s.ensureStockHistoryBackfill(ws, ledgerID, code); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ensureStockHistoryBackfill 把某只股票尚未挂接轮次的存量交易按「建仓 → 清仓」切分并归档。
+// 幂等：每次只处理未挂接的交易；全部挂接后直接返回。
+func (s *stockServiceImpl) ensureStockHistoryBackfill(ws *workspace.Workspace, ledgerID string, stockCode string) error {
+	trades, err := s.stockDao.ListTradesAsc(ws, ledgerID, stockCode)
+	if err != nil {
+		return err
+	}
+	unattached := make([]models.StockTrade, 0, len(trades))
+	for i := range trades {
+		if trades[i].RoundID == "" {
+			unattached = append(unattached, trades[i])
+		}
+	}
+	if len(unattached) == 0 {
+		return nil
+	}
+
+	cycles := deriveTradeCycles(unattached)
+	history, err := s.stockDao.GetTradeHistory(ws, ledgerID, stockCode)
+	if dao.IsNotFound(err) {
+		if len(cycles) == 0 {
+			return nil // 尚无完整轮次（在建），不建历史集合
+		}
+		history = &models.StockTradeHistory{
+			ID:        util.GetUUID(),
+			LedgerID:  ledgerID,
+			StockCode: stockCode,
+			StockName: unattached[0].StockName,
+		}
+		if err := s.stockDao.CreateTradeHistory(ws, history); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	if len(cycles) == 0 {
+		return nil
+	}
+
+	count, err := s.stockDao.CountTradeRounds(ws, history.ID)
+	if err != nil {
+		return err
+	}
+	for i := range cycles {
+		cycle := &cycles[i]
+		round := &models.StockTradeRound{
+			ID:        util.GetUUID(),
+			LedgerID:  ledgerID,
+			StockCode: stockCode,
+			HistoryID: history.ID,
+			RoundNo:   count + int64(i) + 1,
+			OpenedAt:  cycle.openedAt,
+			ClosedAt:  cycle.closedAt,
+		}
+		if err := s.stockDao.CreateTradeRound(ws, round); err != nil {
+			return err
+		}
+		if err := s.stockDao.UpdateTradesRoundID(ws, round.ID, cycle.ids); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// tradeCycle 一轮「建仓 → 清仓」的原始交易。
+type tradeCycle struct {
+	ids      []string
+	openedAt int64
+	closedAt int64
+}
+
+// deriveTradeCycles 把按时间升序的交易流切分为完整轮次：持仓数量回到 0 即一轮结束。
+// 尚未回到 0 的在建轮次不返回（保持未挂接，待清仓时归档）。
+func deriveTradeCycles(trades []models.StockTrade) []tradeCycle {
+	var pending []*tradeCycle
+	var shares int64
+	var current *tradeCycle
+	appendTrade := func(t *models.StockTrade) {
+		current.ids = append(current.ids, t.ID)
+	}
+	for i := range trades {
+		t := &trades[i]
+		switch t.TradeType {
+		case models.StockTradeOpen, models.StockTradeAdd:
+			if shares == 0 {
+				current = &tradeCycle{openedAt: t.TradeTime}
+				pending = append(pending, current)
+			}
+			shares += t.Shares
+			appendTrade(t)
+		case models.StockTradeReduce, models.StockTradeClose:
+			if current == nil {
+				current = &tradeCycle{openedAt: t.TradeTime}
+				pending = append(pending, current)
+			}
+			shares -= t.Shares
+			if shares < 0 {
+				shares = 0
+			}
+			appendTrade(t)
+			if shares == 0 {
+				current.closedAt = t.TradeTime
+				current = nil
+			}
+		}
+	}
+	cycles := make([]tradeCycle, 0, len(pending))
+	for _, c := range pending {
+		if c.closedAt > 0 {
+			cycles = append(cycles, *c)
+		}
+	}
+	return cycles
 }
 
 var (

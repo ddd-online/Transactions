@@ -36,6 +36,15 @@ func (h *Handlers) addStockPrincipal(c *gin.Context) (any, error) {
 	return h.StockSvc.AddPrincipal(ws(c), ledgerID, amount)
 }
 
+// POST /api/v1/stock/account/withdraw  body: { ledger_id, amount(分) }
+func (h *Handlers) withdrawStockAccount(c *gin.Context) (any, error) {
+	ledgerID, amount, err := parseLedgerAndAmount(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.AddWithdraw(ws(c), ledgerID, amount)
+}
+
 // GET /api/v1/stock/account/fee-settings?ledger_id=
 func (h *Handlers) getStockFeeSettings(c *gin.Context) (any, error) {
 	ledgerID, err := requireLedgerID(c)
@@ -98,6 +107,37 @@ func (h *Handlers) listStockTrades(c *gin.Context) (any, error) {
 		return nil, err
 	}
 	return h.StockSvc.ListTrades(ws(c), ledgerID, c.Query("stock_code"))
+}
+
+// GET /api/v1/stock/history?ledger_id=  交易历史集合列表（左栏）
+func (h *Handlers) listStockTradeHistory(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.ListTradeHistories(ws(c), ledgerID)
+}
+
+// GET /api/v1/stock/history/detail?ledger_id=&stock_code=  单只股票历史详情（右栏）
+func (h *Handlers) getStockTradeHistoryDetail(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	stockCode := c.Query("stock_code")
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	return h.StockSvc.GetTradeHistoryDetail(ws(c), ledgerID, stockCode)
+}
+
+// GET /api/v1/stock/history/summary?ledger_id=  全部股票的交易历史总览
+func (h *Handlers) getStockTradeHistorySummary(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.GetTradeHistorySummary(ws(c), ledgerID)
 }
 
 // POST /api/v1/stock/trades  body: { ledger_id, stock_code, stock_name, trade_type, price(元), lots, trade_time(秒), remark }

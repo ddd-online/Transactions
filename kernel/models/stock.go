@@ -4,6 +4,8 @@ package models
 const (
 	// StockEventAddPrincipal 追加本金
 	StockEventAddPrincipal = "add_principal"
+	// StockEventWithdraw 支取（从股票账户现金中取出，本金不变）
+	StockEventWithdraw = "withdraw"
 	// StockEventBuy 买入（预留：交易记录模块写入）
 	StockEventBuy = "buy"
 	// StockEventSell 卖出（预留：交易记录模块写入）
@@ -96,6 +98,7 @@ type StockTrade struct {
 	StockCode   string `gorm:"index:idx_stock_trade_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
 	StockName   string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
 	TradeType   string `gorm:"type:varchar(16);not null;default:'';comment:交易类型 open/add/reduce/close" json:"tradeType"`
+	RoundID     string `gorm:"index:idx_stock_trade_round;type:varchar(36);default:'';comment:所属轮次ID（清仓时挂接到交易历史）" json:"roundId"`
 	Price       int64  `gorm:"not null;default:0;comment:成交价（分/股）" json:"price"`
 	Lots        int64  `gorm:"not null;default:0;comment:手数" json:"lots"`
 	Shares      int64  `gorm:"not null;default:0;comment:股数（手数×100）" json:"shares"`
@@ -112,4 +115,36 @@ type StockTrade struct {
 
 func (StockTrade) TableName() string {
 	return "tbl_billadm_stock_trade"
+}
+
+// StockTradeHistory 股票交易历史集合（每只股票一条）。
+// 首次清仓时创建；该股再次清仓时复用同一集合，挂接新的轮次。
+type StockTradeHistory struct {
+	ID        string `gorm:"primaryKey;comment:历史UUID" json:"id"`
+	LedgerID  string `gorm:"uniqueIndex:idx_stock_trade_history_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	StockCode string `gorm:"uniqueIndex:idx_stock_trade_history_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
+	StockName string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
+	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+	UpdatedAt int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
+}
+
+func (StockTradeHistory) TableName() string {
+	return "tbl_billadm_stock_trade_history"
+}
+
+// StockTradeRound 一次完整的「建仓 → 清仓」轮次，清仓时由服务层创建，
+// 并把该轮从建仓到清仓的全部交易挂接到 round_id。
+type StockTradeRound struct {
+	ID        string `gorm:"primaryKey;comment:轮次UUID" json:"id"`
+	LedgerID  string `gorm:"index:idx_stock_trade_round_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	StockCode string `gorm:"index:idx_stock_trade_round_ledger_code,priority:2;type:varchar(16);not null;comment:股票代码" json:"stockCode"`
+	HistoryID string `gorm:"uniqueIndex:idx_stock_trade_round_history_no,priority:1;type:varchar(36);not null;comment:所属历史集合ID" json:"historyId"`
+	RoundNo   int64  `gorm:"uniqueIndex:idx_stock_trade_round_history_no,priority:2;not null;comment:轮次序号（该股从1起）" json:"roundNo"`
+	OpenedAt  int64  `gorm:"not null;default:0;comment:本轮首次建仓时间（Unix 秒）" json:"openedAt"`
+	ClosedAt  int64  `gorm:"not null;default:0;comment:本轮清仓时间（Unix 秒）" json:"closedAt"`
+	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+}
+
+func (StockTradeRound) TableName() string {
+	return "tbl_billadm_stock_trade_round"
 }

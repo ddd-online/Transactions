@@ -1,13 +1,18 @@
 package dto
 
-import "github.com/transactions/models"
+import (
+	"math"
+
+	"github.com/transactions/models"
+)
 
 // StockOverviewDto 股票账户总览（金额单位：分）。
 type StockOverviewDto struct {
 	Principal           int64   `json:"principal"`           // 本金
-	CurrentCash         int64   `json:"currentCash"`         // 当前现金（末条资金记录余额，无记录时=本金）
+	AvailableCash       int64   `json:"availableCash"`       // 可用现金 = 总资产 − 当前持仓成本
 	PositionMarketValue int64   `json:"positionMarketValue"` // 持仓市值（持仓模块接入后填充，当前为 0）
-	TotalAssets         int64   `json:"totalAssets"`         // 总资产 = 当前现金 + 持仓市值
+	WithdrawnTotal      int64   `json:"withdrawnTotal"`      // 累计支取（Σ 支取事件金额）
+	TotalAssets         int64   `json:"totalAssets"`         // 总资产 = 本金 + 总盈亏 − 累计支取
 	RealizedPnl         int64   `json:"realizedPnl"`         // 已实现总盈亏（Σ 卖出净盈亏）
 	TotalPnlPercent     float64 `json:"totalPnlPercent"`     // 总盈亏占本金百分比（%）
 }
@@ -85,6 +90,7 @@ type StockTradeDto struct {
 	StockCode   string `json:"stockCode"`
 	StockName   string `json:"stockName"`
 	TradeType   string `json:"tradeType"`
+	RoundID     string `json:"roundId"`
 	Price       int64  `json:"price"`       // 成交价（分/股）
 	Lots        int64  `json:"lots"`        // 手数
 	Shares      int64  `json:"shares"`      // 股数
@@ -105,6 +111,7 @@ func FromStockTrade(t *models.StockTrade) StockTradeDto {
 		StockCode:   t.StockCode,
 		StockName:   t.StockName,
 		TradeType:   t.TradeType,
+		RoundID:     t.RoundID,
 		Price:       t.Price,
 		Lots:        t.Lots,
 		Shares:      t.Shares,
@@ -117,4 +124,76 @@ func FromStockTrade(t *models.StockTrade) StockTradeDto {
 		TradeTime:   t.TradeTime,
 		Remark:      t.Remark,
 	}
+}
+
+// StockTradeHistoryDto 股票交易历史集合（左栏列表项）。
+// 盈亏与轮次数均为派生值，按需从轮次交易计算。
+type StockTradeHistoryDto struct {
+	ID          string  `json:"id"`
+	LedgerID    string  `json:"ledgerId"`
+	StockCode   string  `json:"stockCode"`
+	StockName   string  `json:"stockName"`
+	RoundCount  int64   `json:"roundCount"`  // 已完成轮次数
+	TotalPnl    int64   `json:"totalPnl"`    // 该股累计已实现盈亏（分）
+	TotalPnlRate float64 `json:"totalPnlRate"` // 累计盈亏率（%，相对全部建仓成本）
+	LastClosedAt int64  `json:"lastClosedAt"` // 最近一次清仓时间
+	CreatedAt   int64   `json:"createdAt"`
+	UpdatedAt   int64   `json:"updatedAt"`
+}
+
+// StockTradeRoundDto 一次完整轮次：从建仓到清仓的全部交易 + 本轮盈亏。
+type StockTradeRoundDto struct {
+	ID        string          `json:"id"`
+	HistoryID string          `json:"historyId"`
+	RoundNo   int64           `json:"roundNo"`
+	OpenedAt  int64           `json:"openedAt"`
+	ClosedAt  int64           `json:"closedAt"`
+	Pnl       int64           `json:"pnl"`       // 本轮盈亏（分）
+	PnlRate   float64         `json:"pnlRate"`   // 本轮盈亏率（%）
+	TradeCount int64          `json:"tradeCount"`
+	Trades    []StockTradeDto `json:"trades"`
+}
+
+// StockTradeHistoryDetailDto 单只股票的交易历史详情（右栏）。
+type StockTradeHistoryDetailDto struct {
+	ID           string               `json:"id"`
+	LedgerID     string               `json:"ledgerId"`
+	StockCode    string               `json:"stockCode"`
+	StockName    string               `json:"stockName"`
+	RoundCount   int64                `json:"roundCount"`
+	TotalPnl     int64                `json:"totalPnl"`
+	TotalPnlRate float64              `json:"totalPnlRate"`
+	WinCount     int64                `json:"winCount"`  // 盈利轮数
+	LossCount    int64                `json:"lossCount"` // 亏损轮数
+	LastClosedAt int64                `json:"lastClosedAt"`
+	Rounds       []StockTradeRoundDto `json:"rounds"`
+}
+
+// StockTradeHistorySummaryDto 交易历史总览：全部已清仓股票的盈亏、胜负与轮次汇总。
+type StockTradeHistorySummaryDto struct {
+	StockCount   int64   `json:"stockCount"`   // 已清仓股票数
+	RoundCount   int64   `json:"roundCount"`   // 总轮次
+	WinCount     int64   `json:"winCount"`     // 盈利轮次
+	LossCount    int64   `json:"lossCount"`    // 亏损轮次
+	TotalPnl     int64   `json:"totalPnl"`     // 总盈亏（分）
+	TotalPnlRate float64 `json:"totalPnlRate"` // 总盈亏率（%）
+}
+
+// RoundPnl 由一轮交易推导本轮盈亏与盈亏率（不存储冗余派生值）。
+// 买入成本 = Σ(成交金额 + 费用)；卖出净额 = Σ(成交金额 - 费用)；盈亏 = 卖出净额 - 买入成本。
+func RoundPnl(trades []models.StockTrade) (pnl int64, pnlRate float64, buyCost int64) {
+	for i := range trades {
+		t := &trades[i]
+		switch t.TradeType {
+		case models.StockTradeOpen, models.StockTradeAdd:
+			buyCost += t.Amount + t.Fee
+		case models.StockTradeReduce, models.StockTradeClose:
+			pnl += t.Amount - t.Fee
+		}
+	}
+	pnl -= buyCost
+	if buyCost > 0 {
+		pnlRate = math.Round(float64(pnl)/float64(buyCost)*10000) / 100
+	}
+	return pnl, pnlRate, buyCost
 }
