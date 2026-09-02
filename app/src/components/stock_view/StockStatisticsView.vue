@@ -150,16 +150,16 @@
               <thead>
                 <tr>
                   <th>结算点</th>
-                  <th class="align-center">结算日期</th>
-                  <th class="align-right">本笔盈亏</th>
-                  <th class="align-right">累计盈亏</th>
-                  <th class="align-center">胜负</th>
-                  <th class="align-right">胜率</th>
-                  <th class="align-right">平均盈利</th>
-                  <th class="align-right">平均亏损</th>
-                  <th class="align-right">实际盈亏比</th>
-                  <th class="align-right">期望值</th>
-                  <th class="align-right">最大回撤</th>
+                  <th>结算日期</th>
+                  <th>本笔盈亏</th>
+                  <th>累计盈亏</th>
+                  <th>胜负</th>
+                  <th>胜率</th>
+                  <th>平均盈利</th>
+                  <th>平均亏损</th>
+                  <th>实际盈亏比</th>
+                  <th>期望值</th>
+                  <th>最大回撤</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,33 +168,33 @@
                     <span class="cell-seq amount">第 {{ p.sequence }} 笔</span>
                     <span class="cell-note amount">{{ p.stockName }} 第 {{ p.stockRoundNo }} 轮</span>
                   </td>
-                  <td class="cell-date align-center">{{ formatDate(p.closedAt) }}</td>
-                  <td class="align-right">
+                  <td class="cell-date">{{ formatDate(p.closedAt) }}</td>
+                  <td>
                     <span class="cell-money amount" :class="pnlClass(p.pnl)">{{ signedYuan(p.pnl) }}</span>
                     <span class="cell-note amount">{{ rateText(p.pnlRate) }}</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount" :class="pnlClass(p.totalPnl)">{{ signedYuan(p.totalPnl) }}</span>
                   </td>
-                  <td class="align-center">
+                  <td>
                     <span class="cell-winloss">{{ p.winCount }} 胜 {{ p.lossCount }} 负</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount">{{ rateText(p.winRate) }}</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount" :class="p.avgWin > 0 ? 'amount-income' : ''">{{ winAvgText(p.avgWin) }}</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount" :class="p.avgLoss > 0 ? 'amount-expense' : ''">{{ lossAvgText(p.avgLoss) }}</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount">{{ ratioText(p) }}</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount" :class="pnlClass(p.expectancy)">{{ signedYuan(p.expectancy) }}</span>
                   </td>
-                  <td class="align-right">
+                  <td>
                     <span class="cell-money amount" :class="p.maxDrawdown > 0 ? 'amount-expense' : ''">{{ yuanText(p.maxDrawdown) }}</span>
                     <span class="cell-note amount">占本金 {{ rateText(p.maxDrawdownPct) }}</span>
                   </td>
@@ -722,6 +722,7 @@ onMounted(() => {
   padding: var(--transactions-space-sm) var(--transactions-space-xs);
   font-size: var(--transactions-size-text-body);
   color: var(--transactions-color-text-major);
+  text-align: left;
   border-bottom: 1px solid var(--transactions-color-divider);
   white-space: nowrap;
   vertical-align: middle;
@@ -741,14 +742,6 @@ onMounted(() => {
 
 .stats-table tbody tr.row-latest:hover td {
   background-color: var(--transactions-color-active-bg);
-}
-
-.align-center {
-  text-align: center;
-}
-
-.align-right {
-  text-align: right;
 }
 
 .cell-seq,
