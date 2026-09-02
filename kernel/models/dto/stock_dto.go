@@ -207,8 +207,8 @@ type StockStatisticsPointDto struct {
 	AvgLoss        int64    `json:"avgLoss"`        // 平均亏损（分，亏损金额总和 ÷ 亏损笔数，正数）
 	PnlRatio       *float64 `json:"pnlRatio"`       // 实际盈亏比（平均盈利 ÷ 平均亏损），尚无亏损样本时为 null
 	Expectancy     int64    `json:"expectancy"`     // 期望值（分/笔，胜率 × 平均盈利 − 亏损率 × 平均亏损）
-	MaxDrawdown    int64    `json:"maxDrawdown"`    // 最大回撤（分，账户净值从高点到低点的最大跌幅）
-	MaxDrawdownPct float64  `json:"maxDrawdownPct"` // 最大回撤占本金比例（%）
+	MaxDrawdown    int64    `json:"maxDrawdown"`    // 最大回撤（分，当时总资产从高点到低点的最大跌幅）
+	MaxDrawdownPct float64  `json:"maxDrawdownPct"` // 最大回撤占当时本金比例（%）
 }
 
 // RoundPnl 由一轮交易推导本轮盈亏与盈亏率（不存储冗余派生值）。

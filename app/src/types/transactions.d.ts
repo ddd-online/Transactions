@@ -372,7 +372,7 @@ export interface StockStatisticsPoint {
     pnlRatio: number | null;               // 实际盈亏比（无亏损样本时为 null）
     expectancy: number;                    // 期望值（分/笔）
     maxDrawdown: number;                   // 最大回撤（分）
-    maxDrawdownPct: number;                // 最大回撤占本金比例（%）
+    maxDrawdownPct: number;                // 最大回撤占当时本金比例（%）
 }
 
 /**

@@ -3,6 +3,7 @@ package service_test
 import (
 	"math"
 	"testing"
+	"time"
 
 	"github.com/transactions/dao"
 	"github.com/transactions/models"
@@ -206,5 +207,106 @@ func TestStatisticsNeedsAtLeastOneSettlement(t *testing.T) {
 	p := one.Points[0]
 	if p.Sequence != 1 || p.TotalPnl != 100000 || p.WinRate != 100 || p.AvgWin != 100000 {
 		t.Fatalf("第 1 笔统计点数值错误: %+v", p)
+	}
+}
+
+func TestStatisticsDrawdownUsesPrincipalAtSettlement(t *testing.T) {
+	svc, ws := newStockService(t)
+	stockDao := dao.NewStockDao()
+	if _, err := svc.SetPrincipal(ws, testLedgerID, 10000000); err != nil {
+		t.Fatalf("设置本金失败: %v", err)
+	}
+
+	writeRound := func(openPrice int64, closePrice int64, lots int64, closeAt time.Time) {
+		t.Helper()
+		openAt := closeAt.Add(-time.Minute)
+		writeTrade := func(tradeType string, price int64, ts time.Time) {
+			trade := &models.StockTrade{
+				ID:        util.GetUUID(),
+				LedgerID:  testLedgerID,
+				StockCode: testCode,
+				StockName: testName,
+				TradeType: tradeType,
+				Price:     price,
+				Lots:      lots,
+				Shares:    lots * 100,
+				Amount:    price * lots * 100,
+				TradeTime: ts.Unix(),
+			}
+			if err := stockDao.CreateTrade(ws, trade); err != nil {
+				t.Fatalf("写入交易失败: %v", err)
+			}
+		}
+		writeTrade(models.StockTradeOpen, openPrice, openAt)
+		writeTrade(models.StockTradeClose, closePrice, closeAt)
+	}
+
+	// 第 1 笔盈利 +100000（2023-07-22）
+	writeRound(1000, 1100, 10, time.Date(2023, 7, 22, 12, 0, 0, 0, time.UTC))
+	// 第 2 笔前追加本金 5,000,000（本金 10,000,000 → 15,000,000）
+	if err := stockDao.UpdateAccountPrincipal(ws, testLedgerID, 15000000); err != nil {
+		t.Fatalf("更新本金失败: %v", err)
+	}
+	addRecord := &models.StockFundRecord{
+		ID:           util.GetUUID(),
+		LedgerID:     testLedgerID,
+		RecordDate:   "2023-07-25",
+		EventType:    models.StockEventAddPrincipal,
+		EventText:    "追加本金",
+		AmountChange: 5000000,
+		CashBalance:  15000000,
+	}
+	if err := stockDao.CreateFundRecord(ws, addRecord); err != nil {
+		t.Fatalf("写入追加本金记录失败: %v", err)
+	}
+	// 第 2 笔亏损 -200000（2023-07-28）
+	writeRound(2000, 1800, 10, time.Date(2023, 7, 28, 12, 0, 0, 0, time.UTC))
+	// 第 3 笔前支取 1,000,000（2023-07-29，本金不变）
+	withdrawRecord := &models.StockFundRecord{
+		ID:           util.GetUUID(),
+		LedgerID:     testLedgerID,
+		RecordDate:   "2023-07-29",
+		EventType:    models.StockEventWithdraw,
+		EventText:    "支取",
+		AmountChange: -1000000,
+		CashBalance:  0,
+	}
+	if err := stockDao.CreateFundRecord(ws, withdrawRecord); err != nil {
+		t.Fatalf("写入支取记录失败: %v", err)
+	}
+	// 第 3 笔盈利 +300000（2023-08-01）
+	writeRound(1000, 1300, 10, time.Date(2023, 8, 1, 12, 0, 0, 0, time.UTC))
+
+	stats, err := svc.GetStatistics(ws, testLedgerID)
+	if err != nil {
+		t.Fatalf("查询交易统计失败: %v", err)
+	}
+	if len(stats.Points) != 3 {
+		t.Fatalf("统计点数量应为 3, 实际 %d", len(stats.Points))
+	}
+	if stats.Principal != 15000000 {
+		t.Fatalf("当前本金应为 15000000, 实际 %d", stats.Principal)
+	}
+
+	p1 := stats.Points[0]
+	if p1.MaxDrawdown != 0 || p1.MaxDrawdownPct != 0 {
+		t.Fatalf("第 1 笔不应有回撤: %+v", p1)
+	}
+	p2 := stats.Points[1]
+	// 追加后当时本金 15,000,000；峰值总资产 15,100,000，回撤 200,000 → 1.33%
+	if p2.MaxDrawdown != 200000 {
+		t.Fatalf("第 2 笔最大回撤应为 200000, 实际 %d", p2.MaxDrawdown)
+	}
+	if math.Abs(p2.MaxDrawdownPct-1.33) > 0.01 {
+		t.Fatalf("第 2 笔占当时本金回撤应为 1.33%%, 实际 %.2f", p2.MaxDrawdownPct)
+	}
+	p3 := stats.Points[2]
+	// 支取 1,000,000 计入总资产曲线：峰值 15,100,000 → 支取后 13,900,000 回撤 1,200,000，
+	// 第 3 笔盈利后回升到 14,200,000，历史最大回撤仍为 1,200,000 → 占当时本金 15,000,000 的 8%
+	if p3.MaxDrawdown != 1200000 {
+		t.Fatalf("第 3 笔最大回撤应为 1200000, 实际 %d", p3.MaxDrawdown)
+	}
+	if math.Abs(p3.MaxDrawdownPct-8) > 0.01 {
+		t.Fatalf("第 3 笔占当时本金回撤应为 8%%, 实际 %.2f", p3.MaxDrawdownPct)
 	}
 }
