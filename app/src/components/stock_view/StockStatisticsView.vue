@@ -164,20 +164,20 @@
               </thead>
               <tbody>
                 <tr v-for="p in points" :key="p.sequence" :class="{ 'row-latest': p.sequence === latestPoint.sequence }">
-                  <td>
+                  <td :title="`${p.stockName} ${p.stockCode} · 该股第 ${p.stockRoundNo} 轮`">
                     <span class="cell-seq amount">第 {{ p.sequence }} 笔</span>
-                    <span class="cell-sub">{{ p.stockName }} · {{ p.stockCode }} · 第 {{ p.stockRoundNo }} 轮</span>
+                    <span class="cell-note amount">{{ p.stockName }} 第 {{ p.stockRoundNo }} 轮</span>
                   </td>
                   <td class="cell-date align-center">{{ formatDate(p.closedAt) }}</td>
                   <td class="align-right">
                     <span class="cell-money amount" :class="pnlClass(p.pnl)">{{ signedYuan(p.pnl) }}</span>
-                    <span class="cell-sub" :class="pnlClass(p.pnl)">{{ rateText(p.pnlRate) }}</span>
+                    <span class="cell-note amount">{{ rateText(p.pnlRate) }}</span>
                   </td>
                   <td class="align-right">
                     <span class="cell-money amount" :class="pnlClass(p.totalPnl)">{{ signedYuan(p.totalPnl) }}</span>
                   </td>
                   <td class="align-center">
-                    <span class="cell-winloss">{{ p.winCount }} 胜 · {{ p.lossCount }} 负</span>
+                    <span class="cell-winloss">{{ p.winCount }} 胜 {{ p.lossCount }} 负</span>
                   </td>
                   <td class="align-right">
                     <span class="cell-money amount">{{ rateText(p.winRate) }}</span>
@@ -196,7 +196,7 @@
                   </td>
                   <td class="align-right">
                     <span class="cell-money amount" :class="p.maxDrawdown > 0 ? 'amount-expense' : ''">{{ yuanText(p.maxDrawdown) }}</span>
-                    <span class="cell-sub">占本金 {{ rateText(p.maxDrawdownPct) }}</span>
+                    <span class="cell-note amount">占本金 {{ rateText(p.maxDrawdownPct) }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -707,7 +707,7 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-xs);
   background-color: var(--transactions-color-minor-background);
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-caption);
@@ -719,7 +719,7 @@ onMounted(() => {
 }
 
 .stats-table td {
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-xs);
   font-size: var(--transactions-size-text-body);
   color: var(--transactions-color-text-major);
   border-bottom: 1px solid var(--transactions-color-divider);
@@ -759,19 +759,18 @@ onMounted(() => {
   letter-spacing: -0.01em;
 }
 
-.cell-sub {
-  display: block;
-  margin-top: var(--transactions-space-2xs);
+.cell-note {
+  margin-left: var(--transactions-space-xs);
   font-size: var(--transactions-size-text-small);
   color: var(--transactions-color-text-tertiary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .cell-date,
 .cell-winloss {
   font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-caption);
+  font-size: var(--transactions-size-text-body);
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
