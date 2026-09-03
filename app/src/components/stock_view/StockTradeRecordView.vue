@@ -364,6 +364,15 @@ onMounted(() => {
 <style scoped lang="scss">
 @use '@/styles/mixins' as *;
 
+/* A股习惯：红涨绿跌——股票页盈亏/胜负覆盖全局记账语义色 */
+.history-page .amount-income {
+  color: var(--transactions-color-expense);
+}
+
+.history-page .amount-expense {
+  color: var(--transactions-color-income);
+}
+
 .history-page {
   height: 100%;
   display: flex;
@@ -773,13 +782,13 @@ onMounted(() => {
 }
 
 .result-win {
-  background-color: var(--transactions-color-income-tint);
-  color: var(--transactions-color-income);
+  background-color: var(--transactions-color-expense-tint);
+  color: var(--transactions-color-expense);
 }
 
 .result-loss {
-  background-color: var(--transactions-color-expense-tint);
-  color: var(--transactions-color-expense);
+  background-color: var(--transactions-color-income-tint);
+  color: var(--transactions-color-income);
 }
 
 .result-even {
@@ -988,13 +997,13 @@ onMounted(() => {
 }
 
 .type-buy {
-  background-color: var(--transactions-color-expense-tint);
-  color: var(--transactions-color-expense);
+  background-color: var(--transactions-color-income-tint);
+  color: var(--transactions-color-income);
 }
 
 .type-sell {
-  background-color: var(--transactions-color-income-tint);
-  color: var(--transactions-color-income);
+  background-color: var(--transactions-color-expense-tint);
+  color: var(--transactions-color-expense);
 }
 
 /* 轮次骨架 */

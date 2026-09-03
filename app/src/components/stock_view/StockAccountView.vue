@@ -397,6 +397,15 @@ watch(
 </script>
 
 <style scoped lang="scss">
+/* A股习惯：红涨绿跌——股票页盈亏覆盖全局记账语义色 */
+.stock-account .amount-income {
+  color: var(--transactions-color-expense);
+}
+
+.stock-account .amount-expense {
+  color: var(--transactions-color-income);
+}
+
 .stock-account {
   display: flex;
   flex-direction: column;

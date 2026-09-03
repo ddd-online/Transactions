@@ -325,10 +325,11 @@ const readThemeColors = () => {
     bg: get('--transactions-color-major-background', '#ffffff'),
     border: get('--transactions-color-window-border', '#e8eaed'),
     split: get('--transactions-color-divider', '#eceef1'),
-    income: get('--transactions-color-income', '#16a34a'),
-    expense: get('--transactions-color-expense', '#dc2626'),
-    incomeTint: get('--transactions-color-income-tint', 'rgba(22, 163, 74, 0.10)'),
-    expenseTint: get('--transactions-color-expense-tint', 'rgba(220, 38, 38, 0.10)'),
+    // A股习惯：红涨绿跌——income/expense 变量交换，盈利取红、亏损取绿
+    income: get('--transactions-color-expense', '#dc2626'),
+    expense: get('--transactions-color-income', '#16a34a'),
+    incomeTint: get('--transactions-color-expense-tint', 'rgba(220, 38, 38, 0.10)'),
+    expenseTint: get('--transactions-color-income-tint', 'rgba(22, 163, 74, 0.10)'),
   }
 }
 
@@ -472,6 +473,15 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '@/styles/mixins' as *;
+
+/* A股习惯：红涨绿跌——股票页盈亏/胜负覆盖全局记账语义色 */
+.stats-page .amount-income {
+  color: var(--transactions-color-expense);
+}
+
+.stats-page .amount-expense {
+  color: var(--transactions-color-income);
+}
 
 .stats-page {
   height: 100%;
