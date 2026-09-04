@@ -33,7 +33,7 @@ func InitServices(mgr *workspace.WsManager) *api.Handlers {
 	chartSvc := service.NewChartService(chartDao)
 	trTemplateSvc := service.NewTrTemplateService(trTemplateDao)
 	diarySvc := service.NewDiaryService(diaryDao)
-	stockSvc := service.NewStockService(stockDao)
+	stockSvc := service.NewStockService(stockDao, service.NewTencentStockQuoteFetcher())
 
 	// Services with service+dao deps
 	tagSvc := service.NewTagService(tagDao, trTagDao)

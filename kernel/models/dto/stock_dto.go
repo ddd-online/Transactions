@@ -9,11 +9,13 @@ import (
 // StockOverviewDto 股票账户总览（金额单位：分）。
 type StockOverviewDto struct {
 	Principal           int64   `json:"principal"`           // 本金
-	AvailableCash       int64   `json:"availableCash"`       // 可用现金 = 总资产 − 当前持仓成本
-	PositionMarketValue int64   `json:"positionMarketValue"` // 持仓市值（持仓模块接入后填充，当前为 0）
+	AvailableCash       int64   `json:"availableCash"`       // 可用现金（账户现金余额）
+	PositionMarketValue int64   `json:"positionMarketValue"` // 持仓市值 = Σ（最新价×股数）；行情缺失部分按持仓成本计入
 	WithdrawnTotal      int64   `json:"withdrawnTotal"`      // 累计支取（Σ 支取事件金额）
-	TotalAssets         int64   `json:"totalAssets"`         // 总资产 = 本金 + 总盈亏 − 累计支取
+	TotalAssets         int64   `json:"totalAssets"`         // 总资产 = 可用现金 + 持仓市值
 	RealizedPnl         int64   `json:"realizedPnl"`         // 已实现总盈亏（Σ 卖出净盈亏）
+	UnrealizedPnl       int64   `json:"unrealizedPnl"`       // 浮动盈亏（分）= Σ（最新价×股数 − 持仓总成本），行情缺失部分为 0
+	QuoteFailedCount    int64   `json:"quoteFailedCount"`    // 本次行情获取失败的持仓数量
 	TotalPnlPercent     float64 `json:"totalPnlPercent"`     // 总盈亏占本金百分比（%）
 }
 
@@ -60,9 +62,12 @@ type StockPositionDto struct {
 	LedgerID    string `json:"ledgerId"`
 	StockCode   string `json:"stockCode"`
 	StockName   string `json:"stockName"`
-	Quantity    int64  `json:"quantity"`    // 持仓数量（股）
-	TotalCost   int64  `json:"totalCost"`   // 持仓总成本（分）
-	RealizedPnl int64  `json:"realizedPnl"` // 该股累计已实现盈亏（分）
+	Quantity    int64  `json:"quantity"`              // 持仓数量（股）
+	TotalCost   int64  `json:"totalCost"`             // 持仓总成本（分，含买入手续费）
+	RealizedPnl int64  `json:"realizedPnl"`           // 该股累计已实现盈亏（分）
+	LatestPrice *int64 `json:"latestPrice,omitempty"` // 最新价（分/股），行情获取失败时为空
+	PrevClose   *int64 `json:"prevClose,omitempty"`   // 昨收价（分/股）
+	QuoteTime   *int64 `json:"quoteTime,omitempty"`   // 行情时间（Unix 秒）
 }
 
 func FromStockPosition(p *models.StockPosition) StockPositionDto {
@@ -81,6 +86,14 @@ func FromStockPosition(p *models.StockPosition) StockPositionDto {
 type StockNameDto struct {
 	StockCode string `json:"stockCode"`
 	StockName string `json:"stockName"`
+}
+
+// StockQuoteDto 外部行情返回的最新行情（金额单位：分）。
+type StockQuoteDto struct {
+	StockCode   string `json:"stockCode"`
+	LatestPrice int64  `json:"latestPrice"` // 最新价（分/股）
+	PrevClose   int64  `json:"prevClose"`   // 昨收价（分/股）
+	QuoteTime   int64  `json:"quoteTime"`   // 行情时间（Unix 秒）
 }
 
 // StockTradeDto 股票交易记录。

@@ -21,6 +21,8 @@ const EMPTY_OVERVIEW: StockOverview = {
   withdrawnTotal: 0,
   totalAssets: 0,
   realizedPnl: 0,
+  unrealizedPnl: 0,
+  quoteFailedCount: 0,
   totalPnlPercent: 0,
 }
 

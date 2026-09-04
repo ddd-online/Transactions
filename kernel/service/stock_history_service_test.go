@@ -26,7 +26,7 @@ func newStockService(t *testing.T) (service.StockService, *workspace.Workspace) 
 		t.Fatalf("创建工作空间失败: %v", err)
 	}
 	t.Cleanup(func() { ws.Close() })
-	return service.NewStockService(dao.NewStockDao()), ws
+	return service.NewStockService(dao.NewStockDao(), stubQuoteFetcher{}), ws
 }
 
 func TestCloseArchivesRoundWithAllTrades(t *testing.T) {

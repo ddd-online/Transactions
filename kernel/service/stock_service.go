@@ -48,12 +48,31 @@ type StockService interface {
 
 var _ StockService = &stockServiceImpl{}
 
-type stockServiceImpl struct {
-	stockDao dao.StockDao
+// StockQuoteFetcher 批量行情源：按股票代码返回最新价与昨收价。
+// 行情为外部临时数据，不落库；单个/全部失败不应阻塞业务（调用方自行回退）。
+type StockQuoteFetcher interface {
+	FetchQuotes(stockCodes []string) map[string]dto.StockQuoteDto
 }
 
-func NewStockService(stockDao dao.StockDao) StockService {
-	return &stockServiceImpl{stockDao: stockDao}
+// tencentStockQuoteFetcher 腾讯行情实现（qt.gtimg.cn），与股票名称查询同源。
+type tencentStockQuoteFetcher struct{}
+
+// NewTencentStockQuoteFetcher 创建腾讯行情抓取器（生产环境使用）。
+func NewTencentStockQuoteFetcher() StockQuoteFetcher {
+	return tencentStockQuoteFetcher{}
+}
+
+func (tencentStockQuoteFetcher) FetchQuotes(stockCodes []string) map[string]dto.StockQuoteDto {
+	return fetchTencentQuotes(stockCodes)
+}
+
+type stockServiceImpl struct {
+	stockDao     dao.StockDao
+	quoteFetcher StockQuoteFetcher
+}
+
+func NewStockService(stockDao dao.StockDao, quoteFetcher StockQuoteFetcher) StockService {
+	return &stockServiceImpl{stockDao: stockDao, quoteFetcher: quoteFetcher}
 }
 
 // GetOrCreateAccount 获取账户，不存在则创建（本金为 0），保证服务层永远拿到有效账户。
@@ -116,16 +135,23 @@ func (s *stockServiceImpl) GetOverview(ws *workspace.Workspace, ledgerID string)
 		return nil, err
 	}
 
-	// 总资产 = 本金 + 总盈亏 − 累计支取（本金不因支取减少，保持"累计投入"语义）
-	totalAssets := account.Principal + realizedPnl - withdrawnTotal
-	// 可用现金 = 总资产 − 当前持仓成本（持仓按成本计价，与资金链现金余额一致）
+	// 现金余额 = 本金 + 已实现总盈亏 − 累计支取 − 持仓成本（与资金链一致）
 	positionCost, err := s.stockDao.SumPositionCost(ws, ledgerID)
 	if err != nil {
 		return nil, err
 	}
-	availableCash := totalAssets - positionCost
-	// 持仓市值预留：接入行情后用于展示浮盈资产（当前恒为 0）
-	positionMarketValue := int64(0)
+	availableCash := account.Principal + realizedPnl - withdrawnTotal - positionCost
+
+	// 持仓市值与浮动盈亏：最新价 × 股数；行情缺失的股票按持仓成本计入并计数
+	heldPositions, err := s.stockDao.ListPositions(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	quotes := s.fetchHeldQuotes(heldPositions)
+	positionMarketValue, unrealizedPnl, quoteFailedCount := computeHeldMarketValue(heldPositions, quotes)
+
+	// 总资产 = 可用现金 + 持仓市值（行情全部缺失时市值=成本，口径与旧版一致）
+	totalAssets := availableCash + positionMarketValue
 
 	// 总盈亏占本金百分比，本金为 0 时按 0 处理（防除零）
 	var totalPnlPercent float64
@@ -140,6 +166,8 @@ func (s *stockServiceImpl) GetOverview(ws *workspace.Workspace, ledgerID string)
 		WithdrawnTotal:      withdrawnTotal,
 		TotalAssets:         totalAssets,
 		RealizedPnl:         realizedPnl,
+		UnrealizedPnl:       unrealizedPnl,
+		QuoteFailedCount:    quoteFailedCount,
 		TotalPnlPercent:     totalPnlPercent,
 	}, nil
 }
@@ -228,13 +256,13 @@ func (s *stockServiceImpl) AddPrincipalAtDate(ws *workspace.Workspace, ledgerID 
 }
 
 // AddWithdraw 从股票账户支取：现金减少 amount，本金保持不变（本金始终是"累计投入"）。
-// 总资产 = 本金 + 总盈亏 − 累计支取，支取会相应减少总资产。
+// 总资产 = 可用现金 + 持仓市值，支取减少可用现金，总资产随之减少。
 func (s *stockServiceImpl) AddWithdraw(ws *workspace.Workspace, ledgerID string, amount int64) (*dto.StockOverviewDto, error) {
 	return s.AddWithdrawAtDate(ws, ledgerID, amount, "")
 }
 
 // AddWithdrawAtDate 从股票账户支取并指定资金变化的发生日期；date 为空时按当天记录。
-// 总资产 = 本金 + 总盈亏 − 累计支取，支取会相应减少总资产。
+// 总资产 = 可用现金 + 持仓市值，支取减少可用现金，总资产随之减少。
 func (s *stockServiceImpl) AddWithdrawAtDate(ws *workspace.Workspace, ledgerID string, amount int64, date string) (*dto.StockOverviewDto, error) {
 	if amount <= 0 {
 		return nil, models.NewBadRequest("支取金额必须大于 0")
@@ -345,14 +373,63 @@ func (s *stockServiceImpl) ListPositions(ws *workspace.Workspace, ledgerID strin
 	if err != nil {
 		return nil, err
 	}
-	items := make([]dto.StockPositionDto, 0, len(positions))
+	held := make([]models.StockPosition, 0, len(positions))
 	for i := range positions {
 		if positions[i].Quantity <= 0 {
 			continue // 已清仓的股票不再出现在持仓列表
 		}
-		items = append(items, dto.FromStockPosition(&positions[i]))
+		held = append(held, positions[i])
+	}
+	quotes := s.fetchHeldQuotes(held)
+
+	items := make([]dto.StockPositionDto, 0, len(held))
+	for i := range held {
+		item := dto.FromStockPosition(&held[i])
+		if quote, ok := quotes[held[i].StockCode]; ok && quote.LatestPrice > 0 {
+			latest := quote.LatestPrice
+			prevClose := quote.PrevClose
+			quoteTime := quote.QuoteTime
+			item.LatestPrice = &latest
+			item.PrevClose = &prevClose
+			item.QuoteTime = &quoteTime
+		}
+		items = append(items, item)
 	}
 	return items, nil
+}
+
+// fetchHeldQuotes 仅对当前持仓股票请求行情；无持仓或行情源缺失时返回空映射。
+func (s *stockServiceImpl) fetchHeldQuotes(held []models.StockPosition) map[string]dto.StockQuoteDto {
+	codes := make([]string, 0, len(held))
+	for i := range held {
+		if held[i].Quantity > 0 {
+			codes = append(codes, held[i].StockCode)
+		}
+	}
+	if len(codes) == 0 || s.quoteFetcher == nil {
+		return nil
+	}
+	return s.quoteFetcher.FetchQuotes(codes)
+}
+
+// computeHeldMarketValue 汇总持仓市值与浮动盈亏（单位：分）。
+// 行情可用的股票按最新价计价；缺失的按持仓成本计入，避免总资产在行情失败时失真，并返回失败数量供界面提示。
+func computeHeldMarketValue(held []models.StockPosition, quotes map[string]dto.StockQuoteDto) (marketValue int64, unrealizedPnl int64, quoteFailedCount int64) {
+	for i := range held {
+		p := &held[i]
+		if p.Quantity <= 0 {
+			continue
+		}
+		if quote, ok := quotes[p.StockCode]; ok && quote.LatestPrice > 0 {
+			value := quote.LatestPrice * p.Quantity
+			marketValue += value
+			unrealizedPnl += value - p.TotalCost
+		} else {
+			marketValue += p.TotalCost
+			quoteFailedCount++
+		}
+	}
+	return marketValue, unrealizedPnl, quoteFailedCount
 }
 
 func (s *stockServiceImpl) ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error) {
@@ -949,6 +1026,7 @@ func deriveTradeCycles(trades []models.StockTrade) []tradeCycle {
 var (
 	stockCodePattern  = regexp.MustCompile(`^(60|68|00|30)\d{4}$`)
 	quoteFieldPattern = regexp.MustCompile(`"([^"]*)"`)
+	quoteLinePattern  = regexp.MustCompile(`v_(\w+)="([^"]*)"`)
 )
 
 // LookupStockName 按股票代码查询股票名称：优先本地已有交易记录，未命中时走外部行情接口兜底。
@@ -997,6 +1075,92 @@ func fetchStockNameExternal(stockCode string) string {
 		return ""
 	}
 	return strings.TrimSpace(parts[1])
+}
+
+// fetchTencentQuotes 批量查询 A 股最新价与昨收价（qt.gtimg.cn，一次请求）。
+// 返回仅包含请求且解析成功的股票；网络/解析失败静默跳过，不阻塞调用方。
+func fetchTencentQuotes(stockCodes []string) map[string]dto.StockQuoteDto {
+	result := make(map[string]dto.StockQuoteDto)
+	if len(stockCodes) == 0 {
+		return result
+	}
+
+	query := make([]string, 0, len(stockCodes))
+	requested := make(map[string]struct{}, len(stockCodes))
+	for _, code := range stockCodes {
+		code = strings.TrimSpace(code)
+		if !stockCodePattern.MatchString(code) {
+			continue
+		}
+		if _, dup := requested[code]; dup {
+			continue
+		}
+		requested[code] = struct{}{}
+		market := "sz"
+		if strings.HasPrefix(code, "60") || strings.HasPrefix(code, "68") {
+			market = "sh"
+		}
+		query = append(query, market+code)
+	}
+	if len(query) == 0 {
+		return result
+	}
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get(fmt.Sprintf("http://qt.gtimg.cn/q=%s", strings.Join(query, ",")))
+	if err != nil {
+		logrus.Warnf("查询股票行情失败(网络), codes: %s, err: %v", strings.Join(query, ","), err)
+		return result
+	}
+	defer resp.Body.Close()
+	payload, err := io.ReadAll(transform.NewReader(resp.Body, simplifiedchinese.GBK.NewDecoder()))
+	if err != nil {
+		logrus.Warnf("查询股票行情失败(解码), codes: %s, err: %v", strings.Join(query, ","), err)
+		return result
+	}
+
+	parsed := parseTencentQuotePayload(payload)
+	for code := range requested {
+		if quote, ok := parsed[code]; ok {
+			result[code] = quote
+		}
+	}
+	return result
+}
+
+// parseTencentQuotePayload 解析腾讯行情响应文本，返回全部可识别的 A 股行情。
+// 腾讯字段以 "~" 分隔：名称[1]、代码[2]、最新价[3]、昨收[4]、行情时间[30]（YYYYMMDDHHMMSS）。
+func parseTencentQuotePayload(payload []byte) map[string]dto.StockQuoteDto {
+	result := make(map[string]dto.StockQuoteDto)
+	for _, match := range quoteLinePattern.FindAllSubmatch(payload, -1) {
+		parts := strings.Split(string(match[2]), "~")
+		if len(parts) < 5 {
+			continue
+		}
+		code := strings.TrimSpace(parts[2])
+		if !stockCodePattern.MatchString(code) {
+			continue
+		}
+		latestYuan, err := strconv.ParseFloat(strings.TrimSpace(parts[3]), 64)
+		prevCloseYuan, err2 := strconv.ParseFloat(strings.TrimSpace(parts[4]), 64)
+		if err != nil || err2 != nil || latestYuan <= 0 || prevCloseYuan <= 0 {
+			continue // 停牌/非法值视为该股无行情
+		}
+
+		quoteTime := time.Now().Unix()
+		if len(parts) > 30 {
+			if parsed, err := time.ParseInLocation("20060102150405", strings.TrimSpace(parts[30]), time.Local); err == nil {
+				quoteTime = parsed.Unix()
+			}
+		}
+		result[code] = dto.StockQuoteDto{
+			StockCode:   code,
+			LatestPrice: int64(math.Round(latestYuan * 100)),
+			PrevClose:   int64(math.Round(prevCloseYuan * 100)),
+			QuoteTime:   quoteTime,
+		}
+	}
+	return result
 }
 
 // ResetData 清空指定账本的全部股票交易数据。

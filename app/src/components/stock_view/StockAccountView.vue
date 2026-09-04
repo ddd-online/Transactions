@@ -9,8 +9,8 @@
             <h3 class="panel-title">总资产</h3>
             <a-tooltip>
               <template #title>
-                总资产 = 本金 + 总盈亏 − 累计支取<br />
-                本金为累计投入，支取不改变本金
+                总资产 = 可用现金 + 持仓市值<br />
+                持仓市值按最新行情计算，行情获取失败的持仓按成本计入；本金为累计投入，支取不改变本金
               </template>
               <QuestionCircleOutlined class="panel-title-tip" aria-label="总资产计算说明" />
             </a-tooltip>
@@ -36,10 +36,39 @@
 
           <div class="overview-stat">
             <div class="overview-stat-label">
+              <span class="overview-label">持仓市值</span>
+              <a-tooltip>
+                <template #title>持仓市值 = Σ（最新价 × 股数）；行情获取失败的持仓按持仓成本计入</template>
+                <QuestionCircleOutlined class="overview-stat-tip" aria-label="持仓市值说明" />
+              </a-tooltip>
+            </div>
+            <div class="overview-stat-value amount amount-medium">
+              <template v-if="!overviewLoading">{{ centsToYuan(overview.positionMarketValue) }}</template>
+              <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div class="overview-stat">
+            <div class="overview-stat-label">
+              <span class="overview-label">浮动盈亏</span>
+              <a-tooltip>
+                <template #title>浮动盈亏 = Σ（最新价 × 股数 − 持仓总成本（含买入手续费））<br />未卖出持仓的账面盈亏，行情缺失部分按 0 计</template>
+                <QuestionCircleOutlined class="overview-stat-tip" aria-label="浮动盈亏说明" />
+              </a-tooltip>
+            </div>
+            <div class="overview-stat-value amount amount-medium" :class="signedClass(overview.unrealizedPnl)">
+              <template v-if="!overviewLoading">{{ formatSignedYuan(overview.unrealizedPnl) }}</template>
+              <span v-else class="skeleton-bar skeleton-md" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div class="overview-stat">
+            <div class="overview-stat-label">
               <span class="overview-label">总盈亏</span>
               <a-tooltip>
                 <template #title>
                   总盈亏为已实现盈亏（卖出净盈亏合计）<br />
+                  不含持仓浮动盈亏（浮动部分见「浮动盈亏」）<br />
                   占本金比例 = 总盈亏 ÷ 本金（当前 {{ formatPercent(overview.totalPnlPercent) }}）
                 </template>
                 <QuestionCircleOutlined class="overview-stat-tip" aria-label="总盈亏计算说明" />
@@ -69,7 +98,7 @@
             <div class="overview-stat-label">
               <span class="overview-label">可用现金</span>
               <a-tooltip>
-                <template #title>可用现金 = 总资产 − 当前持仓成本</template>
+                <template #title>可用现金为账户实际现金余额 = 总资产 − 持仓市值（行情缺失部分按成本计入）</template>
                 <QuestionCircleOutlined class="overview-stat-tip" aria-label="可用现金计算说明" />
               </a-tooltip>
             </div>
@@ -80,6 +109,10 @@
           </div>
         </div>
 
+        <p v-if="overview.quoteFailedCount > 0" class="overview-hint">
+          {{ overview.quoteFailedCount }} 只持仓未获取到行情，已按持仓成本计入
+          <a-button type="link" size="small" :loading="overviewLoading" @click="stockStore.loadOverview()">重试</a-button>
+        </p>
         <p v-if="!overviewLoading && overview.principal === 0" class="overview-hint">
           还没有资金记录 — 先「追加本金」开始
         </p>
@@ -234,6 +267,15 @@ import type { StockFeeSetting } from '@/types/transactions'
 const stockStore = useStockAccountStore()
 const { overview, fundRecords, overviewLoading, recordsLoading, mutating } = storeToRefs(stockStore)
 
+interface Props {
+  /** 当前 Tab 是否处于「我的账户」（用于切回时刷新行情） */
+  active?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  active: true,
+})
+
 // ---------- 金额展示 ----------
 const formatSignedYuan = (cents: number): string => {
   const sign = cents > 0 ? '+' : cents < 0 ? '-' : ''
@@ -384,6 +426,16 @@ onMounted(() => {
   stockStore.reloadAll()
 })
 
+// 从其他 Tab 切回账户页时自动刷新行情与账户总览
+watch(
+  () => props.active,
+  (active, previous) => {
+    if (active && previous === false) {
+      stockStore.loadOverview()
+    }
+  }
+)
+
 // 费用设置变化（首次加载 / 保存 / 切换账本）时同步到表单
 watch(
   () => stockStore.feeSettings,
@@ -457,6 +509,16 @@ watch(
 
 .overview-stat + .overview-stat {
   border-left: 1px solid var(--transactions-color-divider);
+}
+
+/* 持仓市值 / 浮动盈亏两卡独占第二行，各占半行 */
+.overview-stat:nth-child(n + 5) {
+  grid-column: span 2;
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.overview-stat:nth-child(5) {
+  border-left: none;
 }
 
 .overview-stat-label {
@@ -608,7 +670,12 @@ watch(
     row-gap: var(--transactions-space-lg);
   }
 
-  .overview-stat:nth-child(3) {
+  .overview-stat:nth-child(n + 5) {
+    grid-column: auto;
+    border-top: 1px solid var(--transactions-color-divider);
+  }
+
+  .overview-stat:nth-child(odd) {
     border-left: none;
   }
 

@@ -3,10 +3,10 @@
     <!-- 股票交易主界面：多 Tab 页 -->
     <a-tabs v-model:activeKey="activeKey" class="tabs-wrapper">
       <a-tab-pane key="account" tab="我的账户">
-        <StockAccountView />
+        <StockAccountView :active="activeKey === 'account'" />
       </a-tab-pane>
       <a-tab-pane key="position" tab="我的持仓">
-        <StockPositionView />
+        <StockPositionView :active="activeKey === 'position'" />
       </a-tab-pane>
       <a-tab-pane key="trade" tab="交易历史">
         <StockTradeRecordView />

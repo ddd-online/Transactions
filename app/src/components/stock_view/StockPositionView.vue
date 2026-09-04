@@ -27,6 +27,26 @@
               <span class="position-card-code">{{ p.stockCode }}</span>
               <span class="position-card-lots">持仓 {{ lotsText(p.quantity) }}</span>
             </div>
+            <template v-if="hasQuote(p)">
+              <div class="position-card-quote-line">
+                <span class="position-card-quote-label">现价</span>
+                <span class="position-card-quote-value amount">¥{{ centsToYuan(quotePriceOf(p)) }}</span>
+                <span class="amount" :class="pnlClass(dayChangeOf(p) ?? 0)">{{ signedPercent(dayRateOf(p)) }}</span>
+              </div>
+              <div class="position-card-quote-line">
+                <span class="position-card-quote-label">浮盈</span>
+                <span class="position-card-quote-value amount" :class="pnlClass(floatPnlOf(p) ?? 0)">
+                  {{ signedYuan(floatPnlOf(p) ?? 0) }}
+                </span>
+                <span class="amount" :class="pnlClass(floatPnlOf(p) ?? 0)">{{ signedPercent(floatRateOf(p)) }}</span>
+              </div>
+            </template>
+            <div v-else class="position-card-quote-line position-card-quote-line--empty">
+              <span class="position-card-quote-label">现价</span>
+              <span>—</span>
+              <span class="position-card-quote-label">浮盈</span>
+              <span>—</span>
+            </div>
           </div>
         </div>
         <div v-else class="column-empty">
@@ -48,6 +68,37 @@
               <a-button @click="openTradeModal('reduce')">减仓</a-button>
               <a-button type="primary" @click="openTradeModal('add')">加仓</a-button>
             </div>
+          </div>
+          <div v-if="currentPosition" class="stock-quote-panel">
+            <div v-if="hasQuote(currentPosition)" class="stock-quote-stats">
+              <div class="stock-quote-stat">
+                <span class="stock-quote-stat-label">现价</span>
+                <span class="stock-quote-stat-value amount">¥{{ centsToYuan(quotePriceOf(currentPosition)) }}</span>
+              </div>
+              <div class="stock-quote-stat">
+                <span class="stock-quote-stat-label">当日涨跌</span>
+                <span class="stock-quote-stat-value amount" :class="pnlClass(dayChangeOf(currentPosition) ?? 0)">
+                  {{ signedYuan(dayChangeOf(currentPosition) ?? 0) }} {{ signedPercent(dayRateOf(currentPosition)) }}
+                </span>
+              </div>
+              <div class="stock-quote-stat">
+                <span class="stock-quote-stat-label">持仓市值</span>
+                <span class="stock-quote-stat-value amount">¥{{ centsToYuan(marketValueOf(currentPosition)) }}</span>
+              </div>
+              <div class="stock-quote-stat">
+                <span class="stock-quote-stat-label">当前盈亏</span>
+                <span class="stock-quote-stat-value amount" :class="pnlClass(floatPnlOf(currentPosition) ?? 0)">
+                  {{ signedYuan(floatPnlOf(currentPosition) ?? 0) }} {{ signedPercent(floatRateOf(currentPosition)) }}
+                </span>
+              </div>
+            </div>
+            <div v-else class="stock-quote-empty-text">暂未获取到行情</div>
+            <a-button class="stock-quote-refresh" size="small" :loading="quotesRefreshing" @click="refreshQuotes">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
+              刷新行情
+            </a-button>
           </div>
           <div class="trade-table-wrap">
             <a-table :columns="columns" :data-source="trades" row-key="id"
@@ -132,9 +183,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
+import { ReloadOutlined } from '@ant-design/icons-vue'
 import { useStockPositionStore } from '@/stores/stockPositionStore'
 import { fetchStockName } from '@/backend/api/stock'
 import { tryOrFallback } from '@/backend/errorHandler'
@@ -145,7 +197,17 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
 const stockStore = useStockPositionStore()
-const { positions, positionsLoading, selectedCode, trades, tradesLoading, mutating } = storeToRefs(stockStore)
+const { positions, positionsLoading, selectedCode, trades, tradesLoading, mutating, quotesRefreshing } = storeToRefs(stockStore)
+const { refreshQuotes } = stockStore
+
+interface Props {
+  /** 当前 Tab 是否处于「我的持仓」（用于切回时自动刷新行情） */
+  active?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  active: true,
+})
 
 const currentPosition = computed(() =>
   positions.value.find((p) => p.stockCode === selectedCode.value) ?? null
@@ -178,6 +240,25 @@ const signedYuan = (cents: number) => {
 }
 const pnlClass = (cents: number) => (cents > 0 ? 'amount-income' : cents < 0 ? 'amount-expense' : '')
 const formatTime = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD HH:mm')
+const hasQuote = (p: StockPosition): boolean => !!p.latestPrice && p.latestPrice > 0
+const quotePriceOf = (p: StockPosition): number => p.latestPrice ?? 0
+const dayChangeOf = (p: StockPosition): number | null => {
+  const latest = quotePriceOf(p)
+  return hasQuote(p) && p.prevClose ? latest - p.prevClose : null
+}
+const dayRateOf = (p: StockPosition): number | null => {
+  const change = dayChangeOf(p)
+  return change === null || !p.prevClose ? null : (change / p.prevClose) * 100
+}
+const floatPnlOf = (p: StockPosition): number | null =>
+  hasQuote(p) ? quotePriceOf(p) * p.quantity - p.totalCost : null
+const floatRateOf = (p: StockPosition): number | null => {
+  const pnl = floatPnlOf(p)
+  return pnl === null || p.totalCost <= 0 ? null : (pnl / p.totalCost) * 100
+}
+const marketValueOf = (p: StockPosition): number => (hasQuote(p) ? quotePriceOf(p) * p.quantity : p.totalCost)
+const signedPercent = (rate: number | null): string =>
+  rate === null ? '—' : `${rate >= 0 ? '+' : ''}${rate.toFixed(2)}%`
 // 交易历史金额：买入现金流出 = -(成交金额 + 费用)，卖出现金流入 = 成交金额 - 费用
 const changeOf = (t: TradeCell) =>
   isBuy(t.tradeType) ? -(t.amount + t.fee) : t.amount - t.fee
@@ -286,6 +367,16 @@ const handleTradeSubmit = async () => {
 onMounted(() => {
   stockStore.loadPositions()
 })
+
+// 从其他 Tab 切回持仓页时自动刷新行情；首次挂载时 loadPositions 已携带行情
+watch(
+  () => props.active,
+  (active, previous) => {
+    if (active && previous === false && !quotesRefreshing.value) {
+      stockStore.refreshQuotes()
+    }
+  }
+)
 </script>
 
 <style scoped lang="scss">
@@ -387,6 +478,66 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+/* ========== 中栏：行情面板 ========== */
+.stock-quote-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-lg);
+  flex-shrink: 0;
+  margin-bottom: var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  min-width: 0;
+}
+
+.stock-quote-stats {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  row-gap: var(--transactions-space-sm);
+}
+
+.stock-quote-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  padding: 0 var(--transactions-space-lg);
+  border-left: 1px solid var(--transactions-color-divider);
+  min-width: 0;
+}
+
+.stock-quote-stat:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.stock-quote-stat-label {
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-tertiary);
+  line-height: var(--transactions-height-snug);
+  white-space: nowrap;
+}
+
+.stock-quote-stat-value {
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  white-space: nowrap;
+}
+
+.stock-quote-empty-text {
+  flex: 1;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-quote-refresh {
+  flex-shrink: 0;
+}
+
 /* 左栏底部主按钮（对应关键事件页「添加事件」） */
 .panel-footer {
   flex-shrink: 0;
@@ -412,7 +563,7 @@ onMounted(() => {
   flex-direction: column;
   gap: var(--transactions-space-xs);
   padding: var(--transactions-space-sm) var(--transactions-space-md);
-  min-height: 72px;
+  min-height: 112px;
   border: none;
   border-radius: var(--transactions-radius-md);
   background-color: var(--transactions-color-major-background);
@@ -424,7 +575,7 @@ onMounted(() => {
               box-shadow var(--transactions-transition-smooth),
               transform var(--transactions-transition-smooth);
   content-visibility: auto;
-  contain-intrinsic-size: auto 72px;
+  contain-intrinsic-size: auto 112px;
 }
 
 .position-card:hover {
@@ -480,6 +631,32 @@ onMounted(() => {
   flex-shrink: 0;
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+}
+
+.position-card-quote-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+  font-size: var(--transactions-size-text-caption);
+}
+
+.position-card-quote-line--empty {
+  color: var(--transactions-color-text-disabled);
+}
+
+.position-card-quote-line .amount:last-child {
+  margin-left: auto;
+}
+
+.position-card-quote-label {
+  flex-shrink: 0;
+  color: var(--transactions-color-text-tertiary);
+}
+
+.position-card-quote-value {
+  color: var(--transactions-color-text-major);
   white-space: nowrap;
 }
 

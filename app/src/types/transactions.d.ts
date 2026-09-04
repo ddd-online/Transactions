@@ -198,11 +198,13 @@ export interface DiaryDateItem {
  */
 export interface StockOverview {
     principal: number;            // 本金
-    availableCash: number;        // 可用现金 = 总资产 − 当前持仓成本
-    positionMarketValue: number;  // 持仓市值（持仓模块接入后填充）
+    availableCash: number;        // 可用现金（账户实际现金余额）
+    positionMarketValue: number;  // 持仓市值 = Σ（最新价×股数），行情缺失部分按成本计入
     withdrawnTotal: number;       // 累计支取（分）
-    totalAssets: number;          // 总资产 = 本金 + 总盈亏 − 累计支取
+    totalAssets: number;          // 总资产 = 可用现金 + 持仓市值
     realizedPnl: number;          // 已实现总盈亏（Σ 卖出净盈亏）
+    unrealizedPnl: number;        // 浮动盈亏（分）= Σ（最新价×股数 − 持仓总成本）
+    quoteFailedCount: number;     // 本次行情获取失败的持仓数量
     totalPnlPercent: number;      // 总盈亏占本金百分比（%）
 }
 
@@ -255,6 +257,9 @@ export interface StockPosition {
     quantity: number;            // 持仓数量（股）
     totalCost: number;           // 持仓总成本（分）
     realizedPnl: number;         // 该股累计已实现盈亏（分）
+    latestPrice?: number;        // 最新价（分/股），行情获取失败时为空
+    prevClose?: number;          // 昨收价（分/股）
+    quoteTime?: number;          // 行情时间（Unix 秒）
 }
 
 /**

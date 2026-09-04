@@ -25,6 +25,7 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
   const trades = ref<StockTrade[]>([])
   const tradesLoading = ref(false)
   const mutating = ref(false)
+  const quotesRefreshing = ref(false)
 
   const currentLedgerId = () => ledgerStore.currentLedgerId
 
@@ -78,6 +79,19 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     if (stockCode === selectedCode.value) return
     selectedCode.value = stockCode
     await loadTrades(stockCode)
+  }
+
+  // 重新获取行情：刷新持仓（接口附带最新价/昨收）并同步刷新账户总览的市值与浮动盈亏
+  const refreshQuotes = async () => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId) return
+    quotesRefreshing.value = true
+    try {
+      await loadPositions()
+      await stockAccountStore.loadOverview()
+    } finally {
+      quotesRefreshing.value = false
+    }
   }
 
   const reloadAll = async () => {
@@ -152,9 +166,11 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     trades,
     tradesLoading,
     mutating,
+    quotesRefreshing,
     loadPositions,
     loadTrades,
     selectStock,
+    refreshQuotes,
     reloadAll,
     recordTrade,
   }
