@@ -42,6 +42,7 @@ type StockService interface {
 	UpdateRoundReview(ws *workspace.Workspace, ledgerID string, roundID string, review string) (*dto.StockTradeHistoryDetailDto, error)
 	GetTradeHistorySummary(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeHistorySummaryDto, error)
 	GetStatistics(ws *workspace.Workspace, ledgerID string) (*dto.StockStatisticsDto, error)
+	GetStatisticsRange(ws *workspace.Workspace, ledgerID string, startMonth string, endMonth string, recent int64) (*dto.StockStatisticsDto, error)
 	LookupStockName(ws *workspace.Workspace, stockCode string) (*dto.StockNameDto, error)
 	ResetData(ws *workspace.Workspace, ledgerID string) error
 }

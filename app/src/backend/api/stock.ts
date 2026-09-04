@@ -84,9 +84,31 @@ export async function updateStockRoundReview(ledgerId: string, roundId: string, 
     );
 }
 
-export async function fetchStockStatistics(ledgerId: string): Promise<StockStatistics> {
+export interface StockStatisticsQuery {
+    /** 起始月份 YYYY-MM（含首月） */
+    startMonth?: string
+    /** 结束月份 YYYY-MM（含末月） */
+    endMonth?: string
+    /** 最近 N 笔（与时间区间互斥） */
+    recent?: number
+}
+
+export async function fetchStockStatistics(
+    ledgerId: string,
+    query: StockStatisticsQuery = {}
+): Promise<StockStatistics> {
+    const params = [`ledger_id=${encodeURIComponent(ledgerId)}`]
+    if (query.startMonth) {
+        params.push(`start_month=${encodeURIComponent(query.startMonth)}`)
+    }
+    if (query.endMonth) {
+        params.push(`end_month=${encodeURIComponent(query.endMonth)}`)
+    }
+    if (query.recent && query.recent > 0) {
+        params.push(`recent=${query.recent}`)
+    }
     return api.get<StockStatistics>(
-        `/v1/stock/statistics?ledger_id=${encodeURIComponent(ledgerId)}`,
+        `/v1/stock/statistics?${params.join('&')}`,
         '查询交易统计'
     );
 }

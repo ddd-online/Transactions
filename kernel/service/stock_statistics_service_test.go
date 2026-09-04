@@ -37,6 +37,32 @@ func seedCleanRound(t *testing.T, ws *workspace.Workspace, svcStockDao dao.Stock
 	writeLegacy(models.StockTradeClose, closePrice)
 }
 
+// seedCleanRoundAt 与 seedCleanRound 相同，但使用 time.Time 表达清仓时间，便于跨月/跨年造数。
+func seedCleanRoundAt(t *testing.T, ws *workspace.Workspace, stockDao dao.StockDao,
+	stockCode string, stockName string, openPrice int64, closePrice int64, lots int64, closeAt time.Time) {
+	t.Helper()
+	writeTrade := func(tradeType string, price int64, at time.Time) {
+		t.Helper()
+		trade := &models.StockTrade{
+			ID:        util.GetUUID(),
+			LedgerID:  testLedgerID,
+			StockCode: stockCode,
+			StockName: stockName,
+			TradeType: tradeType,
+			Price:     price,
+			Lots:      lots,
+			Shares:    lots * 100,
+			Amount:    price * lots * 100,
+			TradeTime: at.Unix(),
+		}
+		if err := stockDao.CreateTrade(ws, trade); err != nil {
+			t.Fatalf("写入交易失败: %v", err)
+		}
+	}
+	writeTrade(models.StockTradeOpen, openPrice, closeAt.Add(-time.Minute))
+	writeTrade(models.StockTradeClose, closePrice, closeAt)
+}
+
 func TestStatisticsStartsFromFirstSettlement(t *testing.T) {
 	svc, ws := newStockService(t)
 	stockDao := dao.NewStockDao()
@@ -308,5 +334,178 @@ func TestStatisticsDrawdownUsesPrincipalAtSettlement(t *testing.T) {
 	}
 	if math.Abs(p3.MaxDrawdownPct-8) > 0.01 {
 		t.Fatalf("第 3 笔占当时本金回撤应为 8%%, 实际 %.2f", p3.MaxDrawdownPct)
+	}
+}
+
+func TestStatisticsMonthRangeRecomputesWindow(t *testing.T) {
+	svc, ws := newStockService(t)
+	stockDao := dao.NewStockDao()
+	if _, err := svc.SetPrincipal(ws, testLedgerID, 10000000); err != nil {
+		t.Fatalf("设置本金失败: %v", err)
+	}
+	// 2023-07：+100000 → -80000；2023-08：+50000
+	seedCleanRoundAt(t, ws, stockDao, testCode, testName, 1000, 1100, 10, time.Date(2023, 7, 22, 12, 0, 0, 0, time.UTC))
+	seedCleanRoundAt(t, ws, stockDao, testCodeB, testNameB, 1000, 920, 10, time.Date(2023, 7, 25, 12, 0, 0, 0, time.UTC))
+	seedCleanRoundAt(t, ws, stockDao, testCode, testName, 1000, 1050, 10, time.Date(2023, 8, 1, 12, 0, 0, 0, time.UTC))
+
+	stats, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-07", "2023-07", 0)
+	if err != nil {
+		t.Fatalf("查询 2023-07 区间统计失败: %v", err)
+	}
+	if stats.RoundCount != 2 || len(stats.Points) != 2 {
+		t.Fatalf("2023-07 应只统计 2 笔, 实际 %+v", stats)
+	}
+	p1 := stats.Points[0]
+	if p1.Sequence != 1 || p1.TotalPnl != 100000 || p1.WinCount != 1 || p1.MaxDrawdown != 0 {
+		t.Fatalf("区间第 1 笔错误: %+v", p1)
+	}
+	p2 := stats.Points[1]
+	if p2.Sequence != 2 || p2.TotalPnl != 20000 || p2.WinCount != 1 || p2.LossCount != 1 {
+		t.Fatalf("区间第 2 笔累计错误: %+v", p2)
+	}
+	if math.Abs(p2.WinRate-50) > 0.01 {
+		t.Fatalf("区间胜率应为 50%%, 实际 %.2f", p2.WinRate)
+	}
+	if p2.AvgWin != 100000 || p2.AvgLoss != 80000 || p2.PnlRatio == nil || math.Abs(*p2.PnlRatio-1.25) > 0.001 {
+		t.Fatalf("区间平均盈亏/盈亏比错误: %+v", p2)
+	}
+	if p2.Expectancy != 10000 {
+		t.Fatalf("区间期望值应为 10000, 实际 %d", p2.Expectancy)
+	}
+	if p2.MaxDrawdown != 80000 || math.Abs(p2.MaxDrawdownPct-0.8) > 0.001 {
+		t.Fatalf("区间最大回撤错误: %+v", p2)
+	}
+
+	august, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-08", "2023-08", 0)
+	if err != nil {
+		t.Fatalf("查询 2023-08 区间统计失败: %v", err)
+	}
+	if august.RoundCount != 1 || len(august.Points) != 1 {
+		t.Fatalf("2023-08 应只统计 1 笔, 实际 %+v", august)
+	}
+	if august.Points[0].Sequence != 1 || august.Points[0].TotalPnl != 50000 {
+		t.Fatalf("2023-08 区间结果错误: %+v", august.Points[0])
+	}
+
+	// 跨年区间不应遗漏边界外数据
+	crossYear, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-07", "2023-12", 0)
+	if err != nil {
+		t.Fatalf("查询跨月区间失败: %v", err)
+	}
+	if crossYear.RoundCount != 3 {
+		t.Fatalf("跨月区间应统计 3 笔, 实际 %d", crossYear.RoundCount)
+	}
+}
+
+func TestStatisticsRecentNRecomputesWindow(t *testing.T) {
+	svc, ws := newStockService(t)
+	stockDao := dao.NewStockDao()
+	if _, err := svc.SetPrincipal(ws, testLedgerID, 10000000); err != nil {
+		t.Fatalf("设置本金失败: %v", err)
+	}
+	seedCleanRoundAt(t, ws, stockDao, testCode, testName, 1000, 1100, 10, time.Date(2023, 7, 22, 12, 0, 0, 0, time.UTC))  // +100000
+	seedCleanRoundAt(t, ws, stockDao, testCodeB, testNameB, 1000, 920, 10, time.Date(2023, 7, 25, 12, 0, 0, 0, time.UTC)) // -80000
+	seedCleanRoundAt(t, ws, stockDao, testCode, testName, 1000, 1050, 10, time.Date(2023, 8, 1, 12, 0, 0, 0, time.UTC))   // +50000
+
+	stats, err := svc.GetStatisticsRange(ws, testLedgerID, "", "", 2)
+	if err != nil {
+		t.Fatalf("查询最近 2 笔失败: %v", err)
+	}
+	if stats.RoundCount != 2 || len(stats.Points) != 2 {
+		t.Fatalf("最近 2 笔应生成 2 个点, 实际 %+v", stats)
+	}
+	if stats.Points[0].Sequence != 1 || stats.Points[0].Pnl != -80000 {
+		t.Fatalf("最近 2 笔第 1 点错误: %+v", stats.Points[0])
+	}
+	if stats.Points[1].Sequence != 2 || stats.Points[1].TotalPnl != -30000 {
+		t.Fatalf("最近 2 笔第 2 点错误: %+v", stats.Points[1])
+	}
+
+	// 请求笔数超过总笔数时返回全部
+	all, err := svc.GetStatisticsRange(ws, testLedgerID, "", "", 100)
+	if err != nil {
+		t.Fatalf("查询超过总数的最近笔数失败: %v", err)
+	}
+	if all.RoundCount != 3 || len(all.Points) != 3 {
+		t.Fatalf("超出总数应返回全部 3 笔, 实际 %+v", all)
+	}
+}
+
+func TestStatisticsRangeDrawdownPercentUsesPrincipalAtPoint(t *testing.T) {
+	svc, ws := newStockService(t)
+	stockDao := dao.NewStockDao()
+	if _, err := svc.SetPrincipal(ws, testLedgerID, 10000000); err != nil {
+		t.Fatalf("设置本金失败: %v", err)
+	}
+	// 第 1 笔亏损 -200000（2023-01-05），随后追加本金 500 万，第 2 笔亏损 -300000（2023-01-20）
+	seedCleanRoundAt(t, ws, stockDao, testCode, testName, 2000, 1800, 10, time.Date(2023, 1, 5, 12, 0, 0, 0, time.UTC))
+	if err := stockDao.UpdateAccountPrincipal(ws, testLedgerID, 15000000); err != nil {
+		t.Fatalf("更新本金失败: %v", err)
+	}
+	addRecord := &models.StockFundRecord{
+		ID:           util.GetUUID(),
+		LedgerID:     testLedgerID,
+		RecordDate:   "2023-01-10",
+		EventType:    models.StockEventAddPrincipal,
+		EventText:    "追加本金",
+		AmountChange: 5000000,
+		CashBalance:  15000000,
+	}
+	if err := stockDao.CreateFundRecord(ws, addRecord); err != nil {
+		t.Fatalf("写入追加本金记录失败: %v", err)
+	}
+	seedCleanRoundAt(t, ws, stockDao, testCodeB, testNameB, 2000, 1700, 10, time.Date(2023, 1, 20, 12, 0, 0, 0, time.UTC))
+
+	stats, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-01", "2023-01", 0)
+	if err != nil {
+		t.Fatalf("查询 2023-01 区间统计失败: %v", err)
+	}
+	if stats.RoundCount != 2 {
+		t.Fatalf("2023-01 应统计 2 笔, 实际 %d", stats.RoundCount)
+	}
+	p1 := stats.Points[0]
+	// 区间曲线从 0 起步：第 1 笔后累计 -200000，回撤 200000 ÷ 当时本金 1000 万 = 2%
+	if p1.MaxDrawdown != 200000 || math.Abs(p1.MaxDrawdownPct-2) > 0.01 {
+		t.Fatalf("区间第 1 笔回撤错误: %+v", p1)
+	}
+	p2 := stats.Points[1]
+	// 区间曲线峰值仍为 0，第 2 笔后累计 -500000 → 回撤 500000；当时本金已含追加 = 1500 万 → 3.33%
+	if p2.MaxDrawdown != 500000 || math.Abs(p2.MaxDrawdownPct-3.33) > 0.01 {
+		t.Fatalf("区间第 2 笔回撤错误: %+v", p2)
+	}
+	if p2.TotalPnl != -500000 {
+		t.Fatalf("区间累计盈亏应为 -500000, 实际 %d", p2.TotalPnl)
+	}
+}
+
+func TestStatisticsRangeValidation(t *testing.T) {
+	svc, ws := newStockService(t)
+
+	if _, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-01", "", 0); err == nil {
+		t.Fatalf("缺少 end_month 应报错")
+	}
+	if _, err := svc.GetStatisticsRange(ws, testLedgerID, "", "2023-01", 0); err == nil {
+		t.Fatalf("缺少 start_month 应报错")
+	}
+	if _, err := svc.GetStatisticsRange(ws, testLedgerID, "2023/01", "2023-02", 0); err == nil {
+		t.Fatalf("非法月份格式应报错")
+	}
+	if _, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-03", "2023-01", 0); err == nil {
+		t.Fatalf("end_month 早于 start_month 应报错")
+	}
+	if _, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-01", "2023-02", 5); err == nil {
+		t.Fatalf("时间与笔数并存应报错")
+	}
+	if _, err := svc.GetStatisticsRange(ws, testLedgerID, "", "", -1); err == nil {
+		t.Fatalf("负数 recent 应报错")
+	}
+
+	// 区间内无结算：返回空统计且不报错
+	empty, err := svc.GetStatisticsRange(ws, testLedgerID, "2023-06", "2023-06", 0)
+	if err != nil {
+		t.Fatalf("无结算区间不应报错: %v", err)
+	}
+	if empty.RoundCount != 0 || len(empty.Points) != 0 {
+		t.Fatalf("无结算区间应返回空, 实际 %+v", empty)
 	}
 }

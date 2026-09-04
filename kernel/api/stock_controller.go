@@ -155,13 +155,22 @@ func (h *Handlers) updateStockRoundReview(c *gin.Context) (any, error) {
 	return h.StockSvc.UpdateRoundReview(ws(c), ledgerID, roundID, review)
 }
 
-// GET /api/v1/stock/statistics?ledger_id=  逐笔结算统计（自第 1 笔起）
+// GET /api/v1/stock/statistics?ledger_id=&start_month=&end_month=&recent=
+// 逐笔结算统计；不带筛选参数为全量，start_month/end_month 为时间区间（YYYY-MM，含首尾整月），recent 为最近 N 笔。
 func (h *Handlers) getStockStatistics(c *gin.Context) (any, error) {
 	ledgerID, err := requireLedgerID(c)
 	if err != nil {
 		return nil, err
 	}
-	return h.StockSvc.GetStatistics(ws(c), ledgerID)
+	var recent int64
+	if rawRecent := c.Query("recent"); rawRecent != "" {
+		parsed, err := strconv.ParseInt(rawRecent, 10, 64)
+		if err != nil || parsed <= 0 {
+			return nil, models.NewBadRequest("recent 必须为正整数")
+		}
+		recent = parsed
+	}
+	return h.StockSvc.GetStatisticsRange(ws(c), ledgerID, c.Query("start_month"), c.Query("end_month"), recent)
 }
 
 // POST /api/v1/stock/trades  body: { ledger_id, stock_code, stock_name, trade_type, price(元), lots, trade_time(秒), remark }

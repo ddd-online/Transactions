@@ -19,8 +19,8 @@ type settleEvent struct {
 	tradeCount int64
 }
 
-// GetStatistics 返回交易统计：把全部已清仓轮次按清仓时间合成结算序列，
-// 自第 1 笔起每结算一笔按累计口径计算一次胜率/平均盈亏/盈亏比/期望值与最大回撤。
+// GetStatistics 返回全量逐笔结算统计（自第 1 笔起累计口径）。
+// GetStatisticsRange 支持按月份区间或最近 N 笔筛选，区间内按独立口径从第 1 笔重新累计。
 //
 // 派生口径：
 //   - 胜率 = 盈利笔数 ÷ 总笔数（平局计入总笔数，不计胜负）；
@@ -30,6 +30,27 @@ type settleEvent struct {
 //   - 最大回撤按每笔结算时点的总资产曲线（当时的本金 + 累计已结算盈亏 − 当时累计支取）
 //     从高点跌落的幅度计算；本金追加/支取按记录日期参与时序，占本金比例使用当时的本金。
 func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID string) (*dto.StockStatisticsDto, error) {
+	return s.statistics(ws, ledgerID, "", "", 0)
+}
+
+// GetStatisticsRange 返回区间统计：时间范围（含首尾整月）或最近 N 笔二选一。
+// 区间内按独立口径逐笔累计；本金追加/支取仍按记录日期全程重放，用于回撤百分比分母。
+func (s *stockServiceImpl) GetStatisticsRange(ws *workspace.Workspace, ledgerID string, startMonth string, endMonth string, recent int64) (*dto.StockStatisticsDto, error) {
+	if recent < 0 {
+		return nil, models.NewBadRequest("recent 必须为正整数")
+	}
+	if recent > 0 && (startMonth != "" || endMonth != "") {
+		return nil, models.NewBadRequest("时间范围与笔数筛选不能同时使用")
+	}
+	fromDay, toDay, err := normalizeStatisticsMonthRange(startMonth, endMonth)
+	if err != nil {
+		return nil, err
+	}
+	return s.statistics(ws, ledgerID, fromDay, toDay, recent)
+}
+
+// statistics 实现结算统计：fromDay/toDay 非空时按清仓日期区间筛选，recent > 0 时取最近 N 笔。
+func (s *stockServiceImpl) statistics(ws *workspace.Workspace, ledgerID string, fromDay string, toDay string, recent int64) (*dto.StockStatisticsDto, error) {
 	if err := s.ensureTradeHistoryBackfill(ws, ledgerID); err != nil {
 		return nil, err
 	}
@@ -83,14 +104,23 @@ func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID strin
 		initialPrincipal -= flows[i].add
 	}
 
+	includedTotal := int64(0)
+	for i := range events {
+		date := time.Unix(events[i].round.ClosedAt, 0).Format("2006-01-02")
+		if includeStatisticsEvent(date, i, len(events), fromDay, toDay, recent) {
+			includedTotal++
+		}
+	}
+
 	result := &dto.StockStatisticsDto{
 		Principal:  account.Principal,
-		RoundCount: int64(len(events)),
-		Points:     make([]dto.StockStatisticsPointDto, 0),
+		RoundCount: includedTotal,
+		Points:     make([]dto.StockStatisticsPointDto, 0, includedTotal),
 	}
-	if len(events) == 0 {
+	if includedTotal == 0 {
 		return result, nil
 	}
+	useWindow := fromDay != "" || recent > 0
 
 	// 资金事件与结算事件按日期合成同一条时序，保证本金追加/支取在正确时点影响总资产峰值与回撤
 	actions := make([]statAction, 0, len(flows)+len(events))
@@ -127,6 +157,15 @@ func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID strin
 		equity      = initialPrincipal
 		peakEquity  = initialPrincipal
 		maxDrawdown int64
+
+		windowCount       int64 // 区间内笔数（区间内从 1 重新编号）
+		windowWinCount    int64
+		windowLossCount   int64
+		windowWinSum      int64
+		windowLossSum     int64 // 区间内亏损金额合计（正数）
+		windowCumPnl      int64
+		windowPeakPnl     int64
+		windowMaxDrawdown int64
 	)
 	updateDrawdown := func() {
 		if equity > peakEquity {
@@ -147,20 +186,56 @@ func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID strin
 			continue
 		}
 		ev := &events[action.eventIndex]
+		date := time.Unix(ev.round.ClosedAt, 0).Format("2006-01-02")
+		if !includeStatisticsEvent(date, action.eventIndex, len(events), fromDay, toDay, recent) {
+			continue
+		}
+
 		totalCount++
+		windowCount++
 		cumPnl += ev.pnl
+		windowCumPnl += ev.pnl
 		if ev.pnl > 0 {
 			winCount++
 			winSum += ev.pnl
+			windowWinCount++
+			windowWinSum += ev.pnl
 		} else if ev.pnl < 0 {
 			lossCount++
 			lossSum += -ev.pnl
+			windowLossCount++
+			windowLossSum += -ev.pnl
 		}
-		// 当时总资产 = 当时本金 + 累计已结算盈亏 − 当时累计支取
+		// 区间回撤曲线：从 0 起步逐笔累计区间盈亏，追踪该曲线峰值的最大回落
+		if windowCumPnl > windowPeakPnl {
+			windowPeakPnl = windowCumPnl
+		}
+		if windowDrawdown := windowPeakPnl - windowCumPnl; windowDrawdown > windowMaxDrawdown {
+			windowMaxDrawdown = windowDrawdown
+		}
+		// 当时总资产 = 当时本金 + 累计已结算盈亏 − 当时累计支取（全量口径）
 		equity = principalAt + cumPnl - withdrawnAt
 		updateDrawdown()
+
+		seqNo := totalCount
+		statCount := totalCount
+		total := cumPnl
+		wins := winCount
+		losses := lossCount
+		winAmountSum, lossAmountSum := winSum, lossSum
+		drawdown := maxDrawdown
+		if useWindow {
+			seqNo = windowCount
+			statCount = windowCount
+			total = windowCumPnl
+			wins = windowWinCount
+			losses = windowLossCount
+			winAmountSum, lossAmountSum = windowWinSum, windowLossSum
+			drawdown = windowMaxDrawdown
+		}
+
 		point := dto.StockStatisticsPointDto{
-			Sequence:     totalCount,
+			Sequence:     seqNo,
 			ClosedAt:     ev.round.ClosedAt,
 			StockCode:    ev.round.StockCode,
 			StockName:    ev.stockName,
@@ -168,35 +243,71 @@ func (s *stockServiceImpl) GetStatistics(ws *workspace.Workspace, ledgerID strin
 			Pnl:          ev.pnl,
 			PnlRate:      ev.pnlRate,
 			TradeCount:   ev.tradeCount,
-			TotalPnl:     cumPnl,
-			WinCount:     winCount,
-			LossCount:    lossCount,
-			MaxDrawdown:  maxDrawdown,
+			TotalPnl:     total,
+			WinCount:     wins,
+			LossCount:    losses,
+			MaxDrawdown:  drawdown,
 		}
-		if totalCount > 0 {
-			point.WinRate = math.Round(float64(winCount)/float64(totalCount)*10000) / 100
+		if statCount > 0 {
+			point.WinRate = math.Round(float64(wins)/float64(statCount)*10000) / 100
 		}
-		if winCount > 0 {
-			point.AvgWin = roundToNearestCents(float64(winSum) / float64(winCount))
+		if wins > 0 {
+			point.AvgWin = roundToNearestCents(float64(winAmountSum) / float64(wins))
 		}
-		if lossCount > 0 {
-			point.AvgLoss = roundToNearestCents(float64(lossSum) / float64(lossCount))
+		if losses > 0 {
+			point.AvgLoss = roundToNearestCents(float64(lossAmountSum) / float64(losses))
 			ratio := 0.0
 			if point.AvgWin > 0 {
 				ratio = float64(point.AvgWin) / float64(point.AvgLoss)
 			}
 			point.PnlRatio = &ratio
 		}
-		if totalCount > 0 {
+		if statCount > 0 {
 			// 期望值 = 胜率 × 平均盈利 − 亏损率 × 平均亏损 = 累计盈亏 ÷ 总笔数
-			point.Expectancy = roundToNearestCents(float64(cumPnl) / float64(totalCount))
+			point.Expectancy = roundToNearestCents(float64(total) / float64(statCount))
 		}
 		if principalAt > 0 {
-			point.MaxDrawdownPct = math.Round(float64(maxDrawdown)/float64(principalAt)*10000) / 100
+			point.MaxDrawdownPct = math.Round(float64(drawdown)/float64(principalAt)*10000) / 100
 		}
 		result.Points = append(result.Points, point)
 	}
 	return result, nil
+}
+
+// includeStatisticsEvent 判断某笔结算是否落入当前筛选：
+// recent > 0 时取排序后最近 N 笔；fromDay 非空时按清仓日期区间（含首尾日）判断。
+func includeStatisticsEvent(date string, idx int, total int, fromDay string, toDay string, recent int64) bool {
+	if recent > 0 {
+		return int64(idx) >= int64(total)-recent
+	}
+	if fromDay != "" {
+		return date >= fromDay && date <= toDay
+	}
+	return true
+}
+
+// normalizeStatisticsMonthRange 校验起止月份（YYYY-MM）并返回首尾两天的日期边界。
+func normalizeStatisticsMonthRange(startMonth string, endMonth string) (string, string, error) {
+	if startMonth == "" && endMonth == "" {
+		return "", "", nil
+	}
+	if startMonth == "" || endMonth == "" {
+		return "", "", models.NewBadRequest("start_month 与 end_month 需同时提供（格式 YYYY-MM）")
+	}
+	start, err := time.Parse("2006-01", startMonth)
+	if err != nil {
+		return "", "", models.NewBadRequest("start_month 格式应为 YYYY-MM")
+	}
+	end, err := time.Parse("2006-01", endMonth)
+	if err != nil {
+		return "", "", models.NewBadRequest("end_month 格式应为 YYYY-MM")
+	}
+	if start.After(end) {
+		return "", "", models.NewBadRequest("end_month 不能早于 start_month")
+	}
+	from := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, time.Local)
+	lastDay := time.Date(end.Year(), end.Month()+1, 0, 0, 0, 0, 0, time.Local)
+	return from.Format("2006-01-02"), lastDay.Format("2006-01-02"), nil
 }
 
 // statAction 结算统计时序中的一步：资金事件（追加本金/支取）或一笔结算。
