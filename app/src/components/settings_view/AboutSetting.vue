@@ -47,9 +47,11 @@
       </div>
 
       <!-- downloaded -->
-      <div v-else-if="updateStore.status === 'downloaded'" class="update-row update-success">
-        <CheckCircleOutlined class="update-icon" />
-        <span class="update-text">下载完成</span>
+      <div v-else-if="updateStore.status === 'downloaded'" class="update-row update-row--downloaded update-success">
+        <div class="update-done-line">
+          <CheckCircleOutlined class="update-icon" />
+          <span class="update-text">下载完成</span>
+        </div>
         <a-button type="primary" size="small" @click="handleInstall">安装并退出</a-button>
       </div>
 
@@ -61,9 +63,9 @@
       </div>
     </div>
 
-    <!-- release body -->
-    <div v-if="updateStore.status === 'available' && updateStore.releaseBody" class="about-release-body">
-      <div class="release-body-content" v-text="updateStore.releaseBody"></div>
+    <!-- 更新说明（Markdown） -->
+    <div v-if="showReleaseBody" class="about-release-body">
+      <MarkdownViewer :content="updateStore.releaseBody" />
     </div>
 
     <div class="about-copyright">
@@ -73,12 +75,20 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons-vue";
 import { useUpdateStore } from "@/stores/updateStore";
+import MarkdownViewer from '@/components/common/MarkdownViewer.vue';
 
 const appVersion = ref('');
 const updateStore = useUpdateStore();
+
+// 下载/完成/失败等阶段保留更新说明，方便用户了解本次更新内容
+const showReleaseBody = computed(() => {
+  const status = updateStore.status
+  return !!updateStore.releaseBody &&
+    (status === 'available' || status === 'downloading' || status === 'downloaded' || status === 'error')
+})
 
 onMounted(async () => {
   try {
@@ -162,6 +172,18 @@ const handleRetry = () => {
   gap: var(--transactions-space-md);
 }
 
+.update-row--downloaded {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+.update-done-line {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
 .update-icon {
   font-size: var(--transactions-size-text-section);
 }
@@ -182,20 +204,126 @@ const handleRetry = () => {
 }
 
 .about-release-body {
-  max-width: 420px;
-  max-height: 120px;
+  width: min(480px, 100%);
+  max-height: 168px;
   overflow-y: auto;
   padding: var(--transactions-space-md) var(--transactions-space-lg);
   background: var(--transactions-color-hover-bg);
   border-radius: var(--transactions-radius-md);
   border: 1px solid var(--transactions-color-divider);
-}
-
-.release-body-content {
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
-  white-space: pre-wrap;
-  line-height: 1.5;
+  line-height: var(--transactions-height-normal);
+}
+
+.about-release-body :deep(.markdown-viewer) {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  line-height: var(--transactions-height-normal);
+  word-break: break-word;
+}
+
+.about-release-body :deep(p) {
+  margin: var(--transactions-space-xs) 0;
+}
+
+.about-release-body :deep(h1),
+.about-release-body :deep(h2),
+.about-release-body :deep(h3),
+.about-release-body :deep(h4) {
+  margin: var(--transactions-space-sm) 0 var(--transactions-space-xs);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-snug);
+}
+
+.about-release-body :deep(h1) {
+  font-size: var(--transactions-size-text-title-sm);
+}
+
+.about-release-body :deep(h2) {
+  font-size: var(--transactions-size-text-section);
+}
+
+.about-release-body :deep(h3),
+.about-release-body :deep(h4) {
+  font-size: var(--transactions-size-text-body);
+}
+
+.about-release-body :deep(ul),
+.about-release-body :deep(ol) {
+  margin: var(--transactions-space-xs) 0;
+  padding-left: var(--transactions-space-xl);
+}
+
+.about-release-body :deep(li) {
+  margin: var(--transactions-space-2xs) 0;
+}
+
+.about-release-body :deep(blockquote) {
+  margin: var(--transactions-space-xs) 0;
+  padding-left: var(--transactions-space-md);
+  border-left: 2px solid var(--transactions-color-border-l2);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.about-release-body :deep(a) {
+  color: var(--transactions-color-primary);
+  text-decoration: none;
+}
+
+.about-release-body :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.about-release-body :deep(code) {
+  font-family: var(--transactions-font-mono);
+  font-size: 0.92em;
+  background: var(--transactions-color-major-background);
+  padding: 1px var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
+}
+
+.about-release-body :deep(pre) {
+  margin: var(--transactions-space-sm) 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  background: var(--transactions-color-major-background);
+  border-radius: var(--transactions-radius-md);
+  overflow-x: auto;
+}
+
+.about-release-body :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.about-release-body :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--transactions-color-divider);
+  margin: var(--transactions-space-sm) 0;
+}
+
+.about-release-body :deep(img) {
+  max-width: 100%;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.about-release-body :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--transactions-space-xs) 0;
+}
+
+.about-release-body :deep(th),
+.about-release-body :deep(td) {
+  padding: var(--transactions-space-2xs) var(--transactions-space-xs);
+  border: 1px solid var(--transactions-color-border-l2);
+  text-align: left;
+}
+
+.about-release-body :deep(th) {
+  background: var(--transactions-color-minor-background);
+  font-weight: var(--transactions-weight-medium);
 }
 
 .about-copyright {
