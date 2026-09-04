@@ -27,11 +27,18 @@
           <span v-if="chart.lines.length === 0" class="chart-list-dot chart-list-dot--empty" />
         </span>
         <div class="chart-list-item-actions" @click.stop>
-          <a-button type="text" size="small" danger @click="handleDelete(chart)">
-            <template #icon>
-              <DeleteOutlined />
-            </template>
-          </a-button>
+          <a-popconfirm
+            :title="`删除图表「${chart.title}」？此操作不可恢复。`"
+            ok-text="删除"
+            cancel-text="取消"
+            @confirm="handleDelete(chart)"
+          >
+            <a-button type="text" size="small" danger aria-label="删除图表">
+              <template #icon>
+                <DeleteOutlined />
+              </template>
+            </a-button>
+          </a-popconfirm>
         </div>
       </div>
     </div>
@@ -122,10 +129,10 @@ const handleCreate = async () => {
 const handleDelete = async (chart: ChartDto) => {
   try {
     await deleteChartApi(chart.chartId)
-    message.success('删除成功')
+    message.success('图表已删除')
     emit('delete', chart.chartId)
   } catch (error) {
-    message.error('删除失败')
+    message.error('删除图表失败')
   }
 }
 </script>

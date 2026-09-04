@@ -48,7 +48,7 @@
               <a-textarea
                 v-model:value="localContent"
                 :maxlength="5000"
-                placeholder="输入描述内容..."
+                placeholder="输入描述内容…"
               />
             </div>
           </div>

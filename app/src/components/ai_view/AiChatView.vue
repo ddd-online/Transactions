@@ -56,7 +56,7 @@
               </template>
             </a-dropdown>
           </div>
-          <a-button type="text" :disabled="messages.length === 0 && !streaming" @click="clearConversation"
+          <a-button type="text" :disabled="streaming || messages.length === 0" @click="clearConversation"
             class="chat-header-clear">
             <template #icon>
               <DeleteOutlined />
@@ -135,7 +135,7 @@
       <Transition name="streaming-bar-fade">
         <div v-if="streaming" class="chat-streaming-bar">
           <span class="chat-streaming-ring"></span>
-          <span class="chat-streaming-text">AI 正在回复...</span>
+          <span class="chat-streaming-text">AI 正在回复…</span>
         </div>
       </Transition>
 
@@ -144,7 +144,7 @@
         <div class="chat-divider"></div>
         <div class="chat-input-row">
           <textarea ref="textareaRef" v-model="inputText" class="chat-textarea" :disabled="streaming" maxlength="10000"
-            placeholder="输入你的问题...  (Enter 发送 / Shift+Enter 换行)" rows="1" @keydown="onKeydown"
+            placeholder="输入你的问题…（Enter 发送，Shift+Enter 换行）" rows="1" @keydown="onKeydown"
             @input="autoResize"></textarea>
           <button class="chat-send-btn" :class="{ 'chat-send-btn--stop': streaming }"
             :disabled="!streaming && !inputText.trim()" @click="streaming ? stopGeneration() : sendMessage()"
@@ -158,7 +158,7 @@
     </div>
 
     <a-modal v-model:open="toolsModalVisible" title="可用工具" :footer="null" centered :width="520">
-      <div v-if="toolsLoading" class="tools-loading">加载中...</div>
+      <div v-if="toolsLoading" class="tools-loading">正在加载工具…</div>
       <div v-else-if="currentRoleTools.length === 0" class="tools-empty">暂无可用工具</div>
       <div v-else class="tools-list">
         <div v-for="tool in currentRoleTools" :key="tool.name" class="tools-item">
@@ -182,7 +182,7 @@ import { DeleteOutlined, SendOutlined, StopOutlined, CopyOutlined, RobotOutlined
 import { useLedgerStore } from '@/stores/ledgerStore'
 import MarkdownViewer from '@/components/common/MarkdownViewer.vue'
 import AiToolCard from './AiToolCard.vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { useAiChat, type ChatMessage } from '@/hooks/useAiChat'
 import { aiApi, type AiRole, type QuickCommand, type ToolInfo } from '@/backend/api/ai'
 
@@ -238,8 +238,17 @@ async function onConversationCreate() {
 
 async function onConversationDelete(id: string) {
   if (streaming.value) return
-  message.warning('删除会话将同时删除该会话的全部消息')
-  await deleteConversation(id)
+  const title = conversations.value.find(c => c.id === id)?.title ?? id
+  Modal.confirm({
+    title: '删除会话',
+    content: `确定删除会话「${title}」吗？会话内的全部消息也会一并删除，此操作不可恢复。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      await deleteConversation(id)
+    },
+  })
 }
 
 const currentRoleDisplay = computed(() => {
@@ -377,9 +386,19 @@ function thinkingRowClass(msg: ChatMessage) {
 }
 
 // ---- Conversation management ----
-async function clearConversation() {
-  expandedToolDetails.value = new Set()
-  await clear()
+function clearConversation() {
+  if (!messages.value.length) return
+  Modal.confirm({
+    title: '清空对话',
+    content: '确定清空当前会话的全部消息吗？此操作不可恢复。',
+    okText: '清空',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      expandedToolDetails.value = new Set()
+      await clear()
+    },
+  })
 }
 
 function copyMessage(text: string) {

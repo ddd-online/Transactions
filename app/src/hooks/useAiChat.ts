@@ -336,13 +336,13 @@ export function useAiChat() {
           messages.value.push({
             id: nextMsgId(),
             role: 'assistant',
-            content: `错误: ${errorMsg}`,
+            content: `错误：${errorMsg}`,
             timestamp: Date.now(),
           })
         } else if (!lastAssistant.content) {
-          lastAssistant.content = `错误: ${errorMsg}`
+          lastAssistant.content = `错误：${errorMsg}`
         } else {
-          lastAssistant.content += `\n\n[错误: ${errorMsg}]`
+          lastAssistant.content += `\n\n[错误：${errorMsg}]`
         }
         console.error('AI chat error:', err)
       }
@@ -407,7 +407,7 @@ export function useAiChat() {
           base.toolName = m.tool_name
           base.toolDone = true
           base.toolResult = m.content.length > 200
-            ? m.content.substring(0, 200) + '...'
+            ? m.content.substring(0, 200) + '…'
             : m.content
           if (m.content) {
             try { base.toolDetail = JSON.parse(m.content) } catch { /* not JSON */ }

@@ -27,7 +27,7 @@
           <div v-if="event.content" class="event-card-desc">{{ truncate(event.content, 30) }}</div>
         </div>
         <a-popconfirm
-          title="确定删除此事件？"
+          :title="`删除事件「${event.title || event.date}」？此操作不可恢复。`"
           ok-text="删除"
           cancel-text="取消"
           placement="left"

@@ -33,7 +33,7 @@ export interface SortItem {
 }
 
 const sortFieldOptions = [
-  { value: 'transactionAt', label: '时间' },
+  { value: 'transactionAt', label: '日期' },
   { value: 'price', label: '金额' },
   { value: 'category', label: '分类' },
   { value: 'transactionType', label: '类型' },

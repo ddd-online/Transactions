@@ -47,18 +47,18 @@
       <template v-else-if="column.dataIndex === 'action'">
         <div class="cell-actions">
           <a-tooltip title="编辑">
-            <a-button type="text" size="small" @click="handleEdit(record as TransactionRecord)">
+            <a-button type="text" size="small" aria-label="编辑记录" @click="handleEdit(record as TransactionRecord)">
               <EditOutlined />
             </a-button>
           </a-tooltip>
           <a-tooltip v-if="(record as TransactionRecord).keyEventDate"
             :title="'已关联至 ' + (record as TransactionRecord).keyEventDate">
-            <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
+            <a-button type="text" size="small" aria-label="修改关联" @click="handleLink(record as TransactionRecord)">
               <LinkOutlined />
             </a-button>
           </a-tooltip>
           <a-tooltip v-else title="关联">
-            <a-button type="text" size="small" @click="handleLink(record as TransactionRecord)">
+            <a-button type="text" size="small" aria-label="关联到关键事件" @click="handleLink(record as TransactionRecord)">
               <LinkOutlined />
             </a-button>
           </a-tooltip>
@@ -78,15 +78,16 @@
             </template>
             <a-tooltip title="同步到其他账本">
               <a-button type="text" size="small"
+                aria-label="同步到其他账本"
                 :disabled="syncingTransactionId === (record as TransactionRecord).transactionId">
                 <SyncOutlined :spin="syncingTransactionId === (record as TransactionRecord).transactionId" />
               </a-button>
             </a-tooltip>
           </a-popover>
-          <a-popconfirm title="确认删除此条记录？" ok-text="确认" @confirm="handleDelete(record as TransactionRecord)"
+          <a-popconfirm title="删除这条消费记录？此操作不可恢复。" ok-text="删除" @confirm="handleDelete(record as TransactionRecord)"
             :showCancel="false">
             <a-tooltip title="删除">
-              <a-button type="text" size="small" danger>
+              <a-button type="text" size="small" danger aria-label="删除记录">
                 <DeleteOutlined />
               </a-button>
             </a-tooltip>

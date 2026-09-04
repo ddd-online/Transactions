@@ -58,7 +58,7 @@
           :disabled="!hasLedger || initLoading"
           @click="$emit('initialize')"
         >
-          <span v-if="initLoading">初始化中...</span>
+          <span v-if="initLoading">初始化中…</span>
           <span v-else>初始化分类标签</span>
         </button>
       </div>

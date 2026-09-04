@@ -58,7 +58,7 @@ const TOOL_ICONS: Record<string, Component> = {
 }
 
 const TOOL_TITLES: Record<string, string> = {
-  query_transactions: '查询交易',
+  query_transactions: '查询消费记录',
   list_ledgers: '账本列表',
   list_categories: '分类列表',
   list_tags: '标签列表',

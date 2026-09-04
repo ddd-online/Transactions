@@ -81,9 +81,9 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             }
             titles.value.set(date, title);
             colors.value.set(date, color);
-            NotificationUtil.success('保存成功');
+            NotificationUtil.success('事件已保存');
         } catch (error) {
-            NotificationUtil.error('保存失败', `${error}`);
+            NotificationUtil.error('保存事件失败', `${error}`);
             throw error;
         }
     };
@@ -100,9 +100,9 @@ export const useKeyEventStore = defineStore('keyEvent', () => {
             // Delegate cache cleanup to KeyEventCache
             cache.invalidate(date);
             images.value = [];
-            NotificationUtil.success('删除成功');
+            NotificationUtil.success('事件已删除');
         } catch (error) {
-            NotificationUtil.error('删除失败', `${error}`);
+            NotificationUtil.error('删除事件失败', `${error}`);
             throw error;
         }
     };

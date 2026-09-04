@@ -62,7 +62,7 @@
               <a-button type="link" @click="fetchModels">重试</a-button>
             </div>
           </template>
-          <a-input v-else v-model:value="form.model" placeholder="例如: claude-sonnet-4-20250514"
+          <a-input v-else v-model:value="form.model" placeholder="例如：claude-sonnet-4-20250514"
             class="setting-input-wide" />
         </div>
 
@@ -78,7 +78,7 @@
           <div class="card-section-divider" />
           <div class="balance-section">
             <div v-if="!form.has_key" class="balance-hint">请先设置 API Key</div>
-            <div v-else-if="balanceLoading" class="balance-hint">查询中...</div>
+            <div v-else-if="balanceLoading" class="balance-hint">查询余额中…</div>
             <div v-else-if="balanceError" class="balance-hint balance-error">
               {{ balanceError }}
               <a-button type="link" @click="fetchBalance">重试</a-button>

@@ -1,7 +1,7 @@
 <template>
   <div class="app-shell">
     <!-- 工作空间选择弹窗 -->
-    <transactions-file-select v-model="showWorkspaceSelect" title="新建工作目录或打开已存在的工作目录" @confirm="handleOpenWorkspace" />
+    <transactions-file-select v-model="showWorkspaceSelect" title="新建或打开工作目录" @confirm="handleOpenWorkspace" />
 
     <!-- 主布局 -->
     <div class="app-shell-body">

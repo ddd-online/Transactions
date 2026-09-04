@@ -217,9 +217,9 @@ const onChartCreate = async (request: { title: string; granularity: 'year' | 'mo
     selectedChart.value = instance
     selectedChartId.value = newChart.chartId
     if (statistics) appDataStore.setStatistics(statistics)
-    message.success('创建成功')
+    message.success('图表创建成功')
   } catch (error) {
-    message.error('创建失败')
+    message.error('图表创建失败')
   }
 }
 
@@ -266,9 +266,9 @@ const onChartUpdate = async (chartId: string, request: { title?: string; granula
     cachedLedgerId = null
     cachedTimeKey = null
     await loadAllCharts()
-    message.success('更新成功')
+    message.success('图表更新成功')
   } catch (error) {
-    message.error('更新失败')
+    message.error('图表更新失败')
   }
 }
 

@@ -287,7 +287,7 @@ async function doImport(directory: string) {
     const res = await scanDirectory(directory)
     fileList = res.files || []
   } catch (e) {
-    message.error('扫描目录失败: ' + getErrorMessage(e))
+    message.error('扫描目录失败：' + getErrorMessage(e))
     importState.status = 'idle'
     return
   }
@@ -402,7 +402,7 @@ async function doExport(directory: string) {
     }, 3000)
   } catch (e) {
     exportState.status = 'idle'
-    message.error('导出失败: ' + getErrorMessage(e))
+    message.error('导出失败：' + getErrorMessage(e))
   }
 }
 </script>

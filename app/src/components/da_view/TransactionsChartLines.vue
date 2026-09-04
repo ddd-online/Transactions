@@ -68,7 +68,7 @@
         </a-table-column>
         <a-table-column v-if="!isPreset" title="操作" width="60">
           <template #default="{ index }">
-            <a-button type="text" size="small" danger @click="handleDeleteLine(index)">
+            <a-button type="text" size="small" danger title="删除曲线" aria-label="删除曲线" @click="handleDeleteLine(index)">
               <template #icon><DeleteOutlined /></template>
             </a-button>
           </template>

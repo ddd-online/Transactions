@@ -45,9 +45,9 @@
           </template>
           <template v-else-if="column.key === 'action'">
             <a-popconfirm
-              :title="`确认删除模板「${record.template_name}」？`"
+              :title="`删除模板「${record.template_name}」？此操作不可恢复。`"
               @confirm="handleDelete(record.template_id)"
-              ok-text="确认"
+              ok-text="删除"
               cancel-text="取消"
             >
               <button class="action-icon delete" title="删除">

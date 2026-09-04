@@ -52,7 +52,7 @@
 
         <!-- 操作 -->
         <a-popconfirm
-          title="确定删除此关联交易？"
+          title="删除这条关联交易？此操作不可恢复。"
           ok-text="删除"
           cancel-text="取消"
           placement="left"

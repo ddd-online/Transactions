@@ -271,15 +271,15 @@ const handleSaveFeeSettings = async () => {
   const transferFeeRate = parseFloat(feeForm.transferFeeRate)
 
   if (isNaN(commissionRate) || commissionRate <= 0) {
-    message.error('请填写大于 0 的佣金费率')
+    message.error('请输入大于 0 的佣金费率')
     return
   }
   if (isNaN(minCommission) || minCommission < 0) {
-    message.error('请填写不小于 0 的最低佣金')
+    message.error('请输入不小于 0 的最低佣金')
     return
   }
   if (isNaN(stampDutyRate) || stampDutyRate < 0 || isNaN(transferFeeRate) || transferFeeRate < 0) {
-    message.error('印花税与过户费不能为负')
+    message.error('印花税与过户费需不小于 0')
     return
   }
 

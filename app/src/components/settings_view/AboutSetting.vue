@@ -10,7 +10,7 @@
         </svg>
       </div>
       <h2 class="app-name">Transactions</h2>
-      <p class="app-version">版本 {{ appVersion || '...' }}</p>
+      <p class="app-version">版本 {{ appVersion || '…' }}</p>
     </div>
 
     <!-- 更新区域 -->
@@ -18,7 +18,7 @@
       <!-- checking -->
       <div v-if="updateStore.status === 'checking'" class="update-row">
         <a-spin size="small" />
-        <span class="update-text">正在检查更新...</span>
+        <span class="update-text">正在检查更新…</span>
       </div>
 
       <!-- no-update -->

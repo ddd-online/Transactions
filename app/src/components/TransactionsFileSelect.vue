@@ -2,7 +2,7 @@
 <template>
   <a-modal v-model:open="open" :title="title" ok-text="确认" cancel-text="取消" @ok="handleOk" @cancel="handleCancel"
     :closable="false" :esc-to-close="false" :mask-closable="false" centered>
-    <a-input-search v-model:value="inputPath" :placeholder="placeholder" enter-button="打开目录" @search="handleBrowse" />
+    <a-input-search v-model:value="inputPath" :placeholder="placeholder" :enter-button="mode === 'file' ? '选择文件' : '选择目录'" @search="handleBrowse" />
   </a-modal>
 </template>
 
@@ -25,7 +25,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   mode: 'directory',
-  placeholder: '请选择路径',
+  placeholder: '请输入或选择路径',
 })
 
 // 定义 emits
@@ -64,7 +64,7 @@ const handleBrowse = async () => {
 // 确认回调
 const handleOk = () => {
   if (!inputPath.value) {
-    NotificationUtil.error('路径为空', '请选择一个有效的路径')
+    NotificationUtil.error('未选择路径', '请先输入或选择路径')
     return
   }
   emit('confirm', inputPath.value)

@@ -58,6 +58,7 @@ import {
 import { queryTags, createTag, deleteTag, updateTagSort } from '@/backend/api/tag'
 import { useCategoryTags } from '@/hooks/useCategoryTags'
 import { message } from "ant-design-vue";
+import { TransactionTypeToLabel } from '@/backend/constant';
 import CategoryColumn from './CategoryColumn.vue'
 import TagColumn from './TagColumn.vue'
 
@@ -154,7 +155,7 @@ const confirmDeleteCategory = (name: string) => {
   deleteTarget.value = {
     type: 'category',
     name,
-    message: `确定删除分类「${name}」及其所有标签？`
+    message: `确定删除分类「${name}」及其所有标签？此操作不可恢复。`
   };
   openDeleteModal.value = true;
 };
@@ -163,7 +164,7 @@ const confirmDeleteTag = (name: string) => {
   deleteTarget.value = {
     type: 'tag',
     name,
-    message: `确定删除标签「${name}」？`
+    message: `确定删除标签「${name}」？此操作不可恢复。`
   };
   openDeleteModal.value = true;
 };
@@ -252,7 +253,7 @@ const loadCategories = async () => {
     const categoryTransactionType = `${category.name}:${activeType.value}`;
     const tags = await withErrorHandling(
       () => queryTags(categoryTransactionType, ledgerStore.currentLedgerId!),
-      { errorPrefix: `查询 ${categoryTransactionType} 消费标签失败`, fallback: [] as Tag[] }
+      { errorPrefix: `查询「${category.name}」标签失败`, fallback: [] as Tag[] }
     );
     category.tags = tags.map(t => ({
       name: t.name,
@@ -272,7 +273,7 @@ const checkHasAnyCategories = async () => {
   for (const type of allTypes) {
     const list = await withErrorHandling(
       () => queryCategory(type, ledgerStore.currentLedgerId),
-      { errorPrefix: `查询 ${type} 消费类型失败`, fallback: [] as Category[] }
+      { errorPrefix: `查询${TransactionTypeToLabel.get(type) ?? type}分类失败`, fallback: [] as Category[] }
     );
     if (list.length > 0) {
       hasAnyCategories.value = true;

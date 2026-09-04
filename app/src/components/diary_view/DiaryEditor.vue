@@ -166,7 +166,7 @@ const onDeleteClick = () => {
   if (!props.entry) return
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除 ${props.entry.date} 的日记吗？此操作不可撤销。`,
+    content: `确定要删除「${props.entry.date}」的日记吗？此操作不可恢复。`,
     okText: '删除',
     okType: 'danger',
     cancelText: '取消',

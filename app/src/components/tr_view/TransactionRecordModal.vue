@@ -4,7 +4,7 @@
     <a-form ref="formRef" :model="trForm" :rules="rules">
       <a-form-item label="模板">
         <div class="template-select-row">
-          <a-select v-model:value="selectedTemplateId" :options="templateOptions" placeholder="选择模板自动填充"
+          <a-select v-model:value="selectedTemplateId" :options="templateOptions" placeholder="选择模板后自动填充"
             class="template-select" allowClear />
           <a-button @click="handleSaveAsTemplate" :disabled="!trForm.type || !trForm.category">
             保存为模板
@@ -12,7 +12,7 @@
         </div>
       </a-form-item>
 
-      <a-form-item label="时间" name="time">
+      <a-form-item label="日期" name="time">
         <a-date-picker v-model:value="trForm.time" style="width: 100%" />
       </a-form-item>
 
@@ -91,7 +91,7 @@ const rules: Record<string, Rule[]> = {
     { trigger: 'blur' },
     {
       validator: (_: any, value: string) => {
-        if (!value) return Promise.reject(new Error('请输入价格'))
+        if (!value) return Promise.reject(new Error('请输入金额'))
         const regex = /^(0|[1-9]\d*)(\.\d{1,2})?$/
         if (!regex.test(value)) {
           return Promise.reject(new Error('请输入 ≥0 的有效金额，最多两位小数'))

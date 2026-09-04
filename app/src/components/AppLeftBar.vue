@@ -137,24 +137,20 @@ const handleConfirmCreate = async () => {
   try {
     await ledgerStore.createLedger(createForm.value.name, createForm.value.description)
     showCreateModal.value = false
-  } catch {
-    message.error('创建失败')
-  }
+  } catch { /* 错误已在 store 中提示 */ }
 }
 
 const handleDeleteLedger = (id: string, name: string) => {
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除账本「${name}」吗？此操作不可撤销。`,
+    content: `确定要删除账本「${name}」吗？此操作不可恢复。`,
     okText: '删除',
     okType: 'danger',
     cancelText: '取消',
     onOk: async () => {
       try {
         await ledgerStore.deleteLedger(id)
-      } catch {
-        message.error('删除失败')
-      }
+      } catch { /* 错误已在 store 中提示 */ }
     },
   })
 }
