@@ -10,52 +10,64 @@
 
     <!-- 数据就绪：无结算 / 仅 1 笔 / 完整统计 -->
     <template v-else-if="stats">
-      <!-- 统计区间筛选 -->
-      <div v-if="stats.roundCount > 0 || isFiltered" class="stats-filter-bar">
-        <a-segmented
-          v-model:value="filterMode"
-          :options="filterModeOptions"
-          size="small"
-          @change="onFilterModeChange"
-          aria-label="选择统计区间"
-        />
-        <template v-if="filterMode === 'range'">
-          <a-range-picker
-            v-model:value="monthRange"
-            picker="month"
-            :allow-clear="false"
-            size="small"
-            class="stats-month-picker"
-            format="YYYY-MM"
-            @change="onMonthRangeChange"
-          />
-          <a-button size="small" @click="presetYear(0)">本年</a-button>
-          <a-button size="small" @click="presetYear(-1)">去年</a-button>
-        </template>
-        <a-select
-          v-else-if="filterMode === 'recent'"
-          v-model:value="recentN"
-          size="small"
-          class="stats-recent-select"
-          @change="onRecentChange"
-          aria-label="选择最近笔数"
-        >
-          <a-select-option :value="10">最近 10 笔</a-select-option>
-          <a-select-option :value="50">最近 50 笔</a-select-option>
-          <a-select-option :value="100">最近 100 笔</a-select-option>
-          <a-select-option :value="0">全部</a-select-option>
-        </a-select>
-        <span v-if="isFiltered" class="stats-filter-desc">{{ rangeDesc }}</span>
-      </div>
-
-      <!-- 无结算 -->
-      <section v-if="stats.roundCount === 0" class="stats-empty-panel">
+      <!-- 首次使用（全量无结算） -->
+      <section v-if="stats.roundCount === 0 && !isFiltered" class="stats-empty-panel">
         <div class="stats-empty-inner">
           <div class="stats-empty-head">
-            <span class="stats-empty-title">{{ isFiltered ? '所选区间内暂无结算记录' : '还没有结算记录' }}</span>
+            <span class="stats-empty-title">还没有结算记录</span>
             <a-tooltip :overlay-style="{ maxWidth: '360px' }">
-              <template #title>{{ emptyTipText }}</template>
+              <template #title><div class="stats-tip">{{ emptyTipText }}</div></template>
               <QuestionCircleOutlined class="stats-tip-icon" aria-label="如何开始交易统计" />
+            </a-tooltip>
+          </div>
+        </div>
+      </section>
+
+      <!-- 筛选后无结果：保留筛选，便于继续调整区间 -->
+      <section v-else-if="stats.roundCount === 0 && isFiltered" class="stats-board stats-filter-empty-board">
+        <header class="stats-panel-head stats-overview-head">
+          <div class="stats-heading">
+            <div class="stats-subtitle-row">
+              <h3 class="stats-title">结算统计</h3>
+              <a-tooltip :overlay-style="{ maxWidth: '380px' }">
+                <template #title><div class="stats-tip">{{ statsTipText }}</div></template>
+                <QuestionCircleOutlined class="stats-tip-icon" aria-label="结算统计说明" />
+              </a-tooltip>
+            </div>
+          </div>
+          <StockStatisticsRangeFilter
+            :mode="filterMode"
+            :month-range="monthRange"
+            :recent="recentN"
+            @mode-change="onFilterModeChange"
+            @range-change="onMonthRangeChange"
+            @recent-change="onRecentChange"
+          />
+          <div class="stats-head-actions">
+            <a-tooltip :overlay-style="{ maxWidth: '380px' }">
+              <template #title>
+                <div class="stats-tip">
+                  一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次）。<br />
+                  全部股票按清仓时间先后合成结算序列；<br />
+                  胜率 = 盈利笔数 ÷ 总笔数（平局计入总笔数）<br />
+                  平均盈利 = 盈利总和 ÷ 盈利笔数<br />
+                  平均亏损 = 亏损总和 ÷ 亏损笔数<br />
+                  实际盈亏比 = 平均盈利 ÷ 平均亏损<br />
+                  期望值 = 胜率 × 平均盈利 − 亏损率 × 平均亏损<br />
+                  最大回撤按所选区间的累计口径计算，占当时本金百分比。
+                </div>
+              </template>
+              <QuestionCircleOutlined class="stats-tip-icon" aria-label="统计口径说明" />
+            </a-tooltip>
+            <a-button type="primary" class="stats-refresh-btn" :loading="loading" @click="applyFilter">刷新</a-button>
+          </div>
+        </header>
+        <div class="stats-filter-empty-body">
+          <div class="stats-empty-head">
+            <span class="stats-empty-title">所选区间内暂无结算记录</span>
+            <a-tooltip :overlay-style="{ maxWidth: '360px' }">
+              <template #title><div class="stats-tip">{{ emptyTipText }}</div></template>
+              <QuestionCircleOutlined class="stats-tip-icon" aria-label="所选区间说明" />
             </a-tooltip>
           </div>
         </div>
@@ -71,30 +83,21 @@
               <div class="stats-subtitle-row">
                 <h3 class="stats-title">结算统计</h3>
                 <a-tooltip :overlay-style="{ maxWidth: '380px' }">
-                  <template #title>{{ statsTipText }}</template>
+                  <template #title><div class="stats-tip">{{ statsTipText }}</div></template>
                   <QuestionCircleOutlined class="stats-tip-icon" aria-label="结算统计说明" />
                 </a-tooltip>
               </div>
             </div>
+            <StockStatisticsRangeFilter
+              :mode="filterMode"
+              :month-range="monthRange"
+              :recent="recentN"
+              @mode-change="onFilterModeChange"
+              @range-change="onMonthRangeChange"
+              @recent-change="onRecentChange"
+            />
             <div class="stats-head-actions">
-              <a-tooltip :overlay-style="{ maxWidth: '380px' }">
-                <template #title>
-                  <div class="stats-tip">
-                    一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次）。<br />
-                    全部股票按清仓时间先后合成结算序列；<br />
-                    胜率 = 盈利笔数 ÷ 总笔数（平局计入总笔数）<br />
-                    平均盈利 = 盈利总和 ÷ 盈利笔数<br />
-                    平均亏损 = 亏损总和 ÷ 亏损笔数<br />
-                    实际盈亏比 = 平均盈利 ÷ 平均亏损<br />
-                    期望值 = 胜率 × 平均盈利 − 亏损率 × 平均亏损<br />
-                    {{ isFiltered
-                      ? '最大回撤 = 区间内从首笔起累计盈亏曲线的峰值回落；百分比 = 回撤 ÷ 当时本金。'
-                      : '最大回撤 = 每笔结算时的总资产（当时的本金 + 累计已结算盈亏 − 当时累计支取）从高点的最大回落，占当时本金百分比。' }}
-                  </div>
-                </template>
-                <QuestionCircleOutlined class="stats-tip-icon" aria-label="统计口径说明" />
-              </a-tooltip>
-              <a-button size="small" :loading="loading" @click="applyFilter">刷新</a-button>
+              <a-button type="primary" class="stats-refresh-btn" :loading="loading" @click="applyFilter">刷新</a-button>
             </div>
           </header>
 
@@ -165,16 +168,32 @@
               <div class="stats-subtitle-row">
                 <h3 class="stats-subtitle">统计曲线</h3>
                 <a-tooltip :overlay-style="{ maxWidth: '340px' }">
-                  <template #title>每个点都是一次结算后的累计计算点，从第 {{ firstPointSequence }} 笔开始。</template>
+                  <template #title><div class="stats-tip">每个点都是一次结算后的累计计算点，从第 {{ firstPointSequence }} 笔开始。</div></template>
                   <QuestionCircleOutlined class="stats-tip-icon" aria-label="统计曲线说明" />
                 </a-tooltip>
               </div>
             </div>
             <div class="stats-chart-controls">
+              <a-tooltip :overlay-style="{ maxWidth: '380px' }">
+                <template #title>
+                  <div class="stats-tip">
+                    一笔 = 一只股票的一次完整「建仓 → 清仓」（一个已归档轮次）。<br />
+                    全部股票按清仓时间先后合成结算序列；<br />
+                    胜率 = 盈利笔数 ÷ 总笔数（平局计入总笔数）<br />
+                    平均盈利 = 盈利总和 ÷ 盈利笔数<br />
+                    平均亏损 = 亏损总和 ÷ 亏损笔数<br />
+                    实际盈亏比 = 平均盈利 ÷ 平均亏损<br />
+                    期望值 = 胜率 × 平均盈利 − 亏损率 × 平均亏损<br />
+                    {{ isFiltered
+                      ? '最大回撤 = 区间内从首笔起累计盈亏曲线的峰值回落；百分比 = 回撤 ÷ 当时本金。'
+                      : '最大回撤 = 每笔结算时的总资产（当时的本金 + 累计已结算盈亏 − 当时累计支取）从高点的最大回落，占当时本金百分比。' }}
+                  </div>
+                </template>
+                <QuestionCircleOutlined class="stats-tip-icon" aria-label="统计口径说明" />
+              </a-tooltip>
               <a-segmented
                 v-model:value="selectedMetric"
                 :options="metricSegmentedOptions"
-                size="small"
                 aria-label="选择曲线指标"
               />
             </div>
@@ -192,7 +211,7 @@
               <div class="stats-subtitle-row">
                 <h3 class="stats-subtitle">逐笔结算明细</h3>
                 <a-tooltip :overlay-style="{ maxWidth: '340px' }">
-                  <template #title>按结算时间倒序排列，每一行 = 结算到第 N 笔时的累计结果</template>
+                  <template #title><div class="stats-tip">按结算时间倒序排列，每一行 = 结算到第 N 笔时的累计结果</div></template>
                   <QuestionCircleOutlined class="stats-tip-icon" aria-label="逐笔明细说明" />
                 </a-tooltip>
               </div>
@@ -278,6 +297,7 @@ import { useStockStatisticsStore } from '@/stores/stockStatisticsStore'
 import { useLedgerStore } from '@/stores/ledgerStore'
 import { centsToYuan } from '@/backend/functions'
 import type { StockStatisticsPoint } from '@/types/transactions'
+import StockStatisticsRangeFilter from './StockStatisticsRangeFilter.vue'
 
 const statsStore = useStockStatisticsStore()
 const { stats, loading } = storeToRefs(statsStore)
@@ -286,11 +306,6 @@ const ledgerStore = useLedgerStore()
 
 // ---------- 统计区间筛选 ----------
 type FilterMode = 'all' | 'range' | 'recent'
-const filterModeOptions = [
-  { label: '全部', value: 'all' },
-  { label: '按时间', value: 'range' },
-  { label: '最近N笔', value: 'recent' },
-]
 const filterMode = ref<FilterMode>('all')
 const monthRange = ref<[Dayjs, Dayjs] | undefined>(undefined)
 const recentN = ref<number>(0)
@@ -300,15 +315,6 @@ const isFiltered = computed(
     (filterMode.value === 'range' && !!monthRange.value) ||
     (filterMode.value === 'recent' && recentN.value > 0)
 )
-const rangeDesc = computed(() => {
-  if (filterMode.value === 'range' && monthRange.value) {
-    return `${monthRange.value[0].format('YYYY-MM')} 至 ${monthRange.value[1].format('YYYY-MM')}`
-  }
-  if (filterMode.value === 'recent' && recentN.value > 0) {
-    return `最近 ${recentN.value} 笔`
-  }
-  return ''
-})
 const statsTipText = computed(() => {
   if (isFiltered.value) {
     return `当前区间共 ${stats.value?.roundCount ?? 0} 笔 · 区间内从第 1 笔起按累计口径统计。`
@@ -619,46 +625,23 @@ onMounted(() => {
 .stats-page {
   height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-xl);
   padding-right: var(--transactions-space-2xs);
-  @include custom-scrollbar;
-}
-
-/* ========== 统计区间筛选 ========== */
-.stats-filter-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-sm);
-  flex-shrink: 0;
-}
-
-.stats-month-picker {
-  width: 260px;
-}
-
-.stats-recent-select {
-  width: 128px;
-}
-
-.stats-filter-desc {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 /* ========== 面板容器 ========== */
 .stats-board {
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background-color: var(--transactions-color-major-background);
   border: 1px solid var(--transactions-color-window-border);
   border-radius: var(--transactions-radius-lg);
   box-shadow: var(--transactions-shadow-sm);
-  overflow: hidden;
 }
 
 /* 完整统计：汇总 / 曲线 / 明细三块共用一张面板，块之间只留分隔线 */
@@ -676,6 +659,26 @@ onMounted(() => {
   border-bottom: 1px solid var(--transactions-color-divider);
 }
 
+.stats-overview {
+  flex-shrink: 0;
+}
+
+.stats-chart-panel {
+  flex-shrink: 0;
+}
+
+.stats-table-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stats-table-panel > .stats-panel-head {
+  flex-shrink: 0;
+}
+
 .stats-heading {
   display: flex;
   flex-direction: column;
@@ -690,6 +693,20 @@ onMounted(() => {
   font-weight: 600;
   color: var(--transactions-color-text-major);
   line-height: var(--transactions-height-snug);
+}
+
+.stats-overview-head {
+  justify-content: flex-start;
+}
+
+.stats-overview-head .stats-head-actions {
+  margin-left: auto;
+}
+
+.stats-refresh-btn {
+  height: 28px;
+  line-height: 26px;
+  padding: 0 12px;
 }
 
 .stats-subtitle {
@@ -710,7 +727,9 @@ onMounted(() => {
 .stats-head-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--transactions-space-md);
+  row-gap: var(--transactions-space-sm);
   flex-shrink: 0;
 }
 
@@ -728,7 +747,7 @@ onMounted(() => {
 .stats-tip {
   font-size: var(--transactions-size-text-caption);
   line-height: 1.8;
-  color: var(--transactions-color-text-secondary);
+  color: var(--transactions-color-text-inverse);
 }
 
 /* ========== 顶部汇总 ========== */
@@ -846,6 +865,9 @@ onMounted(() => {
 
 /* ========== 统计曲线 ========== */
 .stats-chart-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
   flex-shrink: 0;
   max-width: 100%;
 }
@@ -873,8 +895,9 @@ onMounted(() => {
 
 /* ========== 逐笔明细表 ========== */
 .stats-table-scroll {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  max-height: 480px;
   @include custom-scrollbar;
 }
 
@@ -991,6 +1014,15 @@ onMounted(() => {
 }
 
 /* ========== 空态 / 骨架 ========== */
+.stats-filter-empty-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--transactions-space-xl);
+}
+
 .stats-empty-panel {
   flex: 1;
   display: flex;
@@ -1025,6 +1057,8 @@ onMounted(() => {
 }
 
 .stats-loading {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-lg);

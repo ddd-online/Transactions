@@ -22,10 +22,12 @@
             @keydown.enter.self="stockStore.selectStock(p.stockCode)"
             @keydown.space.self.prevent="stockStore.selectStock(p.stockCode)"
           >
-            <span class="position-card-name">{{ p.stockName }}</span>
-            <div class="position-card-code-row">
-              <span class="position-card-code">{{ p.stockCode }}</span>
-              <span class="position-card-lots">持仓 {{ lotsText(p.quantity) }}</span>
+            <div class="position-card-title-row">
+              <span class="position-card-name">{{ p.stockName }}</span>
+              <span class="position-card-title-meta">
+                <span class="position-card-code">{{ p.stockCode }}</span>
+                <span class="position-card-lots">持仓 {{ lotsText(p.quantity) }}</span>
+              </span>
             </div>
             <template v-if="hasQuote(p)">
               <div class="position-card-quote-line">
@@ -563,7 +565,7 @@ watch(
   flex-direction: column;
   gap: var(--transactions-space-xs);
   padding: var(--transactions-space-sm) var(--transactions-space-md);
-  min-height: 112px;
+  min-height: 96px;
   border: none;
   border-radius: var(--transactions-radius-md);
   background-color: var(--transactions-color-major-background);
@@ -575,7 +577,7 @@ watch(
               box-shadow var(--transactions-transition-smooth),
               transform var(--transactions-transition-smooth);
   content-visibility: auto;
-  contain-intrinsic-size: auto 112px;
+  contain-intrinsic-size: auto 96px;
 }
 
 .position-card:hover {
@@ -599,16 +601,24 @@ watch(
   box-shadow: var(--transactions-shadow-md);
 }
 
-.position-card-code-row {
+.position-card-title-row {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: var(--transactions-space-sm);
   min-width: 0;
-  margin-top: auto;
+}
+
+.position-card-title-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
 }
 
 .position-card-name {
+  flex: 1;
+  min-width: 0;
   font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
   color: var(--transactions-color-text-major);

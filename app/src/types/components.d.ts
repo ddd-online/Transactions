@@ -73,6 +73,7 @@ declare module 'vue' {
     SettingsView: typeof import('./../components/settings_view/SettingsView.vue')['default']
     StockAccountView: typeof import('./../components/stock_view/StockAccountView.vue')['default']
     StockPositionView: typeof import('./../components/stock_view/StockPositionView.vue')['default']
+    StockStatisticsRangeFilter: typeof import('./../components/stock_view/StockStatisticsRangeFilter.vue')['default']
     StockStatisticsView: typeof import('./../components/stock_view/StockStatisticsView.vue')['default']
     StockTradeRecordView: typeof import('./../components/stock_view/StockTradeRecordView.vue')['default']
     StockTradingSetting: typeof import('./../components/settings_view/StockTradingSetting.vue')['default']
