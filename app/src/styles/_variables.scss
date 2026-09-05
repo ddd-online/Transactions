@@ -352,3 +352,8 @@ $transitions: (
     @include emit-theme($dark);
   }
 }
+
+// 动效专用缓动：落地感（exponential ease-out），用于“数据落定”类进场
+:root {
+  --transactions-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}

@@ -4,7 +4,7 @@
       <a-button size="small" @click="openToolsModal">查看工具</a-button>
     </div>
 
-    <div class="chat-card">
+    <div class="chat-card" :class="{ 'chat-card--sidebar-collapsed': sidebarCollapsed }">
       <!-- 左侧会话侧边栏（可折叠） -->
       <aside class="chat-conv-sidebar" :class="{ 'chat-conv-sidebar--collapsed': sidebarCollapsed }">
         <div class="chat-conv-sidebar-header">
@@ -516,7 +516,9 @@ onUnmounted(() => {
 
 .chat-card {
   flex: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  transition: grid-template-columns var(--transactions-transition-normal);
   overflow: hidden;
   background-color: var(--transactions-color-major-background);
   border: 1px solid var(--transactions-color-divider);
@@ -524,19 +526,18 @@ onUnmounted(() => {
   box-shadow: var(--transactions-shadow-sm);
 }
 
+.chat-card--sidebar-collapsed {
+  grid-template-columns: 40px minmax(0, 1fr);
+}
+
 /* ---- 左侧会话侧边栏 ---- */
 .chat-conv-sidebar {
   display: flex;
   flex-direction: column;
-  width: 220px;
-  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
   border-right: 1px solid var(--transactions-color-divider);
   background-color: var(--transactions-color-major-warm);
-  transition: width var(--transactions-transition-normal);
-}
-
-.chat-conv-sidebar--collapsed {
-  width: 40px;
 }
 
 .chat-conv-sidebar-header {

@@ -210,6 +210,11 @@ body {
     outline: 2px solid var(--transactions-color-primary);
     outline-offset: 2px;
   }
+
+  // 按下反馈：极短的触感下沉，不让用户等动画
+  &:not(:disabled):active {
+    transform: translateY(1px) scale(0.99);
+  }
 }
 
 
@@ -868,5 +873,17 @@ body {
   .fade-enter-active,
   .fade-leave-active {
     animation: none;
+  }
+}
+
+// 全局限流：减少动态偏好下，只保留瞬时状态反馈（opacity/color 仍即时生效）
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

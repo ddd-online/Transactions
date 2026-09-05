@@ -1,7 +1,8 @@
 <template>
-  <a-modal title="筛选消费记录" v-model:open="open" width="600px" @cancel="confirmFilterModal" centered :closable="false">
+  <a-modal title="筛选消费记录" v-model:open="open" width="600px" @cancel="discardFilterModal" centered>
     <template #footer>
       <a-button key="clear" @click="clearAllConditions">清除条件</a-button>
+      <a-button key="cancel" @click="discardFilterModal">取消</a-button>
       <a-button key="confirm" type="primary" @click="confirmFilterModal">确认</a-button>
     </template>
 
@@ -68,7 +69,7 @@
                 <a-button type="text" danger size="small" @click="deleteCondition(index)">删除</a-button>
               </template>
               <div class="condition-item">
-                <a-tag :color="getTypeColor(item.transactionType)">
+                <a-tag :class="`condition-type-tag condition-type-tag--${item.transactionType}`">
                   {{ TransactionTypeToLabel.get(item.transactionType) || item.transactionType }}
                 </a-tag>
                 <template v-if="item.category">
@@ -201,6 +202,13 @@ function clearAllConditions() {
   trQueryConditionItems.value = [];
 }
 
+// 取消 / Esc / 关闭：丢弃本次未确认的编辑，不改动当前列表
+function discardFilterModal() {
+  trQueryConditionItems.value = [];
+  resetTempInputs();
+  open.value = false;
+}
+
 function confirmFilterModal() {
   trQueryConditionStore.trQueryConditionItems = trQueryConditionItems.value;
   open.value = false;
@@ -208,15 +216,6 @@ function confirmFilterModal() {
 
 function onCategoryChange() {
   tempTags.value = [];
-}
-
-function getTypeColor(type: string): string {
-  const colorMap: Record<string, string> = {
-    income: 'green',
-    expense: 'red',
-    transfer: 'orange',
-  };
-  return colorMap[type] || 'blue';
 }
 </script>
 
@@ -247,7 +246,7 @@ function getTypeColor(type: string): string {
 
 .form-label {
   font-size: 13px;
-  color: var(--transactions-color-text-minor);
+  color: var(--transactions-color-text-secondary);
 }
 
 .form-select {
@@ -281,6 +280,26 @@ function getTypeColor(type: string): string {
 .condition-desc {
   color: var(--transactions-color-text-secondary);
   font-style: italic;
+}
+
+.condition-type-tag {
+  margin-inline-end: 0;
+  border-color: transparent;
+}
+
+.condition-type-tag--income {
+  color: var(--transactions-color-income);
+  background-color: var(--transactions-color-income-tint);
+}
+
+.condition-type-tag--expense {
+  color: var(--transactions-color-expense);
+  background-color: var(--transactions-color-expense-tint);
+}
+
+.condition-type-tag--transfer {
+  color: var(--transactions-color-transfer);
+  background-color: var(--transactions-color-transfer-tint);
 }
 
 :deep(.ant-list-item) {

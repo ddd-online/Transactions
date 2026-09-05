@@ -1,6 +1,6 @@
 <template>
   <a-modal :title="modalTitle" :open="open" width="800px" @ok="handleConfirm" ok-text="确认" @cancel="handleClose"
-    cancel-text="取消" centered>
+    cancel-text="取消" centered :confirm-loading="saving">
     <a-form ref="formRef" :model="trForm" :rules="rules">
       <a-form-item label="模板">
         <div class="template-select-row">
@@ -22,6 +22,9 @@
 
       <a-form-item label="分类" name="category">
         <a-select v-model:value="trForm.category" :options="categoryOptions" />
+        <div v-if="categoryOptions.length === 0 && trForm.type" class="category-empty-hint">
+          该类型还没有分类，请先在「分类标签」页添加分类或初始化默认分类。
+        </div>
       </a-form-item>
 
       <a-form-item label="标签" name="tags">
@@ -105,6 +108,9 @@ const rules: Record<string, Rule[]> = {
 
 const formRef = ref<FormInstance>()
 const trForm = ref<TrForm>(createEmptyForm())
+// 提交中状态：防止重复提交；编辑保存改为「先创建新记录、成功后再删除旧记录」，
+// 避免旧记录被删除后新记录创建失败造成数据丢失
+const saving = ref(false)
 
 const selectedTemplateId = ref<string | undefined>()
 const openSaveTemplateModal = ref(false)
@@ -193,6 +199,7 @@ const handleClose = () => {
 }
 
 const handleConfirm = async () => {
+  if (saving.value) return
   try {
     await formRef.value?.validate()
   } catch {
@@ -202,6 +209,7 @@ const handleConfirm = async () => {
   trForm.value.time = trForm.value.time.hour(12).minute(0).second(0)
   const tr = trFormToTrDto(trForm.value, props.currentLedgerId)
 
+  saving.value = true
   try {
     if (tr.transactionId === '') {
       if (!tr.description) tr.description = '-'
@@ -210,17 +218,34 @@ const handleConfirm = async () => {
         { errorPrefix: '创建消费记录失败', rethrow: true }
       )
     } else {
-      await withErrorHandling(
-        async () => {
-          await deleteTrById(tr.transactionId)
-          await createTrForLedger(tr)
-        },
-        { errorPrefix: '更新消费记录失败', rethrow: true }
+      // 编辑 = 删除 + 重建（后端无单条更新接口）。顺序必须是先建后删：
+      // 新建成功再删除旧记录；若删除失败，尝试回滚新建，避免静默留下重复记录。
+      const oldId = tr.transactionId
+      const newId = await withErrorHandling(
+        () => createTrForLedger(tr),
+        { errorPrefix: '保存修改失败', rethrow: true }
       )
+      try {
+        await withErrorHandling(
+          () => deleteTrById(oldId),
+          { errorPrefix: '删除旧记录失败', rethrow: true }
+        )
+      } catch (deleteError) {
+        try {
+          await deleteTrById(newId)
+        } catch {
+          message.error('新记录已保存，但旧记录清理失败，请手动删除重复记录')
+        }
+        throw deleteError
+      }
     }
     emit('saved')
     emit('close')
-  } catch { /* 错误已在 withErrorHandling 中通知 */ }
+  } catch {
+    // 错误已由 withErrorHandling 通知
+  } finally {
+    saving.value = false
+  }
 }
 
 const handleSaveAsTemplate = () => {
@@ -261,5 +286,12 @@ const handleConfirmSaveTemplate = async () => {
 
 .template-select {
   flex: 1;
+}
+
+.category-empty-hint {
+  margin-top: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-tertiary);
 }
 </style>

@@ -154,12 +154,21 @@ onUnmounted(() => {
 /* 页面过渡 */
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition: opacity 180ms ease;
+  transition: opacity 220ms var(--transactions-ease-out-expo),
+              transform 220ms var(--transactions-ease-out-expo);
+}
+
+.page-fade-leave-active {
+  transition: opacity 140ms ease;
 }
 
 .page-fade-enter-from,
 .page-fade-leave-to {
   opacity: 0;
+}
+
+.page-fade-enter-from {
+  transform: translateY(4px);
 }
 
 /* 底部状态栏 */

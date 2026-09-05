@@ -2,23 +2,29 @@
   <div class="statistics-footer">
     <div class="statistics-footer-item">
       <span class="statistics-footer-item-label">收入</span>
-      <span class="statistics-footer-item-value income">
-        {{ centsToYuan(income) }}
-      </span>
+      <Transition name="stat-value" mode="out-in">
+        <span :key="income" class="statistics-footer-item-value income">
+          {{ centsToYuan(income) }}
+        </span>
+      </Transition>
     </div>
     <div class="statistics-footer-divider"></div>
     <div class="statistics-footer-item">
       <span class="statistics-footer-item-label">支出</span>
-      <span class="statistics-footer-item-value expense">
-        {{ centsToYuan(expense) }}
-      </span>
+      <Transition name="stat-value" mode="out-in">
+        <span :key="expense" class="statistics-footer-item-value expense">
+          {{ centsToYuan(expense) }}
+        </span>
+      </Transition>
     </div>
     <div class="statistics-footer-divider"></div>
     <div class="statistics-footer-item">
       <span class="statistics-footer-item-label">转账</span>
-      <span class="statistics-footer-item-value transfer">
-        {{ centsToYuan(transfer) }}
-      </span>
+      <Transition name="stat-value" mode="out-in">
+        <span :key="transfer" class="statistics-footer-item-value transfer">
+          {{ centsToYuan(transfer) }}
+        </span>
+      </Transition>
     </div>
   </div>
 </template>
@@ -94,5 +100,24 @@ const transfer = computed(() => hasProps.value ? (props.transfer ?? 0) : appData
   width: 1px;
   height: 16px;
   background-color: var(--transactions-color-window-border);
+}
+
+/* 数值变化：旧值快速退场，新值轻量落定，数字“重算”可见但不抢戏 */
+.stat-value-enter-active {
+  transition: opacity 180ms var(--transactions-ease-out-expo),
+              transform 180ms var(--transactions-ease-out-expo);
+}
+
+.stat-value-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.stat-value-enter-from {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+.stat-value-leave-to {
+  opacity: 0;
 }
 </style>
