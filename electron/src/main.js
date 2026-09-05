@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, net, Tray, Menu, nativeImage, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, net, Tray, Menu, nativeImage, nativeTheme, powerMonitor } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -119,9 +119,11 @@ let kernelProcess = null;
 let tray = null;
 let kernelQuitting = false;       // 应用主动退出流程标记，抑制“异常退出”弹窗
 let kernelAlertActive = false;    // 防止探活与退出事件重复弹窗
+let kernelRestarting = false;     // 防止健康检查与用户操作重复触发重启
 let kernelHealthFails = 0;
 let kernelHealthTimer = null;
 let kernelStartedAt = 0;          // kernel 最近一次启动时间，用于启动宽限期
+let kernelResumeGraceUntil = 0;   // 系统休眠唤醒后的宽限期截止时间，期间不累计健康检查失败
 let kernelStatus = 'unknown';     // 'unknown' | 'starting' | 'ok' | 'down' | 'stopped'
 let kernelStatusDetail = '';
 
@@ -129,6 +131,8 @@ const KERNEL_HEALTH_INTERVAL = 5000;      // 健康检查间隔（ms）
 const KERNEL_HEALTH_TIMEOUT = 1500;       // 单次探测超时（ms）
 const KERNEL_HEALTH_FAIL_THRESHOLD = 3;   // 连续失败多少次判定异常
 const KERNEL_START_GRACE_MS = 15000;      // 启动宽限期，期间不判定异常
+const KERNEL_RESUME_GRACE_MS = 60000;     // 休眠唤醒宽限期：磁盘/网络/子进程恢复需要时间
+const KERNEL_RESTART_WAIT_MS = 10000;     // 重启后等待健康恢复的最长时间
 
 // 推送 kernel 状态到渲染进程（标题栏红绿灯）。状态无变化时不重复推送。
 const setKernelStatus = (state, detail = '') => {
@@ -724,14 +728,18 @@ const handleWindowClose = async () => {
 
 // 优雅停止内核：先请求 /api/v1/app/exit 让其保存并退出，超时再强制结束，
 // 避免直接 kill 导致 SQLite WAL 未正常 checkpoint。
+// 返回 true 表示进程已确认退出；false 表示超时后进程仍未退出（如休眠唤醒后卡死）。
 const stopKernel = async (waitMs = 3000) => {
     const proc = kernelProcess;
-    if (!proc) return;
+    if (!proc) return true;
     proc.expectedExit = true;
     try {
         await net.fetch(API_SERVER + "/api/v1/app/exit", {
             method: "POST",
             headers: { 'X-Api-Token': apiToken },
+            // 必须带超时：内核无响应时，无超时的请求会永久挂起，
+            // 导致重启流程永远走不到下面的强制结束与新进程拉起
+            signal: AbortSignal.timeout(KERNEL_HEALTH_TIMEOUT),
         });
     } catch (e) {
         log(`请求kernel关闭失败 ${e}`);
@@ -754,8 +762,10 @@ const stopKernel = async (waitMs = 3000) => {
         }
         if (kernelProcess === proc) {
             log('kernel 强制结束后仍未退出，可能存在残留进程');
+            return false;
         }
     }
+    return true;
 };
 
 const quitApp = async () => {
@@ -782,7 +792,16 @@ const showKernelAlert = async (title, message, options = {}) => {
         });
         if (allowRestart && response === 0) {
             log('用户选择重启后台服务');
-            await restartKernel();
+            const restarted = await restartKernel();
+            if (!restarted && !kernelQuitting) {
+                // 重启失败（例如旧进程残留占用端口）：释放去重标志后再次弹窗，
+                // 让用户可以重试或退出，避免页面停留在“已尝试重启但没下文”的状态
+                kernelAlertActive = false;
+                await showKernelAlert(
+                    '后台服务重启失败',
+                    '后台服务重启失败，未能恢复。\n您可以再次尝试重启后台服务，或退出应用。'
+                );
+            }
         } else if (response === buttons.length - 1) {
             log('用户选择退出应用');
             kernelQuitting = true;
@@ -796,23 +815,42 @@ const showKernelAlert = async (title, message, options = {}) => {
 };
 
 const restartKernel = async () => {
+    if (kernelRestarting) return false;
+    kernelRestarting = true;
     log('开始重启后台服务');
+    setKernelStatus('starting', '正在重启后台服务');
     const proc = kernelProcess;
     if (proc) proc.expectedExit = true;
-    await stopKernel();
-    startKernel();
-    setKernelStatus('starting', '正在重启后台服务');
-    // 等待健康恢复，最多 10s
-    const deadline = Date.now() + 10000;
-    while (Date.now() < deadline) {
-        if (await pingKernelOnce()) {
-            setKernelStatus('ok');
-            log('后台服务重启成功');
-            return;
+    try {
+        const stopped = proc ? await stopKernel() : true;
+        // 强制结束后仍未确认退出（休眠唤醒后进程可能卡死、exit 事件未及时送达）：
+        // 断开旧进程引用再拉起新进程，避免 startKernel 的防重入保护导致“重启”空转
+        if (kernelProcess === proc && !stopped) {
+            log(`旧内核进程 pid=${proc.pid} 未能确认退出，断开引用后重新拉起`);
+            kernelProcess = null;
         }
-        await new Promise(resolve => setTimeout(resolve, 500));
+        startKernel();
+        // 等待健康恢复
+        const deadline = Date.now() + KERNEL_RESTART_WAIT_MS;
+        while (Date.now() < deadline) {
+            if (await pingKernelOnce()) {
+                setKernelStatus('ok');
+                log('后台服务重启成功');
+                for (const win of BrowserWindow.getAllWindows()) {
+                    if (!win.isDestroyed()) {
+                        win.webContents.send('kernel:restarted');
+                    }
+                }
+                return true;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        log('后台服务重启后仍不可达');
+        setKernelStatus('down', '重启后台服务失败，可稍后重试');
+        return false;
+    } finally {
+        kernelRestarting = false;
     }
-    log('后台服务重启后仍不可达');
 };
 
 const pingKernelOnce = async () => {
@@ -832,10 +870,16 @@ const pingKernelOnce = async () => {
 // 定时探活：连续 KERNEL_HEALTH_FAIL_THRESHOLD 次失败才判定异常，
 // 避免 kernel 瞬时繁忙（慢查询 / AI 请求）造成误报。
 const pingKernel = async () => {
-    if (kernelQuitting) return;
+    if (kernelQuitting || kernelRestarting) return;
     if (await pingKernelOnce()) {
         kernelHealthFails = 0;
         setKernelStatus('ok');
+        return;
+    }
+    // 系统休眠唤醒宽限期内不累计失败：唤醒瞬间磁盘/网络/子进程尚未恢复，
+    // 连续超时可能只是假死，立即弹窗引导用户重启反而会误杀一个正常恢复中的内核
+    if (Date.now() < kernelResumeGraceUntil) {
+        log('系统唤醒宽限期内，跳过 kernel 异常判定');
         return;
     }
     // 启动宽限期内不累计失败，避免慢速机器初始化（AutoMigrate 等）导致误报
@@ -964,6 +1008,20 @@ app.whenReady().then(() => {
     startKernelHealthMonitor();
     registerCommonHandlers();
     createTray();
+
+    // 系统休眠/唤醒：休眠期间进程与定时器冻结，唤醒后先给 kernel 一段恢复宽限期，
+    // 避免恢复慢（磁盘唤醒、AutoMigrate、网络栈重建）被误判为“后台无响应”
+    powerMonitor.on('suspend', () => {
+        log('系统进入休眠，暂停 kernel 健康检查累计');
+        kernelHealthFails = 0;
+    });
+    powerMonitor.on('resume', () => {
+        log('系统从休眠唤醒，进入 kernel 恢复宽限期');
+        kernelHealthFails = 0;
+        kernelResumeGraceUntil = Date.now() + KERNEL_RESUME_GRACE_MS;
+        // 立即探一次活：已恢复则尽快变回绿灯
+        pingKernel();
+    });
 
     if (!transactionsCfg.workspaceDir) {
         createInitWindow();

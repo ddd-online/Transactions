@@ -51,6 +51,7 @@ declare global {
             onWindowStateChanged: (cb: (data: { maximized: boolean }) => void) => () => void;
             getKernelStatus: () => Promise<{ state: string; detail?: string }>;
             onKernelStatusChanged: (cb: (data: { state: string; detail?: string }) => void) => () => void;
+            onKernelRestarted: (cb: () => void) => () => void;
         };
     }
 }

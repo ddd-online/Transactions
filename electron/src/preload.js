@@ -100,4 +100,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('kernel:status', handler);
         return () => ipcRenderer.removeListener('kernel:status', handler);
     },
+    onKernelRestarted: (cb) => {
+        const handler = () => cb();
+        ipcRenderer.on('kernel:restarted', handler);
+        return () => ipcRenderer.removeListener('kernel:restarted', handler);
+    },
 });

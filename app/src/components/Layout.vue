@@ -16,7 +16,7 @@
         <app-top-bar />
         <router-view v-slot="{ Component }">
           <Transition name="page-fade" mode="out-in">
-            <div class="app-router-view" :key="$route.path">
+            <div class="app-router-view" :key="routerViewKey">
               <component :is="Component" />
             </div>
           </Transition>
@@ -43,6 +43,11 @@ const showBottomBar = computed(() =>
     route.path === '/tr_view' || route.path === '/da_view' || route.path === '/key_event_view'
     || updateStore.status === 'downloading'
 );
+let unsubKernelRestarted: (() => void) | null = null
+let kernelRecovering = false
+// 后台服务重启后重挂当前页面（key 变化触发），让页面重新从后端拉取数据
+const workspaceRecoveryToken = ref(0)
+const routerViewKey = computed(() => `${route.path}:${workspaceRecoveryToken.value}`)
 
 const handleOpenWorkspace = async (workspaceDir: string) => {
   try {
@@ -71,13 +76,33 @@ function onWorkspaceRequired() {
   showWorkspaceSelect.value = true
 }
 
+// 后台服务被重启后：内核内存中的工作空间已被清空，必须重新调用后端接口打开工作空间；
+// 成功后重挂当前路由视图刷新页面数据，不整窗刷新，尽量保留当前页面与输入状态。
+async function onKernelRestarted() {
+  if (kernelRecovering) return;
+  kernelRecovering = true;
+  try {
+    await initWorkspace();
+    if (!showWorkspaceSelect.value) {
+      workspaceRecoveryToken.value += 1;
+    }
+  } catch {
+    // 取不到已保存工作空间或接口调用失败：退回手动选择
+    showWorkspaceSelect.value = true;
+  } finally {
+    kernelRecovering = false;
+  }
+}
+
 onMounted(() => {
   initWorkspace()
   window.addEventListener('workspace-required', onWorkspaceRequired)
+  unsubKernelRestarted = window.electronAPI?.onKernelRestarted?.(onKernelRestarted) ?? null
 })
 
 onUnmounted(() => {
   window.removeEventListener('workspace-required', onWorkspaceRequired)
+  unsubKernelRestarted?.()
 })
 </script>
 
