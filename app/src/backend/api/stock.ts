@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockStatistics, StockTrade, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary, StockTradeTag } from "@/types/transactions";
+import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockStatistics, StockTrade, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary, StockTradeTag, StockTradeTagSetting } from "@/types/transactions";
 
 export async function fetchStockOverview(ledgerId: string): Promise<StockOverview> {
     return api.get<StockOverview>(`/v1/stock/account/overview?ledger_id=${encodeURIComponent(ledgerId)}`, '查询股票账户总览');
@@ -35,6 +35,21 @@ export async function saveStockFeeSettings(
         stamp_duty_rate: stampDutyRate,
         transfer_fee_rate: transferFeeRate,
     }, '保存交易费用设置');
+}
+
+export async function fetchStockTradeTagSettings(ledgerId: string): Promise<StockTradeTagSetting> {
+    return api.get<StockTradeTagSetting>(
+        `/v1/stock/tag-settings?ledger_id=${encodeURIComponent(ledgerId)}`,
+        '查询交易标签'
+    );
+}
+
+export async function saveStockTradeTagSettings(ledgerId: string, tags: string[]): Promise<StockTradeTagSetting> {
+    return api.put<StockTradeTagSetting>(
+        '/v1/stock/tag-settings',
+        { ledger_id: ledgerId, tags },
+        '保存交易标签'
+    );
 }
 
 export async function fetchStockFundRecords(ledgerId: string, page: number, pageSize: number): Promise<StockFundRecordPage> {

@@ -48,6 +48,18 @@ func FromStockFundRecord(r *models.StockFundRecord) StockFundRecordDto {
 	}
 }
 
+// StockTradeTagSettingDto 股票交易标签设置：可用标签有序列表与默认标签。
+type StockTradeTagSettingDto struct {
+	Tags       []string `json:"tags"`
+	DefaultTag string   `json:"defaultTag"` // 默认标签「分析」，始终存在且不可删除
+}
+
+// StockTradeTagSettingRequest 保存股票交易标签设置的请求体。
+type StockTradeTagSettingRequest struct {
+	LedgerID string   `json:"ledger_id"`
+	Tags     []string `json:"tags"`
+}
+
 // StockFundRecordPage 资金变化记录分页结果。
 type StockFundRecordPage struct {
 	Items    []StockFundRecordDto `json:"items"`

@@ -17,6 +17,9 @@ type StockDao interface {
 	GetFeeSetting(ws *workspace.Workspace, ledgerID string) (*models.StockFeeSetting, error)
 	CreateFeeSetting(ws *workspace.Workspace, setting *models.StockFeeSetting) error
 	UpdateFeeSetting(ws *workspace.Workspace, setting *models.StockFeeSetting) error
+	GetTradeTagSetting(ws *workspace.Workspace, ledgerID string) (*models.StockTradeTagSetting, error)
+	CreateTradeTagSetting(ws *workspace.Workspace, setting *models.StockTradeTagSetting) error
+	UpdateTradeTagSettingTags(ws *workspace.Workspace, ledgerID string, tagsJSON string) error
 	CreateFundRecord(ws *workspace.Workspace, record *models.StockFundRecord) error
 	QueryLatestFundRecord(ws *workspace.Workspace, ledgerID string) (*models.StockFundRecord, error)
 	QueryFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) ([]models.StockFundRecord, int64, error)
@@ -100,6 +103,25 @@ func (d *stockDaoImpl) UpdateFeeSetting(ws *workspace.Workspace, setting *models
 			"stamp_duty_rate":   setting.StampDutyRate,
 			"transfer_fee_rate": setting.TransferFeeRate,
 		}).Error
+}
+
+func (d *stockDaoImpl) GetTradeTagSetting(ws *workspace.Workspace, ledgerID string) (*models.StockTradeTagSetting, error) {
+	var setting models.StockTradeTagSetting
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).First(&setting).Error
+	if err != nil {
+		return nil, err
+	}
+	return &setting, nil
+}
+
+func (d *stockDaoImpl) CreateTradeTagSetting(ws *workspace.Workspace, setting *models.StockTradeTagSetting) error {
+	return ws.GetDb().Create(setting).Error
+}
+
+func (d *stockDaoImpl) UpdateTradeTagSettingTags(ws *workspace.Workspace, ledgerID string, tagsJSON string) error {
+	return ws.GetDb().Model(&models.StockTradeTagSetting{}).
+		Where("ledger_id = ?", ledgerID).
+		Update("tags", tagsJSON).Error
 }
 
 func (d *stockDaoImpl) CreateFundRecord(ws *workspace.Workspace, record *models.StockFundRecord) error {
@@ -357,6 +379,9 @@ func (d *stockDaoImpl) DeleteByLedgerId(ws *workspace.Workspace, ledgerID string
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockFeeSetting{}).Error; err != nil {
 		return err
 	}
+	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTradeTagSetting{}).Error; err != nil {
+		return err
+	}
 	if err := ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTrade{}).Error; err != nil {
 		return err
 	}
@@ -379,6 +404,7 @@ func (d *stockDaoImpl) ResetByLedgerId(ws *workspace.Workspace, ledgerID string)
 		tables := []string{
 			"tbl_billadm_stock_fund_record",
 			"tbl_billadm_stock_fee_setting",
+			"tbl_billadm_stock_trade_tag_setting",
 			"tbl_billadm_stock_trade",
 			"tbl_billadm_stock_trade_round",
 			"tbl_billadm_stock_trade_history",

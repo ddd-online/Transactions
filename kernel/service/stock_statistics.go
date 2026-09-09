@@ -44,8 +44,14 @@ func (s *stockServiceImpl) GetStatisticsRange(ws *workspace.Workspace, ledgerID 
 	if recent > 0 && (startMonth != "" || endMonth != "") {
 		return nil, models.NewBadRequest("时间范围与笔数筛选不能同时使用")
 	}
-	if tag != "" && !models.IsValidStockTradeTag(tag) {
-		return nil, models.NewBadRequest("无效的交易标签")
+	if tag != "" {
+		availableTags, err := s.getTradeTags(ws, ledgerID)
+		if err != nil {
+			return nil, err
+		}
+		if !containsTag(availableTags, tag) {
+			return nil, models.NewBadRequest("无效的交易标签")
+		}
 	}
 	fromDay, toDay, err := normalizeStatisticsMonthRange(startMonth, endMonth)
 	if err != nil {

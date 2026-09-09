@@ -180,19 +180,6 @@
                   </table>
                 </div>
 
-                <!-- 本轮交易标签：四个固定策略取值，可直接修改 -->
-                <div class="round-tag">
-                  <span class="round-tag-label">本轮标签</span>
-                  <a-select
-                    :value="round.tag"
-                    class="round-tag-select"
-                    size="small"
-                    :options="STOCK_TRADE_TAG_OPTIONS"
-                    :disabled="tagSaving"
-                    @change="handleTagChange(round.id, $event)"
-                  />
-                </div>
-
                 <!-- 本轮复盘：一段话，500 字以内 -->
                 <div class="round-review">
                   <div class="round-review-head">
@@ -211,16 +198,28 @@
                       </button>
                     </template>
                     <span v-else class="round-review-label">本轮复盘</span>
-                    <a-button
-                      v-if="editingRoundId !== round.id"
-                      class="review-edit-btn"
-                      type="text"
-                      size="small"
-                      @click="startEditRound(round)"
-                    >
-                      <template #icon><EditOutlined /></template>
-                      {{ round.review ? '编辑' : '写复盘' }}
-                    </a-button>
+                    <div class="round-meta-actions">
+                      <span class="round-meta-label">标签</span>
+                      <a-select
+                        :value="round.tag"
+                        class="round-tag-select"
+                        size="small"
+                        :options="tagOptions"
+                        :disabled="tagSaving"
+                        aria-label="本轮标签"
+                        @change="handleTagChange(round.id, $event)"
+                      />
+                      <a-button
+                        v-if="editingRoundId !== round.id"
+                        class="review-edit-btn"
+                        type="text"
+                        size="small"
+                        @click="startEditRound(round)"
+                      >
+                        <template #icon><EditOutlined /></template>
+                        {{ round.review ? '编辑' : '写复盘' }}
+                      </a-button>
+                    </div>
                   </div>
 
                   <template v-if="isReviewOpen(round.id) && editingRoundId === round.id">
@@ -253,17 +252,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { CaretRightOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
+import { useStockTagStore } from '@/stores/stockTagStore'
 import { centsToYuan } from '@/backend/functions'
-import { STOCK_TRADE_TAG_OPTIONS } from '@/backend/constant'
 import type { StockTradeRound } from '@/types/transactions'
 import dayjs from 'dayjs'
 
 const historyStore = useStockHistoryStore()
+const stockTagStore = useStockTagStore()
 const { histories, historiesLoading, summary, detail, detailLoading, reviewSaving, tagSaving } = storeToRefs(historyStore)
+const { tags: tradeTags } = storeToRefs(stockTagStore)
+
+const tagOptions = computed(() => tradeTags.value.map((t) => ({ value: t, label: t })))
 
 // ---------- 展示 ----------
 const tradeTypeLabels: Record<string, string> = {
@@ -378,6 +381,7 @@ watch(
 
 onMounted(() => {
   historyStore.loadHistories()
+  stockTagStore.load()
 })
 </script>
 
@@ -878,26 +882,6 @@ onMounted(() => {
   background-color: var(--transactions-color-hover-bg);
 }
 
-/* ========== 本轮交易标签 ========== */
-.round-tag {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-md);
-  padding: var(--transactions-space-sm) var(--transactions-space-lg);
-  border-top: 1px solid var(--transactions-color-divider);
-  background-color: var(--transactions-color-major-background);
-}
-
-.round-tag-label {
-  flex-shrink: 0;
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-}
-
-.round-tag-select {
-  width: 140px;
-}
-
 /* ========== 本轮复盘 ========== */
 .round-review {
   padding: var(--transactions-space-md) var(--transactions-space-lg)
@@ -910,6 +894,24 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: var(--transactions-space-md);
+}
+
+.round-meta-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+}
+
+.round-meta-label {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.round-tag-select {
+  width: 128px;
 }
 
 .round-review-toggle {
@@ -977,7 +979,6 @@ onMounted(() => {
   height: 24px;
   font-size: var(--transactions-size-text-body-sm);
   flex-shrink: 0;
-  margin-left: auto;
 }
 
 .round-review-text {

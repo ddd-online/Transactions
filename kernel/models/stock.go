@@ -34,16 +34,13 @@ const (
 	StockTradeTagWeipan = "尾盘"
 	// StockTradeTagZhuizhang 追涨
 	StockTradeTagZhuizhang = "追涨"
+	// StockTradeTagXuli 蓄力
+	StockTradeTagXuli = "蓄力"
 )
 
-// IsValidStockTradeTag 判断是否为受支持的轮次交易标签。
-func IsValidStockTradeTag(tag string) bool {
-	switch tag {
-	case StockTradeTagAnalysis, StockTradeTagDaban, StockTradeTagWeipan, StockTradeTagZhuizhang:
-		return true
-	default:
-		return false
-	}
+// DefaultStockTradeTags 返回新账本默认的可用交易标签（有序）。
+func DefaultStockTradeTags() []string {
+	return []string{StockTradeTagAnalysis, StockTradeTagDaban, StockTradeTagWeipan, StockTradeTagZhuizhang, StockTradeTagXuli}
 }
 
 // StockAccount 股票账户（每个账本一个），本金以整数分存储。
@@ -171,4 +168,19 @@ type StockTradeRound struct {
 
 func (StockTradeRound) TableName() string {
 	return "tbl_billadm_stock_trade_round"
+}
+
+// StockTradeTagSetting 股票交易标签设置（每个账本一份）。
+// Tags 保存可用标签的有序 JSON 数组（含不可删除的默认标签「分析」），
+// 清仓/历史编辑/统计筛选均只允许使用该列表内的标签。
+type StockTradeTagSetting struct {
+	ID        string `gorm:"primaryKey;comment:设置UUID" json:"id"`
+	LedgerID  string `gorm:"uniqueIndex;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
+	Tags      string `gorm:"type:text;not null;default:'[]';comment:可用标签 JSON 数组（有序）" json:"-"`
+	CreatedAt int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
+	UpdatedAt int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
+}
+
+func (StockTradeTagSetting) TableName() string {
+	return "tbl_billadm_stock_trade_tag_setting"
 }

@@ -180,7 +180,7 @@
           <a-date-picker v-model:value="tradeModal.tradeTime" style="width: 100%" />
         </a-form-item>
         <a-form-item v-if="showTagField" label="交易标签">
-          <a-select v-model:value="tradeModal.tag" :options="STOCK_TRADE_TAG_OPTIONS" />
+          <a-select v-model:value="tradeModal.tag" :options="tradeTagOptions" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -193,18 +193,22 @@ import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import { useStockPositionStore } from '@/stores/stockPositionStore'
+import { useStockTagStore } from '@/stores/stockTagStore'
 import { fetchStockName } from '@/backend/api/stock'
 import { tryOrFallback } from '@/backend/errorHandler'
 import { centsToYuan } from '@/backend/functions'
-import { STOCK_TRADE_TAG_DEFAULT, STOCK_TRADE_TAG_OPTIONS } from '@/backend/constant'
 import type { StockPosition, StockTradeTag } from '@/types/transactions'
 import type { ColumnsType } from 'ant-design-vue/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
 const stockStore = useStockPositionStore()
+const stockTagStore = useStockTagStore()
 const { positions, positionsLoading, selectedCode, trades, tradesLoading, mutating, quotesRefreshing } = storeToRefs(stockStore)
+const { tags: tradeTags, defaultTag } = storeToRefs(stockTagStore)
 const { refreshQuotes } = stockStore
+
+const tradeTagOptions = computed(() => tradeTags.value.map((t) => ({ value: t, label: t })))
 
 interface Props {
   /** 当前 Tab 是否处于「我的持仓」（用于切回时自动刷新行情） */
@@ -292,7 +296,7 @@ const tradeModal = reactive({
   lots: '',
   tradeTime: dayjs() as Dayjs,
   availableLots: 0,
-  tag: STOCK_TRADE_TAG_DEFAULT as StockTradeTag,
+  tag: '分析' as StockTradeTag,
 })
 
 // 手数列标签：加仓/减仓展示可用手数，清仓展示全仓手数
@@ -321,7 +325,7 @@ const resetTradeModal = (tradeType: TradeType, position: StockPosition | null) =
   tradeModal.lots = tradeType === 'close' && prefill ? String(Math.floor(prefill.quantity / 100)) : ''
   tradeModal.availableLots = prefill ? Math.floor(prefill.quantity / 100) : 0
   tradeModal.tradeTime = dayjs()
-  tradeModal.tag = STOCK_TRADE_TAG_DEFAULT
+  tradeModal.tag = defaultTag.value
 }
 
 const openTradeModal = (tradeType: TradeType, position?: StockPosition) => {
@@ -376,13 +380,14 @@ const handleTradeSubmit = async () => {
     lots,
     tradeTime: tradeModal.tradeTime.unix(),
     remark: '',
-    tag: submitType === 'close' ? tradeModal.tag : STOCK_TRADE_TAG_DEFAULT,
+    tag: submitType === 'close' ? tradeModal.tag : '',
   })
   if (ok) tradeModal.open = false
 }
 
 onMounted(() => {
   stockStore.loadPositions()
+  stockTagStore.load()
 })
 
 // 从其他 Tab 切回持仓页时自动刷新行情；首次挂载时 loadPositions 已携带行情

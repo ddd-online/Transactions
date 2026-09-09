@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/transactions/models"
+	"github.com/transactions/models/dto"
 )
 
 // GET /api/v1/stock/account/overview?ledger_id=
@@ -77,6 +78,24 @@ func (h *Handlers) updateStockFeeSettings(c *gin.Context) (any, error) {
 	minCommission, _ := arg["min_commission"].(float64)
 
 	return h.StockSvc.SaveFeeSettings(ws, ledgerID, commissionRate, int64(minCommission), stampDutyRate, transferFeeRate)
+}
+
+// GET /api/v1/stock/tag-settings?ledger_id=  当前账本可用交易标签设置
+func (h *Handlers) getStockTradeTagSettings(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.GetTradeTags(ws(c), ledgerID)
+}
+
+// PUT /api/v1/stock/tag-settings  body: { ledger_id, tags: string[] }  保存交易标签（「分析」不可删除）
+func (h *Handlers) updateStockTradeTagSettings(c *gin.Context) (any, error) {
+	var req dto.StockTradeTagSettingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, models.NewBadRequest("invalid request: " + err.Error())
+	}
+	return h.StockSvc.SaveTradeTags(ws(c), req.LedgerID, req.Tags)
 }
 
 // GET /api/v1/stock/account/fund-records?ledger_id=&page=&page_size=

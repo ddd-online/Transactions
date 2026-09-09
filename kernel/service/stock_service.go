@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -33,6 +34,8 @@ type StockService interface {
 	AddWithdrawAtDate(ws *workspace.Workspace, ledgerID string, amount int64, recordDate string) (*dto.StockOverviewDto, error)
 	GetFeeSettings(ws *workspace.Workspace, ledgerID string) (*models.StockFeeSetting, error)
 	SaveFeeSettings(ws *workspace.Workspace, ledgerID string, commissionRate float64, minCommission int64, stampDutyRate float64, transferFeeRate float64) (*models.StockFeeSetting, error)
+	GetTradeTags(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeTagSettingDto, error)
+	SaveTradeTags(ws *workspace.Workspace, ledgerID string, tags []string) (*dto.StockTradeTagSettingDto, error)
 	ListFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) (*dto.StockFundRecordPage, error)
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
@@ -117,6 +120,54 @@ func (s *stockServiceImpl) getOrCreateFeeSetting(ws *workspace.Workspace, ledger
 		return nil, err
 	}
 	return setting, nil
+}
+
+// getTradeTagSetting 获取标签设置行，不存在时按默认标签列表创建（分析/打板/尾盘/追涨/蓄力）。
+func (s *stockServiceImpl) getTradeTagSetting(ws *workspace.Workspace, ledgerID string) (*models.StockTradeTagSetting, error) {
+	setting, err := s.stockDao.GetTradeTagSetting(ws, ledgerID)
+	if err == nil {
+		return setting, nil
+	}
+	if !dao.IsNotFound(err) {
+		return nil, err
+	}
+	tagsJSON, _ := json.Marshal(models.DefaultStockTradeTags())
+	setting = &models.StockTradeTagSetting{
+		ID:       util.GetUUID(),
+		LedgerID: ledgerID,
+		Tags:     string(tagsJSON),
+	}
+	if err := s.stockDao.CreateTradeTagSetting(ws, setting); err != nil {
+		return nil, err
+	}
+	return setting, nil
+}
+
+// getTradeTags 返回某账本当前可用的交易标签（有序）；解析异常或空列表时回退默认列表并修复。
+func (s *stockServiceImpl) getTradeTags(ws *workspace.Workspace, ledgerID string) ([]string, error) {
+	setting, err := s.getTradeTagSetting(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	var tags []string
+	if err := json.Unmarshal([]byte(setting.Tags), &tags); err != nil || len(tags) == 0 {
+		defaults := models.DefaultStockTradeTags()
+		tagsJSON, _ := json.Marshal(defaults)
+		if err := s.stockDao.UpdateTradeTagSettingTags(ws, ledgerID, string(tagsJSON)); err != nil {
+			return nil, err
+		}
+		return defaults, nil
+	}
+	return tags, nil
+}
+
+func containsTag(tags []string, tag string) bool {
+	for _, t := range tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *stockServiceImpl) GetOverview(ws *workspace.Workspace, ledgerID string) (*dto.StockOverviewDto, error) {
@@ -342,6 +393,65 @@ func (s *stockServiceImpl) SaveFeeSettings(ws *workspace.Workspace, ledgerID str
 	return setting, nil
 }
 
+// GetTradeTags 返回某账本当前可用的交易标签设置（含默认标签「分析」）。
+func (s *stockServiceImpl) GetTradeTags(ws *workspace.Workspace, ledgerID string) (*dto.StockTradeTagSettingDto, error) {
+	tags, err := s.getTradeTags(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.StockTradeTagSettingDto{
+		Tags:       tags,
+		DefaultTag: models.StockTradeTagAnalysis,
+	}, nil
+}
+
+// SaveTradeTags 保存某账本可用交易标签：去空白、去重并保留顺序；
+// 默认标签「分析」不可删除，列表至少保留一项，单个标签不超过 8 字、总数不超过 20 个。
+func (s *stockServiceImpl) SaveTradeTags(ws *workspace.Workspace, ledgerID string, tags []string) (*dto.StockTradeTagSettingDto, error) {
+	if ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	normalized := make([]string, 0, len(tags))
+	seen := make(map[string]bool, len(tags))
+	for _, raw := range tags {
+		tag := strings.TrimSpace(raw)
+		if tag == "" {
+			continue
+		}
+		if seen[tag] {
+			return nil, models.NewBadRequest("标签不能重复")
+		}
+		if utf8.RuneCountInString(tag) > 8 {
+			return nil, models.NewBadRequest("单个标签不能超过 8 个字")
+		}
+		if len(normalized) >= 20 {
+			return nil, models.NewBadRequest("标签数量不能超过 20 个")
+		}
+		seen[tag] = true
+		normalized = append(normalized, tag)
+	}
+	if len(normalized) == 0 {
+		return nil, models.NewBadRequest("至少保留一个标签")
+	}
+	if !containsTag(normalized, models.StockTradeTagAnalysis) {
+		return nil, models.NewBadRequest("默认标签「分析」不可删除")
+	}
+
+	tagsJSON, _ := json.Marshal(normalized)
+	if _, err := s.getTradeTagSetting(ws, ledgerID); err != nil {
+		return nil, err
+	}
+	if err := s.stockDao.UpdateTradeTagSettingTags(ws, ledgerID, string(tagsJSON)); err != nil {
+		logrus.Errorf("保存交易标签设置失败, ledger: %s, err: %v", ledgerID, err)
+		return nil, err
+	}
+	logrus.Infof("保存交易标签设置, ledger: %s, tags: %v", ledgerID, normalized)
+	return &dto.StockTradeTagSettingDto{
+		Tags:       normalized,
+		DefaultTag: models.StockTradeTagAnalysis,
+	}, nil
+}
+
 func (s *stockServiceImpl) ListFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) (*dto.StockFundRecordPage, error) {
 	if page < 1 {
 		page = 1
@@ -502,8 +612,14 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 	if lots <= 0 {
 		return nil, models.NewBadRequest("手数必须大于 0")
 	}
-	if tag != "" && !models.IsValidStockTradeTag(tag) {
-		return nil, models.NewBadRequest("无效的交易标签")
+	if tag != "" {
+		tags, err := s.getTradeTags(ws, ledgerID)
+		if err != nil {
+			return nil, err
+		}
+		if !containsTag(tags, tag) {
+			return nil, models.NewBadRequest("无效的交易标签")
+		}
 	}
 	if tradeTime <= 0 {
 		tradeTime = time.Now().Unix()
@@ -829,8 +945,8 @@ func (s *stockServiceImpl) UpdateRoundReview(ws *workspace.Workspace, ledgerID s
 	return s.GetTradeHistoryDetail(ws, ledgerID, round.StockCode)
 }
 
-// UpdateRoundTag 更新某一已完成轮次的交易标签（分析/打板/尾盘/追涨），
-// 校验轮次属于当前账本后保存，并返回该股最新的历史详情。
+// UpdateRoundTag 更新某一已完成轮次的交易标签，
+// 标签必须是该账本可用标签列表中的一项；校验轮次归属后保存，并返回该股最新的历史详情。
 func (s *stockServiceImpl) UpdateRoundTag(ws *workspace.Workspace, ledgerID string, roundID string, tag string) (*dto.StockTradeHistoryDetailDto, error) {
 	if roundID == "" {
 		return nil, models.NewBadRequest("round_id is required")
@@ -838,9 +954,6 @@ func (s *stockServiceImpl) UpdateRoundTag(ws *workspace.Workspace, ledgerID stri
 	tag = strings.TrimSpace(tag)
 	if tag == "" {
 		tag = models.StockTradeTagAnalysis
-	}
-	if !models.IsValidStockTradeTag(tag) {
-		return nil, models.NewBadRequest("无效的交易标签")
 	}
 
 	round, err := s.stockDao.GetTradeRound(ws, roundID)
@@ -852,6 +965,13 @@ func (s *stockServiceImpl) UpdateRoundTag(ws *workspace.Workspace, ledgerID stri
 	}
 	if round.LedgerID != ledgerID {
 		return nil, models.NewNotFound("轮次不存在")
+	}
+	availableTags, err := s.getTradeTags(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	if !containsTag(availableTags, tag) {
+		return nil, models.NewBadRequest("无效的交易标签")
 	}
 
 	if err := s.stockDao.UpdateTradeRoundTag(ws, roundID, tag); err != nil {
