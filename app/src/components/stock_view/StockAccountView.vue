@@ -344,7 +344,7 @@ const columns: ColumnsType = [
   { title: '事件', dataIndex: 'eventText', minWidth: 180 },
   { title: '金额变化', dataIndex: 'amountChange', width: 130, align: 'right' },
   { title: '现金余额', dataIndex: 'cashBalance', width: 130, align: 'right' },
-  { title: '备注', dataIndex: 'remark', minWidth: 180 },
+  { title: '备注', dataIndex: 'remark', minWidth: 180, align: 'right' },
 ]
 
 const pagination = computed(() => ({
