@@ -38,7 +38,7 @@
 
       <div v-else class="empty-guide">
         <TransactionOutlined class="empty-guide-icon" aria-hidden="true" />
-        <p class="empty-guide-title">这段时间还没有记录</p>
+        <p class="empty-guide-title">{{ emptyRangeTitle }}</p>
         <p class="empty-guide-text">换个时间范围看看，或者直接记一笔。</p>
         <div class="empty-guide-actions">
           <a-button @click="goToLastMonth">看上个月</a-button>
@@ -112,7 +112,7 @@
 
     <!-- 编辑/新建弹窗 -->
     <TransactionRecordModal :open="openTrModal" :record="editingRecord" :currentLedgerId="ledgerStore.currentLedgerId"
-      :defaultDate="trQueryConditionStore.timeRange?.[0]" @close="closeTrModal" @saved="onTrSaved" />
+      :defaultDate="defaultRecordDate" @close="closeTrModal" @saved="onTrSaved" />
 
     <!-- 关联关键事件弹窗 -->
     <a-modal v-model:open="openLinkModal" title="关联关键事件" ok-text="确认关联" cancel-text="取消" centered @ok="confirmLink"
@@ -205,8 +205,31 @@ const applyPresetRange = (range: [Dayjs, Dayjs], type: TimeRangeTypeValue) => {
   trQueryConditionStore.timeRangeType = type;
 };
 
+// 新增记录的默认日期：当前范围包含当天时以当天为准，否则沿用范围起点，
+// 保证在不看当天（如上月/今年）时新记录仍落在看得见的区间内。
+const defaultRecordDate = computed<Dayjs>(() => {
+  const today = dayjs();
+  const range = trQueryConditionStore.timeRange;
+  const start = range?.[0];
+  const end = range?.[1];
+  if (!start || !end) return today;
+  if (!today.isBefore(start.startOf('day')) && !today.isAfter(end.endOf('day'))) {
+    return today;
+  }
+  return start;
+});
+
 const goToLastMonth = () => applyPresetRange(getLastMonthRange(), 'month');
 const goToThisYear = () => applyPresetRange(getThisYearRange(), 'year');
+
+// 单日范围（默认「当天」）的空态说清楚是哪一天，避免“这段时间”含糊
+const emptyRangeTitle = computed(() => {
+  const range = trQueryConditionStore.timeRange;
+  const start = range?.[0];
+  const end = range?.[1];
+  if (!start || !end || !start.isSame(end, 'day')) return '这段时间还没有记录';
+  return start.isSame(dayjs(), 'day') ? '今天还没有记录' : '这一天还没有记录';
+});
 
 const handleInitCategories = async () => {
   const ledgerId = ledgerStore.currentLedgerId;
