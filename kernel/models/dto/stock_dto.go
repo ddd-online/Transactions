@@ -158,10 +158,11 @@ type StockTradeHistoryDto struct {
 	LedgerID     string  `json:"ledgerId"`
 	StockCode    string  `json:"stockCode"`
 	StockName    string  `json:"stockName"`
-	RoundCount   int64   `json:"roundCount"`   // 已完成轮次数
-	TotalPnl     int64   `json:"totalPnl"`     // 该股累计已实现盈亏（分）
-	TotalPnlRate float64 `json:"totalPnlRate"` // 累计盈亏率（%，相对全部建仓成本）
-	LastClosedAt int64   `json:"lastClosedAt"` // 最近一次清仓时间
+	RoundCount   int64   `json:"roundCount"`            // 已完成轮次数
+	TotalPnl     int64   `json:"totalPnl"`              // 该股累计已实现盈亏（分）
+	TotalPnlRate float64 `json:"totalPnlRate"`          // 累计盈亏率（%，相对全部建仓成本）
+	LastClosedAt int64   `json:"lastClosedAt"`          // 最近一次清仓时间
+	LatestPrice  *int64  `json:"latestPrice,omitempty"` // 最新价（分/股），行情获取失败时为空
 	CreatedAt    int64   `json:"createdAt"`
 	UpdatedAt    int64   `json:"updatedAt"`
 }

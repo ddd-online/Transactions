@@ -311,6 +311,7 @@ export interface StockTradeHistory {
     totalPnl: number;              // 该股累计已实现盈亏（分）
     totalPnlRate: number;          // 累计盈亏率（%）
     lastClosedAt: number;          // 最近一次清仓时间（Unix 秒）
+    latestPrice?: number;          // 最新价（分/股），行情获取失败时为空
     createdAt: number;
     updatedAt: number;
 }

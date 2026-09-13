@@ -174,3 +174,43 @@ func TestGetOverviewPartialQuoteFailure(t *testing.T) {
 		t.Fatalf("总资产应等于现金+市值: %d", overview.TotalAssets)
 	}
 }
+
+// closeRound 建仓后立即清仓，产生一条已归档轮次（左栏历史集合数据来源）。
+func closeRound(t *testing.T, svc service.StockService, ws *workspace.Workspace, code string, name string, openCents int64, closeCents int64) {
+	t.Helper()
+	if _, err := svc.CreateTrade(ws, testLedgerID, code, name, models.StockTradeOpen, openCents, 10, 1700005000, "", ""); err != nil {
+		t.Fatalf("建仓 %s 失败: %v", code, err)
+	}
+	if _, err := svc.CreateTrade(ws, testLedgerID, code, name, models.StockTradeClose, closeCents, 10, 1700005100, "", ""); err != nil {
+		t.Fatalf("清仓 %s 失败: %v", code, err)
+	}
+}
+
+func TestListTradeHistoriesAttachesQuotes(t *testing.T) {
+	svc, ws := newStockServiceWithQuotes(t, stubQuoteFetcher{
+		quotes: map[string]dto.StockQuoteDto{
+			testCode: {StockCode: testCode, LatestPrice: 1234, PrevClose: 1200, QuoteTime: 1700000000},
+		},
+	})
+
+	closeRound(t, svc, ws, testCode, testName, 1000, 1100)   // 600000 有行情
+	closeRound(t, svc, ws, testCodeB, testNameB, 2000, 1900) // 000001 行情缺失
+
+	items, err := svc.ListTradeHistories(ws, testLedgerID)
+	if err != nil {
+		t.Fatalf("查询交易历史失败: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("应返回 2 只已清仓股票, 实际 %d", len(items))
+	}
+	byCode := make(map[string]dto.StockTradeHistoryDto, len(items))
+	for _, item := range items {
+		byCode[item.StockCode] = item
+	}
+	if got := byCode[testCode].LatestPrice; got == nil || *got != 1234 {
+		t.Fatalf("有行情的已清仓股票应带最新价 1234, 实际 %v", got)
+	}
+	if got := byCode[testCodeB].LatestPrice; got != nil {
+		t.Fatalf("行情缺失时最新价应为空（前端显示占位符）, 实际 %d", *got)
+	}
+}

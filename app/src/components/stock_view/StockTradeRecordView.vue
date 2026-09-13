@@ -58,9 +58,21 @@
             @keydown.enter="historyStore.selectStock(h.stockCode)"
             @keydown.space.prevent="historyStore.selectStock(h.stockCode)"
           >
-            <span class="history-card-name">{{ h.stockName }}</span>
+            <span class="history-card-head">
+              <span class="history-card-name">{{ h.stockName }}</span>
+              <span class="history-card-quote">
+                <span class="history-card-quote-label">现价</span>
+                <span class="history-card-quote-value amount"
+                  :class="{ 'history-card-quote-value--empty': !hasQuote(h) }">{{ quoteText(h) }}</span>
+              </span>
+            </span>
             <span class="history-card-code">{{ h.stockCode }}</span>
-            <span class="history-card-meta">{{ h.roundCount }} 轮 · 最近 {{ formatDate(h.lastClosedAt) }}</span>
+            <span class="history-card-foot">
+              <span class="history-card-meta">{{ h.roundCount }} 轮 · 最近 {{ formatDate(h.lastClosedAt) }}</span>
+              <a-tooltip :title="`累计已实现盈亏 ${signedYuan(h.totalPnl)}`">
+                <span class="history-card-pnl amount" :class="pnlClass(h.totalPnl)">{{ pnlText(h.totalPnl) }}</span>
+              </a-tooltip>
+            </span>
           </button>
         </div>
         <div v-else class="column-empty">
@@ -140,10 +152,20 @@
                     <CaretRightOutlined />
                   </span>
                   <span class="round-title">第 {{ round.roundNo }} 轮</span>
-                  <span v-if="round.tag && round.tag !== '分析'" class="round-tag-chip">{{ round.tag }}</span>
                   <span class="round-period">{{ formatTime(round.openedAt) }} → {{ formatTime(round.closedAt) }}</span>
                 </div>
                 <div class="round-head-right">
+                  <a-select
+                    :value="round.tag"
+                    class="round-tag-select"
+                    size="small"
+                    :options="tagOptions"
+                    :disabled="tagSaving"
+                    aria-label="本轮标签"
+                    @click.stop
+                    @mousedown.stop
+                    @change="handleTagChange(round.id, $event)"
+                  />
                   <span class="round-result" :class="resultClass(round.pnl)">{{ resultLabel(round.pnl) }}</span>
                   <span class="round-pnl amount" :class="pnlClass(round.pnl)">{{ signedYuan(round.pnl) }}</span>
                   <span class="round-rate amount" :class="pnlClass(round.pnl)">{{ rateText(round.pnlRate) }}</span>
@@ -199,16 +221,6 @@
                     </template>
                     <span v-else class="round-review-label">本轮复盘</span>
                     <div class="round-meta-actions">
-                      <span class="round-meta-label">标签</span>
-                      <a-select
-                        :value="round.tag"
-                        class="round-tag-select"
-                        size="small"
-                        :options="tagOptions"
-                        :disabled="tagSaving"
-                        aria-label="本轮标签"
-                        @change="handleTagChange(round.id, $event)"
-                      />
                       <a-button
                         v-if="editingRoundId !== round.id"
                         class="review-edit-btn"
@@ -258,7 +270,7 @@ import { CaretRightOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-d
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
 import { useStockTagStore } from '@/stores/stockTagStore'
 import { centsToYuan } from '@/backend/functions'
-import type { StockTradeRound } from '@/types/transactions'
+import type { StockTradeHistory, StockTradeRound } from '@/types/transactions'
 import dayjs from 'dayjs'
 
 const historyStore = useStockHistoryStore()
@@ -291,6 +303,19 @@ const resultLabel = (pnl: number) => (pnl > 0 ? '盈利' : pnl < 0 ? '亏损' : 
 const resultClass = (pnl: number) => (pnl > 0 ? 'result-win' : pnl < 0 ? 'result-loss' : 'result-even')
 const formatTime = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD HH:mm')
 const formatDate = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD')
+
+// 左栏卡片的现价：行情缺失（未取到）时显示占位符，不显示 0 元
+const hasQuote = (h: StockTradeHistory) => !!h.latestPrice && h.latestPrice > 0
+const quoteText = (h: StockTradeHistory) => (hasQuote(h) ? `¥${centsToYuan(h.latestPrice as number)}` : '-')
+// 左栏卡片的盈亏：该股累计已实现盈亏（与右栏「总盈亏」同口径）。
+// 卡片一行要放下名称/盈亏/现价，金额按图表刻度的同一套口径压缩（亿/万），避免把名称挤成省略号。
+const compactYuan = (cents: number) => {
+  const yuan = Math.abs(cents) / 100
+  if (yuan >= 100000000) return `¥${(yuan / 100000000).toFixed(1)}亿`
+  if (yuan >= 10000) return `¥${(yuan / 10000).toFixed(1)}万`
+  return `¥${yuan.toFixed(0)}`
+}
+const pnlText = (cents: number) => `${cents > 0 ? '盈' : cents < 0 ? '亏' : '平'} ${compactYuan(cents)}`
 
 // ---------- 轮次展开/收起：默认全部展开，收起后头部仍保留本轮盈亏摘要 ----------
 const collapsedRoundIds = ref<Set<string>>(new Set())
@@ -499,7 +524,7 @@ onMounted(() => {
   flex-direction: column;
   gap: var(--transactions-space-2xs);
   padding: var(--transactions-space-sm) var(--transactions-space-md);
-  min-height: 76px;
+  min-height: 80px;
   border: none;
   border-radius: var(--transactions-radius-md);
   background-color: var(--transactions-color-major-background);
@@ -511,7 +536,7 @@ onMounted(() => {
               box-shadow var(--transactions-transition-smooth),
               transform var(--transactions-transition-smooth);
   content-visibility: auto;
-  contain-intrinsic-size: auto 76px;
+  contain-intrinsic-size: auto 80px;
 }
 
 .history-card:hover {
@@ -535,6 +560,8 @@ onMounted(() => {
 }
 
 .history-card-name {
+  flex: 1;
+  min-width: 0;
   font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
   color: var(--transactions-color-text-major);
@@ -543,14 +570,63 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
+/* 名称 + 现价同一行：现价固定在卡片右上角 */
+.history-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.history-card-pnl {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-body-sm);
+  white-space: nowrap;
+}
+
 .history-card-code {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
 }
 
-.history-card-meta {
+.history-card-quote {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.history-card-quote-label {
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.history-card-quote-value {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+/* 行情未取到：占位符保持安静，避免看起来像一个真实的低价 */
+.history-card-quote-value--empty {
+  color: var(--transactions-color-text-disabled);
+}
+
+/* 底部行：轮次/最近清仓时间靠左，盈亏固定在卡片右下角 */
+.history-card-foot {
   margin-top: auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.history-card-meta {
+  flex: 1;
+  min-width: 0;
   font-size: var(--transactions-size-text-small);
   color: var(--transactions-color-text-disabled);
   white-space: nowrap;
@@ -790,20 +866,6 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
-.round-tag-chip {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding: 1px var(--transactions-space-sm);
-  font-size: var(--transactions-size-text-caption);
-  font-weight: 500;
-  line-height: var(--transactions-height-snug);
-  color: var(--transactions-color-text-secondary);
-  background-color: var(--transactions-color-hover-bg);
-  border-radius: var(--transactions-radius-sm);
-  white-space: nowrap;
-}
-
 .round-head-right {
   margin-left: auto;
   display: flex;
@@ -904,14 +966,10 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.round-meta-label {
-  flex-shrink: 0;
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
-
 .round-tag-select {
   width: 128px;
+  flex-shrink: 0;
+  cursor: default;
 }
 
 .round-review-toggle {

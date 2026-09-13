@@ -524,6 +524,25 @@ func (s *stockServiceImpl) fetchHeldQuotes(held []models.StockPosition) map[stri
 	return s.quoteFetcher.FetchQuotes(codes)
 }
 
+// attachHistoryQuotes 为已清仓股票批量补充最新价（一次请求）；
+// 行情缺失的股票保持为空，由前端显示占位符，不阻塞历史列表返回。
+func (s *stockServiceImpl) attachHistoryQuotes(items []dto.StockTradeHistoryDto) {
+	if len(items) == 0 || s.quoteFetcher == nil {
+		return
+	}
+	codes := make([]string, 0, len(items))
+	for i := range items {
+		codes = append(codes, items[i].StockCode)
+	}
+	quotes := s.quoteFetcher.FetchQuotes(codes)
+	for i := range items {
+		if quote, ok := quotes[items[i].StockCode]; ok && quote.LatestPrice > 0 {
+			latest := quote.LatestPrice
+			items[i].LatestPrice = &latest
+		}
+	}
+}
+
 // computeHeldMarketValue 汇总持仓市值与浮动盈亏（单位：分）。
 // 行情可用的股票按最新价计价；缺失的按持仓成本计入，避免总资产在行情失败时失真，并返回失败数量供界面提示。
 func computeHeldMarketValue(held []models.StockPosition, quotes map[string]dto.StockQuoteDto) (marketValue int64, unrealizedPnl int64, quoteFailedCount int64) {
@@ -844,6 +863,7 @@ func (s *stockServiceImpl) ListTradeHistories(ws *workspace.Workspace, ledgerID 
 		}
 		items = append(items, item)
 	}
+	s.attachHistoryQuotes(items)
 	sort.SliceStable(items, func(i, j int) bool {
 		return items[i].LastClosedAt > items[j].LastClosedAt
 	})
