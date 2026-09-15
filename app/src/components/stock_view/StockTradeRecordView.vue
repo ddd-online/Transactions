@@ -59,14 +59,16 @@
             @keydown.space.prevent="historyStore.selectStock(h.stockCode)"
           >
             <span class="history-card-head">
-              <span class="history-card-name">{{ h.stockName }}</span>
+              <span class="history-card-title">
+                <span class="history-card-name">{{ h.stockName }}</span>
+                <span class="history-card-code">{{ h.stockCode }}</span>
+              </span>
               <span class="history-card-quote">
                 <span class="history-card-quote-label">现价</span>
                 <span class="history-card-quote-value amount"
                   :class="{ 'history-card-quote-value--empty': !hasQuote(h) }">{{ quoteText(h) }}</span>
               </span>
             </span>
-            <span class="history-card-code">{{ h.stockCode }}</span>
             <span class="history-card-foot">
               <span class="history-card-meta">{{ h.roundCount }} 轮 · 最近 {{ formatDate(h.lastClosedAt) }}</span>
               <a-tooltip :title="`累计已实现盈亏 ${signedYuan(h.totalPnl)}`">
@@ -524,7 +526,7 @@ onMounted(() => {
   flex-direction: column;
   gap: var(--transactions-space-2xs);
   padding: var(--transactions-space-sm) var(--transactions-space-md);
-  min-height: 80px;
+  min-height: 60px;
   border: none;
   border-radius: var(--transactions-radius-md);
   background-color: var(--transactions-color-major-background);
@@ -536,7 +538,7 @@ onMounted(() => {
               box-shadow var(--transactions-transition-smooth),
               transform var(--transactions-transition-smooth);
   content-visibility: auto;
-  contain-intrinsic-size: auto 80px;
+  contain-intrinsic-size: auto 60px;
 }
 
 .history-card:hover {
@@ -560,7 +562,6 @@ onMounted(() => {
 }
 
 .history-card-name {
-  flex: 1;
   min-width: 0;
   font-size: var(--transactions-size-text-body-sm);
   font-weight: 500;
@@ -570,7 +571,15 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
-/* 名称 + 现价同一行：现价固定在卡片右上角 */
+/* 名称 + 代码为一组：代码紧跟名称、名称过长时只压缩名称；现价固定在卡片右上角 */
+.history-card-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  flex: 1;
+  min-width: 0;
+}
+
 .history-card-head {
   display: flex;
   align-items: baseline;
@@ -586,6 +595,7 @@ onMounted(() => {
 }
 
 .history-card-code {
+  flex-shrink: 0;
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
