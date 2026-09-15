@@ -192,12 +192,6 @@ const handleRetry = () => {
   width: 100%;
 }
 
-.update-row--downloaded {
-  flex-direction: column;
-  align-items: center;
-  gap: var(--transactions-space-md);
-}
-
 .update-done-line {
   display: flex;
   align-items: center;
