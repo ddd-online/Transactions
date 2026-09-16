@@ -103,6 +103,7 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 		stockTrade := v1.Group("/stock")
 		{
 			stockTrade.GET("/positions", Handle(h.getStockPositions))
+			stockTrade.PUT("/positions/:code/review", Handle(h.updateStockPositionReview))
 			stockTrade.GET("/trades", Handle(h.listStockTrades))
 			stockTrade.GET("/history", Handle(h.listStockTradeHistory))
 			stockTrade.GET("/history/detail", Handle(h.getStockTradeHistoryDetail))

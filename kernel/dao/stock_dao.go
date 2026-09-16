@@ -206,12 +206,13 @@ func (d *stockDaoImpl) CreatePosition(ws *workspace.Workspace, position *models.
 
 func (d *stockDaoImpl) UpdatePosition(ws *workspace.Workspace, position *models.StockPosition) error {
 	return ws.GetDb().Model(position).
-		Select("quantity", "total_cost", "realized_pnl", "stock_name").
+		Select("quantity", "total_cost", "realized_pnl", "stock_name", "review").
 		Updates(map[string]any{
 			"quantity":     position.Quantity,
 			"total_cost":   position.TotalCost,
 			"realized_pnl": position.RealizedPnl,
 			"stock_name":   position.StockName,
+			"review":       position.Review,
 		}).Error
 }
 

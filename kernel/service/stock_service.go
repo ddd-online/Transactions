@@ -38,6 +38,7 @@ type StockService interface {
 	SaveTradeTags(ws *workspace.Workspace, ledgerID string, tags []string) (*dto.StockTradeTagSettingDto, error)
 	ListFundRecords(ws *workspace.Workspace, ledgerID string, page int, pageSize int) (*dto.StockFundRecordPage, error)
 	ListPositions(ws *workspace.Workspace, ledgerID string) ([]dto.StockPositionDto, error)
+	UpdatePositionReview(ws *workspace.Workspace, ledgerID string, stockCode string, review string) (*dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string, tag string) (*dto.StockTradeDto, error)
 	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error)
@@ -510,6 +511,41 @@ func (s *stockServiceImpl) ListPositions(ws *workspace.Workspace, ledgerID strin
 	return items, nil
 }
 
+// UpdatePositionReview 保存持仓中的「本轮复盘」（500 字以内，空串清空）。
+// 持仓期间还没有轮次记录，复盘先落在持仓上，清仓归档时带入该轮次，形成同一份记录。
+func (s *stockServiceImpl) UpdatePositionReview(ws *workspace.Workspace, ledgerID string, stockCode string, review string) (*dto.StockPositionDto, error) {
+	if ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	if stockCode == "" {
+		return nil, models.NewBadRequest("stock_code is required")
+	}
+	review = strings.TrimSpace(review)
+	if utf8.RuneCountInString(review) > 500 {
+		return nil, models.NewBadRequest("交易复盘不能超过 500 字")
+	}
+
+	position, err := s.stockDao.GetPosition(ws, ledgerID, stockCode)
+	if err != nil {
+		if dao.IsNotFound(err) {
+			return nil, models.NewNotFound("持仓不存在")
+		}
+		return nil, err
+	}
+	if position.Quantity <= 0 {
+		return nil, models.NewNotFound("该股票已清仓，请在「交易历史」中编辑本轮复盘")
+	}
+
+	position.Review = review
+	if err := s.stockDao.UpdatePosition(ws, position); err != nil {
+		logrus.Errorf("保存持仓复盘失败, ledger: %s, code: %s, err: %v", ledgerID, stockCode, err)
+		return nil, err
+	}
+	logrus.Infof("保存持仓复盘, ledger: %s, code: %s", ledgerID, stockCode)
+	item := dto.FromStockPosition(position)
+	return &item, nil
+}
+
 // fetchHeldQuotes 仅对当前持仓股票请求行情；无持仓或行情源缺失时返回空映射。
 func (s *stockServiceImpl) fetchHeldQuotes(held []models.StockPosition) map[string]dto.StockQuoteDto {
 	codes := make([]string, 0, len(held))
@@ -749,11 +785,13 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 
 		// 清仓：把本轮「建仓 → 清仓」的全部交易归档到交易历史
 		if isSell && position.Quantity == 0 {
-			roundID, err := s.closeRound(tx, ledgerID, stockCode, stockName, tradeTime, tag)
+			roundID, err := s.closeRound(tx, ledgerID, stockCode, stockName, tradeTime, tag, position.Review)
 			if err != nil {
 				return err
 			}
 			trade.RoundID = roundID
+			// 持仓期间先写的复盘已归档到本轮次，清空持仓上的草稿，避免下一轮继承
+			position.Review = ""
 		}
 
 		if err := s.stockDao.UpdatePosition(tx, position); err != nil {
@@ -787,7 +825,8 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 
 // closeRound 清仓收尾：确保历史集合存在（首次清仓创建，之后复用），
 // 创建本轮次并把该股从建仓到清仓的全部未归档交易挂接进来。
-func (s *stockServiceImpl) closeRound(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, closedAt int64, tag string) (string, error) {
+// review 为持仓期间先写的本轮复盘（可为空），归档后由持仓侧清空。
+func (s *stockServiceImpl) closeRound(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, closedAt int64, tag string, review string) (string, error) {
 	// 兼容存量数据：先归档历史上已完成但未挂接的轮次，避免与当前轮次混淆
 	if err := s.ensureStockHistoryBackfill(ws, ledgerID, stockCode); err != nil {
 		return "", err
@@ -826,6 +865,7 @@ func (s *stockServiceImpl) closeRound(ws *workspace.Workspace, ledgerID string, 
 	if tag == "" {
 		tag = models.StockTradeTagAnalysis
 	}
+	review = strings.TrimSpace(review)
 	round := &models.StockTradeRound{
 		ID:        util.GetUUID(),
 		LedgerID:  ledgerID,
@@ -835,6 +875,7 @@ func (s *stockServiceImpl) closeRound(ws *workspace.Workspace, ledgerID string, 
 		OpenedAt:  openedAt,
 		ClosedAt:  closedAt,
 		Tag:       tag,
+		Review:    review,
 	}
 	if err := s.stockDao.CreateTradeRound(ws, round); err != nil {
 		return "", err

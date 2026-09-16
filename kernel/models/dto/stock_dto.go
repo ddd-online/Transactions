@@ -77,6 +77,7 @@ type StockPositionDto struct {
 	Quantity    int64  `json:"quantity"`              // 持仓数量（股）
 	TotalCost   int64  `json:"totalCost"`             // 持仓总成本（分，含买入手续费）
 	RealizedPnl int64  `json:"realizedPnl"`           // 该股累计已实现盈亏（分）
+	Review      string `json:"review"`                // 本轮复盘（持仓期间先写，清仓归档到轮次，500字以内）
 	LatestPrice *int64 `json:"latestPrice,omitempty"` // 最新价（分/股），行情获取失败时为空
 	PrevClose   *int64 `json:"prevClose,omitempty"`   // 昨收价（分/股）
 	QuoteTime   *int64 `json:"quoteTime,omitempty"`   // 行情时间（Unix 秒）
@@ -91,6 +92,7 @@ func FromStockPosition(p *models.StockPosition) StockPositionDto {
 		Quantity:    p.Quantity,
 		TotalCost:   p.TotalCost,
 		RealizedPnl: p.RealizedPnl,
+		Review:      p.Review,
 	}
 }
 

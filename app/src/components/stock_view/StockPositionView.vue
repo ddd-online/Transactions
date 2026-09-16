@@ -100,8 +100,55 @@
                 <ReloadOutlined />
               </template>
               刷新行情
-            </a-button>
+           </a-button>
+         </div>
+
+          <!-- 本轮复盘：持仓期间就能写，清仓后随本轮归档到「交易历史」 -->
+          <div v-if="currentPosition" class="position-review">
+            <div class="position-review-head">
+              <button
+                type="button"
+                class="position-review-toggle"
+                :aria-expanded="isReviewOpen"
+                @click="toggleReview"
+              >
+                <span class="position-review-caret" :class="{ 'position-review-caret--open': isReviewOpen }">
+                  <CaretRightOutlined />
+                </span>
+                <span class="position-review-label">本轮复盘</span>
+                <span v-if="!isReviewOpen && currentPosition.review" class="position-review-excerpt">
+                  {{ currentPosition.review }}
+                </span>
+              </button>
+              <a-button
+                v-if="!editingReview"
+                class="review-edit-btn"
+                type="text"
+                size="small"
+                @click="startEditReview"
+              >
+                <template #icon><EditOutlined /></template>
+                {{ currentPosition.review ? '编辑' : '写复盘' }}
+              </a-button>
+            </div>
+
+            <template v-if="editingReview">
+              <a-textarea
+                v-model:value="reviewDraft"
+                class="review-textarea"
+                :rows="3"
+                :maxlength="500"
+                placeholder="写下本轮的操作依据、得失与可改进之处（500 字以内）"
+              />
+              <div class="position-review-actions">
+                <a-button size="small" :disabled="reviewSaving" @click="cancelEditReview">取消</a-button>
+                <a-button size="small" type="primary" :loading="reviewSaving" @click="saveReview">保存</a-button>
+              </div>
+            </template>
+            <p v-else-if="isReviewOpen && currentPosition.review" class="position-review-text">{{ currentPosition.review }}</p>
+            <p v-else-if="isReviewOpen" class="position-review-empty">还没有写本轮复盘，可随时记录建仓理由与操作计划。</p>
           </div>
+
           <div class="trade-table-wrap">
             <a-table :columns="columns" :data-source="trades" row-key="id"
               :pagination="false" :loading="tradesLoading" size="middle" class="trade-table"
@@ -188,15 +235,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
-import { ReloadOutlined } from '@ant-design/icons-vue'
+import { CaretRightOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { useStockPositionStore } from '@/stores/stockPositionStore'
 import { useStockTagStore } from '@/stores/stockTagStore'
 import { fetchStockName } from '@/backend/api/stock'
 import { tryOrFallback } from '@/backend/errorHandler'
 import { centsToYuan } from '@/backend/functions'
+import { StockRoundReviewTemplate } from '@/backend/constant'
 import type { StockPosition, StockTradeTag } from '@/types/transactions'
 import type { ColumnsType } from 'ant-design-vue/es/table'
 import type { Dayjs } from 'dayjs'
@@ -205,6 +253,7 @@ import dayjs from 'dayjs'
 const stockStore = useStockPositionStore()
 const stockTagStore = useStockTagStore()
 const { positions, positionsLoading, selectedCode, trades, tradesLoading, mutating, quotesRefreshing } = storeToRefs(stockStore)
+const { reviewSaving } = storeToRefs(stockStore)
 const { tags: tradeTags, defaultTag } = storeToRefs(stockTagStore)
 const { refreshQuotes } = stockStore
 
@@ -272,6 +321,48 @@ const signedPercent = (rate: number | null): string =>
 // 交易历史金额：买入现金流出 = -(成交金额 + 费用)，卖出现金流入 = 成交金额 - 费用
 const changeOf = (t: TradeCell) =>
   isBuy(t.tradeType) ? -(t.amount + t.fee) : t.amount - t.fee
+
+// ---------- 本轮复盘（持仓期间先写，清仓后归档到本轮次） ----------
+const isReviewOpen = ref(true)
+const editingReview = ref(false)
+const reviewDraft = ref('')
+
+const toggleReview = () => {
+  if (editingReview.value) cancelEditReview()
+  isReviewOpen.value = !isReviewOpen.value
+}
+
+const startEditReview = () => {
+  const position = currentPosition.value
+  if (!position) return
+  isReviewOpen.value = true
+  editingReview.value = true
+  reviewDraft.value = position.review || StockRoundReviewTemplate
+}
+
+const cancelEditReview = () => {
+  editingReview.value = false
+  reviewDraft.value = ''
+}
+
+const saveReview = async () => {
+  const position = currentPosition.value
+  if (!position) return
+  const ok = await stockStore.savePositionReview(position.stockCode, reviewDraft.value)
+  if (ok) {
+    editingReview.value = false
+    reviewDraft.value = ''
+  }
+}
+
+// 切换持仓股票时退出编辑态并展开，避免 A 股的草稿留在 B 股上
+watch(
+  () => selectedCode.value,
+  () => {
+    cancelEditReview()
+    isReviewOpen.value = true
+  }
+)
 
 // ---------- 交易记录表格 ----------
 const columns: ColumnsType = [
@@ -723,6 +814,122 @@ watch(
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
+}
+
+/* ========== 中栏：本轮复盘（持仓期间先写，清仓后归档到本轮次） ========== */
+.position-review {
+  flex-shrink: 0;
+  margin-bottom: var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-md);
+  min-width: 0;
+}
+
+.position-review-head {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+.position-review-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.position-review-toggle:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.position-review-caret {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--transactions-color-text-tertiary);
+  transition: transform var(--transactions-transition-fast),
+              color var(--transactions-transition-fast);
+}
+
+.position-review-caret--open {
+  transform: rotate(90deg);
+}
+
+.position-review-toggle:hover .position-review-caret {
+  color: var(--transactions-color-text-secondary);
+}
+
+.position-review-toggle:hover .position-review-label {
+  color: var(--transactions-color-text-major);
+}
+
+.position-review-label {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-caption);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--transactions-color-text-secondary);
+}
+
+.position-review-excerpt {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.position-review-text {
+  margin: var(--transactions-space-sm) 0 0;
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-normal);
+  color: var(--transactions-color-text-major);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.position-review-empty {
+  margin: var(--transactions-space-sm) 0 0;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.position-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-sm);
+}
+
+.review-edit-btn {
+  height: 24px;
+  font-size: var(--transactions-size-text-body-sm);
+  flex-shrink: 0;
+}
+
+.review-textarea {
+  margin-top: var(--transactions-space-sm);
+}
+
+.review-textarea :deep(textarea) {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-normal);
+  background-color: var(--transactions-color-major-background);
 }
 
 /* ========== 中栏：交易记录表格 ========== */

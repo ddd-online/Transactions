@@ -271,6 +271,7 @@ export interface StockPosition {
     quantity: number;            // 持仓数量（股）
     totalCost: number;           // 持仓总成本（分）
     realizedPnl: number;         // 该股累计已实现盈亏（分）
+    review: string;              // 本轮复盘（持仓期间先写，清仓归档到本轮次）
     latestPrice?: number;        // 最新价（分/股），行情获取失败时为空
     prevClose?: number;          // 昨收价（分/股）
     quoteTime?: number;          // 行情时间（Unix 秒）

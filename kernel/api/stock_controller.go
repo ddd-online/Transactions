@@ -119,6 +119,21 @@ func (h *Handlers) getStockPositions(c *gin.Context) (any, error) {
 	return h.StockSvc.ListPositions(ws(c), ledgerID)
 }
 
+// PUT /api/v1/stock/positions/:code/review  body: { ledger_id, review }
+// 持仓期间先写本轮复盘（500 字以内），清仓归档时进入该轮次
+func (h *Handlers) updateStockPositionReview(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	review, _ := arg["review"].(string)
+	return h.StockSvc.UpdatePositionReview(ws(c), ledgerID, c.Param("code"), review)
+}
+
 // GET /api/v1/stock/trades?ledger_id=&stock_code=
 func (h *Handlers) listStockTrades(c *gin.Context) (any, error) {
 	ledgerID, err := requireLedgerID(c)

@@ -272,6 +272,7 @@ import { CaretRightOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-d
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
 import { useStockTagStore } from '@/stores/stockTagStore'
 import { centsToYuan } from '@/backend/functions'
+import { StockRoundReviewTemplate } from '@/backend/constant'
 import type { StockTradeHistory, StockTradeRound } from '@/types/transactions'
 import dayjs from 'dayjs'
 
@@ -367,7 +368,7 @@ const startEditRound = (round: StockTradeRound) => {
   reviewNext.delete(round.id)
   collapsedReviewIds.value = reviewNext
   editingRoundId.value = round.id
-  reviewDraft.value = reviewDrafts.value[round.id] ?? round.review
+  reviewDraft.value = reviewDrafts.value[round.id] ?? (round.review || StockRoundReviewTemplate)
 }
 
 const cancelEditReview = () => {

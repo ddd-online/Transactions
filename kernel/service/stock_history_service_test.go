@@ -508,3 +508,58 @@ func TestCloseRoundSavesProvidedTag(t *testing.T) {
 		t.Fatal("非法交易标签应被拒绝")
 	}
 }
+
+func TestPositionReviewCarriesIntoClosedRound(t *testing.T) {
+	svc, ws := newStockService(t)
+	stockDao := dao.NewStockDao()
+
+	// 持仓期间：本轮复盘先写在持仓上，清仓前随时可写
+	if _, err := svc.CreateTrade(ws, testLedgerID, testCode, testName, models.StockTradeOpen, 1000, 10, 1700006000, "", ""); err != nil {
+		t.Fatalf("建仓失败: %v", err)
+	}
+	updated, err := svc.UpdatePositionReview(ws, testLedgerID, testCode, "  建仓理由：回踩年线企稳，等放量  ")
+	if err != nil {
+		t.Fatalf("保存持仓复盘失败: %v", err)
+	}
+	if updated.Review != "建仓理由：回踩年线企稳，等放量" {
+		t.Fatalf("持仓复盘应去除首尾空白: %q", updated.Review)
+	}
+	positions, err := svc.ListPositions(ws, testLedgerID)
+	if err != nil {
+		t.Fatalf("查询持仓失败: %v", err)
+	}
+	if len(positions) != 1 || positions[0].Review != "建仓理由：回踩年线企稳，等放量" {
+		t.Fatalf("持仓列表应带出本轮复盘: %+v", positions)
+	}
+
+	// 超过 500 字拒绝
+	if _, err := svc.UpdatePositionReview(ws, testLedgerID, testCode, strings.Repeat("复", 501)); err == nil {
+		t.Fatal("超过 500 字的持仓复盘应被拒绝")
+	} else if !strings.Contains(err.Error(), "不能超过 500 字") {
+		t.Fatalf("超长复盘错误文案错误: %v", err)
+	}
+
+	// 清仓：复盘归档到本轮次，持仓上的草稿清空（下一轮不继承）
+	if _, err := svc.CreateTrade(ws, testLedgerID, testCode, testName, models.StockTradeClose, 1200, 10, 1700006100, "", ""); err != nil {
+		t.Fatalf("清仓失败: %v", err)
+	}
+	detail, err := svc.GetTradeHistoryDetail(ws, testLedgerID, testCode)
+	if err != nil {
+		t.Fatalf("查询历史详情失败: %v", err)
+	}
+	if len(detail.Rounds) != 1 || detail.Rounds[0].Review != "建仓理由：回踩年线企稳，等放量" {
+		t.Fatalf("清仓后轮次应带上持仓期间写的复盘: %+v", detail.Rounds)
+	}
+	position, err := stockDao.GetPosition(ws, testLedgerID, testCode)
+	if err != nil {
+		t.Fatalf("查询持仓失败: %v", err)
+	}
+	if position.Review != "" {
+		t.Fatalf("归档后持仓复盘应清空: %q", position.Review)
+	}
+
+	// 已清仓股票不能再从持仓侧写复盘，改在交易历史里编辑
+	if _, err := svc.UpdatePositionReview(ws, testLedgerID, testCode, "补写"); err == nil {
+		t.Fatal("已清仓股票的持仓复盘写入应被拒绝")
+	}
+}

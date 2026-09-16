@@ -101,6 +101,7 @@ type StockPosition struct {
 	Quantity    int64  `gorm:"not null;default:0;comment:持仓数量（股）" json:"quantity"`
 	TotalCost   int64  `gorm:"not null;default:0;comment:持仓总成本（分）" json:"totalCost"`
 	RealizedPnl int64  `gorm:"not null;default:0;comment:已实现盈亏（分，该股累计）" json:"realizedPnl"`
+	Review      string `gorm:"type:varchar(2000);not null;default:'';comment:本轮复盘（持仓期间先写，清仓归档到轮次）" json:"review"`
 	CreatedAt   int64  `gorm:"autoCreateTime:unix;not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt   int64  `gorm:"autoUpdateTime:unix;not null;comment:更新时间" json:"updatedAt"`
 }

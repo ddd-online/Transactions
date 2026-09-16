@@ -70,6 +70,14 @@ export async function fetchStockTrades(ledgerId: string, stockCode: string): Pro
     );
 }
 
+export async function updateStockPositionReview(ledgerId: string, stockCode: string, review: string): Promise<StockPosition> {
+    return api.put<StockPosition>(
+        `/v1/stock/positions/${encodeURIComponent(stockCode)}/review`,
+        { ledger_id: ledgerId, review },
+        '保存本轮复盘'
+    );
+}
+
 export async function fetchStockTradeHistories(ledgerId: string): Promise<StockTradeHistory[]> {
     return api.get<StockTradeHistory[]>(
         `/v1/stock/history?ledger_id=${encodeURIComponent(ledgerId)}`,

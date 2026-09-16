@@ -4,6 +4,7 @@ import {
   createStockTrade,
   fetchStockPositions,
   fetchStockTrades,
+  updateStockPositionReview,
 } from '@/backend/api/stock'
 import { withErrorHandling } from '@/backend/errorHandler'
 import NotificationUtil from '@/backend/notification'
@@ -26,6 +27,7 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
   const tradesLoading = ref(false)
   const mutating = ref(false)
   const quotesRefreshing = ref(false)
+  const reviewSaving = ref(false)
 
   const currentLedgerId = () => ledgerStore.currentLedgerId
 
@@ -101,6 +103,28 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     }
   }
 
+  // 本轮复盘：持仓期间先写在持仓上（清仓归档时带入该轮次），只更新本地对应持仓的字段，
+  // 不重拉持仓列表，避免为了保存一段文字再打一次行情接口。
+  const savePositionReview = async (stockCode: string, review: string): Promise<boolean> => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId || !stockCode) return false
+    reviewSaving.value = true
+    try {
+      const data = await withErrorHandling(
+        () => updateStockPositionReview(ledgerId, stockCode, review),
+        { errorPrefix: '保存本轮复盘失败', rethrow: true }
+      )
+      const target = positions.value.find((p) => p.stockCode === data.stockCode)
+      if (target) target.review = data.review
+      NotificationUtil.success('本轮复盘已保存')
+      return true
+    } catch {
+      return false
+    } finally {
+      reviewSaving.value = false
+    }
+  }
+
   const recordTrade = async (input: {
     stockCode: string
     stockName: string
@@ -169,11 +193,13 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     tradesLoading,
     mutating,
     quotesRefreshing,
+    reviewSaving,
     loadPositions,
     loadTrades,
     selectStock,
     refreshQuotes,
     reloadAll,
     recordTrade,
+    savePositionReview,
   }
 })

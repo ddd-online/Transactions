@@ -21,3 +21,17 @@ export const TimeRangeLabelToValue = {
     '月': 'month',
     '年': 'year'
 } as const;
+
+/**
+ * 本轮复盘模板：点「写复盘」时预填，按「判断层 / 改进层 / 交易心得」分层。
+ * 复盘是纯文本（按换行原文展示），所以只用中文小标题加空行分段，不带 Markdown 标记。
+ */
+export const StockRoundReviewTemplate = `判断层
+
+买入理由：
+卖出理由：
+
+改进层
+
+交易心得
+`
