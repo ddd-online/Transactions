@@ -38,11 +38,6 @@ const routes = [
         component: () => import('@/components/diary_view/DiaryView.vue')
       },
       {
-        name: '智能助手',
-        path: 'ai_view',
-        component: () => import('@/components/ai_view/AiChatView.vue'),
-      },
-      {
         name: '应用设置',
         path: 'settings_view',
         component: () => import('@/components/settings_view/SettingsView.vue')

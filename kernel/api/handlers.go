@@ -1,14 +1,11 @@
 package api
 
 import (
-	"github.com/transactions/ai"
-	"github.com/transactions/ai/role"
-	"github.com/transactions/dao"
 	"github.com/transactions/service"
 	"github.com/transactions/workspace"
 )
 
-// Handlers holds all service interfaces and AI dependencies,
+// Handlers holds all service interfaces,
 // injected via constructor by the compose root (server/wire.go).
 // Each handler method receives its dependencies through the struct,
 // not through package-level global variables.
@@ -26,13 +23,4 @@ type Handlers struct {
 	TrTemplateSvc  service.TransactionTemplateService
 	DiarySvc       service.DiaryService
 	StockSvc       service.StockService
-
-	// AI
-	ChatService       *ai.ChatService
-	AiConfigDao       dao.AiConfigDao
-	AiApiConfigDao    dao.AiApiConfigDao
-	AiMessageDao      dao.AiMessageDao
-	AiConversationDao dao.AiConversationDao
-	AiQuickCommandDao dao.AiQuickCommandDao
-	RoleRegistry      *role.Registry
 }

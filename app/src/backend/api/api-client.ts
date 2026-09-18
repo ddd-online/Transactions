@@ -8,7 +8,7 @@ let cachedBaseUrl = 'http://127.0.0.1:28080';
 let cachedApiToken = '';
 
 // 生产环境从 Electron 主进程获取本地 API 令牌（dev 下 kernel 无令牌，返回空串）。
-// 导出供不走 axios 的请求（如 AI 对话 SSE 原生 fetch）复用同一令牌。
+// 导出供不走 axios 的原生请求复用同一令牌。
 export async function getApiToken(): Promise<string> {
     if (cachedApiToken) return cachedApiToken;
     if (window.electronAPI?.getAppInfo) {

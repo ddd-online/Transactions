@@ -43,15 +43,6 @@
         </button>
         <button
           class="nav-item"
-          :class="{ active: activeComponent === 'ai' }"
-          @click="activeComponent = 'ai'"
-          aria-label="智能助手"
-        >
-          <RobotOutlined class="nav-icon"/>
-          <span class="nav-text">智能助手</span>
-        </button>
-        <button
-          class="nav-item"
           :class="{ active: activeComponent === 'about' }"
           @click="activeComponent = 'about'"
           aria-label="关于软件"
@@ -77,14 +68,12 @@ import {
   FileTextOutlined,
   SettingOutlined,
   InfoCircleOutlined,
-  RobotOutlined,
   BookOutlined,
   StockOutlined,
 } from "@ant-design/icons-vue";
 import TransactionsTemplateSetting from './TransactionsTemplateSetting.vue';
 import GeneralSetting from './GeneralSetting.vue';
 import AboutSetting from './AboutSetting.vue';
-import AiSetting from './AiSetting.vue';
 import DiarySetting from './DiarySetting.vue';
 import StockTradingSetting from './StockTradingSetting.vue';
 
@@ -96,7 +85,6 @@ const componentMap = {
   'diary': DiarySetting,
   'stock': StockTradingSetting,
   'about': AboutSetting,
-  'ai': AiSetting,
 };
 
 const currentComponent = computed(() => {

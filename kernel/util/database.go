@@ -49,11 +49,6 @@ func NewDbInstance(dbPath string) (*gorm.DB, error) {
 		&models.StockTradeHistory{},
 		&models.StockTradeRound{},
 		&models.StockTradeTagSetting{},
-		&models.AiConfig{},
-		&models.AiApiConfig{},
-		&models.AiMessage{},
-		&models.AiConversation{},
-		&models.AiQuickCommand{},
 	); err != nil {
 		logrus.Errorf("数据库自动迁移失败, db path: %s, err: %v", dbPath, err)
 		return nil, fmt.Errorf("数据库自动迁移失败: %w", err)

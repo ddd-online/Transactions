@@ -97,7 +97,6 @@ import {
   StockOutlined,
   StarOutlined,
   SettingOutlined,
-  RobotOutlined,
   ReadOutlined,
 } from '@ant-design/icons-vue'
 import { useLedgerStore } from '@/stores/ledgerStore'
@@ -114,7 +113,6 @@ const navItems = [
   { path: '/stock_view', label: '股票交易', icon: StockOutlined },
   { path: '/key_event_view', label: '关键事件', icon: StarOutlined },
   { path: '/diary_view', label: '日记管理', icon: ReadOutlined },
-  { path: '/ai_view', label: '智能助手', icon: RobotOutlined },
 ]
 
 const navigate = (path: string) => {
