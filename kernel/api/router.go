@@ -115,6 +115,9 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 			stockTrade.GET("/statistics", Handle(h.getStockStatistics))
 			stockTrade.GET("/name", Handle(h.getStockName))
 			stockTrade.POST("/trades", Handle(h.createStockTrade))
+			stockTrade.PUT("/trades/:id", Handle(h.updateStockTradeFill))
+			stockTrade.DELETE("/trade-orders/:orderId", Handle(h.deleteStockTradeOrder))
+			stockTrade.POST("/trades/impact", Handle(h.previewStockTradeChange))
 			stockTrade.POST("/reset", Handle(h.resetStockData))
 		}
 
@@ -138,29 +141,6 @@ func ServeAPI(ginServer *gin.Engine, h *Handlers) {
 
 			// Diary export
 			diary.POST("/export", Handle(h.exportDiary))
-		}
-
-		// AI Chat (requires workspace)
-		ai := v1.Group("/ai")
-		{
-			ai.POST("/chat", h.aiChat) // SSE — not wrapped in Handle()
-			ai.GET("/roles", Handle(h.listRoles))
-			ai.GET("/roles/tools", Handle(h.roleTools))
-			// 角色配置（系统提示词）与模型配置（API 连接）语义无关，拆分为两个接口
-			ai.GET("/config", Handle(h.getAiRoleConfig))
-			ai.PUT("/config", Handle(h.updateAiRoleConfig))
-			ai.GET("/model_config", Handle(h.getAiModelConfig))
-			ai.PUT("/model_config", Handle(h.updateAiModelConfig))
-			ai.POST("/model_config/test", Handle(h.testAiConnection))
-			ai.POST("/provider/fetch", Handle(h.fetchProvider))
-			ai.GET("/messages", Handle(h.listAiMessages))
-			ai.DELETE("/messages", Handle(h.clearAiMessages))
-			ai.GET("/conversations", Handle(h.listConversations))
-			ai.POST("/conversations", Handle(h.createConversation))
-			ai.PUT("/conversations/:id", Handle(h.updateConversation))
-			ai.DELETE("/conversations/:id", Handle(h.deleteConversation))
-			ai.GET("/quick-commands", Handle(h.listQuickCommands))
-			ai.PUT("/quick-commands", Handle(h.saveQuickCommands))
 		}
 	}
 }

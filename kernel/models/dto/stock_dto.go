@@ -118,6 +118,8 @@ type StockTradeDto struct {
 	StockName   string `json:"stockName"`
 	TradeType   string `json:"tradeType"`
 	RoundID     string `json:"roundId"`
+	OrderID     string `json:"orderId"`     // 所属委托ID（同委托多笔成交共用）
+	OrderSeq    int64  `json:"orderSeq"`    // 委托内第几笔成交（从 1 起）
 	Price       int64  `json:"price"`       // 成交价（分/股）
 	Lots        int64  `json:"lots"`        // 手数
 	Shares      int64  `json:"shares"`      // 股数
@@ -139,6 +141,8 @@ func FromStockTrade(t *models.StockTrade) StockTradeDto {
 		StockName:   t.StockName,
 		TradeType:   t.TradeType,
 		RoundID:     t.RoundID,
+		OrderID:     t.OrderID,
+		OrderSeq:    t.OrderSeq,
 		Price:       t.Price,
 		Lots:        t.Lots,
 		Shares:      t.Shares,
@@ -151,6 +155,25 @@ func FromStockTrade(t *models.StockTrade) StockTradeDto {
 		TradeTime:   t.TradeTime,
 		Remark:      t.Remark,
 	}
+}
+
+// StockTradeImpactRoundDto 编辑/删除交易后会失效的轮次（该轮复盘随之丢失）。
+type StockTradeImpactRoundDto struct {
+	RoundID   string `json:"roundId"`
+	StockCode string `json:"stockCode"`
+	StockName string `json:"stockName"`
+	RoundNo   int64  `json:"roundNo"`
+	Tag       string `json:"tag"`
+	HasReview bool   `json:"hasReview"`
+}
+
+// StockTradeImpactDto 交易编辑/删除前的影响预演结果。
+type StockTradeImpactDto struct {
+	StockCode     string                     `json:"stockCode"`
+	StockName     string                     `json:"stockName"`
+	PositionAfter int64                      `json:"positionAfter"` // 该股变动后的持仓股数
+	CashAfter     int64                      `json:"cashAfter"`     // 变动后的可用现金（分）
+	RemovedRounds []StockTradeImpactRoundDto `json:"removedRounds"` // 会因此失效的轮次
 }
 
 // StockTradeHistoryDto 股票交易历史集合（左栏列表项）。

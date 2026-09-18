@@ -287,6 +287,8 @@ export interface StockTrade {
     stockName: string;
     tradeType: 'open' | 'add' | 'reduce' | 'close';
     roundId: string;               // 所属轮次ID（清仓时挂接到交易历史）
+    orderId: string;              // 所属委托ID（同一委托的多笔成交共用）
+    orderSeq: number;             // 委托内第几笔成交（从 1 起）
     price: number;               // 成交价（分/股）
     lots: number;                // 手数
     shares: number;              // 股数
@@ -298,6 +300,37 @@ export interface StockTrade {
     realizedPnl: number | null;  // 卖出净盈亏（分），仅减仓/清仓非空
     tradeTime: number;           // 成交时间（Unix 秒）
     remark: string;
+}
+
+/**
+ * 成交明细录入项：一笔委托可包含多笔成交
+ */
+export interface StockTradeFillInput {
+    price: number;               // 成交价（元/股）
+    lots: number;                // 手数
+}
+
+/**
+ * 交易编辑/删除的影响预演结果
+ */
+export interface StockTradeImpact {
+    stockCode: string;
+    stockName: string;
+    positionAfter: number;       // 变动后该股持仓股数
+    cashAfter: number;           // 变动后可用现金（分）
+    removedRounds: StockTradeImpactRound[];
+}
+
+/**
+ * 会因编辑/删除而失效的轮次（其复盘随之丢失）
+ */
+export interface StockTradeImpactRound {
+    roundId: string;
+    stockCode: string;
+    stockName: string;
+    roundNo: number;
+    tag: string;
+    hasReview: boolean;
 }
 
 /**

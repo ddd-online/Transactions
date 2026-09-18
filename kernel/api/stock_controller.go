@@ -8,6 +8,7 @@ import (
 
 	"github.com/transactions/models"
 	"github.com/transactions/models/dto"
+	"github.com/transactions/service"
 )
 
 // GET /api/v1/stock/account/overview?ledger_id=
@@ -223,7 +224,12 @@ func (h *Handlers) getStockStatistics(c *gin.Context) (any, error) {
 	return h.StockSvc.GetStatisticsRange(ws(c), ledgerID, c.Query("start_month"), c.Query("end_month"), recent, c.Query("tag"))
 }
 
-// POST /api/v1/stock/trades  body: { ledger_id, stock_code, stock_name, trade_type, price(元), lots, trade_time(秒), remark, tag? }
+// POST /api/v1/stock/trades
+// body: { ledger_id, stock_code, stock_name, trade_type, trade_time(秒), remark, tag?,
+//
+//	fills: [{ price(元), lots }] }  —— fills 表示一笔委托的多笔成交明细；
+//
+// 兼容旧调用：只传 price/lots 时等价于单笔成交的委托。返回成交明细数组。
 func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
 	arg, ok := JsonArg(c)
 	if !ok {
@@ -239,14 +245,94 @@ func (h *Handlers) createStockTrade(c *gin.Context) (any, error) {
 	}
 	stockName, _ := arg["stock_name"].(string)
 	tradeType, _ := arg["trade_type"].(string)
-	priceYuan, _ := arg["price"].(float64)
-	lots, _ := arg["lots"].(float64)
 	tradeTime, _ := arg["trade_time"].(float64)
 	remark, _ := arg["remark"].(string)
 	tag, _ := arg["tag"].(string)
 
-	priceCents := int64(math.Round(priceYuan * 100))
-	return h.StockSvc.CreateTrade(ws(c), ledgerID, stockCode, stockName, tradeType, priceCents, int64(lots), int64(tradeTime), remark, tag)
+	fills, err := parseTradeFills(arg)
+	if err != nil {
+		return nil, err
+	}
+	return h.StockSvc.CreateTradeOrder(ws(c), ledgerID, stockCode, stockName, tradeType, fills, int64(tradeTime), remark, tag)
+}
+
+// parseTradeFills 解析成交明细：优先 fills 数组，缺省回退到单笔 price/lots。
+func parseTradeFills(arg map[string]any) ([]service.TradeFill, error) {
+	raw, ok := arg["fills"].([]any)
+	if ok && len(raw) > 0 {
+		fills := make([]service.TradeFill, 0, len(raw))
+		for i := range raw {
+			item, ok := raw[i].(map[string]any)
+			if !ok {
+				return nil, models.NewBadRequest("成交明细格式错误")
+			}
+			priceYuan, _ := item["price"].(float64)
+			lots, _ := item["lots"].(float64)
+			fills = append(fills, service.TradeFill{
+				PriceCents: int64(math.Round(priceYuan * 100)),
+				Lots:       int64(lots),
+			})
+		}
+		return fills, nil
+	}
+
+	priceYuan, _ := arg["price"].(float64)
+	lots, _ := arg["lots"].(float64)
+	return []service.TradeFill{{
+		PriceCents: int64(math.Round(priceYuan * 100)),
+		Lots:       int64(lots),
+	}}, nil
+}
+
+// PUT /api/v1/stock/trades/:id  body: { ledger_id, price(元), lots, trade_time(秒)? }
+// 编辑一笔成交：按当前费用设置重算所属委托的全部费用，并重放持仓、资金记录与轮次。
+func (h *Handlers) updateStockTradeFill(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	tradeID := c.Param("id")
+	priceYuan, _ := arg["price"].(float64)
+	lots, _ := arg["lots"].(float64)
+	tradeTime, _ := arg["trade_time"].(float64)
+	return h.StockSvc.UpdateTradeFill(ws(c), ledgerID, tradeID, int64(math.Round(priceYuan*100)), int64(lots), int64(tradeTime))
+}
+
+// DELETE /api/v1/stock/trade-orders/:orderId?ledger_id=  删除整笔委托（含全部成交明细）。
+func (h *Handlers) deleteStockTradeOrder(c *gin.Context) (any, error) {
+	ledgerID, err := requireLedgerID(c)
+	if err != nil {
+		return nil, err
+	}
+	if err := h.StockSvc.DeleteTradeOrder(ws(c), ledgerID, c.Param("orderId")); err != nil {
+		return nil, err
+	}
+	return true, nil
+}
+
+// POST /api/v1/stock/trades/impact
+// body: { ledger_id, action: update_trade|delete_order, trade_id?, order_id?, price?, lots?, trade_time? }
+// 预演编辑/删除的影响（不落库），供确认弹窗提示会失效的轮次与复盘。
+func (h *Handlers) previewStockTradeChange(c *gin.Context) (any, error) {
+	arg, ok := JsonArg(c)
+	if !ok {
+		return nil, models.NewBadRequest("parses request failed")
+	}
+	ledgerID, ok := arg["ledger_id"].(string)
+	if !ok || ledgerID == "" {
+		return nil, models.NewBadRequest("ledger_id is required")
+	}
+	action, _ := arg["action"].(string)
+	tradeID, _ := arg["trade_id"].(string)
+	orderID, _ := arg["order_id"].(string)
+	priceYuan, _ := arg["price"].(float64)
+	lots, _ := arg["lots"].(float64)
+	tradeTime, _ := arg["trade_time"].(float64)
+	return h.StockSvc.PreviewTradeChange(ws(c), ledgerID, action, tradeID, orderID, int64(math.Round(priceYuan*100)), int64(lots), int64(tradeTime))
 }
 
 // GET /api/v1/stock/name?stock_code=

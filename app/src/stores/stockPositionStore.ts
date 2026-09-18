@@ -2,8 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import {
   createStockTrade,
+  deleteStockTradeOrder,
   fetchStockPositions,
   fetchStockTrades,
+  previewStockTradeImpact,
+  updateStockTradeFill,
   updateStockPositionReview,
 } from '@/backend/api/stock'
 import { withErrorHandling } from '@/backend/errorHandler'
@@ -12,7 +15,7 @@ import { useLedgerStore } from '@/stores/ledgerStore'
 import { useStockAccountStore } from '@/stores/stockAccountStore'
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
 import { useStockStatisticsStore } from '@/stores/stockStatisticsStore'
-import type { StockPosition, StockTrade, StockTradeTag } from '@/types/transactions'
+import type { StockPosition, StockTrade, StockTradeFillInput, StockTradeImpact, StockTradeTag } from '@/types/transactions'
 
 export const useStockPositionStore = defineStore('stockPosition', () => {
   const ledgerStore = useLedgerStore()
@@ -125,12 +128,30 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     }
   }
 
+  // 交易写操作后的统一刷新：持仓、交易记录、账户总览/资金记录，
+  // 以及受影响的交易历史轮次与交易统计（编辑/删除会重算轮次）。
+  const reloadAfterMutation = async (stockCode: string, refreshHistory = false) => {
+    await loadPositions(stockCode)
+    // 清仓后该股不在持仓，切到该股查看最终交易历史；否则保持选中并刷新
+    if (stockCode && !positions.value.some((p) => p.stockCode === stockCode)) {
+      selectedCode.value = stockCode
+      await loadTrades(stockCode)
+    } else if (selectedCode.value) {
+      await loadTrades(selectedCode.value)
+    }
+    if (refreshHistory) {
+      await stockHistoryStore.reload(stockCode)
+      await stockStatisticsStore.loadStats()
+    }
+    // 同步刷新「我的账户」总览与资金变化记录（一笔委托产生一条资金记录）
+    await stockAccountStore.reloadAll()
+  }
+
   const recordTrade = async (input: {
     stockCode: string
     stockName: string
     tradeType: 'open' | 'add' | 'reduce' | 'close'
-    price: number
-    lots: number
+    fills: StockTradeFillInput[]
     tradeTime: number
     remark: string
     tag: StockTradeTag
@@ -145,8 +166,7 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
           input.stockCode,
           input.stockName,
           input.tradeType,
-          input.price,
-          input.lots,
+          input.fills,
           input.tradeTime,
           input.remark,
           input.tag
@@ -154,25 +174,75 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
         { errorPrefix: '记录交易失败', rethrow: true }
       )
       NotificationUtil.success('交易已记录')
-      await loadPositions(input.stockCode)
-      // 清仓后该股不在持仓，切到该股查看最终交易历史；否则保持选中并刷新
-      if (input.stockCode && !positions.value.some((p) => p.stockCode === input.stockCode)) {
-        selectedCode.value = input.stockCode
-        await loadTrades(input.stockCode)
-        // 清仓会生成一笔新的交易历史轮次，同步刷新历史页与交易统计
-        await stockHistoryStore.reload(input.stockCode)
-        await stockStatisticsStore.loadStats()
-      } else if (selectedCode.value) {
-        await loadTrades(selectedCode.value)
-      }
-      // 同步刷新「我的账户」总览与资金变化记录（每笔交易都会产生资金记录）
-      await stockAccountStore.reloadAll()
+      await reloadAfterMutation(input.stockCode, true)
       return true
     } catch {
       return false
     } finally {
       mutating.value = false
     }
+  }
+
+  // 编辑一笔成交：所属委托费用与持仓、资金记录、轮次由后端重算
+  const updateTradeFill = async (
+    tradeId: string,
+    price: number,
+    lots: number,
+    tradeTime: number,
+    stockCode: string
+  ): Promise<boolean> => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId) return false
+    mutating.value = true
+    try {
+      await withErrorHandling(
+        () => updateStockTradeFill(ledgerId, tradeId, price, lots, tradeTime),
+        { errorPrefix: '保存成交失败', rethrow: true }
+      )
+      NotificationUtil.success('成交已更新')
+      await reloadAfterMutation(stockCode, true)
+      return true
+    } catch {
+      return false
+    } finally {
+      mutating.value = false
+    }
+  }
+
+  // 删除整笔委托（含全部成交明细）后重算持仓、资金记录与轮次
+  const deleteTradeOrder = async (orderId: string, stockCode: string): Promise<boolean> => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId) return false
+    mutating.value = true
+    try {
+      await withErrorHandling(
+        () => deleteStockTradeOrder(ledgerId, orderId),
+        { errorPrefix: '删除委托失败', rethrow: true }
+      )
+      NotificationUtil.success('委托已删除')
+      await reloadAfterMutation(stockCode, true)
+      return true
+    } catch {
+      return false
+    } finally {
+      mutating.value = false
+    }
+  }
+
+  const previewTradeImpact = async (payload: {
+    action: 'update_trade' | 'delete_order'
+    tradeId?: string
+    orderId?: string
+    price?: number
+    lots?: number
+    tradeTime?: number
+  }): Promise<StockTradeImpact | null> => {
+    const ledgerId = currentLedgerId()
+    if (!ledgerId) return null
+    return withErrorHandling(
+      () => previewStockTradeImpact(ledgerId, payload),
+      { errorPrefix: '预演交易影响失败', fallback: null as StockTradeImpact | null }
+    )
   }
 
   watch(
@@ -200,6 +270,9 @@ export const useStockPositionStore = defineStore('stockPosition', () => {
     refreshQuotes,
     reloadAll,
     recordTrade,
+    updateTradeFill,
+    deleteTradeOrder,
+    previewTradeImpact,
     savePositionReview,
   }
 })

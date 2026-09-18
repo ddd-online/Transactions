@@ -84,5 +84,12 @@ SET ledger_id = COALESCE((
     LIMIT 1
 ), '')`,
 		},
+		{
+			// StockTrade 引入「委托」维度：一笔委托可包含多笔成交明细。
+			// 存量交易没有委托信息，按「一成交 = 一委托」回填，保证每条历史记录
+			// 都能被编辑/删除，且费用口径与改造前完全一致。
+			ID:  "20260918_stock_trade_backfill_order_id",
+			SQL: "UPDATE tbl_billadm_stock_trade SET order_id = id, order_seq = 1 WHERE order_id = '' OR order_id IS NULL",
+		},
 	}
 }

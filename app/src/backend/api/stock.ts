@@ -1,5 +1,5 @@
 import api from "@/backend/api/api-client";
-import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockStatistics, StockTrade, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary, StockTradeTag, StockTradeTagSetting } from "@/types/transactions";
+import type { StockFeeSetting, StockFundRecordPage, StockNameResult, StockOverview, StockPosition, StockStatistics, StockTrade, StockTradeFillInput, StockTradeHistory, StockTradeHistoryDetail, StockTradeHistorySummary, StockTradeImpact, StockTradeTag, StockTradeTagSetting } from "@/types/transactions";
 
 export async function fetchStockOverview(ledgerId: string): Promise<StockOverview> {
     return api.get<StockOverview>(`/v1/stock/account/overview?ledger_id=${encodeURIComponent(ledgerId)}`, '查询股票账户总览');
@@ -157,28 +157,77 @@ export async function fetchStockName(stockCode: string): Promise<string> {
     return data?.stockName ?? '';
 }
 
+/**
+ * 记录一笔委托：fills 为成交明细（可多笔），费用由后端按委托成交总额计算后分摊。
+ * 返回该委托的成交明细数组（单笔成交时长度为 1）。
+ */
 export async function createStockTrade(
     ledgerId: string,
     stockCode: string,
     stockName: string,
     tradeType: string,
-    price: number,
-    lots: number,
+    fills: StockTradeFillInput[],
     tradeTime: number,
     remark: string,
     tag = '分析'
-): Promise<StockTrade> {
-    return api.post<StockTrade>('/v1/stock/trades', {
+): Promise<StockTrade[]> {
+    return api.post<StockTrade[]>('/v1/stock/trades', {
         ledger_id: ledgerId,
         stock_code: stockCode,
         stock_name: stockName,
         trade_type: tradeType,
-        price,
-        lots,
+        fills: fills.map((fill) => ({ price: fill.price, lots: fill.lots })),
         trade_time: tradeTime,
         remark,
         tag,
     }, '记录交易');
+}
+
+/** 编辑一笔成交：按当前费用设置重算所属委托的费用，并重算持仓、资金记录与轮次 */
+export async function updateStockTradeFill(
+    ledgerId: string,
+    tradeId: string,
+    price: number,
+    lots: number,
+    tradeTime: number
+): Promise<StockTrade> {
+    return api.put<StockTrade>(`/v1/stock/trades/${encodeURIComponent(tradeId)}`, {
+        ledger_id: ledgerId,
+        price,
+        lots,
+        trade_time: tradeTime,
+    }, '保存成交');
+}
+
+/** 删除整笔委托（含全部成交明细） */
+export async function deleteStockTradeOrder(ledgerId: string, orderId: string): Promise<boolean> {
+    return api.delete<boolean>(
+        `/v1/stock/trade-orders/${encodeURIComponent(orderId)}?ledger_id=${encodeURIComponent(ledgerId)}`,
+        '删除委托'
+    );
+}
+
+/** 预演编辑/删除的影响（不落库）：变动后的持仓、现金与会失效的轮次 */
+export async function previewStockTradeImpact(
+    ledgerId: string,
+    payload: {
+        action: 'update_trade' | 'delete_order';
+        tradeId?: string;
+        orderId?: string;
+        price?: number;
+        lots?: number;
+        tradeTime?: number;
+    }
+): Promise<StockTradeImpact> {
+    return api.post<StockTradeImpact>('/v1/stock/trades/impact', {
+        ledger_id: ledgerId,
+        action: payload.action,
+        trade_id: payload.tradeId ?? '',
+        order_id: payload.orderId ?? '',
+        price: payload.price ?? 0,
+        lots: payload.lots ?? 0,
+        trade_time: payload.tradeTime ?? 0,
+    }, '预演交易影响');
 }
 
 export async function resetStockData(ledgerId: string): Promise<boolean> {

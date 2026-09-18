@@ -3,8 +3,8 @@ package api_test
 import (
 	"testing"
 
-	"github.com/transactions/api"
 	"github.com/gin-gonic/gin"
+	"github.com/transactions/api"
 )
 
 // TestServeAPIRegistersDiaryExport 冒烟测试：路由注册本身不应 panic（gin 对
@@ -34,4 +34,30 @@ func TestServeAPIRegistersHealth(t *testing.T) {
 		}
 	}
 	t.Fatal("未注册 GET /api/v1/health")
+}
+
+// TestServeAPIRegistersStockTradeRoutes 冒烟测试：委托多笔成交相关的编辑/删除/预演路由必须注册
+// （gin 对同方法下通配符与静态路径冲突会在注册时 panic）。
+func TestServeAPIRegistersStockTradeRoutes(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	api.ServeAPI(r, &api.Handlers{})
+
+	want := map[string]bool{
+		"POST /api/v1/stock/trades":                  false,
+		"PUT /api/v1/stock/trades/:id":               false,
+		"DELETE /api/v1/stock/trade-orders/:orderId": false,
+		"POST /api/v1/stock/trades/impact":           false,
+	}
+	for _, route := range r.Routes() {
+		key := route.Method + " " + route.Path
+		if _, ok := want[key]; ok {
+			want[key] = true
+		}
+	}
+	for key, found := range want {
+		if !found {
+			t.Fatalf("未注册路由 %s", key)
+		}
+	}
 }

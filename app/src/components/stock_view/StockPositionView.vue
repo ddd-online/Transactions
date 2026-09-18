@@ -150,8 +150,9 @@
           </div>
 
           <div class="trade-table-wrap">
-            <a-table :columns="columns" :data-source="trades" row-key="id"
+            <a-table :columns="columns" :data-source="tradeRows" row-key="key"
               :pagination="false" :loading="tradesLoading" size="middle" class="trade-table"
+              :expanded-row-keys="expandedRowKeys" @expanded-rows-change="handleExpandedChange"
               :locale="{ emptyText: currentPosition ? '暂无交易历史，点击「建仓」开始' : '暂无交易历史' }">
               <template #bodyCell="{ column, record }">
                 <template v-if="column.dataIndex === 'tradeTime'">
@@ -163,10 +164,16 @@
                   </a-tag>
                 </template>
                 <template v-else-if="column.dataIndex === 'price'">
-                  <span class="cell-amount">{{ centsToYuan(record.price) }}</span>
+                  <span class="cell-amount">
+                    <template v-if="record.isGroup">均价 {{ centsToYuan(record.price) }}</template>
+                    <template v-else>{{ centsToYuan(record.price) }}</template>
+                  </span>
                 </template>
                 <template v-else-if="column.dataIndex === 'lots'">
-                  <span class="cell-lots">{{ record.lots }}手</span>
+                  <span class="cell-lots">
+                    {{ record.lots }}手
+                    <span v-if="record.isGroup" class="cell-lots-note">{{ record.orderTrades.length }} 笔</span>
+                  </span>
                 </template>
                 <template v-else-if="column.dataIndex === 'amount'">
                   <span class="cell-amount">{{ centsToYuan(record.amount) }}</span>
@@ -187,9 +194,16 @@
                   </span>
                 </template>
                 <template v-else-if="column.dataIndex === 'change'">
-                  <span class="cell-change amount" :class="pnlClass(changeOf(record))">
-                    {{ signedYuan(changeOf(record)) }}
+                  <span v-if="record.change === null" class="cell-change">—</span>
+                  <span v-else class="cell-change amount" :class="pnlClass(record.change)">
+                    {{ signedYuan(record.change) }}
                   </span>
+                </template>
+                <template v-else-if="column.dataIndex === 'action'">
+                  <div class="cell-actions">
+                    <a-button v-if="!record.isGroup" type="link" size="small" @click="handleEditTrade(record)">编辑</a-button>
+                    <a-button v-if="!record.isChild" type="link" size="small" danger @click="handleDeleteOrder(record)">删除</a-button>
+                  </div>
                 </template>
               </template>
             </a-table>
@@ -201,10 +215,10 @@
       </div>
     </div>
 
-    <!-- 记录交易弹窗：交易类型由入口按钮决定 -->
+    <!-- 记录交易弹窗：交易类型由入口按钮决定，一笔委托可包含多笔成交明细 -->
     <a-modal v-model:open="tradeModal.open" :title="`记录${tradeTypeLabel(tradeModal.tradeType)}`"
       :ok-text="tradeTypeLabel(tradeModal.tradeType)" cancel-text="取消" centered
-      :width="480" :confirm-loading="mutating" @ok="handleTradeSubmit">
+      :width="560" :confirm-loading="mutating" @ok="handleTradeSubmit">
       <a-form layout="vertical">
         <div class="trade-form-row">
           <a-form-item label="股票名称" required>
@@ -215,15 +229,43 @@
               @blur="handleStockCodeBlur" />
           </a-form-item>
         </div>
-        <div class="trade-form-row">
-          <a-form-item label="成交价（元/股）" required>
-            <a-input v-model:value="tradeModal.price" />
-          </a-form-item>
-          <a-form-item :label="lotsLabel" required>
-            <a-input v-model:value="tradeModal.lots" :disabled="tradeModal.tradeType === 'close'" />
-          </a-form-item>
+
+        <div class="fill-block">
+          <div class="fill-block-head">
+            <span class="fill-block-title">成交明细</span>
+            <a-button type="link" size="small" @click="addFillRow">+ 添加一笔成交</a-button>
+          </div>
+          <div v-for="(fill, index) in tradeModal.fills" :key="fill.key" class="fill-row">
+            <a-input v-model:value="fill.price" placeholder="成交价（元/股）" />
+            <a-input v-model:value="fill.lots" :placeholder="lotsLabel" />
+            <span class="fill-row-amount amount">{{ fillAmountText(fill) }}</span>
+            <a-button v-if="tradeModal.fills.length > 1" type="text" danger size="small"
+              @click="removeFillRow(index)">删除</a-button>
+            <span v-else class="fill-row-holder" />
+          </div>
+          <div class="fill-summary">
+            <div class="fill-summary-row">
+              <span>合计</span>
+              <span class="fill-summary-value">
+                {{ validFills.length }} 笔 · {{ totalLots }} 手 ·
+                <span class="amount">¥{{ centsToYuan(totalAmount) }}</span>
+              </span>
+            </div>
+            <div class="fill-summary-row">
+              <span>预估费用</span>
+              <span class="fill-summary-value amount">{{ feeText }}</span>
+            </div>
+            <p v-if="validFills.length > 1" class="fill-summary-hint">
+              佣金按委托收取一次，不足 ¥{{ centsToYuan(minCommission) }} 按 ¥{{ centsToYuan(minCommission) }} 计
+            </p>
+            <div class="fill-summary-row fill-summary-row--net">
+              <span>{{ isBuyTrade ? '预计支出' : '预计到手' }}</span>
+              <span class="fill-summary-value amount">¥{{ centsToYuan(netAmount) }}</span>
+            </div>
+          </div>
         </div>
-        <a-form-item label="成交时间" required>
+
+        <a-form-item label="委托时间" required>
           <a-date-picker v-model:value="tradeModal.tradeTime" style="width: 100%" />
         </a-form-item>
         <a-form-item v-if="showTagField" label="交易标签">
@@ -231,6 +273,8 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <StockTradeEditModal ref="tradeEditorRef" />
   </div>
 </template>
 
@@ -240,18 +284,22 @@ import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
 import { CaretRightOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { useStockPositionStore } from '@/stores/stockPositionStore'
+import { useStockAccountStore } from '@/stores/stockAccountStore'
 import { useStockTagStore } from '@/stores/stockTagStore'
 import { fetchStockName } from '@/backend/api/stock'
 import { tryOrFallback } from '@/backend/errorHandler'
 import { centsToYuan } from '@/backend/functions'
+import { computeOrderFee, groupTradesByOrder, isShanghaiCode } from '@/backend/stockFee'
 import { StockRoundReviewTemplate } from '@/backend/constant'
-import type { StockPosition, StockTradeTag } from '@/types/transactions'
+import StockTradeEditModal from '@/components/stock_view/StockTradeEditModal.vue'
+import type { StockPosition, StockTrade, StockTradeTag } from '@/types/transactions'
 import type { ColumnsType } from 'ant-design-vue/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
 const stockStore = useStockPositionStore()
 const stockTagStore = useStockTagStore()
+const accountStore = useStockAccountStore()
 const { positions, positionsLoading, selectedCode, trades, tradesLoading, mutating, quotesRefreshing } = storeToRefs(stockStore)
 const { reviewSaving } = storeToRefs(stockStore)
 const { tags: tradeTags, defaultTag } = storeToRefs(stockTagStore)
@@ -319,8 +367,8 @@ const marketValueOf = (p: StockPosition): number => (hasQuote(p) ? quotePriceOf(
 const signedPercent = (rate: number | null): string =>
   rate === null ? '—' : `${rate >= 0 ? '+' : ''}${rate.toFixed(2)}%`
 // 交易历史金额：买入现金流出 = -(成交金额 + 费用)，卖出现金流入 = 成交金额 - 费用
-const changeOf = (t: TradeCell) =>
-  isBuy(t.tradeType) ? -(t.amount + t.fee) : t.amount - t.fee
+const changeOfOrder = (isBuyOrder: boolean, amount: number, fee: number) =>
+  isBuyOrder ? -(amount + fee) : amount - fee
 
 // ---------- 本轮复盘（持仓期间先写，清仓后归档到本轮次） ----------
 const isReviewOpen = ref(true)
@@ -364,31 +412,187 @@ watch(
   }
 )
 
-// ---------- 交易记录表格 ----------
+// ---------- 交易记录表格（按委托分组，展开可见每笔成交） ----------
+interface TradeRow {
+  key: string
+  isGroup: boolean
+  isChild: boolean
+  /** 同一委托的全部成交明细（编辑与删除的操作对象） */
+  orderTrades: StockTrade[]
+  trades: StockTrade[]
+  tradeType: string
+  price: number
+  lots: number
+  amount: number
+  fee: number
+  commission: number
+  stampDuty: number
+  transferFee: number
+  tradeTime: number
+  /** 资金变动（分）；明细行不参与汇总，固定为 null */
+  change: number | null
+  children?: TradeRow[]
+}
+
+const buildChildRow = (trade: StockTrade, orderTrades: StockTrade[]): TradeRow => ({
+  key: trade.id,
+  isGroup: false,
+  isChild: true,
+  orderTrades,
+  trades: [trade],
+  tradeType: trade.tradeType,
+  price: trade.price,
+  lots: trade.lots,
+  amount: trade.amount,
+  fee: trade.fee,
+  commission: trade.commission,
+  stampDuty: trade.stampDuty,
+  transferFee: trade.transferFee,
+  tradeTime: trade.tradeTime,
+  change: null,
+})
+
+const tradeRows = computed<TradeRow[]>(() =>
+  groupTradesByOrder(trades.value).map((group) => {
+    const change = changeOfOrder(group.isBuy, group.amount, group.fee)
+    const base = {
+      orderTrades: group.trades,
+      tradeType: group.tradeType,
+      price: group.price,
+      lots: group.lots,
+      amount: group.amount,
+      fee: group.fee,
+      commission: group.commission,
+      stampDuty: group.stampDuty,
+      transferFee: group.transferFee,
+      tradeTime: group.tradeTime,
+      change,
+    }
+    // 单笔委托直接平铺一行，避免多一层无意义的层级
+    if (group.trades.length === 1) {
+      const trade = group.trades[0]!
+      return {
+        ...base,
+        key: trade.id,
+        isGroup: false,
+        isChild: false,
+        trades: [trade],
+        price: trade.price,
+      }
+    }
+    return {
+      ...base,
+      key: `order-${group.orderId}`,
+      isGroup: true,
+      isChild: false,
+      trades: group.trades,
+      children: group.trades.map((trade) => buildChildRow(trade, group.trades)),
+    }
+  })
+)
+
 const columns: ColumnsType = [
   { title: '时间', dataIndex: 'tradeTime', width: 150, align: 'center' },
   { title: '类型', dataIndex: 'tradeType', width: 90, align: 'center' },
-  { title: '成交价', dataIndex: 'price', width: 100, align: 'right' },
-  { title: '手数', dataIndex: 'lots', width: 80, align: 'center' },
+  { title: '成交价', dataIndex: 'price', width: 110, align: 'right' },
+  { title: '手数', dataIndex: 'lots', width: 90, align: 'center' },
   { title: '成交金额', dataIndex: 'amount', width: 120, align: 'right' },
   { title: '手续费', dataIndex: 'fee', minWidth: 220 },
   { title: '资金变动', dataIndex: 'change', width: 120, align: 'right' },
+  { title: '操作', dataIndex: 'action', width: 110, align: 'center' },
 ]
 
-// ---------- 记录交易 ----------
+// 委托行默认展开，手动收起后记住收起状态（新增/刷新数据时新委托仍默认展开）
+const collapsedOrderKeys = ref<Set<string>>(new Set())
+const expandedRowKeys = computed(() =>
+  tradeRows.value
+    .filter((row) => row.isGroup && !collapsedOrderKeys.value.has(row.key))
+    .map((row) => row.key)
+)
+const handleExpandedChange = (keys: (string | number)[]) => {
+  const expanded = new Set(keys.map((key) => String(key)))
+  collapsedOrderKeys.value = new Set(
+    tradeRows.value.filter((row) => row.isGroup && !expanded.has(row.key)).map((row) => row.key)
+  )
+}
+
+// ---------- 成交编辑 / 委托删除 ----------
+const tradeEditorRef = ref<InstanceType<typeof StockTradeEditModal> | null>(null)
+
+// 表格 bodyCell 的 record 为宽松类型，这里统一收敛为 TradeRow
+const handleEditTrade = (record: Record<string, any>) => {
+  const row = record as TradeRow
+  tradeEditorRef.value?.openEdit(row.trades[0]!, row.orderTrades)
+}
+
+const handleDeleteOrder = (record: Record<string, any>) => {
+  const row = record as TradeRow
+  tradeEditorRef.value?.confirmDelete(row.orderTrades)
+}
+
+// ---------- 记录交易（一笔委托可含多笔成交） ----------
 type TradeType = 'open' | 'add' | 'reduce' | 'close'
+
+interface FillRow {
+  key: number
+  price: string
+  lots: string
+}
+
+let fillKeySeed = 0
+const createFillRow = (lots = ''): FillRow => ({ key: ++fillKeySeed, price: '', lots })
 
 const tradeModal = reactive({
   open: false,
   tradeType: 'open' as TradeType,
   stockName: '',
   stockCode: '',
-  price: '',
-  lots: '',
+  fills: [createFillRow()] as FillRow[],
   tradeTime: dayjs() as Dayjs,
   availableLots: 0,
   tag: '分析' as StockTradeTag,
 })
+
+// 已填写的成交明细（用于合计、预估费用与提交）
+const validFills = computed(() =>
+  tradeModal.fills
+    .map((fill) => ({ price: parseFloat(fill.price), lots: parseInt(fill.lots, 10) }))
+    .filter(
+      (fill) =>
+        !Number.isNaN(fill.price) && fill.price > 0 && !Number.isNaN(fill.lots) && fill.lots > 0
+    )
+)
+const totalLots = computed(() => validFills.value.reduce((acc, fill) => acc + fill.lots, 0))
+const totalAmount = computed(() =>
+  validFills.value.reduce((acc, fill) => acc + Math.round(fill.price * 100) * fill.lots * 100, 0)
+)
+const isBuyTrade = computed(() => tradeModal.tradeType === 'open' || tradeModal.tradeType === 'add')
+const minCommission = computed(() => accountStore.feeSettings?.minCommission ?? 0)
+const orderFee = computed(() => {
+  const setting = accountStore.feeSettings
+  if (!setting || totalAmount.value <= 0) return null
+  return computeOrderFee(totalAmount.value, isShanghaiCode(tradeModal.stockCode.trim()), setting, isBuyTrade.value)
+})
+// 预估费用与到手/支出：佣金按委托收取一次，多笔成交不重复计最低佣金
+const feeText = computed(() => {
+  const fee = orderFee.value
+  if (!fee) return '—'
+  const parts = [`佣金 ¥${centsToYuan(fee.commission)}`]
+  if (!isBuyTrade.value) parts.push(`印花税 ¥${centsToYuan(fee.stampDuty)}`)
+  parts.push(`过户费 ¥${centsToYuan(fee.transferFee)}`)
+  return `${parts.join(' + ')} = ¥${centsToYuan(fee.total)}`
+})
+const netAmount = computed(() => {
+  const fee = orderFee.value
+  if (!fee) return 0
+  return isBuyTrade.value ? totalAmount.value + fee.total : totalAmount.value - fee.total
+})
+const fillAmountText = (fill: FillRow) => {
+  const price = parseFloat(fill.price)
+  const lots = parseInt(fill.lots, 10)
+  if (Number.isNaN(price) || price <= 0 || Number.isNaN(lots) || lots <= 0) return '—'
+  return `¥${centsToYuan(Math.round(price * 100) * lots * 100)}`
+}
 
 // 手数列标签：加仓/减仓展示可用手数，清仓展示全仓手数
 const lotsLabel = computed(() => {
@@ -402,9 +606,17 @@ const lotsLabel = computed(() => {
 const showTagField = computed(() => {
   if (tradeModal.tradeType === 'close') return true
   if (tradeModal.tradeType !== 'reduce' || tradeModal.availableLots <= 0) return false
-  const lots = parseInt(tradeModal.lots, 10)
-  return !Number.isNaN(lots) && lots > 0 && lots === tradeModal.availableLots
+  return totalLots.value > 0 && totalLots.value === tradeModal.availableLots
 })
+
+const addFillRow = () => {
+  tradeModal.fills.push(createFillRow())
+}
+
+const removeFillRow = (index: number) => {
+  if (tradeModal.fills.length <= 1) return
+  tradeModal.fills.splice(index, 1)
+}
 
 const resetTradeModal = (tradeType: TradeType, position: StockPosition | null) => {
   tradeModal.tradeType = tradeType
@@ -412,15 +624,17 @@ const resetTradeModal = (tradeType: TradeType, position: StockPosition | null) =
   const prefill = tradeType === 'open' ? null : position
   tradeModal.stockName = prefill?.stockName ?? ''
   tradeModal.stockCode = prefill?.stockCode ?? ''
-  tradeModal.price = ''
-  tradeModal.lots = tradeType === 'close' && prefill ? String(Math.floor(prefill.quantity / 100)) : ''
   tradeModal.availableLots = prefill ? Math.floor(prefill.quantity / 100) : 0
+  tradeModal.fills = [
+    createFillRow(tradeType === 'close' && tradeModal.availableLots > 0 ? String(tradeModal.availableLots) : ''),
+  ]
   tradeModal.tradeTime = dayjs()
   tradeModal.tag = defaultTag.value
 }
 
 const openTradeModal = (tradeType: TradeType, position?: StockPosition) => {
   resetTradeModal(tradeType, position ?? currentPosition.value ?? null)
+  if (!accountStore.feeSettings) accountStore.loadFeeSettings()
   tradeModal.open = true
 }
 
@@ -436,8 +650,6 @@ const handleStockCodeBlur = async () => {
 }
 
 const handleTradeSubmit = async () => {
-  const price = parseFloat(tradeModal.price)
-  const lots = parseInt(tradeModal.lots, 10)
   if (!tradeModal.stockName.trim()) {
     message.error('请输入股票名称')
     return
@@ -446,14 +658,11 @@ const handleTradeSubmit = async () => {
     message.error('请输入有效的沪深股票代码（沪 60/68、深 00/30 开头）')
     return
   }
-  if (isNaN(price) || price <= 0) {
-    message.error('请输入有效的股价')
+  if (validFills.value.length !== tradeModal.fills.length) {
+    message.error('请填写完整的成交价与手数')
     return
   }
-  if (isNaN(lots) || lots <= 0) {
-    message.error('请输入有效手数')
-    return
-  }
+  const lots = totalLots.value
   if (tradeModal.tradeType === 'reduce' && lots > tradeModal.availableLots) {
     message.error(`减仓手数不能超过可用手数（${tradeModal.availableLots} 手）`)
     return
@@ -467,8 +676,7 @@ const handleTradeSubmit = async () => {
     stockCode: tradeModal.stockCode.trim(),
     stockName: tradeModal.stockName.trim(),
     tradeType: submitType,
-    price,
-    lots,
+    fills: validFills.value.map((fill) => ({ price: fill.price, lots: fill.lots })),
     tradeTime: tradeModal.tradeTime.unix(),
     remark: '',
     tag: submitType === 'close' ? tradeModal.tag : '',
@@ -997,6 +1205,19 @@ watch(
   white-space: nowrap;
 }
 
+.cell-lots-note {
+  margin-left: 6px;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.cell-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
 .cell-fee {
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
@@ -1025,6 +1246,74 @@ watch(
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--transactions-space-md);
+}
+
+/* ========== 弹窗：成交明细（一笔委托可多笔成交） ========== */
+.fill-block {
+  margin-bottom: var(--transactions-space-md);
+}
+
+.fill-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--transactions-space-xs);
+}
+
+.fill-block-title {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.fill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 110px 56px;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.fill-row-amount {
+  text-align: right;
+  color: var(--transactions-color-text-secondary);
+}
+
+.fill-row-holder {
+  display: block;
+}
+
+.fill-summary {
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border: 1px solid var(--transactions-color-border);
+  border-radius: 8px;
+  background-color: var(--transactions-color-minor-background);
+}
+
+.fill-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-secondary);
+}
+
+.fill-summary-value {
+  color: var(--transactions-color-text-major);
+}
+
+.fill-summary-hint {
+  margin: var(--transactions-space-2xs) 0 0;
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.fill-summary-row--net {
+  margin-top: var(--transactions-space-xs);
+  padding-top: var(--transactions-space-xs);
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 @media (max-width: 1080px) {

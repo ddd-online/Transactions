@@ -34,18 +34,32 @@ type StockDao interface {
 	CreateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
 	ListTradesAsc(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTrade, error)
+	ListAllTradesAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error)
+	GetTrade(ws *workspace.Workspace, tradeID string) (*models.StockTrade, error)
+	ListTradesByOrder(ws *workspace.Workspace, ledgerID string, orderID string) ([]models.StockTrade, error)
+	DeleteTradesByOrder(ws *workspace.Workspace, ledgerID string, orderID string) error
+	DeleteTradesByIDs(ws *workspace.Workspace, ids []string) error
+	UpdateTrade(ws *workspace.Workspace, trade *models.StockTrade) error
+	UpdateTradeSettlement(ws *workspace.Workspace, tradeID string, roundID string, realizedPnl *int64) error
 	GetTradeHistory(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockTradeHistory, error)
 	CreateTradeHistory(ws *workspace.Workspace, history *models.StockTradeHistory) error
 	UpdateTradeHistoryName(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) error
 	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]models.StockTradeHistory, error)
+	DeleteTradeHistoriesByLedger(ws *workspace.Workspace, ledgerID string) error
 	ListTradeStocks(ws *workspace.Workspace, ledgerID string) ([]string, error)
 	CountTradeRounds(ws *workspace.Workspace, historyID string) (int64, error)
 	CreateTradeRound(ws *workspace.Workspace, round *models.StockTradeRound) error
 	ListTradeRoundsByStock(ws *workspace.Workspace, ledgerID string, stockCode string) ([]models.StockTradeRound, error)
+	ListTradeRounds(ws *workspace.Workspace, ledgerID string) ([]models.StockTradeRound, error)
+	DeleteTradeRound(ws *workspace.Workspace, roundID string) error
+	UpdateTradeRoundDerived(ws *workspace.Workspace, roundID string, historyID string, openedAt int64, closedAt int64) error
 	GetTradeRound(ws *workspace.Workspace, roundID string) (*models.StockTradeRound, error)
 	UpdateTradeRoundReview(ws *workspace.Workspace, roundID string, review string) error
 	UpdateTradeRoundTag(ws *workspace.Workspace, roundID string, tag string) error
 	ListTradesByRound(ws *workspace.Workspace, roundID string) ([]models.StockTrade, error)
+	ListFundRecordsInInsertOrder(ws *workspace.Workspace, ledgerID string) ([]models.StockFundRecord, error)
+	DeleteTradeFundRecords(ws *workspace.Workspace, ledgerID string) error
+	UpdateFundRecordCashBalance(ws *workspace.Workspace, id string, cashBalance int64) error
 	MinUnattachedTradeTime(ws *workspace.Workspace, ledgerID string, stockCode string) (int64, error)
 	AttachUnattachedTrades(ws *workspace.Workspace, ledgerID string, stockCode string, roundID string) error
 	UpdateTradesRoundID(ws *workspace.Workspace, roundID string, ids []string) error
@@ -245,6 +259,72 @@ func (d *stockDaoImpl) ListTradesAsc(ws *workspace.Workspace, ledgerID string, s
 	return trades, err
 }
 
+// ListAllTradesAsc 按成交时间升序返回整个账本的全部交易（重放重建使用）。
+// 同一委托内的多笔成交按 order_seq 排序，保证重放顺序确定。
+func (d *stockDaoImpl) ListAllTradesAsc(ws *workspace.Workspace, ledgerID string) ([]models.StockTrade, error) {
+	trades := make([]models.StockTrade, 0)
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
+		Order("trade_time ASC, created_at ASC, order_seq ASC, id ASC").
+		Find(&trades).Error
+	return trades, err
+}
+
+func (d *stockDaoImpl) GetTrade(ws *workspace.Workspace, tradeID string) (*models.StockTrade, error) {
+	var trade models.StockTrade
+	if err := ws.GetDb().Where("id = ?", tradeID).First(&trade).Error; err != nil {
+		return nil, err
+	}
+	return &trade, nil
+}
+
+// ListTradesByOrder 返回同一委托下的全部成交明细，按 order_seq 升序。
+func (d *stockDaoImpl) ListTradesByOrder(ws *workspace.Workspace, ledgerID string, orderID string) ([]models.StockTrade, error) {
+	trades := make([]models.StockTrade, 0)
+	err := ws.GetDb().Where("ledger_id = ? AND order_id = ?", ledgerID, orderID).
+		Order("order_seq ASC, created_at ASC, id ASC").
+		Find(&trades).Error
+	return trades, err
+}
+
+func (d *stockDaoImpl) DeleteTradesByOrder(ws *workspace.Workspace, ledgerID string, orderID string) error {
+	return ws.GetDb().Where("ledger_id = ? AND order_id = ?", ledgerID, orderID).
+		Delete(&models.StockTrade{}).Error
+}
+
+func (d *stockDaoImpl) DeleteTradesByIDs(ws *workspace.Workspace, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return ws.GetDb().Where("id IN ?", ids).Delete(&models.StockTrade{}).Error
+}
+
+func (d *stockDaoImpl) UpdateTrade(ws *workspace.Workspace, trade *models.StockTrade) error {
+	return ws.GetDb().Model(&models.StockTrade{}).Where("id = ?", trade.ID).Updates(map[string]any{
+		"trade_type":   trade.TradeType,
+		"round_id":     trade.RoundID,
+		"order_id":     trade.OrderID,
+		"order_seq":    trade.OrderSeq,
+		"price":        trade.Price,
+		"lots":         trade.Lots,
+		"shares":       trade.Shares,
+		"amount":       trade.Amount,
+		"fee":          trade.Fee,
+		"commission":   trade.Commission,
+		"stamp_duty":   trade.StampDuty,
+		"transfer_fee": trade.TransferFee,
+		"realized_pnl": trade.RealizedPnl,
+		"trade_time":   trade.TradeTime,
+	}).Error
+}
+
+// UpdateTradeSettlement 只回写重放派生字段（轮次挂接与已实现盈亏），不触碰成交本身。
+func (d *stockDaoImpl) UpdateTradeSettlement(ws *workspace.Workspace, tradeID string, roundID string, realizedPnl *int64) error {
+	return ws.GetDb().Model(&models.StockTrade{}).Where("id = ?", tradeID).Updates(map[string]any{
+		"round_id":     roundID,
+		"realized_pnl": realizedPnl,
+	}).Error
+}
+
 func (d *stockDaoImpl) GetTradeHistory(ws *workspace.Workspace, ledgerID string, stockCode string) (*models.StockTradeHistory, error) {
 	var history models.StockTradeHistory
 	err := ws.GetDb().Where("ledger_id = ? AND stock_code = ?", ledgerID, stockCode).First(&history).Error
@@ -256,6 +336,34 @@ func (d *stockDaoImpl) GetTradeHistory(ws *workspace.Workspace, ledgerID string,
 
 func (d *stockDaoImpl) CreateTradeHistory(ws *workspace.Workspace, history *models.StockTradeHistory) error {
 	return ws.GetDb().Create(history).Error
+}
+
+// DeleteTradeHistoriesByLedger 清空账本的历史集合（重放重建时按交易流重新生成）。
+func (d *stockDaoImpl) DeleteTradeHistoriesByLedger(ws *workspace.Workspace, ledgerID string) error {
+	return ws.GetDb().Where("ledger_id = ?", ledgerID).Delete(&models.StockTradeHistory{}).Error
+}
+
+// ListFundRecordsInInsertOrder 按录入顺序（创建时间 → ID）返回全部资金记录，
+// 用于重放时复刻「每条记录取当时日期最大一条的余额」这一既有的现金链条规则。
+func (d *stockDaoImpl) ListFundRecordsInInsertOrder(ws *workspace.Workspace, ledgerID string) ([]models.StockFundRecord, error) {
+	records := make([]models.StockFundRecord, 0)
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
+		Order("created_at ASC, id ASC").
+		Find(&records).Error
+	return records, err
+}
+
+// DeleteTradeFundRecords 清空买卖产生的资金记录，保留本金/追加/支取记录。
+func (d *stockDaoImpl) DeleteTradeFundRecords(ws *workspace.Workspace, ledgerID string) error {
+	return ws.GetDb().Where("ledger_id = ? AND event_type IN ?", ledgerID,
+		[]string{models.StockEventBuy, models.StockEventSell}).
+		Delete(&models.StockFundRecord{}).Error
+}
+
+// UpdateFundRecordCashBalance 只回写资金记录的现金余额（重算链条使用）。
+func (d *stockDaoImpl) UpdateFundRecordCashBalance(ws *workspace.Workspace, id string, cashBalance int64) error {
+	return ws.GetDb().Model(&models.StockFundRecord{}).Where("id = ?", id).
+		Update("cash_balance", cashBalance).Error
 }
 
 func (d *stockDaoImpl) UpdateTradeHistoryName(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string) error {
@@ -299,6 +407,28 @@ func (d *stockDaoImpl) ListTradeRoundsByStock(ws *workspace.Workspace, ledgerID 
 		Order("round_no ASC").
 		Find(&rounds).Error
 	return rounds, err
+}
+
+// ListTradeRounds 返回整个账本的全部轮次（重放重建时用于保留标签与复盘）。
+func (d *stockDaoImpl) ListTradeRounds(ws *workspace.Workspace, ledgerID string) ([]models.StockTradeRound, error) {
+	rounds := make([]models.StockTradeRound, 0)
+	err := ws.GetDb().Where("ledger_id = ?", ledgerID).
+		Order("stock_code ASC, round_no ASC").
+		Find(&rounds).Error
+	return rounds, err
+}
+
+func (d *stockDaoImpl) DeleteTradeRound(ws *workspace.Workspace, roundID string) error {
+	return ws.GetDb().Where("id = ?", roundID).Delete(&models.StockTradeRound{}).Error
+}
+
+// UpdateTradeRoundDerived 回写轮次的派生字段（历史集合与起止时间），标签与复盘保持不变。
+func (d *stockDaoImpl) UpdateTradeRoundDerived(ws *workspace.Workspace, roundID string, historyID string, openedAt int64, closedAt int64) error {
+	return ws.GetDb().Model(&models.StockTradeRound{}).Where("id = ?", roundID).Updates(map[string]any{
+		"history_id": historyID,
+		"opened_at":  openedAt,
+		"closed_at":  closedAt,
+	}).Error
 }
 
 func (d *stockDaoImpl) GetTradeRound(ws *workspace.Workspace, roundID string) (*models.StockTradeRound, error) {

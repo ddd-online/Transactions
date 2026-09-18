@@ -112,6 +112,8 @@ func (StockPosition) TableName() string {
 
 // StockTrade 股票交易记录（建仓/加仓/减仓/清仓）。
 // Price/Amount/Fee 单位均为分；Lots 手数，Shares = Lots × 100。
+// OrderID/OrderSeq 标识成交所属的委托：一笔委托可包含多笔成交明细，
+// 佣金等费用按委托成交总额计算一次后分摊到各笔成交，明细全部保留。
 type StockTrade struct {
 	ID          string `gorm:"primaryKey;comment:交易UUID" json:"id"`
 	LedgerID    string `gorm:"index:idx_stock_trade_ledger_code,priority:1;type:varchar(36);default:'';comment:所属账本ID" json:"ledgerId"`
@@ -119,6 +121,8 @@ type StockTrade struct {
 	StockName   string `gorm:"type:varchar(64);not null;default:'';comment:股票名称" json:"stockName"`
 	TradeType   string `gorm:"type:varchar(16);not null;default:'';comment:交易类型 open/add/reduce/close" json:"tradeType"`
 	RoundID     string `gorm:"index:idx_stock_trade_round;type:varchar(36);default:'';comment:所属轮次ID（清仓时挂接到交易历史）" json:"roundId"`
+	OrderID     string `gorm:"index:idx_stock_trade_ledger_order,priority:1;type:varchar(36);default:'';comment:所属委托ID（同委托多笔成交共用）" json:"orderId"`
+	OrderSeq    int64  `gorm:"not null;default:1;comment:委托内第几笔成交（从 1 起）" json:"orderSeq"`
 	Price       int64  `gorm:"not null;default:0;comment:成交价（分/股）" json:"price"`
 	Lots        int64  `gorm:"not null;default:0;comment:手数" json:"lots"`
 	Shares      int64  `gorm:"not null;default:0;comment:股数（手数×100）" json:"shares"`

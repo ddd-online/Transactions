@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -41,6 +42,10 @@ type StockService interface {
 	UpdatePositionReview(ws *workspace.Workspace, ledgerID string, stockCode string, review string) (*dto.StockPositionDto, error)
 	ListTrades(ws *workspace.Workspace, ledgerID string, stockCode string) ([]dto.StockTradeDto, error)
 	CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string, tag string) (*dto.StockTradeDto, error)
+	CreateTradeOrder(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, fills []TradeFill, tradeTime int64, remark string, tag string) ([]dto.StockTradeDto, error)
+	UpdateTradeFill(ws *workspace.Workspace, ledgerID string, tradeID string, priceCents int64, lots int64, tradeTime int64) (*dto.StockTradeDto, error)
+	DeleteTradeOrder(ws *workspace.Workspace, ledgerID string, orderID string) error
+	PreviewTradeChange(ws *workspace.Workspace, ledgerID string, action string, tradeID string, orderID string, priceCents int64, lots int64, tradeTime int64) (*dto.StockTradeImpactDto, error)
 	ListTradeHistories(ws *workspace.Workspace, ledgerID string) ([]dto.StockTradeHistoryDto, error)
 	GetTradeHistoryDetail(ws *workspace.Workspace, ledgerID string, stockCode string) (*dto.StockTradeHistoryDetailDto, error)
 	UpdateRoundReview(ws *workspace.Workspace, ledgerID string, roundID string, review string) (*dto.StockTradeHistoryDetailDto, error)
@@ -657,15 +662,35 @@ func currentRoundTrades(trades []models.StockTrade) []models.StockTrade {
 	return result
 }
 
-// CreateTrade 记录一笔买卖交易：原子更新持仓、现金资金记录与交易流水。
-// 买入（建仓/加仓）：现金减少 成交金额+费用；卖出（减仓/清仓）：现金增加 成交金额-费用，
-// 并按平均成本结转已实现盈亏到资金记录（netPnl），使账户总盈亏自动汇总。
-func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string, tag string) (*dto.StockTradeDto, error) {
-	if priceCents <= 0 {
-		return nil, models.NewBadRequest("成交价必须大于 0")
+// TradeFill 委托内的一笔成交（价格单位：分/股）。
+type TradeFill struct {
+	PriceCents int64
+	Lots       int64
+}
+
+// orderKeyOf 返回成交所属委托ID；存量数据未标记委托时以自身为独立委托。
+func orderKeyOf(t *models.StockTrade) string {
+	if t.OrderID != "" {
+		return t.OrderID
 	}
-	if lots <= 0 {
-		return nil, models.NewBadRequest("手数必须大于 0")
+	return t.ID
+}
+
+// CreateTradeOrder 记录一笔委托：可包含多笔成交明细，费用按委托成交总额计算一次后分摊到各笔。
+// 买入（建仓/加仓）：现金减少 Σ成交金额+费用；卖出（减仓/清仓）：现金增加 Σ成交金额-费用，
+// 并按平均成本逐笔结转已实现盈亏；全部成交后持仓归零则归档本轮轮次。
+func (s *stockServiceImpl) CreateTradeOrder(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, fills []TradeFill, tradeTime int64, remark string, tag string) ([]dto.StockTradeDto, error) {
+	fills = normalizeTradeFills(fills)
+	if len(fills) == 0 {
+		return nil, models.NewBadRequest("成交明细不能为空")
+	}
+	for i := range fills {
+		if fills[i].PriceCents <= 0 {
+			return nil, models.NewBadRequest("成交价必须大于 0")
+		}
+		if fills[i].Lots <= 0 {
+			return nil, models.NewBadRequest("手数必须大于 0")
+		}
 	}
 	if tag != "" {
 		tags, err := s.getTradeTags(ws, ledgerID)
@@ -686,41 +711,45 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 		return nil, models.NewBadRequest("无效的交易类型")
 	}
 
-	shares := lots * 100
-	amount := priceCents * shares
 	// 沪市：60（主板）/ 68（科创板）开头
 	isSH := strings.HasPrefix(stockCode, "60") || strings.HasPrefix(stockCode, "68")
+	orderID := util.GetUUID()
 
-	trade := &models.StockTrade{
-		ID:        util.GetUUID(),
-		LedgerID:  ledgerID,
-		StockCode: stockCode,
-		StockName: stockName,
-		TradeType: tradeType,
-		Price:     priceCents,
-		Lots:      lots,
-		Shares:    shares,
-		Amount:    amount,
-		TradeTime: tradeTime,
-		Remark:    remark,
+	trades := make([]*models.StockTrade, 0, len(fills))
+	amounts := make([]int64, 0, len(fills))
+	var totalAmount int64
+	var totalLots int64
+	for i := range fills {
+		shares := fills[i].Lots * 100
+		amount := fills[i].PriceCents * shares
+		totalAmount += amount
+		totalLots += fills[i].Lots
+		amounts = append(amounts, amount)
+		trades = append(trades, &models.StockTrade{
+			ID:        util.GetUUID(),
+			LedgerID:  ledgerID,
+			StockCode: stockCode,
+			StockName: stockName,
+			TradeType: tradeType,
+			OrderID:   orderID,
+			OrderSeq:  int64(i + 1),
+			Price:     fills[i].PriceCents,
+			Lots:      fills[i].Lots,
+			Shares:    shares,
+			Amount:    amount,
+			TradeTime: tradeTime,
+			Remark:    remark,
+		})
 	}
 
+	var realizedTotal int64
 	err := ws.Transaction(func(tx *workspace.Workspace) error {
 		feeSetting, err := s.getOrCreateFeeSetting(tx, ledgerID)
 		if err != nil {
 			return err
 		}
-
-		var feeBreakdown FeeBreakdown
-		if isBuy {
-			feeBreakdown = ComputeBuyFee(amount, isSH, feeSetting)
-		} else {
-			feeBreakdown = ComputeSellFee(amount, isSH, feeSetting)
-		}
-		trade.Fee = feeBreakdown.Total
-		trade.Commission = feeBreakdown.Commission
-		trade.StampDuty = feeBreakdown.StampDuty
-		trade.TransferFee = feeBreakdown.TransferFee
+		orderFee := ComputeOrderFee(totalAmount, isSH, feeSetting, isBuy)
+		allocated := AllocateOrderFee(orderFee, amounts)
 
 		position, err := s.stockDao.GetPosition(tx, ledgerID, stockCode)
 		if dao.IsNotFound(err) {
@@ -750,38 +779,44 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 			return err
 		}
 
-		var amountChange int64
-		var eventType string
-		var eventText string
-		var netPnl *int64
-		if isBuy {
-			amountChange = -(amount + feeBreakdown.Total)
-			eventType = models.StockEventBuy
-			eventText = fmt.Sprintf("买入 %s %d手", stockName, lots)
-
-			position.Quantity += shares
-			position.TotalCost += amount + feeBreakdown.Total
-		} else {
-			if shares > position.Quantity {
+		// 卖出先按委托总量校验，避免逐笔结算中途才发现超卖
+		if isSell {
+			var soldShares int64
+			for i := range trades {
+				soldShares += trades[i].Shares
+			}
+			if soldShares > position.Quantity {
 				return models.NewBadRequest(fmt.Sprintf("卖出数量超过持仓（当前 %d 股）", position.Quantity))
 			}
-			amountChange = amount - feeBreakdown.Total
-			eventType = models.StockEventSell
-			eventText = fmt.Sprintf("卖出 %s %d手", stockName, lots)
+		}
+
+		for i := range trades {
+			trade := trades[i]
+			trade.Fee = allocated[i].Total
+			trade.Commission = allocated[i].Commission
+			trade.StampDuty = allocated[i].StampDuty
+			trade.TransferFee = allocated[i].TransferFee
+
+			if isBuy {
+				position.Quantity += trade.Shares
+				position.TotalCost += trade.Amount + trade.Fee
+				continue
+			}
 
 			// 按剩余总成本的比例结转（四舍五入到分），避免整除截断造成已实现盈亏偏差
-			costBasis := int64(math.Round(float64(position.TotalCost) * float64(shares) / float64(position.Quantity)))
-			realized := amount - feeBreakdown.Total - costBasis
-			netPnl = &realized
+			costBasis := int64(math.Round(float64(position.TotalCost) * float64(trade.Shares) / float64(position.Quantity)))
+			realized := trade.Amount - trade.Fee - costBasis
+			value := realized
+			trade.RealizedPnl = &value
+			realizedTotal += realized
 
-			position.Quantity -= shares
+			position.Quantity -= trade.Shares
 			position.TotalCost -= costBasis
 			position.RealizedPnl += realized
 			if position.Quantity == 0 {
 				position.TotalCost = 0
 			}
 		}
-		trade.RealizedPnl = netPnl
 
 		// 清仓：把本轮「建仓 → 清仓」的全部交易归档到交易历史
 		if isSell && position.Quantity == 0 {
@@ -789,13 +824,31 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 			if err != nil {
 				return err
 			}
-			trade.RoundID = roundID
+			for i := range trades {
+				trades[i].RoundID = roundID
+			}
 			// 持仓期间先写的复盘已归档到本轮次，清空持仓上的草稿，避免下一轮继承
 			position.Review = ""
 		}
 
 		if err := s.stockDao.UpdatePosition(tx, position); err != nil {
 			return err
+		}
+
+		var amountChange int64
+		var eventType string
+		var eventText string
+		var netPnl *int64
+		if isBuy {
+			amountChange = -(totalAmount + orderFee.Total)
+			eventType = models.StockEventBuy
+			eventText = fmt.Sprintf("买入 %s %d手", stockName, totalLots)
+		} else {
+			amountChange = totalAmount - orderFee.Total
+			eventType = models.StockEventSell
+			eventText = fmt.Sprintf("卖出 %s %d手", stockName, totalLots)
+			pnl := realizedTotal
+			netPnl = &pnl
 		}
 
 		record := &models.StockFundRecord{
@@ -807,20 +860,67 @@ func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string,
 			AmountChange: amountChange,
 			CashBalance:  prevCash + amountChange,
 			NetPnl:       netPnl,
-			Remark:       fmt.Sprintf("%s %d手 @ %s", stockName, lots, centsToYuanStr(priceCents)),
+			Remark:       tradeOrderRemark(stockName, totalLots, totalAmount, len(trades)),
 		}
 		if err := s.stockDao.CreateFundRecord(tx, record); err != nil {
 			return err
 		}
 
-		return s.stockDao.CreateTrade(tx, trade)
+		for i := range trades {
+			if err := s.stockDao.CreateTrade(tx, trades[i]); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		logrus.Errorf("记录股票交易失败, ledger: %s, code: %s, err: %v", ledgerID, stockCode, err)
 		return nil, err
 	}
-	dto := dto.FromStockTrade(trade)
-	return &dto, nil
+
+	items := make([]dto.StockTradeDto, 0, len(trades))
+	for i := range trades {
+		items = append(items, dto.FromStockTrade(trades[i]))
+	}
+	return items, nil
+}
+
+// CreateTrade 记录单笔成交（等价于只含一笔明细的委托），保持原有调用方不变。
+func (s *stockServiceImpl) CreateTrade(ws *workspace.Workspace, ledgerID string, stockCode string, stockName string, tradeType string, priceCents int64, lots int64, tradeTime int64, remark string, tag string) (*dto.StockTradeDto, error) {
+	items, err := s.CreateTradeOrder(ws, ledgerID, stockCode, stockName, tradeType,
+		[]TradeFill{{PriceCents: priceCents, Lots: lots}}, tradeTime, remark, tag)
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, models.NewBadRequest("成交明细不能为空")
+	}
+	return &items[0], nil
+}
+
+// normalizeTradeFills 过滤前端未填写的空明细行。
+func normalizeTradeFills(fills []TradeFill) []TradeFill {
+	result := make([]TradeFill, 0, len(fills))
+	for i := range fills {
+		if fills[i].PriceCents <= 0 && fills[i].Lots <= 0 {
+			continue
+		}
+		result = append(result, fills[i])
+	}
+	return result
+}
+
+// tradeOrderRemark 生成资金记录备注：均价 + 笔数（单笔委托退化为「名称 N手 @ 价格」）。
+func tradeOrderRemark(stockName string, totalLots int64, totalAmount int64, count int) string {
+	shares := totalLots * 100
+	avgPrice := int64(0)
+	if shares > 0 {
+		avgPrice = int64(math.Round(float64(totalAmount) / float64(shares)))
+	}
+	if count <= 1 {
+		return fmt.Sprintf("%s %d手 @ %s", stockName, totalLots, centsToYuanStr(avgPrice))
+	}
+	return fmt.Sprintf("%s %d手 @ %s（%d笔成交）", stockName, totalLots, centsToYuanStr(avgPrice), count)
 }
 
 // closeRound 清仓收尾：确保历史集合存在（首次清仓创建，之后复用），
@@ -1449,6 +1549,648 @@ func ComputeSellFee(amount int64, isSH bool, setting *models.StockFeeSetting) Fe
 		TransferFee: transferFee,
 		Total:       commission + stampDuty + transferFee,
 	}
+}
+
+// ComputeOrderFee 按委托成交总额计算一次费用：最低佣金按「委托」收取，而不是按每笔成交。
+func ComputeOrderFee(totalAmount int64, isSH bool, setting *models.StockFeeSetting, isBuy bool) FeeBreakdown {
+	if isBuy {
+		return ComputeBuyFee(totalAmount, isSH, setting)
+	}
+	return ComputeSellFee(totalAmount, isSH, setting)
+}
+
+// AllocateOrderFee 把委托级费用按各笔成交金额比例分摊到明细。
+// 每个费用项单独分摊、四舍五入到分，最后一笔吸收余数，保证 Σ分摊 = 委托费用。
+func AllocateOrderFee(fee FeeBreakdown, amounts []int64) []FeeBreakdown {
+	items := make([]FeeBreakdown, len(amounts))
+	commissions := allocateByAmount(fee.Commission, amounts)
+	stampDuties := allocateByAmount(fee.StampDuty, amounts)
+	transferFees := allocateByAmount(fee.TransferFee, amounts)
+	for i := range items {
+		items[i] = FeeBreakdown{
+			Commission:  commissions[i],
+			StampDuty:   stampDuties[i],
+			TransferFee: transferFees[i],
+		}
+		items[i].Total = items[i].Commission + items[i].StampDuty + items[i].TransferFee
+	}
+	return items
+}
+
+// allocateByAmount 按权重比例拆分一个金额，末项吸收取整余数。
+func allocateByAmount(total int64, weights []int64) []int64 {
+	result := make([]int64, len(weights))
+	if len(weights) == 0 {
+		return result
+	}
+	var sum int64
+	for _, weight := range weights {
+		sum += weight
+	}
+	if sum <= 0 {
+		result[len(weights)-1] = total
+		return result
+	}
+	var allocated int64
+	for i := 0; i < len(weights)-1; i++ {
+		value := int64(math.Round(float64(total) * float64(weights[i]) / float64(sum)))
+		result[i] = value
+		allocated += value
+	}
+	result[len(weights)-1] = total - allocated
+	return result
+}
+
+// ---------- 成交编辑 / 委托删除与重放 ----------
+
+// errPreviewRollback 预演专用哨兵错误：事务内执行改动后强制回滚，不对外暴露。
+var errPreviewRollback = errors.New("trade impact preview rollback")
+
+// roundMetaKey 轮次索引键：股票 + 轮次序号。
+func roundMetaKey(stockCode string, roundNo int64) string {
+	return stockCode + "#" + strconv.FormatInt(roundNo, 10)
+}
+
+// UpdateTradeFill 编辑一笔成交（成交价/手数/委托时间）：
+// 按当前费用设置重算所属委托的全部费用后分摊，再重放持仓、资金记录与轮次。
+func (s *stockServiceImpl) UpdateTradeFill(ws *workspace.Workspace, ledgerID string, tradeID string, priceCents int64, lots int64, tradeTime int64) (*dto.StockTradeDto, error) {
+	if tradeID == "" {
+		return nil, models.NewBadRequest("trade_id is required")
+	}
+	if priceCents <= 0 {
+		return nil, models.NewBadRequest("成交价必须大于 0")
+	}
+	if lots <= 0 {
+		return nil, models.NewBadRequest("手数必须大于 0")
+	}
+
+	var updated *models.StockTrade
+	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		if _, err := s.updateTradeFillTx(tx, ledgerID, tradeID, priceCents, lots, tradeTime); err != nil {
+			return err
+		}
+		trade, err := s.stockDao.GetTrade(tx, tradeID)
+		if err != nil {
+			return err
+		}
+		updated = trade
+		return nil
+	})
+	if err != nil {
+		logrus.Errorf("编辑股票成交失败, ledger: %s, trade: %s, err: %v", ledgerID, tradeID, err)
+		return nil, err
+	}
+	item := dto.FromStockTrade(updated)
+	return &item, nil
+}
+
+// DeleteTradeOrder 删除整笔委托（含全部成交明细），并重放重建持仓、资金记录与轮次。
+func (s *stockServiceImpl) DeleteTradeOrder(ws *workspace.Workspace, ledgerID string, orderID string) error {
+	if orderID == "" {
+		return models.NewBadRequest("order_id is required")
+	}
+	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		_, err := s.deleteTradeOrderTx(tx, ledgerID, orderID)
+		return err
+	})
+	if err != nil {
+		logrus.Errorf("删除股票委托失败, ledger: %s, order: %s, err: %v", ledgerID, orderID, err)
+		return err
+	}
+	return nil
+}
+
+// PreviewTradeChange 预演编辑/删除的影响：同一事务内执行改动并重放后强制回滚，
+// 返回变动后的持仓、可用现金，以及会因此失效（复盘丢失）的轮次。
+func (s *stockServiceImpl) PreviewTradeChange(ws *workspace.Workspace, ledgerID string, action string, tradeID string, orderID string, priceCents int64, lots int64, tradeTime int64) (*dto.StockTradeImpactDto, error) {
+	var impact *dto.StockTradeImpactDto
+	err := ws.Transaction(func(tx *workspace.Workspace) error {
+		before, err := s.roundMetaIndex(tx, ledgerID)
+		if err != nil {
+			return err
+		}
+
+		var stockCode string
+		switch action {
+		case "update_trade":
+			stockCode, err = s.updateTradeFillTx(tx, ledgerID, tradeID, priceCents, lots, tradeTime)
+		case "delete_order":
+			stockCode, err = s.deleteTradeOrderTx(tx, ledgerID, orderID)
+		default:
+			return models.NewBadRequest("无效的预演动作")
+		}
+		if err != nil {
+			return err
+		}
+
+		after, err := s.roundMetaIndex(tx, ledgerID)
+		if err != nil {
+			return err
+		}
+
+		result := &dto.StockTradeImpactDto{StockCode: stockCode, RemovedRounds: make([]dto.StockTradeImpactRoundDto, 0)}
+		if position, err := s.stockDao.GetPosition(tx, ledgerID, stockCode); err == nil {
+			result.PositionAfter = position.Quantity
+			result.StockName = position.StockName
+		} else if !dao.IsNotFound(err) {
+			return err
+		}
+		if latest, err := s.stockDao.QueryLatestFundRecord(tx, ledgerID); err == nil && latest != nil {
+			result.CashAfter = latest.CashBalance
+		} else if err != nil && !dao.IsNotFound(err) {
+			return err
+		}
+		for key, meta := range before {
+			if _, ok := after[key]; ok {
+				continue
+			}
+			result.RemovedRounds = append(result.RemovedRounds, meta)
+		}
+		sort.Slice(result.RemovedRounds, func(i, j int) bool {
+			if result.RemovedRounds[i].StockCode != result.RemovedRounds[j].StockCode {
+				return result.RemovedRounds[i].StockCode < result.RemovedRounds[j].StockCode
+			}
+			return result.RemovedRounds[i].RoundNo < result.RemovedRounds[j].RoundNo
+		})
+		if result.StockName == "" {
+			for i := range result.RemovedRounds {
+				if result.RemovedRounds[i].StockCode == stockCode {
+					result.StockName = result.RemovedRounds[i].StockName
+					break
+				}
+			}
+		}
+		impact = result
+		return errPreviewRollback
+	})
+	if err != nil && !errors.Is(err, errPreviewRollback) {
+		return nil, err
+	}
+	if impact == nil {
+		return nil, models.NewBadRequest("预演失败")
+	}
+	return impact, nil
+}
+
+// roundMetaIndex 读取当前轮次索引（用于比对编辑/删除后哪些轮次会失效）。
+func (s *stockServiceImpl) roundMetaIndex(ws *workspace.Workspace, ledgerID string) (map[string]dto.StockTradeImpactRoundDto, error) {
+	rounds, err := s.stockDao.ListTradeRounds(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	histories, err := s.stockDao.ListTradeHistories(ws, ledgerID)
+	if err != nil {
+		return nil, err
+	}
+	stockNames := make(map[string]string, len(histories))
+	for i := range histories {
+		stockNames[histories[i].StockCode] = histories[i].StockName
+	}
+	index := make(map[string]dto.StockTradeImpactRoundDto, len(rounds))
+	for i := range rounds {
+		round := &rounds[i]
+		index[roundMetaKey(round.StockCode, round.RoundNo)] = dto.StockTradeImpactRoundDto{
+			RoundID:   round.ID,
+			StockCode: round.StockCode,
+			StockName: stockNames[round.StockCode],
+			RoundNo:   round.RoundNo,
+			Tag:       round.Tag,
+			HasReview: strings.TrimSpace(round.Review) != "",
+		}
+	}
+	return index, nil
+}
+
+// updateTradeFillTx 事务内编辑一笔成交并重放，返回该成交所属股票代码。
+func (s *stockServiceImpl) updateTradeFillTx(tx *workspace.Workspace, ledgerID string, tradeID string, priceCents int64, lots int64, tradeTime int64) (string, error) {
+	trade, err := s.stockDao.GetTrade(tx, tradeID)
+	if err != nil {
+		if dao.IsNotFound(err) {
+			return "", models.NewNotFound("交易记录不存在")
+		}
+		return "", err
+	}
+	if trade.LedgerID != ledgerID {
+		return "", models.NewNotFound("交易记录不存在")
+	}
+
+	orderID := orderKeyOf(trade)
+	orderTrades, err := s.stockDao.ListTradesByOrder(tx, ledgerID, orderID)
+	if err != nil {
+		return "", err
+	}
+	if len(orderTrades) == 0 {
+		// 兼容未回填委托的历史数据：该成交本身就是一笔独立委托
+		orderTrades = []models.StockTrade{*trade}
+		orderTrades[0].OrderID = orderID
+		orderTrades[0].OrderSeq = 1
+	}
+
+	feeSetting, err := s.getOrCreateFeeSetting(tx, ledgerID)
+	if err != nil {
+		return "", err
+	}
+	isSH := strings.HasPrefix(trade.StockCode, "60") || strings.HasPrefix(trade.StockCode, "68")
+	isBuy := trade.TradeType == models.StockTradeOpen || trade.TradeType == models.StockTradeAdd
+
+	amounts := make([]int64, 0, len(orderTrades))
+	var totalAmount int64
+	for i := range orderTrades {
+		item := &orderTrades[i]
+		if item.ID == tradeID {
+			item.Price = priceCents
+			item.Lots = lots
+			item.Shares = lots * 100
+		}
+		if tradeTime > 0 {
+			item.TradeTime = tradeTime
+		}
+		item.Amount = item.Price * item.Shares
+		totalAmount += item.Amount
+		amounts = append(amounts, item.Amount)
+	}
+
+	allocated := AllocateOrderFee(ComputeOrderFee(totalAmount, isSH, feeSetting, isBuy), amounts)
+	for i := range orderTrades {
+		orderTrades[i].Fee = allocated[i].Total
+		orderTrades[i].Commission = allocated[i].Commission
+		orderTrades[i].StampDuty = allocated[i].StampDuty
+		orderTrades[i].TransferFee = allocated[i].TransferFee
+		if err := s.stockDao.UpdateTrade(tx, &orderTrades[i]); err != nil {
+			return "", err
+		}
+	}
+
+	if err := s.rebuildTrades(tx, ledgerID); err != nil {
+		return "", err
+	}
+	return trade.StockCode, nil
+}
+
+// deleteTradeOrderTx 事务内删除整笔委托并重放，返回被删委托所属股票代码。
+func (s *stockServiceImpl) deleteTradeOrderTx(tx *workspace.Workspace, ledgerID string, orderID string) (string, error) {
+	if orderID == "" {
+		return "", models.NewBadRequest("order_id is required")
+	}
+	trades, err := s.stockDao.ListTradesByOrder(tx, ledgerID, orderID)
+	if err != nil {
+		return "", err
+	}
+	if len(trades) == 0 {
+		// 兼容未回填委托的历史数据：把 orderId 当作单笔交易 ID
+		trade, err := s.stockDao.GetTrade(tx, orderID)
+		if err != nil {
+			if dao.IsNotFound(err) {
+				return "", models.NewNotFound("交易记录不存在")
+			}
+			return "", err
+		}
+		if trade.LedgerID != ledgerID {
+			return "", models.NewNotFound("交易记录不存在")
+		}
+		trades = []models.StockTrade{*trade}
+	}
+
+	stockCode := trades[0].StockCode
+	ids := make([]string, 0, len(trades))
+	for i := range trades {
+		ids = append(ids, trades[i].ID)
+	}
+	if err := s.stockDao.DeleteTradesByIDs(tx, ids); err != nil {
+		return "", err
+	}
+	if err := s.rebuildTrades(tx, ledgerID); err != nil {
+		return "", err
+	}
+	return stockCode, nil
+}
+
+// replayOrder 重放过程中累积的一笔委托。
+type replayOrder struct {
+	key       string
+	stockCode string
+	stockName string
+	isBuy     bool
+	amount    int64
+	fee       int64
+	lots      int64
+	netPnl    int64
+	firstTime int64
+	lastTime  int64
+	createdAt int64
+	indexes   []int
+}
+
+// rebuildTrades 按交易流重放，重建持仓、买卖资金记录、轮次与已实现盈亏等派生数据。
+// 费用沿用各笔已存的值（被编辑的委托已在调用前重算），因此重放不会改写历史费用；
+// 轮次标签/复盘按「股票 + 轮次序号」继承，持仓复盘草稿按股票继承。
+func (s *stockServiceImpl) rebuildTrades(ws *workspace.Workspace, ledgerID string) error {
+	trades, err := s.stockDao.ListAllTradesAsc(ws, ledgerID)
+	if err != nil {
+		return err
+	}
+
+	existingRounds, err := s.stockDao.ListTradeRounds(ws, ledgerID)
+	if err != nil {
+		return err
+	}
+	roundMeta := make(map[string]models.StockTradeRound, len(existingRounds))
+	for i := range existingRounds {
+		roundMeta[roundMetaKey(existingRounds[i].StockCode, existingRounds[i].RoundNo)] = existingRounds[i]
+	}
+	existingPositions, err := s.stockDao.ListPositions(ws, ledgerID)
+	if err != nil {
+		return err
+	}
+
+	// 清空派生数据：买卖资金记录、历史集合与轮次；本金/追加/支取记录保留
+	if err := s.stockDao.DeleteTradeFundRecords(ws, ledgerID); err != nil {
+		return err
+	}
+	if err := s.stockDao.DeleteTradeHistoriesByLedger(ws, ledgerID); err != nil {
+		return err
+	}
+	// 轮次行按「股票 + 轮次序号」复用，保留原 ID、标签与复盘；重放结束后删除不再成立的轮次
+	usedRounds := make(map[string]bool, len(existingRounds))
+
+	positions := make(map[string]*models.StockPosition, len(existingPositions))
+	for i := range existingPositions {
+		position := existingPositions[i]
+		position.Quantity = 0
+		position.TotalCost = 0
+		position.RealizedPnl = 0
+		positions[position.StockCode] = &position
+	}
+
+	histories := make(map[string]*models.StockTradeHistory)
+	roundCounts := make(map[string]int64)
+	cycleOpenedAt := make(map[string]int64)
+	cycleIndexes := make(map[string][]int)
+
+	var current *replayOrder
+	flush := func() error {
+		if current == nil {
+			return nil
+		}
+		order := current
+		current = nil
+
+		var eventType string
+		var eventText string
+		var amountChange int64
+		var netPnl *int64
+		if order.isBuy {
+			amountChange = -(order.amount + order.fee)
+			eventType = models.StockEventBuy
+			eventText = fmt.Sprintf("买入 %s %d手", order.stockName, order.lots)
+		} else {
+			amountChange = order.amount - order.fee
+			eventType = models.StockEventSell
+			eventText = fmt.Sprintf("卖出 %s %d手", order.stockName, order.lots)
+			pnl := order.netPnl
+			netPnl = &pnl
+		}
+		record := &models.StockFundRecord{
+			ID:           util.GetUUID(),
+			LedgerID:     ledgerID,
+			RecordDate:   time.Unix(order.lastTime, 0).Format("2006-01-02"),
+			EventType:    eventType,
+			EventText:    eventText,
+			AmountChange: amountChange,
+			CashBalance:  0,
+			NetPnl:       netPnl,
+			Remark:       tradeOrderRemark(order.stockName, order.lots, order.amount, len(order.indexes)),
+			CreatedAt:    order.createdAt,
+		}
+		if err := s.stockDao.CreateFundRecord(ws, record); err != nil {
+			return err
+		}
+
+		// 委托全部成交后持仓归零：归档本轮「建仓 → 清仓」
+		roundID := ""
+		position := positions[order.stockCode]
+		if position != nil && !order.isBuy && position.Quantity == 0 {
+			history := histories[order.stockCode]
+			if history == nil {
+				history = &models.StockTradeHistory{
+					ID:        util.GetUUID(),
+					LedgerID:  ledgerID,
+					StockCode: order.stockCode,
+					StockName: order.stockName,
+				}
+				if err := s.stockDao.CreateTradeHistory(ws, history); err != nil {
+					return err
+				}
+				histories[order.stockCode] = history
+			}
+			roundNo := roundCounts[order.stockCode] + 1
+			meta := roundMeta[roundMetaKey(order.stockCode, roundNo)]
+			openedAt := cycleOpenedAt[order.stockCode]
+			if openedAt == 0 {
+				openedAt = order.firstTime
+			}
+			tag := meta.Tag
+			if tag == "" {
+				tag = models.StockTradeTagAnalysis
+			}
+			metaKey := roundMetaKey(order.stockCode, roundNo)
+			if existing, ok := roundMeta[metaKey]; ok {
+				// 复用同一轮次行：ID 稳定，标签与复盘原样保留
+				if err := s.stockDao.UpdateTradeRoundDerived(ws, existing.ID, history.ID, openedAt, order.lastTime); err != nil {
+					return err
+				}
+				roundID = existing.ID
+			} else {
+				round := &models.StockTradeRound{
+					ID:        util.GetUUID(),
+					LedgerID:  ledgerID,
+					StockCode: order.stockCode,
+					HistoryID: history.ID,
+					RoundNo:   roundNo,
+					OpenedAt:  openedAt,
+					ClosedAt:  order.lastTime,
+					Tag:       tag,
+					Review:    "",
+				}
+				if err := s.stockDao.CreateTradeRound(ws, round); err != nil {
+					return err
+				}
+				roundID = round.ID
+			}
+			usedRounds[roundID] = true
+			// 本轮「建仓 → 清仓」的全部成交（可能跨多个委托）一起挂接轮次
+			ids := make([]string, 0, len(cycleIndexes[order.stockCode]))
+			for _, index := range cycleIndexes[order.stockCode] {
+				ids = append(ids, trades[index].ID)
+			}
+			if err := s.stockDao.UpdateTradesRoundID(ws, roundID, ids); err != nil {
+				return err
+			}
+			roundCounts[order.stockCode] = roundNo
+			delete(cycleOpenedAt, order.stockCode)
+			delete(cycleIndexes, order.stockCode)
+		}
+
+		for _, index := range order.indexes {
+			if err := s.stockDao.UpdateTradeSettlement(ws, trades[index].ID, roundID, trades[index].RealizedPnl); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for i := range trades {
+		trade := &trades[i]
+		key := orderKeyOf(trade)
+		if current == nil || current.key != key {
+			if err := flush(); err != nil {
+				return err
+			}
+			current = &replayOrder{
+				key:       key,
+				stockCode: trade.StockCode,
+				stockName: trade.StockName,
+				isBuy:     trade.TradeType == models.StockTradeOpen || trade.TradeType == models.StockTradeAdd,
+				firstTime: trade.TradeTime,
+				createdAt: trade.CreatedAt,
+			}
+		}
+		if trade.StockName != "" {
+			current.stockName = trade.StockName
+		}
+		current.amount += trade.Amount
+		current.fee += trade.Fee
+		current.lots += trade.Lots
+		current.lastTime = trade.TradeTime
+		current.indexes = append(current.indexes, i)
+
+		position := positions[trade.StockCode]
+		if position == nil {
+			position = &models.StockPosition{
+				ID:        util.GetUUID(),
+				LedgerID:  ledgerID,
+				StockCode: trade.StockCode,
+				StockName: trade.StockName,
+			}
+			if err := s.stockDao.CreatePosition(ws, position); err != nil {
+				return err
+			}
+			positions[trade.StockCode] = position
+		}
+		if trade.StockName != "" {
+			position.StockName = trade.StockName
+		}
+
+		trade.RoundID = ""
+		trade.RealizedPnl = nil
+		if current.isBuy {
+			if position.Quantity == 0 {
+				cycleOpenedAt[trade.StockCode] = trade.TradeTime
+				cycleIndexes[trade.StockCode] = nil
+			}
+			position.Quantity += trade.Shares
+			position.TotalCost += trade.Amount + trade.Fee
+			cycleIndexes[trade.StockCode] = append(cycleIndexes[trade.StockCode], i)
+			continue
+		}
+		if cycleOpenedAt[trade.StockCode] == 0 {
+			cycleOpenedAt[trade.StockCode] = trade.TradeTime
+		}
+		if trade.Shares > position.Quantity {
+			return models.NewBadRequest(fmt.Sprintf("卖出数量超过持仓（当前 %d 股）", position.Quantity))
+		}
+		costBasis := int64(math.Round(float64(position.TotalCost) * float64(trade.Shares) / float64(position.Quantity)))
+		realized := trade.Amount - trade.Fee - costBasis
+		value := realized
+		trade.RealizedPnl = &value
+		current.netPnl += realized
+		cycleIndexes[trade.StockCode] = append(cycleIndexes[trade.StockCode], i)
+		position.Quantity -= trade.Shares
+		position.TotalCost -= costBasis
+		position.RealizedPnl += realized
+		if position.Quantity == 0 {
+			position.TotalCost = 0
+		}
+	}
+	if err := flush(); err != nil {
+		return err
+	}
+
+	// 重放后不再成立的轮次随编辑/删除失效（其复盘内容一并丢失）
+	for i := range existingRounds {
+		if usedRounds[existingRounds[i].ID] {
+			continue
+		}
+		if err := s.stockDao.DeleteTradeRound(ws, existingRounds[i].ID); err != nil {
+			return err
+		}
+	}
+
+	for code := range positions {
+		position := positions[code]
+		if position.Quantity == 0 {
+			// 已清仓：本轮复盘已归档到轮次，持仓上的草稿不再保留
+			position.Review = ""
+		}
+		if err := s.stockDao.UpdatePosition(ws, position); err != nil {
+			return err
+		}
+	}
+
+	return s.recalculateCashChain(ws, ledgerID)
+}
+
+// recalculateCashChain 重放后重算资金记录的现金余额，精确复刻既有的链条规则：
+// 按录入顺序逐条结算，每条的前值取「当前已存在记录里 (日期 → 创建时间 → ID) 最大一条」的余额
+// （与 QueryLatestFundRecord 口径一致）；首条记录的起点 = 本金 − Σ追加本金。
+// 该规则在补录历史日期交易时并非单纯按日期排序，因此这里同样逐条取最大值而不是重排序。
+func (s *stockServiceImpl) recalculateCashChain(ws *workspace.Workspace, ledgerID string) error {
+	account, err := s.getOrCreateAccount(ws, ledgerID)
+	if err != nil {
+		return err
+	}
+	records, err := s.stockDao.ListFundRecordsInInsertOrder(ws, ledgerID)
+	if err != nil {
+		return err
+	}
+	cash := account.Principal
+	for i := range records {
+		if records[i].EventType == models.StockEventAddPrincipal {
+			cash -= records[i].AmountChange
+		}
+	}
+	balances := make([]int64, len(records))
+	for i := range records {
+		if i > 0 {
+			latest := 0
+			for j := 1; j < i; j++ {
+				if fundRecordAfter(&records[j], &records[latest]) {
+					latest = j
+				}
+			}
+			cash = balances[latest]
+		}
+		cash += records[i].AmountChange
+		balances[i] = cash
+		if records[i].CashBalance == cash {
+			continue
+		}
+		if err := s.stockDao.UpdateFundRecordCashBalance(ws, records[i].ID, cash); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// fundRecordAfter 判断 a 是否比 b 更「新」：(record_date, created_at, id) 三者依次比较。
+func fundRecordAfter(a *models.StockFundRecord, b *models.StockFundRecord) bool {
+	if a.RecordDate != b.RecordDate {
+		return a.RecordDate > b.RecordDate
+	}
+	if a.CreatedAt != b.CreatedAt {
+		return a.CreatedAt > b.CreatedAt
+	}
+	return a.ID > b.ID
 }
 
 // centsToYuanStr 分 → 保留两位小数的元字符串，用于资金记录备注。

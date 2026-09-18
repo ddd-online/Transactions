@@ -162,7 +162,8 @@
               <h3 class="panel-title">交易费用设置</h3>
               <a-tooltip :overlay-style="{ maxWidth: '320px' }">
                 <template #title>
-                  佣金：成交金额 × 费率，不足最低佣金时按最低佣金收取（买卖双向）<br />
+                  佣金：委托成交总额 × 费率，不足最低佣金时按最低佣金收取（买卖双向）<br />
+                  一笔委托分多笔成交时，费用按委托成交总额计算一次，再按各笔成交金额比例分摊<br />
                   买入实际成本 = 成交金额 + 佣金 + 过户费
                 </template>
                 <QuestionCircleOutlined class="panel-title-tip" aria-label="查看交易费用说明" />
@@ -175,7 +176,7 @@
               <a-input v-model:value="feeForm.commissionRate" addon-after="万分之" placeholder="如 2.354" />
             </a-form-item>
             <a-form-item label="最低佣金">
-              <a-input v-model:value="feeForm.minCommission" addon-after="元/笔" placeholder="如 5" />
+              <a-input v-model:value="feeForm.minCommission" addon-after="元/委托" placeholder="如 5" />
             </a-form-item>
             <a-form-item>
               <template #label>

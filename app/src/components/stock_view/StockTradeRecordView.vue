@@ -185,20 +185,39 @@
                         <th class="align-right">手数</th>
                         <th class="align-right">成交金额</th>
                         <th class="align-right">费用</th>
+                        <th class="align-center">操作</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="t in round.trades" :key="t.id">
-                        <td class="cell-date align-center">{{ formatTime(t.tradeTime) }}</td>
+                      <tr
+                        v-for="row in roundTradeRows(round)"
+                        :key="row.key"
+                        class="round-trade-row"
+                        :class="{ 'round-trade-row--child': row.isChild }"
+                      >
+                        <td class="cell-date align-center">{{ formatTime(row.tradeTime) }}</td>
                         <td class="align-center">
-                          <span class="trade-type" :class="isBuy(t.tradeType) ? 'type-buy' : 'type-sell'">
-                            {{ tradeTypeLabel(t.tradeType) }}
+                          <span
+                            v-if="!row.isChild"
+                            class="trade-type"
+                            :class="isBuy(row.tradeType) ? 'type-buy' : 'type-sell'"
+                          >
+                            {{ tradeTypeLabel(row.tradeType) }}
                           </span>
                         </td>
-                        <td class="cell-amount align-right">{{ centsToYuan(t.price) }}</td>
-                        <td class="cell-lots align-right">{{ t.lots }}手</td>
-                        <td class="cell-amount align-right">{{ centsToYuan(t.amount) }}</td>
-                        <td class="cell-fee align-right">{{ centsToYuan(t.fee) }}</td>
+                        <td class="cell-amount align-right">{{ centsToYuan(row.price) }}</td>
+                        <td class="cell-lots align-right">
+                          {{ row.lots }}手
+                          <span v-if="row.isGroup" class="round-lots-note">{{ row.count }} 笔</span>
+                        </td>
+                        <td class="cell-amount align-right">{{ centsToYuan(row.amount) }}</td>
+                        <td class="cell-fee align-right">{{ centsToYuan(row.fee) }}</td>
+                        <td class="align-center">
+                          <div class="round-row-actions">
+                            <a-button v-if="!row.isGroup" type="link" size="small" @click="handleEditTrade(row)">编辑</a-button>
+                            <a-button v-if="!row.isChild" type="link" size="small" danger @click="handleDeleteOrder(row)">删除</a-button>
+                          </div>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -262,6 +281,8 @@
       </div>
       </div>
     </section>
+
+    <StockTradeEditModal ref="tradeEditorRef" />
   </div>
 </template>
 
@@ -272,8 +293,10 @@ import { CaretRightOutlined, EditOutlined, QuestionCircleOutlined } from '@ant-d
 import { useStockHistoryStore } from '@/stores/stockHistoryStore'
 import { useStockTagStore } from '@/stores/stockTagStore'
 import { centsToYuan } from '@/backend/functions'
+import { groupTradesByOrder } from '@/backend/stockFee'
 import { StockRoundReviewTemplate } from '@/backend/constant'
-import type { StockTradeHistory, StockTradeRound } from '@/types/transactions'
+import StockTradeEditModal from '@/components/stock_view/StockTradeEditModal.vue'
+import type { StockTrade, StockTradeHistory, StockTradeRound } from '@/types/transactions'
 import dayjs from 'dayjs'
 
 const historyStore = useStockHistoryStore()
@@ -306,6 +329,90 @@ const resultLabel = (pnl: number) => (pnl > 0 ? '盈利' : pnl < 0 ? '亏损' : 
 const resultClass = (pnl: number) => (pnl > 0 ? 'result-win' : pnl < 0 ? 'result-loss' : 'result-even')
 const formatTime = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD HH:mm')
 const formatDate = (t: number) => dayjs(t * 1000).format('YYYY-MM-DD')
+
+// ---------- 轮次内成交明细：按委托分组，一笔委托的主行 + 各笔成交子行 ----------
+interface RoundTradeRow {
+  key: string
+  isGroup: boolean
+  isChild: boolean
+  orderTrades: StockTrade[]
+  trade: StockTrade | null
+  tradeType: string
+  price: number
+  lots: number
+  amount: number
+  fee: number
+  tradeTime: number
+  count: number
+}
+
+const roundTradeRows = (round: StockTradeRound): RoundTradeRow[] => {
+  const rows: RoundTradeRow[] = []
+  for (const group of groupTradesByOrder(round.trades)) {
+    // 单笔委托直接平铺，不额外加一层层级
+    if (group.trades.length === 1) {
+      const trade = group.trades[0]!
+      rows.push({
+        key: trade.id,
+        isGroup: false,
+        isChild: false,
+        orderTrades: group.trades,
+        trade,
+        tradeType: trade.tradeType,
+        price: trade.price,
+        lots: trade.lots,
+        amount: trade.amount,
+        fee: trade.fee,
+        tradeTime: trade.tradeTime,
+        count: 1,
+      })
+      continue
+    }
+    rows.push({
+      key: `order-${group.orderId}`,
+      isGroup: true,
+      isChild: false,
+      orderTrades: group.trades,
+      trade: null,
+      tradeType: group.tradeType,
+      price: group.price,
+      lots: group.lots,
+      amount: group.amount,
+      fee: group.fee,
+      tradeTime: group.tradeTime,
+      count: group.trades.length,
+    })
+    for (const trade of group.trades) {
+      rows.push({
+        key: trade.id,
+        isGroup: false,
+        isChild: true,
+        orderTrades: group.trades,
+        trade,
+        tradeType: trade.tradeType,
+        price: trade.price,
+        lots: trade.lots,
+        amount: trade.amount,
+        fee: trade.fee,
+        tradeTime: trade.tradeTime,
+        count: 1,
+      })
+    }
+  }
+  return rows
+}
+
+// 成交级编辑 + 委托级删除（删除/编辑后由 store 重算并刷新本页明细）
+const tradeEditorRef = ref<InstanceType<typeof StockTradeEditModal> | null>(null)
+
+const handleEditTrade = (row: RoundTradeRow) => {
+  if (!row.trade) return
+  tradeEditorRef.value?.openEdit(row.trade, row.orderTrades)
+}
+
+const handleDeleteOrder = (row: RoundTradeRow) => {
+  tradeEditorRef.value?.confirmDelete(row.orderTrades)
+}
 
 // 左栏卡片的现价：行情缺失（未取到）时显示占位符，不显示 0 元
 const hasQuote = (h: StockTradeHistory) => !!h.latestPrice && h.latestPrice > 0
@@ -953,6 +1060,29 @@ onMounted(() => {
 
 .round-table tbody tr:hover td {
   background-color: var(--transactions-color-hover-bg);
+}
+
+/* 委托内的成交子行：缩进 + 弱化，主行仍保留完整信息 */
+.round-trade-row--child td {
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-major-background);
+}
+
+.round-trade-row--child td:first-child {
+  padding-left: calc(var(--transactions-space-lg) + var(--transactions-space-md));
+}
+
+.round-lots-note {
+  margin-left: 6px;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.round-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
 /* ========== 本轮复盘 ========== */
