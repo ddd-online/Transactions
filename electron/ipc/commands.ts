@@ -5,10 +5,11 @@ import { app } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
-import { WORKSPACE_CHANGED } from '../../shared/events'
+import { IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
 import type { ConfigStore } from '../config'
 import { currentWorkspace, openWorkspace } from '../db'
 import { logInfo } from '../logging'
+import { importLegacyWorkspace, probeLegacyWorkspace } from '../legacy/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { openDirectory } from '../shell/dialogs'
 import { registerWindowControl } from '../shell/window'
@@ -112,6 +113,30 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
 
     debug_echo(request) {
       return String(asObject(request).message ?? '')
+    },
+
+    legacy_import_probe(request) {
+      const workspaceDir = String(asObject(request).workspaceDir ?? '').trim()
+      if (!workspaceDir) {
+        throw new AppError('请选择旧工作空间目录', { status: 400 })
+      }
+      return probeLegacyWorkspace(workspaceDir)
+    },
+
+    async legacy_import_start(request) {
+      const raw = asObject(request)
+      const sourceDir = String(raw.sourceDir ?? '').trim()
+      const targetDir = String(raw.targetDir ?? '').trim()
+      if (!sourceDir || !targetDir) {
+        throw new AppError('源目录与目标目录都不能为空', { status: 400 })
+      }
+      const report = await importLegacyWorkspace({
+        sourceDir,
+        targetDir,
+        onProgress: (progress) => sendEvent(IMPORT_PROGRESS, progress),
+      })
+      logInfo(`旧数据导入完成: ${sourceDir} -> ${targetDir}`)
+      return report
     },
   }
 }

@@ -1,0 +1,1383 @@
+{
+  "tbl_billadm_category": [
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "餐饮美食",
+      "sort_order": 5,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "购物消费",
+      "sort_order": 3,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "交通出行",
+      "sort_order": 8,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "生活缴费",
+      "sort_order": 1,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "贷款还款",
+      "sort_order": 9,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "医疗健康",
+      "sort_order": 2,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "娱乐休闲",
+      "sort_order": 6,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "人情往来",
+      "sort_order": 4,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "教育学习",
+      "sort_order": 7,
+      "transaction_type": "expense"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "工资奖金",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "补贴补助",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "退税退款",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "二手转卖",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "彩票收入",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "投资理财",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "借贷借款",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "红包转账",
+      "sort_order": 0,
+      "transaction_type": "income"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "五险一金",
+      "sort_order": 0,
+      "transaction_type": "transfer"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "税费党费",
+      "sort_order": 0,
+      "transaction_type": "transfer"
+    }
+  ],
+  "tbl_billadm_chart": [
+    {
+      "chart_id": "ead1a417-dae2-4791-bf84-30c35b6cb5fc",
+      "chart_lines": "[{\"label\":\"支出\",\"transactionType\":\"expense\",\"includeOutlier\":false,\"conditions\":[]},{\"label\":\"收入\",\"transactionType\":\"income\",\"includeOutlier\":false,\"conditions\":[]},{\"label\":\"转账\",\"transactionType\":\"transfer\",\"includeOutlier\":false,\"conditions\":[]}]",
+      "chart_type": "line",
+      "created_at": 1792507986,
+      "granularity": "month",
+      "is_preset": 1,
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "sort_order": 0,
+      "title": "月度消费趋势",
+      "updated_at": 1792507986
+    },
+    {
+      "chart_id": "368442c3-a9ac-4c00-aea5-844011de7392",
+      "chart_lines": "[{\"label\":\"支出\",\"transactionType\":\"expense\",\"includeOutlier\":true,\"conditions\":[]},{\"label\":\"收入\",\"transactionType\":\"income\",\"includeOutlier\":true,\"conditions\":[]},{\"label\":\"转账\",\"transactionType\":\"transfer\",\"includeOutlier\":true,\"conditions\":[]}]",
+      "chart_type": "line",
+      "created_at": 1792507986,
+      "granularity": "year",
+      "is_preset": 1,
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "sort_order": 1,
+      "title": "年度消费趋势",
+      "updated_at": 1792507986
+    },
+    {
+      "chart_id": "c911c99c-1c81-4f9a-9801-3fea6d1008e7",
+      "chart_lines": "[{\"label\":\"年度总收入\",\"transactionType\":\"income\",\"includeOutlier\":true,\"conditions\":[]},{\"label\":\"年度工资收入\",\"transactionType\":\"income\",\"includeOutlier\":true,\"conditions\":[{\"transactionType\":\"income\",\"category\":\"工资奖金\",\"tags\":[\"工资\"],\"tagPolicy\":\"all\",\"tagNot\":false,\"description\":\"\"}]},{\"label\":\"年度奖金收入\",\"transactionType\":\"income\",\"includeOutlier\":true,\"conditions\":[{\"transactionType\":\"income\",\"category\":\"工资奖金\",\"tags\":[\"奖金\"],\"tagPolicy\":\"all\",\"tagNot\":false,\"description\":\"年奖金\"}]},{\"label\":\"年度分红收入\",\"transactionType\":\"income\",\"includeOutlier\":true,\"conditions\":[{\"transactionType\":\"income\",\"category\":\"投资理财\",\"tags\":[],\"tagPolicy\":\"all\",\"tagNot\":false,\"description\":\"年分红\"}]}]",
+      "chart_type": "line",
+      "created_at": 1792507986,
+      "granularity": "year",
+      "is_preset": 1,
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "sort_order": 2,
+      "title": "年度收入趋势",
+      "updated_at": 1792507986
+    },
+    {
+      "chart_id": "841b0c13-31dc-499b-8cd1-1e6b2384ec6c",
+      "chart_lines": "[{\"label\":\"P1-2 餐饮支出\",\"transactionType\":\"expense\",\"includeOutlier\":true,\"conditions\":[{\"transactionType\":\"expense\",\"category\":\"餐饮美食\",\"tags\":[\"三餐\",\"外卖\"],\"tagPolicy\":\"all\",\"tagNot\":false,\"description\":\"\"},{\"transactionType\":\"expense\",\"category\":\"\",\"tags\":[\"数码\"],\"tagPolicy\":\"any\",\"tagNot\":true,\"description\":\"耳机\"}]},{\"label\":\"P1-2 无分类收入\",\"transactionType\":\"income\",\"includeOutlier\":false,\"conditions\":[]}]",
+      "chart_type": "bar",
+      "created_at": 1792507986,
+      "granularity": "year",
+      "is_preset": 0,
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "sort_order": 9,
+      "title": "阶段二图表（更新：分类+标签+离群点）",
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_diary_entry": [
+    {
+      "content": "# 2026-02-10\n\n今天买了耳机，复盘一下。",
+      "created_at": 1792507986,
+      "date": "2026-02-10",
+      "id": "75049516-d671-4d74-a404-dd83ac28cb85",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "mood": "开心",
+      "updated_at": 1792507986,
+      "word_count": 26
+    }
+  ],
+  "tbl_billadm_key_event": [
+    {
+      "color": "outlier",
+      "content": "## 记录\n\n- 价格 2599 元\n- 有点冲动消费",
+      "created_at": 1792507986,
+      "date": "2026-02-10",
+      "id": "edd0cd8f-ac95-493b-8124-7c0191a0fb8b",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "title": "买了新耳机",
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_key_event_image": [],
+  "tbl_billadm_ledger": [
+    {
+      "created_at": 1792507986,
+      "description": "阶段三更新描述",
+      "id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "默认账本（改名）",
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "description": "",
+      "id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "name": "阶段三账本",
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_stock_account": [
+    {
+      "created_at": 1792507986,
+      "id": "3b1ff783-d188-4915-b710-6d29619654a7",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "principal": 65000000,
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "id": "fd223248-44ff-46a7-8750-1534a2062c9d",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "principal": 15000000,
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_stock_day_review": [],
+  "tbl_billadm_stock_fee_setting": [
+    {
+      "commission_rate": 0.0001,
+      "created_at": 1792507986,
+      "id": "e50ed318-7530-4d4f-b345-cfe6b0975718",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "min_commission": 500,
+      "stamp_duty_rate": 0.0005,
+      "transfer_fee_rate": 0.00001,
+      "updated_at": 1792507986
+    },
+    {
+      "commission_rate": 0.0002354,
+      "created_at": 1792507986,
+      "id": "40d29e9d-9297-417f-8b53-2d35986d6835",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "min_commission": 500,
+      "stamp_duty_rate": 0.0005,
+      "transfer_fee_rate": 0.00001,
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_stock_fund_record": [
+    {
+      "amount_change": -1000000,
+      "cash_balance": 30800117,
+      "created_at": 1792507989,
+      "event_text": "支取",
+      "event_type": "withdraw",
+      "id": "157461bb-5d8c-4c97-bae3-a18e3b2806a2",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "net_pnl": null,
+      "record_date": "2026-03-20",
+      "remark": "支取 10000.00 元"
+    },
+    {
+      "amount_change": -18706589,
+      "cash_balance": -3706589,
+      "created_at": 1792507990,
+      "event_text": "买入 贵州茅台 2手",
+      "event_type": "buy",
+      "id": "4739d2b3-8f99-4449-8e18-a9eb851f12d6",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "net_pnl": null,
+      "record_date": "2026-01-06",
+      "remark": "贵州茅台 2手 @ 935.10（2笔成交）"
+    },
+    {
+      "amount_change": -16954160,
+      "cash_balance": -20660749,
+      "created_at": 1792507991,
+      "event_text": "买入 贵州茅台 1手",
+      "event_type": "buy",
+      "id": "0d0c95f3-6586-4920-aff0-b33b98c81627",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "net_pnl": null,
+      "record_date": "2026-01-20",
+      "remark": "贵州茅台 1手 @ 1695.00"
+    },
+    {
+      "amount_change": 52460866,
+      "cash_balance": 31800117,
+      "created_at": 1792507992,
+      "event_text": "卖出 贵州茅台 3手",
+      "event_type": "sell",
+      "id": "20d5548f-bb87-4d23-9278-f8a0639a8b8c",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "net_pnl": 16800117,
+      "record_date": "2026-03-10",
+      "remark": "贵州茅台 3手 @ 1750.00"
+    },
+    {
+      "amount_change": 50000000,
+      "cash_balance": 80800117,
+      "created_at": 1792507993,
+      "event_text": "追加本金",
+      "event_type": "add_principal",
+      "id": "80ec0ae7-24e3-4fdd-a5e0-ae9ffb4db9a9",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "net_pnl": null,
+      "record_date": "2026-04-20",
+      "remark": "本金 150000.00 → 650000.00"
+    },
+    {
+      "amount_change": -59414577,
+      "cash_balance": -44414577,
+      "created_at": 1792507986,
+      "event_text": "买入 贵州茅台 3手",
+      "event_type": "buy",
+      "id": "b6fe89bd-ab36-4874-be3a-12aecde9a59f",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": null,
+      "record_date": "2026-05-08",
+      "remark": "贵州茅台 3手 @ 1980.00"
+    },
+    {
+      "amount_change": 19885167,
+      "cash_balance": -24529410,
+      "created_at": 1792507987,
+      "event_text": "卖出 贵州茅台 1手",
+      "event_type": "sell",
+      "id": "2fb125a4-653b-4ea5-b68e-82a6d3d71399",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": 80308,
+      "record_date": "2026-05-09",
+      "remark": "贵州茅台 1手 @ 1990.00"
+    },
+    {
+      "amount_change": 19735278,
+      "cash_balance": -4794132,
+      "created_at": 1792507988,
+      "event_text": "卖出 贵州茅台 1手",
+      "event_type": "sell",
+      "id": "7b4014d0-575b-442c-91ed-4dbf1d3fb6a6",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": -69581,
+      "record_date": "2026-05-10",
+      "remark": "贵州茅台 1手 @ 1975.00"
+    },
+    {
+      "amount_change": -20104933,
+      "cash_balance": -24899065,
+      "created_at": 1792507989,
+      "event_text": "买入 贵州茅台 1手",
+      "event_type": "buy",
+      "id": "cf8006df-b5ab-49c9-9c08-37fe5a5cd3c2",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": null,
+      "record_date": "2026-05-11",
+      "remark": "贵州茅台 1手 @ 2010.00"
+    },
+    {
+      "amount_change": 39970184,
+      "cash_balance": 15071119,
+      "created_at": 1792507990,
+      "event_text": "卖出 贵州茅台 2手",
+      "event_type": "sell",
+      "id": "988fe5bf-0f7b-4c86-948e-a2b22ec019be",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": 60392,
+      "record_date": "2026-05-12",
+      "remark": "贵州茅台 2手 @ 2000.00"
+    },
+    {
+      "amount_change": -19204712,
+      "cash_balance": -4133593,
+      "created_at": 1792507991,
+      "event_text": "买入 贵州茅台 1手",
+      "event_type": "buy",
+      "id": "35732e70-418b-4831-b888-b81fd247868e",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": null,
+      "record_date": "2026-05-14",
+      "remark": "贵州茅台 1手 @ 1920.00"
+    },
+    {
+      "amount_change": 19485465,
+      "cash_balance": 15351872,
+      "created_at": 1792507992,
+      "event_text": "卖出 贵州茅台 1手",
+      "event_type": "sell",
+      "id": "fc5b7d18-4909-4c91-b047-dd0aae9b5a69",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": 280753,
+      "record_date": "2026-05-15",
+      "remark": "贵州茅台 1手 @ 1950.00"
+    },
+    {
+      "amount_change": -11302660,
+      "cash_balance": 4049212,
+      "created_at": 1792507993,
+      "event_text": "买入 平安银行 1手",
+      "event_type": "buy",
+      "id": "1af0b1c9-f481-47f3-bb90-c899deb9b4c1",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": null,
+      "record_date": "2026-05-17",
+      "remark": "平安银行 1手 @ 1130.00"
+    },
+    {
+      "amount_change": 11791322,
+      "cash_balance": 15840534,
+      "created_at": 1792507994,
+      "event_text": "卖出 平安银行 1手",
+      "event_type": "sell",
+      "id": "880339ba-4c3a-425e-9e46-736a5b778524",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "net_pnl": 488662,
+      "record_date": "2026-05-18",
+      "remark": "平安银行 1手 @ 1180.00"
+    }
+  ],
+  "tbl_billadm_stock_position": [
+    {
+      "created_at": 1792507986,
+      "id": "b62e5565-8f78-498b-b9cc-66e5662b0eb4",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "quantity": 0,
+      "realized_pnl": 16800117,
+      "review": "",
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "tag": "",
+      "total_cost": 0,
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "id": "96f8c9ee-fb2f-4d71-a002-93f6f851cd93",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "quantity": 0,
+      "realized_pnl": 351872,
+      "review": "",
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "tag": "",
+      "total_cost": 0,
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "id": "1e00d739-4bfe-4015-b26a-5bdfae1f180e",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "quantity": 0,
+      "realized_pnl": 488662,
+      "review": "",
+      "stock_code": "000001",
+      "stock_name": "平安银行",
+      "tag": "",
+      "total_cost": 0,
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_stock_trade": [
+    {
+      "amount": 17000000,
+      "commission": 4001,
+      "created_at": 1792507986,
+      "fee": 4171,
+      "id": "8b513c9f-8387-499e-b141-bbce3239ce2f",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "lots": 1,
+      "order_id": "d979da0a-08a9-4746-a759-53de3b194a49",
+      "order_seq": 1,
+      "price": 1700000,
+      "realized_pnl": null,
+      "remark": "种子建仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "0223e10e-cab2-403f-b17c-693340bcda4c",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 0,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1767657600,
+      "trade_type": "open",
+      "transfer_fee": 170
+    },
+    {
+      "amount": 1702000,
+      "commission": 401,
+      "created_at": 1792507986,
+      "fee": 418,
+      "id": "f5309dde-b8db-4f61-a32b-1ff81987f9fd",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "lots": 1,
+      "order_id": "d979da0a-08a9-4746-a759-53de3b194a49",
+      "order_seq": 2,
+      "price": 170200,
+      "realized_pnl": null,
+      "remark": "种子建仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "0223e10e-cab2-403f-b17c-693340bcda4c",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 0,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1767657600,
+      "trade_type": "open",
+      "transfer_fee": 17
+    },
+    {
+      "amount": 16950000,
+      "commission": 3990,
+      "created_at": 1792507986,
+      "fee": 4160,
+      "id": "d96680a2-29ff-426d-b336-6620a863fcbe",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "lots": 1,
+      "order_id": "fbef332f-18ba-4dfe-b3c0-d57c0491d9fb",
+      "order_seq": 1,
+      "price": 1695000,
+      "realized_pnl": null,
+      "remark": "种子加仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "0223e10e-cab2-403f-b17c-693340bcda4c",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 0,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1768867200,
+      "trade_type": "add",
+      "transfer_fee": 170
+    },
+    {
+      "amount": 52500000,
+      "commission": 12359,
+      "created_at": 1792507986,
+      "fee": 39134,
+      "id": "150e5228-b735-4266-a5f0-d88793f5eb13",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "lots": 3,
+      "order_id": "9113cfb2-12dd-465c-b3ef-f6cdc0934c34",
+      "order_seq": 1,
+      "price": 1750000,
+      "realized_pnl": 16800117,
+      "remark": "种子清仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "0223e10e-cab2-403f-b17c-693340bcda4c",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 300,
+      "stamp_duty": 26250,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1773100800,
+      "trade_type": "close",
+      "transfer_fee": 525
+    },
+    {
+      "amount": 59400000,
+      "commission": 13983,
+      "created_at": 1792507986,
+      "fee": 14577,
+      "id": "d49f0ed6-4502-4967-b957-374bba7b37ef",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 3,
+      "order_id": "da4e27c5-c548-4b32-8bb3-9feeb76b04f2",
+      "order_seq": 1,
+      "price": 1980000,
+      "realized_pnl": null,
+      "remark": "第二轮建仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "f6ea3ad3-a18f-4710-a177-4a978b9743d1",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 300,
+      "stamp_duty": 0,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778198400,
+      "trade_type": "open",
+      "transfer_fee": 594
+    },
+    {
+      "amount": 19900000,
+      "commission": 4684,
+      "created_at": 1792507986,
+      "fee": 14833,
+      "id": "aa382d88-5f93-43c5-ad2b-04dc6067aeb0",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "e3965e0f-dcd0-4707-a561-830104372d24",
+      "order_seq": 1,
+      "price": 1990000,
+      "realized_pnl": 80308,
+      "remark": "第二轮减仓甲",
+      "round_commission_rate": 0.0002354,
+      "round_id": "f6ea3ad3-a18f-4710-a177-4a978b9743d1",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 9950,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778284800,
+      "trade_type": "reduce",
+      "transfer_fee": 199
+    },
+    {
+      "amount": 19750000,
+      "commission": 4649,
+      "created_at": 1792507986,
+      "fee": 14722,
+      "id": "326013d9-6b0d-403f-9f2a-baa63d516f69",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "049f7ef0-e643-4322-a8b4-b87bbe0db70d",
+      "order_seq": 1,
+      "price": 1975000,
+      "realized_pnl": -69581,
+      "remark": "第二轮减仓乙",
+      "round_commission_rate": 0.0002354,
+      "round_id": "f6ea3ad3-a18f-4710-a177-4a978b9743d1",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 9875,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778371200,
+      "trade_type": "reduce",
+      "transfer_fee": 198
+    },
+    {
+      "amount": 20100000,
+      "commission": 4732,
+      "created_at": 1792507986,
+      "fee": 4933,
+      "id": "23249fbf-1bd3-4904-ae42-2e576f0cdd1d",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "6c09155c-4e96-4310-8d2c-61210d18e67a",
+      "order_seq": 1,
+      "price": 2010000,
+      "realized_pnl": null,
+      "remark": "第二轮加仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "f6ea3ad3-a18f-4710-a177-4a978b9743d1",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 0,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778457600,
+      "trade_type": "add",
+      "transfer_fee": 201
+    },
+    {
+      "amount": 40000000,
+      "commission": 9416,
+      "created_at": 1792507986,
+      "fee": 29816,
+      "id": "d59d25b7-314f-423c-9878-a56cf2282328",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 2,
+      "order_id": "70b23b95-f7c9-481b-8aaa-3fdf9ae72f81",
+      "order_seq": 1,
+      "price": 2000000,
+      "realized_pnl": 60392,
+      "remark": "第二轮清仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "f6ea3ad3-a18f-4710-a177-4a978b9743d1",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 200,
+      "stamp_duty": 20000,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778544000,
+      "trade_type": "close",
+      "transfer_fee": 400
+    },
+    {
+      "amount": 19200000,
+      "commission": 4520,
+      "created_at": 1792507986,
+      "fee": 4712,
+      "id": "6b1cdd69-c0ee-4954-9756-4d79dfd607a8",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "a4e59121-b944-4ff2-8371-4424f72fb3e0",
+      "order_seq": 1,
+      "price": 1920000,
+      "realized_pnl": null,
+      "remark": "第二轮建仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "511813e7-0bdf-4efb-9f33-192a94c00786",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 0,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778716800,
+      "trade_type": "open",
+      "transfer_fee": 192
+    },
+    {
+      "amount": 19500000,
+      "commission": 4590,
+      "created_at": 1792507986,
+      "fee": 14535,
+      "id": "674f3f6c-330b-4ef0-bc5f-2d4057a16369",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "aeee19df-74ae-48ec-9d84-962e215e9d30",
+      "order_seq": 1,
+      "price": 1950000,
+      "realized_pnl": 280753,
+      "remark": "第二轮清仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "511813e7-0bdf-4efb-9f33-192a94c00786",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 9750,
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "trade_time": 1778803200,
+      "trade_type": "close",
+      "transfer_fee": 195
+    },
+    {
+      "amount": 11300000,
+      "commission": 2660,
+      "created_at": 1792507986,
+      "fee": 2660,
+      "id": "eedf1d5f-95f8-4109-acf1-12851a518769",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "39fda960-fa76-4046-908f-d0962bd4b3e4",
+      "order_seq": 1,
+      "price": 1130000,
+      "realized_pnl": null,
+      "remark": "第四轮建仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "99e58e0e-91ab-469e-a87d-a11d20712a60",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 0,
+      "stock_code": "000001",
+      "stock_name": "平安银行",
+      "trade_time": 1778976000,
+      "trade_type": "open",
+      "transfer_fee": 0
+    },
+    {
+      "amount": 11800000,
+      "commission": 2778,
+      "created_at": 1792507986,
+      "fee": 8678,
+      "id": "c1b572cd-fcec-40a2-984c-39f9265a2950",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "lots": 1,
+      "order_id": "a17f8f26-4558-48c0-9d54-6521c276a4a9",
+      "order_seq": 1,
+      "price": 1180000,
+      "realized_pnl": 488662,
+      "remark": "第四轮清仓",
+      "round_commission_rate": 0.0002354,
+      "round_id": "99e58e0e-91ab-469e-a87d-a11d20712a60",
+      "round_min_commission": 500,
+      "round_stamp_duty_rate": 0.0005,
+      "round_transfer_fee_rate": 0.00001,
+      "shares": 100,
+      "stamp_duty": 5900,
+      "stock_code": "000001",
+      "stock_name": "平安银行",
+      "trade_time": 1779062400,
+      "trade_type": "close",
+      "transfer_fee": 0
+    }
+  ],
+  "tbl_billadm_stock_trade_history": [
+    {
+      "created_at": 1792507986,
+      "id": "1fae30f2-b864-4f5f-a7ac-73997c65f48e",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "id": "308fba91-cc66-4f35-8d6a-a2c4fe148a12",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "stock_code": "600519",
+      "stock_name": "贵州茅台",
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "id": "dc1e90fd-7e45-417a-a446-0aea09ffd5e9",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "stock_code": "000001",
+      "stock_name": "平安银行",
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_stock_trade_round": [
+    {
+      "closed_at": 1773100800,
+      "created_at": 1792507986,
+      "history_id": "1fae30f2-b864-4f5f-a7ac-73997c65f48e",
+      "id": "0223e10e-cab2-403f-b17c-693340bcda4c",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "opened_at": 1767657600,
+      "review": "阶段二：轮次复盘已更新",
+      "round_no": 1,
+      "stock_code": "600519",
+      "tag": "尾盘"
+    },
+    {
+      "closed_at": 1778544000,
+      "created_at": 1792507986,
+      "history_id": "308fba91-cc66-4f35-8d6a-a2c4fe148a12",
+      "id": "f6ea3ad3-a18f-4710-a177-4a978b9743d1",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "opened_at": 1778198400,
+      "review": "阶段三：第二轮复盘（编辑后必须保留）",
+      "round_no": 1,
+      "stock_code": "600519",
+      "tag": "追涨"
+    },
+    {
+      "closed_at": 1778803200,
+      "created_at": 1792507986,
+      "history_id": "308fba91-cc66-4f35-8d6a-a2c4fe148a12",
+      "id": "511813e7-0bdf-4efb-9f33-192a94c00786",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "opened_at": 1778716800,
+      "review": "阶段三：第三轮复盘",
+      "round_no": 2,
+      "stock_code": "600519",
+      "tag": "蓄力"
+    },
+    {
+      "closed_at": 1779062400,
+      "created_at": 1792507986,
+      "history_id": "dc1e90fd-7e45-417a-a446-0aea09ffd5e9",
+      "id": "99e58e0e-91ab-469e-a87d-a11d20712a60",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "opened_at": 1778976000,
+      "review": "",
+      "round_no": 1,
+      "stock_code": "000001",
+      "tag": "尾盘"
+    }
+  ],
+  "tbl_billadm_stock_trade_tag_setting": [
+    {
+      "created_at": 1792507986,
+      "id": "8a6982a7-4b63-41ed-8a31-ee3c19d044ac",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tags": "[\"分析\",\"打板\",\"尾盘\",\"追涨\",\"蓄力\",\"波段\"]",
+      "updated_at": 1792507986
+    },
+    {
+      "created_at": 1792507986,
+      "id": "77da1b14-07d6-4a6a-86ca-657d95d68400",
+      "ledger_id": "3fc2b9af-e5c7-41c8-9b19-9c7eb9848c2c",
+      "tags": "[\"分析\",\"打板\",\"尾盘\",\"追涨\",\"蓄力\"]",
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_tag": [
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "三餐",
+      "sort_order": 10
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "零食",
+      "sort_order": 9
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "商场",
+      "sort_order": 8
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "外卖",
+      "sort_order": 7
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "饮料",
+      "sort_order": 6
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "奶茶",
+      "sort_order": 5
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "咖啡",
+      "sort_order": 4
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "水果",
+      "sort_order": 3
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "茶叶",
+      "sort_order": 2
+    },
+    {
+      "category_transaction_type": "餐饮美食:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "买菜",
+      "sort_order": 1
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "衣物",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "数码",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "家居",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "书籍",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "礼物",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "玩具",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "宠物",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "游戏",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "快递",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "彩票",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "电影",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "运动",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "酒店",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "烟酒",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "充值",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "汽车",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "购物消费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "还款",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "打车",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "地铁",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "公交",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "高铁",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "油费",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "停车",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "ETC",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "交通出行:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "车险",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "房租",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "物业",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "燃气",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "水费",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "电费",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "通讯",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "还款",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "网费",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "生活缴费:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "理发",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "医疗健康:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "医药",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "医疗健康:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "医险",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "人情往来:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "红包",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "人情往来:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "请客",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "人情往来:expense",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "礼金",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "工资奖金:income",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "工资",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "工资奖金:income",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "奖金",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "五险一金:transfer",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "养老",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "五险一金:transfer",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "医疗",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "五险一金:transfer",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "失业",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "五险一金:transfer",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "住房",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "税费党费:transfer",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "团费",
+      "sort_order": 0
+    },
+    {
+      "category_transaction_type": "税费党费:transfer",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "name": "交税",
+      "sort_order": 0
+    }
+  ],
+  "tbl_billadm_todo_card": [],
+  "tbl_billadm_todo_item": [],
+  "tbl_billadm_todo_progress": [],
+  "tbl_billadm_transaction_record": [
+    {
+      "category": "餐饮美食",
+      "created_at": 1792507986,
+      "description": "午餐",
+      "flags": "{\"outlier\":false}",
+      "key_event_date": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 12345,
+      "transaction_at": 1767571200,
+      "transaction_id": "dacec18b-5481-4601-afbe-b5436ac718da",
+      "transaction_type": "expense",
+      "updated_at": 1792507986
+    },
+    {
+      "category": "交通出行",
+      "created_at": 1792507986,
+      "description": "地铁",
+      "flags": "{\"outlier\":false}",
+      "key_event_date": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 8800,
+      "transaction_at": 1767571200,
+      "transaction_id": "2c8189cd-caec-4427-8eb3-dffbb8c2c2cf",
+      "transaction_type": "expense",
+      "updated_at": 1792507986
+    },
+    {
+      "category": "购物消费",
+      "created_at": 1792507986,
+      "description": "耳机",
+      "flags": "{\"outlier\":true}",
+      "key_event_date": "2026-02-10",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 259900,
+      "transaction_at": 1770681600,
+      "transaction_id": "df61897c-0beb-4f7a-90f0-cb325fb38371",
+      "transaction_type": "expense",
+      "updated_at": 1792507986
+    },
+    {
+      "category": "工资奖金",
+      "created_at": 1792507986,
+      "description": "一月工资",
+      "flags": "{\"outlier\":false}",
+      "key_event_date": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 1500000,
+      "transaction_at": 1770681600,
+      "transaction_id": "e25d3e1a-9d56-4b05-a0eb-6e2bd040952c",
+      "transaction_type": "income",
+      "updated_at": 1792507986
+    },
+    {
+      "category": "工资奖金",
+      "created_at": 1792507986,
+      "description": "二月工资",
+      "flags": "{\"outlier\":false}",
+      "key_event_date": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 1500000,
+      "transaction_at": 1773590400,
+      "transaction_id": "2816c052-bcbf-46f7-aa37-2d5aa0ae3e6a",
+      "transaction_type": "income",
+      "updated_at": 1792507986
+    },
+    {
+      "category": "五险一金",
+      "created_at": 1792507986,
+      "description": "公积金",
+      "flags": "{\"outlier\":false}",
+      "key_event_date": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 300000,
+      "transaction_at": 1773590400,
+      "transaction_id": "5d575e02-7b56-4522-a0c2-0c48c99ec89d",
+      "transaction_type": "transfer",
+      "updated_at": 1792507986
+    },
+    {
+      "category": "交通出行",
+      "created_at": 1792507986,
+      "description": "批量B",
+      "flags": "{\"outlier\":false}",
+      "key_event_date": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "price": 8800,
+      "transaction_at": 1773590400,
+      "transaction_id": "2eddf0bf-714e-4f26-bce6-0cedb63d03ea",
+      "transaction_type": "expense",
+      "updated_at": 1792507986
+    }
+  ],
+  "tbl_billadm_transaction_record_tag": [
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "三餐",
+      "transaction_id": "dacec18b-5481-4601-afbe-b5436ac718da"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "地铁",
+      "transaction_id": "2c8189cd-caec-4427-8eb3-dffbb8c2c2cf"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "数码",
+      "transaction_id": "df61897c-0beb-4f7a-90f0-cb325fb38371"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "工资",
+      "transaction_id": "e25d3e1a-9d56-4b05-a0eb-6e2bd040952c"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "工资",
+      "transaction_id": "2816c052-bcbf-46f7-aa37-2d5aa0ae3e6a"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "住房",
+      "transaction_id": "5d575e02-7b56-4522-a0c2-0c48c99ec89d"
+    },
+    {
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "tag": "地铁",
+      "transaction_id": "2eddf0bf-714e-4f26-bce6-0cedb63d03ea"
+    }
+  ],
+  "tbl_billadm_transaction_tpl": [
+    {
+      "category": "餐饮美食",
+      "created_at": 1792507986,
+      "description": "早餐",
+      "flags": "",
+      "ledger_id": "a688ba4f-494d-4f08-9b5d-ecdfb78c8427",
+      "sort_order": 7,
+      "tags": "[\"三餐\"]",
+      "template_id": "9c9651d0-5add-4322-94ae-6047947f079a",
+      "template_name": "早餐",
+      "transaction_type": "expense",
+      "updated_at": 1792507986
+    }
+  ]
+}

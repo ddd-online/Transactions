@@ -16,9 +16,11 @@
   导入器校验并报告孤儿，数据证明干净后再加 FK 迁移。
 - **导入器只接受 0.20.0 格式**：校验 `tbl_billadm_schema_migration` 的 15 个 id 齐全；
   不齐时提示“先用 0.20.0 打开一次旧工作空间完成升级”，不猜、不跑旧迁移。
-- 导入流程：只读源库（`VACUUM INTO` 快照）→ 空目录建新库 → 逐表复制（保留 ID）→
+- 导入流程：只读源库（SQLite `backup()` 一致性快照）→ 空目录建新库 → 逐表复制（保留 ID）→
   修正空 `ledger_id`（归最早账本）→ 复制资产 → 行数/金额合计/唯一键校验 →
   写 `import-report.json` → 失败回滚且旧库不变。
+- 导入器实现：`electron/legacy/importer.ts`；`probe` 只读探测，`import` 用 `node:sqlite` 的
+  `backup()` 做一致性快照；目标目录必须为空且不能嵌在源目录里；源库哈希前后核对。
 - 配置仍用 `~/.transactions.json`（dev `-dev`）与原有键名，保留未知键；新增 `dataVersion`。
 - 旧库识别：打开既有 `transactions.db` 时若存在 `tbl_billadm_schema_migration`，
   返回 `ERR_CODE_LEGACY_WORKSPACE`（`-3`），界面据此引导导入。

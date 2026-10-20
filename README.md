@@ -43,8 +43,12 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
 
 - **M0（已完成）**：仓库脚手架、无边框窗口/托盘/单实例、`app://` 与 `trasset://`、`node:sqlite`、
   config/logging、IPC + zod、Vitest + Playwright、打包冒烟。
-- **M1（下一步）**：领域纯逻辑（money/fee/fund/stock/statistics/update/proxy）与完整 schema v1、
-  DAO、旧数据导入器。
+- **M1（进行中）**：
+  - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
+  - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts（旧 Rust 单测逐条对等）；
+  - 旧数据导入器：只读快照 → 新建工作空间 → 表级单位映射 → 金额合计校验 → 资产复制 → 报告；
+    已用 `fixtures/legacy/seed.sql` 做端到端测试；
+  - 待办：statistics / update 状态机、tr-draw 几何算法、DAO/服务层、导入 UI。
 - 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。

@@ -84,7 +84,7 @@ describe('workspace database', () => {
     database.exec("INSERT INTO app_meta VALUES ('schema_version', '99')")
     database.close()
 
-    expect(() => openWorkspace(directory)).toThrow(/不认识的库格式/)
+    expect(() => openWorkspace(directory)).toThrow(/高于本程序支持/)
   })
 
   it('rejects an empty path', () => {

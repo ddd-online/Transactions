@@ -21,4 +21,15 @@ describe('command catalog', () => {
     expect(commandSchemas.workspace_get.safeParse(undefined).success).toBe(true)
     expect(commandSchemas.debug_write_asset.safeParse(undefined).success).toBe(true)
   })
+
+  it('validates import requests', () => {
+    expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
+      true,
+    )
+    expect(commandSchemas.legacy_import_probe.safeParse({}).success).toBe(false)
+    expect(
+      commandSchemas.legacy_import_start.safeParse({ sourceDir: 'a', targetDir: 'b' }).success,
+    ).toBe(true)
+    expect(commandSchemas.legacy_import_start.safeParse({ sourceDir: 'a' }).success).toBe(false)
+  })
 })

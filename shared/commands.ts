@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { ConfigSnapshot, DialogOpenResponse } from './types/config'
+import type { LegacyImportProbe, LegacyImportReport } from './types/import'
 
 /**
  * IPC 命令目录：名字 + 请求形状。
@@ -25,6 +26,8 @@ export const commandSchemas = {
   /** M0 冒烟用：写一张 1×1 PNG 到工作空间资产目录，验证 trasset://。 */
   debug_write_asset: z.undefined(),
   debug_echo: z.object({ message: z.string() }),
+  legacy_import_probe: z.object({ workspaceDir: z.string() }),
+  legacy_import_start: z.object({ sourceDir: z.string(), targetDir: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -42,6 +45,8 @@ export interface CommandResponses {
   window_control: null
   debug_write_asset: string
   debug_echo: string
+  legacy_import_probe: LegacyImportProbe
+  legacy_import_start: LegacyImportReport
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

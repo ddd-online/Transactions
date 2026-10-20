@@ -12,6 +12,7 @@ Transactions：桌面个人记账应用，每个工作空间是一个独立的 S
 |---|---|
 | `electron/` | 主进程：窗口 / 托盘 / 单实例 / `app://` / `trasset://` / 配置 / 日志 / DB / 服务 / IPC / 更新 / 旧数据导入 |
 | `src/` | 渲染进程：React 19 + Vite；样式与类名从旧仓库原样复用（`src/styles`） |
+| `shared/domain/` | 主/渲染共用的纯算法（money / fee / fund / stock / format / proxy / consts），无 I/O、无 Electron 依赖 |
 | `shared/` | 主/渲染共用：命令目录（zod）、事件名、错误信封、配置与 DTO 类型 |
 | `tests/unit` | Vitest：领域、数据、纯逻辑、导入映射 |
 | `tests/e2e` | Playwright：真实 Electron、临时 `USERPROFILE`、落库/落盘断言 |
