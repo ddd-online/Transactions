@@ -119,6 +119,19 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     expect(trade.amount_cents).toBe(50_000)
     expect(trade.quantity).toBe(100)
     expect(trade.total_cost_cents).toBe(50_501)
+
+    await page.getByTestId('trade-type').selectOption('close')
+    await page.getByTestId('trade-price').fill('6')
+    await page.getByTestId('trade-lots').fill('1')
+    await page.getByTestId('trade-save').click()
+
+    await page.getByTestId('stock-tab-history').click()
+    await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
+    await page.getByTestId('stock-history-open').click()
+    await expect(page.getByTestId('stock-history-detail')).toContainText('第 1 轮')
+
+    await page.getByTestId('stock-tab-statistics').click()
+    await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

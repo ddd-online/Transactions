@@ -60,6 +60,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
     图表分桶补零、关联事件；15 + 9 条测试。
   - 图表 DAO/服务 + 5 条命令：预设 / CRUD / 拖拽排序 / chart_lines JSON；16 条测试。
   - 股票账户/费用/标签/复盘模板/资金链 + 13 条命令；持仓/成交/历史/轮次 DAO（23 + 20 条测试）。
+  - 股票历史/统计页：清仓汇总、单股轮次详情、逐笔/分组/最近 N/标签统计，Playwright 覆盖。
   - 更新器：GitHub latest release、sha256 校验、取消/安装、七状态面板；10 条测试。
   - 打包：NSIS 安装版 + 便携版，打包产物 Playwright 冒烟通过。
   - 旧版导入向导：探查 0.20.0 库、进度事件、报告与自动打开新工作空间，Playwright 用种子库跑通。
@@ -80,6 +81,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 - 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 

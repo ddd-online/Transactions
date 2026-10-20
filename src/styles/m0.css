@@ -527,6 +527,31 @@ body {
   word-break: break-word;
 }
 
+.m0-stock-tabs {
+  margin: 0;
+}
+
+.m0-stock-history-detail {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--transactions-color-border, #e5e6eb);
+}
+
+.m0-rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m0-rounds > li {
+  padding: 12px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  border-radius: 10px;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;
