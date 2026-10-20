@@ -1,0 +1,467 @@
+/* ============================================
+ * Transactions 设计令牌（Design Tokens）
+ * 设计令牌：颜色 / 间距 / 字号 / 圆角 / 阴影的唯一来源；界面里不得硬编码颜色。
+ *
+ * 命名规则（对应主题映射混入 `emit-theme($map)`）：
+ *   --transactions-#{$key}: #{$value}
+ * 因此 `$light` / `$dark` 里的每一个键都变成 `--transactions-<key>`，取值一字不改。
+ *
+ * 主题切换：
+ *   * 浅色（默认）→ `:root`
+ *   * 深色        → `<html data-theme="dark">`
+ *   * 兜底        → 未显式设置 data-theme 时跟随系统（`prefers-color-scheme: dark`
+ *                   作用于 `html:not([data-theme])`）
+ *
+ * 计数不写在这儿（手抄必错）：跑 `fixtures/design-audit.ps1` 会打印"共 N 个令牌 /
+ * 深色与系统兜底各覆盖 M 个"。
+ * ============================================ */
+
+/* ============================================
+ * 浅色主题（默认）
+ * ============================================ */
+:root {
+  /* 浏览器自带的"表面"（滚动条、表单控件、未加载时的底色）跟随**本应用**的外观设置，
+     而不是操作系统的深浅色 —— 覆盖式滚动条不能再用 CSS 上色（见 base.css），
+     颜色只能靠 `color-scheme` 交给 Blink 自己挑。 */
+  color-scheme: light;
+
+  /* Brand — DeepSeek blue */
+  --transactions-color-primary: #3964fe;
+  --transactions-color-primary-light: #5b7fff;
+  --transactions-color-primary-hover: #5b7fff;
+  --transactions-color-primary-active: #2b52e6;
+  --transactions-color-primary-200: #a9bdff;
+  --transactions-color-primary-tint: rgba(57, 100, 254, 0.08);
+
+  /* Secondary / accent（amber = 警示角色） */
+  --transactions-color-secondary: #61666b;
+  --transactions-color-accent: #d97706;
+  --transactions-color-accent-light: #f59e0b;
+  --transactions-color-accent-hover: #b45309;
+
+  /* Semantic — 仅用于交易数据（Semantic Silo 规则） */
+  --transactions-color-income: #16a34a;
+  --transactions-color-expense: #dc2626;
+  --transactions-color-transfer: #3b82f6;
+  --transactions-color-outlier: #d97706;
+
+  /* Semantic tints — 10% 标签/胶囊底色 */
+  --transactions-color-income-tint: rgba(22, 163, 74, 0.10);
+  --transactions-color-expense-tint: rgba(220, 38, 38, 0.10);
+  --transactions-color-transfer-tint: rgba(59, 130, 246, 0.10);
+  --transactions-color-outlier-tint: rgba(217, 119, 6, 0.10);
+  --transactions-color-outlier-tint-strong: rgba(217, 119, 6, 0.18);
+
+  /* Chart categorical palette — 折线图的候选色池（与交易类型无关，见 DESIGN.md）。
+   * 顺序即"第 N 条曲线"的取值顺序；两套主题色相一一对应，切换主题不改变曲线身份。
+   * 两两可辨（dE00 / 红绿色盲下界）与画布对比度由 fixtures/design-audit.ps1 第 4 项盯着。 */
+  --transactions-color-chart-blue: #3964fe;
+  --transactions-color-chart-amber: #d97706;
+  --transactions-color-chart-green: #15803d;
+  --transactions-color-chart-pink: #db2777;
+  --transactions-color-chart-cyan: #0891b2;
+  --transactions-color-chart-red: #dc2626;
+  --transactions-color-chart-violet: #7e22ce;
+  --transactions-color-chart-neutral: #61666b;
+
+  /* UI state */
+  --transactions-color-success: #16a34a;
+  --transactions-color-warning: #d97706;
+  --transactions-color-positive: #16a34a;
+  --transactions-color-negative: #dc2626;
+
+  /* Backgrounds — 冷灰层级 */
+  --transactions-color-bg-base: #f9fafb;
+  --transactions-color-major-background: #ffffff;
+  /* 页面/版心那层纸面的颜色。浅色下就是纯白（页面底色是 #f9fafb 的浅灰，层次由它撑起来）；
+   * 深色下需要单独抬高一点，否则纸面与页面底几乎同色（见下方 dark 覆盖）。 */
+  --transactions-color-card-surface: #ffffff;
+  --transactions-color-major-warm: #f9fafb;
+  --transactions-color-minor-background: #f3f4f6;
+  --transactions-color-sidebar-fill: #f3f4f6;
+  --transactions-color-elevated: #ffffff;
+
+  /* Borders — 发丝线 l1/l2/l3 */
+  --transactions-color-window-border: #e8eaed;
+  --transactions-color-divider: #eceef1;
+  --transactions-color-border-l1: #e8eaed;
+  --transactions-color-border-l2: #e2e4e8;
+  --transactions-color-border-l3: #d5d8dd;
+
+  /* Text — 四级 */
+  --transactions-color-text-major: #0f1115;
+  --transactions-color-text-secondary: #61666b;
+  --transactions-color-text-tertiary: #81858c;
+  --transactions-color-text-disabled: #9aa0a8;
+  --transactions-color-text-inverse: #ffffff;
+
+  /* Icons */
+  --transactions-color-icon: #61666b;
+  --transactions-color-icon-hover: #0f1115;
+  --transactions-color-icon-active: #3964fe;
+
+  /* Interactive fills */
+  --transactions-color-hover-bg: rgba(15, 17, 21, 0.06);
+  --transactions-color-active-bg: rgba(57, 100, 254, 0.10);
+  --transactions-color-danger-hover-bg: rgba(220, 38, 38, 0.10);
+  /* 叠在图片上的浮层控件底：浅色主题下也必须是"暗底 + 亮图标"才看得清 */
+  --transactions-color-overlay-scrim: rgba(15, 17, 21, 0.55);
+  /* 阻塞屏（选工作空间）的压底：比弹窗遮罩重、比灯箱 scrim 轻 ——
+   * 背景是**真的应用界面**（侧栏 + 版心），要看得见，但不能跟对话框抢。 */
+  --transactions-color-screen-scrim: rgba(15, 17, 21, 0.28);
+
+  /* Chat bubble（DSH specific-bubble） */
+  --transactions-color-bubble: #eef0f4;
+
+  /* Code blocks（markdown） */
+  --transactions-color-markdown-code-block: #f4f5f7;
+
+  /* Shadows — lv1..lv4 */
+  --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --transactions-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+  --transactions-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14);
+  --transactions-shadow-focus: 0 0 0 2px rgba(57, 100, 254, 0.25);
+  --transactions-shadow-lv1: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --transactions-shadow-lv2: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --transactions-shadow-lv3: 0 8px 24px rgba(0, 0, 0, 0.10);
+  --transactions-shadow-lv4: 0 16px 40px rgba(0, 0, 0, 0.14);
+
+  /* Ledger identity palette（账本身份色 — 8 个自然色调） */
+  --transactions-ledger-forest: #4a8e70;
+  --transactions-ledger-warm-brown: #8c7b6e;
+  --transactions-ledger-amber: #c6963a;
+  --transactions-ledger-vermillion: #d9705a;
+  --transactions-ledger-slate-blue: #5c8db5;
+  --transactions-ledger-ochre: #9e8c7e;
+  --transactions-ledger-moss: #6b9e7e;
+  --transactions-ledger-camel: #b89a80;
+
+  /* ---------- 字体族 ---------- */
+  --transactions-font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --transactions-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --transactions-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
+
+  /* ---------- Typography（$font-sizes / $font-weights / $line-heights） ---------- */
+  --transactions-size-text-display-xl: 36px;
+  --transactions-size-text-display: 28px;
+  --transactions-size-text-display-sm: 24px;
+  --transactions-size-text-title: 20px;
+  --transactions-size-text-title-sm: 18px;
+  --transactions-size-text-section: 16px;
+  --transactions-size-text-body: 14px;
+  --transactions-size-text-body-sm: 13px;
+  --transactions-size-text-caption: 12px;
+  --transactions-size-text-small: 11px;
+
+  --transactions-weight-regular: 400;
+  --transactions-weight-medium: 500;
+  --transactions-weight-semibold: 600;
+  --transactions-weight-bold: 700;
+
+  --transactions-height-tight: 1.2;
+  --transactions-height-snug: 1.4;
+  --transactions-height-normal: 1.6;
+  --transactions-height-relaxed: 1.8;
+
+  /* 字距（DESIGN.md 的 display / label / amount 三个角色各一档；文与正文不调字距） */
+  --transactions-tracking-display: -0.015em;
+  --transactions-tracking-label: 0.04em;
+  --transactions-tracking-amount: -0.01em;
+  --transactions-tracking-amount-lg: -0.02em;
+  --transactions-tracking-amount-xl: -0.03em;
+
+  /* ---------- Spacing（$spacing，8px 基准） ---------- */
+  --transactions-space-2xs: 2px;
+  --transactions-space-xs: 4px;
+  --transactions-space-sm: 8px;
+  --transactions-space-md: 12px;
+  --transactions-space-lg: 16px;
+  --transactions-space-xl: 24px;
+  --transactions-space-2xl: 32px;
+  --transactions-space-3xl: 48px;
+
+  /* ---------- Layout（$layout-sizes） ----------
+   * 这里原来还有 `header-height: 48px` / `sider-width: 56px` / `content-padding: 20px` 三条
+   * （从 Ant 的令牌表搬来的），值与现有骨架对不上、全仓零引用，已删：
+   *   * 顶部那条带用下文的 `size-top-band`（同为 48px，含义是"两侧共用的顶部容器"）；
+   *   * 侧栏宽是上面的 `size-sidebar`（200px）—— 56px 那条只对得上子功能图标条；
+   *   * 内容内边距由各页自己的容器给（贴边型 0 / 卡片型 16px），没有全局的 20px。 */
+  --transactions-size-footer-height: 44px;
+  /* 子功能图标条宽度（`.page-rail`）。**不是侧边栏**：侧栏宽是 `size-sidebar`。 */
+  --transactions-size-rail-width: 56px;
+
+  /* ---------- Border radius（$border-radius） ---------- */
+  --transactions-radius-sm: 6px;
+  --transactions-radius-md: 8px;
+  --transactions-radius-lg: 12px;
+  --transactions-radius-xl: 16px;
+  --transactions-radius-full: 9999px;
+  --transactions-radius-chat: 20px;
+
+  /* ---------- Transitions（$transitions） ---------- */
+  --transactions-transition-fast: 150ms ease;
+  --transactions-transition-normal: 200ms ease;
+  --transactions-transition-slow: 300ms ease;
+  --transactions-transition-smooth: 300ms cubic-bezier(0.25, 1, 0.5, 1);
+  /* 动效语言（DESIGN.md「Motion」）——两个"落位"节拍共用下面那条 expo 曲线：
+   *   enter  = 面板/消息进场：位移小、200ms，弹窗/抽屉/下拉/气泡/通知都用它；
+   *   settle = 内容区落位：整块内容进来一次（每次切页/子功能），位移大一点、320ms
+   *            （"数据自己落定"那一拍留给曲线描线，见 DESIGN.md「Motion」）。
+   * 遮罩与背板只做透明度（`tr-fade-in`）：全屏层做位移会读成"窗口在动"。 */
+  --transactions-transition-enter: 200ms var(--transactions-ease-out-expo);
+  --transactions-transition-settle: 320ms var(--transactions-ease-out-expo);
+
+  /* ---------- Button ---------- */
+  --transactions-btn-height-sm: 28px;
+  --transactions-btn-height-md: 36px;
+  --transactions-btn-height-lg: 44px;
+  --transactions-btn-min-width: 72px;
+  --transactions-btn-padding-h-sm: 12px;
+  --transactions-btn-padding-h-md: 16px;
+  --transactions-btn-padding-h-lg: 24px;
+  --transactions-btn-font-size-sm: 13px;
+  --transactions-btn-font-size-md: 14px;
+  --transactions-btn-font-size-lg: 16px;
+  /* 图标动作按钮（IconButton）：全仓唯一尺寸 */
+  --transactions-icon-btn-size: 28px;
+
+  /* ---------- 间距节奏（页面布局用语义名，不用裸的 space-*） ----------
+   * 三级节奏：区域内紧凑 8 / 控件簇 12 / 区域之间 16。
+   * 页面与面板之间的"大分隔"一律用 region，避免每个页面各写一个值。 */
+  --transactions-space-row: 12px;
+  --transactions-space-region: 16px;
+
+  /* ---------- 顶部容器（左右两侧共用） ----------
+   * 侧栏「账本选择器容器」与内容区「标题容器（含窗口三按钮）」必须**等高**，
+   * 于是侧栏导航组与页面工具栏都从同一条水平线开始 —— 这是左右顶对齐的结构保证，
+   * 而不是靠各自写一个 margin 去凑。
+   * 48px：容器底边就是那条横贯全窗口的分隔线；
+   * 线下方由 `.sidebar-nav` / `.page-toolbar` 各自留 8px，把导航组与工具栏推下去同一段距离。
+   * 注意：容器里最高的内容是标题文字（见 base.css 的 .page-title），改字号别超过这个高度。 */
+  --transactions-size-top-band: 48px;
+
+  /* 顶部容器分隔线到下方内容之间的距离 */
+  --transactions-space-top-gap: 8px;
+
+  /* ---------- 左侧导航栏宽度 ----------
+   * 侧栏是固定宽度（不拖拽）；收起时换成下面那一档，**没有第三种宽度**。
+   * ⚠ 这个值同时是**标题栏的居中补偿**：标题栏画在内容区里（侧栏右边那一列），
+   * 所以"在容器里居中"会比窗口正中偏右半个侧栏宽 —— 见 base.css 的 `.page-title`。
+   * 两处必须同源，别再手写 200px。 */
+  --transactions-size-sidebar: 200px;
+  /* 收起态的侧栏宽：**只比子功能图标条（56px）略宽一档** ——
+   * 两栏都属于"窄图标列"，收起后它们并排站在一起，
+   * 差一档才读得出是两条不同的栏，而不是同一条栏裂开了。
+   * 内侧 12px 边距 × 2 + 44px 的方块 + **1px 右边框** = 69px：
+   * 边框算在宽度里（`box-sizing: border-box`），不把它加进来，内容盒就只有 43px ——
+   * 功能项（`width: 100%`）会比顶部那个 44px 的头像窄 1px，白纸黑字看得出来。
+   * 44 同时是页脚那条带子的高度，底栏那一格也刚好落在带子里。 */
+  --transactions-size-sidebar-collapsed: 69px;
+
+  /* 动效专用缓动：落地感（exponential ease-out），用于“数据落定”类进场 */
+  --transactions-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============================================
+ * 深色主题 —— 变量名相同，取值不同
+ * 由外观设置写入 `<html data-theme="dark">`。
+ * ============================================ */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --transactions-color-primary: #3964fe;
+  --transactions-color-primary-light: #6b8aff;
+  --transactions-color-primary-hover: #6b8aff;
+  --transactions-color-primary-active: #2b52e6;
+  --transactions-color-primary-200: #a9bdff;
+  --transactions-color-primary-tint: rgba(57, 100, 254, 0.16);
+
+  --transactions-color-secondary: #b6bcc6;
+  --transactions-color-accent: #fbbf24;
+  --transactions-color-accent-light: #fcd34d;
+  --transactions-color-accent-hover: #f59e0b;
+
+  --transactions-color-income: #4ade80;
+  --transactions-color-expense: #f87171;
+  --transactions-color-transfer: #60a5fa;
+  --transactions-color-outlier: #fbbf24;
+
+  --transactions-color-income-tint: rgba(74, 222, 128, 0.14);
+  --transactions-color-expense-tint: rgba(248, 113, 113, 0.14);
+  --transactions-color-transfer-tint: rgba(96, 165, 250, 0.14);
+  --transactions-color-outlier-tint: rgba(251, 191, 36, 0.14);
+  --transactions-color-outlier-tint-strong: rgba(251, 191, 36, 0.22);
+
+  --transactions-color-chart-blue: #60a5fa;
+  --transactions-color-chart-amber: #f59e0b;
+  --transactions-color-chart-green: #4ade80;
+  --transactions-color-chart-pink: #ec4899;
+  --transactions-color-chart-cyan: #22d3ee;
+  --transactions-color-chart-red: #ef4444;
+  --transactions-color-chart-violet: #a855f7;
+  --transactions-color-chart-neutral: #b6bcc6;
+
+  --transactions-color-success: #4ade80;
+  --transactions-color-warning: #fbbf24;
+  --transactions-color-positive: #4ade80;
+  --transactions-color-negative: #f87171;
+
+  --transactions-color-bg-base: #0f1115;
+  --transactions-color-major-background: #16181d;
+  --transactions-color-card-surface: #1c1f26;
+  --transactions-color-major-warm: #0f1115;
+  --transactions-color-minor-background: #14161a;
+  --transactions-color-sidebar-fill: #14161a;
+  --transactions-color-elevated: #1d2026;
+
+  --transactions-color-window-border: rgba(255, 255, 255, 0.08);
+  --transactions-color-divider: rgba(255, 255, 255, 0.08);
+  --transactions-color-border-l1: rgba(255, 255, 255, 0.08);
+  --transactions-color-border-l2: rgba(255, 255, 255, 0.12);
+  --transactions-color-border-l3: rgba(255, 255, 255, 0.18);
+
+  --transactions-color-text-major: #f2f4f8;
+  --transactions-color-text-secondary: #b6bcc6;
+  --transactions-color-text-tertiary: #8a919c;
+  --transactions-color-text-disabled: #6b7280;
+  --transactions-color-text-inverse: #ffffff;
+
+  --transactions-color-icon: #b6bcc6;
+  --transactions-color-icon-hover: #f2f4f8;
+  --transactions-color-icon-active: #6b8aff;
+
+  --transactions-color-hover-bg: rgba(255, 255, 255, 0.08);
+  --transactions-color-active-bg: rgba(57, 100, 254, 0.22);
+  --transactions-color-danger-hover-bg: rgba(248, 113, 113, 0.14);
+
+  /* 叠在图片上的浮层控件底：两套深色定义保持一致，图片前始终可读 */
+  --transactions-color-overlay-scrim: rgba(15, 17, 21, 0.55);
+  --transactions-color-screen-scrim: rgba(0, 0, 0, 0.45);
+
+  --transactions-color-bubble: #24282f;
+
+  --transactions-color-markdown-code-block: #1d2026;
+
+  --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);  --transactions-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --transactions-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --transactions-shadow-focus: 0 0 0 2px rgba(57, 100, 254, 0.45);
+  --transactions-shadow-lv1: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --transactions-shadow-lv2: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --transactions-shadow-lv3: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --transactions-shadow-lv4: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+  /* Ledger identity — 深色表面提亮以保证可读性 */
+  --transactions-ledger-forest: #5d9e80;
+  --transactions-ledger-warm-brown: #a2907f;
+  --transactions-ledger-amber: #d4ae5e;
+  --transactions-ledger-vermillion: #e08a74;
+  --transactions-ledger-slate-blue: #74a0c8;
+  --transactions-ledger-ochre: #b0a092;
+  --transactions-ledger-moss: #82b096;
+  --transactions-ledger-camel: #c8ae94;
+}
+
+/* ============================================
+ * 系统跟随兜底：还没有显式 data-theme 时（例如初始化窗口），
+ * 直接遵从操作系统偏好，规则为
+ * `@media (prefers-color-scheme: dark) { html:not([data-theme]) { ... } }`。
+ * ============================================ */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    color-scheme: dark;
+
+    --transactions-color-primary: #3964fe;
+    --transactions-color-primary-light: #6b8aff;
+    --transactions-color-primary-hover: #6b8aff;
+    --transactions-color-primary-active: #2b52e6;
+    --transactions-color-primary-200: #a9bdff;
+    --transactions-color-primary-tint: rgba(57, 100, 254, 0.16);
+
+    --transactions-color-secondary: #b6bcc6;
+    --transactions-color-accent: #fbbf24;
+    --transactions-color-accent-light: #fcd34d;
+    --transactions-color-accent-hover: #f59e0b;
+
+    --transactions-color-income: #4ade80;
+    --transactions-color-expense: #f87171;
+    --transactions-color-transfer: #60a5fa;
+    --transactions-color-outlier: #fbbf24;
+
+    --transactions-color-income-tint: rgba(74, 222, 128, 0.14);
+    --transactions-color-expense-tint: rgba(248, 113, 113, 0.14);
+    --transactions-color-transfer-tint: rgba(96, 165, 250, 0.14);
+    --transactions-color-outlier-tint: rgba(251, 191, 36, 0.14);
+    --transactions-color-outlier-tint-strong: rgba(251, 191, 36, 0.22);
+
+    --transactions-color-chart-blue: #60a5fa;
+    --transactions-color-chart-amber: #f59e0b;
+    --transactions-color-chart-green: #4ade80;
+    --transactions-color-chart-pink: #ec4899;
+    --transactions-color-chart-cyan: #22d3ee;
+    --transactions-color-chart-red: #ef4444;
+    --transactions-color-chart-violet: #a855f7;
+    --transactions-color-chart-neutral: #b6bcc6;
+
+    --transactions-color-success: #4ade80;
+    --transactions-color-warning: #fbbf24;
+    --transactions-color-positive: #4ade80;
+    --transactions-color-negative: #f87171;
+
+    --transactions-color-bg-base: #0f1115;
+    --transactions-color-major-background: #16181d;
+    --transactions-color-card-surface: #1c1f26;
+    --transactions-color-major-warm: #0f1115;
+    --transactions-color-minor-background: #14161a;
+    --transactions-color-sidebar-fill: #14161a;
+    --transactions-color-elevated: #1d2026;
+
+    --transactions-color-window-border: rgba(255, 255, 255, 0.08);
+    --transactions-color-divider: rgba(255, 255, 255, 0.08);
+    --transactions-color-border-l1: rgba(255, 255, 255, 0.08);
+    --transactions-color-border-l2: rgba(255, 255, 255, 0.12);
+    --transactions-color-border-l3: rgba(255, 255, 255, 0.18);
+
+    --transactions-color-text-major: #f2f4f8;
+    --transactions-color-text-secondary: #b6bcc6;
+    --transactions-color-text-tertiary: #8a919c;
+    --transactions-color-text-disabled: #6b7280;
+    --transactions-color-text-inverse: #ffffff;
+
+    --transactions-color-icon: #b6bcc6;
+    --transactions-color-icon-hover: #f2f4f8;
+    --transactions-color-icon-active: #6b8aff;
+
+    --transactions-color-hover-bg: rgba(255, 255, 255, 0.08);
+    --transactions-color-active-bg: rgba(57, 100, 254, 0.22);
+    --transactions-color-danger-hover-bg: rgba(248, 113, 113, 0.14);
+
+    /* 叠在图片上的浮层控件底：两套深色定义保持一致，图片前始终可读 */
+    --transactions-color-overlay-scrim: rgba(15, 17, 21, 0.55);
+    --transactions-color-screen-scrim: rgba(0, 0, 0, 0.45);
+
+    --transactions-color-bubble: #24282f;
+
+    --transactions-color-markdown-code-block: #1d2026;
+
+    --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --transactions-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --transactions-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --transactions-shadow-focus: 0 0 0 2px rgba(57, 100, 254, 0.45);
+    --transactions-shadow-lv1: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --transactions-shadow-lv2: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --transactions-shadow-lv3: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --transactions-shadow-lv4: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+    --transactions-ledger-forest: #5d9e80;
+    --transactions-ledger-warm-brown: #a2907f;
+    --transactions-ledger-amber: #d4ae5e;
+    --transactions-ledger-vermillion: #e08a74;
+    --transactions-ledger-slate-blue: #74a0c8;
+    --transactions-ledger-ochre: #b0a092;
+    --transactions-ledger-moss: #82b096;
+    --transactions-ledger-camel: #c8ae94;
+  }
+}

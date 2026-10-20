@@ -1,0 +1,11 @@
+node_modules/
+out/
+dist/
+artifacts/
+build/target/
+.cache/
+*.log
+transactions.db
+transactions.db-wal
+transactions.db-shm
+.DS_Store

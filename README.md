@@ -1,0 +1,50 @@
+# Transactions
+
+Windows 桌面个人记账应用。当前处于 **Electron + TypeScript 重写期**（M0 完成），
+旧版（Tauri 2 + Rust + Leptos/WASM，0.20.0）在
+[Transactions-Rust](https://github.com/ddd-online/Transactions-Rust) 继续可用。
+
+## 目标形态
+
+- Electron 44 + React 19 + TypeScript + Vite（electron-vite）
+- 数据库：Node 内置 `node:sqlite`（WAL，金额恒为整数分，股价恒为整数厘）
+- 无原生模块、无本地端口；渲染进程 `sandbox` + `contextIsolation`，只经 preload 的
+  `window.api` 访问主进程
+- 旧数据通过一次性导入器迁移（只读旧库，不修改源目录）
+
+## 开发
+
+```powershell
+pnpm install
+pnpm dev            # Vite + Electron（渲染层 HMR）
+pnpm typecheck
+pnpm test:unit      # Vitest
+pnpm test:e2e       # 先 build，再 Playwright 启动 Electron
+pnpm dist:dir       # 未打包产物：dist/win-unpacked/Transactions.exe
+pnpm dist           # NSIS 安装包 + 便携版到 dist/
+```
+
+本机注意：如果环境里带着 `ELECTRON_RUN_AS_NODE=1`，Electron 会退化成 Node 直接退出。
+`pnpm dev` 走 `scripts/electron-env.mjs` 会自动清掉；Playwright 侧在 `tests/e2e` 里同样清了。
+
+## 目录
+
+| 路径 | 职责 |
+|---|---|
+| `electron/` | 主进程：窗口/托盘/协议/配置/日志/数据库/服务/IPC/更新/导入 |
+| `src/` | 渲染进程：React 页面与组件；样式从旧仓库原样复用 |
+| `shared/` | 主进程与渲染进程共用的命令目录、事件名、错误信封、类型 |
+| `tests/unit` | Vitest（领域/数据/纯逻辑） |
+| `tests/e2e` | Playwright（真实 Electron + 落库断言） |
+| `fixtures/` | 合成数据：旧库说明、HEIC 测试图；不含真实个人数据 |
+| `docs/` | ADR 与迁移参照（旧仓库 commit、fixtures 生成方式） |
+
+## 迁移状态
+
+- **M0（已完成）**：仓库脚手架、无边框窗口/托盘/单实例、`app://` 与 `trasset://`、`node:sqlite`、
+  config/logging、IPC + zod、Vitest + Playwright、打包冒烟。
+- **M1（下一步）**：领域纯逻辑（money/fee/fund/stock/statistics/update/proxy）与完整 schema v1、
+  DAO、旧数据导入器。
+- 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
+
+真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。

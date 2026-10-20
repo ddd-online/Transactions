@@ -1,0 +1,11 @@
+import { createRoot } from 'react-dom/client'
+
+import { App } from './App'
+import './styles/tokens.css'
+import './styles/fonts.css'
+import './styles/m0.css'
+
+const container = document.getElementById('root')
+if (!container) throw new Error('缺少 #root 容器')
+
+createRoot(container).render(<App />)

@@ -1,0 +1,311 @@
+/* ============================================
+ * 分类标签页专属样式（三栏联动 + 拖拽排序）
+ *
+ * 各区块样式：
+ *   - 工具栏与设置区：.type-nav / .type-card / .setting-main / .modal-form
+ *   - 分类栏：.column / .column-header / .list-item / .drag-handle / .empty-init
+ *   - 标签栏同构（右栏圆角在右侧）
+ * 类名前缀统一为 `ct-`；取值只用 `--transactions-*` 令牌（类型色用
+ * --transactions-color-{expense,income,transfer}），不出现裸 hex / rgb。
+ * ============================================ */
+
+/* ========== 工具栏（在 `.page-toolbar` 里）：只有交易类型卡片 ========== */
+
+/* 交易类型导航（.type-nav）：三张卡片，激活色随类型语义色 */
+.ct-type-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+.ct-type-card {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--transactions-space-md);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transactions-transition-smooth),
+    box-shadow var(--transactions-transition-smooth),
+    color var(--transactions-transition-fast);
+}
+
+/* 每个类型各自的 --ct-type-color（令牌，非裸色值） */
+.ct-type-card--expense {
+  --ct-type-color: var(--transactions-color-expense);
+}
+
+.ct-type-card--income {
+  --ct-type-color: var(--transactions-color-income);
+}
+
+.ct-type-card--transfer {
+  --ct-type-color: var(--transactions-color-transfer);
+}
+
+.ct-type-card:hover:not(.is-active) {
+  color: var(--transactions-color-text-major);
+  box-shadow: var(--transactions-shadow-sm);
+}
+
+/* 用子选择器限定直接子节点，避免子级元素被整体染色 */
+.ct-type-card.is-active {
+  color: var(--ct-type-color);
+  background-color: color-mix(
+    in srgb,
+    var(--ct-type-color) 8%,
+    var(--transactions-color-major-background)
+  );
+  border-color: color-mix(in srgb, var(--ct-type-color) 30%, transparent);
+  box-shadow: var(--transactions-shadow-sm);
+}
+
+.ct-type-card.is-active > .ct-type-card-label {
+  color: inherit;
+}
+
+.ct-type-card:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.ct-type-card-label {
+  white-space: nowrap;
+}
+
+/* ========== 主体：240px 分类栏 + 1fr 标签栏 ========== */
+
+/* 两栏是**同一张纸上的两列**，不是两张卡：
+ * 底色透明（版心本身不填色），靠一条竖直发丝线分栏 ——
+ * 之前两栏各自是"白底 + 描边 + 12px 圆角"，正好套在版心里，视觉上成了双层卡片。 */
+.ct-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  overflow: hidden;
+  min-height: 0;
+  gap: 0;
+}
+
+.ct-column {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* 左栏（分类）与右栏（标签）之间：一条贯通的竖线 */
+.ct-column--categories {
+  border-right: 1px solid var(--transactions-color-divider);
+  /* 顶部不留内边距：栏头紧贴工具栏底边线（与记录子功能的表格同一条约定） */
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.ct-column--tags {
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.ct-column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  flex-shrink: 0;
+}
+
+.ct-column-header .ct-add-btn {
+  margin-left: auto;
+}
+
+.ct-column-title {
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ct-column-count {
+  flex-shrink: 0;
+  padding: var(--transactions-space-2xs) var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-full);
+}
+
+/* 栏头按钮的图标（`.ct-add-btn` 是 `.ui-btn`，排布与图标↔文案的 8px 间距都由它给） */
+.ct-add-btn-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+
+.ct-add-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 栏体：可滚动区域（空态也占满剩余高度） */
+.ct-column-body-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ct-column-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--transactions-space-xs);
+}
+
+/* ========== 列表项 ========== */
+
+.ct-list-item {
+  display: flex;
+  align-items: center;
+  padding: var(--transactions-space-sm);
+  border-radius: var(--transactions-radius-md);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transactions-transition-fast);
+}
+
+.ct-list-item:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.ct-list-item.is-active {
+  background-color: var(--transactions-color-active-bg);
+  font-weight: var(--transactions-weight-medium);
+}
+
+/* 拖拽手柄（Title「拖动排序」）；`.ui-drag-item` 自带 grab 光标，
+   这里把实际手柄收窄到 16px 宽的圆点列，避免整行都可拖。 */
+.ct-drag-item {
+  border-radius: var(--transactions-radius-md);
+}
+
+/* 拖拽把手：统一用 `ui.css` 的 `.ui-drag-handle` + 图标集 `Icon::DragHandle`。
+ * 以前这里是用 radial-gradient 画的 6 点阵（1.3px 的点在 1x 下发虚），已删除。
+ *
+ * ⚠ 用 `:where()` 把这条耦合规则的**权重降到 0**：否则它的 (0,3,0) 会压过
+ * `.ui-drag-handle:hover` 的 (0,2,0)，导致"鼠标压在手把上却不变主色"（实测踩过）。 */
+:where(.ct-list-item:hover) .ui-drag-handle {
+  color: var(--transactions-color-text-secondary);
+}
+
+.ct-item-main {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+  flex: 1;
+}
+
+.ct-item-name {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 记录数徽标（`.item-badge`）：有记录数时才出现 */
+.ct-item-badge {
+  flex-shrink: 0;
+  padding: var(--transactions-space-2xs) var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-full);
+}
+
+/* 行内操作：默认隐藏，hover / 选中时出现（按钮本体样式见 ui.css 的 .ui-icon-btn） */
+.ct-item-actions {
+  display: none;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.ct-list-item:hover .ct-item-actions,
+.ct-list-item.is-active .ct-item-actions {
+  display: flex;
+}
+
+/* ========== 空态 ========== */
+
+.ct-column-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--transactions-space-xl);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+  text-align: center;
+}
+
+/* 初始化引导（`.empty-init`） */
+.ct-empty-init {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-md);
+  text-align: center;
+}
+
+.ct-empty-init-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--transactions-color-text-secondary);
+  opacity: 0.4;
+}
+
+.ct-empty-init-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ct-empty-init-text {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* ========== 弹窗 ========== */
+
+.ct-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.ct-delete-message {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  line-height: 1.6;
+}
+
+/* ========== 动效降级 ========== */
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-type-card,
+  .ct-list-item,
+  .ui-drag-handle {
+    transition: none;
+  }
+}
+

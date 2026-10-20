@@ -1,0 +1,112 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+import { afterEach, describe, expect, it } from 'vitest'
+
+import { closeWorkspace, currentWorkspace, hasWorkspace, openWorkspace } from '../../electron/db'
+import { openDatabase } from '../../electron/db/driver'
+import { AppError, ERR_CODE_LEGACY_WORKSPACE } from '../../shared/errors'
+
+const directories: string[] = []
+
+function temporaryDirectory(): string {
+  const directory = mkdtempSync(join(tmpdir(), 'tr-db-test-'))
+  directories.push(directory)
+  return directory
+}
+
+afterEach(() => {
+  closeWorkspace()
+  for (const directory of directories.splice(0)) {
+    rmSync(directory, { recursive: true, force: true })
+  }
+})
+
+describe('workspace database', () => {
+  it('creates a new workspace from the init schema', () => {
+    const directory = temporaryDirectory()
+    const workspace = openWorkspace(directory)
+
+    expect(hasWorkspace()).toBe(true)
+    expect(currentWorkspace()?.databasePath).toBe(join(directory, 'transactions.db'))
+
+    const meta = workspace.db.prepare('SELECT value FROM app_meta WHERE key = ?').get('schema_version') as
+      | { value: string }
+      | undefined
+    expect(meta?.value).toBe('1')
+
+    workspace.db
+      .prepare('INSERT INTO ledger (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')
+      .run('l1', '默认账本', 1, 1)
+    const row = workspace.db.prepare('SELECT name FROM ledger WHERE id = ?').get('l1') as
+      | { name: string }
+      | undefined
+    expect(row?.name).toBe('默认账本')
+  })
+
+  it('rolls back a failed transaction', () => {
+    const workspace = openWorkspace(temporaryDirectory())
+    expect(() =>
+      workspace.db.transaction(() => {
+        workspace.db
+          .prepare('INSERT INTO ledger (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')
+          .run('l1', 'A', 1, 1)
+        throw new Error('boom')
+      }),
+    ).toThrow('boom')
+
+    const count = workspace.db.prepare('SELECT COUNT(*) AS count FROM ledger').get() as {
+      count: number
+    }
+    expect(count.count).toBe(0)
+  })
+
+  it('rejects a legacy workspace with the dedicated error code', () => {
+    const directory = temporaryDirectory()
+    const legacy = openDatabase(join(directory, 'transactions.db'))
+    legacy.exec('CREATE TABLE tbl_billadm_schema_migration (id TEXT, applied_at INTEGER)')
+    legacy.close()
+
+    try {
+      openWorkspace(directory)
+      throw new Error('应当拒绝旧库')
+    } catch (error) {
+      expect(error).toBeInstanceOf(AppError)
+      expect((error as AppError).code).toBe(ERR_CODE_LEGACY_WORKSPACE)
+    }
+  })
+
+  it('rejects an existing database with an unknown app_meta version', () => {
+    const directory = temporaryDirectory()
+    const database = openDatabase(join(directory, 'transactions.db'))
+    database.exec("CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    database.exec("INSERT INTO app_meta VALUES ('schema_version', '99')")
+    database.close()
+
+    expect(() => openWorkspace(directory)).toThrow(/不认识的库格式/)
+  })
+
+  it('rejects an empty path', () => {
+    expect(() => openWorkspace('   ')).toThrow(AppError)
+  })
+
+  it('keeps a single current workspace when reopening', () => {
+    const first = temporaryDirectory()
+    const second = temporaryDirectory()
+    openWorkspace(first)
+    openWorkspace(second)
+    expect(currentWorkspace()?.directory).toBe(second)
+    closeWorkspace()
+    expect(hasWorkspace()).toBe(false)
+  })
+})
+
+describe('workspace file layout', () => {
+  it('leaves a readable database file on disk', () => {
+    const directory = temporaryDirectory()
+    openWorkspace(directory)
+    writeFileSync(join(directory, 'marker.txt'), 'ok')
+    expect(join(directory, 'transactions.db')).toMatch(/transactions\.db$/)
+  })
+})

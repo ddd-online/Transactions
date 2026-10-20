@@ -1,0 +1,771 @@
+/* ============================================
+ * 应用设置页专属样式（5 个分栏）
+ *
+ * 覆盖内容：
+ *   - 分栏骨架（页签 + 内容区）
+ *   - 分栏标题 + 卡片列表
+ *   - 通用设置 / 消费模板 / 日记配置 / 股票 / 关于软件
+ *   - 「交易费用设置」那一组表单（挂在股票分栏下）
+ *
+ * 约定：
+ *   - 类名一律 st- 前缀；
+ *   - 取值只用 --transactions-* 令牌（禁止裸 hex / rgb）；
+ *   - 导航形态是顶部 Tabs（见 settings.rs 顶部注释）。
+ * ============================================ */
+
+/* ---------------------------------------------------------------- 分栏骨架 */
+
+.st-tabs {
+  flex-shrink: 0;
+}
+
+/* 设置页的内容容器：**纵向不留内边距**（左右由统一规则给 16px）。
+ * 每行自带 12px 上下内边距，所以第一行的分隔线正好落在工具栏那条线上 ——
+ * 以前这里还有 16px 顶部内边距，工作空间那一行离工具栏的空档就显得很长。 */
+.st-panes {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* 页签面板容器（`TabPane` 渲染出的 `.ui-tab-pane`）：
+ *  1) **去掉它自带的 16px 上内边距** —— 实测这就是"工作空间上方空一截"的来源
+ *     （`.st-panes` 已经是 0，间隔全在它身上；去掉后首行紧贴工具栏那条线）；
+ *  2) **撑满分栏高度** —— 否则它是内容高度，"关于软件"这类需要垂直居中的面板
+ *     分不到多余空间，内容只能停在顶部（实测面板高 483 vs 分栏高 876）。 */
+.st-panes > .ui-tab-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 说明：`.st-pane-title`（「消费模板」「日记配置」「股票」那三个分区标题）已删除 ——
+ * 页签本身已经说明当前在看哪一页，标题只是重复一遍。若将来某一页内容复杂到需要
+ * 二级分区，再按"分区标题 + 发丝线"的样式新加，不要恢复到"标题重复页签"的老样子。 */
+
+/* ---------------------------------------------------------------- 卡片列表 */
+
+/* 设置行 = **版心里的行**，不是卡片里再套一张卡片：
+ * 页面内容区是铺满的版心（`.page-content`），所以行只留一条通到版心边缘的分隔线、
+ * 底色透明。以前每行自带边框 + 白底，在白卡片里就是"白套白"，层次全丢。 */
+.st-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 第一行的上内边距收到 8px：让它紧贴工具栏那条底边线（原来是 16 + 12 = 28px 的空白），
+ * 但留一点呼吸，不让文字直接贴在线上。每个设置分栏的第一行都适用。 */
+.st-list > .st-card:first-child {
+  padding-top: var(--transactions-space-sm);
+}
+
+/* 功能开关（`settings.rs` 的 `FeatureSetting`）：作用域说明行 + 卡片列表。
+ * 说明行必须在 `.st-list` **外面** —— 进了列表，上面那条 `:first-child` 规则就不再命中
+ * 任何一行（第一项变成了说明文字），第一行会重新贴到工具栏线上。这一层只负责把两者摞起来。 */
+.st-feature-pane {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 位置与 `.st-list > .st-card:first-child` 同一意图：紧贴工具栏那条底边线。 */
+.st-feature-hint {
+  padding-top: var(--transactions-space-sm);
+  padding-bottom: var(--transactions-space-2xs);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* **最后一行同样画线**（不再有 `:last-child { border-bottom: none }` 那个例外）：
+ * 少了这条线时，列表在最后一行看起来像被截断 —— 而且同一页里"上面三行有线、最后一行没有"
+ * 会被读成渲染坏了。所有设置行列表（通用设置 / 日记配置 / 股票）都以一条线收尾。 */
+.st-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 左右负外边距抵消页面内容容器的内边距，让分隔线通到版心边缘 */
+  margin: 0 calc(-1 * var(--transactions-space-lg));
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--transactions-color-divider);
+  border-radius: 0;
+  transition: background-color var(--transactions-transition-fast);
+}
+
+/* 说明：这里曾经有一条 `.st-list > .st-card:last-child { border-bottom: none }`
+ * （"最后一行下面就是版心底边，不必再画线"）。实测观感是列表被截断、且与上面几行不一致，
+ * 已删除 —— **每一行都有下边线**，包括最后一行。 */
+
+.st-card:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+/* 纵向排布的卡片（交易标签 / 费用设置） */
+.st-card--block {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--transactions-space-md);
+}
+
+.st-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  min-width: 0;
+}
+
+.st-card-title {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  /* 块标题统一 600（分类标签的列头、日记的「日记列表」都是 600）：500 与下面
+   * 12px/400 的说明只差一档，读起来分不出「标题」和「说明」 */
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.st-card-desc {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  line-height: var(--transactions-height-snug);
+  max-width: 620px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 工作空间路径用等宽字体（`.setting-desc` 的 `--transactions-font-mono`） */
+.st-card-desc--mono {
+  font-family: var(--transactions-font-mono);
+}
+
+.st-card-desc--empty {
+  font-family: var(--transactions-font-body);
+  font-style: italic;
+  color: var(--transactions-color-text-disabled);
+}
+
+.st-card-action {
+  flex-shrink: 0;
+  margin-left: var(--transactions-space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+/* ---------------------------------------------------------------- 软件图标
+ *
+ * 预览方块：与侧栏左上角那个入口**同一个视觉**（同取 `workspace_mark`），
+ * 只是放大一档 —— 同一个东西在设置里必须长得一样，否则用户改完认不出来改的是哪个。
+ * **高度与同一行的按钮一致（36px）**：它不是卡片里的独立元素，是「选择图片 / 恢复默认」
+ * 这一组动作里的第一件，比旁边两个按钮高出一截会显得错位。
+ * 圆角与侧栏那个方块同档（8px），两处才是同一个形状语言。 */
+.st-icon-preview {
+  width: var(--transactions-btn-height-md);
+  height: var(--transactions-btn-height-md);
+  border-radius: var(--transactions-radius-md);
+  flex-shrink: 0;
+}
+
+/* 缩略图选择器在本页当正常按钮用：与同排的「切换」「恢复默认」同一档（36px），
+ * 不跟着事件页详情底栏那套 28px 走。 */
+.st-card-action .image-picker__button {
+  height: var(--transactions-btn-height-md);
+  padding: 0 var(--transactions-btn-padding-h-md);
+  font-size: var(--transactions-btn-font-size-md);
+  border-radius: var(--transactions-radius-md);
+}
+
+/* ---------------------------------------------------------------- 日记配置 */
+
+.st-scope-row {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-xs);
+}
+
+.st-scope-input {
+  width: 140px;
+}
+
+/* 「代理」行的手动地址：协议 / 域名 / 端口三段一排。固定宽度免得把这一行撑变形，
+ * 顺序与"拼回一条 URL"的读法一致（`http://` + 域名 + `:` + 端口）。 */
+.st-proxy-fields {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.st-proxy-fields__scheme {
+  width: 104px;
+}
+
+.st-proxy-fields__host {
+  width: 150px;
+}
+
+.st-proxy-fields__port {
+  width: 84px;
+}
+
+/* 「检测」按钮的宽度在**两种状态之间钉住**：`Button` 的 loading 会在文案前插一个 14px 图标
+ * （外加 8px 间隙 = +22px），不钉住的话一点「检测」整排按钮就向左挤一下、松手又弹回来
+ * （用户报的）。84px = 文案 28 + 图标 14 + 间隙 8 + 左右内边距 32 + 边框 2。 */
+.st-proxy-detect {
+  min-width: 84px;
+}
+
+.st-progress-card {
+  margin-top: var(--transactions-space-md);
+  padding: var(--transactions-space-md);
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+}
+
+.st-summary-title {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.st-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.st-summary-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+}
+
+.st-summary-percent {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.st-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-minor-background);
+  overflow: hidden;
+}
+
+.st-bar-fill {
+  height: 100%;
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-primary);
+  transform-origin: left center;
+  transition: transform var(--transactions-transition-normal);
+}
+
+.st-bar-fill--done {
+  background-color: var(--transactions-color-success);
+}
+
+.st-bar-fill--error {
+  background-color: var(--transactions-color-expense);
+}
+
+.st-file-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--transactions-space-sm);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.st-file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+.st-file-row:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.st-file-row--importing {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.st-file-row--done {
+  background-color: var(--transactions-color-primary-tint);
+}
+
+.st-file-row--error {
+  background-color: var(--transactions-color-danger-hover-bg);
+}
+
+.st-file-dot {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-text-disabled);
+}
+
+.st-file-date {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st-file-status {
+  flex-shrink: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.st-file-status--done {
+  color: var(--transactions-color-success);
+}
+
+.st-file-status--importing {
+  color: var(--transactions-color-primary);
+}
+
+.st-file-status--error {
+  color: var(--transactions-color-expense);
+}
+
+.st-icon-done {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-success);
+}
+
+.st-icon-error {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-expense);
+}
+
+/* ---------------------------------------------------------------- 股票 */
+
+.st-tag-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-sm) var(--transactions-space-xl);
+  width: 100%;
+}
+
+.st-tag-head .st-card-info {
+  flex: 1;
+  min-width: min(320px, 100%);
+}
+
+.st-tag-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.st-tag-input {
+  width: 190px;
+}
+
+.st-tag-list {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-xs) var(--transactions-space-sm);
+}
+
+.st-tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-2xs);
+  padding: 2px var(--transactions-space-xs) 2px var(--transactions-space-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  background-color: var(--transactions-color-minor-background);
+  border-radius: var(--transactions-radius-sm);
+}
+
+.st-tag-item--default {
+  color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-primary-tint);
+}
+
+.st-tag-item-name {
+  line-height: var(--transactions-height-snug);
+}
+
+.st-tag-item-default {
+  flex-shrink: 0;
+  padding-left: var(--transactions-space-xs);
+  border-left: 1px solid currentColor;
+  font-size: var(--transactions-size-text-small);
+  line-height: var(--transactions-height-snug);
+  opacity: 0.85;
+}
+
+.st-tag-item-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--transactions-color-text-tertiary);
+  cursor: pointer;
+  transition: color var(--transactions-transition-fast);
+}
+
+.st-tag-item-remove:hover:not(:disabled) {
+  color: var(--transactions-color-expense);
+}
+
+.st-tag-item-remove:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.st-tag-item-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.st-tag-empty {
+  width: 100%;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 费用设置 */
+.st-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+}
+
+.st-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+/* 卡头右侧的动作组（本轮复盘模板：恢复默认 + 保存）：不参与收缩，宽度由按钮自己定 */
+.st-panel-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+/* 复盘模板的写作面：四行起（内置模板就三行，一打开要看全），
+ * 长模板按内容长高 —— 与复盘弹窗同一个 `auto_grow` 机制。 */
+.st-review-template .ui-textarea__control {
+  min-height: 108px;
+  line-height: var(--transactions-height-relaxed);
+}
+
+.st-panel-title {
+  margin: 0;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.st-panel-tip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-text-tertiary);
+  cursor: help;
+}
+
+/* 费用说明是多行文案：`data-tooltip` 里带换行，按原样折行显示。
+ *
+ * 两个变体按**触发器在行内的位置**选（错选会让 320px 的气泡越出版心，压到侧栏或窗口外）：
+ *   * `.st-fee-tip`（**行尾**的图标：印花税 / 过户费）→ 右对齐，向左铺开；
+ *   * `.st-fee-tip--start`（**标题行**里的图标：交易费用设置）→ 左对齐，向右铺开。
+ *
+ * ⚠ 这里**不能只写 `max-width`**：气泡是绝对定位的，包含块是那个 ~14px 宽的图标触发器，
+ * shrink-to-fit 的可用宽度就等于它 —— 只给上限的话文案会被压成一列窄条（实测 bug）。
+ * 宽度由基类 `.ui-tooltip::after` 的 `width: max-content` 铺开，这里只收上限与对齐。 */
+.st-fee-tip::after {
+  left: auto;
+  right: 0;
+  transform: none;
+  max-width: 320px;
+  line-height: var(--transactions-height-snug);
+}
+
+/* 标题行那个图标（在面板左半边）：**左对齐向右铺开**。
+ * 若沿用右对齐，320px 的气泡会从图标往左伸出面板、压到侧栏上。 */
+.st-fee-tip--start::after {
+  left: 0;
+  right: auto;
+  transform: none;
+  max-width: 320px;
+  line-height: var(--transactions-height-snug);
+}
+
+/* 费用表单：网格列必须**允许收缩**（`min-width: 0`）。
+ * 否则列内容（输入框 + "万分之/元/委托"后缀 + 提示图标）会撑到列宽之外，
+ * 把 `.page-pane` 顶出横向滚动条 —— 实测 `ui-form-item` 272 → scroll 279。 */
+.st-fee-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--transactions-space-md) var(--transactions-space-lg);
+}
+
+.st-fee-form > * {
+  min-width: 0;
+}
+
+.st-fee-field {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+}
+
+.st-fee-field .ui-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-fee-addon {
+  flex-shrink: 0;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.st-modal-text {
+  margin: 0;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-relaxed);
+}
+
+/* ---------------------------------------------------------------- 关于软件 */
+
+/* 关于软件：内容在分栏里**水平垂直居中**。
+ * `flex: 1` 是必需的：`.page-pane` 默认是内容高度，没有多余空间可分配，
+ * `margin: auto`（`.st-about-main`）就起不到垂直居中的作用，内容会停在顶部。 */
+.st-about {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--transactions-space-2xl) var(--transactions-space-lg);
+}
+
+.st-about-main {
+  margin: auto;
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-xl);
+}
+
+.st-about-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+.st-app-logo {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-app-name {
+  margin: 0;
+  font-family: var(--transactions-font-display);
+  font-size: var(--transactions-size-text-display-sm);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-tight);
+  color: var(--transactions-color-text-major);
+}
+
+.st-app-version {
+  margin: 0;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 说明：旧的 `.st-app-build`（「构建类型：开发版 / 正式版」那行小字）已随该行一起删除，
+ * 不要再加回来 —— 详见 `settings.rs` 第 6 条约定。 */
+
+.st-about-update {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+}
+
+.st-update-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md);
+  width: 100%;
+}
+
+.st-update-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--transactions-size-text-section);
+}
+
+.st-update-text {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+  text-align: center;
+}
+
+/* 下载速度：按任务单增补的小字 */
+.st-update-speed {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.st-update-success .st-update-text,
+.st-update-success .st-update-icon {
+  color: var(--transactions-color-primary);
+}
+
+.st-update-available .st-update-text {
+  color: var(--transactions-color-text-major);
+}
+
+.st-update-error .st-update-text,
+.st-update-error .st-update-icon {
+  color: var(--transactions-color-expense);
+}
+
+.st-update-progress {
+  width: 200px;
+}
+
+/* 更新说明：纯文本 + 保留换行（本仓库没有 Markdown 解析器，不渲染 Markdown） */
+.st-release-body {
+  width: 100%;
+  max-height: 168px;
+  overflow-y: auto;
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  background-color: var(--transactions-color-hover-bg);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  line-height: var(--transactions-height-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.st-about-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+.st-about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-primary);
+  text-decoration: none;
+}
+
+/* 外链图标：文案是 12px 的 caption，`.icon` 默认 1em 会偏小，提一档到正文尺寸 */
+.st-about-link .icon {
+  width: var(--transactions-size-text-body);
+  height: var(--transactions-size-text-body);
+}
+
+/* 下划线只画在文字上：整条 flex 一起加下划线的话，线会从图标底下穿过去 */
+.st-about-link:hover .st-about-link-text {
+  text-decoration: underline;
+}
+
+.st-about-copyright {
+  margin: 0;
+  text-align: center;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-card,
+  .ui-drag-handle,
+  .st-tag-item-remove,
+  .st-bar-fill {
+    transition: none;
+  }
+}

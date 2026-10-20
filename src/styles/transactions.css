@@ -1,0 +1,750 @@
+/* ============================================
+ * 消费记录页专属样式（P6-a 写操作扩展）
+ *
+ * 底样式在 base.css（`.table-wrapper`）与 app.css（`.tr-*`）；
+ * 这里只放本轮的：时间范围选择器、记录弹窗、筛选弹窗、排序弹窗、
+ * 行内操作列、标签多选、同步气泡、悬浮按钮。
+ *
+ * 类名前缀一律 `tr-`，且避开 app.css 里已有的 `.tr-*`
+ * （toolbar / body / content / footer / pagination / table / cell 系列）。
+ * 取值只用 `--transactions-*` 令牌，禁止裸 hex / rgb。
+ * ============================================ */
+
+/* ============================================
+ * 2. 工具栏里带图标/角标的按钮（排序 / 筛选）
+ *    形状与字号全部来自 `.ui-btn`，这里只加图标位与筛选计数徽标
+ * ============================================ */
+
+.tr-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+
+/* 已添加筛选条件的计数（跟在「筛选」文案后面，不再像悬浮按钮那样贴角） */
+.tr-btn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: calc(-1 * var(--transactions-space-2xs));
+  padding: 0 var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-primary);
+  color: var(--transactions-color-text-inverse);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: 1;
+}
+
+/* ============================================
+ * 3. 表格操作列（.cell-actions）
+ * ============================================ */
+
+/* 标签单元格里的标签（.tag-item：中性底 + 次要文字） */
+.tr-cell-tags .tag-item {
+  border: none;
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+/* 已关联事件的星标（标记列） */
+.tr-cell-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-outlier);
+  font-size: var(--transactions-size-text-body);
+}
+
+/* 标记列的内容（离群值标签 + 关联星标）：并排、居中、留出间距 */
+.tr-cell-marks {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-xs);
+}
+
+.tr-cell-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-xs);
+}
+
+.tr-sync {
+  position: relative;
+  display: inline-flex;
+}
+
+.tr-sync-icon {
+  display: inline-flex;
+}
+
+.tr-sync-icon.is-spinning {
+  animation: tr-spin 1s linear infinite;
+}
+
+@keyframes tr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 同步目标账本气泡（.sync-popover-content） */
+.tr-sync-panel {
+  position: absolute;
+  z-index: 1050;
+  top: calc(100% + var(--transactions-space-xs));
+  right: 0;
+  min-width: 140px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--transactions-space-xs);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-elevated);
+  box-shadow: var(--transactions-shadow-lg);
+}
+
+.tr-sync-panel.is-hidden {
+  display: none;
+}
+
+.tr-sync-item {
+  display: block;
+  width: 100%;
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast);
+}
+
+.tr-sync-item:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.tr-sync-empty {
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  white-space: nowrap;
+}
+
+/* 行内删除确认气泡右对齐，避免在表格右侧溢出 */
+@media (prefers-reduced-motion: reduce) {
+  .tr-sync-icon.is-spinning {
+    animation: none;
+  }
+}
+
+/* ============================================
+ * 4. 记一笔 / 编辑弹窗
+ * ============================================ */
+
+.tr-modal-form .ui-form-item__control > * {
+  width: 100%;
+}
+
+.tr-modal-template {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.tr-modal-template-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.tr-modal-full {
+  width: 100%;
+}
+
+.tr-modal-hint {
+  margin: var(--transactions-space-xs) 0 0 0;
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 弹窗底栏（`Modal` 的 footer 被关掉，按钮放在内容里） */
+.tr-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-lg);
+  padding-top: var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* ============================================
+ * 5. 标签多选（TrCheckList，对应 a-select mode="multiple"）
+ * ============================================ */
+
+.tr-taglist {
+  position: relative;
+  width: 100%;
+}
+
+.tr-taglist__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  width: 100%;
+  min-height: 36px;
+  padding: var(--transactions-space-xs) var(--transactions-space-sm);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-major-background);
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transactions-transition-fast);
+}
+
+.tr-taglist__trigger:hover {
+  border-color: var(--transactions-color-primary);
+}
+
+.tr-taglist.is-open .tr-taglist__trigger {
+  border-color: var(--transactions-color-primary);
+}
+
+.tr-taglist__value {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+}
+
+.tr-taglist__placeholder {
+  color: var(--transactions-color-text-disabled);
+}
+
+.tr-taglist__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-2xs);
+  max-width: 100%;
+  padding: 0 var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-caption);
+  line-height: 20px;
+}
+
+.tr-taglist__chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tr-taglist__chip-close {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-icon);
+  cursor: pointer;
+}
+
+.tr-taglist__chip-close:hover {
+  color: var(--transactions-color-expense);
+}
+
+.tr-taglist__panel {
+  position: absolute;
+  z-index: 1050;
+  top: calc(100% + var(--transactions-space-xs));
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--transactions-space-xs);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-elevated);
+  box-shadow: var(--transactions-shadow-lg);
+}
+
+.tr-taglist__option {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast);
+}
+
+.tr-taglist__option:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.tr-taglist__option.is-selected {
+  color: var(--transactions-color-primary);
+}
+
+/* ============================================
+ * 6. 筛选弹窗
+ * ============================================ */
+
+.tr-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-lg);
+}
+
+.tr-filter__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.tr-filter__row {
+  display: flex;
+  gap: var(--transactions-space-lg);
+}
+
+.tr-filter__half {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+}
+
+.tr-filter__label {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.tr-filter__select {
+  width: 100%;
+}
+
+.tr-filter__add {
+  margin-top: var(--transactions-space-xs);
+}
+
+.tr-filter__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+}
+
+.tr-filter__item {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+}
+
+.tr-filter__item-body {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.tr-filter__separator {
+  color: var(--transactions-color-text-disabled);
+}
+
+.tr-filter__tags {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.tr-filter__desc {
+  color: var(--transactions-color-text-secondary);
+  font-style: italic;
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.tr-filter__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-xs);
+  padding-top: var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* 条件面板里追加按钮独占一行 */
+.tr-filter > .ui-btn--block {
+  width: 100%;
+}
+
+/* ============================================
+ * 7. 排序弹窗
+ * ============================================ */
+
+.tr-sort {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-md);
+}
+
+.tr-sort__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-md);
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.tr-sort__item {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.tr-sort__priority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-primary);
+  color: var(--transactions-color-text-inverse);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.tr-sort__select {
+  flex: 1;
+  min-width: 0;
+}
+
+.tr-sort__select--field {
+  flex: 1;
+}
+
+.tr-sort__select--order {
+  flex: 0 0 100px;
+}
+
+.tr-sort__add-icon {
+  display: inline-flex;
+  margin-right: var(--transactions-space-xs);
+}
+
+.tr-sort__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* ============================================
+ * 8. 小屏收敛
+ * ============================================ */
+
+@media (max-width: 720px) {
+  .tr-filter__row {
+    flex-direction: column;
+    gap: var(--transactions-space-md);
+  }
+}
+
+/* ============================================
+ * 交易页的表格 / 列表样式（从 app.css 搬来，候选 13 / #41）
+ *
+ * 这些选择器只在交易页出现，从前住在全局的 app.css 里 —— 谁在用它们要全仓找，
+ * 改一条也不敢删。搬到这里之后，"交易页的样式"与"交易页的代码"在一起。
+ * ============================================ */
+
+/* 内容区：吃掉工具栏/底栏之外的全部高度。
+ * 页面自己的容器（`.tr-body` / `.st-panes` / `.diary-body` …）在这些高度里排布，
+ * 谁需要滚动由谁自己声明 —— 这里给一层兜底滚动，避免内容比区域高时被直接裁掉。 */
+.page-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+/* 版心内的内容容器内边距（各页在自己文件里只需要管排布）。
+ *
+ * **顶部怎么留白，取决于内容形态**：
+ *   * **贴边型**（表格 / 分栏列表）：顶部为 0 —— 表头与行的分隔线要从工具栏底边那条
+ *     发丝线开始（`.tr-body`、`.ct-column*`、`.tpl-pane`、`.st-panes`、`.stock-body`）。
+ *   * **卡片型**（卡片列表 / 面板）：四边都留 16px —— 卡片/面板不该贴着工具栏的线
+ *     （事件的三条轨道、分析的图表面板都是这类；两处都曾被我按贴边型一刀切成 0）。
+ *
+ * 多栏网格（`.ct-main` / `.key-event-body` / `.diary-body`）不在列表里：
+ * 它们的内边距下放给各栏自己，栏目分隔线才能从版心顶贯通到底。
+ *
+ * 逐页的例外（一律在下面按页写清理由）：
+ *   * `.tr-body` **四边都不留**：消费记录的表格要**通到版心边缘**（表头底边线、
+ *     行分隔线从版心左边一路到右边），内缩交给单元格自己的 padding；
+ *     分页行与空态各自带内边距。 */
+.st-panes {
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.tr-body {
+  padding: 0;
+}
+
+/* 消费记录页工具栏：底边线与外边距由 `.page-toolbar` 统一给，这里只管左右两簇的排布 */
+.tr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md);
+  flex: 1;
+}
+
+.tr-toolbar-left,
+.tr-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+.tr-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tr-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* 分页行（版心的最后一行，底栏之上）：左侧「共 N 条」+ 右侧翻页控件，整行贴右。
+ * 收支合计在底栏（`.page-footer-bar`）。 */
+.tr-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-lg);
+}
+
+.tr-footer-total {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.tr-footer-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+.tr-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+/* 页码按钮与「每页条数」下拉共用同一套外观（原来两份逐字重复的声明） */
+.tr-pagination__item,
+.tr-pagination__size {
+  height: 32px;
+  padding: 0 var(--transactions-space-sm);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-major-background);
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  cursor: pointer;
+}
+
+/* 页码按钮自己的部分：居中 + 最小宽度 + 过渡（`__size` 是原生 select，不需要这些） */
+.tr-pagination__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  transition: all var(--transactions-transition-fast);
+}
+
+.tr-pagination__item:hover:not(:disabled) {
+  border-color: var(--transactions-color-primary);
+  color: var(--transactions-color-primary);
+}
+
+.tr-pagination__item.is-active {
+  border-color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.tr-pagination__item:disabled {
+  cursor: not-allowed;
+  color: var(--transactions-color-text-disabled);
+}
+
+.tr-pagination__item:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.tr-pagination__ellipsis {
+  padding: 0 var(--transactions-space-2xs);
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+/* `.tr-pagination__size` 的外观与 `.tr-pagination__item` 共用（见上方合并规则） */
+.tr-pagination__size:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+/* 表格单元格 */
+.tr-table {
+  min-width: 880px;
+}
+
+.tr-cell {
+  white-space: nowrap;
+}
+
+.tr-cell--center {
+  text-align: center;
+}
+
+.tr-cell-date {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.tr-cell-type {
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--transactions-tracking-label);
+}
+
+.tr-cell-type.type-income {
+  color: var(--transactions-color-income);
+}
+
+.tr-cell-type.type-expense {
+  color: var(--transactions-color-expense);
+}
+
+.tr-cell-type.type-transfer {
+  color: var(--transactions-color-transfer);
+}
+
+.tr-cell-category {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+}
+
+.tr-cell-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-xs);
+}
+
+.tr-cell-description {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tr-cell-price {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.tr-cell-price.price-income {
+  color: var(--transactions-color-income);
+}
+
+.tr-cell-price.price-expense {
+  color: var(--transactions-color-expense);
+}
+
+.tr-cell-price.price-transfer {
+  color: var(--transactions-color-transfer);
+}
+
+/* 行底色按交易类型（row-type-*） */
+.tr-table tbody > tr.row-type-income > td {
+  background-color: var(--transactions-color-income-tint);
+}
+
+.tr-table tbody > tr.row-type-expense > td {
+  background-color: var(--transactions-color-expense-tint);
+}
+
+.tr-table tbody > tr.row-type-transfer > td {
+  background-color: var(--transactions-color-transfer-tint);
+}
+
+.tr-table tbody > tr:hover > td {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+/* 空态引导（empty-guide）
+ * `height: 100%` 是必需的：父容器 `.tr-content` 是**块级滚动容器**（不是 flex），
+ * 不给高度的话这一块只有内容那么高，"justify-content: center" 就没有垂直居中的参照。 */
+.empty-guide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-md);
+  height: 100%;
+  padding: var(--transactions-space-3xl);
+  text-align: center;
+}
+

@@ -1,0 +1,45 @@
+{
+  "name": "transactions",
+  "productName": "Transactions",
+  "version": "1.0.0",
+  "description": "Transactions —— 本地优先的桌面个人记账工作台",
+  "license": "Apache-2.0",
+  "author": "ddd-online",
+  "private": true,
+  "main": "out/main/index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.4.1",
+  "scripts": {
+    "dev": "node scripts/electron-env.mjs dev",
+    "build": "electron-vite build",
+    "preview": "node scripts/electron-env.mjs preview",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:guards": "node scripts/static-guards.mjs",
+    "test:e2e": "pnpm build && playwright test",
+    "test:e2e:packaged": "playwright test tests/e2e/packaged.spec.ts",
+    "test": "pnpm typecheck && pnpm test:unit && pnpm test:guards",
+    "dist:dir": "pnpm build && electron-builder --win --dir",
+    "dist": "pnpm build && electron-builder --win"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "44.9.1",
+    "electron-builder": "26.15.3",
+    "electron-vite": "6.0.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "4.1.12"
+  }
+}

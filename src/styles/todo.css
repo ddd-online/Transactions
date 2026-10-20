@@ -1,0 +1,746 @@
+/* =============================================================================
+ * todo.css —— 待办页（记录 / 历史）
+ *
+ * 这一页只有一种"面"：**卡片**（Paper + 发丝线 + 12px 圆角）。
+ * 事项行不再各自成卡，只用发丝线分隔；进度记录展开后是一块 Soft Gray 底的内嵌区
+ * （不是第二层卡片 —— 卡片里套卡片是这一页最容易读成"一堆盒子"的写法）。
+ *
+ * 颜色与间距一律走 `--transactions-*` 令牌；四象限图的四个底用**同一支色的四种深浅**
+ * 分档（浅 → 深 = 优先级低 → 高），不引入第二个强调色。
+ * ============================================================================= */
+
+/* ---------------- 版心骨架 ----------------
+ * `.page-content`(flex ✓) → `.todo-body`(flex ✓) → `.todo-pane`(flex ✓) → 滚动容器
+ * 少任何一级，卡片列就贴不到版心底部、四象限图也会按错误高度出图。 */
+.todo-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 工具栏右侧的动作簇（工具栏本身两端对齐：页签在左、动作在右） */
+.todo-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+/* 切到「四象限图」时「新建卡片」收起来：那张表的主动作只对卡片有意义。
+   常驻 DOM + `is-hidden`（见 ui.css 里那条通用隐藏类的注释），不做条件渲染。 */
+.todo-toolbar-actions.is-hidden {
+  display: none;
+}
+
+/* 加载态：与模板页 / 记账页同一个写法 —— 共享 `Spin` + 一行说明，这里只负责按版心居中。
+   （从前只有一行 tertiary 的文字，是全站唯一没有转圈的加载态。） */
+.todo-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-sm);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+/* ---------------- 待办视图：竖直排列的卡片 ---------------- */
+.todo-cards {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  /* 卡片之间 16px、卡片内部 12px：**外面必须比里面宽**，两张卡才靠"邻近"分开而不是
+     靠边框撑着（从前内外都是 12px，四张卡叠在一起像同一张表里的分区）。16px 同时也是
+     卡片列自己的四周留白，全页只有"卡外 16 / 卡内 12"两档。 */
+  gap: var(--transactions-space-lg);
+  /* 上下左右都留白：卡片列与工具栏底边那条发丝线之间也要有间距（与底部一致） */
+  padding: var(--transactions-space-lg);
+}
+
+.todo-card {
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+  box-shadow: var(--transactions-shadow-sm);
+}
+
+.todo-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.todo-card__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.todo-card__count {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.todo-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  /* 动作簇贴右：标题与计数留在左边 */
+  margin-left: auto;
+}
+
+.todo-card__empty {
+  margin: 0;
+  padding: var(--transactions-space-lg);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* ---------------- 事项行 ---------------- */
+.todo-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  /* 整行可点（收起 / 展开进度），所以给个可点的指针 */
+  cursor: pointer;
+}
+
+.todo-item + .todo-item {
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* 最后一行贴着卡片的下圆角：悬停底色也得跟着圆，否则底色会顶出圆角 */
+.todo-item:last-child {
+  border-radius: 0 0 var(--transactions-radius-lg) var(--transactions-radius-lg);
+}
+
+.todo-item:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+/* 勾选：方形描边按钮，悬停才亮主色（静置不与卡片抢注意力） */
+.todo-item__check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--transactions-color-border-l3);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-major-background);
+  color: transparent;
+  cursor: pointer;
+  transition: color var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast),
+    background-color var(--transactions-transition-fast);
+}
+
+.todo-item__check svg {
+  width: 100%;
+  height: 100%;
+}
+
+.todo-item__check:hover {
+  border-color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-primary-tint);
+  color: var(--transactions-color-primary);
+}
+
+/* 按压反馈：与全站按钮同一档（用 `translate`，不要 `transform` —— 那会顶掉元素自己的定位） */
+.todo-item__check:active {
+  translate: 0 1px;
+}
+
+.todo-item__check:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.todo-item__main {
+  flex: 1;
+  min-width: 0;
+  /* 两行：第一行事项描述（`__title`），第二行两档标签 + 已过天数 + 时间区间（`__levels`）——
+     与四象限图弹窗里的行同一个写法 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.todo-item__title {
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+  word-break: break-word;
+}
+
+.todo-item__levels {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  flex-wrap: wrap;
+}
+
+.todo-level {
+  padding: 1px var(--transactions-space-sm);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  white-space: nowrap;
+}
+
+.todo-level--elapsed {
+  /* 「已过 N 天」是提醒不是状态：与紧急/重要同一形状，字色更实一点 */
+  color: var(--transactions-color-text-major);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-item__dates {
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-item__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-2xs);
+  flex-shrink: 0;
+}
+
+/* ---------------- 进度记录（展开区） ---------------- */
+.todo-progress {
+  margin-top: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.todo-progress__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+}
+
+.todo-progress__row {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+/* 打勾：与事项行的勾选同一套语言，小一号 */
+.todo-progress__check {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--transactions-color-border-l3);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-major-background);
+  color: transparent;
+  cursor: pointer;
+  transition: color var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast),
+    background-color var(--transactions-transition-fast);
+}
+
+.todo-progress__check svg {
+  width: 100%;
+  height: 100%;
+}
+
+.todo-progress__check:hover {
+  border-color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-primary-tint);
+  color: var(--transactions-color-primary);
+}
+
+/* 按压与键盘焦点：**与事项行的勾选框同一套状态** —— 同一个控件在两处出现过，
+   行的那个两样都有、面板里这个两样都没有（点了没反馈、Tab 过去只有浏览器默认的细框）。 */
+.todo-progress__check:active {
+  translate: 0 1px;
+}
+
+.todo-progress__check:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+/* 打勾后的那一条：填主色 + 正文划掉 —— "做完了"一眼可辨 */
+.todo-progress__row.is-done .todo-progress__check {
+  border-color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-primary);
+  color: var(--transactions-color-text-inverse);
+}
+
+.todo-progress__row.is-done .todo-progress__text {
+  color: var(--transactions-color-text-tertiary);
+  text-decoration: line-through;
+}
+
+/* 没打勾的那条：正文用最实的字色（默认 secondary 会跟打勾的糊在一起） */
+.todo-progress__row:not(.is-done) .todo-progress__text {
+  color: var(--transactions-color-text-major);
+}
+
+/* 时间与空态都在 **soft gray 底上**（`.todo-progress`）—— 灰底必须用 secondary：
+   tertiary 在 `minor-background` 上只有 3.37:1，12px 正文的门槛是 4.5:1（同一个判据见下面
+   四象限弹窗的 `__meta`）。白底的弹窗里也共用这两条，secondary 在那里是 5.8:1。 */
+.todo-progress__time {
+  flex-shrink: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-progress__text {
+  flex: 1;
+  min-width: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.todo-progress__empty {
+  margin: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.todo-progress__add {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-sm);
+}
+
+.todo-progress__add > *:first-child {
+  flex: 1;
+}
+
+/* ---------------- 四象限图 ---------------- */
+.todo-quadrant {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.todo-quadrant__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md) 0;
+}
+
+.todo-quadrant__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.todo-quadrant__hint {
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.todo-quadrant__canvas {
+  /* 撑满工具栏以下的整块高度（`.todo-quadrant` 是弹性列）：卡片不再只跟着内容高，
+     底部也不再留一段空白；象限底**铺满**整张卡片（没有内边距）—— 圆角靠这里的
+     `overflow: hidden` 裁掉（方块底自己不知道卡片是圆的）。 */
+  flex: 1;
+  /* 窗口再矮也不把图压没：不够高时由外层的 `overflow: auto` 出滚动条 */
+  min-height: 220px;
+  overflow: hidden;
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+}
+
+.todo-quadrant__svg {
+  display: block;
+  width: 100%;
+  /* 高宽都撑满卡片：viewBox 由 `watch_canvas_size` 量到的像素宽高给出（1 单位 = 1px），
+     所以这里是"等比贴合"而不是"拉伸变形"，文字也始终是令牌里的字号。 */
+  height: 100%;
+}
+
+/* 四个象限的底：最"该马上做"的一格用主色浅底（与它的主色水印同源），
+   其余三格是 Ink 的三档浓度（10% / 7% / 4.5%）—— 最浅那档也要和卡片底拉出边界，
+   所以不再是 transparent（原来最浅的一格就和卡片融成了一片）。 */
+.todo-quadrant__ground--now {
+  fill: var(--transactions-color-active-bg);
+}
+
+.todo-quadrant__ground--plan {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 10%, transparent);
+}
+
+.todo-quadrant__ground--delegate {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 7%, transparent);
+}
+
+.todo-quadrant__ground--less {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 4.5%, transparent);
+}
+
+.todo-quadrant__axis {
+  /* 十字轴是这张图里最该被看见的一条线：比象限底高一档 */
+  stroke: var(--transactions-color-text-tertiary);
+  stroke-width: 1;
+}
+
+.todo-quadrant__name {
+  /* 字号由 SVG 按象限宽度给（见 `quadrant_view`），这里只管颜色与字重。
+     颜色是**低浓度的墨**（`text-major` 只留一成二）—— 这是真正的水印：只给象限留一个
+     方位轮廓，不承担阅读（语义由点开后的弹窗承担），所以不套"大字号 3:1"那条门槛；
+     浓度调这一处即可整档加减。 */
+  fill: color-mix(
+    in srgb,
+    var(--transactions-color-text-major) 12%,
+    transparent
+  );
+  font-weight: var(--transactions-weight-semibold);
+  /* 名字是个**按钮**（点开该象限的事项列表）：悬停 / 键盘聚焦时"亮起"，按压下沉 1px */
+  cursor: pointer;
+  transition: fill var(--transactions-transition-fast);
+}
+
+/* 水印里唯一带色的一格：同样只留低浓度，但用主色 —— 这一格是画面里唯一的强调色，
+   水印也要保住"马上做"的身份。比其余三格浓一点（它的底本身就是主色浅底，
+   同浓度会被底吃掉）。 */
+.todo-quadrant__name--now {
+  fill: color-mix(
+    in srgb,
+    var(--transactions-color-primary) 24%,
+    transparent
+  );
+}
+
+/* 亮起：水印浓度 → 可读的实色（三格灰、`--now` 一格蓝）。两者选择器同权重，靠顺序分胜负。 */
+.todo-quadrant__name:hover,
+.todo-quadrant__name:focus-visible {
+  fill: var(--transactions-color-text-secondary);
+}
+
+.todo-quadrant__name--now:hover,
+.todo-quadrant__name--now:focus-visible {
+  fill: var(--transactions-color-primary);
+}
+
+/* ⚠ Chromium 在 **SVG 文本**上连"鼠标点一下"都画一圈默认焦点环（实测是 currentColor 的黑框，
+   而且不认 `outline-color`）—— 那圈不属于这套设计系统，先关掉，键盘的环下面自己画。 */
+.todo-quadrant__name:focus {
+  outline: none;
+}
+
+/* 键盘焦点：用 SVG 自己的描边画环（`paint-order: stroke` 把描边压在填充下面，观感是
+   字形外面套了一圈主色）。`outline` 在 SVG 文本上不可靠，所以不靠它。 */
+.todo-quadrant__name:focus-visible {
+  outline: none;
+  stroke: var(--transactions-color-primary);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+/* 按压反馈：与全站按钮同一档（用 `translate`，别碰 x/y 属性定位） */
+.todo-quadrant__name:active {
+  translate: 0 1px;
+}
+
+.todo-quadrant__axis-label {
+  /* 轴端标注（重要 / 紧急 / 不重要 / 不紧急）：放大到 section 号，颜色用 secondary
+     —— 它们要比水印实，才能在象限名上照样被读到。 */
+  fill: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-section);
+}
+
+/* 事项点：主色实心 + 白圈（白圈让叠在一起的点也分得出"这里有几个"）。
+   半径、抖动与"绘图区四周的留白"（点绝不被画布裁掉）都在 `tr_draw::quadrant`
+   （`POINT_RADIUS` / `PLOT_INSET` / `point_of`）—— 这里只管配色与描边宽度。 */
+.todo-quadrant__point {
+  fill: var(--transactions-color-primary);
+  stroke: var(--transactions-color-major-background);
+  stroke-width: 2;
+  /* hover 略微膨胀。SVG 的几何属性（r）不能用 CSS 动画，所以缩放走 transform：
+     `transform-box: fill-box` 让缩放中心落在点自己身上而不是画布原点。 */
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--transactions-transition-fast);
+}
+
+.todo-quadrant__point:hover {
+  transform: scale(1.35);
+}
+
+/* ---------------- 四象限图的象限弹窗（点象限名打开） ---------------- */
+.todo-quadrant-modal__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* 事项多时在**弹窗内**滚动：`.ui-modal__content` 是 `overflow: visible`（为了弹窗里的
+     下拉面板不被裁），列表要自己收住高度，否则会把弹窗顶出视口 */
+  max-height: min(48vh, 420px);
+  overflow-y: auto;
+}
+
+/* 一行 = 事项描述（第一行）+ 主题 / 两档标签 / 时间区间（第二行）。
+   行底用 soft gray：多条事项靠**整块底色**分开（原来是一条分隔线，只切一刀、看着还是一整片）。 */
+.todo-quadrant-modal__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.todo-quadrant-modal__row + .todo-quadrant-modal__row {
+  margin-top: var(--transactions-space-sm);
+}
+
+/* 第一行：事项描述 */
+.todo-quadrant-modal__title {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  word-break: break-word;
+}
+
+/* 第二行：主题 + 紧急 / 重要 + 时间区间。底色是 soft gray —— 这里的文字用 secondary
+   （tertiary 在灰底上只有 3.4:1，12px 的正文门槛是 4.5:1）。 */
+.todo-quadrant-modal__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-wrap: wrap;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 主题名：同色但重一档，跟后面的时间区间分得开（不额外加"主题"两个字） */
+.todo-quadrant-modal__card {
+  font-weight: var(--transactions-weight-medium);
+}
+
+/* 两档标签在灰底上要"翻上来"：用 `elevated`（浅色是 Paper、深色比行底再亮一档）——
+   两个主题里都看得出是标签；用 `major-background` 的话深色下和行底只差 2 级、几乎看不见。
+   （注释里也别写十六进制色值：design-audit 的硬编码扫描不认注释。） */
+.todo-quadrant-modal__row .todo-level {
+  background-color: var(--transactions-color-elevated);
+}
+
+/* ---------------- 历史 ---------------- */
+.todo-history {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* 空态（`.ui-empty` 自带 `flex: 1`）要在整块版心里垂直居中，所以这层也得是弹性列；
+     有数据时表按内容高排，滚动交给本层。 */
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.todo-history__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md) 0;
+}
+
+.todo-history__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.todo-history__count {
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.todo-table {
+  width: 100%;
+  /* 与 `.tr-table` / `.stock-table--trades` 同一档：窗口再窄也不把列挤到放不下，
+     放不下时由 `.todo-history` 横向滚动（覆盖式滚动条不占位、也不显眼，所以"能放下"
+     这件事必须由列宽自己保证，不能指望用户看见滚出来一半的表）。 */
+  min-width: 880px;
+  /* **固定布局**：下面给了宽的列就是那个宽，`事项`没给宽 → 它独吞剩下的全部。
+     不这么写的话两种自动布局都不成立：`auto` 会把宽度全让给最长的那一格（一个 200 字的
+     卡片名就能把后面四列顶出视口，实测就是这样），百分比则会在窄窗里把"完成时间"压到
+     放不下 16 个字符。 */
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+/* 列宽：**事项**（第 3 列）是唯一会长的一列，剩余宽度全给它；其余六列按内容给固定宽。
+   第 2 列（主题）是卡片名，单行截断（见下面那条 `td.todo-table__card`）。 */
+.todo-table th:nth-child(1) {
+  /* 完成时间：`2026-10-10 21:07` 定长 16 字符 */
+  width: 136px;
+}
+
+.todo-table th:nth-child(2) {
+  /* 主题：卡片名 */
+  width: 150px;
+}
+
+.todo-table th:nth-child(4),
+.todo-table th:nth-child(5) {
+  /* 紧急 / 重要：两个字一档 */
+  width: 56px;
+}
+
+.todo-table th:nth-child(6) {
+  /* 进度记录：`查看（N）` 那颗按钮 */
+  width: 108px;
+}
+
+.todo-table th:nth-child(7) {
+  /* 操作：`退回进行中` + `删除` 并排 */
+  width: 168px;
+}
+
+/* 对齐：**文本列左对齐、短列居中** —— 与全站表格同一套约定（`.stock-table .is-center`、
+   `.tr-cell--center`：居中是要一个一个标出来的）。这里反过来：原先"整张表都居中"，
+   于是视图里那四个 `is-center` 一直被架空，而**事项**作为唯一的长文本列两端都参差，
+   读一列事项时眼睛没有落点。 */
+.todo-table th,
+.todo-table td {
+  text-align: left;
+}
+
+.todo-table .is-center {
+  text-align: center;
+}
+
+.todo-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+  font-weight: var(--transactions-weight-medium);
+  padding: var(--transactions-space-sm);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  white-space: nowrap;
+}
+
+.todo-table td {
+  padding: var(--transactions-space-sm);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  color: var(--transactions-color-text-major);
+  white-space: nowrap;
+  /* 单元格里常是按钮（比文字高）：靠中线对齐，否则按钮看着"偏下" */
+  vertical-align: middle;
+}
+
+.todo-table tbody tr:hover td {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+/* 操作列：两个按钮并排居中 */
+.todo-table__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-xs);
+}
+
+/* ⚠ 单元格级的改写一律写成 `.todo-table td.<类>`：上面那两条 `.todo-table th/td` 的
+ * 权重是 (0,1,1)，光写 `.todo-table__title` 是 (0,1,0) —— 会被 `white-space: nowrap` /
+ * `color` 反压回去，规则在、效果没有（**事项列"允许换行"这条曾经就是死的**：长事项名一路
+ * 撑到把后面四列顶出视口，看着像"表格没有宽度纪律"）。
+ *
+ * 时间列：定长、tabular-nums、不换行（换行会把 `2026-10-10 21:07` 折成两行）。 */
+.todo-table td.todo-table__time {
+  color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 事项是表里**唯一**允许换行的列。 */
+.todo-table td.todo-table__title {
+  white-space: normal;
+  /* 中文没有词边界：不断词的话一长串数字/英文会把列撑开 */
+  word-break: break-word;
+}
+
+/* 主题（卡片名，上限 200 字）是**标签**不是内容：它只回答"这条事项属于哪张卡片"。
+   所以单行截断（看全靠单元格上的 `title` 提示）—— 让它跟着事项一起换行的话，**行高会由这个
+   标签列决定**：一个 200 字的卡片名把这一行撑到 4 行高（实测 100.7px，常规行 45.3px），
+   而同一行的"事项"只有一行，整张表的节奏就断在这里。行高现在只由**事项**决定。 */
+.todo-table td.todo-table__card {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- 弹窗里的小结构 ---------------- */
+.todo-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--transactions-space-lg);
+}
+
+.todo-modal-text {
+  margin: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body);
+}
+
+.todo-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-lg);
+}
+
+/* 窄窗：两列表单折成一列（版心本来就窄，别硬挤） */
+@media (max-width: 720px) {
+  .todo-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todo-item__check,
+  .todo-progress__check {
+    transition: none;
+  }
+}

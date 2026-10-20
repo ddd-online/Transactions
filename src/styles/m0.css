@@ -1,0 +1,137 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Inter", "Microsoft YaHei UI", system-ui, sans-serif;
+  font-size: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--transactions-color-bg-layout, #f5f6fa);
+  color: var(--transactions-color-text, #1f2329);
+  -webkit-font-smoothing: antialiased;
+}
+
+.m0 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.m0-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--transactions-color-bg-container, #ffffff);
+  border-bottom: 1px solid var(--transactions-color-border, #e5e6eb);
+  -webkit-app-region: drag;
+}
+
+.m0-brand {
+  font-weight: 600;
+}
+
+.m0-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--transactions-color-primary-bg, #eef2ff);
+  color: var(--transactions-color-primary, #3964fe);
+  font-size: 12px;
+}
+
+.m0-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 20px;
+  overflow: auto;
+}
+
+.m0-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--transactions-color-bg-container, #ffffff);
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
+}
+
+.m0-card h1 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.m0-card h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.m0-card ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.9;
+}
+
+.m0-muted {
+  color: var(--transactions-color-text-secondary, #646a73);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.m0-actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.m0-actions button {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  background: var(--transactions-color-bg-container, #ffffff);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.m0-actions button:first-child {
+  border-color: var(--transactions-color-primary, #3964fe);
+  background: var(--transactions-color-primary, #3964fe);
+  color: #ffffff;
+}
+
+.m0-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.m0-asset {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m0-asset-image {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  border-radius: 6px;
+  image-rendering: pixelated;
+}
+
+.m0-error {
+  margin-top: 12px;
+  color: var(--transactions-color-error, #d92d20);
+  white-space: pre-wrap;
+}

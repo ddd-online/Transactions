@@ -1,0 +1,39 @@
+appId: com.github.Transactions
+productName: Transactions
+copyright: Copyright © 2026 ddd-online
+directories:
+  output: dist
+  buildResources: resources
+
+files:
+  - out/**
+  - package.json
+
+extraResources:
+  - from: resources
+    to: resources
+
+asar: true
+npmRebuild: false
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: resources/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Transactions
+  installerLanguages: [zh_CN]
+  displayLanguageSelector: false
+  artifactName: Transactions-${version}-setup.exe
+
+portable:
+  artifactName: Transactions-${version}-portable.exe
