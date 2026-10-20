@@ -12,6 +12,12 @@ import type {
 } from './domain/models'
 import type { DiaryExportResult, DiaryScanResponse } from './types/diary'
 import type {
+  TodoCardDto,
+  TodoHistoryDto,
+  TodoItemDto,
+  TodoProgressDto,
+} from './types/todo'
+import type {
   ChartQueryResponse,
   TransactionRecordDto,
   TrQueryResult,
@@ -223,6 +229,42 @@ export const commandSchemas = {
     thumb: z.string().nullable().optional(),
   }),
   key_event_image_delete: z.object({ id: z.string() }),
+  todo_cards: z.object({ ledger_id: z.string() }),
+  todo_history: z.object({ ledger_id: z.string() }),
+  todo_card_create: z.object({ ledger_id: z.string(), title: z.string().nullable().optional() }),
+  todo_card_delete: z.object({ id: z.string() }),
+  todo_card_sort: z.object({ id: z.string(), sort_order: z.number().nullable().optional() }),
+  todo_item_create: z.object({
+    ledger_id: z.string(),
+    card_id: z.string(),
+    title: z.string().nullable().optional(),
+    start_date: z.string().nullable().optional(),
+    due_date: z.string().nullable().optional(),
+    urgency: z.number().nullable().optional(),
+    importance: z.number().nullable().optional(),
+  }),
+  todo_item_update: z.object({
+    ledger_id: z.string(),
+    id: z.string(),
+    title: z.string().nullable().optional(),
+    start_date: z.string().nullable().optional(),
+    due_date: z.string().nullable().optional(),
+    urgency: z.number().nullable().optional(),
+    importance: z.number().nullable().optional(),
+  }),
+  todo_item_status: z.object({
+    ledger_id: z.string(),
+    id: z.string(),
+    status: z.string().nullable().optional(),
+  }),
+  todo_item_delete: z.object({ id: z.string() }),
+  todo_progress_add: z.object({
+    ledger_id: z.string(),
+    item_id: z.string(),
+    content: z.string().nullable().optional(),
+  }),
+  todo_progress_delete: z.object({ id: z.string() }),
+  todo_progress_done: z.object({ id: z.string(), done: z.boolean().nullable().optional() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -290,6 +332,18 @@ export interface CommandResponses {
   key_event_images_list: KeyEventImage[]
   key_event_image_add: KeyEventImage
   key_event_image_delete: null
+  todo_cards: TodoCardDto[]
+  todo_history: TodoHistoryDto[]
+  todo_card_create: TodoCardDto
+  todo_card_delete: null
+  todo_card_sort: null
+  todo_item_create: TodoItemDto
+  todo_item_update: TodoItemDto
+  todo_item_status: TodoItemDto
+  todo_item_delete: null
+  todo_progress_add: TodoProgressDto
+  todo_progress_delete: null
+  todo_progress_done: null
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

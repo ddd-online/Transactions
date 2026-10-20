@@ -104,6 +104,21 @@ describe('command catalog', () => {
     expect(commandSchemas.key_event_image_delete.safeParse({ id: 'img-1' }).success).toBe(true)
   })
 
+  it('validates todo requests', () => {
+    expect(commandSchemas.todo_cards.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(
+      commandSchemas.todo_card_create.safeParse({ ledger_id: 'l1', title: '主题' }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.todo_item_create.safeParse({ ledger_id: 'l1', card_id: 'c1', title: '事项' })
+        .success,
+    ).toBe(true)
+    expect(commandSchemas.todo_item_status.safeParse({ ledger_id: 'l1', id: 'i1', status: 'done' }).success).toBe(
+      true,
+    )
+    expect(commandSchemas.todo_progress_done.safeParse({ id: 'p1', done: true }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
