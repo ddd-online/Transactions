@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { join } from 'node:path'
 
-import { app, BrowserWindow, dialog } from 'electron'
+import { app, dialog } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
@@ -85,7 +85,7 @@ import {
   queryLedgerById,
 } from '../services/ledger'
 import { openDirectory } from '../shell/dialogs'
-import { applyAppearance, registerWindowControl } from '../shell/window'
+import { applyAppearance, getMainWindow, registerWindowControl } from '../shell/window'
 import { sendEvent } from './events'
 import { validatedProxySetting } from '../../shared/domain/proxy'
 
@@ -1309,21 +1309,32 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     },
 
     devtools_get_state() {
-      return BrowserWindow.getFocusedWindow()?.webContents.isDevToolsOpened() ?? false
+      return getMainWindow()?.webContents.isDevToolsOpened() ?? false
     },
 
-    devtools_toggle(request) {
+    async devtools_toggle(request) {
       const enabled = asObject(request).enabled === true
-      const window = BrowserWindow.getFocusedWindow()
+      const window = getMainWindow()
       if (!window) return false
+      const event = enabled ? 'devtools-opened' : 'devtools-closed'
+      const settled = new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 1500)
+        window.webContents.once(event as 'devtools-opened', () => {
+          clearTimeout(timer)
+          resolve()
+        })
+      })
       if (enabled) window.webContents.openDevTools()
       else window.webContents.closeDevTools()
+      await settled
       const opened = window.webContents.isDevToolsOpened()
       sendEvent(DEVTOOLS_STATE_CHANGED, opened)
       return opened
     },
   }
 }
+
+
 
 
 
