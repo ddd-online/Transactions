@@ -5,6 +5,11 @@ import type { LegacyImportProbe, LegacyImportReport } from './types/import'
 import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
 import type { ChartDto } from './types/chart'
 import type {
+  DiaryDateItem,
+  DiaryEntry,
+} from './domain/models'
+import type { DiaryExportResult, DiaryScanResponse } from './types/diary'
+import type {
   ChartQueryResponse,
   TransactionRecordDto,
   TrQueryResult,
@@ -176,6 +181,27 @@ export const commandSchemas = {
   chart_list: z.object({ ledgerId: z.string() }),
   chart_update: updateChartSchema,
   chart_update_sort: z.object({ chartId: z.string(), sortOrder: z.number() }),
+  diary_list_dates: z.object({ ledger_id: z.string() }),
+  diary_get: z.object({ ledger_id: z.string(), date: z.string() }),
+  diary_upsert: z.object({
+    ledger_id: z.string(),
+    date: z.string(),
+    content: z.string().nullable().optional(),
+    mood: z.string().nullable().optional(),
+  }),
+  diary_delete: z.object({ ledger_id: z.string(), date: z.string() }),
+  diary_import_scan: z.object({ directory: z.string() }),
+  diary_import_file: z.object({
+    ledger_id: z.string(),
+    path: z.string(),
+    date: z.string(),
+  }),
+  diary_export: z.object({
+    ledger_id: z.string(),
+    directory: z.string(),
+    year: z.number().nullable().optional(),
+    month: z.number().nullable().optional(),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -228,6 +254,13 @@ export interface CommandResponses {
   chart_list: ChartDto[]
   chart_update: ChartDto
   chart_update_sort: null
+  diary_list_dates: DiaryDateItem[]
+  diary_get: DiaryEntry
+  diary_upsert: DiaryEntry
+  diary_delete: null
+  diary_import_scan: DiaryScanResponse
+  diary_import_file: DiaryEntry
+  diary_export: DiaryExportResult
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

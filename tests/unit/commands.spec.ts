@@ -74,6 +74,22 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates diary requests', () => {
+    expect(commandSchemas.diary_list_dates.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(commandSchemas.diary_get.safeParse({ ledger_id: 'l1', date: '2026-01-01' }).success).toBe(
+      true,
+    )
+    expect(
+      commandSchemas.diary_upsert.safeParse({ ledger_id: 'l1', date: '2026-01-01', content: 'x' })
+        .success,
+    ).toBe(true)
+    expect(commandSchemas.diary_import_scan.safeParse({ directory: 'D:\\diary' }).success).toBe(true)
+    expect(
+      commandSchemas.diary_export.safeParse({ ledger_id: 'l1', directory: 'D:\\out', year: 2026 })
+        .success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
