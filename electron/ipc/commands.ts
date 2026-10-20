@@ -37,6 +37,7 @@ import {
 } from '../services/stock-history'
 import { getStatisticsFor } from '../services/stock-statistics'
 import { createTradeOrderWithRoundFee } from '../services/stock-trade-write'
+import { archiveStockData, resetStockData } from '../services/stock-lifecycle'
 import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
@@ -1041,6 +1042,22 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         tag: String(raw.tag ?? ''),
         roundFee,
       })
+    },
+
+    stock_reset(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      resetStockData(workspaceDb(), ledgerId)
+      return true
+    },
+
+    stock_archive(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const name = String(raw.name ?? '').trim()
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      if (!name) throw new AppError('请输入账本名称', { status: 400 })
+      return archiveStockData(workspaceDb(), ledgerId, name)
     },
   }
 }

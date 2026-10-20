@@ -375,6 +375,8 @@ export const commandSchemas = {
       .nullable()
       .optional(),
   }),
+  stock_reset: z.object({ ledger_id: z.string() }),
+  stock_archive: z.object({ ledger_id: z.string(), name: z.string().default('') }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -476,6 +478,8 @@ export interface CommandResponses {
   stock_history_summary: StockTradeHistorySummaryDto
   stock_statistics: StockStatisticsDto
   stock_trade_create: StockTradeDto[]
+  stock_reset: boolean
+  stock_archive: string
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

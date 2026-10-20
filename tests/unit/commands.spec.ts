@@ -190,6 +190,13 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates stock lifecycle requests', () => {
+    expect(commandSchemas.stock_reset.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(
+      commandSchemas.stock_archive.safeParse({ ledger_id: 'l1', name: '归档账本' }).success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
