@@ -289,6 +289,192 @@ body {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.app {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100vh;
+  padding: 18px 14px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--transactions-color-border, #e5e6eb);
+  background: var(--transactions-color-bg-secondary, #f7f8fa);
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-nav button {
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--transactions-color-text, #1f2329);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-nav button:hover {
+  background: var(--transactions-color-fill, #eef0f3);
+}
+
+.app-nav button.app-nav-active {
+  background: var(--transactions-color-primary, #3964fe);
+  color: #ffffff;
+}
+
+.app-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.app-workspace {
+  color: var(--transactions-color-text-secondary, #646a73);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.m0-event-content {
+  width: 100%;
+  min-height: 180px;
+  padding: 12px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.m0-event-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.m0-event-image {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.m0-event-image img {
+  width: 180px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+}
+
+.m0-diary-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.m0-diary-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m0-diary-dates button {
+  width: 100%;
+  text-align: left;
+}
+
+.m0-diary-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.m0-diary-content {
+  width: 100%;
+  min-height: 320px;
+  padding: 12px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.m0-todo-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.m0-todo-card {
+  padding: 14px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  border-radius: 10px;
+}
+
+.m0-todo-card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.m0-todo-items,
+.m0-todo-progress,
+.m0-todo-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m0-todo-items > li {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--transactions-color-bg-secondary, #f7f8fa);
+}
+
+.m0-todo-progress {
+  font-size: 12px;
+}
+
+.m0-todo-progress label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;

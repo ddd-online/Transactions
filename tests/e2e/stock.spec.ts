@@ -46,6 +46,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('ledger-name').fill('股票账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/股票账本/)
+    await page.getByTestId('nav-stock').click()
 
     await expect(page.getByTestId('stock-principal')).toHaveText('¥0.00')
     await expect(page.getByTestId('stock-cash')).toHaveText('¥0.00')
@@ -123,5 +124,6 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 

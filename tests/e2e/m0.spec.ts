@@ -68,6 +68,7 @@ test('M0：窗口 / 工作空间 / trasset / IPC 闭环', async () => {
     expect(meta?.value).toBe('1')
     database.close()
 
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('write-asset').click()
     await expect(page.getByTestId('asset-state')).toHaveText('trasset:// 已加载')
     const naturalWidth = await page
@@ -88,3 +89,4 @@ test('M0：窗口 / 工作空间 / trasset / IPC 闭环', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+

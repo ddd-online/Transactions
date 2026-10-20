@@ -6,6 +6,9 @@ import { WORKSPACE_CHANGED } from '../shared/events'
 import { RecordsPage } from './pages/records'
 import { DashboardPage } from './pages/dashboard'
 import { StockPage } from './pages/stock'
+import { EventsPage } from './pages/events'
+import { DiaryPage } from './pages/diary'
+import { TodoPage } from './pages/todo'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -23,6 +26,16 @@ const FEATURES: Array<[keyof FeatureFlags, string]> = [
   ['diary', '日记'],
 ]
 
+type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
+
+const NAV: Array<[View, string]> = [
+  ['accounting', '记账'],
+  ['stock', '股票'],
+  ['events', '事件'],
+  ['diary', '日记'],
+  ['todo', '待办'],
+]
+
 export function App(): JSX.Element {
   const [version, setVersion] = useState('…')
   const [config, setConfig] = useState<ConfigSnapshot | null>(null)
@@ -35,6 +48,7 @@ export function App(): JSX.Element {
   const [assetLoaded, setAssetLoaded] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [view, setView] = useState<View>('accounting')
 
   useEffect(() => {
     const root = document.documentElement
@@ -218,184 +232,225 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <div className="m0">
-      <header className="m0-header">
-        <span className="m0-brand">Transactions</span>
-        <span className="m0-tag">M0 冒烟</span>
-      </header>
-
-      <main className="m0-main">
-        <section className="m0-card">
-          <h1>Electron 迁移 · M0</h1>
-          <p data-testid="app-info">版本 {version}</p>
-          <p data-testid="workspace-state">
-            {workspace ? `已打开：${workspace}` : '未打开工作空间'}
-          </p>
-          <p className="m0-muted">
-            配置文件：{config?.configPath ?? '…'}（{config?.isDev ? '开发' : '生产'}）
-          </p>
-
-          <div className="m0-actions">
-            <button
-              type="button"
-              data-testid="open-workspace"
-              disabled={busy}
-              onClick={() => void openWorkspace()}
-            >
-              选择工作空间
-            </button>
-            <button
-              type="button"
-              data-testid="write-asset"
-              disabled={busy || !workspace}
-              onClick={() => void writeAsset()}
-            >
-              写入示例资产
-            </button>
-          </div>
-
-          {asset ? (
-            <div className="m0-asset">
-              <img
-                data-testid="asset-img"
-                className="m0-asset-image"
-                src={asset}
-                alt="trasset 示例"
-                onLoad={() => setAssetLoaded(true)}
-              />
-              <span data-testid="asset-state">
-                {assetLoaded ? 'trasset:// 已加载' : '加载中…'}
-              </span>
-            </div>
-          ) : null}
-
-          {error ? (
-            <p className="m0-error" data-testid="error">
-              {error}
-            </p>
-          ) : null}
-        </section>
-
-        <div className="m0-actions m0-ledger-select">
-          <label className="m0-field">
-            当前账本
-            <select
-              data-testid="ledger-select"
-              className="m0-input"
-              value={activeLedgerId}
-              onChange={(event) => setActiveLedgerId(event.target.value)}
-            >
-              {ledgers.length === 0 ? <option value="">（无账本）</option> : null}
-              {ledgers.map((ledger) => (
-                <option key={ledger.id} value={ledger.id}>
-                  {ledger.name}
-                </option>
-              ))}
-            </select>
-          </label>
+    <div className="app">
+      <aside className="app-sidebar">
+        <div className="app-brand">
+          <span className="m0-brand">Transactions</span>
+          <span className="m0-tag">Electron</span>
         </div>
 
-        <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
-
-        <StockPage ledgerId={activeLedgerId} />
-
-        <RecordsPage
-          ledgerId={activeLedgerId}
-          onChanged={() => setDataVersion((value) => value + 1)}
-        />
-
-        <section className="m0-card m0-card--wide">
-          <h2>账本</h2>
-          <div className="m0-actions">
-            <input
-              data-testid="ledger-name"
-              className="m0-input"
-              placeholder="新账本名称"
-              value={ledgerName}
-              disabled={busy || !workspace}
-              onChange={(event) => setLedgerName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void createLedger()
-              }}
-            />
+        <nav className="app-nav">
+          {NAV.map(([key, label]) => (
             <button
+              key={key}
               type="button"
-              data-testid="ledger-create"
-              disabled={busy || !workspace}
-              onClick={() => void createLedger()}
+              data-testid={`nav-${key}`}
+              className={view === key ? 'app-nav-active' : ''}
+              onClick={() => setView(key)}
             >
-              新建账本
+              {label}
             </button>
-          </div>
+          ))}
+        </nav>
 
-          {ledgers.length === 0 ? (
-            <p className="m0-muted" data-testid="ledger-empty">
-              {workspace ? '还没有账本' : '请先选择工作空间'}
-            </p>
-          ) : (
-            <ul className="m0-ledgers">
-              {ledgers.map((ledger) => (
-                <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
-                  <span>{ledger.name}</span>
-                  <span className="m0-muted">{ledger.description}</span>
-                  <button
-                    type="button"
-                    className="m0-link"
-                    disabled={busy}
-                    onClick={() => void deleteLedger(ledger.id)}
-                  >
-                    删除
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <div className="app-sidebar-footer">
+          <button
+            type="button"
+            data-testid="open-workspace"
+            className="m0-primary"
+            disabled={busy}
+            onClick={() => void openWorkspace()}
+          >
+            {workspace ? '切换工作空间' : '选择工作空间'}
+          </button>
+          <span className="app-workspace" data-testid="workspace-state">
+            {workspace ? `已打开：${workspace}` : '未打开工作空间'}
+          </span>
+          <button
+            type="button"
+            data-testid="nav-settings"
+            className={view === 'settings' ? 'app-nav-active' : 'm0-link'}
+            onClick={() => setView('settings')}
+          >
+            设置
+          </button>
+          <span className="m0-muted" data-testid="app-info">
+            版本 {version}
+          </span>
+        </div>
+      </aside>
 
-        <section className="m0-card m0-card--wide">
-          <h2>外观与功能开关</h2>
-          <label className="m0-field">
-            外观
-            <select
-              data-testid="appearance"
-              className="m0-input"
-              value={config?.appearance ?? 'system'}
-              disabled={!config}
-              onChange={(event) => void setAppearance(event.target.value)}
-            >
-              <option value="system">跟随系统</option>
-              <option value="light">浅色</option>
-              <option value="dark">深色</option>
-            </select>
-          </label>
-          <div className="m0-features">
-            {FEATURES.map(([key, label]) => (
-              <label key={key} className="m0-feature">
-                <input
-                  type="checkbox"
-                  data-testid={`feature-${key}`}
-                  checked={config?.features[key] ?? true}
-                  disabled={!config}
-                  onChange={(event) => void toggleFeature(key, event.target.checked)}
-                />
-                {label}
+      <main className="app-main">
+        {error ? (
+          <p className="m0-error" data-testid="error">
+            {error}
+          </p>
+        ) : null}
+
+        {view === 'accounting' ? (
+          <>
+            <div className="m0-actions m0-ledger-select">
+              <label className="m0-field">
+                当前账本
+                <select
+                  data-testid="ledger-select"
+                  className="m0-input"
+                  value={activeLedgerId}
+                  onChange={(event) => setActiveLedgerId(event.target.value)}
+                >
+                  {ledgers.length === 0 ? <option value="">（无账本）</option> : null}
+                  {ledgers.map((ledger) => (
+                    <option key={ledger.id} value={ledger.id}>
+                      {ledger.name}
+                    </option>
+                  ))}
+                </select>
               </label>
-            ))}
-          </div>
-        </section>
+            </div>
 
-        <section className="m0-card">
-          <h2>M0 验收</h2>
-          <ul>
-            <li>无边框窗口 / 托盘 / 单实例</li>
-            <li>app:// 协议加载渲染产物</li>
-            <li>node:sqlite 建库、校验、事务</li>
-            <li>trasset:// 协议读取工作空间资产</li>
-            <li>IPC 命令 + zod 边界校验</li>
-            <li>Playwright 启动、点击、落库断言</li>
-          </ul>
-        </section>
+            <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
+
+            <RecordsPage
+              ledgerId={activeLedgerId}
+              onChanged={() => setDataVersion((value) => value + 1)}
+            />
+
+            <section className="m0-card m0-card--wide">
+              <h2>账本</h2>
+              <div className="m0-actions">
+                <input
+                  data-testid="ledger-name"
+                  className="m0-input"
+                  placeholder="新账本名称"
+                  value={ledgerName}
+                  disabled={busy || !workspace}
+                  onChange={(event) => setLedgerName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') void createLedger()
+                  }}
+                />
+                <button
+                  type="button"
+                  data-testid="ledger-create"
+                  disabled={busy || !workspace}
+                  onClick={() => void createLedger()}
+                >
+                  新建账本
+                </button>
+              </div>
+
+              {ledgers.length === 0 ? (
+                <p className="m0-muted" data-testid="ledger-empty">
+                  {workspace ? '还没有账本' : '请先选择工作空间'}
+                </p>
+              ) : (
+                <ul className="m0-ledgers">
+                  {ledgers.map((ledger) => (
+                    <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
+                      <span>{ledger.name}</span>
+                      <span className="m0-muted">{ledger.description}</span>
+                      <button
+                        type="button"
+                        className="m0-link"
+                        disabled={busy}
+                        onClick={() => void deleteLedger(ledger.id)}
+                      >
+                        删除
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        ) : null}
+
+        {view === 'stock' ? <StockPage ledgerId={activeLedgerId} /> : null}
+
+        {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
+
+        {view === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
+
+        {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
+
+        {view === 'settings' ? (
+          <>
+            <section className="m0-card m0-card--wide">
+              <h1>设置</h1>
+              <p className="m0-muted">
+                配置文件：{config?.configPath ?? '…'}（{config?.isDev ? '开发' : '生产'}）
+              </p>
+              <label className="m0-field">
+                外观
+                <select
+                  data-testid="appearance"
+                  className="m0-input"
+                  value={config?.appearance ?? 'system'}
+                  disabled={!config}
+                  onChange={(event) => void setAppearance(event.target.value)}
+                >
+                  <option value="system">跟随系统</option>
+                  <option value="light">浅色</option>
+                  <option value="dark">深色</option>
+                </select>
+              </label>
+              <div className="m0-features">
+                {FEATURES.map(([key, label]) => (
+                  <label key={key} className="m0-feature">
+                    <input
+                      type="checkbox"
+                      data-testid={`feature-${key}`}
+                      checked={config?.features[key] ?? true}
+                      disabled={!config}
+                      onChange={(event) => void toggleFeature(key, event.target.checked)}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="m0-card">
+              <h2>M0 验收</h2>
+              <ul>
+                <li>无边框窗口 / 托盘 / 单实例</li>
+                <li>app:// 协议加载渲染产物</li>
+                <li>node:sqlite 建库、校验、事务</li>
+                <li>trasset:// 协议读取工作空间资产</li>
+                <li>IPC 命令 + zod 边界校验</li>
+                <li>Playwright 启动、点击、落库断言</li>
+              </ul>
+              <div className="m0-actions">
+                <button
+                  type="button"
+                  data-testid="write-asset"
+                  disabled={busy || !workspace}
+                  onClick={() => void writeAsset()}
+                >
+                  写入示例资产
+                </button>
+              </div>
+              {asset ? (
+                <div className="m0-asset">
+                  <img
+                    data-testid="asset-img"
+                    className="m0-asset-image"
+                    src={asset}
+                    alt="trasset 示例"
+                    onLoad={() => setAssetLoaded(true)}
+                  />
+                  <span data-testid="asset-state">
+                    {assetLoaded ? 'trasset:// 已加载' : '加载中…'}
+                  </span>
+                </div>
+              ) : null}
+            </section>
+          </>
+        ) : null}
       </main>
     </div>
   )
 }
+
+
+
