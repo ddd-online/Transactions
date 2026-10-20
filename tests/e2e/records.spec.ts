@@ -66,6 +66,10 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('dashboard-slices')).toContainText('餐饮美食')
     await expect(page.getByTestId('dashboard-slices')).toContainText('1 笔')
 
+    await expect(page.getByTestId('chart-select')).toBeVisible()
+    await page.getByTestId('chart-select').selectOption({ label: '年度消费趋势' })
+    await expect(page.getByTestId('chart-svg')).toBeVisible()
+
     await page.getByTestId('tr-template-name').fill('午餐模板')
     await page.getByTestId('tr-template-save').click()
     await expect(page.getByTestId('tr-template')).toContainText('午餐模板')
@@ -135,5 +139,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 

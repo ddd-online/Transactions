@@ -13,6 +13,7 @@ import { ERR_CODE_LEGACY_WORKSPACE } from '../shared/errors'
 import type { LegacyImportProgress } from '../shared/types/import'
 import type { UpdateSnapshot } from '../shared/domain/update'
 import { RecordsPage } from './pages/records'
+import { ChartsPage } from './pages/charts'
 import { DashboardPage } from './pages/dashboard'
 import { StockPage } from './pages/stock'
 import { EventsPage } from './pages/events'
@@ -444,6 +445,8 @@ export function App(): JSX.Element {
               onChanged={() => setDataVersion((value) => value + 1)}
             />
 
+            <ChartsPage ledgerId={activeLedgerId} />
+
             <section className="m0-card m0-card--wide">
               <h2>账本</h2>
               <div className="m0-actions">
@@ -634,6 +637,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 
