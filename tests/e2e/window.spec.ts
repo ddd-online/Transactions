@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
@@ -59,6 +59,32 @@ test('窗口：关闭行为为托盘时隐藏窗口、进程保留', async () =>
   }
 })
 
+test('窗口：关闭时保存尺寸到配置', async () => {
+  const { app, root } = await launch('quit')
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await app.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0].setSize(1320, 860)
+    })
+    await page.waitForTimeout(400)
+    await page.getByTestId('window-close').click()
+    await expect.poll(() => page.isClosed()).toBe(true)
+    const configPath = join(root, 'home', '.transactions-dev.json')
+    const config = JSON.parse(readFileSync(configPath, 'utf8')) as { width: number; height: number }
+    expect(Math.abs(config.width - 1320)).toBeLessThanOrEqual(2)
+    expect(Math.abs(config.height - 860)).toBeLessThanOrEqual(2)
+  } finally {
+    try {
+      await app.close()
+    } catch {
+      // 已退出
+    }
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('窗口：关闭行为为退出时进程结束', async () => {
   const { app, root } = await launch('quit')
   try {
@@ -75,5 +101,7 @@ test('窗口：关闭行为为退出时进程结束', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 
