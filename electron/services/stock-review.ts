@@ -1,11 +1,11 @@
 import { AppError } from '../../shared/errors'
 import { currentRoundTrades } from '../../shared/domain/stock'
 import type { Db } from '../db/driver'
-import { getTradeRound, listTradesAsc, updateTradeRoundReview } from '../db/dao/stock-trade'
+import { getTradeRound, listTradesAsc, updateTradeRoundReview, updateTradeRoundTag } from '../db/dao/stock-trade'
 import type { StockDayReviewDto, StockNameDto } from '../../shared/types/stock-position'
 import type { StockTradeHistoryDetailDto } from '../../shared/types/stock-history'
 import { getTradeHistoryDetail } from './stock-history'
-import { unixToDate } from './stock-account'
+import { getTradeTags, unixToDate } from './stock-account'
 import type { StockQuoteFetcher } from './stock-quote'
 import { isValidDiaryDate } from './diary'
 import { todayYmd } from '../../shared/domain/time'
@@ -100,6 +100,30 @@ export function updateRoundReview(
   return getTradeHistoryDetail(db, ledgerId, round.stockCode)
 }
 
+/** 更新已完成轮次的交易标签（空串回到默认「分析」）。 */
+export function updateRoundTag(
+  db: Db,
+  ledgerId: string,
+  roundId: string,
+  tag: string,
+): StockTradeHistoryDetailDto {
+  if (!roundId) throw new AppError('round_id is required', { status: 400 })
+  const normalized = tag.trim() === '' ? '分析' : tag.trim()
+  const round = (() => {
+    try {
+      return getTradeRound(db, roundId)
+    } catch {
+      throw new AppError('轮次不存在', { status: 404 })
+    }
+  })()
+  if (round.ledgerId !== ledgerId) throw new AppError('轮次不存在', { status: 404 })
+  if (!getTradeTags(db, ledgerId).includes(normalized)) {
+    throw new AppError('无效的交易标签', { status: 400 })
+  }
+  updateTradeRoundTag(db, roundId, normalized)
+  return getTradeHistoryDetail(db, ledgerId, round.stockCode)
+}
+
 /** 股票名称：先查本地成交，未命中走行情；都没有时报 404。 */
 export async function lookupStockName(
   db: Db,
@@ -121,3 +145,4 @@ export async function lookupStockName(
   if (!name) throw new AppError(`未找到股票: ${stockCode}`, { status: 404 })
   return { stockCode, stockName: name }
 }
+

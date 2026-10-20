@@ -415,6 +415,11 @@ export const commandSchemas = {
     round_id: z.string(),
     review: z.string().default(''),
   }),
+  stock_round_tag: z.object({
+    ledger_id: z.string(),
+    round_id: z.string(),
+    tag: z.string().default(''),
+  }),
   stock_name: z.object({ stock_code: z.string() }),
 } as const
 
@@ -526,6 +531,7 @@ export interface CommandResponses {
   stock_operation_rollback: StockOperationRollbackDto
   stock_day_review: StockDayReviewDto[]
   stock_round_review: StockTradeHistoryDetailDto
+  stock_round_tag: StockTradeHistoryDetailDto
   stock_name: StockNameDto
 }
 

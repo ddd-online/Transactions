@@ -45,7 +45,7 @@ import {
   rollbackLatest,
   updateTradeFill,
 } from '../services/stock-trade-edit'
-import { lookupStockName, updateDayReview, updateRoundReview } from '../services/stock-review'
+import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../services/stock-review'
 import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
@@ -1140,6 +1140,18 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         ledgerId,
         String(raw.round_id ?? ''),
         String(raw.review ?? ''),
+      )
+    },
+
+    stock_round_tag(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return updateRoundTag(
+        workspaceDb(),
+        ledgerId,
+        String(raw.round_id ?? ''),
+        String(raw.tag ?? ''),
       )
     },
 

@@ -8,7 +8,7 @@ import { closeWorkspace, openWorkspace } from '../../electron/db'
 import { AppError } from '../../shared/errors'
 import { addPrincipalAtDate } from '../../electron/services/stock-account'
 import { createTradeOrderWithRoundFee } from '../../electron/services/stock-trade-write'
-import { lookupStockName, updateDayReview, updateRoundReview } from '../../electron/services/stock-review'
+import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../../electron/services/stock-review'
 import { getTradeHistoryDetail } from '../../electron/services/stock-history'
 import type { StockQuoteFetcher } from '../../electron/services/stock-quote'
 import type { CreateTradeOrderWithRoundFeeRequest } from '../../shared/types/stock-trade'
@@ -97,6 +97,8 @@ describe('stock review', () => {
     expect(detail.rounds[0].review).toBe('复盘一下')
 
     expect(() => updateRoundReview(db, 'l1', 'missing', 'x')).toThrow('轮次不存在')
+    expect(updateRoundTag(db, 'l1', roundId, '打板').rounds[0].tag).toBe('打板')
+    expect(() => updateRoundTag(db, 'l1', roundId, '不存在')).toThrow('无效的交易标签')
   })
 
   it('looks up a stock name locally first, then from the quote fetcher', async () => {
@@ -119,3 +121,4 @@ describe('stock review', () => {
     await expect(lookupStockName(db, fetcher, '999999')).rejects.toBeInstanceOf(AppError)
   })
 })
+
