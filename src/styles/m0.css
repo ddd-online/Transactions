@@ -76,6 +76,55 @@ body {
   font-size: 15px;
 }
 
+.m0-card--wide {
+  grid-column: 1 / -1;
+}
+
+.m0-input {
+  height: 34px;
+  min-width: 240px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  background: var(--transactions-color-bg-container, #ffffff);
+  color: inherit;
+  font: inherit;
+}
+
+.m0-ledgers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m0-ledger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  border-radius: 8px;
+}
+
+.m0-ledger > span:first-child {
+  font-weight: 600;
+}
+
+.m0-ledger > span:nth-child(2) {
+  flex: 1;
+}
+
+.m0-link {
+  border: 0;
+  background: transparent;
+  color: var(--transactions-color-primary, #3964fe);
+  font: inherit;
+  cursor: pointer;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;

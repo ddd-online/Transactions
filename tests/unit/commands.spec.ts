@@ -22,6 +22,16 @@ describe('command catalog', () => {
     expect(commandSchemas.debug_write_asset.safeParse(undefined).success).toBe(true)
   })
 
+  it('validates ledger requests', () => {
+    expect(commandSchemas.ledger_list.safeParse({ id: 'all' }).success).toBe(true)
+    expect(commandSchemas.ledger_list.safeParse({}).success).toBe(false)
+    expect(commandSchemas.ledger_create.safeParse({ name: '账本' }).success).toBe(true)
+    expect(commandSchemas.ledger_create.safeParse({}).success).toBe(true)
+    expect(commandSchemas.ledger_get.safeParse({ id: 'l1' }).success).toBe(true)
+    expect(commandSchemas.ledger_update.safeParse({ id: 'l1', name: '新名' }).success).toBe(true)
+    expect(commandSchemas.ledger_delete.safeParse({ id: 'l1' }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

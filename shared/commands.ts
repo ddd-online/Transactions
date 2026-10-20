@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import type { ConfigSnapshot, DialogOpenResponse } from './types/config'
 import type { LegacyImportProbe, LegacyImportReport } from './types/import'
+import type { Ledger } from './domain/models'
 
 /**
  * IPC 命令目录：名字 + 请求形状。
@@ -28,6 +29,18 @@ export const commandSchemas = {
   debug_echo: z.object({ message: z.string() }),
   legacy_import_probe: z.object({ workspaceDir: z.string() }),
   legacy_import_start: z.object({ sourceDir: z.string(), targetDir: z.string() }),
+  ledger_list: z.object({ id: z.string() }),
+  ledger_create: z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+  }),
+  ledger_get: z.object({ id: z.string() }),
+  ledger_update: z.object({
+    id: z.string(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+  }),
+  ledger_delete: z.object({ id: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -47,6 +60,11 @@ export interface CommandResponses {
   debug_echo: string
   legacy_import_probe: LegacyImportProbe
   legacy_import_start: LegacyImportReport
+  ledger_list: Ledger[]
+  ledger_create: string
+  ledger_get: Ledger
+  ledger_update: null
+  ledger_delete: null
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

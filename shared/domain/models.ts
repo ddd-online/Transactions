@@ -63,3 +63,144 @@ export const DEFAULT_STOCK_FEE_SETTING: Omit<StockFeeSetting, 'id' | 'ledgerId' 
   stampDutyRate: 0.0005,
   transferFeeRate: 0.00001,
 }
+
+/** 日记日期树的一项（旧 wire 契约：date / wordCount / mood）。 */
+export interface DiaryDateItem {
+  date: string
+  wordCount: number
+  mood: string
+}
+
+// ---------------------------------------------------------------- 核心记账模型
+// 内部字段用 camelCase；与旧 wire 的 snake_case/camelCase 差异由 DTO / DAO 层显式映射。
+
+export interface Ledger {
+  id: string
+  name: string
+  description: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface TransactionRecordFlags {
+  outlier: boolean
+}
+
+export interface TransactionRecord {
+  transactionId: string
+  ledgerId: string
+  /** 交易金额（分；旧库列名 price） */
+  amountCents: number
+  transactionType: string
+  category: string
+  description: string
+  /** 标记集 JSON */
+  flags: string
+  keyEventDate: string
+  transactionAt: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface TrTag {
+  ledgerId: string
+  transactionId: string
+  tag: string
+}
+
+export interface Category {
+  ledgerId: string
+  name: string
+  transactionType: string
+  sortOrder: number
+}
+
+export interface Tag {
+  ledgerId: string
+  name: string
+  /** 形如 `餐饮美食:expense` */
+  categoryTransactionType: string
+  sortOrder: number
+}
+
+export interface TransactionTemplate {
+  templateId: string
+  ledgerId: string
+  templateName: string
+  transactionType: string
+  category: string
+  /** 标签集 JSON 数组字符串 */
+  tags: string
+  flags: string
+  description: string
+  sortOrder: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface QueryConditionItem {
+  transactionType: string
+  category: string
+  tags: string[]
+  tagPolicy: string
+  tagNot: boolean
+  description: string
+}
+
+export interface ChartLine {
+  label: string
+  transactionType: string
+  includeOutlier: boolean
+  conditions: QueryConditionItem[]
+}
+
+export interface Chart {
+  chartId: string
+  ledgerId: string
+  title: string
+  /** year / month */
+  granularity: string
+  /** 曲线配置 JSON */
+  chartLines: string
+  /** line / bar */
+  chartType: string
+  isPreset: boolean
+  sortOrder: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface KeyEvent {
+  id: string
+  date: string
+  title: string
+  content: string
+  color: string
+  createdAt: number
+  updatedAt: number
+  ledgerId: string
+}
+
+export interface KeyEventImage {
+  id: string
+  ledgerId: string
+  eventDate: string
+  /** 相对 data/assets 的原图路径 */
+  filePath: string
+  /** 相对 data/assets 的缩略图路径 */
+  thumbPath: string
+  sortOrder: number
+  createdAt: number
+}
+
+export interface DiaryEntry {
+  id: string
+  date: string
+  content: string
+  /** Unicode 字符数，不是字节数 */
+  wordCount: number
+  mood: string
+  createdAt: number
+  updatedAt: number
+  ledgerId: string
+}

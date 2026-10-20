@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { ConfigSnapshot } from '../shared/types/config'
+import type { Ledger } from '../shared/domain/models'
 import { WORKSPACE_CHANGED } from '../shared/events'
 
 function errorMessage(error: unknown): string {
@@ -15,6 +16,8 @@ export function App(): JSX.Element {
   const [version, setVersion] = useState('…')
   const [config, setConfig] = useState<ConfigSnapshot | null>(null)
   const [workspace, setWorkspace] = useState('')
+  const [ledgers, setLedgers] = useState<Ledger[]>([])
+  const [ledgerName, setLedgerName] = useState('')
   const [asset, setAsset] = useState('')
   const [assetLoaded, setAssetLoaded] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -24,6 +27,23 @@ export function App(): JSX.Element {
     const directory = await window.api.invoke('workspace_get')
     setWorkspace(directory)
   }, [])
+
+  const refreshLedgers = useCallback(async (): Promise<void> => {
+    if (!workspace) {
+      setLedgers([])
+      return
+    }
+    try {
+      const rows = await window.api.invoke('ledger_list', { id: 'all' })
+      setLedgers(rows)
+    } catch (listError) {
+      setError(errorMessage(listError))
+    }
+  }, [workspace])
+
+  useEffect(() => {
+    void refreshLedgers()
+  }, [refreshLedgers])
 
   useEffect(() => {
     let alive = true
@@ -80,6 +100,41 @@ export function App(): JSX.Element {
       setBusy(false)
     }
   }, [refreshWorkspace])
+
+  const createLedger = useCallback(async (): Promise<void> => {
+    const name = ledgerName.trim()
+    if (!name) {
+      setError('请输入账本名称')
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      await window.api.invoke('ledger_create', { name, description: '' })
+      setLedgerName('')
+      await refreshLedgers()
+    } catch (createError) {
+      setError(errorMessage(createError))
+    } finally {
+      setBusy(false)
+    }
+  }, [ledgerName, refreshLedgers])
+
+  const deleteLedger = useCallback(
+    async (id: string): Promise<void> => {
+      setBusy(true)
+      setError('')
+      try {
+        await window.api.invoke('ledger_delete', { id })
+        await refreshLedgers()
+      } catch (deleteError) {
+        setError(errorMessage(deleteError))
+      } finally {
+        setBusy(false)
+      }
+    },
+    [refreshLedgers],
+  )
 
   const writeAsset = useCallback(async (): Promise<void> => {
     setBusy(true)
@@ -155,8 +210,55 @@ export function App(): JSX.Element {
           ) : null}
         </section>
 
+        <section className="m0-card m0-card--wide">
+          <h2>账本</h2>
+          <div className="m0-actions">
+            <input
+              data-testid="ledger-name"
+              className="m0-input"
+              placeholder="新账本名称"
+              value={ledgerName}
+              disabled={busy || !workspace}
+              onChange={(event) => setLedgerName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void createLedger()
+              }}
+            />
+            <button
+              type="button"
+              data-testid="ledger-create"
+              disabled={busy || !workspace}
+              onClick={() => void createLedger()}
+            >
+              新建账本
+            </button>
+          </div>
+
+          {ledgers.length === 0 ? (
+            <p className="m0-muted" data-testid="ledger-empty">
+              {workspace ? '还没有账本' : '请先选择工作空间'}
+            </p>
+          ) : (
+            <ul className="m0-ledgers">
+              {ledgers.map((ledger) => (
+                <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
+                  <span>{ledger.name}</span>
+                  <span className="m0-muted">{ledger.description}</span>
+                  <button
+                    type="button"
+                    className="m0-link"
+                    disabled={busy}
+                    onClick={() => void deleteLedger(ledger.id)}
+                  >
+                    删除
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <section className="m0-card">
-          <h2>M0 验收</h2>
           <ul>
             <li>无边框窗口 / 托盘 / 单实例</li>
             <li>app:// 协议加载渲染产物</li>

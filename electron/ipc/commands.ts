@@ -8,9 +8,17 @@ import { AppError, workspaceNotOpened } from '../../shared/errors'
 import { IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
 import type { ConfigStore } from '../config'
 import { currentWorkspace, openWorkspace } from '../db'
+import type { Db } from '../db/driver'
 import { logInfo } from '../logging'
 import { importLegacyWorkspace, probeLegacyWorkspace } from '../legacy/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
+import {
+  createLedger,
+  deleteLedgerById,
+  listAllLedgers,
+  modifyLedger,
+  queryLedgerById,
+} from '../services/ledger'
 import { openDirectory } from '../shell/dialogs'
 import { registerWindowControl } from '../shell/window'
 import { sendEvent } from './events'
@@ -27,6 +35,12 @@ export interface HandlerOptions {
 
 function asObject(request: unknown): Record<string, unknown> {
   return typeof request === 'object' && request !== null ? (request as Record<string, unknown>) : {}
+}
+
+function workspaceDb(): Db {
+  const workspace = currentWorkspace()
+  if (!workspace) throw workspaceNotOpened()
+  return workspace.db
 }
 
 export function createHandlers(options: HandlerOptions): HandlerMap {
@@ -137,6 +151,58 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       })
       logInfo(`旧数据导入完成: ${sourceDir} -> ${targetDir}`)
       return report
+    },
+
+    ledger_list(request) {
+      const id = String(asObject(request).id ?? '')
+      if (!id) {
+        throw new AppError('missing required query parameter: id', { status: 400 })
+      }
+      const db = workspaceDb()
+      if (id === 'all') return listAllLedgers(db)
+      return id.split(',').map((raw) => {
+        const ledgerId = raw.trim()
+        try {
+          return queryLedgerById(db, ledgerId)
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          throw new AppError(`查询账本 ${ledgerId} 失败: ${message}`, { status: 500 })
+        }
+      })
+    },
+
+    ledger_create(request) {
+      const raw = asObject(request)
+      if (typeof raw.name !== 'string') {
+        throw new AppError('name在请求体中不存在', { status: 400 })
+      }
+      const description = typeof raw.description === 'string' ? raw.description : ''
+      return createLedger(workspaceDb(), raw.name, description)
+    },
+
+    ledger_get(request) {
+      const id = String(asObject(request).id ?? '')
+      if (!id) throw new AppError('missing ledger id', { status: 400 })
+      return queryLedgerById(workspaceDb(), id)
+    },
+
+    ledger_update(request) {
+      const raw = asObject(request)
+      const id = String(raw.id ?? '')
+      if (!id) throw new AppError('missing ledger id', { status: 400 })
+      if (typeof raw.name !== 'string') {
+        throw new AppError('name在请求体中不存在', { status: 400 })
+      }
+      const description = typeof raw.description === 'string' ? raw.description : ''
+      modifyLedger(workspaceDb(), id, raw.name, description)
+      return null
+    },
+
+    ledger_delete(request) {
+      const id = String(asObject(request).id ?? '')
+      if (!id) throw new AppError('missing ledger id', { status: 400 })
+      deleteLedgerById(workspaceDb(), id)
+      return null
     },
   }
 }
