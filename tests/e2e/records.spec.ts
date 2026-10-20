@@ -66,6 +66,13 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('dashboard-slices')).toContainText('餐饮美食')
     await expect(page.getByTestId('dashboard-slices')).toContainText('1 笔')
 
+    await page.getByTestId('tr-template-name').fill('午餐模板')
+    await page.getByTestId('tr-template-save').click()
+    await expect(page.getByTestId('tr-template')).toContainText('午餐模板')
+    await page.getByTestId('tr-category').fill('别的分类')
+    await page.getByTestId('tr-template').first().click()
+    await expect(page.getByTestId('tr-category')).toHaveValue('餐饮美食')
+
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'records.png'),
       fullPage: true,
@@ -87,6 +94,9 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     const tags = database
       .prepare('SELECT tag FROM transaction_record_tag ORDER BY tag')
       .all() as Array<{ tag: string }>
+    const template = database
+      .prepare('SELECT template_name, tags FROM transaction_template')
+      .get() as { template_name: string; tags: string }
     database.close()
     expect(record.amount_cents).toBe(1234)
     expect(record.transaction_type).toBe('expense')
@@ -95,6 +105,8 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     expect(JSON.parse(record.flags).outlier).toBe(true)
     expect(record.key_event_date).toBe('2026-01-15')
     expect(tags.map((row) => row.tag).sort()).toEqual(['三餐', '外卖'])
+    expect(template.template_name).toBe('午餐模板')
+    expect(template.tags).toBe('["三餐","外卖"]')
 
     await page.getByTestId('tr-keyword').fill('午')
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)

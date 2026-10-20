@@ -9,6 +9,7 @@ import type {
 } from '../../shared/types/transaction'
 import type { CategoryDto } from '../../shared/types/category'
 import type { TagDto } from '../../shared/types/category'
+import type { TransactionTemplateDto } from '../../shared/types/template'
 
 const PAGE_SIZE = 20
 
@@ -51,6 +52,8 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
   const [tagOptions, setTagOptions] = useState<TagDto[]>([])
   const [outlier, setOutlier] = useState(false)
   const [keyEventDate, setKeyEventDate] = useState('')
+  const [templates, setTemplates] = useState<TransactionTemplateDto[]>([])
+  const [templateName, setTemplateName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -68,12 +71,14 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     }
     void (async () => {
       try {
-        const [categoryRows, tagRows] = await Promise.all([
+        const [categoryRows, tagRows, templateRows] = await Promise.all([
           window.api.invoke('category_list', { ledgerId, type: typeFilter }),
           window.api.invoke('tag_list', { ledgerId, categoryTransactionType: '' }),
+          window.api.invoke('template_list', { ledger_id: ledgerId }),
         ])
         setCategories(categoryRows)
         setTagOptions(tagRows)
+        setTemplates(templateRows)
       } catch {
         // 分类/标签只是输入建议，读取失败不阻塞记账
       }
@@ -191,6 +196,53 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     [load, onChanged],
   )
 
+  const applyTemplate = useCallback((template: TransactionTemplateDto): void => {
+    setType(template.transactionType)
+    setCategory(template.category)
+    setDescription(template.description)
+    setTags(template.tags.join(', '))
+  }, [])
+
+  const saveTemplate = useCallback(async (): Promise<void> => {
+    const name = templateName.trim() || `${typeLabel(type)} · ${category.trim() || '模板'}`
+    setError('')
+    try {
+      await window.api.invoke('template_create', {
+        template_id: '',
+        ledger_id: ledgerId,
+        template_name: name,
+        transaction_type: type,
+        category: category.trim(),
+        tags: tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+        flags: '',
+        description: description.trim(),
+        sort_order: templates.length + 1,
+      })
+      setTemplateName('')
+      const rows = await window.api.invoke('template_list', { ledger_id: ledgerId })
+      setTemplates(rows)
+    } catch (templateError) {
+      setError(errorMessage(templateError))
+    }
+  }, [category, description, ledgerId, tags, templateName, templates.length, type])
+
+  const removeTemplate = useCallback(
+    async (id: string): Promise<void> => {
+      setError('')
+      try {
+        await window.api.invoke('template_delete', { id })
+        const rows = await window.api.invoke('template_list', { ledger_id: ledgerId })
+        setTemplates(rows)
+      } catch (templateError) {
+        setError(errorMessage(templateError))
+      }
+    },
+    [ledgerId],
+  )
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   return (
@@ -243,6 +295,45 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             <option key={tag.name} value={tag.name} />
           ))}
         </datalist>
+      </div>
+
+      <div className="m0-actions m0-templates">
+        {templates.map((template) => (
+          <span key={template.templateId} className="m0-template">
+            <button
+              type="button"
+              className="m0-link"
+              data-testid="tr-template"
+              onClick={() => applyTemplate(template)}
+            >
+              {template.templateName}
+            </button>
+            <button
+              type="button"
+              className="m0-link"
+              data-testid="tr-template-delete"
+              onClick={() => void removeTemplate(template.templateId)}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        <input
+          className="m0-input"
+          data-testid="tr-template-name"
+          placeholder="模板名称（可空）"
+          value={templateName}
+          onChange={(event) => setTemplateName(event.target.value)}
+        />
+        <button
+          type="button"
+          className="m0-link"
+          data-testid="tr-template-save"
+          disabled={!ledgerId}
+          onClick={() => void saveTemplate()}
+        >
+          存为模板
+        </button>
       </div>
 
       <div className="m0-actions m0-new-record">
@@ -411,6 +502,8 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     </section>
   )
 }
+
+
 
 
 

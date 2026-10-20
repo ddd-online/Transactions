@@ -211,7 +211,7 @@ body {
   margin-bottom: 0;
 }
 
-.m0-period {
+.m0-templates {`n  flex-wrap: wrap;`n  align-items: center;`n}`n`n.m0-template {`n  display: inline-flex;`n  align-items: center;`n  gap: 2px;`n  padding: 2px 6px;`n  border-radius: 6px;`n  background: var(--transactions-color-fill, #eef0f3);`n}`n`n.m0-period {
   margin: 0;
   align-items: center;
 }
@@ -639,3 +639,4 @@ body {
   color: var(--transactions-color-error, #d92d20);
   white-space: pre-wrap;
 }
+
