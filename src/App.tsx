@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import type { ConfigSnapshot } from '../shared/types/config'
+import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
 import { WORKSPACE_CHANGED } from '../shared/events'
 
@@ -12,6 +12,14 @@ function errorMessage(error: unknown): string {
   return String(error)
 }
 
+const FEATURES: Array<[keyof FeatureFlags, string]> = [
+  ['accounting', '记账'],
+  ['stock', '股票'],
+  ['todo', '待办'],
+  ['keyEvent', '事件'],
+  ['diary', '日记'],
+]
+
 export function App(): JSX.Element {
   const [version, setVersion] = useState('…')
   const [config, setConfig] = useState<ConfigSnapshot | null>(null)
@@ -22,6 +30,15 @@ export function App(): JSX.Element {
   const [assetLoaded, setAssetLoaded] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (config?.appearance === 'light' || config?.appearance === 'dark') {
+      root.dataset.theme = config.appearance
+    } else {
+      delete root.dataset.theme
+    }
+  }, [config?.appearance])
 
   const refreshWorkspace = useCallback(async (): Promise<void> => {
     const directory = await window.api.invoke('workspace_get')
@@ -134,6 +151,40 @@ export function App(): JSX.Element {
       }
     },
     [refreshLedgers],
+  )
+
+  const setAppearance = useCallback(async (appearance: string): Promise<void> => {
+    setError('')
+    try {
+      await window.api.invoke('config_set_appearance', { appearance })
+      setConfig((current) => (current ? { ...current, appearance } : current))
+    } catch (appearanceError) {
+      setError(errorMessage(appearanceError))
+    }
+  }, [])
+
+  const toggleFeature = useCallback(
+    async (feature: string, enabled: boolean): Promise<void> => {
+      setError('')
+      // 乐观更新：受控 checkbox 要立刻反映点击，不能等 IPC 回来再渲染。
+      setConfig((current) =>
+        current
+          ? { ...current, features: { ...current.features, [feature]: enabled } }
+          : current,
+      )
+      try {
+        const features: FeatureFlags = await window.api.invoke('config_set_feature', {
+          feature,
+          enabled,
+        })
+        setConfig((current) => (current ? { ...current, features } : current))
+      } catch (featureError) {
+        setError(errorMessage(featureError))
+        const snapshot = await window.api.invoke('config_get')
+        setConfig(snapshot)
+      }
+    },
+    [],
   )
 
   const writeAsset = useCallback(async (): Promise<void> => {
@@ -258,7 +309,40 @@ export function App(): JSX.Element {
           )}
         </section>
 
+        <section className="m0-card m0-card--wide">
+          <h2>外观与功能开关</h2>
+          <label className="m0-field">
+            外观
+            <select
+              data-testid="appearance"
+              className="m0-input"
+              value={config?.appearance ?? 'system'}
+              disabled={!config}
+              onChange={(event) => void setAppearance(event.target.value)}
+            >
+              <option value="system">跟随系统</option>
+              <option value="light">浅色</option>
+              <option value="dark">深色</option>
+            </select>
+          </label>
+          <div className="m0-features">
+            {FEATURES.map(([key, label]) => (
+              <label key={key} className="m0-feature">
+                <input
+                  type="checkbox"
+                  data-testid={`feature-${key}`}
+                  checked={config?.features[key] ?? true}
+                  disabled={!config}
+                  onChange={(event) => void toggleFeature(key, event.target.checked)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </section>
+
         <section className="m0-card">
+          <h2>M0 验收</h2>
           <ul>
             <li>无边框窗口 / 托盘 / 单实例</li>
             <li>app:// 协议加载渲染产物</li>

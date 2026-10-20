@@ -125,6 +125,25 @@ body {
   cursor: pointer;
 }
 
+.m0-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.m0-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.m0-feature {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;
