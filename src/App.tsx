@@ -2,13 +2,16 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
-import { WORKSPACE_CHANGED } from '../shared/events'
+import { IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../shared/events'
+import { ERR_CODE_LEGACY_WORKSPACE } from '../shared/errors'
+import type { LegacyImportProgress } from '../shared/types/import'
 import { RecordsPage } from './pages/records'
 import { DashboardPage } from './pages/dashboard'
 import { StockPage } from './pages/stock'
 import { EventsPage } from './pages/events'
 import { DiaryPage } from './pages/diary'
 import { TodoPage } from './pages/todo'
+import { ImportWizard } from './pages/import-wizard'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -49,6 +52,7 @@ export function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
+  const [importProgress, setImportProgress] = useState<LegacyImportProgress | null>(null)
 
   useEffect(() => {
     const root = document.documentElement
@@ -124,6 +128,9 @@ export function App(): JSX.Element {
       if (message.event === WORKSPACE_CHANGED && typeof message.payload === 'string') {
         setWorkspace(message.payload)
       }
+      if (message.event === IMPORT_PROGRESS) {
+        setImportProgress(message.payload as LegacyImportProgress)
+      }
     })
 
     return () => {
@@ -141,6 +148,9 @@ export function App(): JSX.Element {
         await refreshWorkspace()
       }
     } catch (openError) {
+      if (typeof openError === 'object' && openError !== null && (openError as { code?: number }).code === ERR_CODE_LEGACY_WORKSPACE) {
+        setView('settings')
+      }
       setError(errorMessage(openError))
     } finally {
       setBusy(false)
@@ -229,6 +239,14 @@ export function App(): JSX.Element {
     } finally {
       setBusy(false)
     }
+  }, [])
+
+  const finishImport = useCallback(async (targetDir: string): Promise<void> => {
+    await window.api.invoke('workspace_open', { workspaceDir: targetDir })
+    setWorkspace(targetDir)
+    const rows = await window.api.invoke('ledger_list', { id: 'all' })
+    setLedgers(rows)
+    setView('accounting')
   }, [])
 
   return (
@@ -410,6 +428,8 @@ export function App(): JSX.Element {
               </div>
             </section>
 
+            <ImportWizard progress={importProgress} onImported={finishImport} />
+
             <section className="m0-card">
               <h2>M0 验收</h2>
               <ul>
@@ -451,6 +471,8 @@ export function App(): JSX.Element {
     </div>
   )
 }
+
+
 
 
 

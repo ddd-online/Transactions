@@ -475,6 +475,31 @@ body {
   gap: 6px;
 }
 
+.m0-import-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.m0-import-field {
+  flex: 1;
+}
+
+.m0-import-probe,
+.m0-import-report {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--transactions-color-bg-secondary, #f7f8fa);
+  font-size: 13px;
+}
+
+.m0-import-probe ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;
