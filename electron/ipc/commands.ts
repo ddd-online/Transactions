@@ -14,6 +14,8 @@ import { logInfo } from '../logging'
 import { importLegacyWorkspace, probeLegacyWorkspace } from '../legacy/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { setFeatureIn } from '../services/config'
+import * as categoryService from '../services/category'
+import * as tagService from '../services/tag'
 import {
   createLedger,
   deleteLedgerById,
@@ -267,6 +269,116 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         config.proxy = setting
       })
       return setting
+    },
+
+    category_list(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledgerId ?? '')
+      if (!ledgerId) return []
+      const transactionType = String(raw.type ?? raw.transactionType ?? '')
+      const db = workspaceDb()
+      const categories = categoryService.queryCategory(db, ledgerId, transactionType)
+      const counts = categoryService.countRecordsByCategories(
+        db,
+        ledgerId,
+        categories.map((category) => category.name),
+      )
+      return categories.map((category) => ({
+        ...category,
+        recordCount: counts[category.name] ?? 0,
+      }))
+    },
+
+    category_create(request) {
+      const raw = asObject(request)
+      categoryService.createCategory(
+        workspaceDb(),
+        String(raw.ledgerId ?? ''),
+        String(raw.name ?? ''),
+        String(raw.transactionType ?? ''),
+      )
+      return null
+    },
+
+    category_delete(request) {
+      const raw = asObject(request)
+      const name = String(raw.name ?? '')
+      const transactionType = String(raw.type ?? raw.transactionType ?? '')
+      const ledgerId = String(raw.ledgerId ?? '')
+      if (!name || !transactionType || !ledgerId) {
+        throw new AppError('missing required parameters', { status: 400 })
+      }
+      categoryService.deleteCategory(workspaceDb(), ledgerId, name, transactionType)
+      return null
+    },
+
+    category_update_sort(request) {
+      const raw = asObject(request)
+      categoryService.updateCategorySort(
+        workspaceDb(),
+        String(raw.ledgerId ?? ''),
+        String(raw.name ?? ''),
+        String(raw.transactionType ?? ''),
+        Number(raw.sortOrder ?? 0),
+      )
+      return null
+    },
+
+    category_initialize(request) {
+      const ledgerId = String(asObject(request).ledgerId ?? '')
+      if (!ledgerId) throw new AppError('缺少 ledgerId 参数', { status: 400 })
+      const [categories, tags] = categoryService.initializeCategories(workspaceDb(), ledgerId)
+      return { categories, tags }
+    },
+
+    tag_list(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledgerId ?? '')
+      if (!ledgerId) return []
+      const categoryTransactionType = String(raw.categoryTransactionType ?? '')
+      const db = workspaceDb()
+      const tags = tagService.queryTags(db, ledgerId, categoryTransactionType)
+      const counts = tagService.countRecordsByTags(
+        db,
+        ledgerId,
+        tags.map((tag) => tag.name),
+      )
+      return tags.map((tag) => ({ ...tag, recordCount: counts[tag.name] ?? 0 }))
+    },
+
+    tag_create(request) {
+      const raw = asObject(request)
+      tagService.createTag(
+        workspaceDb(),
+        String(raw.ledgerId ?? ''),
+        String(raw.name ?? ''),
+        String(raw.categoryTransactionType ?? ''),
+      )
+      return null
+    },
+
+    tag_delete(request) {
+      const raw = asObject(request)
+      const name = String(raw.name ?? '')
+      const categoryTransactionType = String(raw.categoryTransactionType ?? '')
+      const ledgerId = String(raw.ledgerId ?? '')
+      if (!name || !categoryTransactionType || !ledgerId) {
+        throw new AppError('missing required parameters', { status: 400 })
+      }
+      tagService.deleteTag(workspaceDb(), ledgerId, name, categoryTransactionType)
+      return null
+    },
+
+    tag_update_sort(request) {
+      const raw = asObject(request)
+      tagService.updateTagSort(
+        workspaceDb(),
+        String(raw.ledgerId ?? ''),
+        String(raw.name ?? ''),
+        String(raw.categoryTransactionType ?? ''),
+        Number(raw.sortOrder ?? 0),
+      )
+      return null
     },
   }
 }

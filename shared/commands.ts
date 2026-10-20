@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
 import type { LegacyImportProbe, LegacyImportReport } from './types/import'
+import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
 import type { Ledger } from './domain/models'
 
 /**
@@ -51,6 +52,48 @@ export const commandSchemas = {
   config_set_key_event_linked_open: z.object({ open: z.boolean() }),
   config_set_sidebar_collapsed: z.object({ collapsed: z.boolean() }),
   config_set_proxy: z.object({ mode: z.string(), url: z.string() }),
+  category_list: z.object({
+    type: z.string().optional(),
+    transactionType: z.string().optional(),
+    ledgerId: z.string(),
+  }),
+  category_create: z.object({
+    ledgerId: z.string(),
+    name: z.string(),
+    transactionType: z.string(),
+    sortOrder: z.number().optional(),
+  }),
+  category_delete: z.object({
+    name: z.string(),
+    type: z.string().optional(),
+    transactionType: z.string().optional(),
+    ledgerId: z.string(),
+  }),
+  category_update_sort: z.object({
+    ledgerId: z.string(),
+    name: z.string(),
+    transactionType: z.string(),
+    sortOrder: z.number(),
+  }),
+  category_initialize: z.object({ ledgerId: z.string() }),
+  tag_list: z.object({ categoryTransactionType: z.string(), ledgerId: z.string() }),
+  tag_create: z.object({
+    ledgerId: z.string(),
+    name: z.string(),
+    categoryTransactionType: z.string(),
+    sortOrder: z.number().optional(),
+  }),
+  tag_delete: z.object({
+    name: z.string(),
+    categoryTransactionType: z.string(),
+    ledgerId: z.string(),
+  }),
+  tag_update_sort: z.object({
+    ledgerId: z.string(),
+    name: z.string(),
+    categoryTransactionType: z.string(),
+    sortOrder: z.number(),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -81,6 +124,15 @@ export interface CommandResponses {
   config_set_key_event_linked_open: boolean
   config_set_sidebar_collapsed: boolean
   config_set_proxy: ProxySetting
+  category_list: CategoryDto[]
+  category_create: null
+  category_delete: null
+  category_update_sort: null
+  category_initialize: InitializeCategoriesResponse
+  tag_list: TagDto[]
+  tag_create: null
+  tag_delete: null
+  tag_update_sort: null
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]
