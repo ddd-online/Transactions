@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
 import type { LegacyImportProbe, LegacyImportReport } from './types/import'
 import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
+import type { ChartDto } from './types/chart'
 import type {
   ChartQueryResponse,
   TransactionRecordDto,
@@ -46,6 +47,23 @@ const chartLineSchema = z.object({
   transactionType: z.string().default(''),
   includeOutlier: z.boolean().default(false),
   conditions: z.array(queryConditionItemSchema).default([]),
+})
+
+const createChartSchema = z.object({
+  ledgerId: z.string().default(''),
+  title: z.string().default(''),
+  granularity: z.string().default('month'),
+  lines: z.array(chartLineSchema).default([]),
+  chartType: z.string().default('line'),
+})
+
+const updateChartSchema = z.object({
+  chartId: z.string().default(''),
+  title: z.string().default(''),
+  granularity: z.string().default('month'),
+  lines: z.array(chartLineSchema).default([]),
+  chartType: z.string().default('line'),
+  sortOrder: z.number().default(0),
 })
 
 /**
@@ -150,6 +168,14 @@ export const commandSchemas = {
   tr_link: z.object({ transaction_id: z.string(), date: z.string() }),
   tr_unlink: z.object({ transaction_id: z.string() }),
   tr_linked_by_date: z.object({ ledger_id: z.string(), date: z.string() }),
+  chart_create: createChartSchema,
+  chart_delete: z.object({
+    chartId: z.string().optional(),
+    id: z.string().optional(),
+  }),
+  chart_list: z.object({ ledgerId: z.string() }),
+  chart_update: updateChartSchema,
+  chart_update_sort: z.object({ chartId: z.string(), sortOrder: z.number() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -197,6 +223,11 @@ export interface CommandResponses {
   tr_link: string
   tr_unlink: string
   tr_linked_by_date: TransactionRecordDto[]
+  chart_create: ChartDto
+  chart_delete: null
+  chart_list: ChartDto[]
+  chart_update: ChartDto
+  chart_update_sort: null
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

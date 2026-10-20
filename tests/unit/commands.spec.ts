@@ -62,6 +62,18 @@ describe('command catalog', () => {
     expect(commandSchemas.tr_chart_data.safeParse({ ledgerId: 'l1', lines: [] }).success).toBe(true)
   })
 
+  it('validates chart requests', () => {
+    expect(
+      commandSchemas.chart_create.safeParse({ ledgerId: 'l1', title: '支出趋势', lines: [] })
+        .success,
+    ).toBe(true)
+    expect(commandSchemas.chart_list.safeParse({ ledgerId: 'l1' }).success).toBe(true)
+    expect(commandSchemas.chart_delete.safeParse({ chartId: 'c1' }).success).toBe(true)
+    expect(
+      commandSchemas.chart_update.safeParse({ chartId: 'c1', title: 'x', sortOrder: 0 }).success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

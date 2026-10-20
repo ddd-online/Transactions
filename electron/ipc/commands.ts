@@ -17,11 +17,13 @@ import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
 import * as transactionService from '../services/transaction-record'
+import * as chartService from '../services/chart'
 import type {
   ChartQueryRequest,
   TransactionRecordDto,
   TrQueryCondition,
 } from '../../shared/types/transaction'
+import type { CreateChartRequest, UpdateChartRequest } from '../../shared/types/chart'
 import {
   createLedger,
   deleteLedgerById,
@@ -446,6 +448,36 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       if (!date) throw new AppError('date is required', { status: 400 })
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return transactionService.queryLinkedByDate(workspaceDb(), ledgerId, date)
+    },
+
+    chart_create(request) {
+      return chartService.createChart(workspaceDb(), request as CreateChartRequest)
+    },
+
+    chart_delete(request) {
+      const raw = asObject(request)
+      const chartId = String(raw.chartId ?? raw.id ?? '')
+      if (!chartId) throw new AppError('missing chart id', { status: 400 })
+      chartService.deleteChartById(workspaceDb(), chartId)
+      return null
+    },
+
+    chart_list(request) {
+      const ledgerId = String(asObject(request).ledgerId ?? '')
+      if (!ledgerId) throw new AppError('missing ledgerId', { status: 400 })
+      return chartService.listChartsByLedgerId(workspaceDb(), ledgerId)
+    },
+
+    chart_update(request) {
+      return chartService.updateChart(workspaceDb(), request as UpdateChartRequest)
+    },
+
+    chart_update_sort(request) {
+      const raw = asObject(request)
+      const chartId = String(raw.chartId ?? '')
+      if (!chartId) throw new AppError('missing chart id', { status: 400 })
+      chartService.updateChartSortOrder(workspaceDb(), chartId, Number(raw.sortOrder ?? 0))
+      return null
     },
   }
 }
