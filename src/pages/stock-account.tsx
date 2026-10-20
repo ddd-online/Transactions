@@ -10,6 +10,7 @@ import type {
 import type { StockOverviewDto, StockPositionDto } from '../../shared/types/stock-position'
 import type { StockOperationDto } from '../../shared/types/stock'
 import { ConfirmDialog } from '../components/confirm-dialog'
+import { notify } from '../components/toast'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -193,6 +194,7 @@ export function StockAccountPanel({
       setTransferStatus(
         result.skipped ? `目标已不存在，已移除记录：${result.action}` : `已回滚：${result.action}`,
       )
+      notify('操作已回滚')
       await load()
     } catch (rollbackError) {
       setError(errorMessage(rollbackError))
@@ -204,6 +206,7 @@ export function StockAccountPanel({
     try {
       await window.api.invoke('stock_reset', { ledger_id: ledgerId })
       setTransferStatus('股票数据已重置')
+      notify('股票数据已重置')
       await load()
     } catch (resetError) {
       setError(errorMessage(resetError))
@@ -223,6 +226,7 @@ export function StockAccountPanel({
       })
       setArchiveName('')
       setTransferStatus('股票数据已归档到新账本')
+      notify('股票数据已归档')
       onLedgerChanged?.()
       await load()
     } catch (archiveError) {
@@ -658,6 +662,7 @@ export function StockAccountPanel({
     </section>
   )
 }
+
 
 
 

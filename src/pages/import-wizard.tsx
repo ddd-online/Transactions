@@ -1,5 +1,6 @@
 import { useCallback, useState, type JSX } from 'react'
 
+import { notify } from '../components/toast'
 import type {
   LegacyImportProbe,
   LegacyImportProgress,
@@ -63,6 +64,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     try {
       const result = await window.api.invoke('legacy_import_start', { sourceDir, targetDir })
       setReport(result)
+      notify('旧版数据导入完成')
       await onImported(targetDir)
     } catch (importError) {
       setError(errorMessage(importError))
@@ -174,4 +176,5 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     </section>
   )
 }
+
 

@@ -48,6 +48,7 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     await page.getByTestId('ledger-name').fill('测试账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/测试账本/)
+    await expect(page.getByTestId('toast').first()).toContainText('账本已创建')
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const rows = database.prepare('SELECT id, name FROM ledger').all() as Array<{
@@ -72,4 +73,5 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 

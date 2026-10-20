@@ -24,6 +24,7 @@ import { TodoPage } from './pages/todo'
 import { ImportWizard } from './pages/import-wizard'
 import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
+import { ToastHost, notify } from './components/toast'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -227,6 +228,7 @@ export function App(): JSX.Element {
       await window.api.invoke('category_initialize', { ledgerId })
       setLedgerName('')
       await refreshLedgers()
+      notify('账本已创建')
     } catch (createError) {
       setError(errorMessage(createError))
     } finally {
@@ -241,6 +243,7 @@ export function App(): JSX.Element {
       try {
         await window.api.invoke('ledger_delete', { id })
         await refreshLedgers()
+        notify('账本已删除')
       } catch (deleteError) {
         setError(errorMessage(deleteError))
       } finally {
@@ -278,6 +281,7 @@ export function App(): JSX.Element {
         url: proxyUrl,
       })
       setConfig((current) => (current ? { ...current, proxy } : current))
+      notify('代理设置已保存')
     } catch (proxyError) {
       setError(errorMessage(proxyError))
     }
@@ -345,6 +349,7 @@ export function App(): JSX.Element {
       const relative = await window.api.invoke('workspace_icon_set', { data })
       if (relative) {
         setWorkspaceIconUrl(await window.api.invoke('asset_url', { filePath: relative }))
+        notify('工作空间图标已更新')
       }
     } catch (iconError) {
       setError(errorMessage(iconError))
@@ -844,9 +849,12 @@ export function App(): JSX.Element {
         </div>
       </main>
       </div>
+      <ToastHost />
     </>
   )
 }
+
+
 
 
 

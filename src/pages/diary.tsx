@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
+import { notify } from '../components/toast'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -82,6 +83,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
         mood,
       })
       setWordCount(entry.wordCount)
+      notify('日记已保存')
       await loadDates()
     } catch (saveError) {
       setError(errorMessage(saveError))
@@ -155,6 +157,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
       setContent('')
       setMood('')
       setWordCount(0)
+      notify('日记已删除')
       await loadDates()
     } catch (deleteError) {
       setError(errorMessage(deleteError))
@@ -289,3 +292,4 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
     </section>
   )
 }
+

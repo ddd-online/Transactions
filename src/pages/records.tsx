@@ -10,6 +10,7 @@ import type {
 import type { CategoryDto } from '../../shared/types/category'
 import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
+import { notify } from '../components/toast'
 
 const PAGE_SIZE = 20
 
@@ -170,6 +171,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       if (keyEventDate) {
         await window.api.invoke('tr_link', { transaction_id: transactionId, date: keyEventDate })
       }
+      notify('已记一笔')
       setAmount('')
       setDescription('')
       setOutlier(false)
@@ -187,6 +189,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       setError('')
       try {
         await window.api.invoke('tr_delete', { id })
+        notify('记录已删除')
         onChanged?.()
         await load()
       } catch (deleteError) {
@@ -502,6 +505,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     </section>
   )
 }
+
 
 
 
