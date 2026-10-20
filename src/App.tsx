@@ -5,6 +5,7 @@ import type { Ledger } from '../shared/domain/models'
 import { WORKSPACE_CHANGED } from '../shared/events'
 import { RecordsPage } from './pages/records'
 import { DashboardPage } from './pages/dashboard'
+import { StockPage } from './pages/stock'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -295,6 +296,8 @@ export function App(): JSX.Element {
         </div>
 
         <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
+
+        <StockPage ledgerId={activeLedgerId} />
 
         <RecordsPage
           ledgerId={activeLedgerId}

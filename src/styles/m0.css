@@ -280,6 +280,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.m0-subtitle {
+  margin: 20px 0 10px;
+  font-size: 14px;
+}
+
+.m0-stock-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;
