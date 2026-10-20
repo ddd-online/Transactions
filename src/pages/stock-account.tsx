@@ -7,6 +7,7 @@ import type {
   StockTradeTagSettingDto,
 } from '../../shared/types/stock'
 import type { StockOverviewDto, StockPositionDto } from '../../shared/types/stock-position'
+import type { StockOperationDto } from '../../shared/types/stock'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -22,14 +23,21 @@ function money(cents: number): string {
 
 export interface StockAccountPanelProps {
   ledgerId: string
+  onLedgerChanged?: () => void
 }
 
-export function StockAccountPanel({ ledgerId }: StockAccountPanelProps): JSX.Element {
+export function StockAccountPanel({
+  ledgerId,
+  onLedgerChanged,
+}: StockAccountPanelProps): JSX.Element {
   const [summary, setSummary] = useState<StockAccountSummary | null>(null)
   const [tags, setTags] = useState<StockTradeTagSettingDto | null>(null)
   const [funds, setFunds] = useState<StockFundRecordPage | null>(null)
   const [overview, setOverview] = useState<StockOverviewDto | null>(null)
   const [positions, setPositions] = useState<StockPositionDto[]>([])
+  const [operations, setOperations] = useState<StockOperationDto[]>([])
+  const [archiveName, setArchiveName] = useState('')
+  const [transferStatus, setTransferStatus] = useState('')
   const [amount, setAmount] = useState('')
   const [tradeForm, setTradeForm] = useState({
     tradeType: 'open',
@@ -54,19 +62,22 @@ export function StockAccountPanel({ ledgerId }: StockAccountPanelProps): JSX.Ele
       return
     }
     try {
-      const [account, settings, tagSettings, page, overviewData, positionRows] = await Promise.all([
+      const [account, settings, tagSettings, page, overviewData, positionRows, operationRows] =
+        await Promise.all([
         window.api.invoke('stock_account_summary', { ledger_id: ledgerId }),
         window.api.invoke('stock_fee_settings_get', { ledger_id: ledgerId }),
         window.api.invoke('stock_tag_settings_get', { ledger_id: ledgerId }),
         window.api.invoke('stock_fund_records', { ledger_id: ledgerId, page: 1, pageSize: 20 }),
         window.api.invoke('stock_overview', { ledger_id: ledgerId }),
-        window.api.invoke('stock_positions', { ledger_id: ledgerId }),
-      ])
+          window.api.invoke('stock_positions', { ledger_id: ledgerId }),
+          window.api.invoke('stock_operation_list', { ledger_id: ledgerId }),
+        ])
       setSummary(account)
       setTags(tagSettings)
       setFunds(page)
       setOverview(overviewData)
       setPositions(positionRows)
+      setOperations(operationRows)
       setFeeForm({
         commissionRate: String(settings.commissionRate),
         minCommission: centsToYuan(settings.minCommission),
@@ -144,6 +155,51 @@ export function StockAccountPanel({ ledgerId }: StockAccountPanelProps): JSX.Ele
       setBusy(false)
     }
   }, [feeForm, ledgerId])
+
+  const rollbackOperation = useCallback(async (): Promise<void> => {
+    setError('')
+    try {
+      const result = await window.api.invoke('stock_operation_rollback', { ledger_id: ledgerId })
+      setTransferStatus(
+        result.skipped ? `目标已不存在，已移除记录：${result.action}` : `已回滚：${result.action}`,
+      )
+      await load()
+    } catch (rollbackError) {
+      setError(errorMessage(rollbackError))
+    }
+  }, [ledgerId, load])
+
+  const resetStock = useCallback(async (): Promise<void> => {
+    if (!window.confirm('确定清空该账本的全部股票数据？此操作不可撤销。')) return
+    setError('')
+    try {
+      await window.api.invoke('stock_reset', { ledger_id: ledgerId })
+      setTransferStatus('股票数据已重置')
+      await load()
+    } catch (resetError) {
+      setError(errorMessage(resetError))
+    }
+  }, [ledgerId, load])
+
+  const archiveStock = useCallback(async (): Promise<void> => {
+    if (!archiveName.trim()) {
+      setError('请输入归档账本名称')
+      return
+    }
+    setError('')
+    try {
+      await window.api.invoke('stock_archive', {
+        ledger_id: ledgerId,
+        name: archiveName.trim(),
+      })
+      setArchiveName('')
+      setTransferStatus('股票数据已归档到新账本')
+      onLedgerChanged?.()
+      await load()
+    } catch (archiveError) {
+      setError(errorMessage(archiveError))
+    }
+  }, [archiveName, ledgerId, load, onLedgerChanged])
 
   return (
     <section className="m0-card m0-card--wide">
@@ -440,9 +496,74 @@ export function StockAccountPanel({ ledgerId }: StockAccountPanelProps): JSX.Ele
           {ledgerId ? '还没有资金记录' : '请先创建/选择账本'}
         </p>
       )}
+
+      <h3 className="m0-subtitle">操作记录</h3>
+      {operations.length === 0 ? (
+        <p className="m0-muted" data-testid="stock-operation-empty">
+          还没有可回滚的操作
+        </p>
+      ) : (
+        <>
+          <ul className="m0-tag-list">
+            {operations.map((operation) => (
+              <li key={operation.id} data-testid="stock-operation">
+                <span>{operation.action}</span>
+                <span className="m0-muted">{operation.detail}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="m0-actions">
+            <button
+              type="button"
+              className="m0-link"
+              data-testid="stock-operation-rollback"
+              onClick={() => void rollbackOperation()}
+            >
+              回滚最近一步
+            </button>
+            {transferStatus ? (
+              <span className="m0-muted" data-testid="stock-transfer-status">
+                {transferStatus}
+              </span>
+            ) : null}
+          </div>
+        </>
+      )}
+
+      <h3 className="m0-subtitle">重置与归档</h3>
+      <div className="m0-import-row">
+        <label className="m0-field m0-import-field">
+          归档到新账本
+          <input
+            className="m0-input"
+            data-testid="stock-archive-name"
+            placeholder="新账本名称"
+            value={archiveName}
+            onChange={(event) => setArchiveName(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="m0-primary"
+          data-testid="stock-archive"
+          onClick={() => void archiveStock()}
+        >
+          归档
+        </button>
+        <button
+          type="button"
+          className="m0-link"
+          data-testid="stock-reset"
+          onClick={() => void resetStock()}
+        >
+          重置全部股票数据
+        </button>
+      </div>
     </section>
   )
 }
+
+
 
 
 

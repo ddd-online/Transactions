@@ -132,11 +132,17 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
 
     await page.getByTestId('stock-tab-statistics').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
+
+    await page.getByTestId('stock-tab-account').click()
+    await expect(page.getByTestId('stock-operation')).toHaveCount(4)
+    await page.getByTestId('stock-operation-rollback').click()
+    await expect(page.getByTestId('stock-operation')).toHaveCount(3)
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

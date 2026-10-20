@@ -6,6 +6,7 @@ import { StockStatisticsPanel } from './stock-statistics'
 
 export interface StockPageProps {
   ledgerId: string
+  onLedgerChanged?: () => void
 }
 
 type StockTab = 'account' | 'history' | 'statistics'
@@ -17,7 +18,7 @@ const TABS: Array<[StockTab, string]> = [
 ]
 
 /** 股票域分页：账户/持仓、交易历史、统计。 */
-export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
+export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.Element {
   const [tab, setTab] = useState<StockTab>('account')
 
   return (
@@ -36,9 +37,12 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
         ))}
       </div>
 
-      {tab === 'account' ? <StockAccountPanel ledgerId={ledgerId} /> : null}
+      {tab === 'account' ? (
+        <StockAccountPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
+      ) : null}
       {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
       {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
     </>
   )
 }
+

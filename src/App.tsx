@@ -558,7 +558,9 @@ export function App(): JSX.Element {
           </>
         ) : null}
 
-        {view === 'stock' ? <StockPage ledgerId={activeLedgerId} /> : null}
+        {view === 'stock' ? (
+          <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
+        ) : null}
 
         {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
 
@@ -718,6 +720,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 
