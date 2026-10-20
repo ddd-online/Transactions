@@ -168,4 +168,5 @@
 
 ## 发布前待复核
 - 安装版：静默安装到临时目录后 packaged e2e 通过（2026-10-21）。
-- 便携版：本机 wrapper 退出 0 但未观察到 UI 进程，需在无安全软件拦截的干净环境复核启动。
+- 便携版：`build/smoke-portable.ps1` 启动并等到主窗口，已纳入 `build.ps1 -E2E`；启动前需清掉 `ELECTRON_RUN_AS_NODE`。
+

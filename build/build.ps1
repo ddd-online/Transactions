@@ -50,6 +50,10 @@ try {
         $env:TRANSACTIONS_PACKAGED_EXE = $unpacked
         pnpm exec playwright test tests/e2e/packaged.spec.ts
         if ($LASTEXITCODE -ne 0) { throw "打包产物冒烟失败（exit $LASTEXITCODE）" }
+
+        Write-Host "[build] 便携版启动冒烟"
+        pwsh -File (Join-Path $root 'build\smoke-portable.ps1') -Portable $portable
+        if ($LASTEXITCODE -ne 0) { throw "便携版启动冒烟失败（exit $LASTEXITCODE）" }
     }
 
     Write-Host "[build] 完成"
@@ -61,3 +65,4 @@ try {
 finally {
     Pop-Location
 }
+
