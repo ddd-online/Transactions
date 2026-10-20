@@ -638,6 +638,8 @@ body {
 
 .m0-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   margin: 16px 0;
 }
@@ -748,3 +750,23 @@ body {
   border-radius: 6px;
   background: var(--transactions-color-bg-secondary, #f7f8fa);
 }
+
+.m0-tag-list > li > .m0-actions {
+  margin-bottom: 0;
+}
+
+.m0-tag-list > li > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.m0-category-tag > div {
+  min-width: 0;
+}
+
+.m0-table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+

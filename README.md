@@ -67,7 +67,8 @@ pwsh -File build/release.ps1 -Tag v1.0.0
   - 打包：NSIS 安装版 + 便携版，打包产物 Playwright 冒烟通过。
   - 旧版导入向导：探查 0.20.0 库、进度事件、报告与自动打开新工作空间，Playwright 用种子库跑通。
   - 日记导入导出：按目录扫描/导入 `YYYY-MM-DD.txt`、导出全部；Playwright 验证往返。
-  - 界面壳：侧栏导航 + 记账/股票/事件/日记/待办/设置分页；事件图片、日记、待办页面均 Playwright 覆盖。
+  - 界面壳：复用旧版 `base/ui/app.css` 的侧栏、导航与按钮语言；内容区使用设计令牌。
+  - 侧栏导航 + 记账/股票/事件/日记/待办/设置分页；事件图片、日记、待办页面均 Playwright 覆盖。
   - 股票复盘：每日复盘（本轮区间/500 字）、轮次复盘、股票名称查询；4 条测试。
   - 股票成交编辑/删除/全账本重放/预览/回滚；31 条测试。
   - 股票重置/归档：清空股票数据、归档到新账本并复制费用设置；3 条测试。
@@ -86,6 +87,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 - 详见 `docs/adr/`、`docs/migration/oracle.md` 与验收清单 `docs/migration/acceptance.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 

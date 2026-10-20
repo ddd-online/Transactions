@@ -1,0 +1,80 @@
+/* Electron shell 适配层：复用旧版设计令牌与 app.css 的侧栏/导航语言。
+ * 页面内容仍使用 m0 组件类；这里只负责外壳骨架。 */
+
+.app-titlebar {
+  height: 56px;
+  padding: 0 12px 0 16px;
+  background: var(--transactions-color-sidebar-fill);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.app-titlebar-title {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.app-titlebar-actions button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--transactions-radius-md);
+}
+
+.app-shell-body {
+  display: grid;
+  grid-template-columns: var(--transactions-size-sidebar) minmax(0, 1fr);
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+.app-sidebar {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  gap: 0;
+  border-right: 1px solid var(--transactions-color-border-l1);
+  background: var(--transactions-color-sidebar-fill);
+}
+
+.app-brand {
+  height: 56px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.sidebar-nav {
+  flex: 1;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+.sidebar-bottom {
+  height: auto;
+  min-height: 128px;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.app-workspace {
+  display: block;
+  margin: 4px 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--transactions-color-text-secondary);
+  word-break: break-all;
+}
+
+.app-router-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+  overflow: auto;
+}
+
+.app-router-view > * {
+  flex-shrink: 0;
+}
+
+.app-router-view {
+  overflow-x: hidden;
+}

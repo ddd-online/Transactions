@@ -385,7 +385,6 @@ export function App(): JSX.Element {
     setWorkspace(targetDir)
     const rows = await window.api.invoke('ledger_list', { id: 'all' })
     setLedgers(rows)
-    setView('accounting')
   }, [])
 
   return (
@@ -449,7 +448,7 @@ export function App(): JSX.Element {
         </div>
       </header>
 
-      <div className="app">
+      <div className="app-shell-body">
       <aside className="app-sidebar">
         <div className="app-brand">
           {workspaceIconUrl ? (
@@ -459,13 +458,13 @@ export function App(): JSX.Element {
           <span className="m0-tag">Electron</span>
         </div>
 
-        <nav className="app-nav">
+        <nav className="sidebar-nav">
           {NAV.filter(([, , feature]) => effectiveFeatures?.[feature] !== false).map(([key, label]) => (
             <button
               key={key}
               type="button"
               data-testid={`nav-${key}`}
-              className={view === key ? 'app-nav-active' : ''}
+              className={`nav-btn${view === key ? ' active' : ''}`}
               onClick={() => setView(key)}
             >
               {label}
@@ -473,7 +472,7 @@ export function App(): JSX.Element {
           ))}
         </nav>
 
-        <div className="app-sidebar-footer">
+        <div className="sidebar-bottom">
           {workspace ? (
             <button
               type="button"
@@ -491,7 +490,7 @@ export function App(): JSX.Element {
           <button
             type="button"
             data-testid="nav-settings"
-            className={view === 'settings' ? 'app-nav-active' : 'm0-link'}
+            className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
             onClick={() => setView('settings')}
           >
             设置
@@ -502,7 +501,8 @@ export function App(): JSX.Element {
         </div>
       </aside>
 
-      <main className="app-main">
+      <main className="app-content">
+        <div className="app-router-view">
         {error ? (
           <p className="m0-error" data-testid="error">
             {error}
@@ -767,11 +767,15 @@ export function App(): JSX.Element {
             </section>
           </>
         ) : null}
+        </div>
       </main>
       </div>
     </>
   )
 }
+
+
+
 
 
 
