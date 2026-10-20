@@ -60,6 +60,12 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     await page.getByTestId('event-save').click()
     await expect(page.getByTestId('event-date-item')).toContainText('2026-01-15')
 
+    await page.getByTestId('event-date').click()
+    await expect(page.getByRole('dialog', { name: '选择日期' })).toBeVisible()
+    await page.getByTestId('date-picker-day-2026-01-20').click()
+    await expect(page.getByTestId('event-date')).toHaveValue('2026-01-20')
+    await page.getByTestId('event-date').fill('2026-01-15')
+
     await page.getByTestId('event-image-input').setInputFiles({
       name: 'demo.png',
       mimeType: 'image/png',
@@ -102,5 +108,9 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
+
+
 
 

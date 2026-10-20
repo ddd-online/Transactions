@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { TodoCardDto, TodoHistoryDto } from '../../shared/types/todo'
 import { EmptyState } from '../components/empty-state'
+import { Progress } from '../components/progress'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -265,6 +266,10 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                           {LEVEL_LABELS[item.importance] ?? item.importance}
                         </span>
                       </div>
+                      <Progress
+                        done={item.progress.filter((progress) => progress.done).length}
+                        total={item.progress.length}
+                      />
                       <div className="m0-actions">
                         <button
                           type="button"
@@ -356,6 +361,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     </section>
   )
 }
+
 
 
 

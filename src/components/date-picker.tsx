@@ -55,7 +55,7 @@ export function DatePicker({
     const result: Array<string | null> = []
     for (let index = 0; index < offset; index += 1) result.push(null)
     for (let day = 1; day <= total; day += 1) {
-      result.push(`${year}-${padded({ year, month: monthNumber, day })}`)
+      result.push(padded({ year, month: monthNumber, day }))
     }
     return result
   }, [monthNumber, offset, total, year])
@@ -111,6 +111,7 @@ export function DatePicker({
                 <button
                   key={cell}
                   type="button"
+                  data-testid={`date-picker-day-${cell}`}
                   className={`date-picker-day${cell === value ? ' is-active' : ''}${
                     cell === todayKey ? ' is-today' : ''
                   }`}
@@ -132,3 +133,4 @@ export function DatePicker({
     </div>
   )
 }
+
