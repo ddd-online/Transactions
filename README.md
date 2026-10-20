@@ -51,7 +51,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
   - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
   - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts / statistics /
     update 状态机；tr-draw 全部模块（chart / calendar / diary_tree / paging / list_order / crop /
-    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，587 条 Vitest）；
+    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，588 条 Vitest）；
   - 旧数据导入器：只读快照 → 新建工作空间 → 表级单位映射 → 金额合计校验 → 资产复制 → 报告；
     已用 `fixtures/legacy/seed.sql` 做端到端测试；
   - 纵向切片：账本 DAO/服务/5 条 IPC 命令 + React 面板 + Playwright 端到端；分类/标签
@@ -87,6 +87,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 - 详见 `docs/adr/`、`docs/migration/oracle.md` 与验收清单 `docs/migration/acceptance.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 

@@ -944,6 +944,41 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     expect(realized).toBe(-29_782 + 3_000 - 2)
   })
 
+  it('orders same-second trades by insertion and edits the close fill', () => {
+    const workspace = newWorkspace()
+    setPrincipal(workspace.db, LEDGER, 10_000_000)
+    createTradeOrder(workspace.db, {
+      ...orderRequest({
+        stockCode: ORDER_CODE,
+        stockName: ORDER_NAME,
+        fills: [fill(100_000, 1)],
+        tradeTime: T2,
+      }),
+    })
+    const closeTrades = createTradeOrder(workspace.db, {
+      ...orderRequest({
+        stockCode: ORDER_CODE,
+        stockName: ORDER_NAME,
+        tradeType: STOCK_TRADE_CLOSE,
+        fills: [fill(110_000, 1)],
+        tradeTime: T2,
+      }),
+    })
+
+    const rows = listAllTradesAsc(workspace.db, LEDGER)
+    expect(rows[0].tradeType).toBe(STOCK_TRADE_OPEN)
+    expect(rows[1].tradeType).toBe(STOCK_TRADE_CLOSE)
+
+    const updated = updateTradeFill(workspace.db, {
+      ledgerId: LEDGER,
+      tradeId: closeTrades[0].id,
+      priceMilli: 120_000,
+      lots: 1,
+      tradeTime: T2,
+    })
+    expect(updated.price).toBe(120_000)
+  })
+
   it('restores the position after deleting an order', () => {
     const workspace = newWorkspace()
     const items = createXieheOrder(workspace)
