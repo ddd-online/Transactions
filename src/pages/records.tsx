@@ -34,9 +34,10 @@ function typeLabel(transactionType: string): string {
 
 export interface RecordsPageProps {
   ledgerId: string
+  onChanged?: () => void
 }
 
-export function RecordsPage({ ledgerId }: RecordsPageProps): JSX.Element {
+export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Element {
   const [rows, setRows] = useState<TransactionRecordDto[]>([])
   const [total, setTotal] = useState(0)
   const [statistics, setStatistics] = useState<Record<string, number>>({})
@@ -137,23 +138,25 @@ export function RecordsPage({ ledgerId }: RecordsPageProps): JSX.Element {
       setAmount('')
       setDescription('')
       setPage(1)
+      onChanged?.()
       await load()
     } catch (createError) {
       setError(errorMessage(createError))
     }
-  }, [amount, category, description, ledgerId, load, tags, type])
+  }, [amount, category, description, ledgerId, load, onChanged, tags, type])
 
   const remove = useCallback(
     async (id: string): Promise<void> => {
       setError('')
       try {
         await window.api.invoke('tr_delete', { id })
+        onChanged?.()
         await load()
       } catch (deleteError) {
         setError(errorMessage(deleteError))
       }
     },
-    [load],
+    [load, onChanged],
   )
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))

@@ -58,6 +58,9 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
     await expect(page.getByTestId('tr-row')).toHaveText(/-12\.34/)
     await expect(page.getByTestId('tr-total')).toHaveText('1 笔')
+    await expect(page.getByTestId('stat-expense')).toHaveText('¥12.34')
+    await expect(page.getByTestId('dashboard-slices')).toContainText('餐饮美食')
+    await expect(page.getByTestId('dashboard-slices')).toContainText('1 笔')
 
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'records.png'),

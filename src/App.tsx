@@ -4,6 +4,7 @@ import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
 import { WORKSPACE_CHANGED } from '../shared/events'
 import { RecordsPage } from './pages/records'
+import { DashboardPage } from './pages/dashboard'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -27,6 +28,7 @@ export function App(): JSX.Element {
   const [workspace, setWorkspace] = useState('')
   const [ledgers, setLedgers] = useState<Ledger[]>([])
   const [activeLedgerId, setActiveLedgerId] = useState('')
+  const [dataVersion, setDataVersion] = useState(0)
   const [ledgerName, setLedgerName] = useState('')
   const [asset, setAsset] = useState('')
   const [assetLoaded, setAssetLoaded] = useState(false)
@@ -292,7 +294,12 @@ export function App(): JSX.Element {
           </label>
         </div>
 
-        <RecordsPage ledgerId={activeLedgerId} />
+        <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
+
+        <RecordsPage
+          ledgerId={activeLedgerId}
+          onChanged={() => setDataVersion((value) => value + 1)}
+        />
 
         <section className="m0-card m0-card--wide">
           <h2>账本</h2>

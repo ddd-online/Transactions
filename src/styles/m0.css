@@ -211,6 +211,75 @@ body {
   margin-bottom: 0;
 }
 
+.m0-period {
+  margin: 0;
+  align-items: center;
+}
+
+.m0-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.m0-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  border-radius: 10px;
+}
+
+.m0-stat strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.m0-slices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m0-slice {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.m0-slice-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m0-slice-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--transactions-color-fill, #eef0f3);
+  overflow: hidden;
+}
+
+.m0-slice-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--transactions-color-primary, #3964fe);
+}
+
+.m0-slice-amount {
+  text-align: right;
+  color: var(--transactions-color-text-secondary, #646a73);
+  font-variant-numeric: tabular-nums;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;
