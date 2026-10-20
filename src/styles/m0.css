@@ -500,6 +500,33 @@ body {
   padding-left: 18px;
 }
 
+.m0-progress {
+  height: 8px;
+  margin: 12px 0 6px;
+  border-radius: 999px;
+  background: var(--transactions-color-fill, #eef0f3);
+  overflow: hidden;
+}
+
+.m0-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--transactions-color-primary, #3964fe);
+  transition: width 120ms linear;
+}
+
+.m0-release-body {
+  max-height: 180px;
+  margin: 12px 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--transactions-color-bg-secondary, #f7f8fa);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;

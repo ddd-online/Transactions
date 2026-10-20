@@ -178,6 +178,11 @@ export function showsReleaseBody(status: UpdateStatus): boolean {
  * 它**不会 reject**：网络失败时它带着 `error` 字段 —— 状态机据此进 `failed`，
  * 而不是"已是最新"（`hasUpdate === false` 且没有 `error` 才是最新）。
  */
+export interface UpdateInstallResponse {
+  ok: boolean
+  error?: string
+}
+
 export interface UpdateCheckResponse {
   hasUpdate: boolean
   latestVersion: string
@@ -593,3 +598,4 @@ export function formatSpeed(bytesPerSecond: number): string {
   }
   return `${formatF64(roundHalfAwayFromZero(bytesPerSecond))} B/s`
 }
+

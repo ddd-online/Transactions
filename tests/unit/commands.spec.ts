@@ -235,6 +235,18 @@ describe('command catalog', () => {
     expect(commandSchemas.stock_name.safeParse({ stock_code: '600000' }).success).toBe(true)
   })
 
+  it('validates update requests', () => {
+    expect(commandSchemas.update_check.safeParse({}).success).toBe(true)
+    expect(
+      commandSchemas.update_download.safeParse({
+        url: 'https://github.com/x/a.exe',
+        digest: 'sha256:aa',
+      }).success,
+    ).toBe(true)
+    expect(commandSchemas.update_download_status.safeParse({}).success).toBe(true)
+    expect(commandSchemas.update_install.safeParse({}).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

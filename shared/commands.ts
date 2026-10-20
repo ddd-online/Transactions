@@ -28,6 +28,7 @@ import type {
   StockTradeDto,
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
+import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
 import type {
   StockOperationRollbackDto,
   StockOperationRollbackPreviewDto,
@@ -404,6 +405,14 @@ export const commandSchemas = {
   }),
   stock_operation_preview: z.object({ ledger_id: z.string() }),
   stock_operation_rollback: z.object({ ledger_id: z.string() }),
+  update_check: z.object({}),
+  update_download: z.object({
+    url: z.string(),
+    digest: z.string().nullable().optional(),
+  }),
+  update_download_status: z.object({}),
+  update_cancel: z.object({}),
+  update_install: z.object({}),
   stock_day_review: z.object({
     ledger_id: z.string(),
     code: z.string(),
@@ -529,6 +538,11 @@ export interface CommandResponses {
   stock_trade_impact: StockTradeImpactDto
   stock_operation_preview: StockOperationRollbackPreviewDto
   stock_operation_rollback: StockOperationRollbackDto
+  update_check: UpdateSnapshot
+  update_download: UpdateSnapshot
+  update_download_status: UpdateSnapshot
+  update_cancel: UpdateSnapshot
+  update_install: UpdateInstallResponse
   stock_day_review: StockDayReviewDto[]
   stock_round_review: StockTradeHistoryDetailDto
   stock_round_tag: StockTradeHistoryDetailDto
@@ -538,3 +552,4 @@ export interface CommandResponses {
 export type CommandRes<N extends CommandName> = CommandResponses[N]
 
 export const COMMAND_NAMES = Object.keys(commandSchemas) as CommandName[]
+

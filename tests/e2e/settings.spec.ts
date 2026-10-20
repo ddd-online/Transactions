@@ -45,6 +45,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
 
     await page.getByTestId('nav-settings').click()
+    await expect(page.getByTestId('update-status')).toContainText('检查更新')
     await page.getByTestId('appearance').selectOption('dark')
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await expect
@@ -65,4 +66,5 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 

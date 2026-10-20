@@ -46,6 +46,7 @@ import {
   updateTradeFill,
 } from '../services/stock-trade-edit'
 import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../services/stock-review'
+import { UpdaterService } from '../services/updater'
 import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
@@ -78,6 +79,11 @@ export type HandlerMap = Record<CommandName, Handler>
 
 const PNG_1X1 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
+const updater = new UpdaterService({
+  onEvent: (event, snapshot) => sendEvent(event, snapshot),
+  quit: () => app.quit(),
+})
 
 export interface HandlerOptions {
   config: ConfigStore
@@ -117,6 +123,27 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         default:
           throw new AppError(`未知的 app_info 字段: ${field}`, { status: 400 })
       }
+    },
+
+    async update_check() {
+      return updater.check(app.getVersion())
+    },
+
+    async update_download(request) {
+      const raw = asObject(request)
+      return updater.download(String(raw.url ?? ''), String(raw.digest ?? ''))
+    },
+
+    update_download_status() {
+      return updater.snapshot()
+    },
+
+    update_cancel() {
+      return updater.cancel()
+    },
+
+    update_install() {
+      return updater.install()
     },
 
     config_get() {

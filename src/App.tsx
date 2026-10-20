@@ -2,9 +2,16 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
-import { IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../shared/events'
+import {
+  IMPORT_PROGRESS,
+  UPDATE_DOWNLOAD_COMPLETE,
+  UPDATE_DOWNLOAD_ERROR,
+  UPDATE_DOWNLOAD_PROGRESS,
+  WORKSPACE_CHANGED,
+} from '../shared/events'
 import { ERR_CODE_LEGACY_WORKSPACE } from '../shared/errors'
 import type { LegacyImportProgress } from '../shared/types/import'
+import type { UpdateSnapshot } from '../shared/domain/update'
 import { RecordsPage } from './pages/records'
 import { DashboardPage } from './pages/dashboard'
 import { StockPage } from './pages/stock'
@@ -12,6 +19,7 @@ import { EventsPage } from './pages/events'
 import { DiaryPage } from './pages/diary'
 import { TodoPage } from './pages/todo'
 import { ImportWizard } from './pages/import-wizard'
+import { UpdatePanel } from './pages/update-panel'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -53,6 +61,7 @@ export function App(): JSX.Element {
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
   const [importProgress, setImportProgress] = useState<LegacyImportProgress | null>(null)
+  const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
 
   useEffect(() => {
     const root = document.documentElement
@@ -130,6 +139,13 @@ export function App(): JSX.Element {
       }
       if (message.event === IMPORT_PROGRESS) {
         setImportProgress(message.payload as LegacyImportProgress)
+      }
+      if (
+        message.event === UPDATE_DOWNLOAD_PROGRESS ||
+        message.event === UPDATE_DOWNLOAD_COMPLETE ||
+        message.event === UPDATE_DOWNLOAD_ERROR
+      ) {
+        setUpdateSnapshot(message.payload as UpdateSnapshot)
       }
     })
 
@@ -430,6 +446,8 @@ export function App(): JSX.Element {
 
             <ImportWizard progress={importProgress} onImported={finishImport} />
 
+            <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
+
             <section className="m0-card">
               <h2>M0 验收</h2>
               <ul>
@@ -471,6 +489,7 @@ export function App(): JSX.Element {
     </div>
   )
 }
+
 
 
 
