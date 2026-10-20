@@ -49,6 +49,8 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
 
     await expect(page.getByTestId('stock-principal')).toHaveText('¥0.00')
     await expect(page.getByTestId('stock-cash')).toHaveText('¥0.00')
+    await expect(page.getByTestId('stock-total-assets')).toHaveText('¥0.00')
+    await expect(page.getByTestId('stock-position-empty')).toContainText('当前没有持仓')
     await expect(page.getByTestId('fund-empty')).toContainText('还没有资金记录')
 
     await page.getByTestId('stock-amount').fill('1000')

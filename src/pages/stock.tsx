@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import { centsToYuan, yuanToCents } from '../../shared/domain/money'
+import { centsToYuan, milliToYuan, yuanToCents } from '../../shared/domain/money'
 import type {
   StockAccountSummary,
   StockFundRecordPage,
   StockTradeTagSettingDto,
 } from '../../shared/types/stock'
+import type { StockOverviewDto, StockPositionDto } from '../../shared/types/stock-position'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -27,6 +28,8 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
   const [summary, setSummary] = useState<StockAccountSummary | null>(null)
   const [tags, setTags] = useState<StockTradeTagSettingDto | null>(null)
   const [funds, setFunds] = useState<StockFundRecordPage | null>(null)
+  const [overview, setOverview] = useState<StockOverviewDto | null>(null)
+  const [positions, setPositions] = useState<StockPositionDto[]>([])
   const [amount, setAmount] = useState('')
   const [feeForm, setFeeForm] = useState({
     commissionRate: '',
@@ -43,15 +46,19 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
       return
     }
     try {
-      const [account, settings, tagSettings, page] = await Promise.all([
+      const [account, settings, tagSettings, page, overviewData, positionRows] = await Promise.all([
         window.api.invoke('stock_account_summary', { ledger_id: ledgerId }),
         window.api.invoke('stock_fee_settings_get', { ledger_id: ledgerId }),
         window.api.invoke('stock_tag_settings_get', { ledger_id: ledgerId }),
         window.api.invoke('stock_fund_records', { ledger_id: ledgerId, page: 1, pageSize: 20 }),
+        window.api.invoke('stock_overview', { ledger_id: ledgerId }),
+        window.api.invoke('stock_positions', { ledger_id: ledgerId }),
       ])
       setSummary(account)
       setTags(tagSettings)
       setFunds(page)
+      setOverview(overviewData)
+      setPositions(positionRows)
       setFeeForm({
         commissionRate: String(settings.commissionRate),
         minCommission: centsToYuan(settings.minCommission),
@@ -179,6 +186,68 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
         </p>
       ) : null}
 
+      <div className="m0-stats m0-stock-stats">
+        <div className="m0-stat">
+          <span className="m0-muted">总资产</span>
+          <strong data-testid="stock-total-assets">{money(overview?.totalAssets ?? 0)}</strong>
+        </div>
+        <div className="m0-stat">
+          <span className="m0-muted">持仓市值</span>
+          <strong>{money(overview?.positionMarketValue ?? 0)}</strong>
+        </div>
+        <div className="m0-stat">
+          <span className="m0-muted">已实现 / 浮动</span>
+          <strong>
+            {money(overview?.realizedPnl ?? 0)} / {money(overview?.unrealizedPnl ?? 0)}
+          </strong>
+        </div>
+        <div className="m0-stat">
+          <span className="m0-muted">总盈亏 / 仓位</span>
+          <strong>
+            {(overview?.totalPnlPercent ?? 0).toFixed(2)}% /{' '}
+            {overview?.positionRatio == null ? '—' : `${overview.positionRatio.toFixed(2)}%`}
+          </strong>
+        </div>
+      </div>
+
+      <h3 className="m0-subtitle">持仓</h3>
+      {positions.length > 0 ? (
+        <table className="m0-table">
+          <thead>
+            <tr>
+              <th>股票</th>
+              <th className="m0-right">数量</th>
+              <th className="m0-right">成本</th>
+              <th className="m0-right">最新价</th>
+              <th className="m0-right">已实现</th>
+              <th>标签</th>
+              <th>建仓日</th>
+            </tr>
+          </thead>
+          <tbody>
+            {positions.map((row) => (
+              <tr key={row.id} data-testid="stock-position-row">
+                <td>
+                  {row.stockName} {row.stockCode}
+                </td>
+                <td className="m0-right">{row.quantity}</td>
+                <td className="m0-right">{money(row.totalCost)}</td>
+                <td className="m0-right">
+                  {row.latestPrice === undefined ? '—' : milliToYuan(row.latestPrice)}
+                </td>
+                <td className="m0-right">{money(row.realizedPnl)}</td>
+                <td>{row.tag}</td>
+                <td>{row.roundOpenedDate}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="m0-muted" data-testid="stock-position-empty">
+          {ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
+        </p>
+      )}
+
       <h3 className="m0-subtitle">交易费用</h3>
       <div className="m0-actions m0-new-record">
         <label className="m0-field">
@@ -268,6 +337,8 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
     </section>
   )
 }
+
+
 
 
 
