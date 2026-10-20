@@ -11,6 +11,7 @@ import type {
   KeyEventImage,
 } from './domain/models'
 import type { DiaryExportResult, DiaryScanResponse } from './types/diary'
+import type { AccountingOverviewDto } from './types/accounting'
 import type {
   TodoCardDto,
   TodoHistoryDto,
@@ -265,6 +266,11 @@ export const commandSchemas = {
   }),
   todo_progress_delete: z.object({ id: z.string() }),
   todo_progress_done: z.object({ id: z.string(), done: z.boolean().nullable().optional() }),
+  accounting_overview: z.object({
+    ledgerId: z.string().default(''),
+    periodKind: z.string().default('month'),
+    periodKey: z.string().default(''),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -344,6 +350,7 @@ export interface CommandResponses {
   todo_progress_add: TodoProgressDto
   todo_progress_delete: null
   todo_progress_done: null
+  accounting_overview: AccountingOverviewDto
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

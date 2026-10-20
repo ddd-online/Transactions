@@ -119,6 +119,13 @@ describe('command catalog', () => {
     expect(commandSchemas.todo_progress_done.safeParse({ id: 'p1', done: true }).success).toBe(true)
   })
 
+  it('validates accounting overview requests', () => {
+    expect(
+      commandSchemas.accounting_overview.safeParse({ ledgerId: 'l1', periodKind: 'month' }).success,
+    ).toBe(true)
+    expect(commandSchemas.accounting_overview.safeParse({}).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
