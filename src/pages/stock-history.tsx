@@ -415,3 +415,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
 
 
 
+
+
+
+

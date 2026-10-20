@@ -141,6 +141,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
     await page.getByTestId('round-tag').selectOption('打板')
     await expect(page.getByTestId('round-tag')).toHaveValue('打板')
+    await expect(page.getByTestId('stock-round')).toContainText('打板')
 
     const reviewDatabase = new DatabaseSync(join(workspace, 'transactions.db'), {
       readOnly: true,
@@ -180,6 +181,8 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 
 
