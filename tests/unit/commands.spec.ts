@@ -264,6 +264,19 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates stock trade list requests', () => {
+    expect(
+      commandSchemas.stock_trades.safeParse({ ledger_id: 'l1', stock_code: '600000' }).success,
+    ).toBe(true)
+  })
+
+  it('validates shell/icon/devtools requests', () => {
+    expect(commandSchemas.workspace_set.safeParse({ workspaceDir: 'D:/ws' }).success).toBe(true)
+    expect(commandSchemas.workspace_icon_set.safeParse({ data: '' }).success).toBe(true)
+    expect(commandSchemas.file_save_image.safeParse({ relativePath: 'a.png' }).success).toBe(true)
+    expect(commandSchemas.devtools_toggle.safeParse({ enabled: true }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
@@ -275,3 +288,5 @@ describe('command catalog', () => {
     expect(commandSchemas.legacy_import_start.safeParse({ sourceDir: 'a' }).success).toBe(false)
   })
 })
+
+

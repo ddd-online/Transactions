@@ -54,6 +54,8 @@
 | `services/stock-lifecycle.ts`（重置 / 归档到新账本） | ✅ 3 测试 |
 | `services/stock-trade-edit.ts`（编辑 / 删除 / 重放 / 预览 / 回滚） | ✅ 31 测试 |
 | `services/stock-review.ts`（每日复盘 / 轮次复盘 / 股票名称） | ✅ 4 测试 |
+| `services/stock-trades.ts`（当前轮 / 全历史成交列表） | ✅ 2 测试 |
+| `dao/transaction-template.ts` + 服务（模板 CRUD / 排序） | ✅ 3 测试 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -68,9 +70,9 @@
 | `services/todo.ts` + 12 条 todo 命令 | ✅ 10 测试 |
 | `services/stock-account.ts` + 13 条 stock 账户命令 | ✅ 23 测试 |
 | `services/transaction-record.ts` + 9 条 tr 命令（CRUD / 条件查询 / 图表 / 关联事件） | ✅ 9 测试 |
-| 其余业务命令（约 112 条） | ⬜ 待移植 |
+| 旧版命令面 117/117 + 5 个新命令（导入/账户摘要/调试） | ✅ 122 条 |
 | config / workspace / 导入命令 | ✅（M0/M1） |
-| 更新命令 + 下载器 | ⬜ 待移植 |
+| 更新命令 + 下载器 | ✅ 10 测试 |
 
 ## 界面
 
@@ -95,11 +97,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 579 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票 + 更新器） | ✅ |
+| Vitest 587 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票 + 模板 + 更新器） | ✅ |
 | Playwright：M0 / 账本 / 设置 / 记录 / 股票 / 事件 / 日记 / 待办 / 导入（9 条）+ 打包产物 | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 9 项（安全/协议/端口/事件/版本/旧栈/发布说明） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 

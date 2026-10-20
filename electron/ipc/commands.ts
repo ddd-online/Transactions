@@ -1,11 +1,12 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { basename } from 'node:path'
 import { join } from 'node:path'
 
-import { app } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
-import { IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
+import { DEVTOOLS_STATE_CHANGED, IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
 import type { ConfigStore } from '../config'
 import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
 import { currentWorkspace, openWorkspace } from '../db'
@@ -52,6 +53,13 @@ import {
   listTemplateDtos,
   updateTemplateSortOrder,
 } from '../services/transaction-template'
+import { listStockTrades } from '../services/stock-trades'
+import {
+  removeWorkspaceIcon,
+  resolveAsset,
+  saveWorkspaceIcon,
+  workspaceIconRelative,
+} from '../services/assets'
 import { UpdaterService } from '../services/updater'
 import { applyProxy, appFetch } from '../shell/net'
 import { priceYuanToMilli } from '../../shared/domain/money'
@@ -1239,7 +1247,83 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       updateTemplateSortOrder(workspaceDb(), templateId, Number(raw.sortOrder ?? 0))
       return null
     },
+
+    stock_trades(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const stockCode = String(raw.stock_code ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return listStockTrades(workspaceDb(), ledgerId, stockCode)
+    },
+
+    workspace_set(request) {
+      const workspaceDir = String(asObject(request).workspaceDir ?? '')
+      options.config.update((config) => {
+        config.workspaceDir = workspaceDir
+      })
+      return null
+    },
+
+    workspace_icon_get() {
+      const workspace = currentWorkspace()
+      return workspace ? workspaceIconRelative(workspace.directory) : ''
+    },
+
+    workspace_icon_set(request) {
+      const workspace = currentWorkspace()
+      if (!workspace) throw workspaceNotOpened()
+      const data = String(asObject(request).data ?? '')
+      if (!data.trim()) {
+        removeWorkspaceIcon(workspace.directory)
+        return ''
+      }
+      return saveWorkspaceIcon(workspace.directory, data)
+    },
+
+    proxy_detect() {
+      const proxy = options.config.snapshot().proxy
+      return {
+        url: proxy.mode === 'manual' ? proxy.url : '',
+        source: proxy.mode,
+        pac: false,
+        message: '',
+      }
+    },
+
+    async file_save_image(request) {
+      const workspace = currentWorkspace()
+      if (!workspace) throw workspaceNotOpened()
+      const relativePath = String(asObject(request).relativePath ?? '')
+      const source = resolveAsset(workspace.directory, relativePath)
+      const target = await dialog.showSaveDialog({
+        title: '保存图片',
+        defaultPath: basename(source),
+      })
+      if (target.canceled || !target.filePath) return { success: false, canceled: true }
+      try {
+        copyFileSync(source, target.filePath)
+        return { success: true }
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : String(error) }
+      }
+    },
+
+    devtools_get_state() {
+      return BrowserWindow.getFocusedWindow()?.webContents.isDevToolsOpened() ?? false
+    },
+
+    devtools_toggle(request) {
+      const enabled = asObject(request).enabled === true
+      const window = BrowserWindow.getFocusedWindow()
+      if (!window) return false
+      if (enabled) window.webContents.openDevTools()
+      else window.webContents.closeDevTools()
+      const opened = window.webContents.isDevToolsOpened()
+      sendEvent(DEVTOOLS_STATE_CHANGED, opened)
+      return opened
+    },
   }
 }
+
 
 

@@ -29,6 +29,7 @@ import type {
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
 import type { TransactionTemplateDto } from './types/template'
+import type { FileSaveResponse, ProxyDetectResponse } from './types/shell'
 import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
 import type {
   StockOperationRollbackDto,
@@ -431,6 +432,7 @@ export const commandSchemas = {
     tag: z.string().default(''),
   }),
   stock_name: z.object({ stock_code: z.string() }),
+  stock_trades: z.object({ ledger_id: z.string(), stock_code: z.string() }),
   template_create: z.object({
     template_id: z.string().default(''),
     ledger_id: z.string().default(''),
@@ -453,6 +455,13 @@ export const commandSchemas = {
     ledgerId: z.string().optional(),
     sortOrder: z.number().default(0),
   }),
+  workspace_set: z.object({ workspaceDir: z.string() }),
+  workspace_icon_get: z.object({}),
+  workspace_icon_set: z.object({ data: z.string().default('') }),
+  proxy_detect: z.object({}),
+  file_save_image: z.object({ relativePath: z.string() }),
+  devtools_get_state: z.object({}),
+  devtools_toggle: z.object({ enabled: z.boolean() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -570,10 +579,18 @@ export interface CommandResponses {
   stock_round_review: StockTradeHistoryDetailDto
   stock_round_tag: StockTradeHistoryDetailDto
   stock_name: StockNameDto
+  stock_trades: StockTradeDto[]
   template_create: string
   template_list: TransactionTemplateDto[]
   template_delete: null
   template_update_sort: null
+  workspace_set: null
+  workspace_icon_get: string
+  workspace_icon_set: string
+  proxy_detect: ProxyDetectResponse
+  file_save_image: FileSaveResponse
+  devtools_get_state: boolean
+  devtools_toggle: boolean
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]
