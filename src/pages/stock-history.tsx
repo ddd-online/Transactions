@@ -33,6 +33,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
   const [reviews, setReviews] = useState<Record<string, string>>({})
   const [roundTags, setRoundTags] = useState<Record<string, string>>({})
   const [tagOptions, setTagOptions] = useState<string[]>([])
+  const [edits, setEdits] = useState<Record<string, { price: string; lots: string }>>({})
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -74,6 +75,13 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         setDetail(next)
         setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
+        setEdits(
+          Object.fromEntries(
+            next.rounds
+              .flatMap((round) => round.trades)
+              .map((trade) => [trade.id, { price: milliToYuan(trade.price), lots: String(trade.lots) }]),
+          ),
+        )
         const settings: StockTradeTagSettingDto = await window.api.invoke('stock_tag_settings_get', {
           ledger_id: ledgerId,
         })
@@ -116,11 +124,58 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         })
         setDetail(next)
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
+        setEdits(
+          Object.fromEntries(
+            next.rounds
+              .flatMap((round) => round.trades)
+              .map((trade) => [trade.id, { price: milliToYuan(trade.price), lots: String(trade.lots) }]),
+          ),
+        )
       } catch (tagError) {
         setError(errorMessage(tagError))
       }
     },
     [detail, ledgerId],
+  )
+
+  const saveTrade = useCallback(
+    async (tradeId: string): Promise<void> => {
+      if (!detail) return
+      const edit = edits[tradeId]
+      if (!edit) return
+      setError('')
+      try {
+        await window.api.invoke('stock_trade_update', {
+          ledger_id: ledgerId,
+          id: tradeId,
+          price: Number(edit.price),
+          lots: Number(edit.lots),
+          trade_time: 0,
+        })
+        await openDetail(detail.stockCode)
+      } catch (tradeError) {
+        setError(errorMessage(tradeError))
+      }
+    },
+    [detail, edits, ledgerId, openDetail],
+  )
+
+  const deleteOrder = useCallback(
+    async (orderId: string): Promise<void> => {
+      if (!detail) return
+      if (!window.confirm('删除整笔委托？持仓与资金会按重放结果回滚。')) return
+      setError('')
+      try {
+        await window.api.invoke('stock_trade_order_delete', {
+          ledger_id: ledgerId,
+          order_id: orderId,
+        })
+        await openDetail(detail.stockCode)
+      } catch (deleteError) {
+        setError(errorMessage(deleteError))
+      }
+    },
+    [detail, ledgerId, openDetail],
   )
 
   return (
@@ -261,6 +316,59 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                     ))}
                   </select>
                 </div>
+                <ul className="m0-trade-list">
+                  {round.trades
+                    .filter((trade) => trade.shares > 0)
+                    .map((trade) => (
+                      <li key={trade.id} data-testid="stock-trade">
+                        <span>{trade.tradeType}</span>
+                        <input
+                          className="m0-input"
+                          data-testid="stock-trade-price"
+                          value={edits[trade.id]?.price ?? milliToYuan(trade.price)}
+                          onChange={(event) =>
+                            setEdits((current) => ({
+                              ...current,
+                              [trade.id]: {
+                                price: event.target.value,
+                                lots: current[trade.id]?.lots ?? String(trade.lots),
+                              },
+                            }))
+                          }
+                        />
+                        <input
+                          className="m0-input"
+                          data-testid="stock-trade-lots"
+                          value={edits[trade.id]?.lots ?? String(trade.lots)}
+                          onChange={(event) =>
+                            setEdits((current) => ({
+                              ...current,
+                              [trade.id]: {
+                                price: current[trade.id]?.price ?? milliToYuan(trade.price),
+                                lots: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="m0-link"
+                          data-testid="stock-trade-save"
+                          onClick={() => void saveTrade(trade.id)}
+                        >
+                          保存
+                        </button>
+                        <button
+                          type="button"
+                          className="m0-link"
+                          data-testid="stock-trade-delete"
+                          onClick={() => void deleteOrder(trade.orderId)}
+                        >
+                          删除委托
+                        </button>
+                      </li>
+                    ))}
+                </ul>
                 {round.dayReviews.length > 0 ? (
                   <ul className="m0-muted">
                     {round.dayReviews.map((review) => (
@@ -278,6 +386,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
     </section>
   )
 }
+
+
+
 
 
 

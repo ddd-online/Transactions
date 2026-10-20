@@ -71,6 +71,7 @@ export function App(): JSX.Element {
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
+  const [proxyDetect, setProxyDetect] = useState('')
   const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
 
   useEffect(() => {
@@ -279,6 +280,16 @@ export function App(): JSX.Element {
       setError(errorMessage(proxyError))
     }
   }, [proxyMode, proxyUrl])
+
+  const detectProxy = useCallback(async (): Promise<void> => {
+    setError('')
+    try {
+      const result = await window.api.invoke('proxy_detect', {})
+      setProxyDetect(`${result.source}${result.url ? ` · ${result.url}` : ''}`)
+    } catch (detectError) {
+      setError(errorMessage(detectError))
+    }
+  }, [])
 
   const toggleFeature = useCallback(
     async (feature: string, enabled: boolean): Promise<void> => {
@@ -706,6 +717,19 @@ export function App(): JSX.Element {
                 >
                   保存代理
                 </button>
+                <button
+                  type="button"
+                  className="m0-link"
+                  data-testid="proxy-detect"
+                  onClick={() => void detectProxy()}
+                >
+                  探测
+                </button>
+                {proxyDetect ? (
+                  <span className="m0-muted" data-testid="proxy-detect-result">
+                    {proxyDetect}
+                  </span>
+                ) : null}
               </div>
               <div className="m0-import-row">
                 <label className="m0-field m0-import-field">

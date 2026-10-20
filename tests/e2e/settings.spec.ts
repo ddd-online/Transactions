@@ -71,6 +71,8 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).proxy)
       .toEqual({ mode: 'manual', url: 'http://127.0.0.1:7890' })
+    await page.getByTestId('proxy-detect').click()
+    await expect(page.getByTestId('proxy-detect-result')).toContainText('manual')
 
     await page.getByTestId('workspace-icon-input').setInputFiles({
       name: 'icon.png',
@@ -119,6 +121,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 
