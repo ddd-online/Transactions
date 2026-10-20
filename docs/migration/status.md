@@ -53,7 +53,7 @@
 | `services/stock-trade-write.ts`（下单 / 多笔成交 / 费用分摊 / 轮次归档） | ✅ 17 测试 |
 | `services/stock-lifecycle.ts`（重置 / 归档到新账本） | ✅ 3 测试 |
 | `services/stock-trade-edit.ts`（编辑 / 删除 / 重放 / 预览 / 回滚） | ✅ 31 测试 |
-| 股票剩余：每日复盘/轮次复盘写入、股票名称查询 | ⬜ 待移植 |
+| `services/stock-review.ts`（每日复盘 / 轮次复盘 / 股票名称） | ✅ 4 测试 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -87,11 +87,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 563 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票读层/写入/回放） | ✅ |
+| Vitest 568 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票全链路） | ✅ |
 | Playwright：M0 / 账本 / 设置 / 记录 / 股票（5 条） | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 

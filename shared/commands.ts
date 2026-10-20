@@ -20,7 +20,7 @@ import type {
   StockTradeTagSettingDto,
 } from './types/stock'
 import type { StockFeeSetting } from './domain/models'
-import type { StockOverviewDto, StockPositionDto } from './types/stock-position'
+import type { StockOverviewDto, StockPositionDto, StockDayReviewDto, StockNameDto } from './types/stock-position'
 import type {
   StockTradeHistoryDetailDto,
   StockTradeHistoryDto,
@@ -404,6 +404,18 @@ export const commandSchemas = {
   }),
   stock_operation_preview: z.object({ ledger_id: z.string() }),
   stock_operation_rollback: z.object({ ledger_id: z.string() }),
+  stock_day_review: z.object({
+    ledger_id: z.string(),
+    code: z.string(),
+    date: z.string(),
+    review: z.string().default(''),
+  }),
+  stock_round_review: z.object({
+    ledger_id: z.string(),
+    round_id: z.string(),
+    review: z.string().default(''),
+  }),
+  stock_name: z.object({ stock_code: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -512,6 +524,9 @@ export interface CommandResponses {
   stock_trade_impact: StockTradeImpactDto
   stock_operation_preview: StockOperationRollbackPreviewDto
   stock_operation_rollback: StockOperationRollbackDto
+  stock_day_review: StockDayReviewDto[]
+  stock_round_review: StockTradeHistoryDetailDto
+  stock_name: StockNameDto
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

@@ -45,6 +45,7 @@ import {
   rollbackLatest,
   updateTradeFill,
 } from '../services/stock-trade-edit'
+import { lookupStockName, updateDayReview, updateRoundReview } from '../services/stock-review'
 import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
@@ -1115,6 +1116,37 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return rollbackLatest(workspaceDb(), ledgerId)
+    },
+
+    stock_day_review(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return updateDayReview(
+        workspaceDb(),
+        ledgerId,
+        String(raw.code ?? ''),
+        String(raw.date ?? ''),
+        String(raw.review ?? ''),
+      )
+    },
+
+    stock_round_review(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return updateRoundReview(
+        workspaceDb(),
+        ledgerId,
+        String(raw.round_id ?? ''),
+        String(raw.review ?? ''),
+      )
+    },
+
+    async stock_name(request) {
+      const stockCode = String(asObject(request).stock_code ?? '')
+      if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
+      return lookupStockName(workspaceDb(), new TencentStockQuoteFetcher(), stockCode)
     },
   }
 }

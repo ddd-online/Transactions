@@ -216,6 +216,25 @@ describe('command catalog', () => {
     expect(commandSchemas.stock_operation_rollback.safeParse({ ledger_id: 'l1' }).success).toBe(true)
   })
 
+  it('validates stock review requests', () => {
+    expect(
+      commandSchemas.stock_day_review.safeParse({
+        ledger_id: 'l1',
+        code: '600000',
+        date: '2026-01-05',
+        review: '观察',
+      }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_round_review.safeParse({
+        ledger_id: 'l1',
+        round_id: 'r1',
+        review: '复盘',
+      }).success,
+    ).toBe(true)
+    expect(commandSchemas.stock_name.safeParse({ stock_code: '600000' }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
