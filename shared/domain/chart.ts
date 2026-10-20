@@ -7,9 +7,13 @@
  *
  * 移植约定：Rust 的 `Option<T>` 是 `T | null`；元组是只读定长数组；`impl Fn(&str) ->
  * Option<String>` 是 `(tag: string) => string | null`；Rust 的 `f64::EPSILON` 就是
- * `Number.EPSILON`。Rust 里返回 `f32` 的地方（{@link displayValue}、`nice_axis_range` 的
- * f32 比较）用 `Math.fround` 逐位对齐 —— JS 只有 f64，不收敛就会改变"上界是否算严格大于数据"
- * 这类判据。
+ * `Number.EPSILON`。Rust 里返回 `f32` 的地方（{@link displayValue}、{@link niceAxisRange}
+ * 的 f32 比较）用 `Math.fround` 逐位对齐 —— JS 只有 f64，不收敛就会改变"上界是否算严格大于
+ * 数据"这类判据。
+ *
+ * `ChartGeometry` 的固有方法搬成了同目录下的纯函数：`assemble` → {@link assembleGeometry}，
+ * `y_of` / `y_range` / `x_extent` / `points_at` / `rows_at` → {@link yOf} / {@link yRange} /
+ * {@link xExtent} / {@link pointsAt} / {@link rowsAt}；默认值用 {@link chartGeometry}。
  */
 
 /** 一条序列。 */
