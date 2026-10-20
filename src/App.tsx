@@ -14,6 +14,8 @@ import type { LegacyImportProgress } from '../shared/types/import'
 import type { UpdateSnapshot } from '../shared/domain/update'
 import { RecordsPage } from './pages/records'
 import { ChartsPage } from './pages/charts'
+import { CategoryTagPage } from './pages/category-tag'
+import { TemplatePage } from './pages/templates'
 import { DashboardPage } from './pages/dashboard'
 import { StockPage } from './pages/stock'
 import { EventsPage } from './pages/events'
@@ -502,6 +504,10 @@ export function App(): JSX.Element {
 
             <ChartsPage ledgerId={activeLedgerId} />
 
+            <CategoryTagPage ledgerId={activeLedgerId} />
+
+            <TemplatePage ledgerId={activeLedgerId} />
+
             <section className="m0-card m0-card--wide">
               <h2>账本</h2>
               <div className="m0-actions">
@@ -712,6 +718,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 

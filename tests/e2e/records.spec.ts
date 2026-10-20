@@ -76,6 +76,24 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await page.getByTestId('tr-category').fill('别的分类')
     await page.getByTestId('tr-template').first().click()
     await expect(page.getByTestId('tr-category')).toHaveValue('餐饮美食')
+    await page.getByTestId('template-refresh').click()
+    await expect(page.getByTestId('template-row')).toContainText('午餐模板')
+
+    await page.getByTestId('category-name').fill('测试分类')
+    await page.getByTestId('category-create').click()
+    await expect(
+      page.getByTestId('category-item').filter({ hasText: '测试分类' }),
+    ).toHaveCount(1)
+    await page.getByTestId('tag-category').selectOption('测试分类')
+    await page.getByTestId('tag-name').fill('测试标签')
+    await page.getByTestId('tag-create').click()
+    const newTag = page.getByTestId('tag-item').filter({ hasText: '测试标签' })
+    await expect(newTag).toHaveCount(1)
+    await newTag.getByTestId('tag-delete').click()
+    await expect(newTag).toHaveCount(0)
+    const newCategory = page.getByTestId('category-item').filter({ hasText: '测试分类' })
+    await newCategory.getByTestId('category-delete').click()
+    await expect(newCategory).toHaveCount(0)
 
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'records.png'),
@@ -139,6 +157,8 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 
 
