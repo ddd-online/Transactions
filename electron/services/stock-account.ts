@@ -11,7 +11,12 @@ import {
   STOCK_TAG_ANALYSIS,
   defaultStockTradeTags,
 } from '../../shared/domain/consts'
-import { type CashChange, cashBefore, cashChain, withdrawLimitMessage } from '../../shared/domain/fund'
+import {
+  type CashChange,
+  cashBefore,
+  cashChain,
+  withdrawLimitMessage,
+} from '../../shared/domain/fund'
 import { centsToYuan } from '../../shared/domain/money'
 import {
   DEFAULT_STOCK_FEE_SETTING,
@@ -31,12 +36,12 @@ import type {
 } from '../../shared/types/stock'
 import type { Db } from '../db/driver'
 import {
-  createOperation,
-  listOperations as listOperationRows,
   STOCK_OPERATION_LIMIT,
   createFundRecord,
+  createOperation,
   countFundRecords,
   listAllFundRecords,
+  listOperations as listOperationRows,
   queryFundRecords,
   queryLatestFundRecord,
   sumInterestPrincipal,
@@ -217,7 +222,11 @@ export function getTradeTags(db: Db, ledgerId: string): string[] {
     // 存储里不是合法 JSON：按空列表处理，下面回退默认值并修复
     parsed = null
   }
-  if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((tag) => typeof tag === 'string')) {
+  if (
+    Array.isArray(parsed) &&
+    parsed.length > 0 &&
+    parsed.every((tag) => typeof tag === 'string')
+  ) {
     return parsed as string[]
   }
 
@@ -401,7 +410,7 @@ export function recalculateCashChain(db: Db, ledgerId: string): void {
   }
 }
 
-/** 金额摘要（分 → `¥1,234.56` 的旧口径：无千分位，`centsToYuan` 负责负号与两位小数）。 */
+/** 金额摘要（分 → `¥1234.56`；无千分位，负数由 `centsToYuan` 带出）。 */
 function amountDetail(amount: number): string {
   return `¥${centsToYuan(amount)}`
 }

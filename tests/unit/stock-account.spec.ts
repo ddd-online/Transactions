@@ -7,9 +7,11 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { closeWorkspace, openWorkspace, type OpenedWorkspace } from '../../electron/db'
 import {
   createFundRecord,
+  deleteTradeFundRecords,
   getFundRecord,
   latestOperation,
   listAllFundRecords,
+  listTradeFundLedgerIds,
   queryLatestFundRecord,
 } from '../../electron/db/dao/stock-fund'
 import {
@@ -38,6 +40,7 @@ import {
 } from '../../electron/services/stock-account'
 import {
   STOCK_EVENT_ADD_PRINCIPAL,
+  STOCK_EVENT_BUY,
   STOCK_EVENT_INTEREST_PRINCIPAL,
   STOCK_EVENT_SELL,
   STOCK_EVENT_WITHDRAW,
@@ -676,6 +679,35 @@ describe('stock account / settings / fund slice', () => {
       summary.principal + summary.interestTotal + summary.sellNetPnlTotal - summary.withdrawnTotal -
         summary.positionCost,
     )
+  })
+
+  it('trade-fund repair helpers only touch buy/sell records', () => {
+    const workspace = newWorkspace()
+    seedPrincipal(workspace, 10_000_000)
+    seedFundRecord(workspace, {
+      id: 'buy-repair',
+      recordDate: '2026-01-02',
+      eventType: STOCK_EVENT_BUY,
+      amountChange: -100_000,
+    })
+    seedFundRecord(workspace, {
+      id: 'sell-repair',
+      recordDate: '2026-01-03',
+      eventType: STOCK_EVENT_SELL,
+      amountChange: 120_000,
+      netPnl: 20_000,
+    })
+    addInterestAtDate(workspace.db, LEDGER, 100, '2026-01-04')
+
+    expect(listTradeFundLedgerIds(workspace.db)).toEqual([LEDGER])
+    deleteTradeFundRecords(workspace.db, LEDGER)
+
+    const page = listFundRecords(workspace.db, LEDGER, 1, 10)
+    expect(page.total).toBe(1)
+    expect(page.items[0].eventType).toBe(STOCK_EVENT_INTEREST_PRINCIPAL)
+
+    recalculateCashChain(workspace.db, LEDGER)
+    expect(getAccountSummary(workspace.db, LEDGER).availableCash).toBe(10_000_100)
   })
 
   it('operation log keeps only the newest ten fund actions', () => {

@@ -1,5 +1,7 @@
 import {
+  STOCK_EVENT_BUY,
   STOCK_EVENT_INTEREST_PRINCIPAL,
+  STOCK_EVENT_SELL,
   STOCK_EVENT_WITHDRAW,
 } from '../../../shared/domain/consts'
 import type { StockFundRecord, StockOperation } from '../../../shared/types/stock'
@@ -185,6 +187,29 @@ export function listAllFundRecords(db: Db, ledgerId: string): StockFundRecord[] 
     )
     .all(ledgerId) as unknown as FundRow[]
   return rows.map(fundFromRow)
+}
+
+/**
+ * 有「买入 / 卖出」资金记录的账本 id（去重，按 id 升序）。
+ *
+ * 只给旧数据订正用（`repair_legacy_trade_fund_dates` 要按账本重放）：只有买卖记录才可能
+ * 带旧版本的 UTC 日期，本金 / 支取 / 利息归本的日期由界面给字符串。
+ */
+export function listTradeFundLedgerIds(db: Db): string[] {
+  const rows = db
+    .prepare(
+      'SELECT DISTINCT ledger_id FROM stock_fund_record WHERE event_type IN (?, ?) ' +
+        'ORDER BY ledger_id ASC',
+    )
+    .all(STOCK_EVENT_BUY, STOCK_EVENT_SELL) as unknown as Array<{ ledger_id: string }>
+  return rows.map((row) => row.ledger_id)
+}
+
+/** 清空买卖产生的资金记录，保留本金 / 追加 / 支取记录（旧数据订正用）。 */
+export function deleteTradeFundRecords(db: Db, ledgerId: string): void {
+  db.prepare(
+    'DELETE FROM stock_fund_record WHERE ledger_id = ? AND event_type IN (?, ?)',
+  ).run(ledgerId, STOCK_EVENT_BUY, STOCK_EVENT_SELL)
 }
 
 /** 只回写资金记录的现金余额（重算链条使用）。 */
