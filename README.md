@@ -62,7 +62,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
   - 股票账户/费用/标签/复盘模板/资金链 + 13 条命令；持仓/成交/历史/轮次 DAO（23 + 20 条测试）。
   - 命令面：旧版 117 条命令全部对齐（另加 5 条导入/调试命令）；模板与股票成交列表补齐。
   - 设置页：外观、关闭行为、系统/手动代理（行情与更新共用 session 代理）、工作空间图标、按账本功能开关。
-  - 股票历史/统计页：清仓汇总、单股轮次详情、逐笔/分组/最近 N/标签统计，Playwright 覆盖。
+  - 股票历史/统计页：清仓汇总、单股轮次详情与复盘/标签、逐笔/分组/最近 N/标签统计，Playwright 覆盖。
   - 更新器：GitHub latest release、sha256 校验、取消/安装、七状态面板；10 条测试。
   - 打包：NSIS 安装版 + 便携版，打包产物 Playwright 冒烟通过。
   - 旧版导入向导：探查 0.20.0 库、进度事件、报告与自动打开新工作空间，Playwright 用种子库跑通。
@@ -87,6 +87,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 - 详见 `docs/adr/`、`docs/migration/oracle.md` 与验收清单 `docs/migration/acceptance.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 

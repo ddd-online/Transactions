@@ -130,6 +130,21 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('stock-history-open').click()
     await expect(page.getByTestId('stock-history-detail')).toContainText('第 1 轮')
 
+    await page.getByTestId('round-review').fill('复盘：趋势向上')
+    await page.getByTestId('round-review-save').click()
+    await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
+    await page.getByTestId('round-tag').selectOption('打板')
+    await expect(page.getByTestId('round-tag')).toHaveValue('打板')
+
+    const reviewDatabase = new DatabaseSync(join(workspace, 'transactions.db'), {
+      readOnly: true,
+    })
+    const round = reviewDatabase
+      .prepare('SELECT review, tag FROM stock_trade_round')
+      .get() as { review: string; tag: string }
+    reviewDatabase.close()
+    expect(round).toEqual({ review: '复盘：趋势向上', tag: '打板' })
+
     await page.getByTestId('stock-tab-statistics').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
 
@@ -142,6 +157,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

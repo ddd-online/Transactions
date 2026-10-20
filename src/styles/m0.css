@@ -770,3 +770,11 @@ body {
   overflow-x: auto;
 }
 
+
+.m0-round-review {
+  flex: 1;
+  min-width: 220px;
+  min-height: 60px;
+  padding: 8px;
+  resize: vertical;
+}

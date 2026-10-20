@@ -7,6 +7,7 @@ import type {
   StockTradeHistoryDto,
   StockTradeHistorySummaryDto,
 } from '../../shared/types/stock-history'
+import type { StockTradeTagSettingDto } from '../../shared/types/stock'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -29,6 +30,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
   const [summary, setSummary] = useState<StockTradeHistorySummaryDto | null>(null)
   const [rows, setRows] = useState<StockTradeHistoryDto[]>([])
   const [detail, setDetail] = useState<StockTradeHistoryDetailDto | null>(null)
+  const [reviews, setReviews] = useState<Record<string, string>>({})
+  const [roundTags, setRoundTags] = useState<Record<string, string>>({})
+  const [tagOptions, setTagOptions] = useState<string[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -63,17 +67,60 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
     async (code: string): Promise<void> => {
       setError('')
       try {
-        setDetail(
-          await window.api.invoke('stock_history_detail', {
-            ledger_id: ledgerId,
-            stock_code: code,
-          }),
-        )
+        const next = await window.api.invoke('stock_history_detail', {
+          ledger_id: ledgerId,
+          stock_code: code,
+        })
+        setDetail(next)
+        setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
+        setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
+        const settings: StockTradeTagSettingDto = await window.api.invoke('stock_tag_settings_get', {
+          ledger_id: ledgerId,
+        })
+        setTagOptions(settings.tags)
       } catch (detailError) {
         setError(errorMessage(detailError))
       }
     },
     [ledgerId],
+  )
+
+  const saveRoundReview = useCallback(
+    async (roundId: string): Promise<void> => {
+      if (!detail) return
+      setError('')
+      try {
+        const next = await window.api.invoke('stock_round_review', {
+          ledger_id: ledgerId,
+          round_id: roundId,
+          review: reviews[roundId] ?? '',
+        })
+        setDetail(next)
+        setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
+      } catch (reviewError) {
+        setError(errorMessage(reviewError))
+      }
+    },
+    [detail, ledgerId, reviews],
+  )
+
+  const saveRoundTag = useCallback(
+    async (roundId: string, tag: string): Promise<void> => {
+      if (!detail) return
+      setError('')
+      try {
+        const next = await window.api.invoke('stock_round_tag', {
+          ledger_id: ledgerId,
+          round_id: roundId,
+          tag,
+        })
+        setDetail(next)
+        setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
+      } catch (tagError) {
+        setError(errorMessage(tagError))
+      }
+    },
+    [detail, ledgerId],
   )
 
   return (
@@ -183,6 +230,37 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                   {round.tag} · {round.tradeCount} 笔成交
                   {round.review ? ` · ${round.review}` : ''}
                 </p>
+                <div className="m0-actions">
+                  <textarea
+                    className="m0-input m0-round-review"
+                    data-testid="round-review"
+                    placeholder="本轮复盘"
+                    value={reviews[round.id] ?? ''}
+                    onChange={(event) =>
+                      setReviews((current) => ({ ...current, [round.id]: event.target.value }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="m0-link"
+                    data-testid="round-review-save"
+                    onClick={() => void saveRoundReview(round.id)}
+                  >
+                    保存复盘
+                  </button>
+                  <select
+                    className="m0-input"
+                    data-testid="round-tag"
+                    value={roundTags[round.id] ?? round.tag}
+                    onChange={(event) => void saveRoundTag(round.id, event.target.value)}
+                  >
+                    {tagOptions.map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 {round.dayReviews.length > 0 ? (
                   <ul className="m0-muted">
                     {round.dayReviews.map((review) => (
@@ -200,4 +278,6 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
     </section>
   )
 }
+
+
 
