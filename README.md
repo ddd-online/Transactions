@@ -47,18 +47,20 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
   - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
   - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts / statistics /
     update 状态机；tr-draw 全部模块（chart / calendar / diary_tree / paging / list_order / crop /
-    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，336 条 Vitest）；
+    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，352 条 Vitest）；
   - 旧数据导入器：只读快照 → 新建工作空间 → 表级单位映射 → 金额合计校验 → 资产复制 → 报告；
     已用 `fixtures/legacy/seed.sql` 做端到端测试；
   - 纵向切片：账本 DAO/服务/5 条 IPC 命令 + React 面板 + Playwright 端到端；分类/标签
     DAO/服务 + 12 条命令（默认 19 分类 / 57 标签、排序、级联、计数）；
   - 交易记录 DAO/服务 + 9 条命令：条件筛选（类型/分类/标签/时间）、排序分页、同源统计、
     图表分桶补零、关联事件；15 + 9 条测试。
+  - 图表 DAO/服务 + 5 条命令：预设 / CRUD / 拖拽排序 / chart_lines JSON；16 条测试。
   - 记账 · 记录页：列表 / 记一笔 / 筛选 / 分页 / 删除，Playwright 断言落库与标签。
   - 待办：其余 DAO 与服务、真实外壳与页面、导入 UI。
 - 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 
