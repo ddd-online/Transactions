@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
+import { DatePicker } from '../components/date-picker'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -213,12 +214,10 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
             value={year}
             onChange={(event) => setYear(event.target.value)}
           />
-          <input
-            className="m0-input"
-            type="date"
-            data-testid="event-date"
+          <DatePicker
+            testId="event-date"
             value={date}
-            onChange={(changeEvent) => setDate(changeEvent.target.value)}
+            onChange={(value) => setDate(value)}
           />
         </div>
       </div>

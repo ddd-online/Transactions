@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { notify } from '../components/toast'
+import { DatePicker } from '../components/date-picker'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -171,13 +172,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
       <div className="m0-card-head">
         <h2>日记</h2>
         <div className="m0-actions m0-period">
-          <input
-            className="m0-input"
-            type="date"
-            data-testid="diary-date"
-            value={date}
-            onChange={(changeEvent) => setDate(changeEvent.target.value)}
-          />
+          <DatePicker testId="diary-date" value={date} onChange={(value) => setDate(value)} />
           <span className="m0-muted" data-testid="diary-word-count">
             {wordCount} 字
           </span>
@@ -292,4 +287,5 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
     </section>
   )
 }
+
 
