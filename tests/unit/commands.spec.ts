@@ -32,6 +32,21 @@ describe('command catalog', () => {
     expect(commandSchemas.ledger_delete.safeParse({ id: 'l1' }).success).toBe(true)
   })
 
+  it('validates config requests', () => {
+    expect(commandSchemas.config_set_close_behavior.safeParse({ behavior: 'tray' }).success).toBe(
+      true,
+    )
+    expect(
+      commandSchemas.config_set_feature.safeParse({ feature: 'stock', enabled: false }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.config_set_feature.safeParse({ feature: 'stock', enabled: false, ledgerId: 'l1' })
+        .success,
+    ).toBe(true)
+    expect(commandSchemas.config_set_proxy.safeParse({ mode: 'auto', url: '' }).success).toBe(true)
+    expect(commandSchemas.config_set_appearance.safeParse({ appearance: 'dark' }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

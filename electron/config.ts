@@ -173,10 +173,11 @@ export class ConfigStore {
     }
   }
 
-  update(edit: (config: AppConfig) => void): void {
-    edit(this.config)
+  update<T>(edit: (config: AppConfig) => T): T {
+    const result = edit(this.config)
     this.raw = { ...this.raw, ...serializeConfig(this.config) }
     writeRaw(this.path, this.raw)
+    return result
   }
 }
 

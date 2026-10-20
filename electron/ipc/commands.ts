@@ -7,11 +7,13 @@ import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
 import { IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
 import type { ConfigStore } from '../config'
+import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
 import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
 import { logInfo } from '../logging'
 import { importLegacyWorkspace, probeLegacyWorkspace } from '../legacy/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
+import { setFeatureIn } from '../services/config'
 import {
   createLedger,
   deleteLedgerById,
@@ -20,8 +22,9 @@ import {
   queryLedgerById,
 } from '../services/ledger'
 import { openDirectory } from '../shell/dialogs'
-import { registerWindowControl } from '../shell/window'
+import { applyAppearance, registerWindowControl } from '../shell/window'
 import { sendEvent } from './events'
+import { validatedProxySetting } from '../../shared/domain/proxy'
 
 export type Handler = (request: unknown) => unknown | Promise<unknown>
 export type HandlerMap = Record<CommandName, Handler>
@@ -203,6 +206,67 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       if (!id) throw new AppError('missing ledger id', { status: 400 })
       deleteLedgerById(workspaceDb(), id)
       return null
+    },
+
+    config_set_close_behavior(request) {
+      const behavior = String(asObject(request).behavior ?? '')
+      if (behavior !== 'quit' && behavior !== 'tray' && behavior !== '') {
+        throw new AppError('无效的关闭行为', { status: 400 })
+      }
+      options.config.update((config) => {
+        config.closeBehavior = behavior
+      })
+      return null
+    },
+
+    config_set_appearance(request) {
+      const appearance = String(asObject(request).appearance ?? '')
+      if (appearance !== 'light' && appearance !== 'dark' && appearance !== 'system') {
+        throw new AppError('无效的外观设置', { status: 400 })
+      }
+      options.config.update((config) => {
+        config.appearance = appearance
+      })
+      applyAppearance(appearance)
+      return null
+    },
+
+    config_set_feature(request) {
+      const raw = asObject(request)
+      const feature = String(raw.feature ?? '')
+      const enabled = raw.enabled === true
+      const ledgerId = typeof raw.ledgerId === 'string' ? raw.ledgerId : ''
+      return options.config.update((config) =>
+        setFeatureIn(config, ledgerId, feature, enabled),
+      ) as FeatureFlags
+    },
+
+    config_set_key_event_linked_open(request) {
+      const open = asObject(request).open === true
+      return options.config.update((config) => {
+        config.keyEventLinkedOpen = open
+        return config.keyEventLinkedOpen
+      })
+    },
+
+    config_set_sidebar_collapsed(request) {
+      const collapsed = asObject(request).collapsed === true
+      return options.config.update((config) => {
+        config.sidebarCollapsed = collapsed
+        return config.sidebarCollapsed
+      })
+    },
+
+    config_set_proxy(request) {
+      const raw = asObject(request)
+      const setting = validatedProxySetting(
+        String(raw.mode ?? ''),
+        String(raw.url ?? ''),
+      ) as ProxySetting
+      options.config.update((config) => {
+        config.proxy = setting
+      })
+      return setting
     },
   }
 }

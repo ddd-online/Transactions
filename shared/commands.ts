@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { ConfigSnapshot, DialogOpenResponse } from './types/config'
+import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
 import type { LegacyImportProbe, LegacyImportReport } from './types/import'
 import type { Ledger } from './domain/models'
 
@@ -41,6 +41,16 @@ export const commandSchemas = {
     description: z.string().optional(),
   }),
   ledger_delete: z.object({ id: z.string() }),
+  config_set_close_behavior: z.object({ behavior: z.string() }),
+  config_set_appearance: z.object({ appearance: z.string() }),
+  config_set_feature: z.object({
+    feature: z.string(),
+    enabled: z.boolean(),
+    ledgerId: z.string().optional(),
+  }),
+  config_set_key_event_linked_open: z.object({ open: z.boolean() }),
+  config_set_sidebar_collapsed: z.object({ collapsed: z.boolean() }),
+  config_set_proxy: z.object({ mode: z.string(), url: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -65,6 +75,12 @@ export interface CommandResponses {
   ledger_get: Ledger
   ledger_update: null
   ledger_delete: null
+  config_set_close_behavior: null
+  config_set_appearance: null
+  config_set_feature: FeatureFlags
+  config_set_key_event_linked_open: boolean
+  config_set_sidebar_collapsed: boolean
+  config_set_proxy: ProxySetting
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]
