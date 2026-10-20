@@ -121,6 +121,20 @@ check('仓库不再包含旧栈源码', () => {
   return '无 Rust/Tauri'
 })
 
+check('发布说明版本与构建脚本', () => {
+  const notes = read('build/release_notes.md')
+  const match = /^##\s*\[([^\]]+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/m.exec(notes)
+  assert(match, 'release_notes.md 首行必须是 ## [版本] - YYYY-MM-DD')
+  assert(
+    match[1] === packageJson.version,
+    `release_notes.md 版本 ${match[1]} 与 package.json ${packageJson.version} 不一致`,
+  )
+  for (const script of ['build/build.ps1', 'build/clean.ps1', 'build/release.ps1']) {
+    assert(read(script).length > 0, `缺少构建脚本: ${script}`)
+  }
+  return `v${packageJson.version}`
+})
+
 for (const message of passes) {
   console.log(`  ✓ ${message}`)
 }

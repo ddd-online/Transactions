@@ -22,6 +22,10 @@ pnpm test:unit      # Vitest
 pnpm test:e2e       # 先 build，再 Playwright 启动 Electron
 pnpm dist:dir       # 未打包产物：dist/win-unpacked/Transactions.exe
 pnpm dist           # NSIS 安装包 + 便携版到 dist/
+
+# 发布链路（产物断言 + 打包产物冒烟）
+pwsh -File build/build.ps1 -E2E
+pwsh -File build/release.ps1 -Tag v1.0.0
 ```
 
 本机注意：如果环境里带着 `ELECTRON_RUN_AS_NODE=1`，Electron 会退化成 Node 直接退出。
