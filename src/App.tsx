@@ -42,12 +42,12 @@ const FEATURES: Array<[keyof FeatureFlags, string]> = [
 
 type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
 
-const NAV: Array<[View, string]> = [
-  ['accounting', '记账'],
-  ['stock', '股票'],
-  ['events', '事件'],
-  ['diary', '日记'],
-  ['todo', '待办'],
+const NAV: Array<[View, string, keyof FeatureFlags]> = [
+  ['accounting', '记账', 'accounting'],
+  ['stock', '股票', 'stock'],
+  ['events', '事件', 'keyEvent'],
+  ['diary', '日记', 'diary'],
+  ['todo', '待办', 'todo'],
 ]
 
 export function App(): JSX.Element {
@@ -345,6 +345,41 @@ export function App(): JSX.Element {
     }
   }, [])
 
+  const toggleLedgerFeature = useCallback(
+    async (feature: string, enabled: boolean): Promise<void> => {
+      if (!activeLedgerId) return
+      setError('')
+      try {
+        const flags: FeatureFlags = await window.api.invoke('config_set_feature', {
+          feature,
+          enabled,
+          ledgerId: activeLedgerId,
+        })
+        setConfig((current) =>
+          current
+            ? {
+                ...current,
+                ledgerFeatures: { ...current.ledgerFeatures, [activeLedgerId]: flags },
+              }
+            : current,
+        )
+      } catch (featureError) {
+        setError(errorMessage(featureError))
+      }
+    },
+    [activeLedgerId],
+  )
+
+  const effectiveFeatures = config
+    ? { ...config.features, ...(config.ledgerFeatures[activeLedgerId] ?? {}) }
+    : null
+
+  useEffect(() => {
+    if (view === 'settings') return
+    const entry = NAV.find(([key]) => key === view)
+    if (entry && effectiveFeatures?.[entry[2]] === false) setView('accounting')
+  }, [effectiveFeatures, view])
+
   const finishImport = useCallback(async (targetDir: string): Promise<void> => {
     await window.api.invoke('workspace_open', { workspaceDir: targetDir })
     setWorkspace(targetDir)
@@ -425,7 +460,7 @@ export function App(): JSX.Element {
         </div>
 
         <nav className="app-nav">
-          {NAV.map(([key, label]) => (
+          {NAV.filter(([, , feature]) => effectiveFeatures?.[feature] !== false).map(([key, label]) => (
             <button
               key={key}
               type="button"
@@ -672,6 +707,23 @@ export function App(): JSX.Element {
                   </label>
                 ))}
               </div>
+              {activeLedgerId ? (
+                <div className="m0-features" data-testid="ledger-features">
+                  <span className="m0-muted">本账本：</span>
+                  {FEATURES.map(([key, label]) => (
+                    <label key={key} className="m0-feature">
+                      <input
+                        type="checkbox"
+                        data-testid={`ledger-feature-${key}`}
+                        checked={effectiveFeatures?.[key] ?? true}
+                        disabled={!config}
+                        onChange={(event) => void toggleLedgerFeature(key, event.target.checked)}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              ) : null}
             </section>
 
             <ImportWizard progress={importProgress} onImported={finishImport} />
@@ -720,6 +772,8 @@ export function App(): JSX.Element {
     </>
   )
 }
+
+
 
 
 
