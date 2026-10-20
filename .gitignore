@@ -4,6 +4,7 @@ dist/
 artifacts/
 build/target/
 .cache/
+logs/
 *.log
 transactions.db
 transactions.db-wal
