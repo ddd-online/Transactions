@@ -46,7 +46,9 @@
 | `dao/key-event.ts` / `key-event-image.ts` + 服务（标题按字符截断、图片落盘/回滚/清理） | ✅ 5 测试 |
 | `services/assets.ts`（图片/图标落盘、data URI 校验、路径穿越） | ✅ 4 测试 |
 | `dao/todo.ts` + `services/todo.ts`（卡片/事项/进度、六档吸附、完成态） | ✅ 10 测试 |
-| 其余 DAO（stock） | ⬜ 待移植 |
+| `dao/stock-settings.ts` / `stock-fund.ts`（账户 / 费用 / 标签 / 复盘模板 / 资金链） | ✅ 23 测试 |
+| `dao/stock-trade.ts`（持仓 / 成交 / 历史 / 轮次，35 个函数） | ✅ 20 测试 |
+| 股票服务其余切片（持仓 / 成交写入 / 统计 / 复盘 / 归档） | ⬜ 待移植 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -59,6 +61,7 @@
 | `services/diary.ts` + 7 条 diary 命令（日期列表 / 读写 / 导入导出） | ✅ 15 测试 |
 | `services/key-event.ts` + 8 条 key_event 命令（含图片上传/删除） | ✅ 5 测试 |
 | `services/todo.ts` + 12 条 todo 命令 | ✅ 10 测试 |
+| `services/stock-account.ts` + 13 条 stock 账户命令 | ✅ 23 测试 |
 | `services/transaction-record.ts` + 9 条 tr 命令（CRUD / 条件查询 / 图表 / 关联事件） | ✅ 9 测试 |
 | 其余业务命令（约 112 条） | ⬜ 待移植 |
 | config / workspace / 导入命令 | ✅（M0/M1） |
@@ -78,11 +81,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 395 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板） | ✅ |
+| Vitest 439 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票账户） | ✅ |
 | Playwright：M0 / 账本 / 设置 / 记录（4 条） | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 

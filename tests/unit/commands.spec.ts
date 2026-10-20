@@ -126,6 +126,21 @@ describe('command catalog', () => {
     expect(commandSchemas.accounting_overview.safeParse({}).success).toBe(true)
   })
 
+  it('validates stock account requests', () => {
+    expect(commandSchemas.stock_account_summary.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(
+      commandSchemas.stock_principal_add.safeParse({ ledger_id: 'l1', amount: 100 }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_fee_settings_put.safeParse({ ledger_id: 'l1', commission_rate: 0.001 })
+        .success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_fund_records.safeParse({ ledger_id: 'l1', page: 1, pageSize: 10 })
+        .success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

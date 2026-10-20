@@ -13,6 +13,14 @@ import type {
 import type { DiaryExportResult, DiaryScanResponse } from './types/diary'
 import type { AccountingOverviewDto } from './types/accounting'
 import type {
+  StockAccountSummary,
+  StockFundRecordPage,
+  StockOperationDto,
+  StockReviewSettingDto,
+  StockTradeTagSettingDto,
+} from './types/stock'
+import type { StockFeeSetting } from './domain/models'
+import type {
   TodoCardDto,
   TodoHistoryDto,
   TodoItemDto,
@@ -271,6 +279,49 @@ export const commandSchemas = {
     periodKind: z.string().default('month'),
     periodKey: z.string().default(''),
   }),
+  stock_account_summary: z.object({ ledger_id: z.string() }),
+  stock_principal_add: z.object({
+    ledger_id: z.string(),
+    amount: z.number().nullable().optional(),
+    date: z.string().default(''),
+  }),
+  stock_interest_add: z.object({
+    ledger_id: z.string(),
+    amount: z.number().nullable().optional(),
+    date: z.string().default(''),
+  }),
+  stock_withdraw: z.object({
+    ledger_id: z.string(),
+    amount: z.number().nullable().optional(),
+    date: z.string().default(''),
+  }),
+  stock_fee_settings_get: z.object({ ledger_id: z.string() }),
+  stock_fee_settings_put: z.object({
+    ledger_id: z.string(),
+    commission_rate: z.number().nullable().optional(),
+    min_commission: z.number().nullable().optional(),
+    stamp_duty_rate: z.number().nullable().optional(),
+    transfer_fee_rate: z.number().nullable().optional(),
+  }),
+  stock_tag_settings_get: z.object({ ledger_id: z.string() }),
+  stock_tag_settings_put: z.object({
+    ledger_id: z.string().optional(),
+    ledgerId: z.string().optional(),
+    tags: z.array(z.string()).default([]),
+  }),
+  stock_review_template_get: z.object({ ledger_id: z.string() }),
+  stock_review_template_put: z.object({
+    ledger_id: z.string().optional(),
+    ledgerId: z.string().optional(),
+    template: z.string().default(''),
+  }),
+  stock_fund_records: z.object({
+    ledger_id: z.string(),
+    page: z.number().nullable().optional(),
+    page_size: z.number().nullable().optional(),
+    pageSize: z.number().nullable().optional(),
+  }),
+  stock_operation_list: z.object({ ledger_id: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -351,6 +402,18 @@ export interface CommandResponses {
   todo_progress_delete: null
   todo_progress_done: null
   accounting_overview: AccountingOverviewDto
+  stock_account_summary: StockAccountSummary
+  stock_principal_add: StockAccountSummary
+  stock_interest_add: StockAccountSummary
+  stock_withdraw: StockAccountSummary
+  stock_fee_settings_get: StockFeeSetting
+  stock_fee_settings_put: StockFeeSetting
+  stock_tag_settings_get: StockTradeTagSettingDto
+  stock_tag_settings_put: StockTradeTagSettingDto
+  stock_review_template_get: StockReviewSettingDto
+  stock_review_template_put: StockReviewSettingDto
+  stock_fund_records: StockFundRecordPage
+  stock_operation_list: StockOperationDto[]
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]
