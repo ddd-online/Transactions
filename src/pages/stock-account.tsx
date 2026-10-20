@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import { centsToYuan, milliToYuan, yuanToCents } from '../../shared/domain/money'
+import { todayYmd } from '../../shared/domain/time'
 import type {
   StockAccountSummary,
   StockFundRecordPage,
@@ -38,6 +39,9 @@ export function StockAccountPanel({
   const [operations, setOperations] = useState<StockOperationDto[]>([])
   const [archiveName, setArchiveName] = useState('')
   const [transferStatus, setTransferStatus] = useState('')
+  const [reviewCode, setReviewCode] = useState('')
+  const [reviewDate, setReviewDate] = useState(todayYmd())
+  const [reviewText, setReviewText] = useState('')
   const [amount, setAmount] = useState('')
   const [tradeForm, setTradeForm] = useState({
     tradeType: 'open',
@@ -155,6 +159,30 @@ export function StockAccountPanel({
       setBusy(false)
     }
   }, [feeForm, ledgerId])
+
+  const openReview = useCallback((code: string, rows: Array<{ date: string; review: string }>): void => {
+    const today = todayYmd()
+    setReviewCode(code)
+    setReviewDate(today)
+    setReviewText(rows.find((row) => row.date === today)?.review ?? '')
+  }, [])
+
+  const saveReview = useCallback(async (): Promise<void> => {
+    if (!reviewCode) return
+    setError('')
+    try {
+      const rows = await window.api.invoke('stock_day_review', {
+        ledger_id: ledgerId,
+        code: reviewCode,
+        date: reviewDate,
+        review: reviewText,
+      })
+      setReviewText(rows.find((row) => row.date === reviewDate)?.review ?? '')
+      await load()
+    } catch (reviewError) {
+      setError(errorMessage(reviewError))
+    }
+  }, [ledgerId, load, reviewCode, reviewDate, reviewText])
 
   const rollbackOperation = useCallback(async (): Promise<void> => {
     setError('')
@@ -311,6 +339,7 @@ export function StockAccountPanel({
               <th className="m0-right">已实现</th>
               <th>标签</th>
               <th>建仓日</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -327,6 +356,16 @@ export function StockAccountPanel({
                 <td className="m0-right">{money(row.realizedPnl)}</td>
                 <td>{row.tag}</td>
                 <td>{row.roundOpenedDate}</td>
+                <td className="m0-right">
+                  <button
+                    type="button"
+                    className="m0-link"
+                    data-testid="position-review-open"
+                    onClick={() => openReview(row.stockCode, row.dayReviews)}
+                  >
+                    写复盘
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -336,6 +375,49 @@ export function StockAccountPanel({
           {ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
         </p>
       )}
+
+      {reviewCode ? (
+        <div className="m0-stock-review">
+          <h3 className="m0-subtitle">{reviewCode} · 每日复盘</h3>
+          <div className="m0-actions">
+            <input
+              className="m0-input"
+              type="date"
+              data-testid="position-review-date"
+              value={reviewDate}
+              onChange={(event) => {
+                setReviewDate(event.target.value)
+                const position = positions.find((row) => row.stockCode === reviewCode)
+                setReviewText(
+                  position?.dayReviews.find((row) => row.date === event.target.value)?.review ?? '',
+                )
+              }}
+            />
+            <textarea
+              className="m0-input m0-round-review"
+              data-testid="position-review-text"
+              placeholder="当天观察"
+              value={reviewText}
+              onChange={(event) => setReviewText(event.target.value)}
+            />
+            <button
+              type="button"
+              className="m0-primary"
+              data-testid="position-review-save"
+              onClick={() => void saveReview()}
+            >
+              保存复盘
+            </button>
+            <button
+              type="button"
+              className="m0-link"
+              onClick={() => setReviewCode('')}
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <h3 className="m0-subtitle">记一笔股票交易</h3>
       <div className="m0-actions m0-new-record">
@@ -562,6 +644,8 @@ export function StockAccountPanel({
     </section>
   )
 }
+
+
 
 
 

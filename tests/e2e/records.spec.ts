@@ -72,6 +72,11 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('chart-select')).toBeVisible()
     await page.getByTestId('chart-select').selectOption({ label: '年度消费趋势' })
     await expect(page.getByTestId('chart-svg')).toBeVisible()
+    await page.getByTestId('chart-title').fill('自定义图表')
+    await page.getByTestId('chart-create').click()
+    await expect(page.getByTestId('chart-select')).toContainText('自定义图表')
+    await page.getByTestId('chart-delete').click()
+    await expect(page.getByTestId('chart-select')).not.toContainText('自定义图表')
 
     await page.getByTestId('acct-tab-records').click()
     await page.getByTestId('tr-category').fill('餐饮美食')
@@ -167,6 +172,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

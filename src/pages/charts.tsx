@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 
 import { centsToYuan } from '../../shared/domain/money'
 import type { ChartDto } from '../../shared/types/chart'
@@ -25,6 +25,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [granularity, setGranularity] = useState('month')
   const [data, setData] = useState<ChartQueryResponse | null>(null)
   const [error, setError] = useState('')
+  const [newTitle, setNewTitle] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -50,6 +51,39 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   }, [ledgerId])
 
   const selected = charts.find((chart) => chart.chartId === selectedId) ?? null
+
+  const createChart = useCallback(async (): Promise<void> => {
+    if (!ledgerId) return
+    setError('')
+    try {
+      const created = await window.api.invoke('chart_create', {
+        ledgerId,
+        title: newTitle.trim() || '自定义图表',
+        granularity,
+        chartType: 'line',
+        lines: [{ label: '支出', transactionType: 'expense', includeOutlier: true, conditions: [] }],
+      })
+      setNewTitle('')
+      const rows = await window.api.invoke('chart_list', { ledgerId })
+      setCharts(rows)
+      setSelectedId(created.chartId)
+    } catch (createError) {
+      setError(errorMessage(createError))
+    }
+  }, [granularity, ledgerId, newTitle])
+
+  const deleteChart = useCallback(async (): Promise<void> => {
+    if (!selectedId) return
+    setError('')
+    try {
+      await window.api.invoke('chart_delete', { chartId: selectedId })
+      const rows = await window.api.invoke('chart_list', { ledgerId })
+      setCharts(rows)
+      setSelectedId(rows[0]?.chartId ?? '')
+    } catch (deleteError) {
+      setError(errorMessage(deleteError))
+    }
+  }, [ledgerId, selectedId])
 
   useEffect(() => {
     let alive = true
@@ -138,6 +172,19 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <option value="month">按月</option>
             <option value="year">按年</option>
           </select>
+          <input
+            className="m0-input"
+            data-testid="chart-title"
+            placeholder="新图表名称"
+            value={newTitle}
+            onChange={(event) => setNewTitle(event.target.value)}
+          />
+          <button type="button" className="m0-link" data-testid="chart-create" onClick={() => void createChart()}>
+            新建
+          </button>
+          <button type="button" className="m0-link" data-testid="chart-delete" onClick={() => void deleteChart()}>
+            删除
+          </button>
         </div>
       </div>
 
@@ -210,4 +257,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     </section>
   )
 }
+
+
+
 

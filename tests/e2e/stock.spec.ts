@@ -120,6 +120,11 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     expect(trade.quantity).toBe(100)
     expect(trade.total_cost_cents).toBe(50_501)
 
+    await page.getByTestId('position-review-open').click()
+    await page.getByTestId('position-review-text').fill('观察一天')
+    await page.getByTestId('position-review-save').click()
+    await expect(page.getByTestId('position-review-text')).toHaveValue('观察一天')
+
     await page.getByTestId('trade-type').selectOption('close')
     await page.getByTestId('trade-price').fill('6')
     await page.getByTestId('trade-lots').fill('1')
@@ -129,6 +134,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
     await page.getByTestId('stock-history-open').click()
     await expect(page.getByTestId('stock-history-detail')).toContainText('第 1 轮')
+    await expect(page.getByTestId('stock-round')).toContainText('观察一天')
 
     await page.getByTestId('round-review').fill('复盘：趋势向上')
     await page.getByTestId('round-review-save').click()
@@ -157,6 +163,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 
