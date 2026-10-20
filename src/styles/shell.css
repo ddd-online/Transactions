@@ -22,8 +22,27 @@
 .app-shell-body {
   display: grid;
   grid-template-columns: var(--transactions-size-sidebar) minmax(0, 1fr);
-  height: calc(100vh - 56px);
+  height: 100vh;
   overflow: hidden;
+}
+
+.app-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.page-header {
+  flex-shrink: 0;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
 }
 
 .app-sidebar {

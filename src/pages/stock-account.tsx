@@ -521,11 +521,6 @@ export function StockAccountPanel({
             >
               回滚最近一步
             </button>
-            {transferStatus ? (
-              <span className="m0-muted" data-testid="stock-transfer-status">
-                {transferStatus}
-              </span>
-            ) : null}
           </div>
         </>
       )}
@@ -559,9 +554,15 @@ export function StockAccountPanel({
           重置全部股票数据
         </button>
       </div>
+      {transferStatus ? (
+        <p className="m0-muted" data-testid="stock-transfer-status">
+          {transferStatus}
+        </p>
+      ) : null}
     </section>
   )
 }
+
 
 
 

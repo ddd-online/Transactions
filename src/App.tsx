@@ -380,6 +380,9 @@ export function App(): JSX.Element {
     if (entry && effectiveFeatures?.[entry[2]] === false) setView('accounting')
   }, [effectiveFeatures, view])
 
+  const pageTitle =
+    view === 'settings' ? '设置' : (NAV.find(([key]) => key === view)?.[1] ?? '记账')
+
   const finishImport = useCallback(async (targetDir: string): Promise<void> => {
     await window.api.invoke('workspace_open', { workspaceDir: targetDir })
     setWorkspace(targetDir)
@@ -419,34 +422,6 @@ export function App(): JSX.Element {
           </div>
         </div>
       ) : null}
-
-      <header className="app-titlebar">
-        <span className="app-titlebar-title">Transactions</span>
-        <div className="app-titlebar-actions">
-          <button
-            type="button"
-            data-testid="window-minimize"
-            onClick={() => void window.api.invoke('window_control', { action: 'minimize' })}
-          >
-            —
-          </button>
-          <button
-            type="button"
-            data-testid="window-maximize"
-            onClick={() => void window.api.invoke('window_control', { action: 'maximize' })}
-          >
-            □
-          </button>
-          <button
-            type="button"
-            data-testid="window-close"
-            className="app-titlebar-close"
-            onClick={() => void window.api.invoke('window_control', { action: 'close' })}
-          >
-            ×
-          </button>
-        </div>
-      </header>
 
       <div className="app-shell-body">
       <aside className="app-sidebar">
@@ -502,6 +477,40 @@ export function App(): JSX.Element {
       </aside>
 
       <main className="app-content">
+        <div className="app-top-bar">
+          <div className="window-controls">
+            <button
+              type="button"
+              className="window-btn"
+              data-testid="window-minimize"
+              title="最小化"
+              onClick={() => void window.api.invoke('window_control', { action: 'minimize' })}
+            >
+              —
+            </button>
+            <button
+              type="button"
+              className="window-btn"
+              data-testid="window-maximize"
+              title="最大化"
+              onClick={() => void window.api.invoke('window_control', { action: 'maximize' })}
+            >
+              □
+            </button>
+            <button
+              type="button"
+              className="window-btn window-btn--close"
+              data-testid="window-close"
+              title="关闭"
+              onClick={() => void window.api.invoke('window_control', { action: 'close' })}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        <div className="page-header">
+          <h1>{pageTitle}</h1>
+        </div>
         <div className="app-router-view">
         {error ? (
           <p className="m0-error" data-testid="error">
