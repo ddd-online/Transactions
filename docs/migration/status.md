@@ -27,7 +27,8 @@
 | `tr-draw/diary_tree.rs` | `diary-tree.ts` | ✅ 4 测试 |
 | `tr-draw/chart.rs` | `chart.ts` | ✅ 23 测试 |
 | `tr-draw/query.rs` | `query.ts` | ✅ 10 测试 |
-| `tr-draw/stock_rows.rs` / `stock_stats.rs` | — | ⬜ 待移植 |
+| `tr-draw/stock_rows.rs` | `stock-rows.ts` | ✅ 8 测试 |
+| `tr-draw/stock_stats.rs` | `stock-stats.ts` | ✅ 11 测试 |
 | `tr-ui/time.rs` | `time.ts` | ✅ 5 测试 |
 
 ## 数据层
@@ -64,11 +65,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 292 条（领域 + 数据 + 导入 + 账本 + 分类标签） | ✅ |
+| Vitest 311 条（领域 + 数据 + 导入 + 账本 + 分类标签） | ✅ |
 | Playwright M0 冒烟 + 账本端到端 | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 
