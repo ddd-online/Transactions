@@ -196,3 +196,25 @@
   background: var(--transactions-color-primary);
   color: #fff;
 }
+
+.ui-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ui-pagination__summary {
+  padding: 0 8px;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.m0-table th {
+  background: var(--transactions-color-minor-background);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.m0-table tbody tr:hover td {
+  background: var(--transactions-color-hover-bg);
+}

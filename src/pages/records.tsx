@@ -12,6 +12,7 @@ import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
 import { notify } from '../components/toast'
 import { EmptyState } from '../components/empty-state'
+import { Pagination } from '../components/pagination'
 
 const PAGE_SIZE = 20
 
@@ -485,29 +486,12 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         </table>
       )}
 
-      <div className="m0-actions m0-pager">
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="tr-prev"
-          disabled={page <= 1 || loading}
-          onClick={() => setPage((current) => Math.max(1, current - 1))}
-        >
-          上一页
-        </button>
-        <span className="m0-muted" data-testid="tr-page">
-          {page} / {totalPages}
-        </span>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="tr-next"
-          disabled={page >= totalPages || loading}
-          onClick={() => setPage((current) => current + 1)}
-        >
-          下一页
-        </button>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        disabled={loading}
+        onChange={(next) => setPage(next)}
+      />
     </section>
   )
 }
