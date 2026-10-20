@@ -59,6 +59,8 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     expect(rows[0]?.name).toBe('测试账本')
 
     await page.getByTestId('ledger-item').getByRole('button', { name: '删除' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await page.getByTestId('confirm-dialog-confirm').click()
     await expect(page.getByTestId('ledger-empty')).toContainText('还没有账本')
 
     const after = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -70,3 +72,4 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+

@@ -23,6 +23,7 @@ import { DiaryPage } from './pages/diary'
 import { TodoPage } from './pages/todo'
 import { ImportWizard } from './pages/import-wizard'
 import { UpdatePanel } from './pages/update-panel'
+import { ConfirmDialog } from './components/confirm-dialog'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -72,6 +73,7 @@ export function App(): JSX.Element {
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
   const [proxyDetect, setProxyDetect] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
 
   useEffect(() => {
@@ -626,7 +628,7 @@ export function App(): JSX.Element {
                         type="button"
                         className="m0-link"
                         disabled={busy}
-                        onClick={() => void deleteLedger(ledger.id)}
+                        onClick={() => setDeleteTarget(ledger.id)}
                       >
                         删除
                       </button>
@@ -825,12 +827,28 @@ export function App(): JSX.Element {
             </section>
           </>
         ) : null}
+
+        <ConfirmDialog
+          open={deleteTarget !== null}
+          title="删除账本"
+          message="确定删除该账本及其全部记录？此操作不可撤销。"
+          confirmText="删除"
+          danger
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            const target = deleteTarget
+            setDeleteTarget(null)
+            if (target) void deleteLedger(target)
+          }}
+        />
         </div>
       </main>
       </div>
     </>
   )
 }
+
+
 
 
 

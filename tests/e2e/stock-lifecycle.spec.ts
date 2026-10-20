@@ -54,6 +54,8 @@ test('股票：重置与归档', async () => {
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
     await page.getByTestId('stock-reset').click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await page.getByTestId('confirm-dialog-confirm').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥0.00')
 
     let database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -91,6 +93,7 @@ test('股票：重置与归档', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

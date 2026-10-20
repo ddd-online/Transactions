@@ -9,6 +9,7 @@ import type {
 } from '../../shared/types/stock'
 import type { StockOverviewDto, StockPositionDto } from '../../shared/types/stock-position'
 import type { StockOperationDto } from '../../shared/types/stock'
+import { ConfirmDialog } from '../components/confirm-dialog'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -42,6 +43,7 @@ export function StockAccountPanel({
   const [reviewCode, setReviewCode] = useState('')
   const [reviewDate, setReviewDate] = useState(todayYmd())
   const [reviewText, setReviewText] = useState('')
+  const [confirmReset, setConfirmReset] = useState(false)
   const [amount, setAmount] = useState('')
   const [tradeForm, setTradeForm] = useState({
     tradeType: 'open',
@@ -198,7 +200,6 @@ export function StockAccountPanel({
   }, [ledgerId, load])
 
   const resetStock = useCallback(async (): Promise<void> => {
-    if (!window.confirm('确定清空该账本的全部股票数据？此操作不可撤销。')) return
     setError('')
     try {
       await window.api.invoke('stock_reset', { ledger_id: ledgerId })
@@ -631,7 +632,7 @@ export function StockAccountPanel({
           type="button"
           className="m0-link"
           data-testid="stock-reset"
-          onClick={() => void resetStock()}
+          onClick={() => setConfirmReset(true)}
         >
           重置全部股票数据
         </button>
@@ -641,9 +642,23 @@ export function StockAccountPanel({
           {transferStatus}
         </p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmReset}
+        title="重置股票数据"
+        message="确定清空该账本的全部股票数据？此操作不可撤销。"
+        confirmText="重置"
+        danger
+        onCancel={() => setConfirmReset(false)}
+        onConfirm={() => {
+          setConfirmReset(false)
+          void resetStock()
+        }}
+      />
     </section>
   )
 }
+
 
 
 

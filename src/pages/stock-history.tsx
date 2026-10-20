@@ -8,6 +8,7 @@ import type {
   StockTradeHistorySummaryDto,
 } from '../../shared/types/stock-history'
 import type { StockTradeTagSettingDto } from '../../shared/types/stock'
+import { ConfirmDialog } from '../components/confirm-dialog'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -34,6 +35,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
   const [roundTags, setRoundTags] = useState<Record<string, string>>({})
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [edits, setEdits] = useState<Record<string, { price: string; lots: string }>>({})
+  const [confirmOrder, setConfirmOrder] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -166,7 +168,6 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
   const deleteOrder = useCallback(
     async (orderId: string): Promise<void> => {
       if (!detail) return
-      if (!window.confirm('删除整笔委托？持仓与资金会按重放结果回滚。')) return
       setError('')
       try {
         await window.api.invoke('stock_trade_order_delete', {
@@ -365,7 +366,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                           type="button"
                           className="m0-link"
                           data-testid="stock-trade-delete"
-                          onClick={() => void deleteOrder(trade.orderId)}
+                          onClick={() => setConfirmOrder(trade.orderId)}
                         >
                           删除委托
                         </button>
@@ -386,9 +387,24 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
           </ul>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmOrder !== null}
+        title="删除整笔委托"
+        message="删除后持仓与资金会按重放结果回滚，确定继续？"
+        confirmText="删除"
+        danger
+        onCancel={() => setConfirmOrder(null)}
+        onConfirm={() => {
+          const orderId = confirmOrder
+          setConfirmOrder(null)
+          if (orderId) void deleteOrder(orderId)
+        }}
+      />
     </section>
   )
 }
+
 
 
 
