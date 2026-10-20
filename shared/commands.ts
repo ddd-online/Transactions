@@ -28,6 +28,7 @@ import type {
   StockTradeDto,
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
+import type { TransactionTemplateDto } from './types/template'
 import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
 import type {
   StockOperationRollbackDto,
@@ -430,6 +431,28 @@ export const commandSchemas = {
     tag: z.string().default(''),
   }),
   stock_name: z.object({ stock_code: z.string() }),
+  template_create: z.object({
+    template_id: z.string().default(''),
+    ledger_id: z.string().default(''),
+    template_name: z.string().default(''),
+    transaction_type: z.string().default(''),
+    category: z.string().default(''),
+    tags: z.array(z.string()).default([]),
+    flags: z.string().default(''),
+    description: z.string().default(''),
+    sort_order: z.number().default(0),
+  }),
+  template_list: z.object({ ledger_id: z.string() }),
+  template_delete: z.object({
+    id: z.string().optional(),
+    templateId: z.string().optional(),
+  }),
+  template_update_sort: z.object({
+    id: z.string(),
+    ledger_id: z.string().default(''),
+    ledgerId: z.string().optional(),
+    sortOrder: z.number().default(0),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -547,6 +570,10 @@ export interface CommandResponses {
   stock_round_review: StockTradeHistoryDetailDto
   stock_round_tag: StockTradeHistoryDetailDto
   stock_name: StockNameDto
+  template_create: string
+  template_list: TransactionTemplateDto[]
+  template_delete: null
+  template_update_sort: null
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

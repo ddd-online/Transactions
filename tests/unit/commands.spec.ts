@@ -247,6 +247,23 @@ describe('command catalog', () => {
     expect(commandSchemas.update_install.safeParse({}).success).toBe(true)
   })
 
+  it('validates template requests', () => {
+    expect(
+      commandSchemas.template_create.safeParse({
+        ledger_id: 'l1',
+        template_name: '午餐',
+        transaction_type: 'expense',
+        category: '餐饮美食',
+        tags: ['三餐'],
+      }).success,
+    ).toBe(true)
+    expect(commandSchemas.template_list.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(commandSchemas.template_delete.safeParse({ id: 't1' }).success).toBe(true)
+    expect(
+      commandSchemas.template_update_sort.safeParse({ id: 't1', sortOrder: 2 }).success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

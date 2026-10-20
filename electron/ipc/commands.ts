@@ -46,6 +46,12 @@ import {
   updateTradeFill,
 } from '../services/stock-trade-edit'
 import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../services/stock-review'
+import {
+  createTemplateDto,
+  deleteTemplate,
+  listTemplateDtos,
+  updateTemplateSortOrder,
+} from '../services/transaction-template'
 import { UpdaterService } from '../services/updater'
 import { applyProxy, appFetch } from '../shell/net'
 import { priceYuanToMilli } from '../../shared/domain/money'
@@ -1195,6 +1201,43 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const stockCode = String(asObject(request).stock_code ?? '')
       if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
       return lookupStockName(workspaceDb(), createQuoteFetcher(), stockCode)
+    },
+
+    template_create(request) {
+      const raw = asObject(request)
+      return createTemplateDto(workspaceDb(), {
+        templateId: String(raw.template_id ?? ''),
+        ledgerId: String(raw.ledger_id ?? ''),
+        templateName: String(raw.template_name ?? ''),
+        transactionType: String(raw.transaction_type ?? ''),
+        category: String(raw.category ?? ''),
+        tags: Array.isArray(raw.tags) ? raw.tags.map((tag) => String(tag)) : [],
+        flags: String(raw.flags ?? ''),
+        description: String(raw.description ?? ''),
+        sortOrder: Number(raw.sort_order ?? 0),
+      })
+    },
+
+    template_list(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('missing ledgerId', { status: 400 })
+      return listTemplateDtos(workspaceDb(), ledgerId)
+    },
+
+    template_delete(request) {
+      const raw = asObject(request)
+      const templateId = String(raw.id ?? raw.templateId ?? '')
+      if (!templateId) throw new AppError('missing template id', { status: 400 })
+      deleteTemplate(workspaceDb(), templateId)
+      return null
+    },
+
+    template_update_sort(request) {
+      const raw = asObject(request)
+      const templateId = String(raw.id ?? '')
+      if (!templateId) throw new AppError('missing template id', { status: 400 })
+      updateTemplateSortOrder(workspaceDb(), templateId, Number(raw.sortOrder ?? 0))
+      return null
     },
   }
 }
