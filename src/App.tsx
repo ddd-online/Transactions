@@ -301,7 +301,7 @@ export function App(): JSX.Element {
   return (
     <>
       {!workspace && !workspacePromptDismissed ? (
-        <div className="app-workspace-overlay">
+        <div className="app-workspace-overlay" data-testid="workspace-overlay">
           <div className="app-workspace-card">
             <h1>Transactions</h1>
             <p className="m0-muted">选择一个工作空间开始；所有数据都保存在本地。</p>
@@ -606,6 +606,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 
