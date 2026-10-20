@@ -83,9 +83,10 @@ pwsh -File build/release.ps1 -Tag v1.0.0
   - 日记 DAO/服务 + 7 条命令：按账本隔离、字数、导入导出（UTF-8/UTF-16/GBK）。
   - 记账 · 记录页：列表 / 记一笔 / 模板套用与保存 / 标签筛选 / 异常与关联事件 / 分页 / 删除，Playwright 断言落库与标签。
   - 待办：其余 DAO 与服务、真实外壳与页面、导入 UI。
-- 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
+- 详见 `docs/adr/`、`docs/migration/oracle.md` 与验收清单 `docs/migration/acceptance.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 
