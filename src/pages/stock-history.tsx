@@ -143,6 +143,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
       if (!detail) return
       const edit = edits[tradeId]
       if (!edit) return
+      const trade = detail.rounds
+        .flatMap((round) => round.trades)
+        .find((item) => item.id === tradeId)
       setError('')
       try {
         await window.api.invoke('stock_trade_update', {
@@ -150,7 +153,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
           id: tradeId,
           price: Number(edit.price),
           lots: Number(edit.lots),
-          trade_time: 0,
+          trade_time: trade?.tradeTime ?? 0,
         })
         await openDetail(detail.stockCode)
       } catch (tradeError) {
@@ -386,6 +389,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
     </section>
   )
 }
+
 
 
 

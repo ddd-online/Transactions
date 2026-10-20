@@ -121,6 +121,32 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     [load],
   )
 
+  const removeCard = useCallback(
+    async (id: string): Promise<void> => {
+      setError('')
+      try {
+        await window.api.invoke('todo_card_delete', { id })
+        await load()
+      } catch (deleteError) {
+        setError(errorMessage(deleteError))
+      }
+    },
+    [load],
+  )
+
+  const removeProgress = useCallback(
+    async (id: string): Promise<void> => {
+      setError('')
+      try {
+        await window.api.invoke('todo_progress_delete', { id })
+        await load()
+      } catch (deleteError) {
+        setError(errorMessage(deleteError))
+      }
+    },
+    [load],
+  )
+
   const addProgress = useCallback(
     async (itemId: string): Promise<void> => {
       const content = (progressText[itemId] ?? '').trim()
@@ -192,7 +218,17 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         <div className="m0-todo-cards">
           {cards.map((card) => (
             <div key={card.id} className="m0-todo-card" data-testid="todo-card">
-              <h3>{card.title}</h3>
+              <div className="m0-card-head">
+                <h3>{card.title}</h3>
+                <button
+                  type="button"
+                  className="m0-link"
+                  data-testid="todo-card-delete"
+                  onClick={() => void removeCard(card.id)}
+                >
+                  删除主题
+                </button>
+              </div>
               <div className="m0-actions">
                 <input
                   className="m0-input"
@@ -260,6 +296,14 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                                 />
                                 {progress.content}
                               </label>
+                              <button
+                                type="button"
+                                className="m0-link"
+                                data-testid="todo-progress-delete"
+                                onClick={() => void removeProgress(progress.id)}
+                              >
+                                删除
+                              </button>
                             </li>
                           ))}
                         </ul>
@@ -312,4 +356,5 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     </section>
   )
 }
+
 
