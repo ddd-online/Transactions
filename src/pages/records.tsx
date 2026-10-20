@@ -7,6 +7,8 @@ import type {
   TrQueryCondition,
   TrQueryResult,
 } from '../../shared/types/transaction'
+import type { CategoryDto } from '../../shared/types/category'
+import type { TagDto } from '../../shared/types/category'
 
 const PAGE_SIZE = 20
 
@@ -44,6 +46,11 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
   const [page, setPage] = useState(1)
   const [keyword, setKeyword] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
+  const [categories, setCategories] = useState<CategoryDto[]>([])
+  const [tagOptions, setTagOptions] = useState<TagDto[]>([])
+  const [outlier, setOutlier] = useState(false)
+  const [keyEventDate, setKeyEventDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -52,6 +59,26 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
+
+  useEffect(() => {
+    if (!ledgerId) {
+      setCategories([])
+      setTagOptions([])
+      return
+    }
+    void (async () => {
+      try {
+        const [categoryRows, tagRows] = await Promise.all([
+          window.api.invoke('category_list', { ledgerId, type: typeFilter }),
+          window.api.invoke('tag_list', { ledgerId, categoryTransactionType: '' }),
+        ])
+        setCategories(categoryRows)
+        setTagOptions(tagRows)
+      } catch {
+        // 分类/标签只是输入建议，读取失败不阻塞记账
+      }
+    })()
+  }, [ledgerId, typeFilter])
 
   const load = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -69,13 +96,13 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         limit: PAGE_SIZE,
         tsRange: [],
         items:
-          typeFilter || keyword
+          typeFilter || keyword || tagFilter
             ? [
                 {
                   transactionType: typeFilter,
                   category: '',
-                  tags: [],
-                  tagPolicy: '',
+                  tags: tagFilter ? [tagFilter] : [],
+                  tagPolicy: tagFilter ? 'any' : '',
                   tagNot: false,
                   description: keyword,
                 },
@@ -92,7 +119,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     } finally {
       setLoading(false)
     }
-  }, [keyword, ledgerId, page, typeFilter])
+  }, [keyword, ledgerId, page, tagFilter, typeFilter])
 
   useEffect(() => {
     void load()
@@ -120,7 +147,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       return
     }
     try {
-      await window.api.invoke('tr_create', {
+      const transactionId = await window.api.invoke('tr_create', {
         ledgerId,
         transactionId: '',
         price,
@@ -132,18 +159,23 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
         transactionAt: Math.floor(Date.now() / 1000),
-        outlier: false,
-        keyEventDate: '',
+        outlier,
+        keyEventDate,
       })
+      if (keyEventDate) {
+        await window.api.invoke('tr_link', { transaction_id: transactionId, date: keyEventDate })
+      }
       setAmount('')
       setDescription('')
+      setOutlier(false)
+      setKeyEventDate('')
       setPage(1)
       onChanged?.()
       await load()
     } catch (createError) {
       setError(errorMessage(createError))
     }
-  }, [amount, category, description, ledgerId, load, onChanged, tags, type])
+  }, [amount, category, description, keyEventDate, ledgerId, load, onChanged, outlier, tags, type])
 
   const remove = useCallback(
     async (id: string): Promise<void> => {
@@ -195,6 +227,22 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             setKeyword(event.target.value)
           }}
         />
+        <input
+          className="m0-input"
+          list="tr-tag-options"
+          data-testid="tr-tag-filter"
+          placeholder="按标签筛选"
+          value={tagFilter}
+          onChange={(event) => {
+            setPage(1)
+            setTagFilter(event.target.value)
+          }}
+        />
+        <datalist id="tr-tag-options">
+          {tagOptions.map((tag) => (
+            <option key={tag.name} value={tag.name} />
+          ))}
+        </datalist>
       </div>
 
       <div className="m0-actions m0-new-record">
@@ -218,11 +266,17 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         />
         <input
           className="m0-input"
+          list="tr-category-options"
           data-testid="tr-category"
           placeholder="分类"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
         />
+        <datalist id="tr-category-options">
+          {categories.map((item) => (
+            <option key={`${item.transactionType}-${item.name}`} value={item.name} />
+          ))}
+        </datalist>
         <input
           className="m0-input"
           data-testid="tr-description"
@@ -236,6 +290,22 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
           placeholder="标签（逗号分隔）"
           value={tags}
           onChange={(event) => setTags(event.target.value)}
+        />
+        <label className="m0-feature">
+          <input
+            type="checkbox"
+            data-testid="tr-outlier"
+            checked={outlier}
+            onChange={(event) => setOutlier(event.target.checked)}
+          />
+          异常
+        </label>
+        <input
+          className="m0-input"
+          type="date"
+          data-testid="tr-event-date"
+          value={keyEventDate}
+          onChange={(event) => setKeyEventDate(event.target.value)}
         />
         <button
           type="button"
@@ -267,6 +337,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
               <th>分类</th>
               <th>备注</th>
               <th>标签</th>
+              <th>标记</th>
               <th className="m0-right">金额（元）</th>
               <th />
             </tr>
@@ -279,6 +350,11 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
                 <td>{row.category}</td>
                 <td>{row.description}</td>
                 <td>{row.tags.join('、')}</td>
+                <td>
+                  {row.outlier ? '异常' : ''}
+                  {row.outlier && row.keyEventDate ? ' · ' : ''}
+                  {row.keyEventDate ? `事件 ${row.keyEventDate}` : ''}
+                </td>
                 <td className={`m0-right m0-amount-${row.transactionType}`}>
                   {signedAmount(row.transactionType, row.price)}
                 </td>
@@ -297,7 +373,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={5}>合计</td>
+              <td colSpan={6}>合计</td>
               <td className="m0-right">
                 {signedAmount('expense', statistics.expense ?? 0)}
                 {' / '}
@@ -335,3 +411,9 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     </section>
   )
 }
+
+
+
+
+
+

@@ -191,7 +191,8 @@ export function App(): JSX.Element {
     setBusy(true)
     setError('')
     try {
-      await window.api.invoke('ledger_create', { name, description: '' })
+      const ledgerId = await window.api.invoke('ledger_create', { name, description: '' })
+      await window.api.invoke('category_initialize', { ledgerId })
       setLedgerName('')
       await refreshLedgers()
     } catch (createError) {
@@ -605,6 +606,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 

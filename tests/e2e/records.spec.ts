@@ -53,11 +53,15 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await page.getByTestId('tr-category').fill('餐饮美食')
     await page.getByTestId('tr-description').fill('午餐')
     await page.getByTestId('tr-tags').fill('三餐, 外卖')
+    await page.getByTestId('tr-outlier').check()
+    await page.getByTestId('tr-event-date').fill('2026-01-15')
     await page.getByTestId('tr-save').click()
 
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
     await expect(page.getByTestId('tr-row')).toHaveText(/-12\.34/)
     await expect(page.getByTestId('tr-total')).toHaveText('1 笔')
+    await expect(page.getByTestId('tr-row')).toContainText('异常')
+    await expect(page.getByTestId('tr-row')).toContainText('事件 2026-01-15')
     await expect(page.getByTestId('stat-expense')).toHaveText('¥12.34')
     await expect(page.getByTestId('dashboard-slices')).toContainText('餐饮美食')
     await expect(page.getByTestId('dashboard-slices')).toContainText('1 笔')
@@ -70,13 +74,15 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const record = database
       .prepare(
-        'SELECT amount_cents, transaction_type, category, description FROM transaction_record',
+        'SELECT amount_cents, transaction_type, category, description, flags, key_event_date FROM transaction_record',
       )
       .get() as {
       amount_cents: number
       transaction_type: string
       category: string
       description: string
+      flags: string
+      key_event_date: string
     }
     const tags = database
       .prepare('SELECT tag FROM transaction_record_tag ORDER BY tag')
@@ -86,10 +92,18 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     expect(record.transaction_type).toBe('expense')
     expect(record.category).toBe('餐饮美食')
     expect(record.description).toBe('午餐')
+    expect(JSON.parse(record.flags).outlier).toBe(true)
+    expect(record.key_event_date).toBe('2026-01-15')
     expect(tags.map((row) => row.tag).sort()).toEqual(['三餐', '外卖'])
 
     await page.getByTestId('tr-keyword').fill('午')
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
+    await page.getByTestId('tr-tag-filter').fill('三餐')
+    await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
+    await page.getByTestId('tr-tag-filter').fill('不存在')
+    await expect(page.getByTestId('tr-empty')).toContainText('还没有记录')
+
+    await page.getByTestId('tr-tag-filter').fill('')
     await page.getByTestId('tr-keyword').fill('不存在')
     await expect(page.getByTestId('tr-empty')).toContainText('还没有记录')
 
@@ -109,3 +123,5 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
