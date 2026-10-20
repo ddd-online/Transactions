@@ -45,10 +45,13 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
   config/logging、IPC + zod、Vitest + Playwright、打包冒烟。
 - **M1（进行中）**：
   - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
-  - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts（旧 Rust 单测逐条对等）；
+  - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts / statistics /
+    update 状态机；tr-draw 的 calendar / diary_tree / paging / list_order / crop / quadrant /
+    text / section / change（旧 Rust 单测逐条对等，227 条 Vitest）；
   - 旧数据导入器：只读快照 → 新建工作空间 → 表级单位映射 → 金额合计校验 → 资产复制 → 报告；
     已用 `fixtures/legacy/seed.sql` 做端到端测试；
-  - 待办：statistics / update 状态机、tr-draw 几何算法、DAO/服务层、导入 UI。
+  - 第一条纵向切片：账本 DAO/服务/5 条 IPC 命令 + React 面板 + Playwright 端到端；
+  - 待办：tr-draw 的 chart / query / stock_rows / stock_stats、其余 DAO 与服务、导入 UI。
 - 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。

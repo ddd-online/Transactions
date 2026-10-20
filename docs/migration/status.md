@@ -14,17 +14,17 @@
 | `tr-domain/format.rs` | `format.ts` | ✅ 18 测试 |
 | `tr-domain/proxy.rs` | `proxy.ts` | ✅ 10 测试 |
 | `tr-domain/consts.rs` | `consts.ts` | ✅ 随使用点覆盖 |
-| `tr-domain/statistics.rs` | `statistics.ts` | ⏳ 移植中 |
-| `tr-domain/update.rs` | `update.ts` | ⏳ 移植中 |
-| `tr-draw/paging.rs` | `paging.ts` | ⏳ 移植中 |
-| `tr-draw/list_order.rs` | `list-order.ts` | ⏳ 移植中 |
-| `tr-draw/crop.rs` | `crop.ts` | ⏳ 移植中 |
-| `tr-draw/quadrant.rs` | `quadrant.ts` | ⏳ 移植中 |
-| `tr-draw/text.rs` | `text.ts` | ⏳ 移植中 |
-| `tr-draw/section.rs` | `section.ts` | ⏳ 移植中 |
-| `tr-draw/change.rs` | `change.ts` | ⏳ 移植中 |
-| `tr-draw/calendar.rs` | `calendar.ts` | ⏳ 移植中 |
-| `tr-draw/diary_tree.rs` | `diary-tree.ts` | ⏳ 移植中 |
+| `tr-domain/statistics.rs` | `statistics.ts` | ✅ 15 测试 |
+| `tr-domain/update.rs` | `update.ts` | ✅ 22 测试 |
+| `tr-draw/paging.rs` | `paging.ts` | ✅ 3 测试 |
+| `tr-draw/list_order.rs` | `list-order.ts` | ✅ 5 测试 |
+| `tr-draw/crop.rs` | `crop.ts` | ✅ 4 测试 |
+| `tr-draw/quadrant.rs` | `quadrant.ts` | ✅ 9 测试 |
+| `tr-draw/text.rs` | `text.ts` | ✅ 5 测试 |
+| `tr-draw/section.rs` | `section.ts` | ✅ 7 测试 |
+| `tr-draw/change.rs` | `change.ts` | ✅ 4 测试 |
+| `tr-draw/calendar.rs` | `calendar.ts` | ✅ 14 测试 |
+| `tr-draw/diary_tree.rs` | `diary-tree.ts` | ✅ 4 测试 |
 | `tr-draw/chart.rs` / `query.rs` / `stock_rows.rs` / `stock_stats.rs` | — | ⬜ 待移植 |
 
 ## 数据层
@@ -59,8 +59,9 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 129 条（领域 + 数据 + 导入 + 账本） | ✅ |
+| Vitest 227 条（领域 + 数据 + 导入 + 账本） | ✅ |
 | Playwright M0 冒烟 + 账本端到端 | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
