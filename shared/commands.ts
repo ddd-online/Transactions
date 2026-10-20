@@ -20,6 +20,7 @@ import type {
   StockTradeTagSettingDto,
 } from './types/stock'
 import type { StockFeeSetting } from './domain/models'
+import type { StockOverviewDto, StockPositionDto } from './types/stock-position'
 import type {
   TodoCardDto,
   TodoHistoryDto,
@@ -322,6 +323,18 @@ export const commandSchemas = {
     pageSize: z.number().nullable().optional(),
   }),
   stock_operation_list: z.object({ ledger_id: z.string() }),
+  stock_overview: z.object({ ledger_id: z.string() }),
+  stock_positions: z.object({ ledger_id: z.string() }),
+  stock_position_review: z.object({
+    ledger_id: z.string(),
+    code: z.string(),
+    review: z.string().default(''),
+  }),
+  stock_position_tag: z.object({
+    ledger_id: z.string(),
+    code: z.string(),
+    tag: z.string().default(''),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -414,6 +427,10 @@ export interface CommandResponses {
   stock_review_template_put: StockReviewSettingDto
   stock_fund_records: StockFundRecordPage
   stock_operation_list: StockOperationDto[]
+  stock_overview: StockOverviewDto
+  stock_positions: StockPositionDto[]
+  stock_position_review: StockPositionDto
+  stock_position_tag: StockPositionDto
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

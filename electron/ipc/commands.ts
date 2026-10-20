@@ -23,6 +23,13 @@ import * as keyEventService from '../services/key-event'
 import * as todoService from '../services/todo'
 import { accountingOverview } from '../services/accounting-overview'
 import * as stockAccount from '../services/stock-account'
+import {
+  getOverview,
+  listPositions,
+  updatePositionReview,
+  updatePositionTag,
+} from '../services/stock-positions'
+import { TencentStockQuoteFetcher } from '../services/stock-quote'
 import type { RoundFee } from '../../shared/domain/models'
 import type {
   ChartQueryRequest,
@@ -894,6 +901,34 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return stockAccount.listOperations(workspaceDb(), ledgerId)
+    },
+
+    async stock_overview(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return getOverview(workspaceDb(), ledgerId, new TencentStockQuoteFetcher())
+    },
+
+    async stock_positions(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return listPositions(workspaceDb(), ledgerId, new TencentStockQuoteFetcher())
+    },
+
+    stock_position_review(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const code = String(raw.code ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return updatePositionReview(workspaceDb(), ledgerId, code, String(raw.review ?? ''))
+    },
+
+    stock_position_tag(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const code = String(raw.code ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return updatePositionTag(workspaceDb(), ledgerId, code, String(raw.tag ?? ''))
     },
   }
 }

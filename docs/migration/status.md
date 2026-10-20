@@ -48,7 +48,8 @@
 | `dao/todo.ts` + `services/todo.ts`（卡片/事项/进度、六档吸附、完成态） | ✅ 10 测试 |
 | `dao/stock-settings.ts` / `stock-fund.ts`（账户 / 费用 / 标签 / 复盘模板 / 资金链） | ✅ 23 测试 |
 | `dao/stock-trade.ts`（持仓 / 成交 / 历史 / 轮次，35 个函数） | ✅ 20 测试 |
-| 股票服务其余切片（持仓 / 成交写入 / 统计 / 复盘 / 归档） | ⬜ 待移植 |
+| `services/stock-positions.ts` + `stock-quote.ts`（持仓 / 总览 / 行情 GBK） | ✅ 27 测试 |
+| 股票服务其余切片（成交写入 / 统计 / 复盘 / 归档） | ⬜ 待移植 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -82,11 +83,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 441 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票账户） | ✅ |
+| Vitest 469 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件 + 待办 + 看板 + 股票账户/持仓） | ✅ |
 | Playwright：M0 / 账本 / 设置 / 记录 / 股票（5 条） | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 

@@ -47,7 +47,7 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
   - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
   - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts / statistics /
     update 状态机；tr-draw 全部模块（chart / calendar / diary_tree / paging / list_order / crop /
-    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，441 条 Vitest）；
+    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，469 条 Vitest）；
   - 旧数据导入器：只读快照 → 新建工作空间 → 表级单位映射 → 金额合计校验 → 资产复制 → 报告；
     已用 `fixtures/legacy/seed.sql` 做端到端测试；
   - 纵向切片：账本 DAO/服务/5 条 IPC 命令 + React 面板 + Playwright 端到端；分类/标签
@@ -56,6 +56,7 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
     图表分桶补零、关联事件；15 + 9 条测试。
   - 图表 DAO/服务 + 5 条命令：预设 / CRUD / 拖拽排序 / chart_lines JSON；16 条测试。
   - 股票账户/费用/标签/复盘模板/资金链 + 13 条命令；持仓/成交/历史/轮次 DAO（23 + 20 条测试）。
+  - 股票持仓/总览 + 行情抓取（腾讯 GBK、注入式 fetcher、浮动盈亏/仓位比例）；27 条测试。
   - 股票 · 账户页：本金/支取/利息、费用设置、资金记录，Playwright 验证现金链。
   - 记账 · 看板页：月/年期间、收支卡、支出构成，Playwright 与记一笔联动。
   - 待办 DAO/服务 + 12 条命令：卡片/事项/进度、六档吸附、完成态与历史；10 条测试。
@@ -66,6 +67,7 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
 - 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 

@@ -141,6 +141,18 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates stock position requests', () => {
+    expect(commandSchemas.stock_overview.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(commandSchemas.stock_positions.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(
+      commandSchemas.stock_position_review.safeParse({ ledger_id: 'l1', code: '600519' }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_position_tag.safeParse({ ledger_id: 'l1', code: '600519', tag: '打板' })
+        .success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
