@@ -25,6 +25,7 @@ import type {
   StockTradeHistoryDetailDto,
   StockTradeHistoryDto,
   StockTradeHistorySummaryDto,
+  StockTradeDto,
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
 import type {
@@ -353,6 +354,27 @@ export const commandSchemas = {
     strategy: z.string().nullable().optional(),
     group_size: z.union([z.number(), z.string()]).nullable().optional(),
   }),
+  stock_trade_create: z.object({
+    ledger_id: z.string(),
+    stock_code: z.string().default(''),
+    stock_name: z.string().default(''),
+    trade_type: z.string().default(''),
+    trade_time: z.number().default(0),
+    remark: z.string().default(''),
+    tag: z.string().default(''),
+    fills: z.array(z.object({ price: z.number(), lots: z.number() })).default([]),
+    price: z.number().default(0),
+    lots: z.number().default(0),
+    round_fee: z
+      .object({
+        commission_rate: z.number(),
+        min_commission: z.number().default(0),
+        stamp_duty_rate: z.number().default(0),
+        transfer_fee_rate: z.number().default(0),
+      })
+      .nullable()
+      .optional(),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -453,6 +475,7 @@ export interface CommandResponses {
   stock_history_detail: StockTradeHistoryDetailDto
   stock_history_summary: StockTradeHistorySummaryDto
   stock_statistics: StockStatisticsDto
+  stock_trade_create: StockTradeDto[]
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

@@ -169,6 +169,27 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates stock trade create requests', () => {
+    expect(
+      commandSchemas.stock_trade_create.safeParse({
+        ledger_id: 'l1',
+        stock_code: '600519',
+        stock_name: '贵州茅台',
+        trade_type: 'open',
+        fills: [{ price: 1500.5, lots: 1 }],
+      }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_trade_create.safeParse({
+        ledger_id: 'l1',
+        stock_code: '510300',
+        trade_type: 'open',
+        price: 3.9,
+        lots: 10,
+      }).success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

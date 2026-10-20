@@ -36,6 +36,8 @@ import {
   listTradeHistories,
 } from '../services/stock-history'
 import { getStatisticsFor } from '../services/stock-statistics'
+import { createTradeOrderWithRoundFee } from '../services/stock-trade-write'
+import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
   normalizeRecent,
@@ -996,5 +998,50 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       }
       return getStatisticsFor(workspaceDb(), ledgerId, filter)
     },
+
+    stock_trade_create(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const stockCode = String(raw.stock_code ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
+
+      const rawFills = Array.isArray(raw.fills) ? raw.fills : []
+      const fills = (
+        rawFills.length > 0
+          ? rawFills
+          : [{ price: Number(raw.price ?? 0), lots: Number(raw.lots ?? 0) }]
+      ).map((fill) => {
+        const item = asObject(fill)
+        return {
+          priceMilli: priceYuanToMilli(Number(item.price ?? 0)),
+          lots: Math.trunc(Number(item.lots ?? 0)),
+        }
+      })
+
+      let roundFee: RoundFee | undefined = undefined
+      if (typeof raw.round_fee === 'object' && raw.round_fee !== null) {
+        const fee = asObject(raw.round_fee)
+        roundFee = {
+          commissionRate: Number(fee.commission_rate ?? 0),
+          minCommission: Math.trunc(Number(fee.min_commission ?? 0)),
+          stampDutyRate: Number(fee.stamp_duty_rate ?? 0),
+          transferFeeRate: Number(fee.transfer_fee_rate ?? 0),
+        }
+      }
+
+      return createTradeOrderWithRoundFee(workspaceDb(), {
+        ledgerId,
+        stockCode,
+        stockName: String(raw.stock_name ?? ''),
+        tradeType: String(raw.trade_type ?? ''),
+        fills,
+        tradeTime: Math.trunc(Number(raw.trade_time ?? 0)),
+        remark: String(raw.remark ?? ''),
+        tag: String(raw.tag ?? ''),
+        roundFee,
+      })
+    },
   }
 }
+

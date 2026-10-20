@@ -31,6 +31,14 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
   const [overview, setOverview] = useState<StockOverviewDto | null>(null)
   const [positions, setPositions] = useState<StockPositionDto[]>([])
   const [amount, setAmount] = useState('')
+  const [tradeForm, setTradeForm] = useState({
+    tradeType: 'open',
+    code: '',
+    name: '',
+    price: '',
+    lots: '1',
+    tag: '分析',
+  })
   const [feeForm, setFeeForm] = useState({
     commissionRate: '',
     minCommission: '',
@@ -92,6 +100,31 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
     },
     [amount, ledgerId, load],
   )
+
+  const createTrade = useCallback(async (): Promise<void> => {
+    setBusy(true)
+    setError('')
+    try {
+      await window.api.invoke('stock_trade_create', {
+        ledger_id: ledgerId,
+        stock_code: tradeForm.code.trim(),
+        stock_name: tradeForm.name.trim(),
+        trade_type: tradeForm.tradeType,
+        trade_time: Math.floor(Date.now() / 1000),
+        remark: '',
+        tag: tradeForm.tag,
+        fills: [{ price: Number(tradeForm.price), lots: Number(tradeForm.lots) }],
+        price: 0,
+        lots: 0,
+      })
+      setTradeForm((current) => ({ ...current, price: '' }))
+      await load()
+    } catch (tradeError) {
+      setError(errorMessage(tradeError))
+    } finally {
+      setBusy(false)
+    }
+  }, [ledgerId, load, tradeForm])
 
   const saveFees = useCallback(async (): Promise<void> => {
     setBusy(true)
@@ -248,6 +281,79 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
         </p>
       )}
 
+      <h3 className="m0-subtitle">记一笔股票交易</h3>
+      <div className="m0-actions m0-new-record">
+        <select
+          className="m0-input"
+          data-testid="trade-type"
+          value={tradeForm.tradeType}
+          onChange={(event) =>
+            setTradeForm((current) => ({ ...current, tradeType: event.target.value }))
+          }
+        >
+          <option value="open">建仓</option>
+          <option value="add">加仓</option>
+          <option value="reduce">减仓</option>
+          <option value="close">清仓</option>
+        </select>
+        <input
+          className="m0-input"
+          data-testid="trade-code"
+          placeholder="代码"
+          value={tradeForm.code}
+          onChange={(event) =>
+            setTradeForm((current) => ({ ...current, code: event.target.value }))
+          }
+        />
+        <input
+          className="m0-input"
+          data-testid="trade-name"
+          placeholder="名称"
+          value={tradeForm.name}
+          onChange={(event) =>
+            setTradeForm((current) => ({ ...current, name: event.target.value }))
+          }
+        />
+        <input
+          className="m0-input"
+          data-testid="trade-price"
+          inputMode="decimal"
+          placeholder="价格（元）"
+          value={tradeForm.price}
+          onChange={(event) =>
+            setTradeForm((current) => ({ ...current, price: event.target.value }))
+          }
+        />
+        <input
+          className="m0-input"
+          data-testid="trade-lots"
+          inputMode="numeric"
+          placeholder="手数"
+          value={tradeForm.lots}
+          onChange={(event) =>
+            setTradeForm((current) => ({ ...current, lots: event.target.value }))
+          }
+        />
+        <input
+          className="m0-input"
+          data-testid="trade-tag"
+          placeholder="标签"
+          value={tradeForm.tag}
+          onChange={(event) =>
+            setTradeForm((current) => ({ ...current, tag: event.target.value }))
+          }
+        />
+        <button
+          type="button"
+          className="m0-primary"
+          data-testid="trade-save"
+          disabled={!ledgerId || busy}
+          onClick={() => void createTrade()}
+        >
+          记一笔
+        </button>
+      </div>
+
       <h3 className="m0-subtitle">交易费用</h3>
       <div className="m0-actions m0-new-record">
         <label className="m0-field">
@@ -337,6 +443,8 @@ export function StockPage({ ledgerId }: StockPageProps): JSX.Element {
     </section>
   )
 }
+
+
 
 
 

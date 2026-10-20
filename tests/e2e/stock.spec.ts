@@ -69,6 +69,18 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('fee-save').click()
     await expect(page.getByTestId('stock-error')).toHaveCount(0)
 
+    await page.getByTestId('trade-code').fill('600000')
+    await page.getByTestId('trade-name').fill('浦发银行')
+    await page.getByTestId('trade-price').fill('5')
+    await page.getByTestId('trade-lots').fill('1')
+    await page.getByTestId('trade-save').click()
+
+    await expect(page.getByTestId('stock-position-row')).toContainText('浦发银行')
+    await expect(page.getByTestId('stock-position-row')).toContainText('100')
+    await expect(page.getByTestId('stock-position-empty')).toHaveCount(0)
+    await expect(page.getByTestId('stock-cash')).toHaveText('¥294.99')
+    await expect(page.getByTestId('fund-row').filter({ hasText: '买入' })).toHaveCount(1)
+
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const account = database
       .prepare('SELECT principal_cents FROM stock_account')
@@ -83,16 +95,33 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     const fee = database
       .prepare('SELECT commission_rate FROM stock_fee_setting')
       .get() as { commission_rate: number }
+    const trade = database
+      .prepare(
+        'SELECT price_milli, amount_cents, quantity, total_cost_cents FROM stock_trade JOIN stock_position ON stock_position.stock_code = stock_trade.stock_code',
+      )
+      .get() as {
+      price_milli: number
+      amount_cents: number
+      quantity: number
+      total_cost_cents: number
+    }
     database.close()
 
     expect(account.principal_cents).toBe(100_000)
     expect(funds.map((row) => [row.event_type, row.amount_change_cents, row.cash_balance_cents])).toEqual([
       ['add_principal', 100_000, 100_000],
       ['withdraw', -20_000, 80_000],
+      ['buy', -50_501, 29_499],
     ])
     expect(fee.commission_rate).toBeCloseTo(0.0001, 10)
+    expect(trade.price_milli).toBe(5_000)
+    expect(trade.amount_cents).toBe(50_000)
+    expect(trade.quantity).toBe(100)
+    expect(trade.total_cost_cents).toBe(50_501)
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
