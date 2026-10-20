@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { TodoCardDto, TodoHistoryDto } from '../../shared/types/todo'
+import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -211,9 +212,10 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       ) : null}
 
       {cards.length === 0 ? (
-        <p className="m0-muted" data-testid="todo-empty">
-          {ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="todo-empty"
+          title={ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
+        />
       ) : (
         <div className="m0-todo-cards">
           {cards.map((card) => (
@@ -341,9 +343,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
       <h3 className="m0-subtitle">历史</h3>
       {history.length === 0 ? (
-        <p className="m0-muted" data-testid="todo-history-empty">
-          还没有已完成事项
-        </p>
+        <EmptyState testId="todo-history-empty" title="还没有已完成事项" />
       ) : (
         <ul className="m0-todo-history">
           {history.map((item) => (
@@ -356,5 +356,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     </section>
   )
 }
+
 
 

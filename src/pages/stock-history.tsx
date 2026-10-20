@@ -9,6 +9,7 @@ import type {
 } from '../../shared/types/stock-history'
 import type { StockTradeTagSettingDto } from '../../shared/types/stock'
 import { ConfirmDialog } from '../components/confirm-dialog'
+import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -219,9 +220,10 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
       ) : null}
 
       {rows.length === 0 ? (
-        <p className="m0-muted" data-testid="stock-history-empty">
-          {ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="stock-history-empty"
+          title={ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
+        />
       ) : (
         <table className="m0-table">
           <thead>
@@ -404,6 +406,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
     </section>
   )
 }
+
 
 
 

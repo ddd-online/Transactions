@@ -158,13 +158,16 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(
       closeTrade.getByTestId('stock-trade-price'),
     ).toHaveValue('6.5')
-    const priceDatabase = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
-    const closePrice = priceDatabase
-      .prepare("SELECT price_milli FROM stock_trade WHERE trade_type = 'close'")
-      .get() as { price_milli: number }
-    priceDatabase.close()
-    expect(closePrice.price_milli).toBe(6500)
-
+    await expect
+      .poll(() => {
+        const db = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
+        const row = db
+          .prepare("SELECT price_milli FROM stock_trade WHERE trade_type = 'close'")
+          .get() as { price_milli: number }
+        db.close()
+        return row.price_milli
+      })
+      .toBe(6500)
     await page.getByTestId('stock-tab-statistics').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
 
@@ -177,6 +180,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

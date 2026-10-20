@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import { centsToYuan } from '../../shared/domain/money'
 import { formatTimestamp } from '../../shared/domain/time'
 import type { StockStatisticsDto } from '../../shared/types/stock-statistics'
+import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -133,9 +134,10 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
       ) : null}
 
       {points.length === 0 ? (
-        <p className="m0-muted" data-testid="stock-statistics-empty">
-          {ledgerId ? '还没有已结算的轮次' : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="stock-statistics-empty"
+          title={ledgerId ? '还没有已结算的轮次' : '请先创建/选择账本'}
+        />
       ) : (
         <table className="m0-table">
           <thead>
@@ -169,4 +171,5 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
     </section>
   )
 }
+
 

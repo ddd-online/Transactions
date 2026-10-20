@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { centsToYuan } from '../../shared/domain/money'
 import type { ChartDto } from '../../shared/types/chart'
 import type { ChartQueryResponse } from '../../shared/types/transaction'
+import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -195,9 +196,10 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       ) : null}
 
       {!ledgerId || charts.length === 0 ? (
-        <p className="m0-muted" data-testid="chart-empty">
-          {ledgerId ? '还没有图表' : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="chart-empty"
+          title={ledgerId ? '还没有图表' : '请先创建/选择账本'}
+        />
       ) : (
         <>
           {geometry.length > 0 && geometry.some((line) => line.points.length > 0) ? (
@@ -232,9 +234,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               ))}
             </svg>
           ) : (
-            <p className="m0-muted" data-testid="chart-empty">
-              这一期还没有数据
-            </p>
+            <EmptyState testId="chart-empty" title="这一期还没有数据" />
           )}
 
           <ul className="m0-chart-legend">
@@ -257,6 +257,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     </section>
   )
 }
+
 
 
 
