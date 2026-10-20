@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
+import { ImageCrop } from '../components/image-crop'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -57,6 +58,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [color, setColor] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [cropSrc, setCropSrc] = useState('')
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const loadDates = useCallback(async (): Promise<void> => {
@@ -143,9 +145,20 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     }
   }, [date, ledgerId, loadDates])
 
-  const addImage = useCallback(
-    async (file: File | undefined): Promise<void> => {
-      if (!file || !ledgerId) return
+  const addImage = useCallback(async (file: File | undefined): Promise<void> => {
+    if (!file || !ledgerId) return
+    setError('')
+    try {
+      setCropSrc(await readDataUrl(file))
+    } catch (readError) {
+      setError(errorMessage(readError))
+    } finally {
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }, [ledgerId])
+
+  const commitImage = useCallback(
+    async (data: string): Promise<void> => {
       setBusy(true)
       setError('')
       try {
@@ -158,7 +171,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
             color,
           })
         }
-        const data = await readDataUrl(file)
         const thumb = await makeThumbnail(data)
         await window.api.invoke('key_event_image_add', {
           ledger_id: ledgerId,
@@ -166,11 +178,11 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           data,
           thumb,
         })
+        setCropSrc('')
         await Promise.all([loadEvent(), loadDates()])
       } catch (imageError) {
         setError(errorMessage(imageError))
       } finally {
-        if (fileRef.current) fileRef.current.value = ''
         setBusy(false)
       }
     },
@@ -301,6 +313,14 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           </figure>
         ))}
       </div>
+
+      {cropSrc ? (
+        <ImageCrop
+          src={cropSrc}
+          onCancel={() => setCropSrc('')}
+          onConfirm={(data) => void commitImage(data)}
+        />
+      ) : null}
     </section>
   )
 }

@@ -65,6 +65,8 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
       mimeType: 'image/png',
       buffer: PNG_1X1,
     })
+    await expect(page.getByTestId('image-crop')).toBeVisible()
+    await page.getByTestId('image-crop-confirm').click()
     await expect(page.getByTestId('event-image')).toHaveCount(1)
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -77,7 +79,7 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     database.close()
 
     expect(event).toEqual({ title: '年会', content: '抽奖与聚餐', color: 'red' })
-    expect(image.file_path).toMatch(/^key_events\/2026-01-15\/.+\.png$/)
+    expect(image.file_path).toMatch(/^key_events\/2026-01-15\/.+\.(png|jpg)$/)
     expect(image.thumb_path).toMatch(/^key_events\/2026-01-15\/thumb_.+\.jpg$/)
     expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(true)
     expect(existsSync(join(workspace, 'data', 'assets', image.thumb_path))).toBe(true)
@@ -100,3 +102,5 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+

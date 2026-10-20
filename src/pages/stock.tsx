@@ -23,13 +23,13 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
 
   return (
     <>
-      <div className="m0-actions m0-stock-tabs">
+      <div className="ui-tabs m0-stock-tabs">
         {TABS.map(([key, label]) => (
           <button
             key={key}
             type="button"
             data-testid={`stock-tab-${key}`}
-            className={tab === key ? 'm0-primary' : 'm0-link'}
+            className={`ui-tabs__tab${tab === key ? ' is-active' : ''}`}
             onClick={() => setTab(key)}
           >
             {label}

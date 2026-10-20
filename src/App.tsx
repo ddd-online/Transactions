@@ -560,7 +560,7 @@ export function App(): JSX.Element {
               </label>
             </div>
 
-            <div className="m0-actions m0-accounting-tabs">
+            <div className="ui-tabs m0-accounting-tabs">
               {(
                 [
                   ['dashboard', '看板'],
@@ -574,7 +574,7 @@ export function App(): JSX.Element {
                   key={key}
                   type="button"
                   data-testid={`acct-tab-${key}`}
-                  className={accountingTab === key ? 'm0-primary' : 'm0-link'}
+                  className={`ui-tabs__tab${accountingTab === key ? ' is-active' : ''}`}
                   onClick={() => setAccountingTab(key)}
                 >
                   {label}
