@@ -57,6 +57,18 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
       .toBe(false)
 
+    await page.getByTestId('close-behavior').selectOption('tray')
+    await expect
+      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).closeBehavior)
+      .toBe('tray')
+
+    await page.getByTestId('proxy-mode').selectOption('manual')
+    await page.getByTestId('proxy-url').fill('http://127.0.0.1:7890')
+    await page.getByTestId('proxy-save').click()
+    await expect
+      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).proxy)
+      .toEqual({ mode: 'manual', url: 'http://127.0.0.1:7890' })
+
     await page.getByTestId('feature-stock').check()
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
@@ -66,5 +78,6 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 

@@ -47,6 +47,7 @@ import {
 } from '../services/stock-trade-edit'
 import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../services/stock-review'
 import { UpdaterService } from '../services/updater'
+import { applyProxy, appFetch } from '../shell/net'
 import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
@@ -81,9 +82,16 @@ const PNG_1X1 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
 const updater = new UpdaterService({
+  fetchImpl: (input, init) => appFetch(input, init as RequestInit),
   onEvent: (event, snapshot) => sendEvent(event, snapshot),
   quit: () => app.quit(),
 })
+
+function createQuoteFetcher(): TencentStockQuoteFetcher {
+  return new TencentStockQuoteFetcher({
+    fetchImpl: (url, signal) => appFetch(url, { signal }),
+  })
+}
 
 export interface HandlerOptions {
   config: ConfigStore
@@ -350,6 +358,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       options.config.update((config) => {
         config.proxy = setting
       })
+      void applyProxy(setting)
       return setting
     },
 
@@ -967,13 +976,13 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     async stock_overview(request) {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return getOverview(workspaceDb(), ledgerId, new TencentStockQuoteFetcher())
+      return getOverview(workspaceDb(), ledgerId, createQuoteFetcher())
     },
 
     async stock_positions(request) {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return listPositions(workspaceDb(), ledgerId, new TencentStockQuoteFetcher())
+      return listPositions(workspaceDb(), ledgerId, createQuoteFetcher())
     },
 
     stock_position_review(request) {
@@ -995,7 +1004,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     async stock_history(request) {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return listTradeHistories(workspaceDb(), ledgerId, new TencentStockQuoteFetcher())
+      return listTradeHistories(workspaceDb(), ledgerId, createQuoteFetcher())
     },
 
     stock_history_detail(request) {
@@ -1185,8 +1194,9 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     async stock_name(request) {
       const stockCode = String(asObject(request).stock_code ?? '')
       if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
-      return lookupStockName(workspaceDb(), new TencentStockQuoteFetcher(), stockCode)
+      return lookupStockName(workspaceDb(), createQuoteFetcher(), stockCode)
     },
   }
 }
+
 

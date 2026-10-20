@@ -8,6 +8,7 @@ import { createHandlers } from './ipc/commands'
 import { registerIpc } from './ipc/router'
 import { initLogging, logError, logStartup } from './logging'
 import { createTray } from './shell/tray'
+import { applyProxy } from './shell/net'
 import {
   createMainWindow,
   applyAppearance,
@@ -64,6 +65,7 @@ if (!hasSingleInstanceLock) {
       const config = ConfigStore.forApp(isDev)
       logStartup(isDev, config.path)
       applyAppearance(config.get().appearance)
+      void applyProxy(config.get().proxy)
 
       registerAppProtocol(join(__dirname, '../renderer'))
       registerAssetProtocol(() => {

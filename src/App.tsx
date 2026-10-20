@@ -62,6 +62,14 @@ export function App(): JSX.Element {
   const [view, setView] = useState<View>('accounting')
   const [importProgress, setImportProgress] = useState<LegacyImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
+  const [proxyMode, setProxyMode] = useState('auto')
+  const [proxyUrl, setProxyUrl] = useState('')
+
+  useEffect(() => {
+    if (!config) return
+    setProxyMode(config.proxy.mode)
+    setProxyUrl(config.proxy.url)
+  }, [config?.proxy.mode, config?.proxy.url])
 
   useEffect(() => {
     const root = document.documentElement
@@ -217,6 +225,29 @@ export function App(): JSX.Element {
       setError(errorMessage(appearanceError))
     }
   }, [])
+
+  const setCloseBehavior = useCallback(async (behavior: string): Promise<void> => {
+    setError('')
+    try {
+      await window.api.invoke('config_set_close_behavior', { behavior })
+      setConfig((current) => (current ? { ...current, closeBehavior: behavior } : current))
+    } catch (closeError) {
+      setError(errorMessage(closeError))
+    }
+  }, [])
+
+  const saveProxy = useCallback(async (): Promise<void> => {
+    setError('')
+    try {
+      const proxy = await window.api.invoke('config_set_proxy', {
+        mode: proxyMode,
+        url: proxyUrl,
+      })
+      setConfig((current) => (current ? { ...current, proxy } : current))
+    } catch (proxyError) {
+      setError(errorMessage(proxyError))
+    }
+  }, [proxyMode, proxyUrl])
 
   const toggleFeature = useCallback(
     async (feature: string, enabled: boolean): Promise<void> => {
@@ -428,6 +459,55 @@ export function App(): JSX.Element {
                   <option value="dark">深色</option>
                 </select>
               </label>
+              <label className="m0-field">
+                关闭窗口
+                <select
+                  data-testid="close-behavior"
+                  className="m0-input"
+                  value={config?.closeBehavior ?? 'quit'}
+                  disabled={!config}
+                  onChange={(event) => void setCloseBehavior(event.target.value)}
+                >
+                  <option value="quit">退出应用</option>
+                  <option value="tray">最小化到托盘</option>
+                  <option value="ask">每次询问</option>
+                </select>
+              </label>
+              <div className="m0-import-row">
+                <label className="m0-field m0-import-field">
+                  网络代理
+                  <select
+                    className="m0-input"
+                    data-testid="proxy-mode"
+                    value={proxyMode}
+                    disabled={!config}
+                    onChange={(event) => setProxyMode(event.target.value)}
+                  >
+                    <option value="auto">跟随系统</option>
+                    <option value="off">不使用代理</option>
+                    <option value="manual">手动</option>
+                  </select>
+                </label>
+                <label className="m0-field m0-import-field">
+                  代理地址
+                  <input
+                    className="m0-input"
+                    data-testid="proxy-url"
+                    value={proxyUrl}
+                    disabled={!config || proxyMode !== 'manual'}
+                    onChange={(event) => setProxyUrl(event.target.value)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="m0-primary"
+                  data-testid="proxy-save"
+                  disabled={!config}
+                  onClick={() => void saveProxy()}
+                >
+                  保存代理
+                </button>
+              </div>
               <div className="m0-features">
                 {FEATURES.map(([key, label]) => (
                   <label key={key} className="m0-feature">
