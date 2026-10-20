@@ -144,6 +144,73 @@ body {
   gap: 6px;
 }
 
+.m0-ledger-select {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.m0-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.m0-primary {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--transactions-color-primary, #3964fe);
+  background: var(--transactions-color-primary, #3964fe);
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.m0-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.m0-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.m0-table th,
+.m0-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--transactions-color-border, #e5e6eb);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.m0-table th {
+  color: var(--transactions-color-text-secondary, #646a73);
+  font-weight: 500;
+}
+
+.m0-right {
+  text-align: right;
+}
+
+.m0-amount-expense {
+  color: var(--transactions-color-error, #d92d20);
+}
+
+.m0-amount-income {
+  color: var(--transactions-color-success, #12805c);
+}
+
+.m0-pager {
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0;
+}
+
 .m0-card ul {
   margin: 0;
   padding-left: 18px;

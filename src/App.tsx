@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
 import { WORKSPACE_CHANGED } from '../shared/events'
+import { RecordsPage } from './pages/records'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -25,6 +26,7 @@ export function App(): JSX.Element {
   const [config, setConfig] = useState<ConfigSnapshot | null>(null)
   const [workspace, setWorkspace] = useState('')
   const [ledgers, setLedgers] = useState<Ledger[]>([])
+  const [activeLedgerId, setActiveLedgerId] = useState('')
   const [ledgerName, setLedgerName] = useState('')
   const [asset, setAsset] = useState('')
   const [assetLoaded, setAssetLoaded] = useState(false)
@@ -61,6 +63,16 @@ export function App(): JSX.Element {
   useEffect(() => {
     void refreshLedgers()
   }, [refreshLedgers])
+
+  useEffect(() => {
+    if (ledgers.length === 0) {
+      setActiveLedgerId('')
+      return
+    }
+    if (!ledgers.some((ledger) => ledger.id === activeLedgerId)) {
+      setActiveLedgerId(ledgers[0].id)
+    }
+  }, [activeLedgerId, ledgers])
 
   useEffect(() => {
     let alive = true
@@ -260,6 +272,27 @@ export function App(): JSX.Element {
             </p>
           ) : null}
         </section>
+
+        <div className="m0-actions m0-ledger-select">
+          <label className="m0-field">
+            当前账本
+            <select
+              data-testid="ledger-select"
+              className="m0-input"
+              value={activeLedgerId}
+              onChange={(event) => setActiveLedgerId(event.target.value)}
+            >
+              {ledgers.length === 0 ? <option value="">（无账本）</option> : null}
+              {ledgers.map((ledger) => (
+                <option key={ledger.id} value={ledger.id}>
+                  {ledger.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <RecordsPage ledgerId={activeLedgerId} />
 
         <section className="m0-card m0-card--wide">
           <h2>账本</h2>
