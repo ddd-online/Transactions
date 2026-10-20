@@ -38,6 +38,13 @@ import {
 import { getStatisticsFor } from '../services/stock-statistics'
 import { createTradeOrderWithRoundFee } from '../services/stock-trade-write'
 import { archiveStockData, resetStockData } from '../services/stock-lifecycle'
+import {
+  deleteTradeOrder,
+  previewRollback,
+  previewTradeChange,
+  rollbackLatest,
+  updateTradeFill,
+} from '../services/stock-trade-edit'
 import { priceYuanToMilli } from '../../shared/domain/money'
 import {
   createStatisticsFilter,
@@ -1058,6 +1065,56 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       if (!name) throw new AppError('请输入账本名称', { status: 400 })
       return archiveStockData(workspaceDb(), ledgerId, name)
+    },
+
+    stock_trade_update(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const tradeId = String(raw.id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return updateTradeFill(workspaceDb(), {
+        ledgerId,
+        tradeId,
+        priceMilli: priceYuanToMilli(Number(raw.price ?? 0)),
+        lots: Math.trunc(Number(raw.lots ?? 0)),
+        tradeTime: Math.trunc(Number(raw.trade_time ?? 0)),
+      })
+    },
+
+    stock_trade_order_delete(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const orderId = String(raw.order_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      deleteTradeOrder(workspaceDb(), { ledgerId, orderId })
+      return null
+    },
+
+    stock_trade_impact(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return previewTradeChange(workspaceDb(), {
+        ledgerId,
+        action: String(raw.action ?? ''),
+        tradeId: String(raw.trade_id ?? ''),
+        orderId: String(raw.order_id ?? ''),
+        priceMilli: priceYuanToMilli(Number(raw.price ?? 0)),
+        lots: Math.trunc(Number(raw.lots ?? 0)),
+        tradeTime: Math.trunc(Number(raw.trade_time ?? 0)),
+      })
+    },
+
+    stock_operation_preview(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return previewRollback(workspaceDb(), ledgerId)
+    },
+
+    stock_operation_rollback(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return rollbackLatest(workspaceDb(), ledgerId)
     },
   }
 }

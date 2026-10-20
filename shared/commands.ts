@@ -29,6 +29,11 @@ import type {
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
 import type {
+  StockOperationRollbackDto,
+  StockOperationRollbackPreviewDto,
+  StockTradeImpactDto,
+} from './types/stock-trade-edit'
+import type {
   TodoCardDto,
   TodoHistoryDto,
   TodoItemDto,
@@ -377,6 +382,28 @@ export const commandSchemas = {
   }),
   stock_reset: z.object({ ledger_id: z.string() }),
   stock_archive: z.object({ ledger_id: z.string(), name: z.string().default('') }),
+  stock_trade_update: z.object({
+    ledger_id: z.string(),
+    id: z.string(),
+    price: z.number().default(0),
+    lots: z.number().default(0),
+    trade_time: z.number().default(0),
+  }),
+  stock_trade_order_delete: z.object({
+    ledger_id: z.string(),
+    order_id: z.string().default(''),
+  }),
+  stock_trade_impact: z.object({
+    ledger_id: z.string(),
+    action: z.string().default(''),
+    trade_id: z.string().default(''),
+    order_id: z.string().default(''),
+    price: z.number().default(0),
+    lots: z.number().default(0),
+    trade_time: z.number().default(0),
+  }),
+  stock_operation_preview: z.object({ ledger_id: z.string() }),
+  stock_operation_rollback: z.object({ ledger_id: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -480,6 +507,11 @@ export interface CommandResponses {
   stock_trade_create: StockTradeDto[]
   stock_reset: boolean
   stock_archive: string
+  stock_trade_update: StockTradeDto
+  stock_trade_order_delete: null
+  stock_trade_impact: StockTradeImpactDto
+  stock_operation_preview: StockOperationRollbackPreviewDto
+  stock_operation_rollback: StockOperationRollbackDto
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

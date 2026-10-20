@@ -197,6 +197,25 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates stock trade edit requests', () => {
+    expect(
+      commandSchemas.stock_trade_update.safeParse({ ledger_id: 'l1', id: 't1', price: 5, lots: 1 })
+        .success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_trade_order_delete.safeParse({ ledger_id: 'l1', order_id: 'o1' })
+        .success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_trade_impact.safeParse({
+        ledger_id: 'l1',
+        action: 'delete_order',
+        order_id: 'o1',
+      }).success,
+    ).toBe(true)
+    expect(commandSchemas.stock_operation_rollback.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
