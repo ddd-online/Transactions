@@ -47,7 +47,7 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
   - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
   - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts / statistics /
     update 状态机；tr-draw 全部模块（chart / calendar / diary_tree / paging / list_order / crop /
-    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，390 条 Vitest）；
+    quadrant / text / section / change / query / stock_rows / stock_stats；旧 Rust 单测逐条对等，395 条 Vitest）；
   - 旧数据导入器：只读快照 → 新建工作空间 → 表级单位映射 → 金额合计校验 → 资产复制 → 报告；
     已用 `fixtures/legacy/seed.sql` 做端到端测试；
   - 纵向切片：账本 DAO/服务/5 条 IPC 命令 + React 面板 + Playwright 端到端；分类/标签
@@ -55,6 +55,7 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
   - 交易记录 DAO/服务 + 9 条命令：条件筛选（类型/分类/标签/时间）、排序分页、同源统计、
     图表分桶补零、关联事件；15 + 9 条测试。
   - 图表 DAO/服务 + 5 条命令：预设 / CRUD / 拖拽排序 / chart_lines JSON；16 条测试。
+  - 记账 · 看板页：月/年期间、收支卡、支出构成，Playwright 与记一笔联动。
   - 待办 DAO/服务 + 12 条命令：卡片/事项/进度、六档吸附、完成态与历史；10 条测试。
   - 事件 DAO/服务 + 8 条命令：标题按字符截断、图片落盘/回滚/删除、资产路径校验；5 + 4 条测试。
   - 日记 DAO/服务 + 7 条命令：按账本隔离、字数、导入导出（UTF-8/UTF-16/GBK）。
@@ -63,6 +64,7 @@ pnpm dist           # NSIS 安装包 + 便携版到 dist/
 - 详见 `docs/adr/` 与 `docs/migration/oracle.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 
