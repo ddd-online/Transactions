@@ -52,7 +52,8 @@ test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
 
   try {
     const page = await electronApp.firstWindow()
-    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('open-import').click()
+    await expect(page.getByTestId('import-source')).toBeVisible()
     await page.getByTestId('import-source').fill(source)
     await page.getByTestId('import-target').fill(target)
     await page.getByTestId('import-probe').click()

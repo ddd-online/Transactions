@@ -364,6 +364,34 @@ body {
   box-sizing: border-box;
 }
 
+.app-workspace-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--transactions-color-bg, #f2f3f5);
+}
+
+.app-workspace-card {
+  width: min(420px, calc(100vw - 40px));
+  padding: 32px;
+  border-radius: 16px;
+  border: 1px solid var(--transactions-color-border, #e5e6eb);
+  background: var(--transactions-color-bg-elevated, #ffffff);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.app-workspace-card h1 {
+  margin: 0 0 8px;
+}
+
+.app-workspace-card p {
+  margin: 0 0 20px;
+}
+
 .m0-event-content {
   width: 100%;
   min-height: 180px;

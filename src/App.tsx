@@ -62,6 +62,7 @@ export function App(): JSX.Element {
   const [view, setView] = useState<View>('accounting')
   const [importProgress, setImportProgress] = useState<LegacyImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
+  const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
 
@@ -297,7 +298,39 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <div className="app">
+    <>
+      {!workspace && !workspacePromptDismissed ? (
+        <div className="app-workspace-overlay">
+          <div className="app-workspace-card">
+            <h1>Transactions</h1>
+            <p className="m0-muted">选择一个工作空间开始；所有数据都保存在本地。</p>
+            <div className="m0-actions" style={{ justifyContent: 'center' }}>
+              <button
+                type="button"
+                data-testid="open-workspace"
+                className="m0-primary"
+                disabled={busy}
+                onClick={() => void openWorkspace()}
+              >
+                选择工作空间
+              </button>
+              <button
+                type="button"
+                data-testid="open-import"
+                className="m0-link"
+                onClick={() => {
+                  setWorkspacePromptDismissed(true)
+                  setView('settings')
+                }}
+              >
+                导入旧版数据
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="app">
       <aside className="app-sidebar">
         <div className="app-brand">
           <span className="m0-brand">Transactions</span>
@@ -319,15 +352,17 @@ export function App(): JSX.Element {
         </nav>
 
         <div className="app-sidebar-footer">
-          <button
-            type="button"
-            data-testid="open-workspace"
-            className="m0-primary"
-            disabled={busy}
-            onClick={() => void openWorkspace()}
-          >
-            {workspace ? '切换工作空间' : '选择工作空间'}
-          </button>
+          {workspace ? (
+            <button
+              type="button"
+              data-testid="open-workspace"
+              className="m0-primary"
+              disabled={busy}
+              onClick={() => void openWorkspace()}
+            >
+              切换工作空间
+            </button>
+          ) : null}
           <span className="app-workspace" data-testid="workspace-state">
             {workspace ? `已打开：${workspace}` : '未打开工作空间'}
           </span>
@@ -566,9 +601,12 @@ export function App(): JSX.Element {
           </>
         ) : null}
       </main>
-    </div>
+      </div>
+    </>
   )
 }
+
+
 
 
 
