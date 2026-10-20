@@ -78,6 +78,9 @@
 - [x] 功能开关复用旧版 `ui-switch`（原生 checkbox 语义保留）
 - [x] 图表按月/按年复用旧版 `ui-segmented`
 - [x] 待办进度复用旧版 `ui-progress`
+- [x] 提示气泡复用旧版 `ui-tooltip`；加载复用 `ui-spin`
+- [x] 事件正文 Markdown 渲染（标题/列表/代码/粗斜体/https 链接）
+- [x] 页头抽出 `PageHeader`，与顶栏/窗口控制布局一致
 - [ ] 页面内 35 个组件（表格/弹窗/日期选择/图片裁剪等）逐页还原
 - [x] 按账本功能开关（`ledgerFeatures`）的配置与界面
 - [x] 股票归档/重置/操作回滚的界面入口

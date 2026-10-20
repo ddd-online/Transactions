@@ -4,6 +4,8 @@ import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
 import { DatePicker } from '../components/date-picker'
+import { Tooltip } from '../components/tooltip'
+import { Markdown } from '../components/markdown'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -286,6 +288,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         value={content}
         onChange={(changeEvent) => setContent(changeEvent.target.value)}
       />
+      {content ? <Markdown source={content} testId="event-content-preview" /> : null}
 
       <div className="m0-actions">
         <input
@@ -301,14 +304,16 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         {images.map((image) => (
           <figure key={image.id} className="m0-event-image">
             <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="event-image-delete"
-              onClick={() => void removeImage(image.id)}
-            >
-              删除图片
-            </button>
+            <Tooltip text="删除这张图片">
+              <button
+                type="button"
+                className="m0-link"
+                data-testid="event-image-delete"
+                onClick={() => void removeImage(image.id)}
+              >
+                删除图片
+              </button>
+            </Tooltip>
           </figure>
         ))}
       </div>
@@ -323,4 +328,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     </section>
   )
 }
+
+
 

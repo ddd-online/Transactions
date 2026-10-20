@@ -1,6 +1,7 @@
 import { useCallback, useState, type JSX } from 'react'
 
 import { notify } from '../components/toast'
+import { Spin } from '../components/spin'
 import type {
   LegacyImportProbe,
   LegacyImportProgress,
@@ -133,6 +134,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
         </button>
         {progress ? (
           <span className="m0-muted" data-testid="import-status">
+            {busy ? <Spin /> : null}
             {PHASE_LABELS[progress.phase] ?? progress.phase}
             {progress.table ? ` · ${progress.table}` : ''}
             {typeof progress.index === 'number' && progress.total
@@ -176,5 +178,6 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     </section>
   )
 }
+
 
 

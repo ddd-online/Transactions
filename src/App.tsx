@@ -26,6 +26,7 @@ import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
 import { ToastHost, notify } from './components/toast'
 import { Switch } from './components/switch'
+import { PageHeader } from './components/page-header'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -530,9 +531,7 @@ export function App(): JSX.Element {
             </button>
           </div>
         </div>
-        <div className="page-header">
-          <h1>{pageTitle}</h1>
-        </div>
+        <PageHeader title={pageTitle} />
         <div className="app-router-view">
         {error ? (
           <p className="m0-error" data-testid="error">
@@ -850,6 +849,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 
