@@ -16,6 +16,12 @@ import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
+import * as transactionService from '../services/transaction-record'
+import type {
+  ChartQueryRequest,
+  TransactionRecordDto,
+  TrQueryCondition,
+} from '../../shared/types/transaction'
 import {
   createLedger,
   deleteLedgerById,
@@ -379,6 +385,67 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         Number(raw.sortOrder ?? 0),
       )
       return null
+    },
+
+    tr_query(request) {
+      return transactionService.queryTrsOnCondition(workspaceDb(), request as TrQueryCondition)
+    },
+
+    tr_chart_data(request) {
+      return transactionService.queryTrsForChart(workspaceDb(), request as ChartQueryRequest)
+    },
+
+    tr_create(request) {
+      return transactionService.createTr(workspaceDb(), request as TransactionRecordDto)
+    },
+
+    tr_batch_create(request) {
+      const dtos = request as TransactionRecordDto[]
+      dtos.forEach((dto, index) => {
+        try {
+          transactionService.validateTransactionDto(dto)
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          throw new AppError(`record ${index + 1}: ${message}`, { status: 400 })
+        }
+      })
+      return transactionService.batchCreateTr(workspaceDb(), dtos)
+    },
+
+    tr_delete(request) {
+      const id = String(asObject(request).id ?? '')
+      if (!id) throw new AppError('missing transaction id', { status: 400 })
+      transactionService.deleteTrById(workspaceDb(), id)
+      return null
+    },
+
+    tr_link(request) {
+      const raw = asObject(request)
+      const transactionId = String(raw.transaction_id ?? '')
+      const date = String(raw.date ?? '')
+      if (!transactionId || !date) {
+        throw new AppError('transaction_id and date are required', { status: 400 })
+      }
+      transactionService.linkToKeyEvent(workspaceDb(), transactionId, date)
+      return date
+    },
+
+    tr_unlink(request) {
+      const transactionId = String(asObject(request).transaction_id ?? '')
+      if (!transactionId) {
+        throw new AppError('transaction_id is required', { status: 400 })
+      }
+      transactionService.unlinkFromKeyEvent(workspaceDb(), transactionId)
+      return transactionId
+    },
+
+    tr_linked_by_date(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const date = String(raw.date ?? '')
+      if (!date) throw new AppError('date is required', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return transactionService.queryLinkedByDate(workspaceDb(), ledgerId, date)
     },
   }
 }

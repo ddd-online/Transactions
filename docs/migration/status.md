@@ -40,7 +40,8 @@
 | 旧库探测 + 一次性导入（快照 / 单位映射 / 合计校验 / 资产 / 报告） | ✅ 8 测试 |
 | `dao/ledger.ts` + 级联清单 | ✅ 4 测试（含“带 ledger_id 的表都被级联覆盖”守卫） |
 | `dao/category.ts` / `dao/tag.ts`（默认 19 分类 / 57 标签、排序、级联、计数） | ✅ 22 测试 |
-| 其余 DAO（transaction/chart/key_event/diary/stock/todo） | ⬜ 待移植 |
+| `dao/transaction-record.ts` + `transaction-record-tag.ts`（过滤/排序/分页/统计/图表分桶） | ✅ 15 测试 |
+| 其余 DAO（chart/key_event/diary/stock/todo） | ⬜ 待移植 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -49,6 +50,7 @@
 |---|---|
 | `services/ledger.ts` + 5 条 ledger 命令 | ✅ 单元 + Playwright 端到端（新建/列表/落库/删除） |
 | `services/category.ts` / `services/tag.ts` + 12 条命令 | ✅ 单元测试 |
+| `services/transaction-record.ts` + 9 条 tr 命令（CRUD / 条件查询 / 图表 / 关联事件） | ✅ 9 测试 |
 | 其余业务命令（约 112 条） | ⬜ 待移植 |
 | config / workspace / 导入命令 | ✅（M0/M1） |
 | 更新命令 + 下载器 | ⬜ 待移植 |
@@ -65,11 +67,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 311 条（领域 + 数据 + 导入 + 账本 + 分类标签） | ✅ |
+| Vitest 336 条（领域 + 数据 + 导入 + 账本 + 分类标签 + 交易记录） | ✅ |
 | Playwright M0 冒烟 + 账本端到端 | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 

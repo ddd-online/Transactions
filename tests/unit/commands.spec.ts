@@ -47,6 +47,21 @@ describe('command catalog', () => {
     expect(commandSchemas.config_set_appearance.safeParse({ appearance: 'dark' }).success).toBe(true)
   })
 
+  it('validates transaction requests', () => {
+    const dto = { ledgerId: 'l1', price: 100, transactionType: 'expense', category: '餐饮美食' }
+    expect(commandSchemas.tr_create.safeParse(dto).success).toBe(true)
+    expect(commandSchemas.tr_batch_create.safeParse([dto, dto]).success).toBe(true)
+    expect(commandSchemas.tr_query.safeParse({ ledgerId: 'l1' }).success).toBe(true)
+    expect(commandSchemas.tr_delete.safeParse({ id: 't1' }).success).toBe(true)
+    expect(commandSchemas.tr_link.safeParse({ transaction_id: 't1', date: '2026-01-01' }).success).toBe(
+      true,
+    )
+    expect(commandSchemas.tr_linked_by_date.safeParse({ ledger_id: 'l1', date: '2026-01-01' }).success).toBe(
+      true,
+    )
+    expect(commandSchemas.tr_chart_data.safeParse({ ledgerId: 'l1', lines: [] }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

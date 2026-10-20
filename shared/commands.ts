@@ -3,7 +3,50 @@ import { z } from 'zod'
 import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
 import type { LegacyImportProbe, LegacyImportReport } from './types/import'
 import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
+import type {
+  ChartQueryResponse,
+  TransactionRecordDto,
+  TrQueryResult,
+} from './types/transaction'
 import type { Ledger } from './domain/models'
+
+const queryConditionItemSchema = z.object({
+  transactionType: z.string().default(''),
+  category: z.string().default(''),
+  tags: z.array(z.string()).default([]),
+  tagPolicy: z.string().default(''),
+  tagNot: z.boolean().default(false),
+  description: z.string().default(''),
+})
+
+const transactionRecordDtoSchema = z.object({
+  ledgerId: z.string().default(''),
+  transactionId: z.string().default(''),
+  price: z.number().default(0),
+  transactionType: z.string().default(''),
+  category: z.string().default(''),
+  description: z.string().default(''),
+  tags: z.array(z.string()).default([]),
+  transactionAt: z.number().default(0),
+  outlier: z.boolean().default(false),
+  keyEventDate: z.string().default(''),
+})
+
+const trQueryConditionSchema = z.object({
+  ledgerId: z.string().default(''),
+  offset: z.number().default(-1),
+  limit: z.number().default(-1),
+  tsRange: z.array(z.number()).default([]),
+  items: z.array(queryConditionItemSchema).default([]),
+  sortFields: z.array(z.object({ field: z.string(), order: z.string() })).default([]),
+})
+
+const chartLineSchema = z.object({
+  label: z.string().default(''),
+  transactionType: z.string().default(''),
+  includeOutlier: z.boolean().default(false),
+  conditions: z.array(queryConditionItemSchema).default([]),
+})
 
 /**
  * IPC 命令目录：名字 + 请求形状。
@@ -94,6 +137,19 @@ export const commandSchemas = {
     categoryTransactionType: z.string(),
     sortOrder: z.number(),
   }),
+  tr_query: trQueryConditionSchema,
+  tr_chart_data: z.object({
+    ledgerId: z.string().default(''),
+    tsRange: z.array(z.number()).default([]),
+    granularity: z.string().default('month'),
+    lines: z.array(chartLineSchema).default([]),
+  }),
+  tr_create: transactionRecordDtoSchema,
+  tr_batch_create: z.array(transactionRecordDtoSchema),
+  tr_delete: z.object({ id: z.string() }),
+  tr_link: z.object({ transaction_id: z.string(), date: z.string() }),
+  tr_unlink: z.object({ transaction_id: z.string() }),
+  tr_linked_by_date: z.object({ ledger_id: z.string(), date: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -133,6 +189,14 @@ export interface CommandResponses {
   tag_create: null
   tag_delete: null
   tag_update_sort: null
+  tr_query: TrQueryResult
+  tr_chart_data: ChartQueryResponse
+  tr_create: string
+  tr_batch_create: number
+  tr_delete: null
+  tr_link: string
+  tr_unlink: string
+  tr_linked_by_date: TransactionRecordDto[]
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]
