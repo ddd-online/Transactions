@@ -1295,10 +1295,13 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       if (!workspace) throw workspaceNotOpened()
       const relativePath = String(asObject(request).relativePath ?? '')
       const source = resolveAsset(workspace.directory, relativePath)
-      const target = await dialog.showSaveDialog({
-        title: '保存图片',
-        defaultPath: basename(source),
-      })
+      const testTarget = process.env.TRANSACTIONS_TEST_SAVE_PATH
+      const target = testTarget
+        ? { canceled: false, filePath: testTarget }
+        : await dialog.showSaveDialog({
+            title: '保存图片',
+            defaultPath: basename(source),
+          })
       if (target.canceled || !target.filePath) return { success: false, canceled: true }
       try {
         copyFileSync(source, target.filePath)
@@ -1333,6 +1336,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     },
   }
 }
+
 
 
 
