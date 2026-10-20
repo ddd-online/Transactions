@@ -97,6 +97,8 @@ const PNG_1X1 =
 
 const updater = new UpdaterService({
   fetchImpl: (input, init) => appFetch(input, init as RequestInit),
+  releaseApi: process.env.TRANSACTIONS_TEST_RELEASE_API,
+  tempDir: process.env.TRANSACTIONS_TEST_UPDATE_DIR,
   onEvent: (event, snapshot) => sendEvent(event, snapshot),
   quit: () => app.quit(),
 })
@@ -1336,6 +1338,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     },
   }
 }
+
 
 
 

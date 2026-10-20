@@ -59,7 +59,7 @@
 |---|---|
 | Vitest | 588 条通过 |
 | 静态护栏 | 9 项通过 |
-| Playwright | 22 条通过 + 打包产物 1 条 |
+| Playwright | 23 条通过 + 打包产物 1 条 |
 | 安装版 | `dist/Transactions-1.0.0-setup.exe` |
 | 便携版 | `dist/Transactions-1.0.0-portable.exe` |
 
@@ -81,9 +81,9 @@
 - [ ] 页面内 35 个组件（表格/弹窗/日期选择/图片裁剪等）逐页还原
 - [x] 按账本功能开关（`ledgerFeatures`）的配置与界面
 - [x] 股票归档/重置/操作回滚的界面入口
-- [ ] 旧 26 个 UIA 护栏迁移为 Playwright（当前 22 条覆盖主链路）
+- [ ] 旧 26 个 UIA 护栏迁移为 Playwright（当前 23 条覆盖主链路）
 - [x] 安装版静默安装启动 + 便携版启动冒烟（`build/smoke-portable.ps1`）
-- [ ] 发布前完整回归：旧数据导入、更新检查成功路径（需真实 Release）
+- [x] 发布前回归：安装版/便携版启动、旧数据导入、更新检查+下载+SHA256（本地 release 测试桩）
 
 ## 9. 切换步骤（草案）
 

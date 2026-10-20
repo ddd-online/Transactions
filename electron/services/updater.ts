@@ -92,6 +92,9 @@ export function allowedDownloadHost(url: string): boolean {
   try {
     const parsed = new URL(url)
     const host = parsed.hostname.toLowerCase()
+    if (process.env.TRANSACTIONS_TEST_UPDATE_LOCAL === '1') {
+      return host === '127.0.0.1' || host === 'localhost'
+    }
     return host.endsWith('github.com') || host.endsWith('objects.githubusercontent.com')
   } catch {
     return false
@@ -308,4 +311,5 @@ export class UpdaterService {
     return { ok: true }
   }
 }
+
 
