@@ -30,6 +30,19 @@ import {
   updatePositionTag,
 } from '../services/stock-positions'
 import { TencentStockQuoteFetcher } from '../services/stock-quote'
+import {
+  getTradeHistoryDetail,
+  getTradeHistorySummary,
+  listTradeHistories,
+} from '../services/stock-history'
+import { getStatisticsFor } from '../services/stock-statistics'
+import {
+  createStatisticsFilter,
+  normalizeRecent,
+  parseStrategyWire,
+  withStrategy,
+  type StatisticsFilter,
+} from '../../shared/domain/statistics'
 import type { RoundFee } from '../../shared/domain/models'
 import type {
   ChartQueryRequest,
@@ -61,6 +74,16 @@ export interface HandlerOptions {
 
 function asObject(request: unknown): Record<string, unknown> {
   return typeof request === 'object' && request !== null ? (request as Record<string, unknown>) : {}
+}
+
+/** QueryNumber 语义：数字/数字字符串 → 整数；空串或非数字 → null。 */
+function queryNumber(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? Math.trunc(value) : null
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? Math.trunc(parsed) : null
+  }
+  return null
 }
 
 function workspaceDb(): Db {
@@ -929,6 +952,49 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const code = String(raw.code ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return updatePositionTag(workspaceDb(), ledgerId, code, String(raw.tag ?? ''))
+    },
+
+    async stock_history(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return listTradeHistories(workspaceDb(), ledgerId, new TencentStockQuoteFetcher())
+    },
+
+    stock_history_detail(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const stockCode = String(raw.stock_code ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
+      return getTradeHistoryDetail(workspaceDb(), ledgerId, stockCode)
+    },
+
+    stock_history_summary(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return getTradeHistorySummary(workspaceDb(), ledgerId)
+    },
+
+    stock_statistics(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      let filter: StatisticsFilter
+      try {
+        filter = withStrategy(
+          createStatisticsFilter(
+            String(raw.start_month ?? ''),
+            String(raw.end_month ?? ''),
+            normalizeRecent(queryNumber(raw.recent)),
+            String(raw.tag ?? ''),
+          ),
+          parseStrategyWire(String(raw.strategy ?? '')),
+          queryNumber(raw.group_size),
+        )
+      } catch (error) {
+        throw new AppError(error instanceof Error ? error.message : String(error), { status: 400 })
+      }
+      return getStatisticsFor(workspaceDb(), ledgerId, filter)
     },
   }
 }

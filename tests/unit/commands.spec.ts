@@ -153,6 +153,22 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates stock history requests', () => {
+    expect(commandSchemas.stock_history.safeParse({ ledger_id: 'l1' }).success).toBe(true)
+    expect(
+      commandSchemas.stock_history_detail.safeParse({ ledger_id: 'l1', stock_code: '600519' })
+        .success,
+    ).toBe(true)
+    expect(
+      commandSchemas.stock_statistics.safeParse({
+        ledger_id: 'l1',
+        recent: '20',
+        strategy: 'grouped',
+        group_size: 5,
+      }).success,
+    ).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

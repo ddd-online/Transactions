@@ -22,6 +22,12 @@ import type {
 import type { StockFeeSetting } from './domain/models'
 import type { StockOverviewDto, StockPositionDto } from './types/stock-position'
 import type {
+  StockTradeHistoryDetailDto,
+  StockTradeHistoryDto,
+  StockTradeHistorySummaryDto,
+} from './types/stock-history'
+import type { StockStatisticsDto } from './types/stock-statistics'
+import type {
   TodoCardDto,
   TodoHistoryDto,
   TodoItemDto,
@@ -335,6 +341,18 @@ export const commandSchemas = {
     code: z.string(),
     tag: z.string().default(''),
   }),
+  stock_history: z.object({ ledger_id: z.string() }),
+  stock_history_detail: z.object({ ledger_id: z.string(), stock_code: z.string() }),
+  stock_history_summary: z.object({ ledger_id: z.string() }),
+  stock_statistics: z.object({
+    ledger_id: z.string(),
+    start_month: z.string().default(''),
+    end_month: z.string().default(''),
+    recent: z.union([z.number(), z.string()]).nullable().optional(),
+    tag: z.string().default(''),
+    strategy: z.string().nullable().optional(),
+    group_size: z.union([z.number(), z.string()]).nullable().optional(),
+  }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -431,6 +449,10 @@ export interface CommandResponses {
   stock_positions: StockPositionDto[]
   stock_position_review: StockPositionDto
   stock_position_tag: StockPositionDto
+  stock_history: StockTradeHistoryDto[]
+  stock_history_detail: StockTradeHistoryDetailDto
+  stock_history_summary: StockTradeHistorySummaryDto
+  stock_statistics: StockStatisticsDto
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]
