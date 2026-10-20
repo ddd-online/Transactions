@@ -440,12 +440,16 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             {rows.map((row) => (
               <tr key={row.transactionId} data-testid="tr-row">
                 <td>{formatTimestamp(row.transactionAt, 'YYYY-MM-DD')}</td>
-                <td>{typeLabel(row.transactionType)}</td>
+                <td>
+                  <span className={`ui-tag ui-tag--${row.transactionType}`}>
+                    {typeLabel(row.transactionType)}
+                  </span>
+                </td>
                 <td>{row.category}</td>
                 <td>{row.description}</td>
                 <td>{row.tags.join('、')}</td>
                 <td>
-                  {row.outlier ? '异常' : ''}
+                  {row.outlier ? <span className="ui-tag ui-tag--outlier">异常</span> : null}
                   {row.outlier && row.keyEventDate ? ' · ' : ''}
                   {row.keyEventDate ? `事件 ${row.keyEventDate}` : ''}
                 </td>
