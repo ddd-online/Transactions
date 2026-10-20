@@ -11,6 +11,7 @@ import type { StockOverviewDto, StockPositionDto } from '../../shared/types/stoc
 import type { StockOperationDto } from '../../shared/types/stock'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { notify } from '../components/toast'
+import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -376,9 +377,10 @@ export function StockAccountPanel({
           </tbody>
         </table>
       ) : (
-        <p className="m0-muted" data-testid="stock-position-empty">
-          {ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="stock-position-empty"
+          title={ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
+        />
       )}
 
       {reviewCode ? (
@@ -579,9 +581,10 @@ export function StockAccountPanel({
           </tbody>
         </table>
       ) : (
-        <p className="m0-muted" data-testid="fund-empty">
-          {ledgerId ? '还没有资金记录' : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="fund-empty"
+          title={ledgerId ? '还没有资金记录' : '请先创建/选择账本'}
+        />
       )}
 
       <h3 className="m0-subtitle">操作记录</h3>
@@ -662,6 +665,7 @@ export function StockAccountPanel({
     </section>
   )
 }
+
 
 
 

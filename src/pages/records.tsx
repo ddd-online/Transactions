@@ -11,6 +11,7 @@ import type { CategoryDto } from '../../shared/types/category'
 import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
 import { notify } from '../components/toast'
+import { EmptyState } from '../components/empty-state'
 
 const PAGE_SIZE = 20
 
@@ -419,9 +420,10 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       ) : null}
 
       {rows.length === 0 ? (
-        <p className="m0-muted" data-testid="tr-empty">
-          {ledgerId ? (loading ? '加载中…' : '还没有记录') : '请先创建/选择账本'}
-        </p>
+        <EmptyState
+          testId="tr-empty"
+          title={ledgerId ? (loading ? '加载中…' : '还没有记录') : '请先创建/选择账本'}
+        />
       ) : (
         <table className="m0-table">
           <thead>
@@ -509,6 +511,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     </section>
   )
 }
+
 
 
 
