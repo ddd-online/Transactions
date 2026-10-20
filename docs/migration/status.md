@@ -25,7 +25,10 @@
 | `tr-draw/change.rs` | `change.ts` | ✅ 4 测试 |
 | `tr-draw/calendar.rs` | `calendar.ts` | ✅ 14 测试 |
 | `tr-draw/diary_tree.rs` | `diary-tree.ts` | ✅ 4 测试 |
-| `tr-draw/chart.rs` / `query.rs` / `stock_rows.rs` / `stock_stats.rs` | — | ⬜ 待移植 |
+| `tr-draw/chart.rs` | `chart.ts` | ✅ 23 测试 |
+| `tr-draw/query.rs` | `query.ts` | ✅ 10 测试 |
+| `tr-draw/stock_rows.rs` / `stock_stats.rs` | — | ⬜ 待移植 |
+| `tr-ui/time.rs` | `time.ts` | ✅ 5 测试 |
 
 ## 数据层
 
@@ -35,7 +38,8 @@
 | 迁移执行器（连续版本 / 事务 / `VACUUM INTO` 备份 / 版本拒绝） | ✅ 7 测试 |
 | 旧库探测 + 一次性导入（快照 / 单位映射 / 合计校验 / 资产 / 报告） | ✅ 8 测试 |
 | `dao/ledger.ts` + 级联清单 | ✅ 4 测试（含“带 ledger_id 的表都被级联覆盖”守卫） |
-| 其余 DAO（transaction/category/tag/chart/key_event/diary/stock/todo） | ⬜ 待移植 |
+| `dao/category.ts` / `dao/tag.ts`（默认 19 分类 / 57 标签、排序、级联、计数） | ✅ 22 测试 |
+| 其余 DAO（transaction/chart/key_event/diary/stock/todo） | ⬜ 待移植 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -43,6 +47,7 @@
 | 模块 | 状态 |
 |---|---|
 | `services/ledger.ts` + 5 条 ledger 命令 | ✅ 单元 + Playwright 端到端（新建/列表/落库/删除） |
+| `services/category.ts` / `services/tag.ts` + 12 条命令 | ✅ 单元测试 |
 | 其余业务命令（约 112 条） | ⬜ 待移植 |
 | config / workspace / 导入命令 | ✅（M0/M1） |
 | 更新命令 + 下载器 | ⬜ 待移植 |
@@ -59,9 +64,11 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 227 条（领域 + 数据 + 导入 + 账本） | ✅ |
+| Vitest 292 条（领域 + 数据 + 导入 + 账本 + 分类标签） | ✅ |
 | Playwright M0 冒烟 + 账本端到端 | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
+
 
