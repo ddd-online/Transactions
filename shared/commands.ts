@@ -7,6 +7,8 @@ import type { ChartDto } from './types/chart'
 import type {
   DiaryDateItem,
   DiaryEntry,
+  KeyEvent,
+  KeyEventImage,
 } from './domain/models'
 import type { DiaryExportResult, DiaryScanResponse } from './types/diary'
 import type {
@@ -202,6 +204,25 @@ export const commandSchemas = {
     year: z.number().nullable().optional(),
     month: z.number().nullable().optional(),
   }),
+  key_event_list_by_year: z.object({ ledger_id: z.string(), year: z.string() }),
+  key_event_dates_by_year: z.object({ ledger_id: z.string(), year: z.string() }),
+  key_event_get: z.object({ ledger_id: z.string(), date: z.string() }),
+  key_event_upsert: z.object({
+    ledger_id: z.string(),
+    date: z.string(),
+    title: z.string().nullable().optional(),
+    content: z.string().nullable().optional(),
+    color: z.string().nullable().optional(),
+  }),
+  key_event_delete: z.object({ ledger_id: z.string(), date: z.string() }),
+  key_event_images_list: z.object({ ledger_id: z.string(), date: z.string() }),
+  key_event_image_add: z.object({
+    ledger_id: z.string(),
+    date: z.string(),
+    data: z.string().nullable().optional(),
+    thumb: z.string().nullable().optional(),
+  }),
+  key_event_image_delete: z.object({ id: z.string() }),
 } as const
 
 export type CommandName = keyof typeof commandSchemas
@@ -261,6 +282,14 @@ export interface CommandResponses {
   diary_import_scan: DiaryScanResponse
   diary_import_file: DiaryEntry
   diary_export: DiaryExportResult
+  key_event_list_by_year: KeyEvent[]
+  key_event_dates_by_year: string[]
+  key_event_get: KeyEvent
+  key_event_upsert: string
+  key_event_delete: null
+  key_event_images_list: KeyEventImage[]
+  key_event_image_add: KeyEventImage
+  key_event_image_delete: null
 }
 
 export type CommandRes<N extends CommandName> = CommandResponses[N]

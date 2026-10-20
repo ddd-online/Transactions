@@ -90,6 +90,20 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
+  it('validates key event requests', () => {
+    expect(commandSchemas.key_event_list_by_year.safeParse({ ledger_id: 'l1', year: '2026' }).success).toBe(true)
+    expect(commandSchemas.key_event_get.safeParse({ ledger_id: 'l1', date: '2026-01-01' }).success).toBe(true)
+    expect(
+      commandSchemas.key_event_image_add.safeParse({
+        ledger_id: 'l1',
+        date: '2026-01-01',
+        data: 'data:image/png;base64,AA==',
+        thumb: 'data:image/jpeg;base64,AA==',
+      }).success,
+    ).toBe(true)
+    expect(commandSchemas.key_event_image_delete.safeParse({ id: 'img-1' }).success).toBe(true)
+  })
+
   it('validates import requests', () => {
     expect(commandSchemas.legacy_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,

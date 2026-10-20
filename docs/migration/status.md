@@ -43,7 +43,9 @@
 | `dao/transaction-record.ts` + `transaction-record-tag.ts`（过滤/排序/分页/统计/图表分桶） | ✅ 15 测试 |
 | `dao/chart.ts` + `services/chart.ts`（预设 / CRUD / 排序 / chart_lines JSON） | ✅ 16 测试 |
 | `dao/diary.ts` + `services/diary.ts`（按账本隔离 / 字数 / 导入导出编码） | ✅ 15 测试 |
-| 其余 DAO（key_event/stock/todo） | ⬜ 待移植 |
+| `dao/key-event.ts` / `key-event-image.ts` + 服务（标题按字符截断、图片落盘/回滚/清理） | ✅ 5 测试 |
+| `services/assets.ts`（图片/图标落盘、data URI 校验、路径穿越） | ✅ 4 测试 |
+| 其余 DAO（stock/todo） | ⬜ 待移植 |
 | 旧 fixtures（`seed.sql` / `seed.dump.json` / `fresh.sql` / HEIC） | ✅ |
 
 ## 服务与 IPC
@@ -54,6 +56,7 @@
 | `services/category.ts` / `services/tag.ts` + 12 条命令 | ✅ 单元测试 |
 | `services/chart.ts` + 5 条 chart 命令 | ✅ 16 测试 |
 | `services/diary.ts` + 7 条 diary 命令（日期列表 / 读写 / 导入导出） | ✅ 15 测试 |
+| `services/key-event.ts` + 8 条 key_event 命令（含图片上传/删除） | ✅ 5 测试 |
 | `services/transaction-record.ts` + 9 条 tr 命令（CRUD / 条件查询 / 图表 / 关联事件） | ✅ 9 测试 |
 | 其余业务命令（约 112 条） | ⬜ 待移植 |
 | config / workspace / 导入命令 | ✅（M0/M1） |
@@ -72,11 +75,12 @@
 
 | 项 | 状态 |
 |---|---|
-| Vitest 369 条（领域 + 数据 + 导入 + 账本 + 分类标签 + 交易记录 + 图表 + 日记） | ✅ |
+| Vitest 379 条（领域 + 数据 + 导入 + 账本 + 分类 + 交易 + 图表 + 日记 + 事件） | ✅ |
 | Playwright：M0 / 账本 / 设置 / 记录（4 条） | ✅ |
 | 打包产物冒烟（`TRANSACTIONS_PACKAGED_EXE`） | ✅ |
 | 静态护栏 8 项（安全/协议/端口/事件/版本/旧栈残留） | ✅ |
 | 旧 26 个 UIA 护栏对等迁移 | ⬜ |
+
 
 
 

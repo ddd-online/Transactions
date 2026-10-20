@@ -19,6 +19,7 @@ import * as tagService from '../services/tag'
 import * as transactionService from '../services/transaction-record'
 import * as chartService from '../services/chart'
 import * as diaryService from '../services/diary'
+import * as keyEventService from '../services/key-event'
 import type {
   ChartQueryRequest,
   TransactionRecordDto,
@@ -549,6 +550,101 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         throw new AppError('invalid year/month range', { status: 400 })
       }
       return diaryService.exportToDirectory(workspaceDb(), ledgerId, directory, year, month)
+    },
+
+    key_event_list_by_year(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const year = String(raw.year ?? '')
+      if (!year) throw new AppError('missing year parameter', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return keyEventService.queryKeyEventsByYear(workspaceDb(), ledgerId, year)
+    },
+
+    key_event_dates_by_year(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const year = String(raw.year ?? '')
+      if (!year) throw new AppError('missing year parameter', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return keyEventService.queryDatesByYear(workspaceDb(), ledgerId, year)
+    },
+
+    key_event_get(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const date = String(raw.date ?? '')
+      if (!date) throw new AppError('missing date parameter', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return keyEventService.queryKeyEventByDate(workspaceDb(), ledgerId, date)
+    },
+
+    key_event_upsert(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      const date = String(raw.date ?? '')
+      keyEventService.upsertKeyEvent(
+        workspaceDb(),
+        ledgerId,
+        date,
+        typeof raw.title === 'string' ? raw.title : '',
+        typeof raw.content === 'string' ? raw.content : '',
+        typeof raw.color === 'string' ? raw.color : '',
+      )
+      return date
+    },
+
+    key_event_delete(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const date = String(raw.date ?? '')
+      if (!date) throw new AppError('missing date parameter', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      const workspace = currentWorkspace()
+      if (!workspace) throw workspaceNotOpened()
+      keyEventService.deleteKeyEventByDate(workspace.db, workspace.directory, ledgerId, date)
+      return null
+    },
+
+    key_event_images_list(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const date = String(raw.date ?? '')
+      if (!date) throw new AppError('missing date parameter', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return keyEventService.listImages(workspaceDb(), ledgerId, date)
+    },
+
+    key_event_image_add(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const date = String(raw.date ?? '')
+      const data = typeof raw.data === 'string' ? raw.data : ''
+      const thumb = typeof raw.thumb === 'string' ? raw.thumb : ''
+      if (!date) throw new AppError('missing date parameter', { status: 400 })
+      if (!data) throw new AppError('invalid image data', { status: 400 })
+      if (!thumb) throw new AppError('invalid thumb data', { status: 400 })
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      const workspace = currentWorkspace()
+      if (!workspace) throw workspaceNotOpened()
+      return keyEventService.addImage(
+        workspace.db,
+        workspace.directory,
+        ledgerId,
+        date,
+        data,
+        thumb,
+      )
+    },
+
+    key_event_image_delete(request) {
+      const id = String(asObject(request).id ?? '')
+      if (!id) throw new AppError('missing image id parameter', { status: 400 })
+      const workspace = currentWorkspace()
+      if (!workspace) throw workspaceNotOpened()
+      keyEventService.deleteImage(workspace.db, workspace.directory, id)
+      return null
     },
   }
 }
