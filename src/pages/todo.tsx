@@ -27,6 +27,7 @@ export interface TodoPageProps {
 
 export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [cards, setCards] = useState<TodoCardDto[]>([])
+  const [dragCardId, setDragCardId] = useState<string | null>(null)
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
   const [cardTitle, setCardTitle] = useState('')
   const [itemTitles, setItemTitles] = useState<Record<string, string>>({})
@@ -136,6 +137,31 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     [load],
   )
 
+  const moveCard = useCallback(
+    async (sourceId: string, targetId: string): Promise<void> => {
+      if (sourceId === targetId) return
+      const from = cards.findIndex((card) => card.id === sourceId)
+      const to = cards.findIndex((card) => card.id === targetId)
+      if (from < 0 || to < 0) return
+      const next = [...cards]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      setCards(next)
+      setError('')
+      try {
+        await Promise.all(
+          next.map((card, index) =>
+            window.api.invoke('todo_card_sort', { id: card.id, sort_order: index + 1 }),
+          ),
+        )
+        await load()
+      } catch (sortError) {
+        setError(errorMessage(sortError))
+      }
+    },
+    [cards, load],
+  )
+
   const removeProgress = useCallback(
     async (id: string): Promise<void> => {
       setError('')
@@ -220,8 +246,22 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       ) : (
         <div className="m0-todo-cards">
           {cards.map((card) => (
-            <div key={card.id} className="m0-todo-card" data-testid="todo-card">
+            <div
+              key={card.id}
+              className="m0-todo-card"
+              data-testid="todo-card"
+              draggable
+              onDragStart={() => setDragCardId(card.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                if (dragCardId) void moveCard(dragCardId, card.id)
+                setDragCardId(null)
+              }}
+            >
               <div className="m0-card-head">
+                <span className="ui-drag-handle" title="拖动排序">
+                  ⠿
+                </span>
                 <h3>{card.title}</h3>
                 <button
                   type="button"
@@ -361,6 +401,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     </section>
   )
 }
+
+
 
 
 

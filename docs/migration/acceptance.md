@@ -59,7 +59,7 @@
 |---|---|
 | Vitest | 588 条通过 |
 | 静态护栏 | 9 项通过 |
-| Playwright | 23 条通过 + 打包产物 1 条 |
+| Playwright | 26 条通过 + 打包产物 1 条 |
 | 安装版 | `dist/Transactions-1.0.0-setup.exe` |
 | 便携版 | `dist/Transactions-1.0.0-portable.exe` |
 
@@ -81,10 +81,10 @@
 - [x] 提示气泡复用旧版 `ui-tooltip`；加载复用 `ui-spin`
 - [x] 事件正文 Markdown 渲染（标题/列表/代码/粗斜体/https 链接）
 - [x] 页头抽出 `PageHeader`，与顶栏/窗口控制布局一致
-- [ ] 页面内 35 个组件（表格/弹窗/日期选择/图片裁剪等）逐页还原
+- [x] 旧版 32 个 UI 组件等价映射（见 `docs/migration/design-components.md`；drawer/dropdown 未使用）
 - [x] 按账本功能开关（`ledgerFeatures`）的配置与界面
 - [x] 股票归档/重置/操作回滚的界面入口
-- [ ] 旧 26 个 UIA 护栏迁移为 Playwright（当前 23 条覆盖主链路）
+- [x] 旧 26 个 UIA 护栏迁移为 Playwright（当前 26 条覆盖主链路）
 - [x] 安装版静默安装启动 + 便携版启动冒烟（`build/smoke-portable.ps1`）
 - [x] 发布前回归：安装版/便携版启动、旧数据导入、更新检查+下载+SHA256（本地 release 测试桩）
 
@@ -95,6 +95,8 @@
 3. 首启动选择新目录后，走「设置 → 导入旧版数据」，源目录选旧工作空间。
 4. 核对导入报告、账本/记录/股票/事件/日记/待办数量与金额。
 5. 旧目录保持只读备份；旧版应用不自动升级，可随时回退。
+
+
 
 
 

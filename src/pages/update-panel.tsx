@@ -147,7 +147,6 @@ export function UpdatePanel({ snapshot, onSnapshot }: UpdatePanelProps): JSX.Ele
             type="button"
             className="m0-link"
             data-testid="update-cancel"
-            disabled={busy}
             onClick={() => void cancel()}
           >
             取消下载
@@ -168,4 +167,5 @@ export function UpdatePanel({ snapshot, onSnapshot }: UpdatePanelProps): JSX.Ele
     </section>
   )
 }
+
 
