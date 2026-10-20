@@ -453,7 +453,13 @@ interface ReplayState {
  * interface —— 它收 `Db`，一旦公开就等于让调用方替这里操心事务边界与调用顺序。
  */
 function rebuildTrades(db: Db, ledgerId: string): void {
-  const trades = listAllTradesAsc(db, ledgerId)
+  const trades = listAllTradesAsc(db, ledgerId).sort((left, right) => {
+    if (left.tradeTime !== right.tradeTime) return left.tradeTime - right.tradeTime
+    if (left.createdAt !== right.createdAt) return left.createdAt - right.createdAt
+    const buyOrder = Number(isBuy(right.tradeType)) - Number(isBuy(left.tradeType))
+    if (buyOrder !== 0) return buyOrder
+    return left.id.localeCompare(right.id)
+  })
 
   const existingRounds = listTradeRounds(db, ledgerId)
   const roundMeta = new Map<string, StockTradeRound>()
@@ -997,3 +1003,4 @@ export function rollbackLatest(db: Db, ledgerId: string): StockOperationRollback
   if (!outcome) throw new AppError('回滚后未取到结果', { status: 500 })
   return outcome
 }
+

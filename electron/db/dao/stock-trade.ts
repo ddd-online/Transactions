@@ -390,7 +390,7 @@ export function listAllTradesAsc(db: Db, ledgerId: string): StockTrade[] {
   const rows = db
     .prepare(
       `SELECT ${TRADE_COLUMNS} FROM stock_trade WHERE ledger_id = ? ` +
-        'ORDER BY trade_time ASC, created_at ASC, rowid ASC, order_seq ASC, id ASC',
+        'ORDER BY trade_time ASC, created_at ASC, order_seq ASC, id ASC',
     )
     .all(ledgerId) as unknown as TradeRow[]
   return rows.map(tradeFromRow)

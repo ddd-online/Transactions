@@ -944,7 +944,7 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     expect(realized).toBe(-29_782 + 3_000 - 2)
   })
 
-  it('orders same-second trades by insertion and edits the close fill', () => {
+  it('edits a close fill when open and close share the same second', () => {
     const workspace = newWorkspace()
     setPrincipal(workspace.db, LEDGER, 10_000_000)
     createTradeOrder(workspace.db, {
@@ -964,10 +964,6 @@ describe('stock-trade-edit: edit / delete / replay', () => {
         tradeTime: T2,
       }),
     })
-
-    const rows = listAllTradesAsc(workspace.db, LEDGER)
-    expect(rows[0].tradeType).toBe(STOCK_TRADE_OPEN)
-    expect(rows[1].tradeType).toBe(STOCK_TRADE_CLOSE)
 
     const updated = updateTradeFill(workspace.db, {
       ledgerId: LEDGER,
@@ -1632,3 +1628,4 @@ describe('stock-trade-edit: day reviews follow the round through replay', () => 
     expect(currentRows[0].review).toBe('第二轮今天')
   })
 })
+
