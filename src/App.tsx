@@ -331,6 +331,34 @@ export function App(): JSX.Element {
         </div>
       ) : null}
 
+      <header className="app-titlebar">
+        <span className="app-titlebar-title">Transactions</span>
+        <div className="app-titlebar-actions">
+          <button
+            type="button"
+            data-testid="window-minimize"
+            onClick={() => void window.api.invoke('window_control', { action: 'minimize' })}
+          >
+            —
+          </button>
+          <button
+            type="button"
+            data-testid="window-maximize"
+            onClick={() => void window.api.invoke('window_control', { action: 'maximize' })}
+          >
+            □
+          </button>
+          <button
+            type="button"
+            data-testid="window-close"
+            className="app-titlebar-close"
+            onClick={() => void window.api.invoke('window_control', { action: 'close' })}
+          >
+            ×
+          </button>
+        </div>
+      </header>
+
       <div className="app">
       <aside className="app-sidebar">
         <div className="app-brand">

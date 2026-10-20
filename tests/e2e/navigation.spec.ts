@@ -46,6 +46,23 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await expect(page.getByTestId('workspace-overlay')).toHaveCount(0)
 
+    await page.getByTestId('window-maximize').click()
+    await expect
+      .poll(() =>
+        electronApp.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows()[0].isMaximized(),
+        ),
+      )
+      .toBe(true)
+    await page.getByTestId('window-maximize').click()
+    await expect
+      .poll(() =>
+        electronApp.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows()[0].isMaximized(),
+        ),
+      )
+      .toBe(false)
+
     await expect(page.getByTestId('tr-total')).toBeVisible()
     await page.getByTestId('nav-stock').click()
     await expect(page.getByTestId('stock-tab-account')).toBeVisible()
@@ -64,4 +81,5 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 

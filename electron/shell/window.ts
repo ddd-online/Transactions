@@ -219,3 +219,4 @@ export function resourcePath(name: string): string {
     ? join(process.resourcesPath, 'resources', name)
     : join(app.getAppPath(), 'resources', name)
 }
+
