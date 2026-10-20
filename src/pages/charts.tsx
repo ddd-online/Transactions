@@ -4,6 +4,7 @@ import { centsToYuan } from '../../shared/domain/money'
 import type { ChartDto } from '../../shared/types/chart'
 import type { ChartQueryResponse } from '../../shared/types/transaction'
 import { EmptyState } from '../components/empty-state'
+import { Segmented } from '../components/segmented'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -164,15 +165,15 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               </option>
             ))}
           </select>
-          <select
-            className="m0-input"
-            data-testid="chart-granularity"
+          <Segmented
+            testId="chart-granularity"
             value={granularity}
-            onChange={(event) => setGranularity(event.target.value)}
-          >
-            <option value="month">按月</option>
-            <option value="year">按年</option>
-          </select>
+            onChange={(value) => setGranularity(value)}
+            options={[
+              { value: 'month', label: '按月' },
+              { value: 'year', label: '按年' },
+            ]}
+          />
           <input
             className="m0-input"
             data-testid="chart-title"
@@ -257,6 +258,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     </section>
   )
 }
+
 
 
 

@@ -59,7 +59,7 @@
 |---|---|
 | Vitest | 587 条通过 |
 | 静态护栏 | 9 项通过 |
-| Playwright | 21 条通过 + 打包产物 1 条 |
+| Playwright | 22 条通过 + 打包产物 1 条 |
 | 安装版 | `dist/Transactions-1.0.0-setup.exe` |
 | 便携版 | `dist/Transactions-1.0.0-portable.exe` |
 
@@ -75,10 +75,12 @@
 - [x] 日期输入复用旧版日历风格 DatePicker（事件/日记）
 - [x] 创建/删除/页码复用旧版按钮语言（Pagination）
 - [x] 表格表头与行悬停使用设计令牌
+- [x] 功能开关复用旧版 `ui-switch`（原生 checkbox 语义保留）
+- [x] 图表按月/按年复用旧版 `ui-segmented`
 - [ ] 页面内 35 个组件（表格/弹窗/日期选择/图片裁剪等）逐页还原
 - [x] 按账本功能开关（`ledgerFeatures`）的配置与界面
 - [x] 股票归档/重置/操作回滚的界面入口
-- [ ] 旧 26 个 UIA 护栏迁移为 Playwright（当前 21 条覆盖主链路）
+- [ ] 旧 26 个 UIA 护栏迁移为 Playwright（当前 22 条覆盖主链路）
 - [ ] 发布前完整回归：安装版/便携版启动、旧数据导入、更新检查
 - [ ] 切换文档与回滚步骤定稿
 

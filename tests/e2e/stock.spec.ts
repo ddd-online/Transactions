@@ -153,17 +153,18 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     expect(round).toEqual({ review: '复盘：趋势向上', tag: '打板' })
 
     await expect(page.getByTestId('stock-trade')).toHaveCount(2)
-    const closeTrade = page.getByTestId('stock-trade').filter({ hasText: 'close' })
-    await closeTrade.getByTestId('stock-trade-price').fill('6.5')
-    await closeTrade.getByTestId('stock-trade-save').click()
-    await expect(
-      closeTrade.getByTestId('stock-trade-price'),
-    ).toHaveValue('6.5')
+    const openTrade = page.getByTestId('stock-trade').filter({ hasText: 'open' })
+    await openTrade.getByTestId('stock-trade-price').fill('6.5')
+    await expect(openTrade.getByTestId('stock-trade-price')).toHaveValue('6.5')
+    await page.waitForTimeout(100)
+    await openTrade.getByTestId('stock-trade-save').click()
+    await expect(page.getByTestId('toast').last()).toContainText('成交已更新')
+    await expect(openTrade.getByTestId('stock-trade-price')).toHaveValue('6.50')
     await expect
       .poll(() => {
         const db = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
         const row = db
-          .prepare("SELECT price_milli FROM stock_trade WHERE trade_type = 'close'")
+          .prepare("SELECT price_milli FROM stock_trade WHERE trade_type = 'open'")
           .get() as { price_milli: number }
         db.close()
         return row.price_milli
@@ -181,6 +182,8 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 
 

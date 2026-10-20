@@ -10,6 +10,7 @@ import type {
 import type { StockTradeTagSettingDto } from '../../shared/types/stock'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { EmptyState } from '../components/empty-state'
+import { notify } from '../components/toast'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -156,10 +157,12 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
           id: tradeId,
           price: Number(edit.price),
           lots: Number(edit.lots),
-          trade_time: trade?.tradeTime ?? 0,
+          trade_time: trade?.tradeTime || Math.floor(Date.now() / 1000),
         })
         await openDetail(detail.stockCode)
+        notify('成交已更新')
       } catch (tradeError) {
+        notify(`成交更新失败：${errorMessage(tradeError)}`, 'error')
         setError(errorMessage(tradeError))
       }
     },
@@ -328,42 +331,50 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                     .map((trade) => (
                       <li key={trade.id} data-testid="stock-trade">
                         <span>{trade.tradeType}</span>
-                        <input
-                          className="m0-input"
-                          data-testid="stock-trade-price"
-                          value={edits[trade.id]?.price ?? milliToYuan(trade.price)}
-                          onChange={(event) =>
-                            setEdits((current) => ({
-                              ...current,
-                              [trade.id]: {
-                                price: event.target.value,
-                                lots: current[trade.id]?.lots ?? String(trade.lots),
-                              },
-                            }))
-                          }
-                        />
-                        <input
-                          className="m0-input"
-                          data-testid="stock-trade-lots"
-                          value={edits[trade.id]?.lots ?? String(trade.lots)}
-                          onChange={(event) =>
-                            setEdits((current) => ({
-                              ...current,
-                              [trade.id]: {
-                                price: current[trade.id]?.price ?? milliToYuan(trade.price),
-                                lots: event.target.value,
-                              },
-                            }))
-                          }
-                        />
-                        <button
-                          type="button"
-                          className="m0-link"
-                          data-testid="stock-trade-save"
-                          onClick={() => void saveTrade(trade.id)}
-                        >
-                          保存
-                        </button>
+                        {trade.tradeType === 'close' ? (
+                          <span className="m0-muted">
+                            {milliToYuan(trade.price)} 元 · {trade.lots} 手
+                          </span>
+                        ) : (
+                          <>
+                            <input
+                              className="m0-input"
+                              data-testid="stock-trade-price"
+                              value={edits[trade.id]?.price ?? milliToYuan(trade.price)}
+                              onChange={(event) =>
+                                setEdits((current) => ({
+                                  ...current,
+                                  [trade.id]: {
+                                    price: event.target.value,
+                                    lots: current[trade.id]?.lots ?? String(trade.lots),
+                                  },
+                                }))
+                              }
+                            />
+                            <input
+                              className="m0-input"
+                              data-testid="stock-trade-lots"
+                              value={edits[trade.id]?.lots ?? String(trade.lots)}
+                              onChange={(event) =>
+                                setEdits((current) => ({
+                                  ...current,
+                                  [trade.id]: {
+                                    price: current[trade.id]?.price ?? milliToYuan(trade.price),
+                                    lots: event.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="m0-link"
+                              data-testid="stock-trade-save"
+                              onClick={() => void saveTrade(trade.id)}
+                            >
+                              保存
+                            </button>
+                          </>
+                        )}
                         <button
                           type="button"
                           className="m0-link"
@@ -406,6 +417,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
     </section>
   )
 }
+
+
+
 
 
 

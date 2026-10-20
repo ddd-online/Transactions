@@ -25,6 +25,7 @@ import { ImportWizard } from './pages/import-wizard'
 import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
 import { ToastHost, notify } from './components/toast'
+import { Switch } from './components/switch'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -760,32 +761,28 @@ export function App(): JSX.Element {
               </div>
               <div className="m0-features">
                 {FEATURES.map(([key, label]) => (
-                  <label key={key} className="m0-feature">
-                    <input
-                      type="checkbox"
-                      data-testid={`feature-${key}`}
-                      checked={config?.features[key] ?? true}
-                      disabled={!config}
-                      onChange={(event) => void toggleFeature(key, event.target.checked)}
-                    />
-                    {label}
-                  </label>
+                  <Switch
+                    key={key}
+                    testId={`feature-${key}`}
+                    label={label}
+                    checked={config?.features[key] ?? true}
+                    disabled={!config}
+                    onChange={(checked) => void toggleFeature(key, checked)}
+                  />
                 ))}
               </div>
               {activeLedgerId ? (
                 <div className="m0-features" data-testid="ledger-features">
                   <span className="m0-muted">本账本：</span>
                   {FEATURES.map(([key, label]) => (
-                    <label key={key} className="m0-feature">
-                      <input
-                        type="checkbox"
-                        data-testid={`ledger-feature-${key}`}
-                        checked={effectiveFeatures?.[key] ?? true}
-                        disabled={!config}
-                        onChange={(event) => void toggleLedgerFeature(key, event.target.checked)}
-                      />
-                      {label}
-                    </label>
+                    <Switch
+                      key={key}
+                      testId={`ledger-feature-${key}`}
+                      label={label}
+                      checked={effectiveFeatures?.[key] ?? true}
+                      disabled={!config}
+                      onChange={(checked) => void toggleLedgerFeature(key, checked)}
+                    />
                   ))}
                 </div>
               ) : null}
