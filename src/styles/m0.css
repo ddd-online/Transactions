@@ -714,3 +714,10 @@ body {
   height: 8px;
   border-radius: 50%;
 }
+
+.app-brand-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  object-fit: cover;
+}

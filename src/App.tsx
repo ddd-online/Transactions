@@ -66,6 +66,29 @@ export function App(): JSX.Element {
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
+  const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    if (!workspace) {
+      setWorkspaceIconUrl('')
+      return
+    }
+    void (async () => {
+      try {
+        const relative = await window.api.invoke('workspace_icon_get', {})
+        const url = relative
+          ? await window.api.invoke('asset_url', { filePath: relative })
+          : ''
+        if (alive) setWorkspaceIconUrl(url)
+      } catch {
+        if (alive) setWorkspaceIconUrl('')
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [workspace])
 
   useEffect(() => {
     if (!config) return
@@ -291,6 +314,35 @@ export function App(): JSX.Element {
     }
   }, [])
 
+  const changeWorkspaceIcon = useCallback(async (file: File | undefined): Promise<void> => {
+    if (!file) return
+    setError('')
+    try {
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = () => reject(reader.error ?? new Error('读取图标失败'))
+        reader.readAsDataURL(file)
+      })
+      const relative = await window.api.invoke('workspace_icon_set', { data })
+      if (relative) {
+        setWorkspaceIconUrl(await window.api.invoke('asset_url', { filePath: relative }))
+      }
+    } catch (iconError) {
+      setError(errorMessage(iconError))
+    }
+  }, [])
+
+  const clearWorkspaceIcon = useCallback(async (): Promise<void> => {
+    setError('')
+    try {
+      await window.api.invoke('workspace_icon_set', { data: '' })
+      setWorkspaceIconUrl('')
+    } catch (iconError) {
+      setError(errorMessage(iconError))
+    }
+  }, [])
+
   const finishImport = useCallback(async (targetDir: string): Promise<void> => {
     await window.api.invoke('workspace_open', { workspaceDir: targetDir })
     setWorkspace(targetDir)
@@ -363,6 +415,9 @@ export function App(): JSX.Element {
       <div className="app">
       <aside className="app-sidebar">
         <div className="app-brand">
+          {workspaceIconUrl ? (
+            <img className="app-brand-icon" data-testid="workspace-icon" src={workspaceIconUrl} alt="工作空间图标" />
+          ) : null}
           <span className="m0-brand">Transactions</span>
           <span className="m0-tag">Electron</span>
         </div>
@@ -573,6 +628,26 @@ export function App(): JSX.Element {
                   onClick={() => void saveProxy()}
                 >
                   保存代理
+                </button>
+              </div>
+              <div className="m0-import-row">
+                <label className="m0-field m0-import-field">
+                  工作空间图标
+                  <input
+                    className="m0-input"
+                    type="file"
+                    data-testid="workspace-icon-input"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={(event) => void changeWorkspaceIcon(event.target.files?.[0])}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="m0-link"
+                  data-testid="workspace-icon-clear"
+                  onClick={() => void clearWorkspaceIcon()}
+                >
+                  清除图标
                 </button>
               </div>
               <div className="m0-features">

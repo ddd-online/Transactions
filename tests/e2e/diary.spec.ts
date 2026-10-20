@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -59,9 +59,29 @@ test('日记：保存/字数/覆盖/删除', async () => {
     await page.getByTestId('diary-save').click()
     await expect(page.getByTestId('diary-word-count')).toHaveText('9 字')
 
+    const exportDir = join(root, 'out')
+    const importDir = join(root, 'in')
+    mkdirSync(exportDir, { recursive: true })
+    mkdirSync(importDir, { recursive: true })
+    writeFileSync(join(importDir, '2026-02-01.txt'), '导入的日记', 'utf8')
+
+    await page.getByTestId('diary-dir').fill(exportDir)
+    await page.getByTestId('diary-export').click()
+    await expect(page.getByTestId('diary-transfer-status')).toHaveText('导出 1/1 篇')
+    expect(readFileSync(join(exportDir, '2026-01-15.txt'), 'utf8')).toBe('今天很好，明天继续')
+
+    await page.getByTestId('diary-dir').fill(importDir)
+    await page.getByTestId('diary-import').click()
+    await expect(page.getByTestId('diary-transfer-status')).toHaveText('导入 1/1 篇')
+    await expect(page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' })).toHaveCount(1)
+    await page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' }).click()
+    await page.getByTestId('diary-delete').click()
+    await expect(page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' })).toHaveCount(0)
+    await page.getByTestId('diary-date-item').filter({ hasText: '2026-01-15' }).click()
+
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const rows = database
-      .prepare('SELECT date, content, mood, word_count FROM diary_entry')
+      .prepare('SELECT date, content, mood, word_count FROM diary_entry ORDER BY date')
       .all() as Array<{ date: string; content: string; mood: string; word_count: number }>
     database.close()
     expect(rows).toEqual([
@@ -82,3 +102,6 @@ test('日记：保存/字数/覆盖/删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
+

@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
@@ -69,6 +69,25 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).proxy)
       .toEqual({ mode: 'manual', url: 'http://127.0.0.1:7890' })
 
+    await page.getByTestId('workspace-icon-input').setInputFiles({
+      name: 'icon.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    })
+    await expect(page.getByTestId('workspace-icon')).toBeVisible()
+    const iconWidth = await page
+      .getByTestId('workspace-icon')
+      .evaluate((element) => (element as HTMLImageElement).naturalWidth)
+    expect(iconWidth).toBeGreaterThan(0)
+    expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(true)
+
+    await page.getByTestId('workspace-icon-clear').click()
+    await expect(page.getByTestId('workspace-icon')).toHaveCount(0)
+    expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
+
     await page.getByTestId('feature-stock').check()
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
@@ -78,6 +97,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

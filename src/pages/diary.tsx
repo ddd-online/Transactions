@@ -21,6 +21,8 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   const [content, setContent] = useState('')
   const [mood, setMood] = useState('')
   const [wordCount, setWordCount] = useState(0)
+  const [directory, setDirectory] = useState('')
+  const [transferStatus, setTransferStatus] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -88,6 +90,63 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
     }
   }, [content, date, ledgerId, loadDates, mood])
 
+  const pickDirectory = useCallback(async (): Promise<void> => {
+    const picked = await window.api.invoke('dialog_open', { title: '选择日记目录' })
+    if (!picked.canceled && picked.filePaths[0]) setDirectory(picked.filePaths[0])
+  }, [])
+
+  const exportDiary = useCallback(async (): Promise<void> => {
+    if (!ledgerId || !directory) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await window.api.invoke('diary_export', {
+        ledger_id: ledgerId,
+        directory,
+        year: null,
+        month: null,
+      })
+      setTransferStatus(`导出 ${result.success}/${result.total} 篇`)
+      if (result.failed.length > 0) {
+        setError(result.failed.map((item) => `${item.date}: ${item.error}`).join('\n'))
+      }
+    } catch (exportError) {
+      setError(errorMessage(exportError))
+    } finally {
+      setBusy(false)
+    }
+  }, [directory, ledgerId])
+
+  const importDiary = useCallback(async (): Promise<void> => {
+    if (!ledgerId || !directory) return
+    setBusy(true)
+    setError('')
+    try {
+      const scan = await window.api.invoke('diary_import_scan', { directory })
+      let imported = 0
+      for (const file of scan.files) {
+        try {
+          await window.api.invoke('diary_import_file', {
+            ledger_id: ledgerId,
+            path: file.path,
+            date: file.date,
+          })
+          imported += 1
+        } catch (importError) {
+          setError((current) =>
+            `${current}${current ? '\n' : ''}${file.date}: ${errorMessage(importError)}`,
+          )
+        }
+      }
+      setTransferStatus(`导入 ${imported}/${scan.files.length} 篇`)
+      await loadDates()
+    } catch (importError) {
+      setError(errorMessage(importError))
+    } finally {
+      setBusy(false)
+    }
+  }, [directory, ledgerId, loadDates])
+
   const remove = useCallback(async (): Promise<void> => {
     setBusy(true)
     setError('')
@@ -120,6 +179,45 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
             {wordCount} 字
           </span>
         </div>
+      </div>
+
+      <div className="m0-import-row">
+        <label className="m0-field m0-import-field">
+          导入 / 导出目录
+          <input
+            className="m0-input"
+            data-testid="diary-dir"
+            value={directory}
+            onChange={(event) => setDirectory(event.target.value)}
+            placeholder="包含 YYYY-MM-DD.txt 的目录"
+          />
+        </label>
+        <button type="button" className="m0-link" onClick={() => void pickDirectory()}>
+          选择
+        </button>
+        <button
+          type="button"
+          className="m0-link"
+          data-testid="diary-import"
+          disabled={!directory || busy}
+          onClick={() => void importDiary()}
+        >
+          导入目录
+        </button>
+        <button
+          type="button"
+          className="m0-link"
+          data-testid="diary-export"
+          disabled={!directory || busy}
+          onClick={() => void exportDiary()}
+        >
+          导出全部
+        </button>
+        {transferStatus ? (
+          <span className="m0-muted" data-testid="diary-transfer-status">
+            {transferStatus}
+          </span>
+        ) : null}
       </div>
 
       <div className="m0-diary-layout">
