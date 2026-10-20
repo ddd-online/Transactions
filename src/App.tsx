@@ -63,6 +63,9 @@ export function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
+  const [accountingTab, setAccountingTab] = useState<
+    'dashboard' | 'records' | 'charts' | 'tags' | 'templates'
+  >('dashboard')
   const [importProgress, setImportProgress] = useState<LegacyImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
@@ -539,18 +542,40 @@ export function App(): JSX.Element {
               </label>
             </div>
 
-            <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
+            <div className="m0-actions m0-accounting-tabs">
+              {(
+                [
+                  ['dashboard', '看板'],
+                  ['records', '记录'],
+                  ['charts', '分析'],
+                  ['tags', '标签'],
+                  ['templates', '模板'],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  data-testid={`acct-tab-${key}`}
+                  className={accountingTab === key ? 'm0-primary' : 'm0-link'}
+                  onClick={() => setAccountingTab(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-            <RecordsPage
-              ledgerId={activeLedgerId}
-              onChanged={() => setDataVersion((value) => value + 1)}
-            />
-
-            <ChartsPage ledgerId={activeLedgerId} />
-
-            <CategoryTagPage ledgerId={activeLedgerId} />
-
-            <TemplatePage ledgerId={activeLedgerId} />
+            {accountingTab === 'dashboard' ? (
+              <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
+            ) : null}
+            {accountingTab === 'records' ? (
+              <RecordsPage
+                ledgerId={activeLedgerId}
+                onChanged={() => setDataVersion((value) => value + 1)}
+              />
+            ) : null}
+            {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
+            {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
+            {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
 
             <section className="m0-card m0-card--wide">
               <h2>账本</h2>

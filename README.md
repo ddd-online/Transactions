@@ -76,7 +76,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
   - 股票历史/统计读层：回填、详情、汇总、逐笔/分组/区间/标签统计；39 条测试。
   - 股票持仓/总览 + 行情抓取（腾讯 GBK、注入式 fetcher、浮动盈亏/仓位比例）；27 条测试。
   - 股票 · 账户页：本金/支取/利息、费用设置、资金记录、操作回滚、重置/归档、下单表单，Playwright 验证现金链与持仓落库。
-  - 记账子功能：看板 / 记录 / 图表 / 分类标签 / 模板，均 Playwright 覆盖。
+  - 记账子功能：看板 / 记录 / 图表 / 分类标签 / 模板，顶部子功能切换，均 Playwright 覆盖。
   - 记账 · 图表页：预设曲线、按月/按年分桶与 SVG 折线，Playwright 覆盖。
   - 记账 · 看板页：月/年期间、收支卡、支出构成，Playwright 与记一笔联动。
   - 待办 DAO/服务 + 12 条命令：卡片/事项/进度、六档吸附、完成态与历史；10 条测试。
@@ -87,6 +87,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 - 详见 `docs/adr/`、`docs/migration/oracle.md` 与验收清单 `docs/migration/acceptance.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 

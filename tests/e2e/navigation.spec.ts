@@ -63,7 +63,7 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
       )
       .toBe(false)
 
-    await expect(page.getByTestId('tr-total')).toBeVisible()
+    await expect(page.getByTestId('acct-tab-dashboard')).toBeVisible()
     await page.getByTestId('nav-stock').click()
     await expect(page.getByTestId('stock-tab-account')).toBeVisible()
     await page.getByTestId('nav-events').click()
@@ -75,11 +75,12 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     await page.getByTestId('nav-settings').click()
     await expect(page.getByTestId('update-status')).toBeVisible()
     await page.getByTestId('nav-accounting').click()
-    await expect(page.getByTestId('tr-total')).toBeVisible()
+    await expect(page.getByTestId('acct-tab-dashboard')).toBeVisible()
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 

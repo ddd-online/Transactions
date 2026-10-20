@@ -47,6 +47,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await page.getByTestId('ledger-name').fill('测试账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/测试账本/)
+    await page.getByTestId('acct-tab-records').click()
     await expect(page.getByTestId('tr-empty')).toContainText('还没有记录')
 
     await page.getByTestId('tr-amount').fill('12.34')
@@ -62,23 +63,31 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('tr-total')).toHaveText('1 笔')
     await expect(page.getByTestId('tr-row')).toContainText('异常')
     await expect(page.getByTestId('tr-row')).toContainText('事件 2026-01-15')
+    await page.getByTestId('acct-tab-dashboard').click()
     await expect(page.getByTestId('stat-expense')).toHaveText('¥12.34')
     await expect(page.getByTestId('dashboard-slices')).toContainText('餐饮美食')
     await expect(page.getByTestId('dashboard-slices')).toContainText('1 笔')
 
+    await page.getByTestId('acct-tab-charts').click()
     await expect(page.getByTestId('chart-select')).toBeVisible()
     await page.getByTestId('chart-select').selectOption({ label: '年度消费趋势' })
     await expect(page.getByTestId('chart-svg')).toBeVisible()
 
+    await page.getByTestId('acct-tab-records').click()
+    await page.getByTestId('tr-category').fill('餐饮美食')
+    await page.getByTestId('tr-description').fill('午餐')
+    await page.getByTestId('tr-tags').fill('三餐, 外卖')
     await page.getByTestId('tr-template-name').fill('午餐模板')
     await page.getByTestId('tr-template-save').click()
     await expect(page.getByTestId('tr-template')).toContainText('午餐模板')
     await page.getByTestId('tr-category').fill('别的分类')
     await page.getByTestId('tr-template').first().click()
     await expect(page.getByTestId('tr-category')).toHaveValue('餐饮美食')
+    await page.getByTestId('acct-tab-templates').click()
     await page.getByTestId('template-refresh').click()
     await expect(page.getByTestId('template-row')).toContainText('午餐模板')
 
+    await page.getByTestId('acct-tab-tags').click()
     await page.getByTestId('category-name').fill('测试分类')
     await page.getByTestId('category-create').click()
     await expect(
@@ -130,6 +139,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     expect(template.template_name).toBe('午餐模板')
     expect(template.tags).toBe('["三餐","外卖"]')
 
+    await page.getByTestId('acct-tab-records').click()
     await page.getByTestId('tr-keyword').fill('午')
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
     await page.getByTestId('tr-tag-filter').fill('三餐')
@@ -157,6 +167,8 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 
 
