@@ -48,6 +48,7 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('ledger-name').fill('事件账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/事件账本/)
@@ -108,6 +109,7 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

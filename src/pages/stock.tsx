@@ -1,5 +1,6 @@
 import { useState, type JSX } from 'react'
 
+import { Icon, type IconName } from '../components/icon'
 import { StockAccountPanel } from './stock-account'
 import { StockHistoryPanel } from './stock-history'
 import { StockStatisticsPanel } from './stock-statistics'
@@ -11,10 +12,10 @@ export interface StockPageProps {
 
 type StockTab = 'account' | 'history' | 'statistics'
 
-const TABS: Array<[StockTab, string]> = [
-  ['account', '账户与持仓'],
-  ['history', '交易历史'],
-  ['statistics', '统计'],
+const TABS: Array<[StockTab, string, IconName]> = [
+  ['account', '账户与持仓', 'User'],
+  ['history', '交易历史', 'LineChart'],
+  ['statistics', '统计', 'BarChart'],
 ]
 
 /** 股票域分页：账户/持仓、交易历史、统计。 */
@@ -22,27 +23,37 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [tab, setTab] = useState<StockTab>('account')
 
   return (
-    <>
-      <div className="ui-tabs m0-stock-tabs">
-        {TABS.map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            data-testid={`stock-tab-${key}`}
-            className={`ui-tabs__tab${tab === key ? ' is-active' : ''}`}
-            onClick={() => setTab(key)}
-          >
-            {label}
-          </button>
-        ))}
+    <section className="page">
+      <div className="page-region">
+        <aside className="page-rail">
+          <div className="page-rail-nav">
+            {TABS.map(([key, label, icon]) => (
+              <button
+                key={key}
+                type="button"
+                data-testid={`stock-tab-${key}`}
+                className={`page-rail-btn${tab === key ? ' is-active' : ''}`}
+                title={label}
+                aria-label={label}
+                onClick={() => setTab(key)}
+              >
+                <span className="page-rail-btn-icon">
+                  <Icon name={icon} size={18} />
+                </span>
+              </button>
+            ))}
+          </div>
+        </aside>
+        <div className="page-main">
+          <div className="page-content">
+            {tab === 'account' ? (
+              <StockAccountPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
+            ) : null}
+            {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
+            {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
+          </div>
+        </div>
       </div>
-
-      {tab === 'account' ? (
-        <StockAccountPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
-      ) : null}
-      {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
-      {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
-    </>
+    </section>
   )
 }
-

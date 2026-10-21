@@ -44,10 +44,14 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
 
+    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('ledger-name').fill('测试账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/测试账本/)
+    await page.getByTestId('nav-accounting').click()
     await page.getByTestId('acct-tab-records').click()
+    await page.getByTestId('tr-new').click()
     await expect(page.getByTestId('tr-empty')).toContainText('还没有记录')
 
     await page.getByTestId('tr-amount').fill('12.34')
@@ -60,7 +64,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
 
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
     await expect(page.getByTestId('tr-row')).toHaveText(/-12\.34/)
-    await expect(page.getByTestId('tr-total')).toHaveText('1 笔')
+    await expect(page.getByTestId('tr-total')).toHaveText('共 1 条')
     await expect(page.getByTestId('tr-row')).toContainText('异常')
     await expect(page.getByTestId('tr-row')).toContainText('事件 2026-01-15')
     await page.getByTestId('acct-tab-dashboard').click()
@@ -83,6 +87,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('chart-select')).not.toContainText('自定义图表')
 
     await page.getByTestId('acct-tab-records').click()
+    await page.getByTestId('tr-new').click()
     await page.getByTestId('tr-category').fill('餐饮美食')
     await page.getByTestId('tr-description').fill('午餐')
     await page.getByTestId('tr-tags').fill('三餐, 外卖')
@@ -149,6 +154,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     expect(template.tags).toBe('["三餐","外卖"]')
 
     await page.getByTestId('acct-tab-records').click()
+    await page.getByTestId('tr-filter').click()
     await page.getByTestId('tr-keyword').fill('午')
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
     await page.getByTestId('tr-tag-filter').fill('三餐')
@@ -176,6 +182,12 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
+
+
+
+
 
 
 

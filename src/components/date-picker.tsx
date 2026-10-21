@@ -14,6 +14,7 @@ export interface DatePickerProps {
   testId?: string
   disabled?: boolean
   className?: string
+  showToggle?: boolean
 }
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
@@ -25,6 +26,7 @@ export function DatePicker({
   testId,
   disabled = false,
   className = 'm0-input',
+  showToggle = true,
 }: DatePickerProps): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -77,7 +79,7 @@ export function DatePicker({
         onChange={(event) => onChange(event.target.value)}
         onFocus={() => setOpen(true)}
       />
-      <button
+      {showToggle ? (<button
         type="button"
         className="date-picker-toggle"
         data-testid={testId ? `${testId}-toggle` : undefined}
@@ -86,7 +88,7 @@ export function DatePicker({
         onClick={() => setOpen((current) => !current)}
       >
         ▦
-      </button>
+      </button>) : null}
       {open ? (
         <div className="date-picker-popover" role="dialog" aria-label="选择日期">
           <div className="date-picker-head">
@@ -133,4 +135,5 @@ export function DatePicker({
     </div>
   )
 }
+
 

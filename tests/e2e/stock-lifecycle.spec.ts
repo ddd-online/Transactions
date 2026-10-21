@@ -44,6 +44,7 @@ test('股票：重置与归档', async () => {
     page.on('dialog', (dialog) => void dialog.accept())
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('ledger-name').fill('股票账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/股票账本/)
@@ -93,6 +94,7 @@ test('股票：重置与归档', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

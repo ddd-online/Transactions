@@ -44,6 +44,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
 
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('ledger-name').fill('设置账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/设置账本/)
@@ -121,6 +122,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

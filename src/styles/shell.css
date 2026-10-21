@@ -1,29 +1,13 @@
-/* Electron shell 适配层：复用旧版设计令牌与 app.css 的侧栏/导航语言。
- * 页面内容仍使用 m0 组件类；这里只负责外壳骨架。 */
-
-.app-titlebar {
-  height: 56px;
-  padding: 0 12px 0 16px;
-  background: var(--transactions-color-sidebar-fill);
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.app-titlebar-title {
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-}
-
-.app-titlebar-actions button {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--transactions-radius-md);
-}
 
 .app-shell-body {
   display: grid;
   grid-template-columns: var(--transactions-size-sidebar) minmax(0, 1fr);
   height: 100vh;
   overflow: hidden;
+}
+
+.app-shell-body.is-sidebar-collapsed {
+  --transactions-size-sidebar: var(--transactions-size-sidebar-collapsed);
 }
 
 .app-content {
@@ -38,12 +22,6 @@
   flex-shrink: 0;
 }
 
-.page-header h1 {
-  margin: 0;
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-medium);
-  color: var(--transactions-color-text-major);
-}
 
 .app-sidebar {
   width: 100%;
@@ -54,40 +32,26 @@
   background: var(--transactions-color-sidebar-fill);
 }
 
-.app-brand {
-  height: 56px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
 
-.sidebar-nav {
-  flex: 1;
-  justify-content: flex-start;
-  overflow-y: auto;
-}
 
-.sidebar-bottom {
-  height: auto;
-  min-height: 128px;
-  gap: 6px;
-  padding: 8px 12px;
-}
 
-.app-workspace {
-  display: block;
-  margin: 4px 0;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--transactions-color-text-secondary);
-  word-break: break-all;
-}
 
 .app-router-view {
   display: flex;
   flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.app-router-view > .page {
+  flex: 1;
+  min-height: 0;
+}
+
+.page-content {
+  padding: 16px 20px;
   gap: 16px;
-  padding: 20px 24px;
-  overflow: auto;
 }
 
 .app-router-view > * {
@@ -234,4 +198,105 @@
   opacity: 0;
   cursor: pointer;
   z-index: 2;
+}
+
+
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page-content > .m0-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.tr-empty {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.tr-empty-icon {
+  color: var(--transactions-color-primary);
+  opacity: 0.35;
+}
+
+.tr-empty h3 {
+  margin: 0;
+  font-size: var(--transactions-size-text-title-sm);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.tr-empty-icon svg {
+  width: 56px;
+  height: 56px;
+}
+
+.page-content > .page-footer-bar {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background: var(--transactions-color-bg-base);
+}
+
+.page-content > section {
+  flex: 1;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-region,
+.page-main,
+.page-content {
+  height: 100%;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.4fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dashboard-card {
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-lg);
+  background: var(--transactions-color-major-background);
+  padding: 20px 24px;
+}
+
+.dashboard-card h3 {
+  margin: 0 0 8px;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.dashboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.dashboard-row:last-child {
+  border-bottom: 0;
 }

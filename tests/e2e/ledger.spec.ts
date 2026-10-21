@@ -43,8 +43,8 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
     await expect(page.getByTestId('ledger-empty')).toContainText('还没有账本')
-
     await page.getByTestId('ledger-name').fill('测试账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/测试账本/)
@@ -73,5 +73,7 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 

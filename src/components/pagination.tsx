@@ -6,6 +6,7 @@ export interface PaginationProps {
   disabled?: boolean
   onChange: (page: number) => void
   testId?: string
+  showSummary?: boolean
 }
 
 /** 旧版分页条：上一页 / 页码 / 下一页，两端保留 testid。 */
@@ -15,6 +16,7 @@ export function Pagination({
   disabled = false,
   onChange,
   testId = 'tr',
+  showSummary = true,
 }: PaginationProps): JSX.Element {
   const start = Math.max(1, Math.min(page - 2, Math.max(1, totalPages - 4)))
   const end = Math.min(totalPages, start + 4)
@@ -32,9 +34,11 @@ export function Pagination({
       >
         上一页
       </button>
-      <span className="ui-pagination__summary" data-testid={`${testId}-page`}>
-        {page} / {totalPages}
-      </span>
+      {showSummary ? (
+        <span className="ui-pagination__summary" data-testid={`${testId}-page`}>
+          {page} / {totalPages}
+        </span>
+      ) : null}
       {numbers.map((number) => (
         <button
           key={number}
@@ -58,3 +62,4 @@ export function Pagination({
     </div>
   )
 }
+

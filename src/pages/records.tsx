@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import { centsToYuan, yuanToCents } from '../../shared/domain/money'
-import { formatTimestamp } from '../../shared/domain/time'
+import { formatTimestamp, todayYmd } from '../../shared/domain/time'
+import { addDays, addMonths, daysInMonth, parseYmd } from '../../shared/domain/calendar'
 import type {
   TransactionRecordDto,
   TrQueryCondition,
@@ -11,10 +12,25 @@ import type { CategoryDto } from '../../shared/types/category'
 import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
 import { notify } from '../components/toast'
-import { EmptyState } from '../components/empty-state'
 import { Pagination } from '../components/pagination'
+import { Icon } from '../components/icon'
+import { Segmented } from '../components/segmented'
+import { DatePicker } from '../components/date-picker'
 
 const PAGE_SIZE = 20
+
+function rangeOf(period: 'day' | 'month' | 'year', anchor: string): number[] {
+  const ymd = parseYmd(anchor)
+  if (!ymd) return []
+  const start = new Date(ymd.year, ymd.month - 1, ymd.day, 0, 0, 0).getTime() / 1000
+  const end =
+    period === 'day'
+      ? new Date(ymd.year, ymd.month - 1, ymd.day, 23, 59, 59).getTime() / 1000
+      : period === 'month'
+        ? new Date(ymd.year, ymd.month - 1, daysInMonth(ymd.year, ymd.month), 23, 59, 59).getTime() / 1000
+        : new Date(ymd.year, 11, 31, 23, 59, 59).getTime() / 1000
+  return [Math.trunc(start), Math.trunc(end)]
+}
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -59,6 +75,10 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
   const [templateName, setTemplateName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showComposer, setShowComposer] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [period, setPeriod] = useState<'day' | 'month' | 'year'>('day')
+  const [anchor, setAnchor] = useState(todayYmd())
 
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('expense')
@@ -102,7 +122,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         ledgerId,
         offset: (page - 1) * PAGE_SIZE,
         limit: PAGE_SIZE,
-        tsRange: [],
+        tsRange: rangeOf(period, anchor),
         items:
           typeFilter || keyword || tagFilter
             ? [
@@ -127,7 +147,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     } finally {
       setLoading(false)
     }
-  }, [keyword, ledgerId, page, tagFilter, typeFilter])
+  }, [anchor, keyword, ledgerId, page, period, tagFilter, typeFilter])
 
   useEffect(() => {
     void load()
@@ -248,18 +268,64 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     [ledgerId],
   )
 
+  const shiftAnchor = (delta: number): void => {
+    const ymd = parseYmd(anchor)
+    if (!ymd) return
+    if (period === 'day') {
+      setAnchor(addDays(anchor, delta) ?? anchor)
+      return
+    }
+    if (period === 'month') {
+      const [year, month] = addMonths(ymd.year, ymd.month, delta)
+      setAnchor(`${year}-${String(month).padStart(2, '0')}-01`)
+      return
+    }
+    setAnchor(`${ymd.year + delta}-01-01`)
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   return (
     <section className="m0-card m0-card--wide">
-      <div className="m0-card-head">
-        <h2>记账 · 记录</h2>
-        <span className="m0-muted" data-testid="tr-total">
-          {total} 笔
-        </span>
+      <div className="page-toolbar">
+        <div className="m0-actions">
+          <Segmented
+            testId="tr-period"
+            value={period}
+            onChange={(value) => setPeriod(value as 'day' | 'month' | 'year')}
+            options={[
+              { value: 'day', label: '日' },
+              { value: 'month', label: '月' },
+              { value: 'year', label: '年' },
+            ]}
+          />
+          <button type="button" className="ui-btn ui-btn--text" onClick={() => shiftAnchor(-1)}>
+            <Icon name="Left" size={14} />
+          </button>
+          <DatePicker testId="tr-anchor" value={anchor} onChange={setAnchor} showToggle={false} />
+          <button type="button" className="ui-btn ui-btn--text" onClick={() => shiftAnchor(1)}>
+            <Icon name="Right" size={14} />
+          </button>
+        </div>
+        <div className="m0-actions">
+          <button type="button" className="ui-btn ui-btn--secondary" data-testid="tr-sort">
+            <Icon name="SortDesc" size={14} /> 排序
+          </button>
+          <button type="button" className="ui-btn ui-btn--secondary" data-testid="tr-filter" onClick={() => setShowFilters((open) => !open)}>
+            <Icon name="Search" size={14} /> 筛选
+          </button>
+          <button
+            type="button"
+            className="ui-btn ui-btn--primary"
+            data-testid="tr-new"
+            onClick={() => setShowComposer((open) => !open)}
+          >
+            <Icon name="Plus" size={14} /> 记一笔
+          </button>
+        </div>
       </div>
 
-      <div className="m0-actions m0-filter">
+      {showFilters ? (<div className="m0-actions m0-filter">
         <select
           className="m0-input"
           data-testid="tr-type"
@@ -300,9 +366,9 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             <option key={tag.name} value={tag.name} />
           ))}
         </datalist>
-      </div>
+      </div>) : null}
 
-      <div className="m0-actions m0-templates">
+      {templates.length > 0 || showComposer ? (<div className="m0-actions m0-templates">
         {templates.map((template) => (
           <span key={template.templateId} className="m0-template">
             <button
@@ -339,9 +405,9 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         >
           存为模板
         </button>
-      </div>
+      </div>) : null}
 
-      <div className="m0-actions m0-new-record">
+      {showComposer ? (<div className="m0-actions m0-new-record">
         <select
           className="m0-input"
           data-testid="tr-new-type"
@@ -412,7 +478,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         >
           记一笔
         </button>
-      </div>
+      </div>) : null}
 
       {error ? (
         <p className="m0-error" data-testid="tr-error">
@@ -421,10 +487,16 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       ) : null}
 
       {rows.length === 0 ? (
-        <EmptyState
-          testId="tr-empty"
-          title={ledgerId ? (loading ? '加载中…' : '还没有记录') : '请先创建/选择账本'}
-        />
+        <div className="tr-empty" data-testid="tr-empty">
+          <span className="tr-empty-icon">
+            <Icon name="Inbox" size={48} />
+          </span>
+          <h3>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h3>
+          {ledgerId ? <p className="m0-muted">换个时间范围，或直接记一笔。</p> : null}
+          <button type="button" className="ui-btn ui-btn--primary" onClick={() => setShowComposer(true)}>
+            记一笔
+          </button>
+        </div>
       ) : (
         <table className="m0-table">
           <thead>
@@ -486,15 +558,38 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
         </table>
       )}
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        disabled={loading}
-        onChange={(next) => setPage(next)}
-      />
+      <div className="page-footer-bar">
+        <span className="m0-muted" data-testid="tr-total">
+          共 {total} 条
+        </span>
+        <div className="m0-actions">
+          <span className="m0-muted">收入 {centsToYuan(statistics.income ?? 0)}</span>
+          <span className="m0-muted">支出 {centsToYuan(statistics.expense ?? 0)}</span>
+          <span className="m0-muted">转账 {centsToYuan(statistics.transfer ?? 0)}</span>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            disabled={loading}
+            showSummary={false}
+            onChange={(next) => setPage(next)}
+          />
+        </div>
+      </div>
     </section>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

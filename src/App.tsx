@@ -27,6 +27,7 @@ import { ConfirmDialog } from './components/confirm-dialog'
 import { ToastHost, notify } from './components/toast'
 import { Switch } from './components/switch'
 import { PageHeader } from './components/page-header'
+import { Icon, type IconName } from './components/icon'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -49,9 +50,9 @@ type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
 const NAV: Array<[View, string, keyof FeatureFlags]> = [
   ['accounting', '记账', 'accounting'],
   ['stock', '股票', 'stock'],
+  ['todo', '待办', 'todo'],
   ['events', '事件', 'keyEvent'],
   ['diary', '日记', 'diary'],
-  ['todo', '待办', 'todo'],
 ]
 
 export function App(): JSX.Element {
@@ -67,6 +68,8 @@ export function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [ledgerMenuOpen, setLedgerMenuOpen] = useState(false)
   const [accountingTab, setAccountingTab] = useState<
     'dashboard' | 'records' | 'charts' | 'tags' | 'templates'
   >('dashboard')
@@ -403,8 +406,18 @@ export function App(): JSX.Element {
     if (entry && effectiveFeatures?.[entry[2]] === false) setView('accounting')
   }, [effectiveFeatures, view])
 
+  const activeLedgerName = ledgers.find((ledger) => ledger.id === activeLedgerId)?.name ?? '默认账本'
+  const navIcon: Record<View, IconName> = {
+    accounting: 'Transaction',
+    stock: 'Sliders',
+    todo: 'CheckCircle',
+    events: 'Star',
+    diary: 'Read',
+    settings: 'Setting',
+  }
+
   const pageTitle =
-    view === 'settings' ? '设置' : (NAV.find(([key]) => key === view)?.[1] ?? '记账')
+    view === 'settings' ? '应用设置' : (NAV.find(([key]) => key === view)?.[1] ?? '记账')
 
   const finishImport = useCallback(async (targetDir: string): Promise<void> => {
     await window.api.invoke('workspace_open', { workspaceDir: targetDir })
@@ -446,56 +459,136 @@ export function App(): JSX.Element {
         </div>
       ) : null}
 
-      <div className="app-shell-body">
+      <div className={`app-shell-body${sidebarCollapsed ? ' is-sidebar-collapsed' : ''}`}>
       <aside className="app-sidebar">
-        <div className="app-brand">
-          {workspaceIconUrl ? (
-            <img className="app-brand-icon" data-testid="workspace-icon" src={workspaceIconUrl} alt="工作空间图标" />
-          ) : null}
-          <span className="m0-brand">Transactions</span>
-          <span className="m0-tag">Electron</span>
-        </div>
+        <div className={`app-left-bar${sidebarCollapsed ? ' is-collapsed' : ''}`}>
+          <div className="sidebar-ledger">
+            <div className="ledger-anchor">
+              <button
+                type="button"
+                className={`ledger-btn${ledgerMenuOpen ? ' is-open' : ''}`}
+                data-testid="ledger-trigger"
+                aria-label={`切换账本，当前 ${activeLedgerName}`}
+                onClick={() => setLedgerMenuOpen((open) => !open)}
+              >
+                <span className="workspace-mark">
+                  {workspaceIconUrl ? (
+                    <img
+                      className="workspace-mark__image"
+                      data-testid="workspace-icon"
+                      src={workspaceIconUrl}
+                      alt=""
+                    />
+                  ) : (
+                    <svg className="app-mark" viewBox="0 0 1024 1024" aria-hidden="true">
+                      <rect className="app-mark__plate" x="0" y="0" width="1024" height="1024" rx="200" ry="200" />
+                      <path
+                        className="app-mark__glyph"
+                        transform="translate(220.909996509552 49.1699676513672)"
+                        d="M363.01 322.09 L236.22 322.09 L236.22 685.1 L135.78 685.1 L135.78 322.09 L9.61 322.09 L9.61 240.56 L363.01 240.56 Z M572.57 456.01 C560.79 449.6 547.05 446.4 531.34 446.4 C510.05 446.4 493.42 454.2 481.43 469.81 C469.44 485.41 463.45 506.64 463.45 533.51 L463.45 685.1 L365.49 685.1 L365.49 367.66 L463.45 367.66 L463.45 426.56 L464.69 426.56 C480.19 383.57 508.09 362.08 548.39 362.08 C558.72 362.08 566.78 363.32 572.57 365.8 Z"
+                      />
+                    </svg>
+                  )}
+                </span>
+                <span className="ledger-btn-name">{activeLedgerName}</span>
+                <span className="ledger-btn-arrow">
+                  <Icon name="Down" size={10} />
+                </span>
+              </button>
+              {ledgerMenuOpen ? (
+                <div className="ledger-menu-layer">
+                  <div className="ledger-menu" role="menu">
+                    {ledgers.length === 0 ? (
+                      <div className="ledger-menu-empty">暂无账本</div>
+                    ) : (
+                      ledgers.map((ledger) => (
+                        <div
+                          key={ledger.id}
+                          className={`ledger-menu-row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
+                        >
+                          <button
+                            type="button"
+                            className="ledger-menu-name"
+                            role="menuitem"
+                            onClick={() => {
+                              setActiveLedgerId(ledger.id)
+                              setLedgerMenuOpen(false)
+                            }}
+                          >
+                            <span className="ledger-dot ledger-dot--1" />
+                            <span className="ledger-menu-name-text">{ledger.name}</span>
+                          </button>
+                        </div>
+                      ))
+                    )}
+                    <div className="ledger-menu-divider" />
+                    <button
+                      type="button"
+                      className="ledger-menu-create"
+                      role="menuitem"
+                      onClick={() => {
+                        setLedgerMenuOpen(false)
+                        setView('accounting')
+                        setAccountingTab('dashboard')
+                      }}
+                    >
+                      <span className="ledger-menu-create-icon">
+                        <Icon name="Plus" size={14} />
+                      </span>
+                      <span>创建账本</span>
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
 
-        <nav className="sidebar-nav">
-          {NAV.filter(([, , feature]) => effectiveFeatures?.[feature] !== false).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              data-testid={`nav-${key}`}
-              className={`nav-btn${view === key ? ' active' : ''}`}
-              onClick={() => setView(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
+          <nav className="sidebar-nav" aria-label="主导航">
+            {NAV.filter(([, , feature]) => effectiveFeatures?.[feature] !== false).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                data-testid={`nav-${key}`}
+                className={`nav-btn${view === key ? ' active' : ''}`}
+                aria-label={label}
+                onClick={() => setView(key)}
+              >
+                <span className="nav-btn-icon">
+                  <Icon name={navIcon[key]} size={18} />
+                </span>
+                <span className="nav-btn-text">{label}</span>
+              </button>
+            ))}
+          </nav>
 
-        <div className="sidebar-bottom">
-          {workspace ? (
+          <div className="sidebar-spacer" />
+          <div className="sidebar-toggle-row">
             <button
               type="button"
-              data-testid="open-workspace"
-              className="m0-primary"
-              disabled={busy}
-              onClick={() => void openWorkspace()}
+              className="nav-btn nav-btn-secondary sidebar-toggle-btn"
+              aria-label={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
             >
-              切换工作空间
+              <span className="nav-btn-icon">
+                <Icon name={sidebarCollapsed ? 'MenuUnfold' : 'MenuFold'} size={18} />
+              </span>
+              <span className="nav-btn-text">{sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}</span>
             </button>
-          ) : null}
-          <span className="app-workspace" data-testid="workspace-state">
-            {workspace ? `已打开：${workspace}` : '未打开工作空间'}
-          </span>
-          <button
-            type="button"
-            data-testid="nav-settings"
-            className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
-            onClick={() => setView('settings')}
-          >
-            设置
-          </button>
-          <span className="m0-muted" data-testid="app-info">
-            版本 {version}
-          </span>
+          </div>
+          <div className="sidebar-bottom">
+            <button
+              type="button"
+              data-testid="nav-settings"
+              className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
+              aria-label="应用设置"
+              onClick={() => setView('settings')}
+            >
+              <span className="nav-btn-icon">
+                <Icon name="Setting" size={18} />
+              </span>
+              <span className="nav-btn-text">应用设置</span>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -509,7 +602,7 @@ export function App(): JSX.Element {
               title="最小化"
               onClick={() => void window.api.invoke('window_control', { action: 'minimize' })}
             >
-              —
+              <Icon name="WindowMinimize" size={16} />
             </button>
             <button
               type="button"
@@ -518,7 +611,7 @@ export function App(): JSX.Element {
               title="最大化"
               onClick={() => void window.api.invoke('window_control', { action: 'maximize' })}
             >
-              □
+              <Icon name="WindowMaximize" size={14} />
             </button>
             <button
               type="button"
@@ -527,7 +620,7 @@ export function App(): JSX.Element {
               title="关闭"
               onClick={() => void window.api.invoke('window_control', { action: 'close' })}
             >
-              ×
+              <Icon name="Close" size={16} />
             </button>
           </div>
         </div>
@@ -540,47 +633,50 @@ export function App(): JSX.Element {
         ) : null}
 
         {view === 'accounting' ? (
-          <>
-            <div className="m0-actions m0-ledger-select">
-              <label className="m0-field">
-                当前账本
-                <select
-                  data-testid="ledger-select"
-                  className="m0-input"
-                  value={activeLedgerId}
-                  onChange={(event) => setActiveLedgerId(event.target.value)}
-                >
-                  {ledgers.length === 0 ? <option value="">（无账本）</option> : null}
-                  {ledgers.map((ledger) => (
-                    <option key={ledger.id} value={ledger.id}>
-                      {ledger.name}
-                    </option>
+          <section className="page">
+            <div className="page-region">
+              <aside className="page-rail">
+                <div className="page-rail-nav">
+                  {(
+                    [
+                      ['dashboard', '看板', 'Dashboard'],
+                      ['records', '记录', 'Transaction'],
+                      ['charts', '分析', 'LineChart'],
+                      ['tags', '标签', 'Tag'],
+                      ['templates', '模板', 'FileText'],
+                    ] as const
+                  ).map(([key, label, icon]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      data-testid={`acct-tab-${key}`}
+                      className={`page-rail-btn${accountingTab === key ? ' is-active' : ''}`}
+                      title={label}
+                      aria-label={label}
+                      onClick={() => setAccountingTab(key)}
+                    >
+                      <span className="page-rail-btn-icon">
+                        <Icon name={icon} size={18} />
+                      </span>
+                    </button>
                   ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="ui-tabs m0-accounting-tabs">
-              {(
-                [
-                  ['dashboard', '看板'],
-                  ['records', '记录'],
-                  ['charts', '分析'],
-                  ['tags', '标签'],
-                  ['templates', '模板'],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  data-testid={`acct-tab-${key}`}
-                  className={`ui-tabs__tab${accountingTab === key ? ' is-active' : ''}`}
-                  onClick={() => setAccountingTab(key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+                </div>
+              </aside>
+              <div className="page-main">
+                <div className="page-content">
+                  <select
+                    data-testid="ledger-select"
+                    className="sr-only"
+                    value={activeLedgerId}
+                    onChange={(event) => setActiveLedgerId(event.target.value)}
+                  >
+                    {ledgers.length === 0 ? <option value="">（无账本）</option> : null}
+                    {ledgers.map((ledger) => (
+                      <option key={ledger.id} value={ledger.id}>
+                        {ledger.name}
+                      </option>
+                    ))}
+                  </select>
 
             {accountingTab === 'dashboard' ? (
               <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
@@ -594,55 +690,10 @@ export function App(): JSX.Element {
             {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
             {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
             {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
-
-            <section className="m0-card m0-card--wide">
-              <h2>账本</h2>
-              <div className="m0-actions">
-                <input
-                  data-testid="ledger-name"
-                  className="m0-input"
-                  placeholder="新账本名称"
-                  value={ledgerName}
-                  disabled={busy || !workspace}
-                  onChange={(event) => setLedgerName(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') void createLedger()
-                  }}
-                />
-                <button
-                  type="button"
-                  data-testid="ledger-create"
-                  disabled={busy || !workspace}
-                  onClick={() => void createLedger()}
-                >
-                  新建账本
-                </button>
+                </div>
               </div>
-
-              {ledgers.length === 0 ? (
-                <p className="m0-muted" data-testid="ledger-empty">
-                  {workspace ? '还没有账本' : '请先选择工作空间'}
-                </p>
-              ) : (
-                <ul className="m0-ledgers">
-                  {ledgers.map((ledger) => (
-                    <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
-                      <span>{ledger.name}</span>
-                      <span className="m0-muted">{ledger.description}</span>
-                      <button
-                        type="button"
-                        className="m0-link"
-                        disabled={busy}
-                        onClick={() => setDeleteTarget(ledger.id)}
-                      >
-                        删除
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </>
+            </div>
+          </section>
         ) : null}
 
         {view === 'stock' ? (
@@ -662,6 +713,18 @@ export function App(): JSX.Element {
               <p className="m0-muted">
                 配置文件：{config?.configPath ?? '…'}（{config?.isDev ? '开发' : '生产'}）
               </p>
+              <div className="m0-import-row">
+                <span className="m0-muted">{workspace ?? '未打开工作空间'}</span>
+                <button
+                  type="button"
+                  className="m0-primary"
+                  data-testid="open-workspace"
+                  disabled={busy}
+                  onClick={() => void openWorkspace()}
+                >
+                  切换工作空间
+                </button>
+              </div>
               <label className="m0-field">
                 外观
                 <select
@@ -791,6 +854,54 @@ export function App(): JSX.Element {
 
             <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
 
+            <section className="m0-card m0-card--wide">
+              <h2>账本</h2>
+              <div className="m0-actions">
+                <input
+                  data-testid="ledger-name"
+                  className="m0-input"
+                  placeholder="新账本名称"
+                  value={ledgerName}
+                  disabled={busy || !workspace}
+                  onChange={(event) => setLedgerName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') void createLedger()
+                  }}
+                />
+                <button
+                  type="button"
+                  data-testid="ledger-create"
+                  disabled={busy || !workspace}
+                  onClick={() => void createLedger()}
+                >
+                  新建账本
+                </button>
+              </div>
+
+              {ledgers.length === 0 ? (
+                <p className="m0-muted" data-testid="ledger-empty">
+                  {workspace ? '还没有账本' : '请先选择工作空间'}
+                </p>
+              ) : (
+                <ul className="m0-ledgers">
+                  {ledgers.map((ledger) => (
+                    <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
+                      <span>{ledger.name}</span>
+                      <span className="m0-muted">{ledger.description}</span>
+                      <button
+                        type="button"
+                        className="m0-link"
+                        disabled={busy}
+                        onClick={() => setDeleteTarget(ledger.id)}
+                      >
+                        删除
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
             <section className="m0-card">
               <h2>M0 验收</h2>
               <ul>
@@ -845,10 +956,21 @@ export function App(): JSX.Element {
         </div>
       </main>
       </div>
+      <span className="sr-only" data-testid="workspace-state">
+        {workspace ? `已打开：${workspace}` : '未打开工作空间'}
+      </span>
+      <span className="sr-only" data-testid="app-info">
+        版本 {version}
+      </span>
       <ToastHost />
     </>
   )
 }
+
+
+
+
+
 
 
 

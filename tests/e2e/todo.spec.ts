@@ -43,6 +43,7 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('ledger-name').fill('待办账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/待办账本/)
@@ -83,5 +84,6 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 

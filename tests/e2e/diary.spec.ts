@@ -43,6 +43,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('ledger-name').fill('日记账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/日记账本/)
@@ -102,6 +103,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 
