@@ -500,15 +500,6 @@
   resize: vertical;
 }
 
-.diary-io {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 10px;
-  border-top: 1px solid var(--transactions-color-divider);
-}
-
 .charts-layout {
   flex: 1;
   min-height: 0;

@@ -20,6 +20,8 @@ test('日记：保存/字数/覆盖/删除', async () => {
   const home = join(root, 'home')
   const workspace = join(root, 'ws')
   const userData = join(root, 'user-data')
+  const exportDir = join(root, 'out')
+  const importDir = join(root, 'in')
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
@@ -34,7 +36,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
       USERPROFILE: home,
       HOME: home,
       TRANSACTIONS_USER_DATA: userData,
-      TRANSACTIONS_TEST_DIALOG_DIR: workspace,
+      TRANSACTIONS_TEST_DIALOG_DIRS: `${workspace}|${exportDir}|${importDir}`,
       TRANSACTIONS_TEST_CLOSE: 'quit',
     }),
   })
@@ -61,25 +63,30 @@ test('日记：保存/字数/覆盖/删除', async () => {
     await page.getByTestId('diary-save').click()
     await expect(page.getByTestId('diary-word-count')).toHaveText('9字')
 
-    const exportDir = join(root, 'out')
-    const importDir = join(root, 'in')
     mkdirSync(exportDir, { recursive: true })
     mkdirSync(importDir, { recursive: true })
     writeFileSync(join(importDir, '2026-02-01.txt'), '导入的日记', 'utf8')
 
-    await page.getByTestId('diary-dir').fill(exportDir)
+    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-diary').click()
+    await page.getByTestId('diary-export-scope-year').click()
+    await expect(page.getByTestId('diary-export-period')).toBeVisible()
+    await page.getByTestId('diary-export-scope-month').click()
+    await expect(page.getByTestId('diary-export-period')).toBeVisible()
+    await page.getByTestId('diary-export-scope-all').click()
     await page.getByTestId('diary-export').click()
     await expect(page.getByTestId('diary-transfer-status')).toHaveText('导出 1/1 篇')
     expect(readFileSync(join(exportDir, '2026-01-15.txt'), 'utf8')).toBe('今天很好，明天继续')
 
-    await page.getByTestId('diary-dir').fill(importDir)
     await page.getByTestId('diary-import').click()
     await expect(page.getByTestId('diary-transfer-status')).toHaveText('导入 1/1 篇')
+    await page.getByTestId('nav-diary').click()
     await expect(page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' })).toHaveCount(1)
     await page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' }).click()
     await page.getByTestId('diary-delete').click()
     await expect(page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' })).toHaveCount(0)
-    await page.getByTestId('diary-date-item').filter({ hasText: '2026-01-15' }).click()
+    await page.getByTestId('diary-date').fill('2026-01-15')
+    await expect(page.getByTestId('diary-word-count')).toHaveText('9字')
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const rows = database

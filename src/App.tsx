@@ -26,6 +26,7 @@ import { Input, Tabs } from 'antd'
 import { AppMark } from './components/app-mark'
 import { Button } from './components/button'
 import { ImportWizard } from './pages/import-wizard'
+import { DiaryTransfer } from './pages/diary-transfer'
 import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
 import { notify } from './components/toast'
@@ -959,27 +960,7 @@ export function App(): JSX.Element {
                     </div>
                   ) : null}
 
-                  {settingsTab === 'diary' ? (
-                    <div className="st-list">
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">日记格式</span>
-                          <span className="st-card-desc">每篇日记按 YYYY-MM-DD 保存；正文按纯文本呈现。</span>
-                        </div>
-                      </div>
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">导入 / 导出</span>
-                          <span className="st-card-desc">按目录扫描或导出 YYYY-MM-DD.txt；入口在日记页。</span>
-                        </div>
-                        <div className="st-card-action">
-                          <Button variant="secondary" onClick={() => setView('diary')}>
-                            前往日记
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
+                  {settingsTab === 'diary' ? <DiaryTransfer ledgerId={activeLedgerId} /> : null}
 
                   {settingsTab === 'data' ? (
                     <div className="st-list">
