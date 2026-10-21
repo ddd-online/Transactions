@@ -226,12 +226,12 @@
 }
 
 .workspace-btn:hover {
-  box-shadow: 0 0 0 3px var(--transactions-color-hover-bg);
+  background-color: var(--transactions-color-hover-bg);
 }
 
-/* 展开中 = 侧栏导航项的"选中"语言：主色 tint 光环 */
+/* 展开中 = 侧栏导航项的"选中"语言：主色 tint 底色 */
 .workspace-btn.is-open {
-  box-shadow: 0 0 0 3px var(--transactions-color-active-bg);
+  background-color: var(--transactions-color-active-bg);
 }
 
 .workspace-btn:focus-visible {
@@ -252,8 +252,10 @@
  * 40 也是子功能图标条里那颗按钮的尺寸（`.page-rail-btn`）：两条窄列里的"方格图标"
  * 因此同一档。 */
 .app-left-bar.is-collapsed .workspace-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border-radius: var(--transactions-radius-md);
 }
 
 /* 工作空间标志：铺满所在方块，**圆角继承宿主**（按钮 8px / 设置页预览 12px）。
@@ -640,6 +642,7 @@
  * ============================================ */
 .app-left-bar.is-collapsed .sidebar-ledger {
   justify-content: center;
+  height: 56px;
   padding-left: 0;
   padding-right: 0;
 }
