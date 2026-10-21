@@ -29,6 +29,8 @@ import { Switch } from './components/switch'
 import { PageHeader } from './components/page-header'
 import { Segmented } from './components/segmented'
 import { PageLayout, PageRailProvider } from './components/page-layout'
+import { SettingsRow } from './components/settings-row'
+import { FileButton } from './components/file-button'
 import { Icon, type IconName } from './components/icon'
 
 function errorMessage(error: unknown): string {
@@ -751,25 +753,17 @@ export function App(): JSX.Element {
 
                   {settingsTab === 'general' ? (
                     <div className="st-list">
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">工作空间</span>
-                          <span className="st-card-desc st-card-desc--mono">
-                            {workspace ?? '尚未选择工作空间'}
-                          </span>
-                        </div>
-                        <div className="st-card-action">
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            data-testid="open-workspace"
-                            disabled={busy}
-                            onClick={() => void openWorkspace()}
-                          >
-                            切换
-                          </button>
-                        </div>
-                      </div>
+                      <SettingsRow title="工作空间" description={workspace ?? '尚未选择工作空间'} mono>
+                        <button
+                          type="button"
+                          className="ui-btn ui-btn--secondary"
+                          data-testid="open-workspace"
+                          disabled={busy}
+                          onClick={() => void openWorkspace()}
+                        >
+                          切换
+                        </button>
+                      </SettingsRow>
 
                       <div className="st-card">
                         <div className="st-card-info">
@@ -786,12 +780,10 @@ export function App(): JSX.Element {
                               alt=""
                             />
                           ) : null}
-                          <input
-                            className="m0-input"
-                            type="file"
-                            data-testid="workspace-icon-input"
+                          <FileButton
+                            testId="workspace-icon-input"
                             accept="image/png,image/jpeg,image/webp,image/gif"
-                            onChange={(event) => void changeWorkspaceIcon(event.target.files?.[0])}
+                            onSelect={(file) => void changeWorkspaceIcon(file)}
                           />
                           <button
                             type="button"
@@ -804,45 +796,33 @@ export function App(): JSX.Element {
                         </div>
                       </div>
 
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">外观</span>
-                          <span className="st-card-desc">界面配色，可跟随系统</span>
-                        </div>
-                        <div className="st-card-action">
-                          <Segmented
-                            testId="appearance"
-                            value={config?.appearance ?? 'system'}
-                            disabled={!config}
-                            onChange={(value) => void setAppearance(value)}
-                            options={[
-                              { value: 'light', label: '浅色' },
-                              { value: 'dark', label: '深色' },
-                              { value: 'system', label: '跟随系统' },
-                            ]}
-                          />
-                        </div>
-                      </div>
+                      <SettingsRow title="外观" description="界面配色，可跟随系统">
+                        <Segmented
+                          testId="appearance"
+                          value={config?.appearance ?? 'system'}
+                          disabled={!config}
+                          onChange={(value) => void setAppearance(value)}
+                          options={[
+                            { value: 'light', label: '浅色' },
+                            { value: 'dark', label: '深色' },
+                            { value: 'system', label: '跟随系统' },
+                          ]}
+                        />
+                      </SettingsRow>
 
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">关闭行为</span>
-                          <span className="st-card-desc">点击右上角关闭按钮时的行为</span>
-                        </div>
-                        <div className="st-card-action">
-                          <Segmented
-                            testId="close-behavior"
-                            value={config?.closeBehavior ?? 'quit'}
-                            disabled={!config}
-                            onChange={(value) => void setCloseBehavior(value)}
-                            options={[
-                              { value: 'quit', label: '直接退出' },
-                              { value: 'tray', label: '最小化到托盘' },
-                              { value: 'ask', label: '每次询问' },
-                            ]}
-                          />
-                        </div>
-                      </div>
+                      <SettingsRow title="关闭行为" description="点击右上角关闭按钮时的行为">
+                        <Segmented
+                          testId="close-behavior"
+                          value={config?.closeBehavior ?? 'quit'}
+                          disabled={!config}
+                          onChange={(value) => void setCloseBehavior(value)}
+                          options={[
+                            { value: 'quit', label: '直接退出' },
+                            { value: 'tray', label: '最小化到托盘' },
+                            { value: 'ask', label: '每次询问' },
+                          ]}
+                        />
+                      </SettingsRow>
 
                       <div className="st-card">
                         <div className="st-card-info">
@@ -896,22 +876,16 @@ export function App(): JSX.Element {
                         </div>
                       </div>
 
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">开发者工具</span>
-                          <span className="st-card-desc">打开开发者工具，用于调试界面代码</span>
-                        </div>
-                        <div className="st-card-action">
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            data-testid="devtools-open"
-                            onClick={() => void window.api.invoke('devtools_toggle', { enabled: true })}
-                          >
-                            打开
-                          </button>
-                        </div>
-                      </div>
+                      <SettingsRow title="开发者工具" description="打开开发者工具，用于调试界面代码">
+                        <button
+                          type="button"
+                          className="ui-btn ui-btn--secondary"
+                          data-testid="devtools-open"
+                          onClick={() => void window.api.invoke('devtools_toggle', { enabled: true })}
+                        >
+                          打开
+                        </button>
+                      </SettingsRow>
 
                       <div className="st-card">
                         <div className="st-card-info">

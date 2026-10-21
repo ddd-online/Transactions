@@ -55,8 +55,8 @@
   display: flex;
   flex-direction: column;
   overflow: auto;
-  padding: 16px 20px;
-  gap: 16px;
+  padding: var(--transactions-space-lg);
+  gap: var(--transactions-space-lg);
 }
 
 .app-router-view > * {
@@ -74,7 +74,7 @@
   justify-content: center;
   max-height: 60vh;
   overflow: hidden;
-  background: #000;
+  background: var(--transactions-color-text-major);
   touch-action: none;
   user-select: none;
   cursor: crosshair;
@@ -89,8 +89,8 @@
 
 .image-crop-box {
   position: absolute;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 9999px rgb(0 0 0 / 45%);
+  border: 2px solid var(--transactions-color-text-inverse);
+  box-shadow: 0 0 0 9999px var(--transactions-color-overlay-scrim);
   pointer-events: none;
 }
 
@@ -314,7 +314,7 @@
 }
 
 .stock-hero strong {
-  font-size: 36px;
+  font-size: var(--transactions-size-text-display-xl);
   line-height: 1.2;
   font-weight: var(--transactions-weight-semibold);
 }
@@ -505,7 +505,7 @@
 .diary-editor-head h2 {
   flex: 1;
   margin: 0;
-  font-size: 26px;
+  font-size: var(--transactions-size-text-display-sm);
   font-weight: var(--transactions-weight-semibold);
 }
 
@@ -747,7 +747,7 @@
 }
 
 .page-content > .page-toolbar:first-child {
-  margin: -16px -20px 0;
+  margin: calc(-1 * var(--transactions-space-lg)) calc(-1 * var(--transactions-space-lg)) 0;
   position: sticky;
   top: -16px;
   z-index: 2;
@@ -755,11 +755,11 @@
 }
 
 .page-content > .page-footer-bar {
-  margin-left: -20px;
-  margin-right: -20px;
-  margin-bottom: -16px;
-  padding-left: 20px;
-  padding-right: 20px;
+  margin-left: calc(-1 * var(--transactions-space-lg));
+  margin-right: calc(-1 * var(--transactions-space-lg));
+  margin-bottom: calc(-1 * var(--transactions-space-lg));
+  padding-left: var(--transactions-space-lg);
+  padding-right: var(--transactions-space-lg);
 }
 
 
@@ -769,4 +769,52 @@
   width: 110px !important;
   height: 28px;
   padding: 0 6px;
+}
+
+.dashboard-grid {
+  gap: var(--transactions-space-lg);
+}
+
+.dashboard-card {
+  padding: var(--transactions-space-lg) var(--transactions-space-xl);
+}
+
+.dashboard-card h3 {
+  margin-bottom: var(--transactions-space-md);
+  font-size: var(--transactions-size-text-title-sm);
+  line-height: var(--transactions-height-snug);
+}
+
+.dashboard-row {
+  gap: var(--transactions-space-lg);
+  padding: var(--transactions-space-md) 0;
+}
+
+.dashboard-row strong {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title);
+  font-weight: var(--transactions-weight-medium);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount-lg);
+}
+
+.m0-slice-amount {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.st-file-picker {
+  cursor: pointer;
+}
+
+.stock-hero strong,
+.m0-stock-stats .m0-stat strong {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount-xl);
+}
+
+.m0-stock-stats .m0-stat strong {
+  font-size: var(--transactions-size-text-title);
+  font-weight: var(--transactions-weight-medium);
 }

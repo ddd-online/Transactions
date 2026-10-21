@@ -7,6 +7,7 @@ import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
 import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
+import { FileButton } from '../components/file-button'
 import { Tooltip } from '../components/tooltip'
 import { Icon } from '../components/icon'
 import { Markdown } from '../components/markdown'
@@ -354,12 +355,11 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     {content ? <Markdown source={content} testId="event-content-preview" /> : null}
 
                     <div className="m0-actions">
-                      <input
-                        ref={fileRef}
-                        type="file"
+                      <FileButton
+                        testId="event-image-input"
                         accept="image/png,image/jpeg,image/webp,image/gif"
-                        data-testid="event-image-input"
-                        onChange={(changeEvent) => void addImage(changeEvent.target.files?.[0])}
+                        inputRef={fileRef}
+                        onSelect={(file) => void addImage(file)}
                       />
                     </div>
 

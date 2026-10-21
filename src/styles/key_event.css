@@ -239,7 +239,7 @@
 .key-event-card__bar {
   width: 4px;
   flex-shrink: 0;
-  border-radius: 2px;
+  border-radius: var(--transactions-radius-full);
   margin: var(--transactions-space-sm) 0;
   transform-origin: left;
   transition: transform var(--transactions-transition-smooth);
@@ -894,14 +894,14 @@
 .upload-progress-bar .summary-bar-track {
   width: 100%;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--transactions-radius-full);
   background: var(--transactions-color-minor-background);
   overflow: hidden;
 }
 
 .upload-progress-bar .summary-bar-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: var(--transactions-radius-full);
   background: var(--transactions-color-primary);
   transform-origin: left;
   transition: transform var(--transactions-transition-normal);
@@ -987,14 +987,14 @@
 .upload-progress-bar .file-bar-track {
   width: 100%;
   height: 2px;
-  border-radius: 1px;
+  border-radius: var(--transactions-radius-full);
   background: var(--transactions-color-minor-background);
   overflow: hidden;
 }
 
 .upload-progress-bar .file-bar-fill {
   height: 100%;
-  border-radius: 1px;
+  border-radius: var(--transactions-radius-full);
   background: var(--transactions-color-primary);
   transform-origin: left;
   transition: transform var(--transactions-transition-fast);
