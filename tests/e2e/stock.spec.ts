@@ -52,7 +52,9 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-principal')).toHaveText('¥0.00')
     await expect(page.getByTestId('stock-cash')).toHaveText('¥0.00')
     await expect(page.getByTestId('stock-total-assets')).toHaveText('¥0.00')
+    await page.getByTestId('stock-tab-positions').click()
     await expect(page.getByTestId('stock-position-empty')).toContainText('当前没有持仓')
+    await page.getByTestId('stock-tab-account').click()
     await expect(page.getByTestId('fund-empty')).toContainText('还没有资金记录')
 
     await page.getByTestId('stock-amount').fill('1000')
@@ -67,10 +69,12 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-cash')).toHaveText('¥800.00')
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
+    await page.getByTestId('stock-tab-settings').click()
     await page.getByTestId('fee-commission').fill('0.0001')
     await page.getByTestId('fee-save').click()
     await expect(page.getByTestId('stock-error')).toHaveCount(0)
 
+    await page.getByTestId('stock-tab-positions').click()
     await page.getByTestId('trade-code').fill('600000')
     await page.getByTestId('trade-name').fill('浦发银行')
     await page.getByTestId('trade-price').fill('5')
@@ -80,8 +84,10 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-position-row')).toContainText('浦发银行')
     await expect(page.getByTestId('stock-position-row')).toContainText('100')
     await expect(page.getByTestId('stock-position-empty')).toHaveCount(0)
+    await page.getByTestId('stock-tab-account').click()
     await expect(page.getByTestId('stock-cash')).toHaveText('¥294.99')
     await expect(page.getByTestId('fund-row').filter({ hasText: '买入' })).toHaveCount(1)
+    await page.getByTestId('stock-tab-positions').click()
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const account = database
@@ -125,11 +131,13 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('position-review-text').fill('观察一天')
     await page.getByTestId('position-review-save').click()
     await expect(page.getByTestId('position-review-text')).toHaveValue('观察一天')
+    await page.waitForTimeout(200)
 
     await page.getByTestId('trade-type').selectOption('close')
     await page.getByTestId('trade-price').fill('6')
     await page.getByTestId('trade-lots').fill('1')
     await page.getByTestId('trade-save').click()
+    await expect(page.getByTestId('stock-position-empty')).toContainText('当前没有持仓')
 
     await page.getByTestId('stock-tab-history').click()
     await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
@@ -174,7 +182,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('stock-tab-statistics').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
 
-    await page.getByTestId('stock-tab-account').click()
+    await page.getByTestId('stock-tab-settings').click()
     await expect(page.getByTestId('stock-operation')).toHaveCount(4)
     await page.getByTestId('stock-operation-rollback').click()
     await expect(page.getByTestId('stock-operation')).toHaveCount(3)
@@ -183,6 +191,11 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
+
+
+
 
 
 

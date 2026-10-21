@@ -54,9 +54,11 @@ test('股票：重置与归档', async () => {
     await page.getByTestId('stock-add-principal').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
+    await page.getByTestId('stock-tab-settings').click()
     await page.getByTestId('stock-reset').click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await page.getByTestId('confirm-dialog-confirm').click()
+    await page.getByTestId('stock-tab-account').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥0.00')
 
     let database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -74,6 +76,7 @@ test('股票：重置与归档', async () => {
     await page.getByTestId('stock-add-principal').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥500.00')
 
+    await page.getByTestId('stock-tab-settings').click()
     await page.getByTestId('stock-archive-name').fill('归档账本')
     await page.getByTestId('stock-archive').click()
     await expect(page.getByTestId('stock-transfer-status')).toContainText('已归档')
@@ -94,6 +97,7 @@ test('股票：重置与归档', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

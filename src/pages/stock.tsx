@@ -10,12 +10,14 @@ export interface StockPageProps {
   onLedgerChanged?: () => void
 }
 
-type StockTab = 'account' | 'history' | 'statistics'
+type StockTab = 'account' | 'positions' | 'history' | 'statistics' | 'settings'
 
 const TABS: Array<[StockTab, string, IconName]> = [
-  ['account', '账户与持仓', 'User'],
-  ['history', '交易历史', 'LineChart'],
+  ['account', '账户', 'User'],
+  ['positions', '持仓', 'LineChart'],
+  ['history', '记录', 'ClockCircle'],
   ['statistics', '统计', 'BarChart'],
+  ['settings', '设置', 'Setting'],
 ]
 
 /** 股票域分页：账户/持仓、交易历史、统计。 */
@@ -46,10 +48,9 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
         </aside>
         <div className="page-main">
           <div className="page-content">
-            {tab === 'account' ? (
-              <StockAccountPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
-            ) : null}
-            {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
+            {tab === 'account' || tab === 'positions' || tab === 'settings' ? (
+              <StockAccountPanel section={tab} ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
+            ) : null}            {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
             {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
           </div>
         </div>
@@ -57,3 +58,5 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
     </section>
   )
 }
+
+

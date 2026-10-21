@@ -26,11 +26,13 @@ function money(cents: number): string {
 }
 
 export interface StockAccountPanelProps {
+  section: 'account' | 'positions' | 'settings'
   ledgerId: string
   onLedgerChanged?: () => void
 }
 
 export function StockAccountPanel({
+  section,
   ledgerId,
   onLedgerChanged,
 }: StockAccountPanelProps): JSX.Element {
@@ -238,7 +240,7 @@ export function StockAccountPanel({
   return (
     <section className="m0-card m0-card--wide">
       <div className="m0-card-head">
-        <h2>股票 · 账户与设置</h2>
+        <h2>{section === 'account' ? '股票 · 账户' : section === 'positions' ? '股票 · 持仓' : '股票 · 设置'}</h2>
         <span className="m0-muted" data-testid="stock-tags">
           {tags ? tags.tags.join(' / ') : ''}
         </span>
@@ -249,6 +251,7 @@ export function StockAccountPanel({
         <strong data-testid="stock-total-assets">{money(overview?.totalAssets ?? 0)}</strong>
       </div>
 
+      {section === 'account' ? (<> 
       <div className="m0-stats m0-stock-stats">
         <div className="m0-stat">
           <span className="m0-muted">本金</span>
@@ -334,6 +337,9 @@ export function StockAccountPanel({
         </div>
       </div>
 
+      </>) : null}
+
+      {section === 'positions' ? (<> 
       <h3 className="m0-subtitle">持仓</h3>
       {positions.length > 0 ? (
         <table className="m0-table">
@@ -500,6 +506,9 @@ export function StockAccountPanel({
         </button>
       </div>
 
+      </>) : null}
+
+      {section === 'settings' ? (<> 
       <h3 className="m0-subtitle">交易费用</h3>
       <div className="m0-actions m0-new-record">
         <label className="m0-field">
@@ -557,6 +566,9 @@ export function StockAccountPanel({
         </button>
       </div>
 
+      </>) : null}
+
+      {section === 'account' ? (<> 
       <h3 className="m0-subtitle">资金记录</h3>
       {funds && funds.items.length > 0 ? (
         <table className="m0-table">
@@ -588,6 +600,9 @@ export function StockAccountPanel({
         />
       )}
 
+      </>) : null}
+
+      {section === 'settings' ? (<> 
       <h3 className="m0-subtitle">操作记录</h3>
       {operations.length === 0 ? (
         <p className="m0-muted" data-testid="stock-operation-empty">
@@ -651,6 +666,8 @@ export function StockAccountPanel({
         </p>
       ) : null}
 
+      </>) : null}
+
       <ConfirmDialog
         open={confirmReset}
         title="重置股票数据"
@@ -666,6 +683,8 @@ export function StockAccountPanel({
     </section>
   )
 }
+
+
 
 
 
