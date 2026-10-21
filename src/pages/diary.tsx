@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
+import { formatYmdCn, weekdayCn } from '../../shared/domain/calendar'
 import { notify } from '../components/toast'
 import { DatePicker } from '../components/date-picker'
 
@@ -11,6 +12,23 @@ function errorMessage(error: unknown): string {
   }
   if (error instanceof Error) return error.message
   return String(error)
+}
+
+function groupByYearMonth(dates: DiaryDateItem[]): Array<{ key: string; label: string; items: DiaryDateItem[] }> {
+  const groups = new Map<string, DiaryDateItem[]>()
+  for (const item of dates) {
+    const key = item.date.slice(0, 7)
+    const list = groups.get(key) ?? []
+    list.push(item)
+    groups.set(key, list)
+  }
+  return [...groups.entries()]
+    .sort(([left], [right]) => right.localeCompare(left))
+    .map(([key, items]) => ({
+      key,
+      label: `${key.slice(0, 4)}年${Number(key.slice(5))}月`,
+      items,
+    }))
 }
 
 export interface DiaryPageProps {
@@ -168,124 +186,144 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   }, [date, ledgerId, loadDates])
 
   return (
-    <section className="m0-card m0-card--wide">
-      <div className="m0-card-head">
-        <h2>日记</h2>
-        <div className="m0-actions m0-period">
-          <DatePicker testId="diary-date" value={date} onChange={(value) => setDate(value)} />
-          <span className="m0-muted" data-testid="diary-word-count">
-            {wordCount} 字
-          </span>
-        </div>
-      </div>
-
-      <div className="m0-import-row">
-        <label className="m0-field m0-import-field">
-          导入 / 导出目录
-          <input
-            className="m0-input"
-            data-testid="diary-dir"
-            value={directory}
-            onChange={(event) => setDirectory(event.target.value)}
-            placeholder="包含 YYYY-MM-DD.txt 的目录"
-          />
-        </label>
-        <button type="button" className="m0-link" onClick={() => void pickDirectory()}>
-          选择
-        </button>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="diary-import"
-          disabled={!directory || busy}
-          onClick={() => void importDiary()}
-        >
-          导入目录
-        </button>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="diary-export"
-          disabled={!directory || busy}
-          onClick={() => void exportDiary()}
-        >
-          导出全部
-        </button>
-        {transferStatus ? (
-          <span className="m0-muted" data-testid="diary-transfer-status">
-            {transferStatus}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="m0-diary-layout">
-        <ul className="m0-diary-dates">
-          {dates.length === 0 ? (
-            <li className="m0-muted" data-testid="diary-empty">
-              {ledgerId ? '还没有日记' : '请先创建/选择账本'}
-            </li>
-          ) : (
-            dates.map((item) => (
-              <li key={item.date}>
+    <section className="page">
+      <div className="page-region">
+        <div className="page-main">
+          <div className="page-content">
+            <div className="page-toolbar">
+              <div className="m0-actions">
+                <button type="button" className="ui-btn ui-btn--secondary" onClick={() => setDate(todayYmd())}>
+                  今天
+                </button>
+                <DatePicker testId="diary-date" value={date} onChange={(value) => setDate(value)} />
+              </div>
+              <div className="m0-actions">
                 <button
                   type="button"
-                  className={item.date === date ? 'm0-primary' : 'm0-link'}
-                  data-testid="diary-date-item"
-                  onClick={() => setDate(item.date)}
+                  className="ui-btn ui-btn--primary"
+                  data-testid="diary-save"
+                  disabled={!ledgerId || busy}
+                  onClick={() => void save()}
                 >
-                  {item.date} · {item.wordCount} 字
+                  保存
                 </button>
-              </li>
-            ))
-          )}
-        </ul>
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--text"
+                  data-testid="diary-delete"
+                  disabled={!ledgerId || busy}
+                  onClick={() => void remove()}
+                >
+                  删除
+                </button>
+              </div>
+            </div>
 
-        <div className="m0-diary-editor">
-          <div className="m0-actions m0-new-record">
-            <input
-              className="m0-input"
-              data-testid="diary-mood"
-              placeholder="心情"
-              value={mood}
-              onChange={(changeEvent) => setMood(changeEvent.target.value)}
-            />
-            <button
-              type="button"
-              className="m0-primary"
-              data-testid="diary-save"
-              disabled={!ledgerId || busy}
-              onClick={() => void save()}
-            >
-              保存
-            </button>
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="diary-delete"
-              disabled={!ledgerId || busy}
-              onClick={() => void remove()}
-            >
-              删除
-            </button>
+            {error ? (
+              <p className="m0-error" data-testid="diary-error">
+                {error}
+              </p>
+            ) : null}
+
+            <div className="diary-layout">
+              <aside className="diary-list">
+                <div className="diary-list-head">
+                  <strong>日记列表</strong>
+                  <span className="m0-muted">{dates.length} 篇</span>
+                </div>
+                {dates.length === 0 ? (
+                  <p className="m0-muted" data-testid="diary-empty">
+                    {ledgerId ? '还没有日记' : '请先创建/选择账本'}
+                  </p>
+                ) : (
+                  groupByYearMonth(dates).map((group) => (
+                    <div key={group.key} className="diary-group">
+                      <h4>{group.label}</h4>
+                      {group.items.map((item) => (
+                        <button
+                          key={item.date}
+                          type="button"
+                          className={`diary-date-item${item.date === date ? ' is-active' : ''}`}
+                          data-testid="diary-date-item"
+                          onClick={() => setDate(item.date)}
+                        >
+                          <span>{item.date}</span>
+                          <span className="m0-muted">{item.wordCount} 字</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </aside>
+
+              <section className="diary-editor">
+                <div className="diary-editor-head">
+                  <h2>
+                    {formatYmdCn(date)} <span className="m0-muted">{weekdayCn(date)}</span>
+                  </h2>
+                  <input
+                    className="m0-input"
+                    data-testid="diary-mood"
+                    placeholder="心情"
+                    value={mood}
+                    onChange={(changeEvent) => setMood(changeEvent.target.value)}
+                  />
+                  <span className="m0-muted" data-testid="diary-word-count">
+                    {wordCount} 字
+                  </span>
+                </div>
+
+                <textarea
+                  className="m0-input m0-diary-content"
+                  data-testid="diary-content"
+                  placeholder="写下今天的日记……"
+                  value={content}
+                  onChange={(changeEvent) => setContent(changeEvent.target.value)}
+                />
+
+                <div className="diary-io">
+                  <label className="m0-field">
+                    导入 / 导出目录
+                    <input
+                      className="m0-input"
+                      data-testid="diary-dir"
+                      value={directory}
+                      onChange={(event) => setDirectory(event.target.value)}
+                      placeholder="包含 YYYY-MM-DD.txt 的目录"
+                    />
+                  </label>
+                  <button type="button" className="ui-btn ui-btn--text" onClick={() => void pickDirectory()}>
+                    选择
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-btn ui-btn--text"
+                    data-testid="diary-import"
+                    disabled={!directory || busy}
+                    onClick={() => void importDiary()}
+                  >
+                    导入目录
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-btn ui-btn--text"
+                    data-testid="diary-export"
+                    disabled={!directory || busy}
+                    onClick={() => void exportDiary()}
+                  >
+                    导出全部
+                  </button>
+                  {transferStatus ? (
+                    <span className="m0-muted" data-testid="diary-transfer-status">
+                      {transferStatus}
+                    </span>
+                  ) : null}
+                </div>
+              </section>
+            </div>
           </div>
-
-          {error ? (
-            <p className="m0-error" data-testid="diary-error">
-              {error}
-            </p>
-          ) : null}
-
-          <textarea
-            className="m0-input m0-diary-content"
-            data-testid="diary-content"
-            placeholder="写点什么…"
-            value={content}
-            onChange={(changeEvent) => setContent(changeEvent.target.value)}
-          />
         </div>
       </div>
     </section>
   )
 }
-
-

@@ -428,3 +428,104 @@
   min-height: 260px;
   resize: vertical;
 }
+
+.diary-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.diary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.diary-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 8px;
+}
+
+.diary-group h4 {
+  margin: 10px 0 4px;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.diary-date-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  background: transparent;
+  color: var(--transactions-color-text-major);
+  cursor: pointer;
+  text-align: left;
+}
+
+.diary-date-item:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.diary-date-item.is-active {
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+}
+
+.diary-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 20px 24px;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-lg);
+  background: var(--transactions-color-major-background);
+}
+
+.diary-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diary-editor-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 26px;
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.diary-editor-head h2 span {
+  font-size: var(--transactions-size-text-body);
+  font-weight: normal;
+}
+
+.diary-editor-head .m0-input {
+  width: 120px;
+}
+
+.diary-editor .m0-diary-content {
+  flex: 1;
+  min-height: 420px;
+  resize: vertical;
+}
+
+.diary-io {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--transactions-color-divider);
+}

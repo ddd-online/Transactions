@@ -64,6 +64,7 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-progress-done').click()
     await expect(page.getByTestId('todo-progress-done')).toBeChecked()
     await page.getByTestId('todo-item-done').click()
+    await page.getByTestId('todo-tab-history').click()
     await expect(page.getByTestId('todo-history-item')).toContainText('工作 · 写周报')
     await expect(page.getByTestId('todo-item')).toHaveCount(0)
 
@@ -84,6 +85,7 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

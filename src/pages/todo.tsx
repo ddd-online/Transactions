@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import type { TodoCardDto, TodoHistoryDto } from '../../shared/types/todo'
 import { EmptyState } from '../components/empty-state'
 import { Progress } from '../components/progress'
+import { Icon } from '../components/icon'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -28,6 +29,7 @@ export interface TodoPageProps {
 export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [cards, setCards] = useState<TodoCardDto[]>([])
   const [dragCardId, setDragCardId] = useState<string | null>(null)
+  const [todoMode, setTodoMode] = useState<'cards' | 'history'>('cards')
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
   const [cardTitle, setCardTitle] = useState('')
   const [itemTitles, setItemTitles] = useState<Record<string, string>>({})
@@ -209,7 +211,38 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   )
 
   return (
-    <section className="m0-card m0-card--wide">
+    <section className="page">
+      <div className="page-region">
+        <aside className="page-rail">
+          <div className="page-rail-nav">
+            <button
+              type="button"
+              className={`page-rail-btn${todoMode === 'cards' ? ' is-active' : ''}`}
+              data-testid="todo-tab-cards"
+              title="待办视图"
+              aria-label="待办视图"
+              onClick={() => setTodoMode('cards')}
+            >
+              <span className="page-rail-btn-icon">
+                <Icon name="CheckCircle" size={18} />
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`page-rail-btn${todoMode === 'history' ? ' is-active' : ''}`}
+              data-testid="todo-tab-history"
+              title="历史"
+              aria-label="历史"
+              onClick={() => setTodoMode('history')}
+            >
+              <span className="page-rail-btn-icon">
+                <Icon name="ClockCircle" size={18} />
+              </span>
+            </button>
+          </div>
+        </aside>
+        <div className="page-main">
+          <div className="page-content">
       <div className="m0-card-head">
         <h2>待办</h2>
         <div className="m0-actions m0-period">
@@ -238,6 +271,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         </p>
       ) : null}
 
+      {todoMode === 'cards' ? (
+        <>
       {cards.length === 0 ? (
         <EmptyState
           testId="todo-empty"
@@ -385,7 +420,11 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
           ))}
         </div>
       )}
+        </>
+      ) : null}
 
+      {todoMode === 'history' ? (
+        <>
       <h3 className="m0-subtitle">历史</h3>
       {history.length === 0 ? (
         <EmptyState testId="todo-history-empty" title="还没有已完成事项" />
@@ -398,9 +437,16 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
           ))}
         </ul>
       )}
+        </>
+      ) : null}
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
+
+
 
 
 
