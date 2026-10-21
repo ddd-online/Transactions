@@ -323,3 +323,21 @@
 .m0-stock-stats .m0-stat strong {
   font-size: 20px;
 }
+
+/* 窗口控制必须显式 no-drag：标题栏整条是拖动区，仅靠父级 no-drag
+ * 在部分 Electron/Windows 组合下仍会把三键当成拖动区。 */
+.app-top-bar {
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.app-top-bar .window-controls,
+.app-top-bar .window-btn {
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+.page-header {
+  position: relative;
+  z-index: 0;
+}
