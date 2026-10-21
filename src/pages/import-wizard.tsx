@@ -3,6 +3,7 @@ import { useCallback, useState, type JSX } from 'react'
 import { Input } from 'antd'
 
 import { Button } from '../components/button'
+import { SettingsRow } from '../components/settings-row'
 import { notify } from '../components/toast'
 import { Spin } from '../components/spin'
 import type {
@@ -78,45 +79,42 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
   }, [onImported, sourceDir, targetDir])
 
   return (
-    <section className="m0-card m0-card--wide st-import-card">
-      <h2>导入数据</h2>
-      <p className="m0-muted">
-        选择包含 transactions.db 的源目录，导入到空目录；源库只读，完成后写入 import-report.json。
-      </p>
-
-      <div className="m0-import-row">
-        <label className="m0-field m0-import-field">
-          源目录
-          <Input
-            data-testid="import-source"
-            value={sourceDir}
-            onChange={(event) => setSourceDir(event.target.value)}
-            placeholder="包含 transactions.db 的目录"
-          />
-        </label>
-        <Button variant="text" onClick={() => void pick(setSourceDir)}>
+    <div className="st-list">
+      <SettingsRow
+        title="源目录"
+        description="包含 transactions.db 的工作空间目录；只读，不会修改源库"
+      >
+        <Input
+          className="st-import-path"
+          data-testid="import-source"
+          value={sourceDir}
+          onChange={(event) => setSourceDir(event.target.value)}
+          placeholder="包含 transactions.db 的目录"
+        />
+        <Button variant="secondary" onClick={() => void pick(setSourceDir)}>
           选择
         </Button>
-      </div>
+      </SettingsRow>
 
-      <div className="m0-import-row">
-        <label className="m0-field m0-import-field">
-          新目录
-          <Input
-            data-testid="import-target"
-            value={targetDir}
-            onChange={(event) => setTargetDir(event.target.value)}
-            placeholder="空目录（不存在会自动创建）"
-          />
-        </label>
-        <Button variant="text" onClick={() => void pick(setTargetDir)}>
+      <SettingsRow title="新目录" description="导入到空目录；目录不存在会自动创建">
+        <Input
+          className="st-import-path"
+          data-testid="import-target"
+          value={targetDir}
+          onChange={(event) => setTargetDir(event.target.value)}
+          placeholder="空目录"
+        />
+        <Button variant="secondary" onClick={() => void pick(setTargetDir)}>
           选择
         </Button>
-      </div>
+      </SettingsRow>
 
-      <div className="m0-actions">
+      <SettingsRow
+        title="执行导入"
+        description="先检查源库，确认可导入后开始；完成后写入 import-report.json"
+      >
         <Button
-          variant="primary"
+          variant="secondary"
           testId="import-probe"
           disabled={!sourceDir || busy}
           onClick={() => void check()}
@@ -131,8 +129,11 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
         >
           开始导入
         </Button>
-        {progress ? (
-          <span className="m0-muted" data-testid="import-status">
+      </SettingsRow>
+
+      {progress ? (
+        <div className="st-card st-card--block">
+          <span className="st-card-desc" data-testid="import-status">
             {busy ? <Spin /> : null}
             {PHASE_LABELS[progress.phase] ?? progress.phase}
             {progress.table ? ` · ${progress.table}` : ''}
@@ -140,8 +141,8 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
               ? ` (${progress.index}/${progress.total})`
               : ''}
           </span>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {error ? (
         <p className="m0-error" data-testid="import-error">
@@ -150,13 +151,14 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
       ) : null}
 
       {probe ? (
-        <div className="m0-import-probe" data-testid="import-probe-result">
-          <p className={probe.ready ? 'm0-muted' : 'm0-error'}>{probe.message}</p>
-          <p className="m0-muted">
+        <div className="st-card st-card--block" data-testid="import-probe-result">
+          <span className="st-card-title">源库检查</span>
+          <p className={probe.ready ? 'st-card-desc' : 'm0-error'}>{probe.message}</p>
+          <p className="st-card-desc">
             迁移 {probe.migrationCount} 条 · 资产 {probe.assetFiles} 个 · 缺失{' '}
             {probe.missingMigrations.length} 条
           </p>
-          <ul className="m0-muted">
+          <ul className="st-card-desc">
             {Object.entries(probe.counts).map(([table, count]) => (
               <li key={table}>
                 {table}: {count}
@@ -167,14 +169,15 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
       ) : null}
 
       {report ? (
-        <div className="m0-import-report" data-testid="import-report">
-          <p>导入完成：{report.tables.reduce((sum, table) => sum + table.rows, 0)} 行</p>
-          <p className="m0-muted">
-            资产复制 {report.assets.copied} 个 · 警告 {report.warnings.length} 条
+        <div className="st-card st-card--block" data-testid="import-report">
+          <span className="st-card-title">导入完成</span>
+          <p className="st-card-desc">
+            共 {report.tables.reduce((sum, table) => sum + table.rows, 0)} 行 · 资产复制{' '}
+            {report.assets.copied} 个 · 警告 {report.warnings.length} 条
           </p>
         </div>
       ) : null}
-    </section>
+    </div>
   )
 }
 

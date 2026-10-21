@@ -561,31 +561,6 @@ body {
   gap: 6px;
 }
 
-.m0-import-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.m0-import-field {
-  flex: 1;
-}
-
-.m0-import-probe,
-.m0-import-report {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: var(--transactions-radius-md);
-  background: var(--transactions-color-minor-background);
-  font-size: var(--transactions-size-text-body-sm);
-}
-
-.m0-import-probe ul {
-  margin: 8px 0 0;
-  padding-left: 18px;
-}
-
 .m0-progress {
   height: 8px;
   margin: 12px 0 6px;
