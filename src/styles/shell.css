@@ -350,3 +350,8 @@
   width: 280px;
   padding: 4px 8px;
 }
+
+/* 顶栏只放窗口三键；不再整条设为拖动区，拖动交给下面的 .page-header。 */
+.app-top-bar {
+  -webkit-app-region: no-drag;
+}
