@@ -502,3 +502,20 @@
     padding: var(--transactions-space-md) var(--transactions-space-lg);
   }
 }
+
+/* 自动保存状态：不抢主按钮的位置，只标清当前是否落盘。 */
+.diary-save-state {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+  white-space: nowrap;
+}
+
+.diary-save-state.is-dirty,
+.diary-save-state.is-saving {
+  color: var(--transactions-color-text-secondary);
+}
+
+.diary-save-state.is-error {
+  color: var(--transactions-color-expense);
+}

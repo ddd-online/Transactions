@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type JSX, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type Key } from 'react'
 
 import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
@@ -94,7 +94,13 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   const [wordCount, setWordCount] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved')
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+  const editVersion = useRef(0)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savePromise = useRef<Promise<void> | null>(null)
+  const latest = useRef({ ledgerId, date, content, mood, saveState })
+  latest.current = { ledgerId, date, content, mood, saveState }
 
   const loadDates = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -142,11 +148,13 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
         setContent(entry.content)
         setMood(entry.mood)
         setWordCount(entry.wordCount)
+        setSaveState('saved')
       } catch {
         if (!alive) return
         setContent('')
         setMood('')
         setWordCount(0)
+        setSaveState('saved')
       }
     })()
     return () => {
@@ -154,49 +162,118 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
     }
   }, [date, ledgerId])
 
-  const save = useCallback(async (): Promise<void> => {
-    if (!ledgerId) return
-    setBusy(true)
-    setError('')
-    try {
-      const entry = await window.api.invoke('diary_upsert', {
-        ledger_id: ledgerId,
-        date,
-        content,
-        mood,
-      })
-      setWordCount(entry.wordCount)
-      notify('日记已保存')
-      await loadDates()
-    } catch (saveError) {
-      setError(errorMessage(saveError))
-    } finally {
-      setBusy(false)
+  const persist = useCallback((snapshot: { date: string; content: string; mood: string; version: number }): Promise<void> => {
+    if (!ledgerId) return Promise.resolve()
+    setSaveState('saving')
+    const task = (async () => {
+      try {
+        const entry = await window.api.invoke('diary_upsert', {
+          ledger_id: ledgerId,
+          date: snapshot.date,
+          content: snapshot.content,
+          mood: snapshot.mood,
+        })
+        setDates((current) => {
+          const next = current.filter((item) => item.date !== entry.date)
+          next.push({ date: entry.date, wordCount: entry.wordCount, mood: entry.mood })
+          return next.sort((left, right) => right.date.localeCompare(left.date))
+        })
+        if (snapshot.date === latest.current.date) setWordCount(entry.wordCount)
+        if (snapshot.version === editVersion.current) setSaveState('saved')
+      } catch (saveError) {
+        setError(errorMessage(saveError))
+        if (snapshot.version === editVersion.current) setSaveState('error')
+      }
+    })()
+    savePromise.current = task
+    return task
+  }, [ledgerId])
+
+  useEffect(() => {
+    if (saveState !== 'dirty' || !ledgerId) return
+    const version = editVersion.current
+    saveTimer.current = setTimeout(() => {
+      void persist({ date, content, mood, version })
+    }, 600)
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      saveTimer.current = null
     }
-  }, [content, date, ledgerId, loadDates, mood])
+  }, [content, date, ledgerId, mood, persist, saveState])
+
+  const changeDate = useCallback(async (next: string): Promise<void> => {
+    if (!next || next === date) return
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current)
+      saveTimer.current = null
+    }
+    if (ledgerId && saveState === 'dirty') {
+      await persist({ date, content, mood, version: editVersion.current })
+    } else if (savePromise.current) {
+      await savePromise.current
+    }
+    editVersion.current += 1
+    setDate(next)
+  }, [content, date, ledgerId, mood, persist, saveState])
+
+  const changeContent = useCallback((value: string): void => {
+    setContent(value)
+    setError('')
+    editVersion.current += 1
+    setSaveState('dirty')
+  }, [])
+
+  const changeMood = useCallback((value: string): void => {
+    setMood(value)
+    setError('')
+    editVersion.current += 1
+    setSaveState('dirty')
+  }, [])
+
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    const current = latest.current
+    if (current.ledgerId && current.saveState === 'dirty') {
+      void window.api.invoke('diary_upsert', {
+        ledger_id: current.ledgerId,
+        date: current.date,
+        content: current.content,
+        mood: current.mood,
+      })
+    }
+  }, [])
 
   const remove = useCallback(async (): Promise<void> => {
     setBusy(true)
     setError('')
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current)
+      saveTimer.current = null
+    }
+    if (savePromise.current) await savePromise.current
+    editVersion.current += 1
     try {
       await window.api.invoke('diary_delete', { ledger_id: ledgerId, date })
       setContent('')
       setMood('')
       setWordCount(0)
+      setSaveState('saved')
+      setDates((current) => current.filter((item) => item.date !== date))
       notify('日记已删除')
-      await loadDates()
     } catch (deleteError) {
       setError(errorMessage(deleteError))
     } finally {
       setBusy(false)
     }
-  }, [date, ledgerId, loadDates])
+  }, [date, ledgerId])
 
   const treeData = useMemo(() => buildDiaryTree(dates), [dates])
 
+  const changeDateRef = useRef(changeDate)
+  changeDateRef.current = changeDate
   const selectTree = useCallback((keys: Key[]) => {
     const next = String(keys[0] ?? '')
-    if (/^\d{4}-\d{2}-\d{2}$/.test(next)) setDate(next)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(next)) void changeDateRef.current(next)
   }, [])
 
   const expandTree = useCallback((keys: Key[]) => setExpandedKeys(keys.map(String)), [])
@@ -206,22 +283,23 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
       contentClassName="diary-page-content"
       toolbar={<>
               <div className="m0-actions">
-                <Button variant="secondary" onClick={() => setDate(todayYmd())}>
+                <Button variant="secondary" onClick={() => void changeDate(todayYmd())}>
                   今天
                 </Button>
-                <DatePicker testId="diary-date" value={date} onChange={(value) => setDate(value)} />
+                <DatePicker testId="diary-date" value={date} onChange={(value) => void changeDate(value)} />
               </div>
               <div className="m0-actions">
+                <span className={`diary-save-state is-${saveState}`} data-testid="diary-save-state">
+                  {saveState === 'saving'
+                    ? '保存中…'
+                    : saveState === 'dirty'
+                      ? '未保存'
+                      : saveState === 'error'
+                        ? '保存失败'
+                        : '已保存'}
+                </span>
                 <Button
-                  variant="primary"
-                  testId="diary-save"
-                  disabled={!ledgerId || busy}
-                  onClick={() => void save()}
-                >
-                  保存
-                </Button>
-                <Button
-                  variant="text-danger"
+                  variant="danger-outline"
                   testId="diary-delete"
                   disabled={!ledgerId || busy}
                   onClick={() => void remove()}
@@ -263,7 +341,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   <h2>
                     {formatYmdCn(date)} <span className="m0-muted">{weekdayCn(date)}</span>
                   </h2>
-                  <MoodPicker value={mood} onChange={setMood} />
+                  <MoodPicker value={mood} onChange={changeMood} />
                   <span className="m0-muted" data-testid="diary-word-count">
                     {wordCount}字
                   </span>
@@ -275,7 +353,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                     data-testid="diary-content"
                     placeholder="写下今天的日记……"
                     value={content}
-                    onChange={(changeEvent) => setContent(changeEvent.target.value)}
+                    onChange={(changeEvent) => changeContent(changeEvent.target.value)}
                   />
                 </div>
               </section>

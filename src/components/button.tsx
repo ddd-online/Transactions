@@ -1,7 +1,7 @@
 import { Button as AntButton, type ButtonProps as AntButtonProps } from 'antd'
 import type { JSX, ReactNode } from 'react'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'text-danger'
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'danger-outline' | 'text-danger'
 
 export interface ButtonProps {
   children?: ReactNode
@@ -28,7 +28,7 @@ export function Button({
   className,
   ...rest
 }: ButtonProps): JSX.Element {
-  const danger = variant === 'danger' || variant === 'text-danger'
+  const danger = variant === 'danger' || variant === 'danger-outline' || variant === 'text-danger'
   const type = variant === 'primary' || variant === 'danger' ? 'primary' : variant === 'text' || variant === 'text-danger' ? 'text' : 'default'
   return (
     <AntButton

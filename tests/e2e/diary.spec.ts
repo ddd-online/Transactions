@@ -54,13 +54,12 @@ test('日记：保存/字数/覆盖/删除', async () => {
     await page.getByTestId('diary-date').fill('2026-01-15')
     await page.getByTestId('diary-mood-neutral').click()
     await page.getByTestId('diary-content').fill('今天很好')
-    await page.getByTestId('diary-save').click()
     await expect(page.getByTestId('diary-word-count')).toHaveText('4字')
+    await expect(page.getByTestId('diary-save-state')).toHaveText('已保存')
     await expect(page.getByTestId('diary-date-item')).toHaveText(/2026-01-15/)
     await expect(page.getByTestId('diary-date-item')).toContainText('😐')
 
     await page.getByTestId('diary-content').fill('今天很好，明天继续')
-    await page.getByTestId('diary-save').click()
     await expect(page.getByTestId('diary-word-count')).toHaveText('9字')
 
     mkdirSync(exportDir, { recursive: true })
