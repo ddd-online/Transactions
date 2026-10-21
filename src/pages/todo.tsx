@@ -239,10 +239,10 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               </span>
             </button>
           </div>
-    }>
-      <div className="m0-card-head">
-        <h2>待办</h2>
-        <div className="m0-actions m0-period">
+    }
+      toolbar={<>
+        <h2 className="todo-title">待办</h2>
+        <div className="m0-actions">
           <input
             className="m0-input"
             data-testid="todo-card-title"
@@ -260,8 +260,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             新建主题
           </button>
         </div>
-      </div>
-
+      </>}
+    >
       {error ? (
         <p className="m0-error" data-testid="todo-error">
           {error}
@@ -274,6 +274,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         <EmptyState
           testId="todo-empty"
           title={ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
+          description={ledgerId ? '新建一个主题，再往里加事项。' : undefined}
         />
       ) : (
         <div className="m0-todo-cards">

@@ -796,6 +796,7 @@ export function App(): JSX.Element {
                         </div>
                       </div>
 
+                      <h3 className="st-section-title">外观与行为</h3>
                       <SettingsRow title="外观" description="界面配色，可跟随系统">
                         <Segmented
                           testId="appearance"
@@ -824,6 +825,7 @@ export function App(): JSX.Element {
                         />
                       </SettingsRow>
 
+                      <h3 className="st-section-title">网络</h3>
                       <div className="st-card">
                         <div className="st-card-info">
                           <span className="st-card-title">代理</span>
@@ -887,6 +889,7 @@ export function App(): JSX.Element {
                         </button>
                       </SettingsRow>
 
+                      <h3 className="st-section-title">数据</h3>
                       <div className="st-card">
                         <div className="st-card-info">
                           <span className="st-card-title">账本</span>
