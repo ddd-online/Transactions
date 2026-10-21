@@ -21,7 +21,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
-  const configPath = join(home, '.transactions-dev.json')
+  const configPath = join(home, '.tr-dev.json')
   writeFileSync(
     configPath,
     JSON.stringify({ width: 1200, height: 900, closeBehavior: 'quit', appearance: 'light' }),

@@ -25,7 +25,7 @@ test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
   mkdirSync(source, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 

@@ -23,7 +23,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 

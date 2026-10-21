@@ -24,7 +24,7 @@ test('导入：非旧版目录给出明确拒绝且不能开始', async () => {
   mkdirSync(source, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 

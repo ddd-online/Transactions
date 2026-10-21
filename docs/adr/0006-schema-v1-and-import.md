@@ -21,7 +21,7 @@
   写 `import-report.json` → 失败回滚且旧库不变。
 - 导入器实现：`electron/legacy/importer.ts`；`probe` 只读探测，`import` 用 `node:sqlite` 的
   `backup()` 做一致性快照；目标目录必须为空且不能嵌在源目录里；源库哈希前后核对。
-- 配置仍用 `~/.transactions.json`（dev `-dev`）与原有键名，保留未知键；新增 `dataVersion`。
+- 配置仍用 `~/.tr.json`（dev `-dev`）与原有键名，保留未知键；新增 `dataVersion`。
 - 旧库识别：打开既有 `transactions.db` 时若存在 `tbl_billadm_schema_migration`，
   返回 `ERR_CODE_LEGACY_WORKSPACE`（`-3`），界面据此引导导入。
 

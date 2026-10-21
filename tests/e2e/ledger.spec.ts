@@ -23,7 +23,7 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1200, height: 900, closeBehavior: 'quit', appearance: 'light' }),
   )
 

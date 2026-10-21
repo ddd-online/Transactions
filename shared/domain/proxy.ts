@@ -27,7 +27,7 @@ export const PROXY_SCHEME_HTTP = 'http' as const
 export type ProxyMode = typeof PROXY_MODE_OFF | typeof PROXY_MODE_AUTO | typeof PROXY_MODE_MANUAL
 
 /**
- * 代理设置（`~/.transactions.json` 的 `proxy` 键；字段名是配置契约，不可改）。
+ * 代理设置（`~/.tr.json` 的 `proxy` 键；字段名是配置契约，不可改）。
  *
  * 缺省 / 旧配置里没有 `proxy` 键时 = {@link defaultProxySetting}（自动探测）。
  */

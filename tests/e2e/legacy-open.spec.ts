@@ -24,7 +24,7 @@ test('旧版工作空间：打开被拒绝并引导到导入向导', async () =>
   mkdirSync(source, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
   const seed = readFileSync(join(repositoryRoot, 'fixtures', 'legacy', 'seed.sql'), 'utf8')

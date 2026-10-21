@@ -11,7 +11,7 @@ const directories: string[] = []
 function temporaryFile(): string {
   const directory = mkdtempSync(join(tmpdir(), 'tr-config-test-'))
   directories.push(directory)
-  return join(directory, '.transactions.json')
+  return join(directory, '.tr.json')
 }
 
 afterEach(() => {

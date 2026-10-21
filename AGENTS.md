@@ -26,7 +26,7 @@ Transactions：桌面个人记账应用，每个工作空间是一个独立的 S
 - IPC 命令名、请求字段、事件名、错误 `{code,msg,status}` 是硬契约；命令目录只在
   `shared/commands.ts`，事件名只在 `shared/events.ts`，两边都不写字符串字面量。
 - 所有请求在 main 边界过 zod；路径参数只收相对路径并由 `electron/shell/asset-path.ts` 校验。
-- 配置是用户数据：`~/.transactions.json`（dev 为 `~/.transactions-dev.json`），保留未知键。
+- 配置是用户数据：`~/.tr.json`（dev 为 `~/.tr-dev.json`），保留未知键。
 - 金额恒整数分，股价恒整数厘；日期 `YYYY-MM-DD`，时间戳 Unix 秒。
 
 ## 常用命令

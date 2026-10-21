@@ -33,7 +33,7 @@ test('打包产物：启动、打开工作空间、node:sqlite 落库', async ()
   mkdirSync(userData, { recursive: true })
 
   writeFileSync(
-    join(home, '.transactions.json'),
+    join(home, '.tr.json'),
     JSON.stringify({ width: 1200, height: 800, closeBehavior: 'quit', appearance: 'light' }),
   )
 
@@ -52,7 +52,7 @@ test('打包产物：启动、打开工作空间、node:sqlite 落库', async ()
 
   try {
     const page = await electronApp.firstWindow()
-    await expect(page.getByTestId('app-info')).toContainText('1.0.1')
+    await expect(page.getByTestId('app-info')).toContainText('1.0.2')
 
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')

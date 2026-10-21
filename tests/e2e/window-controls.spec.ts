@@ -21,7 +21,7 @@ test('窗口三键：最大化/还原、最小化', async () => {
   const userData = join(root, 'ud')
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
-  writeFileSync(join(home, '.transactions-dev.json'), JSON.stringify({ width: 1200, height: 800, closeBehavior: 'quit', appearance: 'light' }))
+  writeFileSync(join(home, '.tr-dev.json'), JSON.stringify({ width: 1200, height: 800, closeBehavior: 'quit', appearance: 'light' }))
   const app = await electron.launch({
     args: ['.'],
     cwd: repo,
@@ -51,7 +51,7 @@ test('窗口三键：工作空间选择遮罩未关闭时也可用', async () =>
   const userData = join(root, 'ud')
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
-  writeFileSync(join(home, '.transactions-dev.json'), JSON.stringify({ width: 1200, height: 800, closeBehavior: 'quit', appearance: 'light' }))
+  writeFileSync(join(home, '.tr-dev.json'), JSON.stringify({ width: 1200, height: 800, closeBehavior: 'quit', appearance: 'light' }))
   const app = await electron.launch({
     args: ['.'],
     cwd: repo,
@@ -81,7 +81,7 @@ test('窗口：保存的尺寸和位置超出工作区时夹回屏内', async ()
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({
       width: 1405,
       height: 1029,

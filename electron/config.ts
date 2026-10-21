@@ -5,8 +5,8 @@ import { join } from 'node:path'
 import type { AppConfig, ConfigSnapshot, FeatureFlags, ProxySetting } from '../shared/types/config'
 import { defaultFeatures, defaultProxy } from '../shared/types/config'
 
-export const CONFIG_FILE = '.transactions.json'
-export const CONFIG_FILE_DEV = '.transactions-dev.json'
+export const CONFIG_FILE = '.tr.json'
+export const CONFIG_FILE_DEV = '.tr-dev.json'
 
 export function configPath(isDev: boolean): string {
   return join(homedir(), isDev ? CONFIG_FILE_DEV : CONFIG_FILE)

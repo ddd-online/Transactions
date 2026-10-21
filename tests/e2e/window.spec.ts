@@ -24,7 +24,7 @@ async function launch(
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1200, height: 800, closeBehavior, appearance: 'light' }),
   )
   const app = await electron.launch({
@@ -71,7 +71,7 @@ test('窗口：关闭时保存尺寸到配置', async () => {
     await page.waitForTimeout(400)
     await page.getByTestId('window-close').click()
     await expect.poll(() => page.isClosed()).toBe(true)
-    const configPath = join(root, 'home', '.transactions-dev.json')
+    const configPath = join(root, 'home', '.tr-dev.json')
     const config = JSON.parse(readFileSync(configPath, 'utf8')) as { width: number; height: number }
     expect(Math.abs(config.width - 1320)).toBeLessThanOrEqual(2)
     expect(Math.abs(config.height - 860)).toBeLessThanOrEqual(2)

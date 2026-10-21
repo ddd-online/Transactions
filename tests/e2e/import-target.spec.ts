@@ -27,7 +27,7 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
   mkdirSync(userData, { recursive: true })
   writeFileSync(join(target, 'occupied.txt'), 'occupied')
   writeFileSync(
-    join(home, '.transactions-dev.json'),
+    join(home, '.tr-dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
   const seed = readFileSync(join(repositoryRoot, 'fixtures', 'legacy', 'seed.sql'), 'utf8')
