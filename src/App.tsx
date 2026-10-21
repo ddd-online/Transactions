@@ -502,7 +502,7 @@ export function App(): JSX.Element {
                               setLedgerMenuOpen(false)
                             }}
                           >
-                            <span className="ledger-dot ledger-dot--1" />
+                            <span className="ledger-dot" />
                             <span className="ledger-menu-name-text">{ledger.name}</span>
                           </button>
                         </div>

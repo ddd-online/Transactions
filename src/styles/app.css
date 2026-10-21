@@ -304,35 +304,7 @@
   width: 8px;
   height: 8px;
   border-radius: var(--transactions-radius-full);
-  background-color: var(--transactions-ledger-forest);
-}
-
-.ledger-dot--1 {
-  background-color: var(--transactions-ledger-amber);
-}
-
-.ledger-dot--2 {
-  background-color: var(--transactions-ledger-slate-blue);
-}
-
-.ledger-dot--3 {
-  background-color: var(--transactions-ledger-vermillion);
-}
-
-.ledger-dot--4 {
-  background-color: var(--transactions-ledger-warm-brown);
-}
-
-.ledger-dot--5 {
-  background-color: var(--transactions-ledger-ochre);
-}
-
-.ledger-dot--6 {
-  background-color: var(--transactions-ledger-moss);
-}
-
-.ledger-dot--7 {
-  background-color: var(--transactions-ledger-camel);
+  background-color: var(--transactions-color-primary);
 }
 
 /* 定位层本身不参与定位（static），让 `.ledger-menu` 相对 `.ledger-anchor` 计算 */
