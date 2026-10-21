@@ -107,16 +107,18 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   }, [loadDates])
 
   useEffect(() => {
-    const keys = new Set<string>()
-    for (const item of dates) {
-      keys.add(`year-${item.date.slice(0, 4)}`)
-      keys.add(item.date.slice(0, 7))
+    const pathOf = (ymd: string): string[] => [
+      `year-${ymd.slice(0, 4)}`,
+      ymd.slice(0, 7),
+    ]
+    const paths = new Set<string>()
+    if (dates.some((item) => item.date === date)) {
+      for (const key of pathOf(date)) paths.add(key)
     }
-    setExpandedKeys((current) => {
-      const next = current.filter((key) => keys.has(key))
-      return [...new Set([...next, ...keys])]
-    })
-  }, [dates])
+    const newest = dates[0]?.date
+    if (newest) for (const key of pathOf(newest)) paths.add(key)
+    setExpandedKeys((current) => [...new Set([...current, ...paths])])
+  }, [date, dates])
 
   useEffect(() => {
     let alive = true

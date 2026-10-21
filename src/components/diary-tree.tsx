@@ -26,6 +26,18 @@ export const DiaryTree = memo(function DiaryTree({
   const hostRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(480)
   const selectedKeys = useMemo(() => [selectedDate], [selectedDate])
+  const overflowing = useMemo(() => {
+    const expanded = new Set(expandedKeys)
+    let count = 0
+    const walk = (list: TreeDataNode[]): void => {
+      for (const node of list) {
+        count += 1
+        if (node.children && expanded.has(String(node.key))) walk(node.children)
+      }
+    }
+    walk(nodes)
+    return count * 30 > height
+  }, [expandedKeys, height, nodes])
 
   useLayoutEffect(() => {
     const host = hostRef.current
@@ -38,7 +50,7 @@ export const DiaryTree = memo(function DiaryTree({
   }, [])
 
   return (
-    <div className="diary-tree-scroll" ref={hostRef}>
+    <div className={`diary-tree-scroll${overflowing ? ' is-scrollable' : ''}`} ref={hostRef}>
       <Tree
         className="diary-tree"
         blockNode

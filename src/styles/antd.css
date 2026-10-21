@@ -364,5 +364,19 @@
 
 .diary-tree-scroll .ant-tree {
   height: 100%;
+  overflow: hidden;
   overscroll-behavior: contain;
+}
+
+/* AntD 的虚拟列表会常驻一条自绘滚动条；没有溢出时不要露出来。 */
+.diary-tree-scroll .ant-tree-list-scrollbar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transactions-transition-fast);
+}
+
+.diary-tree-scroll.is-scrollable:hover .ant-tree-list-scrollbar,
+.diary-tree-scroll.is-scrollable:focus-within .ant-tree-list-scrollbar {
+  opacity: 1;
+  pointer-events: auto;
 }
