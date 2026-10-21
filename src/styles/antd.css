@@ -149,17 +149,6 @@
   z-index: 4000;
 }
 
-/* AntD Tabs：只做设置页导航，内容仍由页面条件渲染。 */
-.settings-page-content > .st-tabs .ant-tabs-nav {
-  margin: 0;
-  padding: 0 var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.settings-page-content > .st-tabs .ant-tabs-content-holder {
-  display: none;
-}
-
 .st-about {
   display: flex;
   flex-direction: column;

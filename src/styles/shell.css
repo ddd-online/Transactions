@@ -700,6 +700,7 @@
 .settings-page-content {
   overflow-y: auto;
   min-height: 0;
+  gap: 0;
 }
 
 .app-top-bar {
@@ -792,19 +793,6 @@
   font-size: var(--transactions-size-text-title);
   font-weight: var(--transactions-weight-semibold);
   line-height: var(--transactions-height-snug);
-}
-
-.st-section-title {
-  margin: var(--transactions-space-xl) 0 var(--transactions-space-xs);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  font-weight: var(--transactions-weight-semibold);
-  letter-spacing: var(--transactions-tracking-label);
-  color: var(--transactions-color-text-secondary);
-}
-
-.st-list > .st-section-title:first-child {
-  margin-top: 0;
 }
 
 @media (max-width: 1080px) {

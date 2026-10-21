@@ -22,7 +22,7 @@ import { EventsPage } from './pages/events'
 import { DiaryPage } from './pages/diary'
 import { TodoPage } from './pages/todo'
 import { AntdProvider } from './components/antd-provider'
-import { Input, Tabs } from 'antd'
+import { Input } from 'antd'
 import { AppMark } from './components/app-mark'
 import { Button } from './components/button'
 import { ImportWizard } from './pages/import-wizard'
@@ -711,18 +711,29 @@ export function App(): JSX.Element {
 
         {view === 'settings' ? (
           <PageLayout contentClassName="settings-page-content">
-                  <Tabs
-                    className="st-tabs"
-                    activeKey={settingsTab}
-                    onChange={(key) => setSettingsTab(key as typeof settingsTab)}
-                    items={[
-                      { key: 'general', label: <span data-testid="settings-tab-general">通用设置</span> },
-                      { key: 'features', label: <span data-testid="settings-tab-features">功能开关</span> },
-                      { key: 'diary', label: <span data-testid="settings-tab-diary">日记配置</span> },
-                      { key: 'data', label: <span data-testid="settings-tab-data">数据导入</span> },
-                      { key: 'about', label: <span data-testid="settings-tab-about">关于软件</span> },
-                    ]}
-                  />
+                  <div className="st-tabbar" role="tablist" aria-label="设置分栏">
+                    {(
+                      [
+                        ['general', '通用设置'],
+                        ['features', '功能开关'],
+                        ['diary', '日记配置'],
+                        ['data', '数据导入'],
+                        ['about', '关于软件'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        role="tab"
+                        aria-selected={settingsTab === key}
+                        data-testid={`settings-tab-${key}`}
+                        className={`st-tab${settingsTab === key ? ' is-active' : ''}`}
+                        onClick={() => setSettingsTab(key)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
 
                   {settingsTab === 'general' ? (
                     <div className="st-list">
@@ -767,7 +778,6 @@ export function App(): JSX.Element {
                         </div>
                       </div>
 
-                      <h3 className="st-section-title">外观与行为</h3>
                       <SettingsRow title="外观" description="界面配色，可跟随系统">
                         <Segmented
                           testId="appearance"
@@ -796,7 +806,6 @@ export function App(): JSX.Element {
                         />
                       </SettingsRow>
 
-                      <h3 className="st-section-title">网络</h3>
                       <div className="st-card">
                         <div className="st-card-info">
                           <span className="st-card-title">代理</span>
@@ -856,7 +865,6 @@ export function App(): JSX.Element {
                         </Button>
                       </SettingsRow>
 
-                      <h3 className="st-section-title">数据</h3>
                       <div className="st-card">
                         <div className="st-card-info">
                           <span className="st-card-title">账本</span>

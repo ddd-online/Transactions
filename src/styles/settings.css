@@ -10,13 +10,51 @@
  * 约定：
  *   - 类名一律 st- 前缀；
  *   - 取值只用 --transactions-* 令牌（禁止裸 hex / rgb）；
- *   - 导航形态是顶部 Tabs（见 settings.rs 顶部注释）。
+ *   - 导航形态是自定义顶部页签，不使用 AntD Tabs。
  * ============================================ */
 
 /* ---------------------------------------------------------------- 分栏骨架 */
 
-.st-tabs {
+.st-tabbar {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  padding: 0 0 var(--transactions-space-sm);
+  position: sticky;
+  top: calc(-1 * var(--transactions-space-lg));
+  z-index: 20;
+  background: var(--transactions-color-major-background);
+}
+
+.st-tab {
+  height: 32px;
+  padding: 0 var(--transactions-space-md);
+  border: 0;
+  border-radius: var(--transactions-radius-md);
+  background: transparent;
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.st-tab:hover {
+  background: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
+}
+
+.st-tab.is-active {
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+}
+
+.st-tab:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
 }
 
 /* 设置页的内容容器：**纵向不留内边距**（左右由统一规则给 16px）。
