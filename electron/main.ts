@@ -59,7 +59,7 @@ if (!hasSingleInstanceLock) {
     .whenReady()
     .then(() => {
       const isDev = !app.isPackaged
-      const appDirectory = isDev ? app.getAppPath() : dirname(app.getPath('exe'))
+      const appDirectory = isDev ? join(app.getAppPath(), 'output') : dirname(app.getPath('exe'))
       initLogging(appDirectory)
 
       const config = ConfigStore.forApp(isDev)
@@ -97,3 +97,4 @@ if (!hasSingleInstanceLock) {
       app.quit()
     })
 }
+

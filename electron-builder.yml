@@ -6,7 +6,7 @@ directories:
   buildResources: resources
 
 files:
-  - out/**
+  - output/out/**
   - package.json
 
 extraResources:
@@ -37,3 +37,4 @@ nsis:
 
 portable:
   artifactName: Transactions-${version}-portable.exe
+

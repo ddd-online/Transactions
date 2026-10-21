@@ -7,6 +7,7 @@ export default defineConfig({
   main: {
     // 没有原生模块：把 main 的依赖（zod）一起打进 bundle，打包产物不依赖 node_modules。
     build: {
+      outDir: resolve(__dirname, 'output/out/main'),
       externalizeDeps: false,
       rollupOptions: {
         input: { index: resolve(__dirname, 'electron/main.ts') },
@@ -16,6 +17,7 @@ export default defineConfig({
   },
   preload: {
     build: {
+      outDir: resolve(__dirname, 'output/out/preload'),
       externalizeDeps: false,
       rollupOptions: {
         input: { index: resolve(__dirname, 'electron/preload.ts') },
@@ -35,6 +37,7 @@ export default defineConfig({
     },
     plugins: [react()],
     build: {
+      outDir: resolve(__dirname, 'output/out/renderer'),
       rollupOptions: {
         input: { index: resolve(__dirname, 'src/index.html') },
       },

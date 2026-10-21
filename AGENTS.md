@@ -33,7 +33,7 @@ Transactions：桌面个人记账应用，每个工作空间是一个独立的 S
 
 ```powershell
 pnpm dev              # electron-vite dev（渲染层 HMR）
-pnpm build            # out/main + out/preload + out/renderer
+pnpm build            # output/out/main + output/out/preload + output/out/renderer
 pnpm typecheck        # tsc --noEmit
 pnpm test:unit        # Vitest
 pnpm test:e2e         # 先 build 再 Playwright（真实 Electron）
@@ -69,3 +69,4 @@ pnpm package         # NSIS + portable，产物在 output/
 - `docs/migration/oracle.md`：旧 fixtures 的生成方式与用途。
 - `docs/adr/0003`–`0006`：Electron 外壳、`node:sqlite`、IPC/协议、schema v1 的决策。
 - 旧版的行为契约（费用/资金链/盈亏率/日期口径）以旧 Rust 源码与单测为准；重写不是重新设计业务。
+

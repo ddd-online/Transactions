@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "author": "ddd-online",
   "private": true,
-  "main": "out/main/index.js",
+  "main": "output/out/main/index.js",
   "engines": {
     "node": ">=22"
   },
@@ -45,3 +45,4 @@
     "vitest": "4.1.12"
   }
 }
+

@@ -17,6 +17,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$logDirectory = Join-Path $root 'output\logs'
+New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
+$transcript = Join-Path $logDirectory ("build-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+try { Start-Transcript -Path $transcript -Force | Out-Null } catch { }
 Push-Location $root
 try {
     $package = Get-Content (Join-Path $root 'package.json') -Raw | ConvertFrom-Json
@@ -63,6 +67,7 @@ try {
     }
 }
 finally {
+    try { Stop-Transcript | Out-Null } catch { }
     Pop-Location
 }
 

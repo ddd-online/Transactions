@@ -42,6 +42,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 | `tests/e2e` | Playwright（真实 Electron + 落库断言） |
 | `fixtures/` | 合成数据：旧库说明、HEIC 测试图；不含真实个人数据 |
 | `docs/` | ADR 与迁移参照（旧仓库 commit、fixtures 生成方式） |
+| `output/` | 构建物料：编译产物 `out/`、运行/构建日志 `logs/`、安装包与未打包目录 |
 
 ## 迁移状态
 

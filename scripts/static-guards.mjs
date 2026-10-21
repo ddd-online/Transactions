@@ -27,7 +27,7 @@ function walk(directory) {
   for (const entry of readdirSync(join(root, directory), { withFileTypes: true })) {
     const path = join(directory, entry.name)
     if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === 'out' || entry.name === 'artifacts') continue
+      if (entry.name === 'node_modules' || entry.name === 'out' || entry.name === 'output' || entry.name === 'artifacts') continue
       results.push(...walk(path))
     } else {
       results.push(path)
@@ -99,7 +99,7 @@ check('资产路径只接受相对路径', () => {
 check('版本与产品名', () => {
   assert(packageJson.version === '1.0.0', `版本应为 1.0.0，实际 ${packageJson.version}`)
   assert(packageJson.productName === 'Transactions', 'productName 必须是 Transactions')
-  assert(packageJson.main === 'out/main/index.js', 'main 必须指向 out/main/index.js')
+  assert(packageJson.main === 'output/out/main/index.js', 'main 必须指向 output/out/main/index.js')
   return '1.0.0'
 })
 
@@ -147,3 +147,4 @@ if (failures.length > 0) {
   process.exit(1)
 }
 console.log(`\n[static-guards] 全部通过（${passes.length} 项）`)
+
