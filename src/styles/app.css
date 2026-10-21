@@ -215,6 +215,7 @@
   width: 32px;
   height: 32px;
   padding: 0;
+  background-clip: content-box;
   border: none;
   border-radius: var(--transactions-radius-md);
   background: none;
@@ -647,7 +648,6 @@
  * ============================================ */
 .app-left-bar.is-collapsed .sidebar-ledger {
   justify-content: center;
-  height: 56px;
   padding-left: 0;
   padding-right: 0;
 }
