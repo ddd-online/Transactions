@@ -359,8 +359,10 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  padding-right: var(--transactions-space-xs);
 }
 
 .diary-tree-scroll .ant-tree {
   height: 100%;
+  overscroll-behavior: contain;
 }
