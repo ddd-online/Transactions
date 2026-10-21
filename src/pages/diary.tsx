@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useState, type JSX, type Key } from 'react'
 
 import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { formatYmdCn, weekdayCn } from '../../shared/domain/calendar'
 import { notify } from '../components/toast'
-import { Input, Tree, type TreeDataNode } from 'antd'
+import { Input, type TreeDataNode } from 'antd'
 
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
+import { DiaryTree } from '../components/diary-tree'
 import { PageLayout } from '../components/page-layout'
 
 function errorMessage(error: unknown): string {
@@ -239,6 +240,15 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
     }
   }, [date, ledgerId, loadDates])
 
+  const treeData = useMemo(() => buildDiaryTree(dates), [dates])
+
+  const selectTree = useCallback((keys: Key[]) => {
+    const next = String(keys[0] ?? '')
+    if (/^\d{4}-\d{2}-\d{2}$/.test(next)) setDate(next)
+  }, [])
+
+  const expandTree = useCallback((keys: Key[]) => setExpandedKeys(keys.map(String)), [])
+
   return (
     <PageLayout
       toolbar={<>
@@ -286,18 +296,12 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                     {ledgerId ? '还没有日记' : '请先创建/选择账本'}
                   </p>
                 ) : (
-                  <Tree
-                    className="diary-tree"
-                    blockNode
-                    showLine={{ showLeafIcon: false }}
-                    treeData={buildDiaryTree(dates)}
-                    selectedKeys={[date]}
+                  <DiaryTree
+                    nodes={treeData}
+                    selectedDate={date}
                     expandedKeys={expandedKeys}
-                    onExpand={(keys) => setExpandedKeys(keys.map(String))}
-                    onSelect={(keys) => {
-                      const next = String(keys[0] ?? '')
-                      if (/^\d{4}-\d{2}-\d{2}$/.test(next)) setDate(next)
-                    }}
+                    onExpand={expandTree}
+                    onSelect={selectTree}
                   />
                 )}
               </aside>

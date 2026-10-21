@@ -354,3 +354,13 @@
   flex: 1;
   min-width: 0;
 }
+
+.diary-tree-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.diary-tree-scroll .ant-tree {
+  height: 100%;
+}
