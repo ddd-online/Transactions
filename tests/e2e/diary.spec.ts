@@ -50,15 +50,16 @@ test('日记：保存/字数/覆盖/删除', async () => {
     await page.getByTestId('nav-diary').click()
 
     await page.getByTestId('diary-date').fill('2026-01-15')
-    await page.getByTestId('diary-mood').fill('平静')
+    await page.getByTestId('diary-mood-neutral').click()
     await page.getByTestId('diary-content').fill('今天很好')
     await page.getByTestId('diary-save').click()
-    await expect(page.getByTestId('diary-word-count')).toHaveText('4 字')
+    await expect(page.getByTestId('diary-word-count')).toHaveText('4字')
     await expect(page.getByTestId('diary-date-item')).toHaveText(/2026-01-15/)
+    await expect(page.getByTestId('diary-date-item')).toContainText('😐')
 
     await page.getByTestId('diary-content').fill('今天很好，明天继续')
     await page.getByTestId('diary-save').click()
-    await expect(page.getByTestId('diary-word-count')).toHaveText('9 字')
+    await expect(page.getByTestId('diary-word-count')).toHaveText('9字')
 
     const exportDir = join(root, 'out')
     const importDir = join(root, 'in')
@@ -86,7 +87,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
       .all() as Array<{ date: string; content: string; mood: string; word_count: number }>
     database.close()
     expect(rows).toEqual([
-      { date: '2026-01-15', content: '今天很好，明天继续', mood: '平静', word_count: 9 },
+      { date: '2026-01-15', content: '今天很好，明天继续', mood: '😐', word_count: 9 },
     ])
 
     await page.getByTestId('diary-delete').click()

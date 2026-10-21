@@ -9,6 +9,7 @@ import { Input, type TreeDataNode } from 'antd'
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { DiaryTree } from '../components/diary-tree'
+import { MoodPicker, normalizeMood } from '../components/mood-picker'
 import { PageLayout } from '../components/page-layout'
 
 function errorMessage(error: unknown): string {
@@ -39,9 +40,9 @@ function buildDiaryTree(dates: DiaryDateItem[]): TreeDataNode[] {
         .map(([month, items]) => ({
           key: month,
           title: (
-            <span className="diary-tree-month">
-              {Number(month.slice(5))}月
-              <span className="diary-tree-count">{items.length}</span>
+            <span className="diary-tree-group">
+              <span>{Number(month.slice(5))}月</span>
+              <span className="diary-tree-count">{items.length}篇</span>
             </span>
           ),
           children: items
@@ -52,8 +53,16 @@ function buildDiaryTree(dates: DiaryDateItem[]): TreeDataNode[] {
               isLeaf: true,
               title: (
                 <span className="diary-tree-date" data-testid="diary-date-item">
-                  <span>{item.date}</span>
-                  <span className="m0-muted">{item.wordCount} 字</span>
+                  <span className="diary-tree-day">
+                    <span className="sr-only">{item.date}</span>
+                    {Number(item.date.slice(8))}
+                  </span>
+                  <span className="diary-tree-meta">
+                    {normalizeMood(item.mood) ? (
+                      <span className="diary-tree-mood">{normalizeMood(item.mood)}</span>
+                    ) : null}
+                    <span className="m0-muted">{item.wordCount}字</span>
+                  </span>
                 </span>
               ),
             })),
@@ -63,9 +72,9 @@ function buildDiaryTree(dates: DiaryDateItem[]): TreeDataNode[] {
       return {
         key: `year-${year}`,
         title: (
-          <span className="diary-tree-year">
-            {year}年
-            <span className="diary-tree-count">{count}</span>
+          <span className="diary-tree-group diary-tree-year">
+            <span>{year}年</span>
+            <span className="diary-tree-count">{count}篇</span>
           </span>
         ),
         children: monthNodes,
@@ -313,14 +322,9 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   <h2>
                     {formatYmdCn(date)} <span className="m0-muted">{weekdayCn(date)}</span>
                   </h2>
-                  <Input
-                    data-testid="diary-mood"
-                    placeholder="心情"
-                    value={mood}
-                    onChange={(changeEvent) => setMood(changeEvent.target.value)}
-                  />
+                  <MoodPicker value={mood} onChange={setMood} />
                   <span className="m0-muted" data-testid="diary-word-count">
-                    {wordCount} 字
+                    {wordCount}字
                   </span>
                 </div>
 
