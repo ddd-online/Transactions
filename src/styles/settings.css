@@ -24,7 +24,7 @@
   position: sticky;
   top: calc(-1 * var(--transactions-space-lg));
   z-index: 20;
-  background: var(--transactions-color-major-background);
+  background: var(--transactions-color-bg-base);
 }
 
 .st-tab {
