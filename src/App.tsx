@@ -68,6 +68,7 @@ export function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
+  const [settingsTab, setSettingsTab] = useState<'general'|'features'|'diary'|'about'>('general')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [ledgerMenuOpen, setLedgerMenuOpen] = useState(false)
   const [accountingTab, setAccountingTab] = useState<
@@ -212,6 +213,7 @@ export function App(): JSX.Element {
       }
     } catch (openError) {
       if (typeof openError === 'object' && openError !== null && (openError as { code?: number }).code === ERR_CODE_LEGACY_WORKSPACE) {
+        setWorkspacePromptDismissed(true)
         setView('settings')
       }
       setError(errorMessage(openError))
@@ -707,239 +709,385 @@ export function App(): JSX.Element {
         {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
 
         {view === 'settings' ? (
-          <>
-            <section className="m0-card m0-card--wide">
-              <h1>设置</h1>
-              <p className="m0-muted">
-                配置文件：{config?.configPath ?? '…'}（{config?.isDev ? '开发' : '生产'}）
-              </p>
-              <div className="m0-import-row">
-                <span className="m0-muted">{workspace ?? '未打开工作空间'}</span>
-                <button
-                  type="button"
-                  className="m0-primary"
-                  data-testid="open-workspace"
-                  disabled={busy}
-                  onClick={() => void openWorkspace()}
-                >
-                  切换工作空间
-                </button>
-              </div>
-              <label className="m0-field">
-                外观
-                <select
-                  data-testid="appearance"
-                  className="m0-input"
-                  value={config?.appearance ?? 'system'}
-                  disabled={!config}
-                  onChange={(event) => void setAppearance(event.target.value)}
-                >
-                  <option value="system">跟随系统</option>
-                  <option value="light">浅色</option>
-                  <option value="dark">深色</option>
-                </select>
-              </label>
-              <label className="m0-field">
-                关闭窗口
-                <select
-                  data-testid="close-behavior"
-                  className="m0-input"
-                  value={config?.closeBehavior ?? 'quit'}
-                  disabled={!config}
-                  onChange={(event) => void setCloseBehavior(event.target.value)}
-                >
-                  <option value="quit">退出应用</option>
-                  <option value="tray">最小化到托盘</option>
-                  <option value="ask">每次询问</option>
-                </select>
-              </label>
-              <div className="m0-import-row">
-                <label className="m0-field m0-import-field">
-                  网络代理
-                  <select
-                    className="m0-input"
-                    data-testid="proxy-mode"
-                    value={proxyMode}
-                    disabled={!config}
-                    onChange={(event) => setProxyMode(event.target.value)}
-                  >
-                    <option value="auto">跟随系统</option>
-                    <option value="off">不使用代理</option>
-                    <option value="manual">手动</option>
-                  </select>
-                </label>
-                <label className="m0-field m0-import-field">
-                  代理地址
-                  <input
-                    className="m0-input"
-                    data-testid="proxy-url"
-                    value={proxyUrl}
-                    disabled={!config || proxyMode !== 'manual'}
-                    onChange={(event) => setProxyUrl(event.target.value)}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="m0-primary"
-                  data-testid="proxy-save"
-                  disabled={!config}
-                  onClick={() => void saveProxy()}
-                >
-                  保存代理
-                </button>
-                <button
-                  type="button"
-                  className="m0-link"
-                  data-testid="proxy-detect"
-                  onClick={() => void detectProxy()}
-                >
-                  探测
-                </button>
-                {proxyDetect ? (
-                  <span className="m0-muted" data-testid="proxy-detect-result">
-                    {proxyDetect}
-                  </span>
-                ) : null}
-              </div>
-              <div className="m0-import-row">
-                <label className="m0-field m0-import-field">
-                  工作空间图标
-                  <input
-                    className="m0-input"
-                    type="file"
-                    data-testid="workspace-icon-input"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    onChange={(event) => void changeWorkspaceIcon(event.target.files?.[0])}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="m0-link"
-                  data-testid="workspace-icon-clear"
-                  onClick={() => void clearWorkspaceIcon()}
-                >
-                  清除图标
-                </button>
-              </div>
-              <div className="m0-features">
-                {FEATURES.map(([key, label]) => (
-                  <Switch
-                    key={key}
-                    testId={`feature-${key}`}
-                    label={label}
-                    checked={config?.features[key] ?? true}
-                    disabled={!config}
-                    onChange={(checked) => void toggleFeature(key, checked)}
-                  />
-                ))}
-              </div>
-              {activeLedgerId ? (
-                <div className="m0-features" data-testid="ledger-features">
-                  <span className="m0-muted">本账本：</span>
-                  {FEATURES.map(([key, label]) => (
-                    <Switch
-                      key={key}
-                      testId={`ledger-feature-${key}`}
-                      label={label}
-                      checked={effectiveFeatures?.[key] ?? true}
-                      disabled={!config}
-                      onChange={(checked) => void toggleLedgerFeature(key, checked)}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </section>
-
-            <ImportWizard progress={importProgress} onImported={finishImport} />
-
-            <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
-
-            <section className="m0-card m0-card--wide">
-              <h2>账本</h2>
-              <div className="m0-actions">
-                <input
-                  data-testid="ledger-name"
-                  className="m0-input"
-                  placeholder="新账本名称"
-                  value={ledgerName}
-                  disabled={busy || !workspace}
-                  onChange={(event) => setLedgerName(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') void createLedger()
-                  }}
-                />
-                <button
-                  type="button"
-                  data-testid="ledger-create"
-                  disabled={busy || !workspace}
-                  onClick={() => void createLedger()}
-                >
-                  新建账本
-                </button>
-              </div>
-
-              {ledgers.length === 0 ? (
-                <p className="m0-muted" data-testid="ledger-empty">
-                  {workspace ? '还没有账本' : '请先选择工作空间'}
-                </p>
-              ) : (
-                <ul className="m0-ledgers">
-                  {ledgers.map((ledger) => (
-                    <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
-                      <span>{ledger.name}</span>
-                      <span className="m0-muted">{ledger.description}</span>
+          <section className="page">
+            <div className="page-region">
+              <div className="page-main">
+                <div className="page-content">
+                  <div className="ui-tabs st-tabs">
+                    {(
+                      [
+                        ['general', '通用设置'],
+                        ['features', '功能开关'],
+                        ['diary', '日记配置'],
+                        ['about', '关于软件'],
+                      ] as const
+                    ).map(([key, label]) => (
                       <button
+                        key={key}
                         type="button"
-                        className="m0-link"
-                        disabled={busy}
-                        onClick={() => setDeleteTarget(ledger.id)}
+                        data-testid={`settings-tab-${key}`}
+                        className={`ui-tabs__tab${settingsTab === key ? ' is-active' : ''}`}
+                        onClick={() => setSettingsTab(key)}
                       >
-                        删除
+                        {label}
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                    ))}
+                  </div>
 
-            {config?.isDev ? (
-            <section className="m0-card">
-              <h2>M0 验收</h2>
-              <ul>
-                <li>无边框窗口 / 托盘 / 单实例</li>
-                <li>app:// 协议加载渲染产物</li>
-                <li>node:sqlite 建库、校验、事务</li>
-                <li>trasset:// 协议读取工作空间资产</li>
-                <li>IPC 命令 + zod 边界校验</li>
-                <li>Playwright 启动、点击、落库断言</li>
-              </ul>
-              <div className="m0-actions">
-                <button
-                  type="button"
-                  data-testid="write-asset"
-                  disabled={busy || !workspace}
-                  onClick={() => void writeAsset()}
-                >
-                  写入示例资产
-                </button>
-              </div>
-              {asset ? (
-                <div className="m0-asset">
-                  <img
-                    data-testid="asset-img"
-                    className="m0-asset-image"
-                    src={asset}
-                    alt="trasset 示例"
-                    onLoad={() => setAssetLoaded(true)}
-                  />
-                  <span data-testid="asset-state">
-                    {assetLoaded ? 'trasset:// 已加载' : '加载中…'}
-                  </span>
+                  {settingsTab === 'general' ? (
+                    <div className="st-list">
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">工作空间</span>
+                          <span className="st-card-desc st-card-desc--mono">
+                            {workspace ?? '尚未选择工作空间'}
+                          </span>
+                        </div>
+                        <div className="st-card-action">
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            data-testid="open-workspace"
+                            disabled={busy}
+                            onClick={() => void openWorkspace()}
+                          >
+                            切换
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">软件图标</span>
+                          <span className="st-card-desc">
+                            侧栏左上角的方形图标；保存在当前工作空间里，切换工作空间会跟着换
+                          </span>
+                        </div>
+                        <div className="st-card-action">
+                          {workspaceIconUrl ? (
+                            <img
+                              className="st-icon-preview"
+                              src={workspaceIconUrl}
+                              alt=""
+                            />
+                          ) : null}
+                          <input
+                            className="m0-input"
+                            type="file"
+                            data-testid="workspace-icon-input"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            onChange={(event) => void changeWorkspaceIcon(event.target.files?.[0])}
+                          />
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            data-testid="workspace-icon-clear"
+                            onClick={() => void clearWorkspaceIcon()}
+                          >
+                            恢复默认
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">外观</span>
+                          <span className="st-card-desc">界面配色，可跟随系统</span>
+                        </div>
+                        <div className="st-card-action">
+                          <select
+                            data-testid="appearance"
+                            className="m0-input"
+                            value={config?.appearance ?? 'system'}
+                            disabled={!config}
+                            onChange={(event) => void setAppearance(event.target.value)}
+                          >
+                            <option value="system">跟随系统</option>
+                            <option value="light">浅色</option>
+                            <option value="dark">深色</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">关闭行为</span>
+                          <span className="st-card-desc">点击右上角关闭按钮时的行为</span>
+                        </div>
+                        <div className="st-card-action">
+                          <select
+                            data-testid="close-behavior"
+                            className="m0-input"
+                            value={config?.closeBehavior ?? 'quit'}
+                            disabled={!config}
+                            onChange={(event) => void setCloseBehavior(event.target.value)}
+                          >
+                            <option value="quit">直接退出</option>
+                            <option value="tray">最小化到托盘</option>
+                            <option value="ask">每次询问</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">代理</span>
+                          <span className="st-card-desc">
+                            网络请求（行情、更新检查）走 HTTP 代理；自动探测读取环境变量与 Windows 系统代理
+                          </span>
+                          {proxyDetect ? (
+                            <span className="st-card-desc st-card-desc--mono" data-testid="proxy-detect-result">
+                              {proxyDetect}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="st-card-action">
+                          <select
+                            className="m0-input"
+                            data-testid="proxy-mode"
+                            value={proxyMode}
+                            disabled={!config}
+                            onChange={(event) => setProxyMode(event.target.value)}
+                          >
+                            <option value="auto">自动探测</option>
+                            <option value="off">不使用</option>
+                            <option value="manual">手动</option>
+                          </select>
+                          <input
+                            className="m0-input"
+                            data-testid="proxy-url"
+                            placeholder="http://127.0.0.1:7890"
+                            value={proxyUrl}
+                            disabled={!config || proxyMode !== 'manual'}
+                            onChange={(event) => setProxyUrl(event.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            data-testid="proxy-save"
+                            disabled={!config}
+                            onClick={() => void saveProxy()}
+                          >
+                            保存
+                          </button>
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            data-testid="proxy-detect"
+                            onClick={() => void detectProxy()}
+                          >
+                            检测
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">开发者工具</span>
+                          <span className="st-card-desc">打开开发者工具，用于调试界面代码</span>
+                        </div>
+                        <div className="st-card-action">
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            data-testid="devtools-open"
+                            onClick={() => void window.api.invoke('devtools_toggle', { enabled: true })}
+                          >
+                            打开
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">账本</span>
+                          <span className="st-card-desc">新建或删除账本；侧栏左上角可切换当前账本</span>
+                        </div>
+                        <div className="st-card-action">
+                          <input
+                            data-testid="ledger-name"
+                            className="m0-input"
+                            placeholder="新账本名称"
+                            value={ledgerName}
+                            disabled={busy || !workspace}
+                            onChange={(event) => setLedgerName(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') void createLedger()
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            data-testid="ledger-create"
+                            disabled={busy || !workspace}
+                            onClick={() => void createLedger()}
+                          >
+                            新建
+                          </button>
+                        </div>
+                      </div>
+
+                      {ledgers.length === 0 ? (
+                        <p className="m0-muted" data-testid="ledger-empty">
+                          {workspace ? '还没有账本' : '请先选择工作空间'}
+                        </p>
+                      ) : (
+                        <ul className="m0-ledgers">
+                          {ledgers.map((ledger) => (
+                            <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
+                              <span>{ledger.name}</span>
+                              <span className="m0-muted">{ledger.description}</span>
+                              <button
+                                type="button"
+                                className="ui-btn ui-btn--text"
+                                disabled={busy}
+                                onClick={() => setDeleteTarget(ledger.id)}
+                              >
+                                删除
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {settingsTab === 'features' ? (
+                    <div className="st-list">
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">功能开关</span>
+                          <span className="st-card-desc">关闭后侧栏不再显示该功能；当前账本可单独覆盖</span>
+                        </div>
+                      </div>
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">全局</span>
+                        </div>
+                        <div className="st-card-action">
+                          <div className="m0-features">
+                            {FEATURES.map(([key, label]) => (
+                              <Switch
+                                key={key}
+                                testId={`feature-${key}`}
+                                label={label}
+                                checked={config?.features[key] ?? true}
+                                disabled={!config}
+                                onChange={(checked) => void toggleFeature(key, checked)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      {activeLedgerId ? (
+                        <div className="st-card">
+                          <div className="st-card-info">
+                            <span className="st-card-title">本账本</span>
+                          </div>
+                          <div className="st-card-action">
+                            <div className="m0-features" data-testid="ledger-features">
+                              {FEATURES.map(([key, label]) => (
+                                <Switch
+                                  key={key}
+                                  testId={`ledger-feature-${key}`}
+                                  label={label}
+                                  checked={effectiveFeatures?.[key] ?? true}
+                                  disabled={!config}
+                                  onChange={(checked) => void toggleLedgerFeature(key, checked)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {settingsTab === 'diary' ? (
+                    <div className="st-list">
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">日记格式</span>
+                          <span className="st-card-desc">每篇日记按 YYYY-MM-DD 保存；正文按纯文本呈现。</span>
+                        </div>
+                      </div>
+                      <div className="st-card">
+                        <div className="st-card-info">
+                          <span className="st-card-title">导入 / 导出</span>
+                          <span className="st-card-desc">按目录扫描或导出 YYYY-MM-DD.txt；入口在日记页。</span>
+                        </div>
+                        <div className="st-card-action">
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--secondary"
+                            onClick={() => setView('diary')}
+                          >
+                            前往日记
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {settingsTab === 'about' ? (
+                    <>
+                      <div className="st-list">
+                        <div className="st-card">
+                          <div className="st-card-info">
+                            <span className="st-card-title">Transactions</span>
+                            <span className="st-card-desc">版本 {version}</span>
+                            <span className="st-card-desc st-card-desc--mono">
+                              配置文件：{config?.configPath ?? '…'}（{config?.isDev ? '开发' : '生产'}）
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
+                      <ImportWizard progress={importProgress} onImported={finishImport} />
+                    </>
+                  ) : null}
+
+                  {config?.isDev && settingsTab === 'about' ? (
+                    <section className="m0-card">
+                      <h2>M0 验收</h2>
+                      <ul>
+                        <li>无边框窗口 / 托盘 / 单实例</li>
+                        <li>app:// 协议加载渲染产物</li>
+                        <li>node:sqlite 建库、校验、事务</li>
+                        <li>trasset:// 协议读取工作空间资产</li>
+                        <li>IPC 命令 + zod 边界校验</li>
+                        <li>Playwright 启动、点击、落库断言</li>
+                      </ul>
+                      <div className="m0-actions">
+                        <button
+                          type="button"
+                          data-testid="write-asset"
+                          disabled={busy || !workspace}
+                          onClick={() => void writeAsset()}
+                        >
+                          写入示例资产
+                        </button>
+                      </div>
+                      {asset ? (
+                        <div className="m0-asset">
+                          <img
+                            data-testid="asset-img"
+                            className="m0-asset-image"
+                            src={asset}
+                            alt="trasset 示例"
+                            onLoad={() => setAssetLoaded(true)}
+                          />
+                          <span data-testid="asset-state">
+                            {assetLoaded ? 'trasset:// 已加载' : '加载中…'}
+                          </span>
+                        </div>
+                      ) : null}
+                    </section>
+                  ) : null}
                 </div>
-              ) : null}
-            </section>
-            ) : null}
-          </>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         <ConfirmDialog
@@ -968,6 +1116,11 @@ export function App(): JSX.Element {
     </>
   )
 }
+
+
+
+
+
 
 
 

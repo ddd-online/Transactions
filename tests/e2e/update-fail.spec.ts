@@ -46,6 +46,7 @@ test('更新：不可用代理下检查失败并展示原因', async () => {
     await page.getByTestId('proxy-mode').selectOption('manual')
     await page.getByTestId('proxy-url').fill('http://127.0.0.1:9')
     await page.getByTestId('proxy-save').click()
+    await page.getByTestId('settings-tab-about').click()
 
     await page.getByTestId('update-check').click()
     await expect(page.getByTestId('update-status')).toContainText('检查失败', { timeout: 25_000 })
@@ -55,3 +56,5 @@ test('更新：不可用代理下检查失败并展示原因', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+

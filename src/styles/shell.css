@@ -341,3 +341,12 @@
   position: relative;
   z-index: 0;
 }
+
+.st-card-action .m0-input {
+  width: 220px;
+}
+
+.st-card-action input[type='file'].m0-input {
+  width: 280px;
+  padding: 4px 8px;
+}

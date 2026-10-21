@@ -50,6 +50,7 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
   try {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-import').click()
+    await page.getByTestId('settings-tab-about').click()
     await page.getByTestId('import-source').fill(source)
     await page.getByTestId('import-target').fill(target)
     await page.getByTestId('import-probe').click()
@@ -62,5 +63,6 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 

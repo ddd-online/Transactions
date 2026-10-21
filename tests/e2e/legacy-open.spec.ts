@@ -48,6 +48,7 @@ test('旧版工作空间：打开被拒绝并引导到导入向导', async () =>
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('error')).toContainText('旧版工作空间')
+    await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('import-source')).toBeVisible()
     await expect(page.getByTestId('workspace-state')).toContainText('未打开工作空间')
   } finally {
@@ -55,3 +56,5 @@ test('旧版工作空间：打开被拒绝并引导到导入向导', async () =>
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+

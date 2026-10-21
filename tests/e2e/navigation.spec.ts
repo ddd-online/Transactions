@@ -73,6 +73,7 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     await page.getByTestId('nav-todo').click()
     await expect(page.getByTestId('todo-card-title')).toBeVisible()
     await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toBeVisible()
     await page.getByTestId('nav-accounting').click()
     await expect(page.getByTestId('acct-tab-dashboard')).toBeVisible()
@@ -81,6 +82,7 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

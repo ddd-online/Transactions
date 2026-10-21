@@ -95,6 +95,7 @@ test('更新：慢速下载可取消并回到可下载状态', async () => {
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-about').click()
     await page.getByTestId('update-check').click()
     await expect(page.getByTestId('update-status')).toContainText('9.9.9')
     await page.getByTestId('update-download').click()
@@ -108,3 +109,4 @@ test('更新：慢速下载可取消并回到可下载状态', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+

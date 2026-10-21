@@ -43,6 +43,7 @@ test('导入：非旧版目录给出明确拒绝且不能开始', async () => {
   try {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-import').click()
+    await page.getByTestId('settings-tab-about').click()
     await page.getByTestId('import-source').fill(source)
     await page.getByTestId('import-target').fill(target)
     await page.getByTestId('import-probe').click()
@@ -53,3 +54,4 @@ test('导入：非旧版目录给出明确拒绝且不能开始', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+

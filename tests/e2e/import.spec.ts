@@ -53,6 +53,7 @@ test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
   try {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-import').click()
+    await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('import-source')).toBeVisible()
     await page.getByTestId('import-source').fill(source)
     await page.getByTestId('import-target').fill(target)
@@ -66,6 +67,7 @@ test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
     await expect(page.getByTestId('workspace-state')).toContainText(target)
     await page.getByTestId('nav-accounting').click()
     await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-general').click()
     await expect(page.getByTestId('ledger-item').first()).toBeVisible()
 
     const database = new DatabaseSync(join(target, 'transactions.db'), { readOnly: true })
@@ -85,6 +87,8 @@ test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
 
 
 

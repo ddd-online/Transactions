@@ -48,6 +48,7 @@ test('导入：源与目标相同或目标在源内都被拒绝', async () => {
   try {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-import').click()
+    await page.getByTestId('settings-tab-about').click()
     await page.getByTestId('import-source').fill(source)
     await page.getByTestId('import-target').fill(source)
     await page.getByTestId('import-probe').click()
@@ -64,3 +65,4 @@ test('导入：源与目标相同或目标在源内都被拒绝', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+

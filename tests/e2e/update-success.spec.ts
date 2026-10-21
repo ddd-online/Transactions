@@ -98,6 +98,7 @@ test('更新：检查到新版本、下载并校验 SHA256', async () => {
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-about').click()
     await page.getByTestId('update-check').click()
     await expect(page.getByTestId('update-status')).toContainText('9.9.9')
     await page.getByTestId('update-download').click()
@@ -111,3 +112,4 @@ test('更新：检查到新版本、下载并校验 SHA256', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+

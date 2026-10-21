@@ -48,18 +48,15 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await page.getByTestId('ledger-name').fill('设置账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-item')).toHaveText(/设置账本/)
-    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
+
+    await page.getByTestId('settings-tab-general').click()
     await page.getByTestId('appearance').selectOption('dark')
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).appearance)
       .toBe('dark')
-
-    await page.getByTestId('feature-stock').uncheck()
-    await expect
-      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
-      .toBe(false)
 
     await page.getByTestId('close-behavior').selectOption('tray')
     await expect
@@ -94,11 +91,15 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('workspace-icon')).toHaveCount(0)
     expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
+    await page.getByTestId('settings-tab-features').click()
+    await page.getByTestId('feature-stock').uncheck()
+    await expect
+      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
+      .toBe(false)
     await page.getByTestId('feature-stock').check()
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
       .toBe(true)
-
     await page.getByTestId('ledger-feature-stock').click()
     await expect(page.getByTestId('ledger-feature-stock')).not.toBeChecked()
     await expect(page.getByTestId('nav-stock')).toHaveCount(0)
@@ -116,12 +117,14 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('nav-stock')).toHaveCount(1)
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
-      .toBe(true)
-  } finally {
+      .toBe(true)  } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
+
 
 
 
