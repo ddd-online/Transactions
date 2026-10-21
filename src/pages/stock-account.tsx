@@ -387,6 +387,7 @@ export function StockAccountPanel({
         <EmptyState
           testId="stock-position-empty"
           title={ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
+          description={ledgerId ? '买入后，持仓会显示在这里。' : undefined}
         />
       )}
 
@@ -621,6 +622,7 @@ export function StockAccountPanel({
         <EmptyState
           testId="fund-empty"
           title={ledgerId ? '还没有资金记录' : '请先创建/选择账本'}
+          description={ledgerId ? '追加本金或交易后，资金变化会显示在这里。' : undefined}
         />
       )}
 

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
 
+import { Icon } from './icon'
+
 import {
   daysInMonth,
   mondayOffset,
@@ -90,19 +92,19 @@ export function DatePicker({
         title="选择日期"
         onClick={() => setOpen((current) => !current)}
       >
-        ▦
+        <Icon name="Calendar" size={16} />
       </button>) : null}
       {open ? (
         <div className="date-picker-popover" role="dialog" aria-label="选择日期">
           <div className="date-picker-head">
             <button type="button" className="ui-btn ui-btn--text" onClick={() => shiftMonth(-1)}>
-              ‹
+              <Icon name="Left" size={14} />
             </button>
             <strong>
               {year} 年 {monthNumber} 月
             </strong>
             <button type="button" className="ui-btn ui-btn--text" onClick={() => shiftMonth(1)}>
-              ›
+              <Icon name="Right" size={14} />
             </button>
           </div>
           <div className="date-picker-week">
@@ -138,6 +140,7 @@ export function DatePicker({
     </div>
   )
 }
+
 
 
 

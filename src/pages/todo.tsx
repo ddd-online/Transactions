@@ -293,7 +293,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             >
               <div className="m0-card-head">
                 <span className="ui-drag-handle" title="拖动排序">
-                  ⠿
+                  <Icon name="DragHandle" size={14} />
                 </span>
                 <h3>{card.title}</h3>
                 <button

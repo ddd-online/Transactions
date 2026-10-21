@@ -383,9 +383,10 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
               type="button"
               className="m0-link"
               data-testid="tr-template-delete"
+              aria-label="删除模板"
               onClick={() => void removeTemplate(template.templateId)}
             >
-              ×
+              <Icon name="Close" size={12} />
             </button>
           </span>
         ))}

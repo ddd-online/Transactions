@@ -241,7 +241,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   return (
         <PageLayout
           toolbar={<>
-                  <div className="m0-actions">
+                  <div className="m0-actions event-year-nav">
                     <button
                       type="button"
                       className="ui-btn ui-btn--text"

@@ -94,6 +94,11 @@
   pointer-events: none;
 }
 
+.date-picker > .m0-input {
+  width: 220px;
+  min-width: 0;
+}
+
 .date-picker {
   position: relative;
   display: inline-flex;
@@ -901,4 +906,58 @@
   .m0-stock-stats {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+
+.event-year-nav .ui-btn {
+  width: var(--transactions-btn-height-md);
+  padding: 0;
+  background: none;
+  color: var(--transactions-color-text-secondary);
+}
+
+.event-year-nav .ui-btn:hover:not(:disabled) {
+  background: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
+}
+
+.m0-table td.m0-right {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.date-picker-toggle {
+  width: var(--transactions-btn-height-md);
+  height: var(--transactions-btn-height-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.m0-input:focus-visible,
+.page-toolbar select:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+  border-color: var(--transactions-color-primary);
+}
+
+.m0-link:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.st-file-picker:focus-within {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.ui-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--transactions-color-text-tertiary);
+  cursor: grab;
 }

@@ -658,23 +658,6 @@ body {
   margin: 16px 0;
 }
 
-.m0-actions button {
-  height: var(--transactions-btn-height-md);
-  padding: 0 14px;
-  border-radius: var(--transactions-radius-md);
-  border: 1px solid var(--transactions-color-border-l1);
-  background: var(--transactions-color-major-background);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.m0-actions button:first-child {
-  border-color: var(--transactions-color-primary);
-  background: var(--transactions-color-primary);
-  color: #ffffff;
-}
-
 .m0-actions button:disabled {
   opacity: 0.5;
   cursor: default;
