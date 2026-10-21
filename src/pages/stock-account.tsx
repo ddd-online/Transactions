@@ -628,7 +628,7 @@ export function StockAccountPanel({
         <Button variant="primary" testId="stock-archive" onClick={() => void archiveStock()}>
           归档
         </Button>
-        <Button variant="text" testId="stock-reset" onClick={() => setConfirmReset(true)}>
+        <Button variant="text-danger" testId="stock-reset" onClick={() => setConfirmReset(true)}>
           重置全部股票数据
         </Button>
       </div>

@@ -894,7 +894,7 @@ export function App(): JSX.Element {
                               <span>{ledger.name}</span>
                               <span className="m0-muted">{ledger.description}</span>
                               <Button
-                                variant="text"
+                                variant="text-danger"
                                 size="sm"
                                 disabled={busy}
                                 onClick={() => setDeleteTarget(ledger.id)}

@@ -339,7 +339,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       width: 64,
       align: 'right',
       render: (_, row) => (
-        <Button variant="text" size="sm" testId="tr-delete" onClick={() => void remove(row.transactionId)}>
+        <Button variant="text-danger" size="sm" testId="tr-delete" onClick={() => void remove(row.transactionId)}>
           删除
         </Button>
       ),
@@ -436,7 +436,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
               {template.templateName}
             </Button>
             <Button
-              variant="text"
+              variant="text-danger"
               size="sm"
               testId="tr-template-delete"
               aria-label="删除模板"

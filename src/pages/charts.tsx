@@ -296,7 +296,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                 ]}
               />
               <Button
-                variant="text"
+                variant="text-danger"
                 testId="chart-delete"
                 disabled={!selectedId}
                 onClick={() => void deleteChart()}

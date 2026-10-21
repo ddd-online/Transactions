@@ -205,7 +205,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                     <Icon name="Down" size={12} />
                   </Button>
                   <Button
-                    variant="text"
+                    variant="text-danger"
                     size="sm"
                     testId="category-delete"
                     onClick={() => void deleteCategory(category.name)}
@@ -256,7 +256,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                   {tag.name} · {tag.categoryTransactionType} · {tag.recordCount} 笔
                 </span>
                 <Button
-                  variant="text"
+                  variant="text-danger"
                   size="sm"
                   testId="tag-delete"
                   onClick={() => void deleteTag(tag)}

@@ -336,7 +336,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                         保存
                       </Button>
                       <Button
-                        variant="text"
+                        variant="text-danger"
                         testId="event-delete"
                         disabled={!event || busy}
                         onClick={() => void remove()}
@@ -369,7 +369,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                           <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
                           <Tooltip text="删除这张图片">
                             <Button
-                              variant="text"
+                              variant="text-danger"
                               size="sm"
                               testId="event-image-delete"
                               onClick={() => void removeImage(image.id)}

@@ -364,7 +364,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                           </>
                         )}
                         <Button
-                          variant="text"
+                          variant="text-danger"
                           size="sm"
                           testId="stock-trade-delete"
                           onClick={() => setConfirmOrder(trade.orderId)}

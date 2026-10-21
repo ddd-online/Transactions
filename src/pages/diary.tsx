@@ -279,7 +279,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   保存
                 </Button>
                 <Button
-                  variant="text"
+                  variant="text-danger"
                   testId="diary-delete"
                   disabled={!ledgerId || busy}
                   onClick={() => void remove()}

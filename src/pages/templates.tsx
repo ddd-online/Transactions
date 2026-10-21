@@ -95,7 +95,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
               align: 'right',
               render: (_, row) => (
                 <Button
-                  variant="text"
+                  variant="text-danger"
                   size="sm"
                   testId="template-delete"
                   onClick={() => void remove(row.templateId)}

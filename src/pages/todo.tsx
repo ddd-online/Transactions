@@ -298,7 +298,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                 </span>
                 <h3>{card.title}</h3>
                 <Button
-                  variant="text"
+                  variant="text-danger"
                   size="sm"
                   testId="todo-card-delete"
                   onClick={() => void removeCard(card.id)}
@@ -352,7 +352,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                           完成
                         </Button>
                         <Button
-                          variant="text"
+                          variant="text-danger"
                           size="sm"
                           testId="todo-item-delete"
                           onClick={() => void removeItem(item.id)}
@@ -374,7 +374,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                                 {progress.content}
                               </Checkbox>
                               <Button
-                                variant="text"
+                                variant="text-danger"
                                 size="sm"
                                 testId="todo-progress-delete"
                                 onClick={() => void removeProgress(progress.id)}
