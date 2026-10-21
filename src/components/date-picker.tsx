@@ -76,7 +76,10 @@ export function DatePicker({
         disabled={disabled}
         placeholder="YYYY-MM-DD"
         inputMode="numeric"
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value)
+          if (parseYmd(event.target.value)) setOpen(false)
+        }}
         onFocus={() => setOpen(true)}
       />
       {showToggle ? (<button
@@ -135,5 +138,6 @@ export function DatePicker({
     </div>
   )
 }
+
 
 

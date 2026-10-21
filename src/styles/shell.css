@@ -355,3 +355,76 @@
 .app-top-bar {
   -webkit-app-region: no-drag;
 }
+
+.events-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-lg);
+  background: var(--transactions-color-major-background);
+  color: var(--transactions-color-text-major);
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-card.is-active {
+  border-color: var(--transactions-color-primary);
+  background: var(--transactions-color-active-bg);
+}
+
+.event-card-excerpt {
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-year-label {
+  min-width: 72px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.events-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 20px;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-lg);
+  background: var(--transactions-color-major-background);
+}
+
+.events-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.events-editor .m0-event-content {
+  flex: 1;
+  min-height: 260px;
+  resize: vertical;
+}

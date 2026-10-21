@@ -5,6 +5,7 @@ import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
 import { DatePicker } from '../components/date-picker'
 import { Tooltip } from '../components/tooltip'
+import { Icon } from '../components/icon'
 import { Markdown } from '../components/markdown'
 
 function errorMessage(error: unknown): string {
@@ -53,7 +54,7 @@ export interface EventsPageProps {
 export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [date, setDate] = useState(todayYmd())
-  const [dates, setDates] = useState<string[]>([])
+  const [events, setEvents] = useState<KeyEvent[]>([])
   const [event, setEvent] = useState<KeyEvent | null>(null)
   const [images, setImages] = useState<KeyEventImage[]>([])
   const [title, setTitle] = useState('')
@@ -67,11 +68,11 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const loadDates = useCallback(async (): Promise<void> => {
     if (!ledgerId || !year) return
     try {
-      const rows = await window.api.invoke('key_event_dates_by_year', {
+      const rows = await window.api.invoke('key_event_list_by_year', {
         ledger_id: ledgerId,
         year,
       })
-      setDates(rows)
+      setEvents(rows)
     } catch (loadError) {
       setError(errorMessage(loadError))
     }
@@ -206,128 +207,170 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   )
 
   return (
-    <section className="m0-card m0-card--wide">
-      <div className="m0-card-head">
-        <h2>事件</h2>
-        <div className="m0-actions m0-period">
-          <input
-            className="m0-input"
-            data-testid="event-year"
-            value={year}
-            onChange={(event) => setYear(event.target.value)}
-          />
-          <DatePicker
-            testId="event-date"
-            value={date}
-            onChange={(value) => setDate(value)}
-          />
-        </div>
-      </div>
+        <section className="page">
+          <div className="page-region">
+            <div className="page-main">
+              <div className="page-content">
+                <div className="page-toolbar">
+                  <div className="m0-actions">
+                    <button
+                      type="button"
+                      className="ui-btn ui-btn--text"
+                      onClick={() => setYear(String(Number(year) - 1))}
+                    >
+                      <Icon name="Left" size={16} />
+                    </button>
+                    <strong className="event-year-label">{year}</strong>
+                    <button
+                      type="button"
+                      className="ui-btn ui-btn--text"
+                      onClick={() => setYear(String(Number(year) + 1))}
+                    >
+                      <Icon name="Right" size={16} />
+                    </button>
+                  </div>
+                  <DatePicker
+                    testId="event-date"
+                    value={date}
+                    onChange={(value) => setDate(value)}
+                  />
+                </div>
 
-      {dates.length > 0 ? (
-        <div className="m0-actions">
-          {dates.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={item === date ? 'm0-primary' : 'm0-link'}
-              data-testid="event-date-item"
-              onClick={() => setDate(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      ) : null}
+                {error ? (
+                  <p className="m0-error" data-testid="event-error">
+                    {error}
+                  </p>
+                ) : null}
 
-      {error ? (
-        <p className="m0-error" data-testid="event-error">
-          {error}
-        </p>
-      ) : null}
+                <div className="events-layout">
+                  <aside className="events-list">
+                    {events.length === 0 ? (
+                      <p className="m0-muted">这一年还没有事件</p>
+                    ) : (
+                      events.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={`event-card${item.date === date ? ' is-active' : ''}`}
+                          data-testid="event-date-item"
+                          onClick={() => setDate(item.date)}
+                        >
+                          <strong>{item.title || '未命名事件'}</strong>
+                          <span className="m0-muted">{item.date}</span>
+                          <span className="event-card-excerpt">
+                            {item.content.replace(/\s+/g, ' ').slice(0, 60) || '（无正文）'}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                    <button
+                      type="button"
+                      className="ui-btn ui-btn--primary"
+                      onClick={() => {
+                        const today = todayYmd()
+                        setYear(today.slice(0, 4))
+                        setDate(today)
+                        setTitle('')
+                        setContent('')
+                        setColor('')
+                      }}
+                    >
+                      新增事件
+                    </button>
+                  </aside>
 
-      <div className="m0-actions m0-new-record">
-        <input
-          className="m0-input"
-          data-testid="event-title"
-          placeholder="标题"
-          value={title}
-          onChange={(changeEvent) => setTitle(changeEvent.target.value)}
-        />
-        <input
-          className="m0-input"
-          data-testid="event-color"
-          placeholder="颜色（如 red）"
-          value={color}
-          onChange={(changeEvent) => setColor(changeEvent.target.value)}
-        />
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="event-save"
-          disabled={!ledgerId || busy}
-          onClick={() => void save()}
-        >
-          保存
-        </button>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="event-delete"
-          disabled={!event || busy}
-          onClick={() => void remove()}
-        >
-          删除
-        </button>
-      </div>
+                  <section className="events-editor">
+                    <div className="events-editor-head">
+                      <input
+                        className="m0-input"
+                        data-testid="event-title"
+                        placeholder="事件标题"
+                        value={title}
+                        onChange={(changeEvent) => setTitle(changeEvent.target.value)}
+                      />
+                      <input
+                        className="m0-input"
+                        data-testid="event-color"
+                        placeholder="颜色"
+                        value={color}
+                        onChange={(changeEvent) => setColor(changeEvent.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="ui-btn ui-btn--primary"
+                        data-testid="event-save"
+                        disabled={!ledgerId || busy}
+                        onClick={() => void save()}
+                      >
+                        保存
+                      </button>
+                      <button
+                        type="button"
+                        className="ui-btn ui-btn--text"
+                        data-testid="event-delete"
+                        disabled={!event || busy}
+                        onClick={() => void remove()}
+                      >
+                        删除
+                      </button>
+                    </div>
 
-      <textarea
-        className="m0-input m0-event-content"
-        data-testid="event-content"
-        placeholder="正文"
-        value={content}
-        onChange={(changeEvent) => setContent(changeEvent.target.value)}
-      />
-      {content ? <Markdown source={content} testId="event-content-preview" /> : null}
+                    <textarea
+                      className="m0-input m0-event-content"
+                      data-testid="event-content"
+                      placeholder="写下这件事……"
+                      value={content}
+                      onChange={(changeEvent) => setContent(changeEvent.target.value)}
+                    />
+                    {content ? <Markdown source={content} testId="event-content-preview" /> : null}
 
-      <div className="m0-actions">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
-          data-testid="event-image-input"
-          onChange={(changeEvent) => void addImage(changeEvent.target.files?.[0])}
-        />
-      </div>
+                    <div className="m0-actions">
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        data-testid="event-image-input"
+                        onChange={(changeEvent) => void addImage(changeEvent.target.files?.[0])}
+                      />
+                    </div>
 
-      <div className="m0-event-images">
-        {images.map((image) => (
-          <figure key={image.id} className="m0-event-image">
-            <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
-            <Tooltip text="删除这张图片">
-              <button
-                type="button"
-                className="m0-link"
-                data-testid="event-image-delete"
-                onClick={() => void removeImage(image.id)}
-              >
-                删除图片
-              </button>
-            </Tooltip>
-          </figure>
-        ))}
-      </div>
+                    <div className="m0-event-images">
+                      {images.map((image) => (
+                        <figure key={image.id} className="m0-event-image">
+                          <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
+                          <Tooltip text="删除这张图片">
+                            <button
+                              type="button"
+                              className="m0-link"
+                              data-testid="event-image-delete"
+                              onClick={() => void removeImage(image.id)}
+                            >
+                              删除图片
+                            </button>
+                          </Tooltip>
+                        </figure>
+                      ))}
+                    </div>
+                  </section>
+                </div>
 
-      {cropSrc ? (
-        <ImageCrop
-          src={cropSrc}
-          onCancel={() => setCropSrc('')}
-          onConfirm={(data) => void commitImage(data)}
-        />
-      ) : null}
-    </section>
+                {cropSrc ? (
+                  <ImageCrop
+                    src={cropSrc}
+                    onCancel={() => setCropSrc('')}
+                    onConfirm={(data) => void commitImage(data)}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </section>
   )
 }
+
+
+
+
 
 
 
