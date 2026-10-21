@@ -1,5 +1,8 @@
 import { useCallback, useState, type JSX } from 'react'
 
+import { Input } from 'antd'
+
+import { Button } from '../components/button'
 import { notify } from '../components/toast'
 import { Spin } from '../components/spin'
 import type {
@@ -75,7 +78,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
   }, [onImported, sourceDir, targetDir])
 
   return (
-    <section className="m0-card m0-card--wide">
+    <section className="m0-card m0-card--wide st-import-card">
       <h2>导入数据</h2>
       <p className="m0-muted">
         选择包含 transactions.db 的源目录，导入到空目录；源库只读，完成后写入 import-report.json。
@@ -84,54 +87,50 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
       <div className="m0-import-row">
         <label className="m0-field m0-import-field">
           源目录
-          <input
-            className="m0-input"
+          <Input
             data-testid="import-source"
             value={sourceDir}
             onChange={(event) => setSourceDir(event.target.value)}
             placeholder="包含 transactions.db 的目录"
           />
         </label>
-        <button type="button" className="m0-link" onClick={() => void pick(setSourceDir)}>
+        <Button variant="text" onClick={() => void pick(setSourceDir)}>
           选择
-        </button>
+        </Button>
       </div>
 
       <div className="m0-import-row">
         <label className="m0-field m0-import-field">
           新目录
-          <input
-            className="m0-input"
+          <Input
             data-testid="import-target"
             value={targetDir}
             onChange={(event) => setTargetDir(event.target.value)}
             placeholder="空目录（不存在会自动创建）"
           />
         </label>
-        <button type="button" className="m0-link" onClick={() => void pick(setTargetDir)}>
+        <Button variant="text" onClick={() => void pick(setTargetDir)}>
           选择
-        </button>
+        </Button>
       </div>
 
       <div className="m0-actions">
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="import-probe"
+        <Button
+          variant="primary"
+          testId="import-probe"
           disabled={!sourceDir || busy}
           onClick={() => void check()}
         >
           检查源库
-        </button>
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="import-start"
+        </Button>
+        <Button
+          variant="primary"
+          testId="import-start"
           disabled={!sourceDir || !targetDir || !probe?.ready || busy}
           onClick={() => void start()}
         >
           开始导入
-        </button>
+        </Button>
         {progress ? (
           <span className="m0-muted" data-testid="import-status">
             {busy ? <Spin /> : null}

@@ -3,6 +3,7 @@ import { useEffect, useState, type JSX } from 'react'
 import { centsToYuan } from '../../shared/domain/money'
 import type { AccountingOverviewDto } from '../../shared/types/accounting'
 import { Segmented } from '../components/segmented'
+import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
 import { Icon } from '../components/icon'
@@ -85,21 +86,23 @@ export function DashboardPage({ ledgerId, refreshToken = 0 }: DashboardPageProps
               { value: 'year', label: '年' },
             ]}
           />
-          <button
-            type="button"
-            className="ui-btn ui-btn--text"
+          <Button
+            variant="text"
+            size="sm"
+            aria-label="上一期"
             onClick={() => setAnchor((value) => shiftAnchor(value, periodKind, -1))}
           >
             <Icon name="Left" size={14} />
-          </button>
+          </Button>
           <DatePicker testId="dashboard-date" value={anchor} onChange={(value) => setAnchor(value)} />
-          <button
-            type="button"
-            className="ui-btn ui-btn--text"
+          <Button
+            variant="text"
+            size="sm"
+            aria-label="下一期"
             onClick={() => setAnchor((value) => shiftAnchor(value, periodKind, 1))}
           >
             <Icon name="Right" size={14} />
-          </button>
+          </Button>
           <span className="m0-muted" data-testid="period-label">
             {data?.period.label ?? ''}
           </span>

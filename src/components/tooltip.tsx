@@ -1,3 +1,4 @@
+import { Tooltip as AntTooltip } from 'antd'
 import type { JSX, ReactNode } from 'react'
 
 export interface TooltipProps {
@@ -5,11 +6,11 @@ export interface TooltipProps {
   children: ReactNode
 }
 
-/** 纯 CSS 气泡提示，包裹任意元素。 */
+/** 气泡提示：保留 text/children 契约。 */
 export function Tooltip({ text, children }: TooltipProps): JSX.Element {
   return (
-    <span className="ui-tooltip" data-tooltip={text}>
-      {children}
-    </span>
+    <AntTooltip title={text} mouseEnterDelay={0.25}>
+      <span className="tr-tooltip-trigger">{children}</span>
+    </AntTooltip>
   )
 }

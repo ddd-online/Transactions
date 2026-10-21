@@ -1,49 +1,61 @@
-import { useEffect, useState, type JSX } from 'react'
+import { App as AntApp } from 'antd'
+import { useEffect, useRef, type JSX } from 'react'
 
 type NoticeType = 'success' | 'error' | 'warning' | 'info'
 
 interface Notice {
-  id: number
   message: string
   type: NoticeType
 }
 
-let listener: ((notice: Notice) => void) | null = null
-let nextId = 1
+interface MessageApi {
+  open: (config: {
+    content: JSX.Element
+    type: NoticeType
+    duration: number
+    key?: string
+  }) => void
+}
+
+let api: MessageApi | null = null
+const queued: Notice[] = []
+
+function show(notice: Notice): void {
+  if (!api) {
+    queued.push(notice)
+    return
+  }
+  api.open({
+    type: notice.type,
+    duration: 3,
+    content: (
+      <span data-testid="toast" role="status">
+        {notice.message}
+      </span>
+    ),
+  })
+}
 
 /** 显示一条底部提示。 */
 export function notify(message: string, type: NoticeType = 'success'): void {
-  listener?.({ id: nextId++, message, type })
+  show({ message, type })
 }
 
-/** 全局提示宿主，挂在 App 根部。 */
-export function ToastHost(): JSX.Element {
-  const [items, setItems] = useState<Notice[]>([])
+/** 把 AntD message 实例接到模块级 notify；必须挂在 AntD App 内。 */
+export function ToastHost(): JSX.Element | null {
+  const { message } = AntApp.useApp()
+  const messageRef = useRef(message)
+  messageRef.current = message
 
   useEffect(() => {
-    listener = (notice) => {
-      setItems((current) => [...current, notice])
-      setTimeout(() => {
-        setItems((current) => current.filter((item) => item.id !== notice.id))
-      }, 3000)
+    api = {
+      open: (config) => messageRef.current.open(config),
     }
+    for (const notice of queued.splice(0)) show(notice)
     return () => {
-      listener = null
+      api = null
     }
   }, [])
 
-  return (
-    <div className="notice-stack-message" aria-live="polite">
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className={`notice-message notice--${item.type}`}
-          data-testid="toast"
-          role="status"
-        >
-          {item.message}
-        </div>
-      ))}
-    </div>
-  )
+  return null
 }

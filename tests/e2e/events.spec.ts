@@ -65,7 +65,7 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     await page.getByTestId('event-links-toggle').click()
     await expect(page.getByTestId('event-links-title')).toHaveCount(1)
 
-    await page.getByTestId('event-date').click()
+    await page.getByTestId('event-date-toggle').click()
     await expect(page.getByRole('dialog', { name: '选择日期' })).toBeVisible()
     await page.getByTestId('date-picker-day-2026-01-20').click()
     await expect(page.getByTestId('event-date')).toHaveValue('2026-01-20')

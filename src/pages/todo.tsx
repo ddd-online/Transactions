@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { TodoCardDto, TodoHistoryDto } from '../../shared/types/todo'
+import { Checkbox, Input } from 'antd'
+
+import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Progress } from '../components/progress'
 import { Icon } from '../components/icon'
@@ -243,22 +246,20 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       toolbar={<>
         <h2 className="todo-title">待办</h2>
         <div className="m0-actions">
-          <input
-            className="m0-input"
+          <Input
             data-testid="todo-card-title"
             placeholder="新主题"
             value={cardTitle}
             onChange={(event) => setCardTitle(event.target.value)}
           />
-          <button
-            type="button"
-            className="m0-primary"
-            data-testid="todo-card-create"
+          <Button
+            variant="primary"
+            testId="todo-card-create"
             disabled={!ledgerId || busy}
             onClick={() => void createCard()}
           >
             新建主题
-          </button>
+          </Button>
         </div>
       </>}
     >
@@ -296,18 +297,17 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                   <Icon name="DragHandle" size={14} />
                 </span>
                 <h3>{card.title}</h3>
-                <button
-                  type="button"
-                  className="m0-link"
-                  data-testid="todo-card-delete"
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="todo-card-delete"
                   onClick={() => void removeCard(card.id)}
                 >
                   删除主题
-                </button>
+                </Button>
               </div>
               <div className="m0-actions">
-                <input
-                  className="m0-input"
+                <Input
                   data-testid="todo-item-title"
                   placeholder="新事项"
                   value={itemTitles[card.id] ?? ''}
@@ -315,15 +315,14 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                     setItemTitles((current) => ({ ...current, [card.id]: event.target.value }))
                   }
                 />
-                <button
-                  type="button"
-                  className="m0-link"
-                  data-testid="todo-item-create"
+                <Button
+                  variant="text"
+                  testId="todo-item-create"
                   disabled={busy}
                   onClick={() => void createItem(card.id)}
                 >
                   添加事项
-                </button>
+                </Button>
               </div>
 
               {card.items.length === 0 ? (
@@ -344,53 +343,50 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                         total={item.progress.length}
                       />
                       <div className="m0-actions">
-                        <button
-                          type="button"
-                          className="m0-link"
-                          data-testid="todo-item-done"
+                        <Button
+                          variant="text"
+                          size="sm"
+                          testId="todo-item-done"
                           onClick={() => void setStatus(item.id, 'done')}
                         >
                           完成
-                        </button>
-                        <button
-                          type="button"
-                          className="m0-link"
-                          data-testid="todo-item-delete"
+                        </Button>
+                        <Button
+                          variant="text"
+                          size="sm"
+                          testId="todo-item-delete"
                           onClick={() => void removeItem(item.id)}
                         >
                           删除
-                        </button>
+                        </Button>
                       </div>
                       {item.progress.length > 0 ? (
                         <ul className="m0-todo-progress">
                           {item.progress.map((progress) => (
                             <li key={progress.id}>
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  data-testid="todo-progress-done"
-                                  checked={progress.done}
-                                  onChange={(event) =>
-                                    void toggleProgress(progress.id, event.target.checked)
-                                  }
-                                />
+                              <Checkbox
+                                data-testid="todo-progress-done"
+                                checked={progress.done}
+                                onChange={(event) =>
+                                  void toggleProgress(progress.id, event.target.checked)
+                                }
+                              >
                                 {progress.content}
-                              </label>
-                              <button
-                                type="button"
-                                className="m0-link"
-                                data-testid="todo-progress-delete"
+                              </Checkbox>
+                              <Button
+                                variant="text"
+                                size="sm"
+                                testId="todo-progress-delete"
                                 onClick={() => void removeProgress(progress.id)}
                               >
                                 删除
-                              </button>
+                              </Button>
                             </li>
                           ))}
                         </ul>
                       ) : null}
                       <div className="m0-actions">
-                        <input
-                          className="m0-input"
+                        <Input
                           data-testid="todo-progress-input"
                           placeholder="记进度"
                           value={progressText[item.id] ?? ''}
@@ -401,14 +397,13 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                             }))
                           }
                         />
-                        <button
-                          type="button"
-                          className="m0-link"
-                          data-testid="todo-progress-add"
+                        <Button
+                          variant="text"
+                          testId="todo-progress-add"
                           onClick={() => void addProgress(item.id)}
                         >
                           添加进度
-                        </button>
+                        </Button>
                       </div>
                     </li>
                   ))}

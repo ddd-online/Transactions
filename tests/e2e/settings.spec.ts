@@ -50,6 +50,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('ledger-item')).toHaveText(/设置账本/)
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
+    await page.getByTestId('settings-tab-data').click()
     await expect(page.getByTestId('import-source')).toBeInViewport()
 
     await page.getByTestId('settings-tab-general').click()
@@ -93,16 +94,16 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
     await page.getByTestId('settings-tab-features').click()
-    await page.getByTestId('feature-stock').uncheck()
+    await page.getByTestId('feature-stock').click()
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
       .toBe(false)
-    await page.getByTestId('feature-stock').check()
+    await page.getByTestId('feature-stock').click()
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
       .toBe(true)
     await page.getByTestId('ledger-feature-stock').click()
-    await expect(page.getByTestId('ledger-feature-stock')).not.toBeChecked()
+    await expect(page.getByTestId('ledger-feature-stock')).toHaveAttribute('aria-checked', 'false')
     await expect(page.getByTestId('nav-stock')).toHaveCount(0)
     await expect
       .poll(() => {
@@ -114,7 +115,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       })
       .toBe(true)
     await page.getByTestId('ledger-feature-stock').click()
-    await expect(page.getByTestId('ledger-feature-stock')).toBeChecked()
+    await expect(page.getByTestId('ledger-feature-stock')).toHaveAttribute('aria-checked', 'true')
     await expect(page.getByTestId('nav-stock')).toHaveCount(1)
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)

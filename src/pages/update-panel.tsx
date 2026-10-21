@@ -1,11 +1,13 @@
+import { Progress, Spin } from 'antd'
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import {
-  allowsNewCheck,
   showsReleaseBody,
   updateStatusLabel,
   type UpdateSnapshot,
 } from '../../shared/domain/update'
+import { Button } from '../components/button'
+import { Icon } from '../components/icon'
 
 export interface UpdatePanelProps {
   snapshot: UpdateSnapshot | null
@@ -82,90 +84,136 @@ export function UpdatePanel({ snapshot, onSnapshot }: UpdatePanelProps): JSX.Ele
   }, [])
 
   const status = snapshot?.status ?? 'idle'
+  const showError = snapshot?.error || error
 
   return (
-    <section className="m0-card m0-card--wide">
-      <div className="m0-card-head">
-        <h2>关于与更新</h2>
-        <span className="m0-muted" data-testid="update-status">
-          {updateStatusLabel(status)}
-          {snapshot?.latestVersion ? ` · ${snapshot.latestVersion}` : ''}
-        </span>
-      </div>
-
-      {snapshot?.status === 'downloading' ? (
-        <>
-          <div className="m0-progress">
-            <div className="m0-progress-fill" style={{ width: `${snapshot.percent}%` }} />
-          </div>
-          <p className="m0-muted" data-testid="update-progress">
-            {snapshot.percent}% · {snapshot.speed}
-          </p>
-        </>
+    <section className="st-about-update">
+      {status === 'checking' ? (
+        <div className="st-update-row">
+          <Spin size="small" />
+          <span className="st-update-text" data-testid="update-status">
+            {updateStatusLabel(status)}
+          </span>
+        </div>
       ) : null}
 
-      {snapshot && showsReleaseBody(snapshot.status) && snapshot.releaseBody ? (
-        <pre className="m0-release-body">{snapshot.releaseBody}</pre>
-      ) : null}
-
-      {snapshot?.error ? (
-        <p className="m0-error" data-testid="update-error">
-          {snapshot.error}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="m0-error" data-testid="update-error">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="m0-actions">
-        {allowsNewCheck(status) ? (
-          <button
-            type="button"
-            className="m0-primary"
-            data-testid="update-check"
+      {status === 'idle' ? (
+        <div className="st-update-row">
+          <span className="sr-only" data-testid="update-status">
+            {updateStatusLabel(status)}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            testId="update-check"
             disabled={busy}
             onClick={() => void check()}
           >
             检查更新
-          </button>
-        ) : null}
-        {status === 'available' ? (
-          <button
-            type="button"
-            className="m0-primary"
-            data-testid="update-download"
+          </Button>
+        </div>
+      ) : null}
+
+      {status === 'no-update' ? (
+        <div className="st-update-row st-update-success">
+          <span className="st-update-icon">
+            <Icon name="CheckCircle" size={16} />
+          </span>
+          <span className="st-update-text" data-testid="update-status">
+            {updateStatusLabel(status)}
+            {snapshot?.latestVersion ? ` · ${snapshot.latestVersion}` : ''}
+          </span>
+          <Button variant="secondary" size="sm" disabled={busy} onClick={() => void check()}>
+            重新检查
+          </Button>
+        </div>
+      ) : null}
+
+      {status === 'available' ? (
+        <div className="st-update-row st-update-available">
+          <span className="st-update-text" data-testid="update-status">
+            {updateStatusLabel(status)}
+            {snapshot?.latestVersion ? ` ${snapshot.latestVersion}` : ''}
+          </span>
+          <Button
+            variant="primary"
+            size="sm"
+            testId="update-download"
             disabled={busy || !snapshot?.downloadUrl}
             onClick={() => void download()}
           >
             下载更新
-          </button>
-        ) : null}
-        {status === 'downloading' ? (
-          <button
-            type="button"
-            className="m0-link"
-            data-testid="update-cancel"
-            onClick={() => void cancel()}
-          >
+          </Button>
+        </div>
+      ) : null}
+
+      {status === 'downloading' ? (
+        <div className="st-update-row">
+          <Progress
+            className="st-update-progress"
+            percent={snapshot?.percent ?? 0}
+            size="small"
+            showInfo={false}
+          />
+          <span className="st-update-text" data-testid="update-status">
+            {snapshot?.percent ?? 0}% · {snapshot?.speed ?? ''}
+          </span>
+          <Button variant="text" size="sm" testId="update-cancel" onClick={() => void cancel()}>
             取消下载
-          </button>
-        ) : null}
-        {status === 'downloaded' ? (
-          <button
-            type="button"
-            className="m0-primary"
-            data-testid="update-install"
+          </Button>
+        </div>
+      ) : null}
+
+      {status === 'downloaded' ? (
+        <div className="st-update-row st-update-success">
+          <span className="st-update-icon">
+            <Icon name="CheckCircle" size={16} />
+          </span>
+          <span className="st-update-text" data-testid="update-status">
+            {updateStatusLabel(status)}
+          </span>
+          <Button
+            variant="primary"
+            size="sm"
+            testId="update-install"
             disabled={busy}
             onClick={() => void install()}
           >
             安装并重启
-          </button>
-        ) : null}
-      </div>
+          </Button>
+        </div>
+      ) : null}
+
+      {status === 'failed' ? (
+        <div className="st-update-row st-update-error">
+          <span className="st-update-icon">
+            <Icon name="CloseCircle" size={16} />
+          </span>
+          <span className="st-update-text" data-testid="update-status">
+            {updateStatusLabel(status)}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            testId="update-check"
+            disabled={busy}
+            onClick={() => void check()}
+          >
+            重试
+          </Button>
+        </div>
+      ) : null}
+
+      {snapshot && showsReleaseBody(snapshot.status) && snapshot.releaseBody ? (
+        <pre className="st-release-body">{snapshot.releaseBody}</pre>
+      ) : null}
+
+      {showError ? (
+        <p className="m0-error" data-testid="update-error">
+          {showError}
+        </p>
+      ) : null}
     </section>
   )
 }
-
 

@@ -21,10 +21,14 @@ import { StockPage } from './pages/stock'
 import { EventsPage } from './pages/events'
 import { DiaryPage } from './pages/diary'
 import { TodoPage } from './pages/todo'
+import { AntdProvider } from './components/antd-provider'
+import { Input, Tabs } from 'antd'
+import { AppMark } from './components/app-mark'
+import { Button } from './components/button'
 import { ImportWizard } from './pages/import-wizard'
 import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
-import { ToastHost, notify } from './components/toast'
+import { notify } from './components/toast'
 import { Switch } from './components/switch'
 import { PageHeader } from './components/page-header'
 import { Segmented } from './components/segmented'
@@ -67,12 +71,10 @@ export function App(): JSX.Element {
   const [activeLedgerId, setActiveLedgerId] = useState('')
   const [dataVersion, setDataVersion] = useState(0)
   const [ledgerName, setLedgerName] = useState('')
-  const [asset, setAsset] = useState('')
-  const [assetLoaded, setAssetLoaded] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
-  const [settingsTab, setSettingsTab] = useState<'general'|'features'|'diary'|'about'>('general')
+  const [settingsTab, setSettingsTab] = useState<'general'|'features'|'diary'|'data'|'about'>('general')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [ledgerMenuOpen, setLedgerMenuOpen] = useState(false)
   const [accountingTab, setAccountingTab] = useState<
@@ -332,21 +334,6 @@ export function App(): JSX.Element {
     [],
   )
 
-  const writeAsset = useCallback(async (): Promise<void> => {
-    setBusy(true)
-    setError('')
-    setAssetLoaded(false)
-    try {
-      const relativePath = await window.api.invoke('debug_write_asset')
-      const url = await window.api.invoke('asset_url', { filePath: relativePath })
-      setAsset(url)
-    } catch (assetError) {
-      setError(errorMessage(assetError))
-    } finally {
-      setBusy(false)
-    }
-  }, [])
-
   const changeWorkspaceIcon = useCallback(async (file: File | undefined): Promise<void> => {
     if (!file) return
     setError('')
@@ -433,33 +420,33 @@ export function App(): JSX.Element {
   }, [])
 
   return (
-    <>
+    <AntdProvider appearance={config?.appearance}>
+      <>
       {!workspace && !workspacePromptDismissed ? (
         <div className="app-workspace-overlay" data-testid="workspace-overlay">
           <div className="app-workspace-card">
             <h1>Transactions</h1>
             <p className="m0-muted">选择一个工作空间开始；所有数据都保存在本地。</p>
             <div className="m0-actions" style={{ justifyContent: 'center' }}>
-              <button
-                type="button"
-                data-testid="open-workspace"
-                className="m0-primary"
+              <Button
+                variant="primary"
+                testId="open-workspace"
                 disabled={busy}
                 onClick={() => void openWorkspace()}
               >
                 选择工作空间
-              </button>
-              <button
-                type="button"
-                data-testid="open-import"
-                className="m0-link"
+              </Button>
+              <Button
+                variant="text"
+                testId="open-import"
                 onClick={() => {
                   setWorkspacePromptDismissed(true)
+                  setSettingsTab('data')
                   setView('settings')
                 }}
               >
                 导入数据
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -486,14 +473,7 @@ export function App(): JSX.Element {
                       alt=""
                     />
                   ) : (
-                    <svg className="app-mark" viewBox="0 0 1024 1024" aria-hidden="true">
-                      <rect className="app-mark__plate" x="0" y="0" width="1024" height="1024" rx="200" ry="200" />
-                      <path
-                        className="app-mark__glyph"
-                        transform="translate(220.909996509552 49.1699676513672)"
-                        d="M363.01 322.09 L236.22 322.09 L236.22 685.1 L135.78 685.1 L135.78 322.09 L9.61 322.09 L9.61 240.56 L363.01 240.56 Z M572.57 456.01 C560.79 449.6 547.05 446.4 531.34 446.4 C510.05 446.4 493.42 454.2 481.43 469.81 C469.44 485.41 463.45 506.64 463.45 533.51 L463.45 685.1 L365.49 685.1 L365.49 367.66 L463.45 367.66 L463.45 426.56 L464.69 426.56 C480.19 383.57 508.09 362.08 548.39 362.08 C558.72 362.08 566.78 363.32 572.57 365.8 Z"
-                      />
-                    </svg>
+                    <AppMark />
                   )}
                 </span>
                 <span className="ledger-btn-name">{activeLedgerName}</span>
@@ -730,39 +710,30 @@ export function App(): JSX.Element {
 
         {view === 'settings' ? (
           <PageLayout contentClassName="settings-page-content">
-                  <div className="ui-tabs st-tabs">
-                    {(
-                      [
-                        ['general', '通用设置'],
-                        ['features', '功能开关'],
-                        ['diary', '日记配置'],
-                        ['about', '关于软件'],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        data-testid={`settings-tab-${key}`}
-                        className={`ui-tabs__tab${settingsTab === key ? ' is-active' : ''}`}
-                        onClick={() => setSettingsTab(key)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+                  <Tabs
+                    className="st-tabs"
+                    activeKey={settingsTab}
+                    onChange={(key) => setSettingsTab(key as typeof settingsTab)}
+                    items={[
+                      { key: 'general', label: <span data-testid="settings-tab-general">通用设置</span> },
+                      { key: 'features', label: <span data-testid="settings-tab-features">功能开关</span> },
+                      { key: 'diary', label: <span data-testid="settings-tab-diary">日记配置</span> },
+                      { key: 'data', label: <span data-testid="settings-tab-data">数据导入</span> },
+                      { key: 'about', label: <span data-testid="settings-tab-about">关于软件</span> },
+                    ]}
+                  />
 
                   {settingsTab === 'general' ? (
                     <div className="st-list">
                       <SettingsRow title="工作空间" description={workspace ?? '尚未选择工作空间'} mono>
-                        <button
-                          type="button"
-                          className="ui-btn ui-btn--secondary"
-                          data-testid="open-workspace"
+                        <Button
+                          variant="secondary"
+                          testId="open-workspace"
                           disabled={busy}
                           onClick={() => void openWorkspace()}
                         >
                           切换
-                        </button>
+                        </Button>
                       </SettingsRow>
 
                       <div className="st-card">
@@ -785,14 +756,13 @@ export function App(): JSX.Element {
                             accept="image/png,image/jpeg,image/webp,image/gif"
                             onSelect={(file) => void changeWorkspaceIcon(file)}
                           />
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            data-testid="workspace-icon-clear"
+                          <Button
+                            variant="secondary"
+                            testId="workspace-icon-clear"
                             onClick={() => void clearWorkspaceIcon()}
                           >
                             恢复默认
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
@@ -850,43 +820,39 @@ export function App(): JSX.Element {
                               { value: 'manual', label: '手动' },
                             ]}
                           />
-                          <input
-                            className="m0-input"
+                          <Input
                             data-testid="proxy-url"
                             placeholder="http://127.0.0.1:7890"
                             value={proxyUrl}
                             disabled={!config || proxyMode !== 'manual'}
                             onChange={(event) => setProxyUrl(event.target.value)}
                           />
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            data-testid="proxy-save"
+                          <Button
+                            variant="secondary"
+                            testId="proxy-save"
                             disabled={!config}
                             onClick={() => void saveProxy()}
                           >
                             保存
-                          </button>
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            data-testid="proxy-detect"
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            testId="proxy-detect"
                             onClick={() => void detectProxy()}
                           >
                             检测
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
                       <SettingsRow title="开发者工具" description="打开开发者工具，用于调试界面代码">
-                        <button
-                          type="button"
-                          className="ui-btn ui-btn--secondary"
-                          data-testid="devtools-open"
+                        <Button
+                          variant="secondary"
+                          testId="devtools-open"
                           onClick={() => void window.api.invoke('devtools_toggle', { enabled: true })}
                         >
                           打开
-                        </button>
+                        </Button>
                       </SettingsRow>
 
                       <h3 className="st-section-title">数据</h3>
@@ -896,9 +862,8 @@ export function App(): JSX.Element {
                           <span className="st-card-desc">新建或删除账本；侧栏左上角可切换当前账本</span>
                         </div>
                         <div className="st-card-action">
-                          <input
+                          <Input
                             data-testid="ledger-name"
-                            className="m0-input"
                             placeholder="新账本名称"
                             value={ledgerName}
                             disabled={busy || !workspace}
@@ -907,15 +872,14 @@ export function App(): JSX.Element {
                               if (event.key === 'Enter') void createLedger()
                             }}
                           />
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            data-testid="ledger-create"
+                          <Button
+                            variant="secondary"
+                            testId="ledger-create"
                             disabled={busy || !workspace}
                             onClick={() => void createLedger()}
                           >
                             新建
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
@@ -929,14 +893,14 @@ export function App(): JSX.Element {
                             <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
                               <span>{ledger.name}</span>
                               <span className="m0-muted">{ledger.description}</span>
-                              <button
-                                type="button"
-                                className="ui-btn ui-btn--text"
+                              <Button
+                                variant="text"
+                                size="sm"
                                 disabled={busy}
                                 onClick={() => setDeleteTarget(ledger.id)}
                               >
                                 删除
-                              </button>
+                              </Button>
                             </li>
                           ))}
                         </ul>
@@ -1009,72 +973,47 @@ export function App(): JSX.Element {
                           <span className="st-card-desc">按目录扫描或导出 YYYY-MM-DD.txt；入口在日记页。</span>
                         </div>
                         <div className="st-card-action">
-                          <button
-                            type="button"
-                            className="ui-btn ui-btn--secondary"
-                            onClick={() => setView('diary')}
-                          >
+                          <Button variant="secondary" onClick={() => setView('diary')}>
                             前往日记
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
                   ) : null}
 
-                  {settingsTab === 'about' ? (
-                    <>
-                      <div className="st-list">
-                        <div className="st-card">
-                          <div className="st-card-info">
-                            <span className="st-card-title">Transactions</span>
-                            <span className="st-card-desc">版本 {version}</span>
-                            <span className="st-card-desc st-card-desc--mono">
-                              配置文件：{config?.configPath ?? '…'}（{config?.isDev ? '开发' : '生产'}）
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                  {settingsTab === 'data' ? (
+                    <div className="st-list">
                       <ImportWizard progress={importProgress} onImported={finishImport} />
-                      <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
-                    </>
+                    </div>
                   ) : null}
 
-                  {config?.isDev && settingsTab === 'about' ? (
-                    <section className="m0-card">
-                      <h2>M0 验收</h2>
-                      <ul>
-                        <li>无边框窗口 / 托盘 / 单实例</li>
-                        <li>app:// 协议加载渲染产物</li>
-                        <li>node:sqlite 建库、校验、事务</li>
-                        <li>trasset:// 协议读取工作空间资产</li>
-                        <li>IPC 命令 + zod 边界校验</li>
-                        <li>Playwright 启动、点击、落库断言</li>
-                      </ul>
-                      <div className="m0-actions">
-                        <button
-                          type="button"
-                          data-testid="write-asset"
-                          disabled={busy || !workspace}
-                          onClick={() => void writeAsset()}
-                        >
-                          写入示例资产
-                        </button>
-                      </div>
-                      {asset ? (
-                        <div className="m0-asset">
-                          <img
-                            data-testid="asset-img"
-                            className="m0-asset-image"
-                            src={asset}
-                            alt="trasset 示例"
-                            onLoad={() => setAssetLoaded(true)}
-                          />
-                          <span data-testid="asset-state">
-                            {assetLoaded ? 'trasset:// 已加载' : '加载中…'}
-                          </span>
+                  {settingsTab === 'about' ? (
+                    <div className="st-about">
+                      <div className="st-about-main">
+                        <div className="st-about-header">
+                          <div className="st-app-logo">
+                            <AppMark />
+                          </div>
+                          <h2 className="st-app-name">Transactions</h2>
+                          <p className="st-app-version">版本 {version}</p>
                         </div>
-                      ) : null}
-                    </section>
+                        <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
+                        <div className="st-about-footer">
+                          <a
+                            className="st-about-link"
+                            href="https://github.com/ddd-online/Transactions"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <Icon name="GitHub" size={14} />
+                            <span className="st-about-link-text">GitHub</span>
+                          </a>
+                          <p className="st-about-copyright">
+                            © {new Date().getFullYear()} Transactions. All rights reserved.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : null}
           </PageLayout>
         ) : null}
@@ -1101,10 +1040,11 @@ export function App(): JSX.Element {
       <span className="sr-only" data-testid="app-info">
         版本 {version}
       </span>
-      <ToastHost />
-    </>
+      </>
+    </AntdProvider>
   )
 }
+
 
 
 

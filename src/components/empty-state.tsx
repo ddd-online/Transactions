@@ -1,17 +1,25 @@
+import { Empty } from 'antd'
 import type { JSX } from 'react'
 
 export interface EmptyStateProps {
+  testId?: string
   title: string
   description?: string
-  testId?: string
 }
 
-/** 空态：居中标题 + 可选说明。 */
-export function EmptyState({ title, description, testId }: EmptyStateProps): JSX.Element {
+/** 空态：AntD Empty 的语义与图形，保留项目标题/说明。 */
+export function EmptyState({ testId, title, description }: EmptyStateProps): JSX.Element {
   return (
-    <div className="ui-empty" data-testid={testId}>
-      <p className="ui-empty__title">{title}</p>
-      {description ? <p className="ui-empty__description">{description}</p> : null}
+    <div className="tr-empty" data-testid={testId}>
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={
+          <div className="tr-empty__copy">
+            <span className="tr-empty__title">{title}</span>
+            {description ? <span className="tr-empty__description">{description}</span> : null}
+          </div>
+        }
+      />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useState, type HTMLAttributes, type JSX } from 'react'
 
 import { centsToYuan, milliToYuan, yuanToCents } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
@@ -9,8 +9,12 @@ import type {
 } from '../../shared/types/stock'
 import type { StockOverviewDto, StockPositionDto } from '../../shared/types/stock-position'
 import type { StockOperationDto } from '../../shared/types/stock'
+import { Input, Select, Table } from 'antd'
+
+import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { notify } from '../components/toast'
+import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
@@ -275,41 +279,37 @@ export function StockAccountPanel({
       </div>
 
       <div className="m0-actions m0-new-record">
-        <input
-          className="m0-input"
+        <Input
           data-testid="stock-amount"
           inputMode="decimal"
           placeholder="金额（元）"
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
         />
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="stock-add-principal"
+        <Button
+          variant="primary"
+          testId="stock-add-principal"
           disabled={!ledgerId || busy}
           onClick={() => void runAccount('stock_principal_add')}
         >
           追加本金
-        </button>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="stock-withdraw"
+        </Button>
+        <Button
+          variant="text"
+          testId="stock-withdraw"
           disabled={!ledgerId || busy}
           onClick={() => void runAccount('stock_withdraw')}
         >
           支取
-        </button>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="stock-interest"
+        </Button>
+        <Button
+          variant="text"
+          testId="stock-interest"
           disabled={!ledgerId || busy}
           onClick={() => void runAccount('stock_interest_add')}
         >
           利息归本
-        </button>
+        </Button>
       </div>
 
       {error ? (
@@ -342,47 +342,51 @@ export function StockAccountPanel({
       {section === 'positions' ? (<> 
       <h3 className="m0-subtitle">持仓</h3>
       {positions.filter((row) => row.quantity > 0).length > 0 ? (
-        <table className="m0-table">
-          <thead>
-            <tr>
-              <th>股票</th>
-              <th className="m0-right">数量</th>
-              <th className="m0-right">成本</th>
-              <th className="m0-right">最新价</th>
-              <th className="m0-right">已实现</th>
-              <th>标签</th>
-              <th>建仓日</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {positions.filter((row) => row.quantity > 0).map((row) => (
-              <tr key={row.id} data-testid="stock-position-row">
-                <td>
-                  {row.stockName} {row.stockCode}
-                </td>
-                <td className="m0-right">{row.quantity}</td>
-                <td className="m0-right">{money(row.totalCost)}</td>
-                <td className="m0-right">
-                  {row.latestPrice === undefined ? '—' : milliToYuan(row.latestPrice)}
-                </td>
-                <td className="m0-right">{money(row.realizedPnl)}</td>
-                <td>{row.tag}</td>
-                <td>{row.roundOpenedDate}</td>
-                <td className="m0-right">
-                  <button
-                    type="button"
-                    className="m0-link"
-                    data-testid="position-review-open"
-                    onClick={() => openReview(row.stockCode, row.dayReviews)}
-                  >
-                    写复盘
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          className="tr-table"
+          rowKey="id"
+          pagination={false}
+          size="middle"
+          dataSource={positions.filter((row) => row.quantity > 0)}
+          onRow={() => ({ 'data-testid': 'stock-position-row' }) as HTMLAttributes<HTMLElement>}
+          columns={[
+            {
+              title: '股票',
+              render: (_, row) => `${row.stockName} ${row.stockCode}`,
+            },
+            { title: '数量', dataIndex: 'quantity', align: 'right', width: 88 },
+            { title: '成本', dataIndex: 'totalCost', align: 'right', render: (value: number) => money(value) },
+            {
+              title: '最新价',
+              dataIndex: 'latestPrice',
+              align: 'right',
+              render: (value?: number) => (value === undefined ? '—' : milliToYuan(value)),
+            },
+            {
+              title: '已实现',
+              dataIndex: 'realizedPnl',
+              align: 'right',
+              render: (value: number) => money(value),
+            },
+            { title: '标签', dataIndex: 'tag', width: 96 },
+            { title: '建仓日', dataIndex: 'roundOpenedDate', width: 110 },
+            {
+              title: '',
+              align: 'right',
+              width: 88,
+              render: (_, row) => (
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="position-review-open"
+                  onClick={() => openReview(row.stockCode, row.dayReviews)}
+                >
+                  写复盘
+                </Button>
+              ),
+            },
+          ]}
+        />
       ) : (
         <EmptyState
           testId="stock-position-empty"
@@ -395,116 +399,81 @@ export function StockAccountPanel({
         <div className="m0-stock-review">
           <h3 className="m0-subtitle">{reviewCode} · 每日复盘</h3>
           <div className="m0-actions">
-            <input
-              className="m0-input"
-              type="date"
-              data-testid="position-review-date"
+            <DatePicker
+              testId="position-review-date"
               value={reviewDate}
-              onChange={(event) => {
-                setReviewDate(event.target.value)
+              onChange={(value) => {
+                setReviewDate(value)
                 const position = positions.find((row) => row.stockCode === reviewCode)
-                setReviewText(
-                  position?.dayReviews.find((row) => row.date === event.target.value)?.review ?? '',
-                )
+                setReviewText(position?.dayReviews.find((row) => row.date === value)?.review ?? '')
               }}
             />
-            <textarea
-              className="m0-input m0-round-review"
+            <Input.TextArea
+              className="m0-round-review"
               data-testid="position-review-text"
               placeholder="当天观察"
               value={reviewText}
               onChange={(event) => setReviewText(event.target.value)}
             />
-            <button
-              type="button"
-              className="m0-primary"
-              data-testid="position-review-save"
-              onClick={() => void saveReview()}
-            >
+            <Button variant="primary" testId="position-review-save" onClick={() => void saveReview()}>
               保存复盘
-            </button>
-            <button
-              type="button"
-              className="m0-link"
-              onClick={() => setReviewCode('')}
-            >
+            </Button>
+            <Button variant="text" onClick={() => setReviewCode('')}>
               关闭
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
 
       <h3 className="m0-subtitle">记一笔股票交易</h3>
       <div className="m0-actions m0-new-record">
-        <select
-          className="m0-input"
+        <Select
           data-testid="trade-type"
           value={tradeForm.tradeType}
-          onChange={(event) =>
-            setTradeForm((current) => ({ ...current, tradeType: event.target.value }))
-          }
-        >
-          <option value="open">建仓</option>
-          <option value="add">加仓</option>
-          <option value="reduce">减仓</option>
-          <option value="close">清仓</option>
-        </select>
-        <input
-          className="m0-input"
+          style={{ width: 100 }}
+          onChange={(value) => setTradeForm((current) => ({ ...current, tradeType: value }))}
+          options={[
+            { value: 'open', label: '建仓' },
+            { value: 'add', label: '加仓' },
+            { value: 'reduce', label: '减仓' },
+            { value: 'close', label: '清仓' },
+          ]}
+        />
+        <Input
           data-testid="trade-code"
           placeholder="代码"
           value={tradeForm.code}
-          onChange={(event) =>
-            setTradeForm((current) => ({ ...current, code: event.target.value }))
-          }
+          onChange={(event) => setTradeForm((current) => ({ ...current, code: event.target.value }))}
         />
-        <input
-          className="m0-input"
+        <Input
           data-testid="trade-name"
           placeholder="名称"
           value={tradeForm.name}
-          onChange={(event) =>
-            setTradeForm((current) => ({ ...current, name: event.target.value }))
-          }
+          onChange={(event) => setTradeForm((current) => ({ ...current, name: event.target.value }))}
         />
-        <input
-          className="m0-input"
+        <Input
           data-testid="trade-price"
           inputMode="decimal"
           placeholder="价格（元）"
           value={tradeForm.price}
-          onChange={(event) =>
-            setTradeForm((current) => ({ ...current, price: event.target.value }))
-          }
+          onChange={(event) => setTradeForm((current) => ({ ...current, price: event.target.value }))}
         />
-        <input
-          className="m0-input"
+        <Input
           data-testid="trade-lots"
           inputMode="numeric"
           placeholder="手数"
           value={tradeForm.lots}
-          onChange={(event) =>
-            setTradeForm((current) => ({ ...current, lots: event.target.value }))
-          }
+          onChange={(event) => setTradeForm((current) => ({ ...current, lots: event.target.value }))}
         />
-        <input
-          className="m0-input"
+        <Input
           data-testid="trade-tag"
           placeholder="标签"
           value={tradeForm.tag}
-          onChange={(event) =>
-            setTradeForm((current) => ({ ...current, tag: event.target.value }))
-          }
+          onChange={(event) => setTradeForm((current) => ({ ...current, tag: event.target.value }))}
         />
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="trade-save"
-          disabled={!ledgerId || busy}
-          onClick={() => void createTrade()}
-        >
+        <Button variant="primary" testId="trade-save" disabled={!ledgerId || busy} onClick={() => void createTrade()}>
           记一笔
-        </button>
+        </Button>
       </div>
 
       </>) : null}
@@ -514,8 +483,7 @@ export function StockAccountPanel({
       <div className="m0-actions m0-new-record">
         <label className="m0-field">
           佣金费率
-          <input
-            className="m0-input"
+          <Input
             data-testid="fee-commission"
             value={feeForm.commissionRate}
             onChange={(event) =>
@@ -525,8 +493,7 @@ export function StockAccountPanel({
         </label>
         <label className="m0-field">
           最低佣金（元）
-          <input
-            className="m0-input"
+          <Input
             data-testid="fee-min"
             value={feeForm.minCommission}
             onChange={(event) =>
@@ -536,8 +503,7 @@ export function StockAccountPanel({
         </label>
         <label className="m0-field">
           印花税
-          <input
-            className="m0-input"
+          <Input
             data-testid="fee-stamp"
             value={feeForm.stampDutyRate}
             onChange={(event) =>
@@ -547,8 +513,7 @@ export function StockAccountPanel({
         </label>
         <label className="m0-field">
           过户费
-          <input
-            className="m0-input"
+          <Input
             data-testid="fee-transfer"
             value={feeForm.transferFeeRate}
             onChange={(event) =>
@@ -556,15 +521,9 @@ export function StockAccountPanel({
             }
           />
         </label>
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="fee-save"
-          disabled={!ledgerId || busy}
-          onClick={() => void saveFees()}
-        >
+        <Button variant="primary" testId="fee-save" disabled={!ledgerId || busy} onClick={() => void saveFees()}>
           保存费用
-        </button>
+        </Button>
       </div>
 
       </>) : null}
@@ -573,49 +532,52 @@ export function StockAccountPanel({
       <h3 className="m0-subtitle">资金记录</h3>
       {funds && funds.items.length > 0 ? (
         <>
-        <table className="m0-table">
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>事件</th>
-              <th>备注</th>
-              <th className="m0-right">变动</th>
-              <th className="m0-right">余额</th>
-            </tr>
-          </thead>
-          <tbody>
-            {funds.items.map((row) => (
-              <tr key={row.id} data-testid="fund-row">
-                <td>{row.recordDate}</td>
-                <td>{row.eventText}</td>
-                <td>{row.remark}</td>
-                <td className="m0-right">{money(row.amountChange)}</td>
-                <td className="m0-right">{money(row.cashBalance)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          className="tr-table"
+          rowKey="id"
+          pagination={false}
+          size="middle"
+          dataSource={funds.items}
+          onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
+          columns={[
+            { title: '日期', dataIndex: 'recordDate', width: 110 },
+            { title: '事件', dataIndex: 'eventText', width: 120 },
+            { title: '备注', dataIndex: 'remark', ellipsis: true },
+            {
+              title: '变动',
+              dataIndex: 'amountChange',
+              align: 'right',
+              render: (value: number) => money(value),
+            },
+            {
+              title: '余额',
+              dataIndex: 'cashBalance',
+              align: 'right',
+              render: (value: number) => money(value),
+            },
+          ]}
+        />
         <div className="stock-funds-foot">
           <span className="m0-muted">共 {funds?.total ?? 0} 条</span>
-          <button
-            type="button"
-            className="ui-btn ui-btn--text"
+          <Button
+            variant="text"
+            size="sm"
             disabled={fundPage <= 1}
             onClick={() => setFundPage((page) => Math.max(1, page - 1))}
           >
             上一页
-          </button>
+          </Button>
           <span className="m0-muted">
             {fundPage}/{Math.max(1, Math.ceil((funds?.total ?? 0) / (funds?.pageSize || 20)))}
           </span>
-          <button
-            type="button"
-            className="ui-btn ui-btn--text"
+          <Button
+            variant="text"
+            size="sm"
             disabled={fundPage >= Math.max(1, Math.ceil((funds?.total ?? 0) / (funds?.pageSize || 20)))}
             onClick={() => setFundPage((page) => page + 1)}
           >
             下一页
-          </button>
+          </Button>
         </div>
         </>
       ) : (
@@ -645,14 +607,9 @@ export function StockAccountPanel({
             ))}
           </ul>
           <div className="m0-actions">
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="stock-operation-rollback"
-              onClick={() => void rollbackOperation()}
-            >
+            <Button variant="text" testId="stock-operation-rollback" onClick={() => void rollbackOperation()}>
               回滚最近一步
-            </button>
+            </Button>
           </div>
         </>
       )}
@@ -661,30 +618,19 @@ export function StockAccountPanel({
       <div className="m0-import-row">
         <label className="m0-field m0-import-field">
           归档到新账本
-          <input
-            className="m0-input"
+          <Input
             data-testid="stock-archive-name"
             placeholder="新账本名称"
             value={archiveName}
             onChange={(event) => setArchiveName(event.target.value)}
           />
         </label>
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="stock-archive"
-          onClick={() => void archiveStock()}
-        >
+        <Button variant="primary" testId="stock-archive" onClick={() => void archiveStock()}>
           归档
-        </button>
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="stock-reset"
-          onClick={() => setConfirmReset(true)}
-        >
+        </Button>
+        <Button variant="text" testId="stock-reset" onClick={() => setConfirmReset(true)}>
           重置全部股票数据
-        </button>
+        </Button>
       </div>
       {transferStatus ? (
         <p className="m0-muted" data-testid="stock-transfer-status">

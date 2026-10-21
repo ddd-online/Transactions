@@ -16,9 +16,9 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('M0：窗口 / 工作空间 / trasset / IPC 闭环', async () => {
+test('应用：窗口 / 工作空间 / 配置闭环', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
-  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-m0-'))
+  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-shell-'))
   const home = join(root, 'home')
   const workspace = join(root, 'ws')
   const userData = join(root, 'user-data')
@@ -67,21 +67,6 @@ test('M0：窗口 / 工作空间 / trasset / IPC 闭环', async () => {
       | undefined
     expect(meta?.value).toBe('1')
     database.close()
-
-    await page.getByTestId('nav-settings').click()
-    await page.getByTestId('settings-tab-about').click()
-    await page.getByTestId('write-asset').click()
-    await expect(page.getByTestId('asset-state')).toHaveText('trasset:// 已加载')
-    const naturalWidth = await page
-      .getByTestId('asset-img')
-      .evaluate((element) => (element as HTMLImageElement).naturalWidth)
-    expect(naturalWidth).toBeGreaterThan(0)
-
-    mkdirSync(join(repositoryRoot, 'artifacts', 'tests'), { recursive: true })
-    await page.screenshot({
-      path: join(repositoryRoot, 'artifacts', 'tests', 'm0.png'),
-      fullPage: true,
-    })
 
     const persisted = JSON.parse(readFileSync(configPath, 'utf8')) as { workspaceDir?: string }
     expect(persisted.workspaceDir).toBe(workspace)

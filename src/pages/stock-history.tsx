@@ -8,6 +8,10 @@ import type {
   StockTradeHistorySummaryDto,
 } from '../../shared/types/stock-history'
 import type { StockTradeTagSettingDto } from '../../shared/types/stock'
+import { Input, Select, Table } from 'antd'
+import type { HTMLAttributes } from 'react'
+
+import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { EmptyState } from '../components/empty-state'
 import { notify } from '../components/toast'
@@ -228,45 +232,46 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
           title={ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
         />
       ) : (
-        <table className="m0-table">
-          <thead>
-            <tr>
-              <th>股票</th>
-              <th className="m0-right">轮次</th>
-              <th className="m0-right">总盈亏</th>
-              <th className="m0-right">盈亏率</th>
-              <th className="m0-right">最新价</th>
-              <th>最后清仓</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} data-testid="stock-history-row">
-                <td>
-                  {row.stockName} {row.stockCode}
-                </td>
-                <td className="m0-right">{row.roundCount}</td>
-                <td className="m0-right">{money(row.totalPnl)}</td>
-                <td className="m0-right">{row.totalPnlRate.toFixed(2)}%</td>
-                <td className="m0-right">
-                  {row.latestPrice === undefined ? '—' : milliToYuan(row.latestPrice)}
-                </td>
-                <td>{formatTimestamp(row.lastClosedAt, 'YYYY-MM-DD')}</td>
-                <td className="m0-right">
-                  <button
-                    type="button"
-                    className="m0-link"
-                    data-testid="stock-history-open"
-                    onClick={() => void openDetail(row.stockCode)}
-                  >
-                    详情
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          className="tr-table"
+          rowKey="id"
+          pagination={false}
+          size="middle"
+          dataSource={rows}
+          onRow={() => ({ 'data-testid': 'stock-history-row' }) as HTMLAttributes<HTMLElement>}
+          columns={[
+            { title: '股票', render: (_, row) => `${row.stockName} ${row.stockCode}` },
+            { title: '轮次', dataIndex: 'roundCount', align: 'right', width: 76 },
+            { title: '总盈亏', dataIndex: 'totalPnl', align: 'right', render: (value: number) => money(value) },
+            {
+              title: '盈亏率',
+              dataIndex: 'totalPnlRate',
+              align: 'right',
+              render: (value: number) => `${value.toFixed(2)}%`,
+            },
+            {
+              title: '最新价',
+              dataIndex: 'latestPrice',
+              align: 'right',
+              render: (value?: number) => (value === undefined ? '—' : milliToYuan(value)),
+            },
+            {
+              title: '最后清仓',
+              dataIndex: 'lastClosedAt',
+              render: (value: number) => formatTimestamp(value, 'YYYY-MM-DD'),
+            },
+            {
+              title: '',
+              align: 'right',
+              width: 72,
+              render: (_, row) => (
+                <Button variant="text" size="sm" testId="stock-history-open" onClick={() => void openDetail(row.stockCode)}>
+                  详情
+                </Button>
+              ),
+            },
+          ]}
+        />
       )}
 
       {detail ? (
@@ -295,8 +300,8 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                   {round.review ? ` · ${round.review}` : ''}
                 </p>
                 <div className="m0-actions">
-                  <textarea
-                    className="m0-input m0-round-review"
+                  <Input.TextArea
+                    className="m0-round-review"
                     data-testid="round-review"
                     placeholder="本轮复盘"
                     value={reviews[round.id] ?? ''}
@@ -304,26 +309,16 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                       setReviews((current) => ({ ...current, [round.id]: event.target.value }))
                     }
                   />
-                  <button
-                    type="button"
-                    className="m0-link"
-                    data-testid="round-review-save"
-                    onClick={() => void saveRoundReview(round.id)}
-                  >
+                  <Button variant="text" testId="round-review-save" onClick={() => void saveRoundReview(round.id)}>
                     保存复盘
-                  </button>
-                  <select
-                    className="m0-input"
+                  </Button>
+                  <Select
                     data-testid="round-tag"
                     value={roundTags[round.id] ?? round.tag}
-                    onChange={(event) => void saveRoundTag(round.id, event.target.value)}
-                  >
-                    {tagOptions.map((tag) => (
-                      <option key={tag} value={tag}>
-                        {tag}
-                      </option>
-                    ))}
-                  </select>
+                    style={{ width: 120 }}
+                    onChange={(value) => void saveRoundTag(round.id, value)}
+                    options={tagOptions.map((tag) => ({ value: tag, label: tag }))}
+                  />
                 </div>
                 <ul className="m0-trade-list">
                   {round.trades
@@ -337,8 +332,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                           </span>
                         ) : (
                           <>
-                            <input
-                              className="m0-input"
+                            <Input
                               data-testid="stock-trade-price"
                               value={edits[trade.id]?.price ?? milliToYuan(trade.price)}
                               onChange={(event) =>
@@ -351,8 +345,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                                 }))
                               }
                             />
-                            <input
-                              className="m0-input"
+                            <Input
                               data-testid="stock-trade-lots"
                               value={edits[trade.id]?.lots ?? String(trade.lots)}
                               onChange={(event) =>
@@ -365,24 +358,19 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
                                 }))
                               }
                             />
-                            <button
-                              type="button"
-                              className="m0-link"
-                              data-testid="stock-trade-save"
-                              onClick={() => void saveTrade(trade.id)}
-                            >
+                            <Button variant="text" size="sm" testId="stock-trade-save" onClick={() => void saveTrade(trade.id)}>
                               保存
-                            </button>
+                            </Button>
                           </>
                         )}
-                        <button
-                          type="button"
-                          className="m0-link"
-                          data-testid="stock-trade-delete"
+                        <Button
+                          variant="text"
+                          size="sm"
+                          testId="stock-trade-delete"
                           onClick={() => setConfirmOrder(trade.orderId)}
                         >
                           删除委托
-                        </button>
+                        </Button>
                       </li>
                     ))}
                 </ul>

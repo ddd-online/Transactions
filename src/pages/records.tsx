@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useState, type HTMLAttributes, type JSX } from 'react'
 
 import { centsToYuan, yuanToCents } from '../../shared/domain/money'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
@@ -12,6 +12,9 @@ import type { CategoryDto } from '../../shared/types/category'
 import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
 import { notify } from '../components/toast'
+import { AutoComplete, Checkbox, Input, Select, Table, type TableProps } from 'antd'
+
+import { Button } from '../components/button'
 import { Pagination } from '../components/pagination'
 import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
@@ -285,6 +288,64 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
+  const columns: TableProps<TransactionRecordDto>['columns'] = [
+    {
+      title: '日期',
+      dataIndex: 'transactionAt',
+      width: 112,
+      render: (value: number) => formatTimestamp(value, 'YYYY-MM-DD'),
+    },
+    {
+      title: '类型',
+      dataIndex: 'transactionType',
+      width: 84,
+      render: (value: string) => (
+        <span className={`ui-tag ui-tag--${value}`}>{typeLabel(value)}</span>
+      ),
+    },
+    { title: '分类', dataIndex: 'category', width: 120 },
+    { title: '备注', dataIndex: 'description', ellipsis: true },
+    {
+      title: '标签',
+      dataIndex: 'tags',
+      width: 140,
+      ellipsis: true,
+      render: (value: string[]) => value.join('、'),
+    },
+    {
+      title: '标记',
+      width: 150,
+      render: (_, row) => (
+        <>
+          {row.outlier ? <span className="ui-tag ui-tag--outlier">异常</span> : null}
+          {row.outlier && row.keyEventDate ? ' · ' : ''}
+          {row.keyEventDate ? `事件 ${row.keyEventDate}` : ''}
+        </>
+      ),
+    },
+    {
+      title: '金额（元）',
+      dataIndex: 'price',
+      align: 'right',
+      width: 120,
+      render: (value: number, row) => (
+        <span className={`m0-amount-${row.transactionType}`}>
+          {signedAmount(row.transactionType, value)}
+        </span>
+      ),
+    },
+    {
+      title: '',
+      width: 64,
+      align: 'right',
+      render: (_, row) => (
+        <Button variant="text" size="sm" testId="tr-delete" onClick={() => void remove(row.transactionId)}>
+          删除
+        </Button>
+      ),
+    },
+  ]
+
   return (
     <PageLayout>
       <div className="page-toolbar">
@@ -299,49 +360,54 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
               { value: 'year', label: '年' },
             ]}
           />
-          <button type="button" className="ui-btn ui-btn--text" onClick={() => shiftAnchor(-1)}>
+          <Button variant="text" size="sm" onClick={() => shiftAnchor(-1)} aria-label="上一期">
             <Icon name="Left" size={14} />
-          </button>
+          </Button>
           <DatePicker testId="tr-anchor" value={anchor} onChange={setAnchor} showToggle={false} />
-          <button type="button" className="ui-btn ui-btn--text" onClick={() => shiftAnchor(1)}>
+          <Button variant="text" size="sm" onClick={() => shiftAnchor(1)} aria-label="下一期">
             <Icon name="Right" size={14} />
-          </button>
+          </Button>
         </div>
         <div className="m0-actions">
-          <button type="button" className="ui-btn ui-btn--secondary" data-testid="tr-sort">
-            <Icon name="SortDesc" size={14} /> 排序
-          </button>
-          <button type="button" className="ui-btn ui-btn--secondary" data-testid="tr-filter" onClick={() => setShowFilters((open) => !open)}>
-            <Icon name="Search" size={14} /> 筛选
-          </button>
-          <button
-            type="button"
-            className="ui-btn ui-btn--primary"
-            data-testid="tr-new"
+          <Button variant="secondary" testId="tr-sort" icon={<Icon name="SortDesc" size={14} />}>
+            排序
+          </Button>
+          <Button
+            variant="secondary"
+            testId="tr-filter"
+            icon={<Icon name="Search" size={14} />}
+            onClick={() => setShowFilters((open) => !open)}
+          >
+            筛选
+          </Button>
+          <Button
+            variant="primary"
+            testId="tr-new"
+            icon={<Icon name="Plus" size={14} />}
             onClick={() => setShowComposer((open) => !open)}
           >
-            <Icon name="Plus" size={14} /> 记一笔
-          </button>
+            记一笔
+          </Button>
         </div>
       </div>
 
       {showFilters ? (<div className="m0-actions m0-filter">
-        <select
-          className="m0-input"
+        <Select
           data-testid="tr-type"
           value={typeFilter}
-          onChange={(event) => {
+          style={{ width: 130 }}
+          onChange={(value) => {
             setPage(1)
-            setTypeFilter(event.target.value)
+            setTypeFilter(value)
           }}
-        >
-          <option value="">全部类型</option>
-          <option value="expense">支出</option>
-          <option value="income">收入</option>
-          <option value="transfer">转账</option>
-        </select>
-        <input
-          className="m0-input"
+          options={[
+            { value: '', label: '全部类型' },
+            { value: 'expense', label: '支出' },
+            { value: 'income', label: '收入' },
+            { value: 'transfer', label: '转账' },
+          ]}
+        />
+        <Input
           data-testid="tr-keyword"
           placeholder="搜索备注"
           value={keyword}
@@ -350,135 +416,113 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             setKeyword(event.target.value)
           }}
         />
-        <input
-          className="m0-input"
-          list="tr-tag-options"
-          data-testid="tr-tag-filter"
-          placeholder="按标签筛选"
+        <AutoComplete
           value={tagFilter}
-          onChange={(event) => {
+          options={tagOptions.map((tag) => ({ value: tag.name }))}
+          filterOption
+          onChange={(value) => {
             setPage(1)
-            setTagFilter(event.target.value)
+            setTagFilter(value)
           }}
-        />
-        <datalist id="tr-tag-options">
-          {tagOptions.map((tag) => (
-            <option key={tag.name} value={tag.name} />
-          ))}
-        </datalist>
+        >
+          <Input data-testid="tr-tag-filter" placeholder="按标签筛选" />
+        </AutoComplete>
       </div>) : null}
 
       {templates.length > 0 || showComposer ? (<div className="m0-actions m0-templates">
         {templates.map((template) => (
           <span key={template.templateId} className="m0-template">
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="tr-template"
-              onClick={() => applyTemplate(template)}
-            >
+            <Button variant="text" size="sm" testId="tr-template" onClick={() => applyTemplate(template)}>
               {template.templateName}
-            </button>
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="tr-template-delete"
+            </Button>
+            <Button
+              variant="text"
+              size="sm"
+              testId="tr-template-delete"
               aria-label="删除模板"
+              icon={<Icon name="Close" size={12} />}
               onClick={() => void removeTemplate(template.templateId)}
-            >
-              <Icon name="Close" size={12} />
-            </button>
+            />
           </span>
         ))}
-        <input
-          className="m0-input"
+        <Input
           data-testid="tr-template-name"
           placeholder="模板名称（可空）"
           value={templateName}
+          style={{ width: 180 }}
           onChange={(event) => setTemplateName(event.target.value)}
         />
-        <button
-          type="button"
-          className="m0-link"
-          data-testid="tr-template-save"
+        <Button
+          variant="text"
+          testId="tr-template-save"
           disabled={!ledgerId}
           onClick={() => void saveTemplate()}
         >
           存为模板
-        </button>
+        </Button>
       </div>) : null}
 
       {showComposer ? (<div className="m0-actions m0-new-record">
-        <select
-          className="m0-input"
+        <Select
           data-testid="tr-new-type"
           value={type}
-          onChange={(event) => setType(event.target.value)}
-        >
-          <option value="expense">支出</option>
-          <option value="income">收入</option>
-          <option value="transfer">转账</option>
-        </select>
-        <input
-          className="m0-input"
+          style={{ width: 100 }}
+          onChange={setType}
+          options={[
+            { value: 'expense', label: '支出' },
+            { value: 'income', label: '收入' },
+            { value: 'transfer', label: '转账' },
+          ]}
+        />
+        <Input
           data-testid="tr-amount"
           inputMode="decimal"
           placeholder="金额（元）"
           value={amount}
+          style={{ width: 120 }}
           onChange={(event) => setAmount(event.target.value)}
         />
-        <input
-          className="m0-input"
-          list="tr-category-options"
-          data-testid="tr-category"
-          placeholder="分类"
+        <AutoComplete
           value={category}
-          onChange={(event) => setCategory(event.target.value)}
-        />
-        <datalist id="tr-category-options">
-          {categories.map((item) => (
-            <option key={`${item.transactionType}-${item.name}`} value={item.name} />
-          ))}
-        </datalist>
-        <input
-          className="m0-input"
+          options={categories.map((item) => ({ value: item.name }))}
+          filterOption
+          onChange={setCategory}
+        >
+          <Input data-testid="tr-category" placeholder="分类" />
+        </AutoComplete>
+        <Input
           data-testid="tr-description"
           placeholder="备注"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
-        <input
-          className="m0-input"
+        <Input
           data-testid="tr-tags"
           placeholder="标签（逗号分隔）"
           value={tags}
           onChange={(event) => setTags(event.target.value)}
         />
-        <label className="m0-feature">
-          <input
-            type="checkbox"
-            data-testid="tr-outlier"
-            checked={outlier}
-            onChange={(event) => setOutlier(event.target.checked)}
-          />
+        <Checkbox
+          data-testid="tr-outlier"
+          checked={outlier}
+          onChange={(event) => setOutlier(event.target.checked)}
+        >
           异常
-        </label>
-        <input
-          className="m0-input"
-          type="date"
-          data-testid="tr-event-date"
+        </Checkbox>
+        <DatePicker
+          testId="tr-event-date"
           value={keyEventDate}
-          onChange={(event) => setKeyEventDate(event.target.value)}
+          onChange={setKeyEventDate}
+          allowClear
         />
-        <button
-          type="button"
-          className="m0-primary"
-          data-testid="tr-save"
+        <Button
+          variant="primary"
+          testId="tr-save"
           disabled={!ledgerId || loading}
           onClick={() => void create()}
         >
           记一笔
-        </button>
+        </Button>
       </div>) : null}
 
       {error ? (
@@ -495,90 +539,40 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
           <h3>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h3>
           {ledgerId ? <p className="m0-muted">换个时间范围，或直接记一笔。</p> : null}
           <div className="m0-actions">
-            <button
-              type="button"
-              className="ui-btn ui-btn--secondary"
+            <Button
+              variant="secondary"
               onClick={() => {
                 setPeriod('month')
                 setAnchor(addDays(anchor, -30) ?? anchor)
               }}
             >
               上月
-            </button>
-            <button
-              type="button"
-              className="ui-btn ui-btn--secondary"
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => {
                 setPeriod('year')
                 setAnchor(todayYmd())
               }}
             >
               今年
-            </button>
-            <button type="button" className="ui-btn ui-btn--primary" onClick={() => setShowComposer(true)}>
+            </Button>
+            <Button variant="primary" onClick={() => setShowComposer(true)}>
               记一笔
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <table className="m0-table">
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>类型</th>
-              <th>分类</th>
-              <th>备注</th>
-              <th>标签</th>
-              <th>标记</th>
-              <th className="m0-right">金额（元）</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.transactionId} data-testid="tr-row">
-                <td>{formatTimestamp(row.transactionAt, 'YYYY-MM-DD')}</td>
-                <td>
-                  <span className={`ui-tag ui-tag--${row.transactionType}`}>
-                    {typeLabel(row.transactionType)}
-                  </span>
-                </td>
-                <td>{row.category}</td>
-                <td>{row.description}</td>
-                <td>{row.tags.join('、')}</td>
-                <td>
-                  {row.outlier ? <span className="ui-tag ui-tag--outlier">异常</span> : null}
-                  {row.outlier && row.keyEventDate ? ' · ' : ''}
-                  {row.keyEventDate ? `事件 ${row.keyEventDate}` : ''}
-                </td>
-                <td className={`m0-right m0-amount-${row.transactionType}`}>
-                  {signedAmount(row.transactionType, row.price)}
-                </td>
-                <td className="m0-right">
-                  <button
-                    type="button"
-                    className="m0-link"
-                    data-testid="tr-delete"
-                    onClick={() => void remove(row.transactionId)}
-                  >
-                    删除
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={6}>合计</td>
-              <td className="m0-right">
-                {signedAmount('expense', statistics.expense ?? 0)}
-                {' / '}
-                {signedAmount('income', statistics.income ?? 0)}
-              </td>
-              <td />
-            </tr>
-          </tfoot>
-        </table>
+        <Table<TransactionRecordDto>
+          className="tr-table"
+          rowKey="transactionId"
+          columns={columns}
+          dataSource={rows}
+          pagination={false}
+          size="middle"
+          scroll={{ x: 900 }}
+          onRow={() => ({ 'data-testid': 'tr-row' }) as HTMLAttributes<HTMLElement>}
+        />
       )}
 
       <div className="page-footer-bar">
@@ -596,20 +590,20 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             showSummary={false}
             onChange={(next) => setPage(next)}
           />
-          <select
-            className="m0-input tr-page-size"
+          <Select
             data-testid="tr-page-size"
-            style={{ width: 110 }}
             value={pageSize}
-            onChange={(event) => {
-              setPageSize(Number(event.target.value))
+            style={{ width: 110 }}
+            onChange={(value) => {
+              setPageSize(value)
               setPage(1)
             }}
-          >
-            <option value={15}>15 条/页</option>
-            <option value={30}>30 条/页</option>
-            <option value={50}>50 条/页</option>
-          </select>
+            options={[
+              { value: 15, label: '15 条/页' },
+              { value: 30, label: '30 条/页' },
+              { value: 50, label: '50 条/页' },
+            ]}
+          />
         </div>
       </div>
     </PageLayout>

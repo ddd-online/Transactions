@@ -3,6 +3,9 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { centsToYuan } from '../../shared/domain/money'
 import type { ChartDto } from '../../shared/types/chart'
 import type { ChartQueryResponse } from '../../shared/types/transaction'
+import { Input, Table } from 'antd'
+
+import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Segmented } from '../components/segmented'
 import { Icon } from '../components/icon'
@@ -205,21 +208,20 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       <div className="charts-layout">
         <aside className="charts-list">
           <div className="charts-create">
-            <input
-              className="m0-input"
+            <Input
               data-testid="chart-title"
               placeholder="新图表名称"
               value={newTitle}
               onChange={(event) => setNewTitle(event.target.value)}
             />
-            <button
-              type="button"
-              className="ui-btn ui-btn--primary"
-              data-testid="chart-create"
+            <Button
+              variant="primary"
+              testId="chart-create"
+              icon={<Icon name="Plus" size={14} />}
               onClick={() => void createChart()}
             >
-              <Icon name="Plus" size={14} /> 新增图表
-            </button>
+              新增图表
+            </Button>
           </div>
 
           {charts.map((chart) => (
@@ -242,18 +244,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             </button>
           ))}
 
-          <select
-            className="sr-only"
-            data-testid="chart-select"
-            value={selectedId}
-            onChange={(event) => setSelectedId(event.target.value)}
-          >
-            {charts.map((chart) => (
-              <option key={chart.chartId} value={chart.chartId}>
-                {chart.title}
-              </option>
-            ))}
-          </select>
 
           {charts.length === 0 ? (
             <EmptyState
@@ -267,27 +257,25 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           <div className="charts-main-head">
             {renaming ? (
               <div className="m0-actions">
-                <input
-                  className="m0-input"
+                <Input
                   data-testid="chart-rename-input"
                   value={renameDraft}
                   onChange={(event) => setRenameDraft(event.target.value)}
                 />
-                <button type="button" className="ui-btn ui-btn--primary" data-testid="chart-rename-save" onClick={() => void saveRename()}>
+                <Button variant="primary" testId="chart-rename-save" onClick={() => void saveRename()}>
                   保存
-                </button>
-                <button type="button" className="ui-btn ui-btn--text" onClick={() => setRenaming(false)}>
+                </Button>
+                <Button variant="text" onClick={() => setRenaming(false)}>
                   取消
-                </button>
+                </Button>
               </div>
             ) : (
               <h2>{selected?.title ?? '图表'}</h2>
             )}
               {!renaming ? (
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--text"
-                  data-testid="chart-rename"
+                <Button
+                  variant="text"
+                  testId="chart-rename"
                   disabled={!selected}
                   onClick={() => {
                     setRenameDraft(selected?.title ?? '')
@@ -295,7 +283,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   }}
                 >
                   重命名
-                </button>
+                </Button>
               ) : null}
             <div className="m0-actions">
               <Segmented
@@ -307,15 +295,14 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   { value: 'year', label: '年' },
                 ]}
               />
-              <button
-                type="button"
-                className="ui-btn ui-btn--text"
-                data-testid="chart-delete"
+              <Button
+                variant="text"
+                testId="chart-delete"
                 disabled={!selectedId}
                 onClick={() => void deleteChart()}
               >
                 删除
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -381,34 +368,35 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           {selected ? (
             <div className="chart-config">
               <h3>曲线配置</h3>
-              <table className="m0-table">
-                <thead>
-                  <tr>
-                    <th>曲线名称</th>
-                    <th>交易类型</th>
-                    <th>包含离群值</th>
-                    <th>筛选条件</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selected.lines.map((line) => (
-                    <tr key={line.label}>
-                      <td>{line.label}</td>
-                      <td>
-                        <span className={`ui-tag ui-tag--${line.transactionType}`}>
-                          {line.transactionType === 'expense'
-                            ? '支出'
-                            : line.transactionType === 'income'
-                              ? '收入'
-                              : '转账'}
-                        </span>
-                      </td>
-                      <td>{line.includeOutlier ? '是' : '否'}</td>
-                      <td>{line.conditions.length === 0 ? '不限' : `${line.conditions.length} 项`}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <Table
+                className="tr-table"
+                rowKey="label"
+                pagination={false}
+                size="small"
+                dataSource={selected.lines}
+                columns={[
+                  { title: '曲线名称', dataIndex: 'label' },
+                  {
+                    title: '交易类型',
+                    dataIndex: 'transactionType',
+                    render: (value: string) => (
+                      <span className={`ui-tag ui-tag--${value}`}>
+                        {value === 'expense' ? '支出' : value === 'income' ? '收入' : '转账'}
+                      </span>
+                    ),
+                  },
+                  {
+                    title: '包含离群值',
+                    dataIndex: 'includeOutlier',
+                    render: (value: boolean) => (value ? '是' : '否'),
+                  },
+                  {
+                    title: '筛选条件',
+                    dataIndex: 'conditions',
+                    render: (value: unknown[]) => (value.length === 0 ? '不限' : `${value.length} 项`),
+                  },
+                ]}
+              />
             </div>
           ) : null}
         </section>

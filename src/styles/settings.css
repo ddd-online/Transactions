@@ -635,7 +635,7 @@
 .st-app-name {
   margin: 0;
   font-family: var(--transactions-font-display);
-  font-size: var(--transactions-size-text-display-sm);
+  font-size: var(--transactions-size-text-display);
   font-weight: var(--transactions-weight-semibold);
   line-height: var(--transactions-height-tight);
   color: var(--transactions-color-text-major);

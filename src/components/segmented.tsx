@@ -1,3 +1,4 @@
+import { Segmented as AntSegmented } from 'antd'
 import type { JSX } from 'react'
 
 export interface SegmentedOption {
@@ -14,7 +15,7 @@ export interface SegmentedProps {
   disabled?: boolean
 }
 
-/** 分段控件。 */
+/** 分段控件：AntD Segmented，保留 testId 与 block。 */
 export function Segmented({
   value,
   options,
@@ -24,21 +25,24 @@ export function Segmented({
   disabled = false,
 }: SegmentedProps): JSX.Element {
   return (
-    <div className={`ui-segmented${block ? ' ui-segmented--block' : ''}`} role="group" data-testid={testId}>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          className={`ui-segmented__item${option.value === value ? ' is-active' : ''}`}
-          data-testid={testId ? `${testId}-${option.value}` : undefined}
-          aria-pressed={option.value === value}
-          disabled={disabled}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
+    <div className={`tr-segmented${block ? ' tr-segmented--block' : ''}`} data-testid={testId}>
+      <AntSegmented
+        block={block}
+        disabled={disabled}
+        value={value}
+        onChange={(next) => onChange(String(next))}
+        options={options.map((option) => ({
+          value: option.value,
+          label: (
+            <span
+              data-testid={testId ? `${testId}-${option.value}` : undefined}
+              aria-pressed={option.value === value}
+            >
+              {option.label}
+            </span>
+          ),
+        }))}
+      />
     </div>
   )
 }
-

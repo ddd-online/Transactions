@@ -3,6 +3,9 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import { centsToYuan } from '../../shared/domain/money'
 import { formatTimestamp } from '../../shared/domain/time'
 import type { StockStatisticsDto } from '../../shared/types/stock-statistics'
+import { Input, Select, Table } from 'antd'
+import type { HTMLAttributes } from 'react'
+
 import { EmptyState } from '../components/empty-state'
 
 function errorMessage(error: unknown): string {
@@ -69,34 +72,33 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
       </div>
 
       <div className="m0-actions m0-new-record">
-        <select
-          className="m0-input"
+        <Select
           data-testid="statistics-strategy"
           value={strategy}
-          onChange={(event) => setStrategy(event.target.value as 'cumulative' | 'grouped')}
-        >
-          <option value="cumulative">逐笔累计</option>
-          <option value="grouped">分组统计</option>
-        </select>
+          style={{ width: 130 }}
+          onChange={(value) => setStrategy(value)}
+          options={[
+            { value: 'cumulative', label: '逐笔累计' },
+            { value: 'grouped', label: '分组统计' },
+          ]}
+        />
         {strategy === 'grouped' ? (
-          <input
-            className="m0-input"
+          <Input
             data-testid="statistics-group-size"
             inputMode="numeric"
             value={groupSize}
+            style={{ width: 100 }}
             onChange={(event) => setGroupSize(event.target.value)}
           />
         ) : null}
-        <input
-          className="m0-input"
+        <Input
           data-testid="statistics-recent"
           inputMode="numeric"
           placeholder="最近 N 笔（可空）"
           value={recent}
           onChange={(event) => setRecent(event.target.value)}
         />
-        <input
-          className="m0-input"
+        <Input
           data-testid="statistics-tag"
           placeholder="标签（可空）"
           value={tag}
@@ -139,34 +141,38 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
           title={ledgerId ? '还没有已结算的轮次' : '请先创建/选择账本'}
         />
       ) : (
-        <table className="m0-table">
-          <thead>
-            <tr>
-              <th className="m0-right">#</th>
-              <th>建仓</th>
-              <th>股票</th>
-              <th className="m0-right">盈亏</th>
-              <th className="m0-right">累计</th>
-              <th className="m0-right">胜率</th>
-              <th className="m0-right">回撤</th>
-            </tr>
-          </thead>
-          <tbody>
-            {points.map((point) => (
-              <tr key={`${point.sequence}-${point.stockCode}`} data-testid="stock-statistics-point">
-                <td className="m0-right">{point.sequence}</td>
-                <td>{formatTimestamp(point.openedAt, 'YYYY-MM-DD')}</td>
-                <td>
-                  {point.stockName} {point.stockCode}
-                </td>
-                <td className="m0-right">{money(point.pnl)}</td>
-                <td className="m0-right">{money(point.totalPnl)}</td>
-                <td className="m0-right">{point.winRate.toFixed(2)}%</td>
-                <td className="m0-right">{point.maxDrawdownPct.toFixed(2)}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          className="tr-table"
+          rowKey={(row) => `${row.sequence}-${row.stockCode}`}
+          pagination={false}
+          size="middle"
+          dataSource={points}
+          onRow={() => ({ 'data-testid': 'stock-statistics-point' }) as HTMLAttributes<HTMLElement>}
+          columns={[
+            { title: '#', dataIndex: 'sequence', align: 'right', width: 56 },
+            {
+              title: '建仓',
+              dataIndex: 'openedAt',
+              width: 110,
+              render: (value: number) => formatTimestamp(value, 'YYYY-MM-DD'),
+            },
+            { title: '股票', render: (_, row) => `${row.stockName} ${row.stockCode}` },
+            { title: '盈亏', dataIndex: 'pnl', align: 'right', render: (value: number) => money(value) },
+            { title: '累计', dataIndex: 'totalPnl', align: 'right', render: (value: number) => money(value) },
+            {
+              title: '胜率',
+              dataIndex: 'winRate',
+              align: 'right',
+              render: (value: number) => `${value.toFixed(2)}%`,
+            },
+            {
+              title: '回撤',
+              dataIndex: 'maxDrawdownPct',
+              align: 'right',
+              render: (value: number) => `${value.toFixed(2)}%`,
+            },
+          ]}
+        />
       )}
     </section>
   )

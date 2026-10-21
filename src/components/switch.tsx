@@ -1,3 +1,4 @@
+import { Switch as AntSwitch } from 'antd'
 import type { JSX } from 'react'
 
 export interface SwitchProps {
@@ -8,7 +9,7 @@ export interface SwitchProps {
   onChange: (checked: boolean) => void
 }
 
-/** 开关：原生 checkbox 保留语义，视觉用轨道 + 滑块。 */
+/** 开关：AntD Switch，label 与 testid 保持在按钮上。 */
 export function Switch({
   checked,
   disabled = false,
@@ -17,21 +18,15 @@ export function Switch({
   onChange,
 }: SwitchProps): JSX.Element {
   return (
-    <label className="ui-switch-field m0-feature">
-      <span className="ui-switch-wrap">
-        <input
-          type="checkbox"
-          className="ui-switch-input"
-          data-testid={testId}
-          checked={checked}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.checked)}
-        />
-        <span className={`ui-switch${checked ? ' is-checked' : ''}`} aria-hidden="true">
-          <span className="ui-switch__handle" />
-        </span>
-      </span>
-      <span className="ui-switch-field__label">{label}</span>
+    <label className="tr-switch-field">
+      <AntSwitch
+        checked={checked}
+        disabled={disabled}
+        data-testid={testId}
+        onChange={onChange}
+        aria-label={label}
+      />
+      <span className="tr-switch-field__label">{label}</span>
     </label>
   )
 }

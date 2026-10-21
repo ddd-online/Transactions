@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
+import { Table } from 'antd'
+import type { HTMLAttributes } from 'react'
+
+import { Button } from '../components/button'
 import { PageLayout } from '../components/page-layout'
 
 import type { TransactionTemplateDto } from '../../shared/types/template'
@@ -56,9 +60,9 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
         <h2>记账 · 模板</h2>
         <div className="m0-actions m0-period">
           <span className="m0-muted">{templates.length} 个模板</span>
-          <button type="button" className="m0-link" data-testid="template-refresh" onClick={() => void load()}>
+          <Button variant="text" testId="template-refresh" onClick={() => void load()}>
             刷新
-          </button>
+          </Button>
         </div>
       </div>
       <p className="m0-muted">在「记录」页填好一笔后点「存为模板」，这里管理已有模板。</p>
@@ -72,39 +76,36 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           {ledgerId ? '还没有模板' : '请先创建/选择账本'}
         </p>
       ) : (
-        <table className="m0-table">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>类型</th>
-              <th>分类</th>
-              <th>标签</th>
-              <th>备注</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {templates.map((template) => (
-              <tr key={template.templateId} data-testid="template-row">
-                <td>{template.templateName}</td>
-                <td>{template.transactionType}</td>
-                <td>{template.category}</td>
-                <td>{template.tags.join('、')}</td>
-                <td>{template.description}</td>
-                <td className="m0-right">
-                  <button
-                    type="button"
-                    className="m0-link"
-                    data-testid="template-delete"
-                    onClick={() => void remove(template.templateId)}
-                  >
-                    删除
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          className="tr-table"
+          rowKey="templateId"
+          pagination={false}
+          size="middle"
+          dataSource={templates}
+          onRow={() => ({ 'data-testid': 'template-row' }) as HTMLAttributes<HTMLElement>}
+          columns={[
+            { title: '名称', dataIndex: 'templateName' },
+            { title: '类型', dataIndex: 'transactionType', width: 90 },
+            { title: '分类', dataIndex: 'category', width: 120 },
+            { title: '标签', dataIndex: 'tags', render: (value: string[]) => value.join('、') },
+            { title: '备注', dataIndex: 'description', ellipsis: true },
+            {
+              title: '',
+              width: 72,
+              align: 'right',
+              render: (_, row) => (
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="template-delete"
+                  onClick={() => void remove(row.templateId)}
+                >
+                  删除
+                </Button>
+              ),
+            },
+          ]}
+        />
       )}
     </PageLayout>
   )

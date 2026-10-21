@@ -53,7 +53,7 @@ test('导入：源库 → 新工作空间', async () => {
   try {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-import').click()
-    await page.getByTestId('settings-tab-about').click()
+    await page.getByTestId('settings-tab-data').click()
     await expect(page.getByTestId('import-source')).toBeVisible()
     await page.getByTestId('import-source').fill(sourceRoot)
     await page.getByTestId('import-target').fill(target)

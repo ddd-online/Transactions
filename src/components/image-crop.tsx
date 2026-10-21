@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState, type JSX, type PointerEvent } from 'react'
 
+import { Button } from './button'
+
 export interface ImageCropProps {
   src: string
   onCancel: () => void
@@ -101,17 +103,12 @@ export function ImageCrop({ src, onCancel, onConfirm }: ImageCropProps): JSX.Ele
           <p className="m0-muted">拖动鼠标选择保留区域，默认保留中间 80%。</p>
         </div>
         <footer className="ui-modal__footer">
-          <button type="button" className="ui-btn ui-btn--secondary" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             取消
-          </button>
-          <button
-            type="button"
-            className="ui-btn ui-btn--primary"
-            data-testid="image-crop-confirm"
-            onClick={confirm}
-          >
+          </Button>
+          <Button variant="primary" testId="image-crop-confirm" onClick={confirm}>
             使用这张
-          </button>
+          </Button>
         </footer>
       </div>
     </div>

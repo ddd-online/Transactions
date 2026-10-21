@@ -5,6 +5,9 @@ import type { TransactionRecordDto } from '../../shared/types/transaction'
 import { centsToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
+import { Input } from 'antd'
+
+import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
 import { FileButton } from '../components/file-button'
@@ -242,21 +245,23 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         <PageLayout
           toolbar={<>
                   <div className="m0-actions event-year-nav">
-                    <button
-                      type="button"
-                      className="ui-btn ui-btn--text"
+                    <Button
+                      variant="text"
+                      size="sm"
+                      aria-label="上一年"
                       onClick={() => setYear(String(Number(year) - 1))}
                     >
                       <Icon name="Left" size={16} />
-                    </button>
+                    </Button>
                     <strong className="event-year-label">{year}</strong>
-                    <button
-                      type="button"
-                      className="ui-btn ui-btn--text"
+                    <Button
+                      variant="text"
+                      size="sm"
+                      aria-label="下一年"
                       onClick={() => setYear(String(Number(year) + 1))}
                     >
                       <Icon name="Right" size={16} />
-                    </button>
+                    </Button>
                   </div>
                   <DatePicker
                     testId="event-date"
@@ -293,9 +298,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                         </button>
                       ))
                     )}
-                    <button
-                      type="button"
-                      className="ui-btn ui-btn--primary"
+                    <Button
+                      variant="primary"
                       onClick={() => {
                         const today = todayYmd()
                         setYear(today.slice(0, 4))
@@ -306,47 +310,43 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       }}
                     >
                       新增事件
-                    </button>
+                    </Button>
                   </aside>
 
                   <section className="events-editor">
                     <div className="events-editor-head">
-                      <input
-                        className="m0-input"
+                      <Input
                         data-testid="event-title"
                         placeholder="事件标题"
                         value={title}
                         onChange={(changeEvent) => setTitle(changeEvent.target.value)}
                       />
-                      <input
-                        className="m0-input"
+                      <Input
                         data-testid="event-color"
                         placeholder="颜色"
                         value={color}
                         onChange={(changeEvent) => setColor(changeEvent.target.value)}
                       />
-                      <button
-                        type="button"
-                        className="ui-btn ui-btn--primary"
-                        data-testid="event-save"
+                      <Button
+                        variant="primary"
+                        testId="event-save"
                         disabled={!ledgerId || busy}
                         onClick={() => void save()}
                       >
                         保存
-                      </button>
-                      <button
-                        type="button"
-                        className="ui-btn ui-btn--text"
-                        data-testid="event-delete"
+                      </Button>
+                      <Button
+                        variant="text"
+                        testId="event-delete"
                         disabled={!event || busy}
                         onClick={() => void remove()}
                       >
                         删除
-                      </button>
+                      </Button>
                     </div>
 
-                    <textarea
-                      className="m0-input m0-event-content"
+                    <Input.TextArea
+                      className="m0-event-content"
                       data-testid="event-content"
                       placeholder="写下这件事……"
                       value={content}
@@ -368,14 +368,14 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                         <figure key={image.id} className="m0-event-image">
                           <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
                           <Tooltip text="删除这张图片">
-                            <button
-                              type="button"
-                              className="m0-link"
-                              data-testid="event-image-delete"
+                            <Button
+                              variant="text"
+                              size="sm"
+                              testId="event-image-delete"
                               onClick={() => void removeImage(image.id)}
                             >
                               删除图片
-                            </button>
+                            </Button>
                           </Tooltip>
                         </figure>
                       ))}

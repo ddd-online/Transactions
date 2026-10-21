@@ -4,6 +4,9 @@ import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { formatYmdCn, weekdayCn } from '../../shared/domain/calendar'
 import { notify } from '../components/toast'
+import { Input } from 'antd'
+
+import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
 
@@ -190,30 +193,28 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
     <PageLayout
       toolbar={<>
               <div className="m0-actions">
-                <button type="button" className="ui-btn ui-btn--secondary" onClick={() => setDate(todayYmd())}>
+                <Button variant="secondary" onClick={() => setDate(todayYmd())}>
                   今天
-                </button>
+                </Button>
                 <DatePicker testId="diary-date" value={date} onChange={(value) => setDate(value)} />
               </div>
               <div className="m0-actions">
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--primary"
-                  data-testid="diary-save"
+                <Button
+                  variant="primary"
+                  testId="diary-save"
                   disabled={!ledgerId || busy}
                   onClick={() => void save()}
                 >
                   保存
-                </button>
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--text"
-                  data-testid="diary-delete"
+                </Button>
+                <Button
+                  variant="text"
+                  testId="diary-delete"
                   disabled={!ledgerId || busy}
                   onClick={() => void remove()}
                 >
                   删除
-                </button>
+                </Button>
               </div>
       </>}
     >
@@ -260,8 +261,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   <h2>
                     {formatYmdCn(date)} <span className="m0-muted">{weekdayCn(date)}</span>
                   </h2>
-                  <input
-                    className="m0-input"
+                  <Input
                     data-testid="diary-mood"
                     placeholder="心情"
                     value={mood}
@@ -272,8 +272,8 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   </span>
                 </div>
 
-                <textarea
-                  className="m0-input m0-diary-content"
+                <Input.TextArea
+                  className="m0-diary-content"
                   data-testid="diary-content"
                   placeholder="写下今天的日记……"
                   value={content}
@@ -283,35 +283,32 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                 <div className="diary-io">
                   <label className="m0-field">
                     导入 / 导出目录
-                    <input
-                      className="m0-input"
+                    <Input
                       data-testid="diary-dir"
                       value={directory}
                       onChange={(event) => setDirectory(event.target.value)}
                       placeholder="包含 YYYY-MM-DD.txt 的目录"
                     />
                   </label>
-                  <button type="button" className="ui-btn ui-btn--text" onClick={() => void pickDirectory()}>
+                  <Button variant="text" onClick={() => void pickDirectory()}>
                     选择
-                  </button>
-                  <button
-                    type="button"
-                    className="ui-btn ui-btn--text"
-                    data-testid="diary-import"
+                  </Button>
+                  <Button
+                    variant="text"
+                    testId="diary-import"
                     disabled={!directory || busy}
                     onClick={() => void importDiary()}
                   >
                     导入目录
-                  </button>
-                  <button
-                    type="button"
-                    className="ui-btn ui-btn--text"
-                    data-testid="diary-export"
+                  </Button>
+                  <Button
+                    variant="text"
+                    testId="diary-export"
                     disabled={!directory || busy}
                     onClick={() => void exportDiary()}
                   >
                     导出全部
-                  </button>
+                  </Button>
                   {transferStatus ? (
                     <span className="m0-muted" data-testid="diary-transfer-status">
                       {transferStatus}

@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
+import { Input, Select } from 'antd'
+
+import { Button } from '../components/button'
+import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 
 import type { CategoryDto, TagDto } from '../../shared/types/category'
@@ -137,16 +141,17 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
     <PageLayout>
       <div className="m0-card-head">
         <h2>记账 · 分类与标签</h2>
-        <select
-          className="m0-input"
+        <Select
           data-testid="tag-type"
           value={type}
-          onChange={(event) => setType(event.target.value)}
-        >
-          <option value="expense">支出</option>
-          <option value="income">收入</option>
-          <option value="transfer">转账</option>
-        </select>
+          style={{ width: 110 }}
+          onChange={setType}
+          options={[
+            { value: 'expense', label: '支出' },
+            { value: 'income', label: '收入' },
+            { value: 'transfer', label: '转账' },
+          ]}
+        />
       </div>
 
       {error ? (
@@ -159,22 +164,20 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
         <div>
           <h3 className="m0-subtitle">分类</h3>
           <div className="m0-actions">
-            <input
-              className="m0-input"
+            <Input
               data-testid="category-name"
               placeholder="新分类"
               value={categoryName}
               onChange={(event) => setCategoryName(event.target.value)}
             />
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="category-create"
+            <Button
+              variant="text"
+              testId="category-create"
               disabled={!ledgerId}
               onClick={() => void createCategory()}
             >
               新建分类
-            </button>
+            </Button>
           </div>
           <ul className="m0-tag-list">
             {categories.map((category, index) => (
@@ -183,30 +186,32 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                   {category.name} · {category.recordCount} 笔
                 </span>
                 <span className="m0-actions">
-                  <button
-                    type="button"
-                    className="m0-link"
+                  <Button
+                    variant="text"
+                    size="sm"
+                    aria-label="上移"
                     disabled={index === 0}
                     onClick={() => void moveCategory(category.name, index - 1)}
                   >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className="m0-link"
+                    <Icon name="Up" size={12} />
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="sm"
+                    aria-label="下移"
                     disabled={index === categories.length - 1}
                     onClick={() => void moveCategory(category.name, index + 1)}
                   >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    className="m0-link"
-                    data-testid="category-delete"
+                    <Icon name="Down" size={12} />
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="sm"
+                    testId="category-delete"
                     onClick={() => void deleteCategory(category.name)}
                   >
                     删除
-                  </button>
+                  </Button>
                 </span>
               </li>
             ))}
@@ -216,34 +221,33 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
         <div>
           <h3 className="m0-subtitle">标签</h3>
           <div className="m0-actions">
-            <select
-              className="m0-input"
-              data-testid="tag-category"
-              value={tagCategory}
-              onChange={(event) => setTagCategory(event.target.value)}
-            >
-              {categories.map((category) => (
-                <option key={category.name} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <input
-              className="m0-input"
+            <span className="tr-select-wrap" data-testid="tag-category">
+              <Select
+                value={tagCategory}
+                style={{ width: 140 }}
+                showSearch
+                optionFilterProp="label"
+                onChange={setTagCategory}
+                options={categories.map((category) => ({
+                  value: category.name,
+                  label: category.name,
+                }))}
+              />
+            </span>
+            <Input
               data-testid="tag-name"
               placeholder="新标签"
               value={tagName}
               onChange={(event) => setTagName(event.target.value)}
             />
-            <button
-              type="button"
-              className="m0-link"
-              data-testid="tag-create"
+            <Button
+              variant="text"
+              testId="tag-create"
               disabled={!ledgerId}
               onClick={() => void createTag()}
             >
               新建标签
-            </button>
+            </Button>
           </div>
           <ul className="m0-tag-list">
             {tags.map((tag) => (
@@ -251,14 +255,14 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                 <span>
                   {tag.name} · {tag.categoryTransactionType} · {tag.recordCount} 笔
                 </span>
-                <button
-                  type="button"
-                  className="m0-link"
-                  data-testid="tag-delete"
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="tag-delete"
                   onClick={() => void deleteTag(tag)}
                 >
                   删除
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

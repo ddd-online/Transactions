@@ -1,4 +1,7 @@
+import { Modal } from 'antd'
 import type { JSX } from 'react'
+
+import { Button } from './button'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -19,35 +22,31 @@ export function ConfirmDialog({
   danger = false,
   onConfirm,
   onCancel,
-}: ConfirmDialogProps): JSX.Element | null {
-  if (!open) return null
+}: ConfirmDialogProps): JSX.Element {
   return (
-    <div
-      className="ui-modal__mask"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel()
-      }}
+    <Modal
+      open={open}
+      title={title}
+      centered
+      zIndex={3000}
+      destroyOnHidden
+      onCancel={onCancel}
+      footer={[
+        <Button key="cancel" variant="secondary" size="sm" onClick={onCancel}>
+          取消
+        </Button>,
+        <Button
+          key="confirm"
+          variant={danger ? 'danger' : 'primary'}
+          size="sm"
+          testId="confirm-dialog-confirm"
+          onClick={onConfirm}
+        >
+          {confirmText}
+        </Button>,
+      ]}
     >
-      <div className="ui-modal__content ui-modal__content--sm" role="dialog" aria-modal="true">
-        <header className="ui-modal__header">
-          <h2 className="ui-modal__title">{title}</h2>
-        </header>
-        <div className="ui-modal__body">{message}</div>
-        <footer className="ui-modal__footer">
-          <button type="button" className="ui-btn ui-btn--secondary" onClick={onCancel}>
-            取消
-          </button>
-          <button
-            type="button"
-            data-testid="confirm-dialog-confirm"
-            className={`ui-btn ${danger ? 'ui-btn--primary-danger' : 'ui-btn--primary'}`}
-            onClick={onConfirm}
-          >
-            {confirmText}
-          </button>
-        </footer>
-      </div>
-    </div>
+      <p className="tr-confirm-message">{message}</p>
+    </Modal>
   )
 }

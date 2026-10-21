@@ -1,0 +1,269 @@
+/* Ant Design 接线层：只做项目尺寸/容器适配，颜色与状态由 ConfigProvider 主题控制。 */
+
+.tr-btn {
+  font-weight: 500;
+}
+
+.ant-btn {
+  box-shadow: none;
+}
+
+.tr-segmented {
+  display: inline-flex;
+}
+
+.tr-segmented--block,
+.tr-segmented--block .ant-segmented {
+  width: 100%;
+}
+
+.tr-switch-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.tr-switch-field__label {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-major);
+}
+
+.tr-date-picker {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.tr-date-picker .ant-picker {
+  width: 220px;
+  height: var(--transactions-btn-height-md);
+  border-radius: var(--transactions-radius-md);
+}
+
+.tr-date-picker__toggle {
+  pointer-events: auto;
+  cursor: pointer;
+  display: inline-flex;
+  position: relative;
+  z-index: 1;
+}
+
+.tr-date-picker .ant-picker-input > input {
+  font-family: var(--transactions-font-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.tr-pagination__summary {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.tr-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+}
+
+.tr-progress .ant-progress {
+  flex: 1;
+  margin: 0;
+}
+
+.tr-progress__text {
+  flex-shrink: 0;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: var(--transactions-space-2xl);
+}
+
+.tr-empty .ant-empty {
+  margin: 0;
+}
+
+.tr-empty__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+.tr-empty__title {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+}
+
+.tr-empty__description {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.tr-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tr-confirm-message {
+  margin: 0;
+  color: var(--transactions-color-text-secondary);
+  line-height: var(--transactions-height-relaxed);
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker-input > input,
+.ant-input-number-input {
+  user-select: text;
+}
+
+.ant-modal-mask,
+.ant-modal-wrap {
+  z-index: 3000;
+}
+
+.ant-message {
+  top: auto !important;
+  bottom: 24px;
+  z-index: 4000;
+}
+
+/* AntD Tabs：只做设置页导航，内容仍由页面条件渲染。 */
+.settings-page-content > .st-tabs .ant-tabs-nav {
+  margin: 0;
+  padding: 0 var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.settings-page-content > .st-tabs .ant-tabs-content-holder {
+  display: none;
+}
+
+.st-about {
+  display: flex;
+  flex-direction: column;
+}
+
+.st-about-update {
+  width: 100%;
+}
+
+/* 导入数据表单：字段与操作保持一行，不让 flex 把「选择」推到卡片最右侧。 */
+.st-import-card {
+  width: min(860px, 100%);
+}
+
+.m0-import-row {
+  max-width: 760px;
+}
+
+.m0-import-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+}
+
+.m0-import-field .ant-input {
+  width: 100%;
+}
+
+/* AntD Table 对齐现有页面骨架：去掉外框，行高与金额列保持紧凑。 */
+.tr-table .ant-table {
+  background: transparent;
+}
+
+.tr-table .ant-table-container {
+  border: 0;
+}
+
+.tr-table .ant-table-thead > tr > th {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.tr-table .ant-table-tbody > tr > td {
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.tr-table .ant-table-cell.m0-amount-income,
+.tr-table .ant-table-cell.m0-amount-expense,
+.tr-table .ant-table-cell.m0-amount-transfer {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.m0-new-record {
+  align-items: center;
+}
+
+.m0-new-record .ant-input {
+  flex: 1 1 120px;
+  min-width: 100px;
+  width: auto;
+}
+
+.m0-new-record .ant-select {
+  flex: 0 0 100px;
+}
+
+.m0-new-record .tr-date-picker {
+  flex: 0 0 180px;
+}
+
+.m0-new-record .tr-date-picker .ant-picker {
+  width: 100%;
+}
+
+.m0-new-record .ant-checkbox-wrapper {
+  flex: none;
+}
+
+.m0-new-record > .ant-btn {
+  flex: none;
+}
+
+.tr-pagination .ant-pagination-item-active a {
+  color: var(--transactions-color-text-inverse);
+}
+
+.tr-pagination .ant-pagination-item a {
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-table .ant-table-thead > tr > th {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.tr-table .ant-table-tbody > tr > td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.tr-pagination .ant-pagination-item-active a {
+  color: #ffffff !important;
+}

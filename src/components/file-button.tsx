@@ -1,4 +1,6 @@
-import type { JSX, RefObject } from 'react'
+import { useRef, type JSX, type RefObject } from 'react'
+
+import { Button } from './button'
 
 export interface FileButtonProps {
   testId: string
@@ -8,7 +10,7 @@ export interface FileButtonProps {
   onSelect: (file: File | undefined) => void
 }
 
-/** 统一文件选择按钮：外观与 ui-btn 一致，原生 input 只做隐藏载体。 */
+/** 统一文件选择按钮：AntD Button 触发隐藏的原生 input。 */
 export function FileButton({
   testId,
   accept,
@@ -16,17 +18,21 @@ export function FileButton({
   inputRef,
   onSelect,
 }: FileButtonProps): JSX.Element {
+  const localRef = useRef<HTMLInputElement>(null)
+  const ref = inputRef ?? localRef
   return (
-    <label className="ui-btn ui-btn--secondary st-file-picker">
-      {label}
+    <span className="st-file-picker">
+      <Button variant="secondary" onClick={() => ref.current?.click()}>
+        {label}
+      </Button>
       <input
-        ref={inputRef}
+        ref={ref}
         className="sr-only"
         type="file"
         accept={accept}
         data-testid={testId}
         onChange={(event) => onSelect(event.target.files?.[0])}
       />
-    </label>
+    </span>
   )
 }

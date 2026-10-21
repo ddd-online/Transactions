@@ -133,8 +133,9 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('position-review-text')).toHaveValue('观察一天')
     await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
 
-    await page.getByTestId('trade-type').selectOption('close')
-    await expect(page.getByTestId('trade-type')).toHaveValue('close')
+    await page.getByTestId('trade-type').click()
+    await page.locator('.ant-select-item-option').filter({ hasText: '清仓' }).click()
+    await expect(page.getByTestId('trade-type')).toContainText('清仓')
     await page.getByTestId('trade-price').fill('6')
     await page.getByTestId('trade-lots').fill('1')
     await page.getByTestId('trade-save').click()
@@ -150,8 +151,9 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('round-review').fill('复盘：趋势向上')
     await page.getByTestId('round-review-save').click()
     await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
-    await page.getByTestId('round-tag').selectOption('打板')
-    await expect(page.getByTestId('round-tag')).toHaveValue('打板')
+    await page.getByTestId('round-tag').click()
+    await page.locator('.ant-select-item-option').filter({ hasText: '打板' }).click()
+    await expect(page.getByTestId('round-tag')).toContainText('打板')
     await expect(page.getByTestId('stock-round')).toContainText('打板')
 
     const reviewDatabase = new DatabaseSync(join(workspace, 'transactions.db'), {

@@ -7,7 +7,7 @@ Transactions 是 Electron + React + TypeScript 桌面记账应用。每个工作
 | 目录 | 职责 |
 |---|---|
 | `electron/` | 主进程：窗口 / 托盘 / 单实例 / `app://` / `trasset://` / 配置 / 日志 / DB / 服务 / IPC / 更新 |
-| `src/` | 渲染进程：React 19 页面、组件、设计令牌与页面样式 |
+| `src/` | 渲染进程：React 19 + Ant Design 6 页面、组件、设计令牌与页面样式 |
 | `shared/` | 主进程与渲染进程共用的命令目录、事件名、错误信封、领域纯逻辑与类型 |
 | `tests/unit` | Vitest |
 | `tests/e2e` | Playwright（真实 Electron + 落库断言） |
