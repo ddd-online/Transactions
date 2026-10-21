@@ -1,12 +1,13 @@
 import { join } from 'node:path'
 
-import { app, BrowserWindow, dialog, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, dialog, nativeTheme, screen, shell } from 'electron'
 
 import { WINDOW_STATE_CHANGED } from '../../shared/events'
 import { logInfo, logWarn } from '../logging'
 import { sendEvent } from '../ipc/events'
 import type { ConfigStore } from '../config'
 import { hasWorkspace } from '../db'
+import { fitWindowBounds } from '../../shared/domain/window-bounds'
 
 export interface WindowOptions {
   config: ConfigStore
@@ -98,7 +99,8 @@ function handleClose(window: BrowserWindow, event: CloseEvent): void {
   event.preventDefault()
 
   if (!hasWorkspace()) {
-    logInfo('工作空间尚未打开，忽略关闭请求（必须先选定工作空间）')
+    logInfo('工作空间尚未打开，关闭即退出')
+    quitApp()
     return
   }
 
@@ -127,11 +129,30 @@ export function createMainWindow(windowOptions: WindowOptions): BrowserWindow {
 
   const config = windowOptions.config.get()
   applyAppearance(config.appearance)
+  const display =
+    config.x === null || config.y === null
+      ? screen.getPrimaryDisplay()
+      : screen.getDisplayMatching({
+          x: config.x,
+          y: config.y,
+          width: config.width,
+          height: config.height,
+        })
+  // Electron 在 Windows 高 DPI 下返回的 workArea 是物理像素，而 BrowserWindow 用 DIP。
+  const scale = display.scaleFactor || 1
+  const workArea = {
+    x: display.workArea.x / scale,
+    y: display.workArea.y / scale,
+    width: display.workArea.width / scale,
+    height: display.workArea.height / scale,
+  }
+  const bounds = fitWindowBounds(config, workArea)
 
   const window = new BrowserWindow({
-    width: config.width,
-    height: config.height,
-    ...(config.x !== null && config.y !== null ? { x: config.x, y: config.y } : {}),
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
     frame: false,
     show: false,
     title: 'Transactions',
@@ -151,6 +172,7 @@ export function createMainWindow(windowOptions: WindowOptions): BrowserWindow {
 
   window.on('ready-to-show', () => {
     window.show()
+    window.setBounds(bounds)
   })
   window.on('close', (event) => handleClose(window, event))
   window.on('resize', scheduleSaveBounds)

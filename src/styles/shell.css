@@ -723,3 +723,13 @@
 .chart-config .m0-table {
   width: 100%;
 }
+
+.settings-page-content {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.app-top-bar {
+  position: fixed;
+}
+

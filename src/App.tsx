@@ -596,6 +596,7 @@ export function App(): JSX.Element {
       </aside>
 
       <main className="app-content">
+        <PageHeader title={pageTitle} />
         <div className="app-top-bar">
           <div className="window-controls">
             <button
@@ -648,7 +649,6 @@ export function App(): JSX.Element {
             </button>
           </div>
         </div>
-        <PageHeader title={pageTitle} />
         <div className="app-router-view">
         {error ? (
           <p className="m0-error" data-testid="error">
@@ -734,7 +734,7 @@ export function App(): JSX.Element {
           <section className="page">
             <div className="page-region">
               <div className="page-main">
-                <div className="page-content">
+                <div className="page-content settings-page-content">
                   <div className="ui-tabs st-tabs">
                     {(
                       [
@@ -1064,8 +1064,8 @@ export function App(): JSX.Element {
                           </div>
                         </div>
                       </div>
-                      <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
                       <ImportWizard progress={importProgress} onImported={finishImport} />
+                      <UpdatePanel snapshot={updateSnapshot} onSnapshot={setUpdateSnapshot} />
                     </>
                   ) : null}
 

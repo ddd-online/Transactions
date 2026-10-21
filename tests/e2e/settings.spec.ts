@@ -50,6 +50,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('ledger-item')).toHaveText(/设置账本/)
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
+    await expect(page.getByTestId('import-source')).toBeInViewport()
 
     await page.getByTestId('settings-tab-general').click()
     await page.getByTestId('appearance-dark').click()
@@ -122,6 +123,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

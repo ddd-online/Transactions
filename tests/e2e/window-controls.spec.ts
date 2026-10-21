@@ -71,3 +71,59 @@ test('窗口三键：工作空间选择遮罩未关闭时也可用', async () =>
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+test('窗口：保存的尺寸和位置超出工作区时夹回屏内', async () => {
+  const repo = resolve(__dirname, '../..')
+  const root = mkdtempSync(join(tmpdir(), 'tr-window-bounds-'))
+  const home = join(root, 'home')
+  const ws = join(root, 'ws')
+  const userData = join(root, 'ud')
+  mkdirSync(home, { recursive: true })
+  mkdirSync(userData, { recursive: true })
+  writeFileSync(
+    join(home, '.transactions-dev.json'),
+    JSON.stringify({
+      width: 1405,
+      height: 1029,
+      x: 380,
+      y: 287,
+      closeBehavior: 'quit',
+      appearance: 'light',
+    }),
+  )
+  const app = await electron.launch({
+    args: ['.'],
+    cwd: repo,
+    env: environment({ USERPROFILE: home, HOME: home, TRANSACTIONS_USER_DATA: userData, TRANSACTIONS_TEST_DIALOG_DIR: ws }),
+  })
+  try {
+    await app.firstWindow()
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 800))
+    const state = await app.evaluate(({ BrowserWindow, screen }) => {
+      const bounds = BrowserWindow.getAllWindows()[0].getBounds()
+      const display = screen.getDisplayMatching(bounds)
+      return {
+        bounds,
+        workArea: {
+          x: display.workArea.x / display.scaleFactor,
+          y: display.workArea.y / display.scaleFactor,
+          width: display.workArea.width / display.scaleFactor,
+          height: display.workArea.height / display.scaleFactor,
+        },
+      }
+    })
+    expect(state.bounds.width).toBeLessThanOrEqual(state.workArea.width)
+    expect(state.bounds.height).toBeLessThanOrEqual(state.workArea.height)
+    expect(state.bounds.x).toBeGreaterThanOrEqual(state.workArea.x)
+    expect(state.bounds.y).toBeGreaterThanOrEqual(state.workArea.y)
+    expect(state.bounds.x + state.bounds.width).toBeLessThanOrEqual(state.workArea.x + state.workArea.width)
+    expect(state.bounds.y + state.bounds.height).toBeLessThanOrEqual(state.workArea.y + state.workArea.height)
+  } finally {
+    await app.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+
+
+
