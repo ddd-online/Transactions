@@ -28,6 +28,7 @@ import { ToastHost, notify } from './components/toast'
 import { Switch } from './components/switch'
 import { PageHeader } from './components/page-header'
 import { Segmented } from './components/segmented'
+import { PageLayout, PageRailProvider } from './components/page-layout'
 import { Icon, type IconName } from './components/icon'
 
 function errorMessage(error: unknown): string {
@@ -657,9 +658,8 @@ export function App(): JSX.Element {
         ) : null}
 
         {view === 'accounting' ? (
-          <section className="page">
-            <div className="page-region">
-              <aside className="page-rail">
+          <PageRailProvider
+            rail={
                 <div className="page-rail-nav">
                   {(
                     [
@@ -685,9 +685,8 @@ export function App(): JSX.Element {
                     </button>
                   ))}
                 </div>
-              </aside>
-              <div className="page-main">
-                <div className="page-content">
+            }
+          >
                   <select
                     data-testid="ledger-select"
                     className="sr-only"
@@ -714,10 +713,7 @@ export function App(): JSX.Element {
             {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
             {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
             {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
-                </div>
-              </div>
-            </div>
-          </section>
+          </PageRailProvider>
         ) : null}
 
         {view === 'stock' ? (
@@ -731,10 +727,7 @@ export function App(): JSX.Element {
         {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
 
         {view === 'settings' ? (
-          <section className="page">
-            <div className="page-region">
-              <div className="page-main">
-                <div className="page-content settings-page-content">
+          <PageLayout contentClassName="settings-page-content">
                   <div className="ui-tabs st-tabs">
                     {(
                       [
@@ -1106,10 +1099,7 @@ export function App(): JSX.Element {
                       ) : null}
                     </section>
                   ) : null}
-                </div>
-              </div>
-            </div>
-          </section>
+          </PageLayout>
         ) : null}
 
         <ConfirmDialog
@@ -1138,6 +1128,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 

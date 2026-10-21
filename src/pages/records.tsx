@@ -16,6 +16,7 @@ import { Pagination } from '../components/pagination'
 import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
 import { DatePicker } from '../components/date-picker'
+import { PageLayout } from '../components/page-layout'
 
 function rangeOf(period: 'day' | 'month' | 'year', anchor: string): number[] {
   const ymd = parseYmd(anchor)
@@ -285,7 +286,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   return (
-    <section className="m0-card m0-card--wide">
+    <PageLayout>
       <div className="page-toolbar">
         <div className="m0-actions">
           <Segmented
@@ -610,7 +611,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
           </select>
         </div>
       </div>
-    </section>
+    </PageLayout>
   )
 }
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
+import { PageLayout } from '../components/page-layout'
 
 import type { CategoryDto, TagDto } from '../../shared/types/category'
 
@@ -133,7 +134,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
   )
 
   return (
-    <section className="m0-card m0-card--wide">
+    <PageLayout>
       <div className="m0-card-head">
         <h2>记账 · 分类与标签</h2>
         <select
@@ -263,7 +264,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
           </ul>
         </div>
       </div>
-    </section>
+    </PageLayout>
   )
 }
 

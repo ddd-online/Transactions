@@ -4,6 +4,7 @@ import { centsToYuan } from '../../shared/domain/money'
 import type { AccountingOverviewDto } from '../../shared/types/accounting'
 import { Segmented } from '../components/segmented'
 import { DatePicker } from '../components/date-picker'
+import { PageLayout } from '../components/page-layout'
 import { Icon } from '../components/icon'
 import { todayYmd } from '../../shared/domain/time'
 
@@ -72,8 +73,8 @@ export function DashboardPage({ ledgerId, refreshToken = 0 }: DashboardPageProps
   const maxAmount = Math.max(1, ...(data?.categories.map((item) => item.amount) ?? [0]))
 
   return (
-    <>
-      <div className="page-toolbar">
+    <PageLayout
+      toolbar={<>
         <div className="m0-actions">
           <Segmented
             testId="dashboard-period"
@@ -103,7 +104,8 @@ export function DashboardPage({ ledgerId, refreshToken = 0 }: DashboardPageProps
             {data?.period.label ?? ''}
           </span>
         </div>
-      </div>
+      </>}
+    >
 
       {error ? (
         <p className="m0-error" data-testid="dashboard-error">
@@ -154,6 +156,6 @@ export function DashboardPage({ ledgerId, refreshToken = 0 }: DashboardPageProps
           )}
         </section>
       </div>
-    </>
+    </PageLayout>
   )
 }

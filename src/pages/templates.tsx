@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
+import { PageLayout } from '../components/page-layout'
 
 import type { TransactionTemplateDto } from '../../shared/types/template'
 
@@ -50,7 +51,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
   )
 
   return (
-    <section className="m0-card m0-card--wide">
+    <PageLayout>
       <div className="m0-card-head">
         <h2>记账 · 模板</h2>
         <div className="m0-actions m0-period">
@@ -105,7 +106,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           </tbody>
         </table>
       )}
-    </section>
+    </PageLayout>
   )
 }
 

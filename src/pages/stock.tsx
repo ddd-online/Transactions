@@ -1,6 +1,7 @@
 import { useState, type JSX } from 'react'
 
 import { Icon, type IconName } from '../components/icon'
+import { PageLayout } from '../components/page-layout'
 import { StockAccountPanel } from './stock-account'
 import { StockHistoryPanel } from './stock-history'
 import { StockStatisticsPanel } from './stock-statistics'
@@ -25,9 +26,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [tab, setTab] = useState<StockTab>('account')
 
   return (
-    <section className="page">
-      <div className="page-region">
-        <aside className="page-rail">
+    <PageLayout rail={
           <div className="page-rail-nav">
             {TABS.map(([key, label, icon]) => (
               <button
@@ -45,17 +44,12 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
               </button>
             ))}
           </div>
-        </aside>
-        <div className="page-main">
-          <div className="page-content">
+    }>
             {tab === 'account' || tab === 'positions' || tab === 'settings' ? (
               <StockAccountPanel section={tab} ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
             ) : null}            {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
             {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
-          </div>
-        </div>
-      </div>
-    </section>
+    </PageLayout>
   )
 }
 

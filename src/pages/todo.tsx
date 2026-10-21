@@ -4,6 +4,7 @@ import type { TodoCardDto, TodoHistoryDto } from '../../shared/types/todo'
 import { EmptyState } from '../components/empty-state'
 import { Progress } from '../components/progress'
 import { Icon } from '../components/icon'
+import { PageLayout } from '../components/page-layout'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -211,9 +212,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   )
 
   return (
-    <section className="page">
-      <div className="page-region">
-        <aside className="page-rail">
+    <PageLayout rail={
           <div className="page-rail-nav">
             <button
               type="button"
@@ -240,9 +239,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               </span>
             </button>
           </div>
-        </aside>
-        <div className="page-main">
-          <div className="page-content">
+    }>
       <div className="m0-card-head">
         <h2>待办</h2>
         <div className="m0-actions m0-period">
@@ -464,10 +461,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       )}
         </>
       ) : null}
-          </div>
-        </div>
-      </div>
-    </section>
+    </PageLayout>
   )
 }
 

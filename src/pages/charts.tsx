@@ -6,6 +6,7 @@ import type { ChartQueryResponse } from '../../shared/types/transaction'
 import { EmptyState } from '../components/empty-state'
 import { Segmented } from '../components/segmented'
 import { Icon } from '../components/icon'
+import { PageLayout } from '../components/page-layout'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -194,7 +195,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   }, [data])
 
   return (
-    <>
+    <PageLayout>
       {error ? (
         <p className="m0-error" data-testid="chart-error">
           {error}
@@ -412,7 +413,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           ) : null}
         </section>
       </div>
-    </>
+    </PageLayout>
   )
 }
 

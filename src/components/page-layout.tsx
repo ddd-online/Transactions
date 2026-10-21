@@ -1,4 +1,14 @@
-import type { JSX, ReactNode } from 'react'
+import { createContext, useContext, type JSX, type ReactNode } from 'react'
+
+const PageRailContext = createContext<ReactNode>(null)
+
+export function PageRailProvider({ rail, children }: { rail: ReactNode; children: ReactNode }): JSX.Element {
+  return <PageRailContext.Provider value={rail}>{children}</PageRailContext.Provider>
+}
+
+export function usePageRail(): ReactNode {
+  return useContext(PageRailContext)
+}
 
 export interface PageLayoutProps {
   /** 左侧子功能图标条的内容；不传则不渲染图标条。 */
@@ -19,10 +29,12 @@ export function PageLayout({
   contentClassName,
   children,
 }: PageLayoutProps): JSX.Element {
+  const contextRail = usePageRail()
+  const railContent = rail ?? contextRail
   return (
     <section className="page">
       <div className="page-region">
-        {rail ? <aside className="page-rail">{rail}</aside> : null}
+        {railContent ? <aside className="page-rail">{railContent}</aside> : null}
         <div className="page-main">
           {toolbar ? <div className="page-toolbar">{toolbar}</div> : null}
           <div className={`page-content${contentClassName ? ` ${contentClassName}` : ''}`}>{children}</div>
