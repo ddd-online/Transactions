@@ -11,6 +11,7 @@ export interface SegmentedProps {
   onChange: (value: string) => void
   testId?: string
   block?: boolean
+  disabled?: boolean
 }
 
 /** 旧版 ui-segmented 分段控件。 */
@@ -20,6 +21,7 @@ export function Segmented({
   onChange,
   testId,
   block = false,
+  disabled = false,
 }: SegmentedProps): JSX.Element {
   return (
     <div className={`ui-segmented${block ? ' ui-segmented--block' : ''}`} role="group" data-testid={testId}>
@@ -30,6 +32,7 @@ export function Segmented({
           className={`ui-segmented__item${option.value === value ? ' is-active' : ''}`}
           data-testid={testId ? `${testId}-${option.value}` : undefined}
           aria-pressed={option.value === value}
+          disabled={disabled}
           onClick={() => onChange(option.value)}
         >
           {option.label}
@@ -38,3 +41,4 @@ export function Segmented({
     </div>
   )
 }
+

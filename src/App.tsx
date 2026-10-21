@@ -27,6 +27,7 @@ import { ConfirmDialog } from './components/confirm-dialog'
 import { ToastHost, notify } from './components/toast'
 import { Switch } from './components/switch'
 import { PageHeader } from './components/page-header'
+import { Segmented } from './components/segmented'
 import { Icon, type IconName } from './components/icon'
 
 function errorMessage(error: unknown): string {
@@ -795,17 +796,17 @@ export function App(): JSX.Element {
                           <span className="st-card-desc">界面配色，可跟随系统</span>
                         </div>
                         <div className="st-card-action">
-                          <select
-                            data-testid="appearance"
-                            className="m0-input"
+                          <Segmented
+                            testId="appearance"
                             value={config?.appearance ?? 'system'}
                             disabled={!config}
-                            onChange={(event) => void setAppearance(event.target.value)}
-                          >
-                            <option value="system">跟随系统</option>
-                            <option value="light">浅色</option>
-                            <option value="dark">深色</option>
-                          </select>
+                            onChange={(value) => void setAppearance(value)}
+                            options={[
+                              { value: 'light', label: '浅色' },
+                              { value: 'dark', label: '深色' },
+                              { value: 'system', label: '跟随系统' },
+                            ]}
+                          />
                         </div>
                       </div>
 
@@ -815,17 +816,17 @@ export function App(): JSX.Element {
                           <span className="st-card-desc">点击右上角关闭按钮时的行为</span>
                         </div>
                         <div className="st-card-action">
-                          <select
-                            data-testid="close-behavior"
-                            className="m0-input"
+                          <Segmented
+                            testId="close-behavior"
                             value={config?.closeBehavior ?? 'quit'}
                             disabled={!config}
-                            onChange={(event) => void setCloseBehavior(event.target.value)}
-                          >
-                            <option value="quit">直接退出</option>
-                            <option value="tray">最小化到托盘</option>
-                            <option value="ask">每次询问</option>
-                          </select>
+                            onChange={(value) => void setCloseBehavior(value)}
+                            options={[
+                              { value: 'quit', label: '直接退出' },
+                              { value: 'tray', label: '最小化到托盘' },
+                              { value: 'ask', label: '每次询问' },
+                            ]}
+                          />
                         </div>
                       </div>
 
@@ -842,17 +843,17 @@ export function App(): JSX.Element {
                           ) : null}
                         </div>
                         <div className="st-card-action">
-                          <select
-                            className="m0-input"
-                            data-testid="proxy-mode"
+                          <Segmented
+                            testId="proxy-mode"
                             value={proxyMode}
                             disabled={!config}
-                            onChange={(event) => setProxyMode(event.target.value)}
-                          >
-                            <option value="auto">自动探测</option>
-                            <option value="off">不使用</option>
-                            <option value="manual">手动</option>
-                          </select>
+                            onChange={(value) => setProxyMode(value)}
+                            options={[
+                              { value: 'off', label: '不使用' },
+                              { value: 'auto', label: '自动探测' },
+                              { value: 'manual', label: '手动' },
+                            ]}
+                          />
                           <input
                             className="m0-input"
                             data-testid="proxy-url"
@@ -1116,6 +1117,8 @@ export function App(): JSX.Element {
     </>
   )
 }
+
+
 
 
 

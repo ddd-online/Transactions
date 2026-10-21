@@ -43,7 +43,7 @@ test('更新：不可用代理下检查失败并展示原因', async () => {
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('nav-settings').click()
-    await page.getByTestId('proxy-mode').selectOption('manual')
+    await page.getByTestId('proxy-mode-manual').click()
     await page.getByTestId('proxy-url').fill('http://127.0.0.1:9')
     await page.getByTestId('proxy-save').click()
     await page.getByTestId('settings-tab-about').click()
@@ -56,5 +56,6 @@ test('更新：不可用代理下检查失败并展示原因', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 

@@ -140,6 +140,7 @@ export function StockAccountPanel({
       })
       setTradeForm((current) => ({ ...current, price: '' }))
       await load()
+      notify('成交已记录')
     } catch (tradeError) {
       setError(errorMessage(tradeError))
     } finally {
@@ -185,6 +186,7 @@ export function StockAccountPanel({
       })
       setReviewText(rows.find((row) => row.date === reviewDate)?.review ?? '')
       await load()
+      notify('复盘已保存')
     } catch (reviewError) {
       setError(errorMessage(reviewError))
     }
@@ -258,18 +260,16 @@ export function StockAccountPanel({
           <strong data-testid="stock-principal">{money(summary?.principal ?? 0)}</strong>
         </div>
         <div className="m0-stat">
-          <span className="m0-muted">可用现金</span>
-          <strong data-testid="stock-cash">{money(summary?.availableCash ?? 0)}</strong>
+          <span className="m0-muted">持仓市值</span>
+          <strong>{money(overview?.positionMarketValue ?? 0)}</strong>
         </div>
         <div className="m0-stat">
-          <span className="m0-muted">持仓成本</span>
-          <strong data-testid="stock-position-cost">{money(summary?.positionCost ?? 0)}</strong>
+          <span className="m0-muted">浮动盈亏</span>
+          <strong>{money(overview?.unrealizedPnl ?? 0)}</strong>
         </div>
         <div className="m0-stat">
-          <span className="m0-muted">累计支取 / 利息</span>
-          <strong data-testid="stock-withdrawn">
-            {money(summary?.withdrawnTotal ?? 0)} / {money(summary?.interestTotal ?? 0)}
-          </strong>
+          <span className="m0-muted">已实现盈亏</span>
+          <strong>{money(overview?.realizedPnl ?? 0)}</strong>
         </div>
       </div>
 
@@ -319,21 +319,20 @@ export function StockAccountPanel({
 
       <div className="m0-stats m0-stock-stats">
         <div className="m0-stat">
-          <span className="m0-muted">持仓市值</span>
-          <strong>{money(overview?.positionMarketValue ?? 0)}</strong>
+          <span className="m0-muted">累计支取</span>
+          <strong data-testid="stock-withdrawn">{money(summary?.withdrawnTotal ?? 0)}</strong>
         </div>
         <div className="m0-stat">
-          <span className="m0-muted">已实现 / 浮动</span>
-          <strong>
-            {money(overview?.realizedPnl ?? 0)} / {money(overview?.unrealizedPnl ?? 0)}
-          </strong>
+          <span className="m0-muted">利息归本</span>
+          <strong>{money(summary?.interestTotal ?? 0)}</strong>
         </div>
         <div className="m0-stat">
-          <span className="m0-muted">总盈亏 / 仓位</span>
-          <strong>
-            {(overview?.totalPnlPercent ?? 0).toFixed(2)}% /{' '}
-            {overview?.positionRatio == null ? '—' : `${overview.positionRatio.toFixed(2)}%`}
-          </strong>
+          <span className="m0-muted">可用现金</span>
+          <strong data-testid="stock-cash">{money(summary?.availableCash ?? 0)}</strong>
+        </div>
+        <div className="m0-stat">
+          <span className="m0-muted">仓位</span>
+          <strong>{overview?.positionRatio == null ? '—' : `${overview.positionRatio.toFixed(2)}%`}</strong>
         </div>
       </div>
 
@@ -341,7 +340,7 @@ export function StockAccountPanel({
 
       {section === 'positions' ? (<> 
       <h3 className="m0-subtitle">持仓</h3>
-      {positions.length > 0 ? (
+      {positions.filter((row) => row.quantity > 0).length > 0 ? (
         <table className="m0-table">
           <thead>
             <tr>
@@ -356,7 +355,7 @@ export function StockAccountPanel({
             </tr>
           </thead>
           <tbody>
-            {positions.map((row) => (
+            {positions.filter((row) => row.quantity > 0).map((row) => (
               <tr key={row.id} data-testid="stock-position-row">
                 <td>
                   {row.stockName} {row.stockCode}
@@ -683,6 +682,8 @@ export function StockAccountPanel({
     </section>
   )
 }
+
+
 
 
 

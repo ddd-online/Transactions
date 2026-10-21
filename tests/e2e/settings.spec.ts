@@ -52,18 +52,18 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
 
     await page.getByTestId('settings-tab-general').click()
-    await page.getByTestId('appearance').selectOption('dark')
+    await page.getByTestId('appearance-dark').click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).appearance)
       .toBe('dark')
 
-    await page.getByTestId('close-behavior').selectOption('tray')
+    await page.getByTestId('close-behavior-tray').click()
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).closeBehavior)
       .toBe('tray')
 
-    await page.getByTestId('proxy-mode').selectOption('manual')
+    await page.getByTestId('proxy-mode-manual').click()
     await page.getByTestId('proxy-url').fill('http://127.0.0.1:7890')
     await page.getByTestId('proxy-save').click()
     await expect
@@ -122,6 +122,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

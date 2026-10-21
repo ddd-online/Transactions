@@ -131,12 +131,14 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('position-review-text').fill('观察一天')
     await page.getByTestId('position-review-save').click()
     await expect(page.getByTestId('position-review-text')).toHaveValue('观察一天')
-    await page.waitForTimeout(200)
+    await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
 
     await page.getByTestId('trade-type').selectOption('close')
+    await expect(page.getByTestId('trade-type')).toHaveValue('close')
     await page.getByTestId('trade-price').fill('6')
     await page.getByTestId('trade-lots').fill('1')
     await page.getByTestId('trade-save').click()
+    await expect(page.getByTestId('toast').last()).toContainText('成交已记录')
     await expect(page.getByTestId('stock-position-empty')).toContainText('当前没有持仓')
 
     await page.getByTestId('stock-tab-history').click()
@@ -191,6 +193,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 
