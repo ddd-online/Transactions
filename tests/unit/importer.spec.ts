@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { openDatabase } from '../../electron/db/driver'
 import { openWorkspace, closeWorkspace } from '../../electron/db'
-import { importCompatWorkspace, probeCompatWorkspace } from '../../electron/compat/importer'
+import { importSourceWorkspace, probeSourceWorkspace } from '../../electron/source/importer'
 
 const directories: string[] = []
 
@@ -31,10 +31,10 @@ afterEach(() => {
   }
 })
 
-function buildCompatWorkspace(): string {
+function buildSourceWorkspace(): string {
   const directory = temporaryDirectory('src')
   const database = openDatabase(join(directory, 'transactions.db'))
-  database.exec(readFileSync('fixtures/compat/seed.sql', 'utf8'))
+  database.exec(readFileSync('fixtures/source/seed.sql', 'utf8'))
   database.close()
 
   const assetDirectory = join(directory, 'data', 'assets', 'key_events', '2026-01-01')
@@ -47,11 +47,11 @@ function hash(path: string): string {
   return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
 
-describe('compat probe', () => {
-  it('reports a ready 源格式 workspace', () => {
-    const source = buildCompatWorkspace()
-    const probe = probeCompatWorkspace(source)
-    expect(probe.compat).toBe(true)
+describe('source probe', () => {
+  it('reports a ready source workspace', () => {
+    const source = buildSourceWorkspace()
+    const probe = probeSourceWorkspace(source)
+    expect(probe.source).toBe(true)
     expect(probe.ready).toBe(true)
     expect(probe.missingMigrations).toEqual([])
     expect(probe.counts.ledger).toBeGreaterThanOrEqual(2)
@@ -61,30 +61,30 @@ describe('compat probe', () => {
   })
 
   it('reports a workspace that has not finished upgrading', () => {
-    const source = buildCompatWorkspace()
+    const source = buildSourceWorkspace()
     const database = openDatabase(join(source, 'transactions.db'))
     database.exec(
       "DELETE FROM tbl_billadm_schema_migration WHERE id = '20261018_stock_day_review'",
     )
     database.close()
 
-    const probe = probeCompatWorkspace(source)
-    expect(probe.compat).toBe(true)
+    const probe = probeSourceWorkspace(source)
+    expect(probe.source).toBe(true)
     expect(probe.ready).toBe(false)
     expect(probe.missingMigrations).toContain('20261018_stock_day_review')
     expect(probe.message).toContain('源格式')
   })
 })
 
-describe('compat import', () => {
+describe('source import', () => {
   it('imports rows, money totals and assets, and leaves the source untouched', async () => {
-    const source = buildCompatWorkspace()
+    const source = buildSourceWorkspace()
     const target = temporaryDirectory('dst')
     const sourceDatabase = join(source, 'transactions.db')
     const before = hash(sourceDatabase)
 
-    const probe = probeCompatWorkspace(source)
-    const report = await importCompatWorkspace({ sourceDir: source, targetDir: target })
+    const probe = probeSourceWorkspace(source)
+    const report = await importSourceWorkspace({ sourceDir: source, targetDir: target })
 
     expect(report.tables.find((table) => table.table === 'ledger')?.rows).toBeGreaterThanOrEqual(2)
     expect(report.tables.find((table) => table.table === 'transaction_record')?.rows).toBe(
@@ -96,10 +96,10 @@ describe('compat import', () => {
     expect(hash(sourceDatabase)).toBe(before)
 
     const workspace = openWorkspace(target)
-    const compatTables = workspace.db
+    const sourceTables = workspace.db
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'tbl_billadm_%'")
       .all()
-    expect(compatTables).toEqual([])
+    expect(sourceTables).toEqual([])
 
     const ledgers = workspace.db.prepare('SELECT COUNT(*) AS count FROM ledger').get() as {
       count: number
@@ -118,29 +118,29 @@ describe('compat import', () => {
   })
 
   it('refuses a non-empty target directory', async () => {
-    const source = buildCompatWorkspace()
+    const source = buildSourceWorkspace()
     const target = temporaryDirectory('dst')
     writeFileSync(join(target, 'keep.txt'), 'x')
-    await expect(importCompatWorkspace({ sourceDir: source, targetDir: target })).rejects.toThrow(
+    await expect(importSourceWorkspace({ sourceDir: source, targetDir: target })).rejects.toThrow(
       /不是空目录/,
     )
   })
 
   it('refuses a target directory inside the source directory', async () => {
-    const source = buildCompatWorkspace()
+    const source = buildSourceWorkspace()
     await expect(
-      importCompatWorkspace({ sourceDir: source, targetDir: join(source, 'nested') }),
+      importSourceWorkspace({ sourceDir: source, targetDir: join(source, 'nested') }),
     ).rejects.toThrow(/不能放在源目录里面/)
   })
 
   it('fills NOT NULL text columns when the old row has NULL', async () => {
-    const source = buildCompatWorkspace()
+    const source = buildSourceWorkspace()
     const database = openDatabase(join(source, 'transactions.db'))
     database.exec('UPDATE tbl_billadm_ledger SET description = NULL WHERE rowid = 1')
     database.close()
 
     const target = temporaryDirectory('dst')
-    await importCompatWorkspace({ sourceDir: source, targetDir: target })
+    await importSourceWorkspace({ sourceDir: source, targetDir: target })
     const workspace = openWorkspace(target)
     const row = workspace.db
       .prepare('SELECT description FROM ledger ORDER BY created_at, rowid LIMIT 1')
@@ -148,15 +148,15 @@ describe('compat import', () => {
     expect(row.description).toBe('')
   })
 
-  it('refuses a source that is not a compat workspace', async () => {
+  it('refuses a source that is not a source workspace', async () => {
     const empty = temporaryDirectory('empty')
     await expect(
-      importCompatWorkspace({ sourceDir: empty, targetDir: temporaryDirectory('dst') }),
+      importSourceWorkspace({ sourceDir: empty, targetDir: temporaryDirectory('dst') }),
     ).rejects.toThrow(/未找到 transactions\.db/)
   })
 
   it('assigns empty ledger ids to the earliest ledger', async () => {
-    const source = buildCompatWorkspace()
+    const source = buildSourceWorkspace()
     const database = openDatabase(join(source, 'transactions.db'))
     const trade = database
       .prepare('SELECT id FROM tbl_billadm_stock_trade LIMIT 1')
@@ -170,7 +170,7 @@ describe('compat import', () => {
     database.close()
 
     const target = temporaryDirectory('dst')
-    await importCompatWorkspace({ sourceDir: source, targetDir: target })
+    await importSourceWorkspace({ sourceDir: source, targetDir: target })
 
     const workspace = openWorkspace(target)
     const row = workspace.db

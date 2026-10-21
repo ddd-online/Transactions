@@ -13,7 +13,7 @@ import {
 import { logError } from '../logging'
 
 /**
- * 标签服务（与旧 `tr-service/src/tag.rs` 一致：无状态函数 + 显式 Db 入参）。
+ * 标签服务（与既有实现 一致：无状态函数 + 显式 Db 入参）。
  *
  * 删除标签时"先删交易记录上的关联、再删标签本身"的顺序与事务边界是硬约定。
  */
@@ -22,7 +22,7 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** 底层错误 → 500 + 原始错误文本（与旧 `ServiceError::Database` 的收敛方式一致）。 */
+/** 底层错误 → 500 + 原始错误文本（与既有 `ServiceError::Database` 的收敛方式一致）。 */
 function internalError(action: string, error: unknown): AppError {
   const message = errorText(error)
   logError(`${action}: ${message}`)

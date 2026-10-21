@@ -103,10 +103,10 @@ function sipRound(state: SipState): void {
 }
 
 /**
- * Rust `std::collections::hash_map::DefaultHasher`（SipHash-1-3，密钥全 0）的逐位实现。
+ * `std::collections::hash_map::DefaultHasher`（SipHash-1-3，密钥全 0）的逐位实现。
  *
- * Rust 的 `Hash for str` 在 UTF-8 字节后还写一个 `0xff` 终止符；这里照做，
- * 因此同一个 id 在 Rust 与 TS 两侧得到同一个 64 位哈希、同一个偏移。
+ * 的 `Hash for str` 在 UTF-8 字节后还写一个 `0xff` 终止符；这里照做，
+ * 因此同一个 id 在 与 TS 两侧得到同一个 64 位哈希、同一个偏移。
  */
 function defaultHasher(input: string): bigint {
   const encoded = new TextEncoder().encode(input)
@@ -151,8 +151,8 @@ function defaultHasher(input: string): bigint {
 /**
  * 按 id 给每个点一个固定的小偏移，远近只够分开两颗点、不改变它落在哪个象限。
  *
- * 用 Rust `DefaultHasher`（标准库、固定种子）的同一份算法而不是随机数：
- * 同一份数据每次渲染都落在同一处，且与旧实现逐位一致。
+ * 用 `DefaultHasher`（标准库、固定种子）的同一份算法而不是随机数：
+ * 同一份数据每次渲染都落在同一处，且与既有行为逐位一致。
  */
 export function jitterOf(id: string): readonly [number, number] {
   const bits = defaultHasher(id)

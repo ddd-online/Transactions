@@ -9,8 +9,8 @@ import {
   UPDATE_DOWNLOAD_PROGRESS,
   WORKSPACE_CHANGED,
 } from '../shared/events'
-import { ERR_CODE_COMPAT_WORKSPACE } from '../shared/errors'
-import type { CompatImportProgress } from '../shared/types/import'
+import { ERR_CODE_SOURCE_WORKSPACE } from '../shared/errors'
+import type { SourceImportProgress } from '../shared/types/import'
 import type { UpdateSnapshot } from '../shared/domain/update'
 import { RecordsPage } from './pages/records'
 import { ChartsPage } from './pages/charts'
@@ -78,7 +78,7 @@ export function App(): JSX.Element {
   const [accountingTab, setAccountingTab] = useState<
     'dashboard' | 'records' | 'charts' | 'tags' | 'templates'
   >('dashboard')
-  const [importProgress, setImportProgress] = useState<CompatImportProgress | null>(null)
+  const [importProgress, setImportProgress] = useState<SourceImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
@@ -190,7 +190,7 @@ export function App(): JSX.Element {
         setWorkspace(message.payload)
       }
       if (message.event === IMPORT_PROGRESS) {
-        setImportProgress(message.payload as CompatImportProgress)
+        setImportProgress(message.payload as SourceImportProgress)
       }
       if (
         message.event === UPDATE_DOWNLOAD_PROGRESS ||
@@ -216,7 +216,7 @@ export function App(): JSX.Element {
         await refreshWorkspace()
       }
     } catch (openError) {
-      if (typeof openError === 'object' && openError !== null && (openError as { code?: number }).code === ERR_CODE_COMPAT_WORKSPACE) {
+      if (typeof openError === 'object' && openError !== null && (openError as { code?: number }).code === ERR_CODE_SOURCE_WORKSPACE) {
         setWorkspacePromptDismissed(true)
         setView('settings')
       }

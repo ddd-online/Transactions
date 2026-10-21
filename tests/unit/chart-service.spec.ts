@@ -61,7 +61,7 @@ function captureAppError(run: () => void): AppError {
   throw new Error('应当抛出 AppError')
 }
 
-/** 与 `tr-service` 预设曲线同构的一行 JSON（仅用于 DAO 往返断言）。 */
+/** 与 既有实现 预设曲线同构的一行 JSON（仅用于 DAO 往返断言）。 */
 const LINES =
   '[{"label":"支出","transactionType":"expense","includeOutlier":false,"conditions":[]}]'
 
@@ -121,7 +121,7 @@ function insertChartRow(
 
 // ------------------------------------------------------------------ 预设曲线基线
 
-/** 以下期望值来自旧 Rust 版的一次真实运行，作为回归基线，不要手改。 */
+/** 以下期望值来自既有 版的一次真实运行，作为回归基线，不要手改。 */
 const MONTHLY_LINES_JSON =
   '[{"label":"支出","transactionType":"expense","includeOutlier":false,"conditions":[]},' +
   '{"label":"收入","transactionType":"income","includeOutlier":false,"conditions":[]},' +

@@ -31,7 +31,7 @@ export type SectionState = (typeof SectionState)[keyof typeof SectionState]
  * 优先级：
  *
  * 1. **没跑完过（或正在跑）一律 `Loading`** —— 包括"失败了正在重试"这一段：手上那份错已经过期，
- *    显示加载比显示旧错误更贴近事实；
+ *    显示加载比显示先前错误更贴近事实；
  * 2. 跑完了且有失败文案 → `Failed`（**失败不是空**）；
  * 3. 跑完了、没失败、但没有数据 → `Empty`；
  * 4. 其余 → `Ready`。
@@ -67,7 +67,7 @@ export function sectionState(
  * **高度瞬间塌成一行**；浏览器此时会把滚动位置夹回顶部（而且不会自动恢复），展开着的
  * 面板/浮层也一起消失，用户看到的就是"页面像是刷新了"（待办页写进度即复现）。
  * 首帧（`!loaded`）与"手上没有内容"仍按原规则显示加载态；失败仍显示失败态 ——
- * **失败既不当成空，也不拿旧内容掩盖**。
+ * **失败既不当成空，也不拿先前内容掩盖**。
  */
 export function sectionStateKeepingContent(
   itemsEmpty: boolean,

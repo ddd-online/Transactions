@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { QueryCore, unchanged, type Step } from '../../shared/domain/query'
 
-/** Rust 测试里的 `fetch` 辅助：只关心发出去的 key。 */
+/** 测试里的 `fetch` 辅助：只关心发出去的 key。 */
 function fetchKey(step: Step<string>): string | null {
   return step.type === 'fetch' ? step.key : null
 }

@@ -12,7 +12,7 @@ import {
 } from '../db/dao/ledger'
 import { logError } from '../logging'
 
-/** 账本服务：无状态函数 + 显式 Db 入参（与旧 tr-service 的自由函数风格一致）。 */
+/** 账本服务：无状态函数 + 显式 Db 入参（与既有实现的自由函数风格一致）。 */
 export function createLedger(db: Db, name: string, description: string): string {
   const id = randomUUID()
   try {

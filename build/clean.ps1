@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  清理构建产物（只删仓库内的 out/、output/ 与旧 dist/）。
+  清理构建产物（只删仓库内的 out/、output/ 与既有 dist/）。
 #>
 [CmdletBinding()]
 param()

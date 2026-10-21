@@ -3,7 +3,7 @@ import type { TodoCard, TodoItem, TodoProgress } from '../../../shared/types/tod
 import type { Db } from '../driver'
 
 /**
- * 待办 DAO：卡片（主题） / 事项 / 进度记录（旧 `tr-store/src/dao/todo.rs` 的逐条移植）。
+ * 待办 DAO：卡片（主题） / 事项 / 进度记录（既有 `tr-store/src/dao/todo.rs` 的逐条移植）。
  *
  * 约定与其它 DAO 一致：入参是模型结构体，时间戳由 DAO 在 INSERT / UPDATE 时填，
  * 列名恒为 snake_case（列映射在这里显式书写，不依赖序列化层）。
@@ -53,7 +53,7 @@ interface ProgressRow {
   created_at: number
 }
 
-/** 当前 Unix 秒（旧 `tr_store::util::now_unix`）。 */
+/** 当前 Unix 秒（既有 `tr_store::util::now_unix`）。 */
 export function nowUnix(): number {
   return Math.floor(Date.now() / 1000)
 }
@@ -255,7 +255,7 @@ export function listItemsByStatus(db: Db, ledgerId: string, status: string): Tod
 /**
  * 某卡片下某状态的事项（卡片视图按卡片取；排序与 {@link listItemsByStatus} 一致）。
  *
- * 不按账本过滤：卡片 id 已经决定了归属（与旧 DAO 一致）。
+ * 不按账本过滤：卡片 id 已经决定了归属（与既有 DAO 一致）。
  */
 export function listItemsByCard(db: Db, cardId: string, status: string): TodoItem[] {
   const rows = db
@@ -267,7 +267,7 @@ export function listItemsByCard(db: Db, cardId: string, status: string): TodoIte
   return rows.map(itemFromRow)
 }
 
-/** 某卡片下**全部**事项的 id（旧 DAO 的对齐接口；删卡片走 SQL 子查询，不依赖它）。 */
+/** 某卡片下**全部**事项的 id（既有 DAO 的对齐接口；删卡片走 SQL 子查询，不依赖它）。 */
 export function listItemIdsByCard(db: Db, cardId: string): string[] {
   const rows = db.prepare('SELECT id FROM todo_item WHERE card_id = ?').all(cardId) as unknown as Array<{
     id: string
@@ -287,7 +287,7 @@ export function deleteItemsByCard(db: Db, cardId: string): void {
 
 // ---------------------------------------------------------------- 进度记录
 
-/** 追加一条进度记录（`createdAt` 由 DAO 填当前时刻，与旧实现一致）。 */
+/** 追加一条进度记录（`createdAt` 由 DAO 填当前时刻，与既有行为一致）。 */
 export function createProgress(db: Db, progress: TodoProgress, now = nowUnix()): void {
   db.prepare(
     'INSERT INTO todo_progress (id, ledger_id, item_id, content, done, created_at) ' +

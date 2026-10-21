@@ -1,13 +1,13 @@
 /**
  * 股票持仓 / 成交 / 交易历史 / 轮次 DAO。
  *
- * 逐条移植自旧 `tr-store/src/dao/stock.rs`（position / trade / trade history / round
+ * 逐条移植自既有 `tr-store/src/dao/stock.rs`（position / trade / trade history / round
  * 四节），SQL 形状、ORDER BY 与列映射保持不变：
  *
  * - 单行查询一律补 `ORDER BY id LIMIT 1`（主键升序取第一行，唯一索引被破坏时也确定）；
  * - 时间戳由 DAO 写入（`created_at` / `updated_at` 都是 Unix 秒）；
  * - 金额恒为整数分、股价恒为整数厘；新 schema 的 `_cents` / `_milli` 后缀在 `from*Row`
- *   里映射回模型的 `amount` / `price` 字段，SQL 不出现旧列名；
+ *   里映射回模型的 `amount` / `price` 字段，SQL 不出现原列名；
  * - `Option<String>` 的可空文本列读回空串（`round_id` / `order_id` / `remark` 等），
  *   `Option<i64>` 的 `realized_pnl_cents` 保持 `null`；
  * - `round_*` 四列**齐备**才算本轮费用快照，缺一列按"没有快照"处理（老数据口径）；
@@ -147,7 +147,7 @@ function nowUnix(): number {
   return Math.floor(Date.now() / 1000)
 }
 
-/** 旧 DAO 以 `QueryReturnedNoRows` 表示"查无此行"；对外文案固定为 `record not found`。 */
+/** 既有 DAO 以 `QueryReturnedNoRows` 表示"查无此行"；对外文案固定为 `record not found`。 */
 function notFound(): AppError {
   return new AppError('record not found', { status: 404 })
 }

@@ -20,7 +20,7 @@ import {
   pointSpanLabel,
 } from '../../shared/domain/stock-stats'
 
-/** 一个统计点（对应 Rust 测试里的 `point()`；只填七档指标读的字段）。 */
+/** 一个统计点（对应 测试里的 `point()`；只填七档指标读的字段）。 */
 function point(): StockStatisticsPointDto {
   return {
     totalPnl: 123_456,
@@ -33,14 +33,14 @@ function point(): StockStatisticsPointDto {
   }
 }
 
-/** Rust 测试里的 `.expect(…)`：六档释义都该在。 */
+/** 测试里的 `.expect(…)`：六档释义都该在。 */
 function hintOf(metric: Metric): string {
   const hint = metricHint(metric)
   if (hint === null) throw new Error(`expected a hint for ${metric}`)
   return hint
 }
 
-/** `labels` / `keys` 去重后的条数（Rust 测试的 sort + dedup）。 */
+/** `labels` / `keys` 去重后的条数（测试的 sort + dedup）。 */
 function uniqueCount(values: readonly string[]): number {
   return new Set(values).size
 }

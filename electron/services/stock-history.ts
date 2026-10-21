@@ -1,7 +1,7 @@
 /**
  * 股票交易历史读层：集合列表 / 单股详情 / 总览，以及存量交易的「建仓 → 清仓」回填。
  *
- * 逐条移植自兼容 `tr-service/src/stock.rs` 的历史与详情段
+ * 逐条移植自既有实现 的历史与详情段
  * （`ensure_trade_history_backfill` / `ensure_stock_history_backfill` /
  * `derive_trade_cycles` / `list_trade_histories` / `build_history_dto` /
  * `get_trade_history_detail` / `get_trade_history_summary` / `attach_history_quotes` /
@@ -16,13 +16,13 @@
  * * **盈亏**：买入成本 = Σ(成交额 + 费用)，卖出净额 = Σ(成交额 − 费用)，盈亏 = 卖出净额 −
  *   买入成本；盈亏率 = 盈亏 ÷ 买入成本（%）。
  * * **0 手的标记成交**（清仓时"只归档"那一笔）在详情里不算成交（不进列表、不计 `tradeCount`），
- *   但集合列表与总览沿用兼容的 `round_pnl` 全量口径（那笔金额 / 费用为 0）。
+ *   但集合列表与总览沿用既有的 `round_pnl` 全量口径（那笔金额 / 费用为 0）。
  * * 金额恒为整数分，价格恒为整数厘；百分比是百分数（`12.5` = 12.5%）。
  *
  * 行情源作为参数注入（{@link StockQuoteFetcher}），与持仓服务同一套端口；因为 Node 的网络
- * API 是异步的，{@link listTradeHistories} 返回 `Promise`（兼容是同步）。
+ * API 是异步的，{@link listTradeHistories} 返回 `Promise`（既有是同步）。
  *
- * 每日复盘的 DAO 尚未随本切片移植：`list_day_reviews_by_stock` 按旧 DAO 的同一条 SQL
+ * 每日复盘的 DAO 尚未随本切片移植：`list_day_reviews_by_stock` 按既有 DAO 的同一条 SQL
  * （表 / 列 / `round_id` 分组 / 日期倒序）就地读取，等每日复盘切片落地后再收进 DAO。
  */
 
@@ -63,19 +63,19 @@ import {
 import { logError } from '../logging'
 import type { StockQuoteFetcher } from './stock-quote'
 
-/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成既有的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
   return new AppError(message, { status: 500 })
 }
 
-/** 旧 DAO 以 404 表示"查无此行"。 */
+/** 既有 DAO 以 404 表示"查无此行"。 */
 function isNotFound(error: unknown): boolean {
   return error instanceof AppError && error.status === 404
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
@@ -83,7 +83,7 @@ function roundHalfAwayFromZero(value: number): number {
 /**
  * 占比百分比：`round(part / whole * 10000) / 100`（保留两位小数）。
  *
- * `whole <= 0` 时返回 `0`（兼容 `percent_of` 的防除零分支）；调用点仍各自保留
+ * `whole <= 0` 时返回 `0`（既有 `percent_of` 的防除零分支）；调用点仍各自保留
  * `whole > 0` 守卫。
  */
 export function percentOf(part: number, whole: number): number {
@@ -102,7 +102,7 @@ export interface RoundPnl {
 }
 
 /**
- * 由一轮交易推导本轮盈亏与盈亏率（旧 `tr_domain::dto::round_pnl`）。
+ * 由一轮交易推导本轮盈亏与盈亏率（既有 `dto::round_pnl`）。
  *
  * 买入成本 = Σ(成交金额 + 费用)；卖出净额 = Σ(成交金额 − 费用)；盈亏 = 卖出净额 − 买入成本。
  * 盈亏率按买入成本计算，四舍五入到小数点后两位。
@@ -139,7 +139,7 @@ export interface TradeCycle {
 }
 
 /**
- * 把按时间升序的交易流切分为**已经结束的**轮次（旧 `derive_trade_cycles`）：
+ * 把按时间升序的交易流切分为**已经结束的**轮次（既有 `derive_trade_cycles`）：
  *
  * * 建仓 / 加仓 / 减仓：开一轮（若还没有当前轮）并收进当前轮 —— 减仓**不**结束一轮；
  * * 清仓：若还没有当前轮则先开一轮，收进清仓这笔并记下 `closedAt`，然后结束当前轮；
@@ -181,7 +181,7 @@ export function deriveTradeCycles(trades: readonly StockTrade[]): TradeCycle[] {
 /**
  * 为有交易记录但尚无历史集合的股票补齐历史（幂等）。
  *
- * 与兼容一致：逐只股票调用 {@link ensureStockHistoryBackfill}，第一处失败即向上抛。
+ * 与既有一致：逐只股票调用 {@link ensureStockHistoryBackfill}，第一处失败即向上抛。
  */
 export function ensureTradeHistoryBackfill(db: Db, ledgerId: string): void {
   try {
@@ -304,7 +304,7 @@ function dayReviewsByRound(
   return grouped
 }
 
-/** 汇总单只股票的轮次数、累计盈亏与最近清仓时间（旧 `build_history_dto`）。 */
+/** 汇总单只股票的轮次数、累计盈亏与最近清仓时间（既有 `build_history_dto`）。 */
 function buildHistoryDto(db: Db, history: StockTradeHistory): StockTradeHistoryDto {
   const rounds = listTradeRoundsByStock(db, history.ledgerId, history.stockCode)
   const item: StockTradeHistoryDto = {
@@ -322,7 +322,7 @@ function buildHistoryDto(db: Db, history: StockTradeHistory): StockTradeHistoryD
   let totalPnl = 0
   let totalBuyCost = 0
   for (const round of rounds) {
-    // 列表口径沿用兼容：不过滤 0 手的归档标记成交（那笔金额 / 费用为 0）
+    // 列表口径沿用既有：不过滤 0 手的归档标记成交（那笔金额 / 费用为 0）
     const { pnl, buyCost } = roundPnl(listTradesByRound(db, round.id))
     totalPnl += pnl
     totalBuyCost += buyCost
@@ -333,7 +333,7 @@ function buildHistoryDto(db: Db, history: StockTradeHistory): StockTradeHistoryD
   return item
 }
 
-/** 为要显示的历史集合请求行情；行情缺失时省略 `latestPrice`（旧 `attach_history_quotes`）。 */
+/** 为要显示的历史集合请求行情；行情缺失时省略 `latestPrice`（既有 `attach_history_quotes`）。 */
 async function attachHistoryQuotes(
   fetcher: StockQuoteFetcher,
   items: StockTradeHistoryDto[],
@@ -370,7 +370,7 @@ export async function listTradeHistories(
     ensureTradeHistoryBackfill(db, ledgerId)
     const items = listTradeHistoryRows(db, ledgerId).map((history) => buildHistoryDto(db, history))
     await attachHistoryQuotes(fetcher, items)
-    // JS 的 `Array#sort` 是稳定排序：同值时保持 DAO 顺序（与 Rust 的稳定排序一致）
+    // JS 的 `Array#sort` 是稳定排序：同值时保持 DAO 顺序（与 的稳定排序一致）
     items.sort((left, right) => right.lastClosedAt - left.lastClosedAt)
     return items
   } catch (error) {
@@ -450,7 +450,7 @@ export function getTradeHistoryDetail(
 }
 
 /**
- * 汇总该账本全部已清仓股票：总盈亏、胜负轮次与总轮次（旧 `get_trade_history_summary`）。
+ * 汇总该账本全部已清仓股票：总盈亏、胜负轮次与总轮次（既有 `get_trade_history_summary`）。
  *
  * 与集合列表同一套回填与轮次口径；盈亏率的分母是全部轮次的买入成本合计。
  */
@@ -472,7 +472,7 @@ export function getTradeHistorySummary(db: Db, ledgerId: string): StockTradeHist
       summary.stockCount += 1
       const rounds = listTradeRoundsByStock(db, ledgerId, history.stockCode)
       for (const round of rounds) {
-        // 总览沿用兼容的全量 `round_pnl`（不过滤 0 手标记成交）
+        // 总览沿用既有的全量 `round_pnl`（不过滤 0 手标记成交）
         const { pnl, buyCost } = roundPnl(listTradesByRound(db, round.id))
         summary.roundCount += 1
         summary.totalPnl += pnl

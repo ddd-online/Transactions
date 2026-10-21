@@ -1,5 +1,5 @@
 -- 合成工作空间种子数据（不含真实个人数据）
--- 由 scripts/generate-compat-seed-sql.mjs 生成。
+-- 由 scripts/generate-source-seed-sql.mjs 生成。
 
 PRAGMA foreign_keys = OFF;
 BEGIN TRANSACTION;

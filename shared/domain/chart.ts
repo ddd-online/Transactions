@@ -5,9 +5,9 @@
  * 输入是 `number` / `string` / 本模块自己的类型，输出是数值、路径字符串或改写过的 SVG 文本。
  * 渲染侧负责把 DOM 测量值喂进来、把结果画出去。
  *
- * 移植约定：Rust 的 `Option<T>` 是 `T | null`；元组是只读定长数组；`impl Fn(&str) ->
- * Option<String>` 是 `(tag: string) => string | null`；Rust 的 `f64::EPSILON` 就是
- * `Number.EPSILON`。Rust 里返回 `f32` 的地方（{@link displayValue}、{@link niceAxisRange}
+ * 移植约定：的 `Option<T>` 是 `T | null`；元组是只读定长数组；`impl Fn(&str) ->
+ * Option<String>` 是 `(tag: string) => string | null`；的 `f64::EPSILON` 就是
+ * `Number.EPSILON`。里返回 `f32` 的地方（{@link displayValue}、{@link niceAxisRange}
  * 的 f32 比较）用 `Math.fround` 逐位对齐 —— JS 只有 f64，不收敛就会改变"上界是否算严格大于
  * 数据"这类判据。
  *
@@ -31,7 +31,7 @@ export interface ChartSeries {
   readonly data: readonly number[]
 }
 
-/** 构造一条序列（对应 Rust 的 `ChartSeries::new`）。 */
+/** 构造一条序列（对应 的 `ChartSeries::new`）。 */
 export function chartSeries(
   label: string,
   color: string,
@@ -54,7 +54,7 @@ export const ChartValueKind = {
 
 export type ChartValueKind = (typeof ChartValueKind)[keyof typeof ChartValueKind]
 
-/** 默认取值语义（对应 Rust `#[default] Money`）。 */
+/** 默认取值语义（对应 `#[default] Money`）。 */
 export const DEFAULT_CHART_VALUE_KIND: ChartValueKind = ChartValueKind.Money
 
 /** 拿不到容器尺寸时的兜底宽度 */
@@ -111,7 +111,7 @@ export interface TooltipPlacement {
   readonly translateY: number
 }
 
-/** 内联样式串（对应 Rust 的 `TooltipPlacement::style`，界面里直接用）。 */
+/** 内联样式串（对应 的 `TooltipPlacement::style`，界面里直接用）。 */
 export function tooltipStyle(placement: TooltipPlacement): string {
   return (
     `left: ${placement.left.toFixed(1)}px; top: ${placement.top.toFixed(1)}px; ` +
@@ -425,7 +425,7 @@ function pathPoints(d: string): Point[] | null {
   return points
 }
 
-/** 统计 `needle` 在 `haystack` 里出现的次数（对应 Rust `str::matches`）。 */
+/** 统计 `needle` 在 `haystack` 里出现的次数（对应 `str::matches`）。 */
 function countOccurrences(haystack: string, needle: string): number {
   let count = 0
   let index = haystack.indexOf(needle)
@@ -626,7 +626,7 @@ export function paintBySign(
 /**
  * 按可用宽度抽稀 X 轴类目标签（首尾必显）：不要的类目传空串，图表库不画空标签。
  *
- * `count === 0` 返回空数组（Rust 版在 `count - 1` 上会先 panic，这里按"没有类目"处理）。
+ * `count === 0` 返回空数组（版在 `count - 1` 上会先 panic，这里按"没有类目"处理）。
  */
 export function thinLabels(categories: readonly string[], width: number): string[] {
   const count = categories.length
@@ -734,7 +734,7 @@ export function niceAxisRange(
   dataMax: number,
   bounds: readonly [low: number, high: number] | null,
 ): AxisRange | null {
-  // Rust 文档写明"数据非有限就返回 None"；实现里 `+∞` 会让下面的 `while` 转不出来，
+  // 文档写明"数据非有限就返回 None"；实现里 `+∞` 会让下面的 `while` 转不出来，
   // 这里按文档先挡住（NaN 走原路径，自然落到 None）。
   if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) return null
   if (bounds !== null) {
@@ -802,7 +802,7 @@ export interface ChartGeometry {
   readonly kind: ChartValueKind
 }
 
-/** 空几何（对应 Rust 的 `ChartGeometry::default()`）。 */
+/** 空几何（对应 的 `ChartGeometry::default()`）。 */
 export function chartGeometry(overrides: Partial<ChartGeometry> = {}): ChartGeometry {
   return {
     xs: overrides.xs ?? [],
@@ -814,7 +814,7 @@ export function chartGeometry(overrides: Partial<ChartGeometry> = {}): ChartGeom
   }
 }
 
-/** 把量回来的点与原始数据拼成完整几何（对应 Rust 的 `ChartGeometry::assemble`）。 */
+/** 把量回来的点与原始数据拼成完整几何（对应 的 `ChartGeometry::assemble`）。 */
 export function assembleGeometry(
   points: MeasuredPoints,
   categories: readonly string[],
@@ -949,7 +949,7 @@ export function hitIndex(geometry: ChartGeometry, offsetX: number): number | nul
   return best === null ? null : best.index
 }
 
-/** 读数组的第 `index` 项（Rust `.get` 的对应物：越界是 `undefined`，不是类型上的假象）。 */
+/** 读数组的第 `index` 项（`.get` 的对应物：越界是 `undefined`，不是类型上的假象）。 */
 function at<T>(items: readonly T[], index: number): T | undefined {
   return index >= 0 && index < items.length ? items[index] : undefined
 }
@@ -1002,7 +1002,7 @@ export function formatValue(value: number, kind: ChartValueKind, withSymbol: boo
     case ChartValueKind.Ratio:
       return value.toFixed(2)
     case ChartValueKind.Count:
-      // Rust `f64::to_string`：整数值不带 `.0`；`String` 只在 |value| ≥ 1e21 时改成指数
+      // `f64::to_string`：整数值不带 `.0`；`String` 只在 |value| ≥ 1e21 时改成指数
       // 写法（Count 是整数计数，界面上到不了那个量级）。
       return String(value)
   }

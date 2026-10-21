@@ -1,4 +1,4 @@
-/** 股票域的共享模型（字段名与兼容 wire 契约一致：camelCase）。 */
+/** 股票域的共享模型（字段名与既有 wire 契约一致：camelCase）。 */
 
 export interface StockFeeSetting {
   id: string
@@ -64,7 +64,7 @@ export const DEFAULT_STOCK_FEE_SETTING: Omit<StockFeeSetting, 'id' | 'ledgerId' 
   transferFeeRate: 0.00001,
 }
 
-/** 日记日期树的一项（旧 wire 契约：date / wordCount / mood）。 */
+/** 日记日期树的一项（既有 wire 契约：date / wordCount / mood）。 */
 export interface DiaryDateItem {
   date: string
   wordCount: number
@@ -72,7 +72,7 @@ export interface DiaryDateItem {
 }
 
 // ---------------------------------------------------------------- 核心记账模型
-// 内部字段用 camelCase；与旧 wire 的 snake_case/camelCase 差异由 DTO / DAO 层显式映射。
+// 内部字段用 camelCase；与既有 wire 的 snake_case/camelCase 差异由 DTO / DAO 层显式映射。
 
 export interface Ledger {
   id: string

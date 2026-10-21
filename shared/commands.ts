@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
-import type { CompatImportProbe, CompatImportReport } from './types/import'
+import type { SourceImportProbe, SourceImportReport } from './types/import'
 import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
 import type { ChartDto } from './types/chart'
 import type {
@@ -126,8 +126,8 @@ export const commandSchemas = {
   /** M0 冒烟用：写一张 1×1 PNG 到工作空间资产目录，验证 trasset://。 */
   debug_write_asset: z.undefined(),
   debug_echo: z.object({ message: z.string() }),
-  compat_import_probe: z.object({ workspaceDir: z.string() }),
-  compat_import_start: z.object({ sourceDir: z.string(), targetDir: z.string() }),
+  source_import_probe: z.object({ workspaceDir: z.string() }),
+  source_import_start: z.object({ sourceDir: z.string(), targetDir: z.string() }),
   ledger_list: z.object({ id: z.string() }),
   ledger_create: z.object({
     name: z.string().optional(),
@@ -478,8 +478,8 @@ export interface CommandResponses {
   window_control: null
   debug_write_asset: string
   debug_echo: string
-  compat_import_probe: CompatImportProbe
-  compat_import_start: CompatImportReport
+  source_import_probe: SourceImportProbe
+  source_import_start: SourceImportReport
   ledger_list: Ledger[]
   ledger_create: string
   ledger_get: Ledger

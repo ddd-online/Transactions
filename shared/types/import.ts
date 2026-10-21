@@ -1,7 +1,7 @@
 /** 数据导入（一次性）的请求/响应形状。 */
 
-export interface CompatImportProbe {
-  compat: boolean
+export interface SourceImportProbe {
+  source: boolean
   ready: boolean
   sourceDir: string
   databasePath: string
@@ -13,12 +13,12 @@ export interface CompatImportProbe {
   message: string
 }
 
-export interface CompatImportTableReport {
+export interface SourceImportTableReport {
   table: string
   rows: number
 }
 
-export interface CompatImportSumReport {
+export interface SourceImportSumReport {
   table: string
   column: string
   before: number
@@ -26,18 +26,18 @@ export interface CompatImportSumReport {
   ok: boolean
 }
 
-export interface CompatImportReport {
+export interface SourceImportReport {
   sourceDir: string
   targetDir: string
   sourceDigest: string
   importedAt: number
-  tables: CompatImportTableReport[]
-  sums: CompatImportSumReport[]
+  tables: SourceImportTableReport[]
+  sums: SourceImportSumReport[]
   assets: { copied: number; missing: string[] }
   warnings: string[]
 }
 
-export interface CompatImportProgress {
+export interface SourceImportProgress {
   phase: 'probe' | 'tables' | 'assets' | 'verify' | 'done'
   table?: string
   index?: number

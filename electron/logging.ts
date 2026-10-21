@@ -42,7 +42,7 @@ function append(path: string, line: string): void {
     rotateIfNeeded(path)
     appendFileSync(path, `${line}\n`, 'utf8')
   } catch {
-    // 日志不可写时静默（与旧实现一致）
+    // 日志不可写时静默（与既有行为一致）
   }
 }
 

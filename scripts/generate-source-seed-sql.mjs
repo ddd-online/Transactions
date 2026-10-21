@@ -5,14 +5,14 @@
  * 生成的文件只含合成数据，用于导入器/服务层回归。
  *
  * 用法：
- *   node scripts/generate-compat-seed-sql.mjs <seed.db> <out.sql>
+ *   node scripts/generate-source-seed-sql.mjs <seed.db> <out.sql>
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
 const [databasePath, outputPath] = process.argv.slice(2)
 if (!databasePath || !outputPath) {
-  console.error('用法: node scripts/generate-compat-seed-sql.mjs <seed.db> <out.sql>')
+  console.error('用法: node scripts/generate-source-seed-sql.mjs <seed.db> <out.sql>')
   process.exit(1)
 }
 
@@ -43,7 +43,7 @@ const objects = db
   .all()
 
 const lines = []
-lines.push('-- 源格式 种子工作空间的 SQL dump（合成数据，不含真实个人数据）。')
+lines.push('-- 源格式种子工作空间的 SQL dump（合成数据，不含真实个人数据）。')
 lines.push('PRAGMA foreign_keys = OFF;')
 lines.push('BEGIN TRANSACTION;')
 

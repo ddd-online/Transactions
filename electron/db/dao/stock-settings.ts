@@ -9,17 +9,17 @@ import type { Db } from '../driver'
 /**
  * 股票账户 / 费用设置 / 交易标签设置 / 复盘模板设置 DAO。
  *
- * 逐条移植自旧 `tr-store/src/dao/stock.rs` 的对应段（`tbl_billadm_stock_*` → 无前缀表名，
+ * 逐条移植自既有 `tr-store/src/dao/stock.rs` 的对应段（`tbl_billadm_stock_*` → 无前缀表名，
  * 金额列补 `_cents`）：
  *
  * * 单行查询都补 `ORDER BY id LIMIT 1`（按主键升序取第一行）—— 唯一索引被破坏时取到的行
  *   仍然是确定的；
  * * 时间戳由 DAO 在 INSERT / UPDATE 时填（秒级 Unix 秒），服务层不用自己补；
  * * SQL 只拼固定列名常量，值一律 `?`；
- * * 「不存在」在 DAO 层是 `null`（兼容是 `QueryReturnedNoRows`），服务层负责 get-or-create。
+ * * 「不存在」在 DAO 层是 `null`（既有是 `QueryReturnedNoRows`），服务层负责 get-or-create。
  *
- * 与兼容的差别只有列名映射（`principal` → `principal_cents` 等）与 NULL 的兜底写法一致
- * （兼容 `Option::unwrap_or_default` → 这里 `?? ''`）。
+ * 与既有的差别只有列名映射（`principal` → `principal_cents` 等）与 NULL 的兜底写法一致
+ * （既有 `Option::unwrap_or_default` → 这里 `?? ''`）。
  */
 
 const ACCOUNT_COLUMNS = 'id, ledger_id, principal_cents, created_at, updated_at'
@@ -64,7 +64,7 @@ interface ReviewSettingRow {
   updated_at: number
 }
 
-/** 当前 Unix 秒（旧 `tr_store::util::now_unix`）。 */
+/** 当前 Unix 秒（既有 `tr_store::util::now_unix`）。 */
 function nowUnix(): number {
   return Math.floor(Date.now() / 1000)
 }
@@ -92,7 +92,7 @@ function feeSettingFromRow(row: FeeSettingRow): StockFeeSetting {
   }
 }
 
-/** 兼容 `tag_setting_from_row`：NULL 兜底空串（老库可能缺这一列的值）。 */
+/** 既有 `tag_setting_from_row`：NULL 兜底空串（老库可能缺这一列的值）。 */
 function tagSettingFromRow(row: TagSettingRow): StockTradeTagSetting {
   return {
     id: row.id,
@@ -103,7 +103,7 @@ function tagSettingFromRow(row: TagSettingRow): StockTradeTagSetting {
   }
 }
 
-/** 兼容 `review_setting_from_row`：NULL 兜底空串。 */
+/** 既有 `review_setting_from_row`：NULL 兜底空串。 */
 function reviewSettingFromRow(row: ReviewSettingRow): StockReviewSetting {
   return {
     id: row.id,

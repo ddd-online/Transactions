@@ -18,11 +18,11 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-import-target-'))
   const home = join(root, 'home')
-  const source = join(root, 'compat')
+  const sourceRoot = join(root, 'source')
   const target = join(root, 'target')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })
-  mkdirSync(source, { recursive: true })
+  mkdirSync(sourceRoot, { recursive: true })
   mkdirSync(target, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(join(target, 'occupied.txt'), 'occupied')
@@ -30,10 +30,10 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
     join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
-  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'compat', 'seed.sql'), 'utf8')
-  const compat = new DatabaseSync(join(source, 'transactions.db'))
-  compat.exec(seed)
-  compat.close()
+  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'source', 'seed.sql'), 'utf8')
+  const source = new DatabaseSync(join(sourceRoot, 'transactions.db'))
+  source.exec(seed)
+  source.close()
 
   const electronApp = await electron.launch({
     args: ['.'],
@@ -42,7 +42,7 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
       USERPROFILE: home,
       HOME: home,
       TRANSACTIONS_USER_DATA: userData,
-      TRANSACTIONS_TEST_DIALOG_DIR: source,
+      TRANSACTIONS_TEST_DIALOG_DIR: sourceRoot,
       TRANSACTIONS_TEST_CLOSE: 'quit',
     }),
   })
@@ -51,7 +51,7 @@ test('导入：目标目录非空时拒绝且不写库', async () => {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-import').click()
     await page.getByTestId('settings-tab-about').click()
-    await page.getByTestId('import-source').fill(source)
+    await page.getByTestId('import-source').fill(sourceRoot)
     await page.getByTestId('import-target').fill(target)
     await page.getByTestId('import-probe').click()
     await expect(page.getByTestId('import-probe-result')).toContainText('可导入')

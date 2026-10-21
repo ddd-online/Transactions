@@ -10,7 +10,7 @@ import type { Db } from '../driver'
 /**
  * 股票资金记录 / 汇总 / 操作记录 DAO。
  *
- * 逐条移植自旧 `tr-store/src/dao/stock.rs` 的资金记录段与操作记录段
+ * 逐条移植自既有 `tr-store/src/dao/stock.rs` 的资金记录段与操作记录段
  * （表 `tbl_billadm_stock_fund_record` → `stock_fund_record`，金额列补 `_cents`）。
  *
  * 三处不能改的口径：
@@ -30,7 +30,7 @@ const FUND_COLUMNS =
   'cash_balance_cents, net_pnl_cents, remark, created_at'
 const OPERATION_COLUMNS = 'id, ledger_id, kind, action, detail, target_id, created_at'
 
-/** 每个账本保留的操作记录条数上限（超出的最旧记录在写入时丢弃）。 */
+/** 每个账本保留的操作记录条数上限（超出的最较早记录在写入时丢弃）。 */
 export const STOCK_OPERATION_LIMIT = 10
 
 interface FundRow {
@@ -56,7 +56,7 @@ interface OperationRow {
   created_at: number
 }
 
-/** 当前 Unix 秒（旧 `tr_store::util::now_unix`）。 */
+/** 当前 Unix 秒（既有 `tr_store::util::now_unix`）。 */
 function nowUnix(): number {
   return Math.floor(Date.now() / 1000)
 }
@@ -192,8 +192,8 @@ export function listAllFundRecords(db: Db, ledgerId: string): StockFundRecord[] 
 /**
  * 有「买入 / 卖出」资金记录的账本 id（去重，按 id 升序）。
  *
- * 只给数据订正用（`repair_compat_trade_fund_dates` 要按账本重放）：只有买卖记录才可能
- * 带兼容本的 UTC 日期，本金 / 支取 / 利息归本的日期由界面给字符串。
+ * 只给数据订正用（`repair_source_trade_fund_dates` 要按账本重放）：只有买卖记录才可能
+ * 带既有本的 UTC 日期，本金 / 支取 / 利息归本的日期由界面给字符串。
  */
 export function listTradeFundLedgerIds(db: Db): string[] {
   const rows = db
@@ -280,7 +280,7 @@ export function countFundRecords(db: Db, ledgerId: string): number {
  *
  * `created_at` 与 `createFundRecord` 同一套 idiom：取 `MAX(now, 已有最大值 + 1)`，
  * 「最新一次操作」的顺序才确定。裁剪与插入在**同一次调用**里完成：调用方都在事务中，
- * 超限的旧记录随本次操作一起提交 / 回滚。
+ * 超限的较早记录随本次操作一起提交 / 回滚。
  */
 export function createOperation(db: Db, operation: StockOperation): void {
   const row = db

@@ -40,7 +40,7 @@ function nowUnix(): number {
 /**
  * 图表 DAO。
  *
- * 行为约定（与旧 `tr-store/src/dao/chart.rs` 一致）：
+ * 行为约定（与既有 `tr-store/src/dao/chart.rs` 一致）：
  * - `createChart` 自动填充 `created_at` / `updated_at`（均为秒级 Unix 秒，且两列同值）
  * - `saveChart` 是"按主键写回全部字段"，并刷新 `updated_at`：`ledger_id` / `created_at`
  *   保持调用方传入的值（因此整行回写不会改掉创建时间）
@@ -111,7 +111,7 @@ export function countChartsByLedgerId(db: Db, ledgerId: string): number {
 /**
  * 整行回写（主键命中则更新全部字段并刷新 `updated_at`；否则不改动任何行）。
  *
- * `created_at` 用调用方传入的值 —— 与旧实现一致：整行回写不得把创建时间改成"现在"。
+ * `created_at` 用调用方传入的值 —— 与既有行为一致：整行回写不得把创建时间改成"现在"。
  */
 export function saveChart(db: Db, chart: Chart, now = nowUnix()): void {
   db.prepare(

@@ -90,8 +90,8 @@ describe('quadrant', () => {
     expect(unique.size, '24 个 id 至少该散开一半').toBeGreaterThan(12)
   })
 
-  // 额外护栏：偏移与旧实现（Rust `DefaultHasher`）逐位一致，点位不会跨版本漂移。
-  it('jitter matches Rust DefaultHasher', () => {
+  // 额外护栏：偏移与既有行为（`DefaultHasher`）逐位一致，点位不会跨版本漂移。
+  it('jitter matches DefaultHasher', () => {
     expect(jitterOf('todo-1')).toEqual([-7, -6])
     expect(jitterOf('item-0')).toEqual([-3, -10])
     expect(jitterOf('😀')).toEqual([8, 6])

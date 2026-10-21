@@ -14,28 +14,28 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('导入：源格式 库 → 新工作空间', async () => {
+test('导入：源库 → 新工作空间', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-import-'))
   const home = join(root, 'home')
-  const source = join(root, 'compat')
+  const sourceRoot = join(root, 'source')
   const target = join(root, 'imported')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })
-  mkdirSync(source, { recursive: true })
+  mkdirSync(sourceRoot, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
     join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 
-  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'compat', 'seed.sql'), 'utf8')
-  const compat = new DatabaseSync(join(source, 'transactions.db'))
-  compat.exec(seed)
-  const expected = compat
+  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'source', 'seed.sql'), 'utf8')
+  const sourceDb = new DatabaseSync(join(sourceRoot, 'transactions.db'))
+  sourceDb.exec(seed)
+  const expected = sourceDb
     .prepare('SELECT COUNT(*) AS count FROM tbl_billadm_transaction_record')
     .get() as { count: number }
-  compat.close()
+  sourceDb.close()
   expect(expected.count).toBeGreaterThan(0)
 
   const electronApp = await electron.launch({
@@ -45,7 +45,7 @@ test('导入：源格式 库 → 新工作空间', async () => {
       USERPROFILE: home,
       HOME: home,
       TRANSACTIONS_USER_DATA: userData,
-      TRANSACTIONS_TEST_DIALOG_DIR: source,
+      TRANSACTIONS_TEST_DIALOG_DIR: sourceRoot,
       TRANSACTIONS_TEST_CLOSE: 'quit',
     }),
   })
@@ -55,7 +55,7 @@ test('导入：源格式 库 → 新工作空间', async () => {
     await page.getByTestId('open-import').click()
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('import-source')).toBeVisible()
-    await page.getByTestId('import-source').fill(source)
+    await page.getByTestId('import-source').fill(sourceRoot)
     await page.getByTestId('import-target').fill(target)
     await page.getByTestId('import-probe').click()
     await expect(page.getByTestId('import-probe-result')).toBeVisible()

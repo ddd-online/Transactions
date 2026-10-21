@@ -17,14 +17,14 @@
  *
  * 产出只有三种：什么都不做、清空对外状态、发一次请求。
  *
- * Rust 的 `PartialEq` 在 TS 里没有对应物，所以 key 的比较与 {@link unchanged} 都退到
+ * 的 `PartialEq` 在 TS 里没有对应物，所以 key 的比较与 {@link unchanged} 都退到
  * 结构比较（原始值 / 数组 / 普通对象）；筛选条件快照这类对象 key 也能正确去重。
  */
 
 /**
  * 核心给出的下一步。
  *
- * `type` 是 TS 侧的判别标签（对应 Rust 的三个变体 `Idle` / `Clear` / `Fetch`）。
+ * `type` 是 TS 侧的判别标签（对应 的三个变体 `Idle` / `Clear` / `Fetch`）。
  */
 export type Step<K> =
   /** 什么都不用做：同一份 key 已经取过、或已经在飞。 */
@@ -34,7 +34,7 @@ export type Step<K> =
   /** 发一次请求。 */
   | { type: 'fetch'; key: K; generation: number }
 
-/** 一份"发过 / 正在飞"的 `(key, generation)`，对应 Rust 的元组。 */
+/** 一份"发过 / 正在飞"的 `(key, generation)`，对应 的元组。 */
 interface Mark<K> {
   readonly key: K
   readonly generation: number
@@ -47,7 +47,7 @@ function isPlainObject(value: object): boolean {
 }
 
 /**
- * 结构相等：Rust `PartialEq` 的替身。
+ * 结构相等：`PartialEq` 的替身。
  *
  * 只覆盖领域结果会出现的形状：原始值、数组、普通对象。别的对象（例如 `Date`）只有
  * 同一引用才算相等 —— 宁可多写一次信号，也不把两个不同的对象误判成"没变"。
@@ -106,7 +106,7 @@ export class QueryCore<K> {
   /**
    * 当前观察到的 key（`null` = 现在不拉）。
    *
-   * Rust 侧这个字段是私有的，决策本身也不读它；这里留一个只读窗口，排障时能看见
+   * 侧这个字段是私有的，决策本身也不读它；这里留一个只读窗口，排障时能看见
    * 状态机到底认的是哪一份 key。
    */
   get currentKey(): K | null {
@@ -203,7 +203,7 @@ export class QueryCore<K> {
  * 一致就不该写信号：统计视图的图表是"读信号即重建"的，同值通知会让入场动画重播
  * （真实缺陷：曲线一直在闪）。这条判据过去写在股票页的注释里，现在是一条能断言的决定。
  *
- * `current` 是 Rust 的 `Option<&T>`：`null`（没缓存）永远算不一致。
+ * `current` 是 的 `Option<&T>`：`null`（没缓存）永远算不一致。
  */
 export function unchanged<T>(current: T | null, fresh: T): boolean {
   return current !== null && sameValue(current, fresh)

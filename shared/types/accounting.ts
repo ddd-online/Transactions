@@ -1,4 +1,4 @@
-/** 记账 · 看板（旧 `tr-domain/src/dto/accounting_overview.rs`，响应 camelCase）。 */
+/** 记账 · 看板（既有 `DTO accounting_overview.rs`，响应 camelCase）。 */
 
 export interface AccountingOverviewRequest {
   ledgerId: string

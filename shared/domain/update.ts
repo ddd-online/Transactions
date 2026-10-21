@@ -7,7 +7,7 @@
  * 既不知道 HTTP，也不知道文件系统。
  *
  * 与 `proxy` 同规格：词表与用户可见文案放领域层，主进程与渲染进程共用同一份，两侧不会漂移。
- * 字符串取值是**跨进程契约**（事件载荷 / 命令返回），改名即破坏兼容。
+ * 字符串取值是**跨进程契约**（事件载荷 / 命令返回），改名即破坏既有。
  *
  * ## 状态图（合法迁移）
  *
@@ -26,12 +26,12 @@
  * 规则是**宽进**的：{@link applyUpdateEvent} 接受任何事件序列，只按"当前状态允不允许"取舍 ——
  * 乱序到达的进度事件会被丢弃，幂等的重复事件不改变结果，状态因此不会倒退。
  *
- * ## 与 Rust 版的差异（表达方式，不是规则）
+ * ## 与 版的差异（表达方式，不是规则）
  *
- * * `UpdateEvent` 在 Rust 里没有 serde 派生；这里的判别标签（`type`）是 TS 侧新增的。
- * * `applyUpdateEvent` **不可变**：Rust 的 `UpdateEvent::apply(self, &snapshot)` 消费事件并
+ * * `UpdateEvent` 在 里没有 序列化 派生；这里的判别标签（`type`）是 TS 侧新增的。
+ * * `applyUpdateEvent` **不可变**：的 `UpdateEvent::apply(self, &snapshot)` 消费事件并
  *   克隆快照，这里返回新快照、绝不改写入参。
- * * `Option<T>` 在快照里是 `error?: string`（`undefined` = Rust 的 `None`，`JSON.stringify`
+ * * `Option<T>` 在快照里是 `error?: string`（`undefined` = 的 `None`，`JSON.stringify`
  *   会像 `skip_serializing_if` 一样丢掉这个键），工具函数的入参用 `string | null`。
  */
 
@@ -61,7 +61,7 @@ export const UPDATE_STATUS_FAILED = 'failed' as const
 /**
  * 更新流程的状态词表。
  *
- * **序列化取值就是契约**（界面 `switch` 的分支、兼容字符串比较的对象）：
+ * **序列化取值就是契约**（界面 `switch` 的分支、既有字符串比较的对象）：
  * `idle` / `checking` / `available` / `no-update` / `downloading` / `downloaded` / `failed`。
  */
 export type UpdateStatus =
@@ -76,7 +76,7 @@ export type UpdateStatus =
 /**
  * 全部状态（顺序与状态图一致，`idle` 是缺省值）。
  *
- * 界面遍历它渲染"每个状态都有文案"；`idle` 同时是 `#[serde(default)]` 的兜底值。
+ * 界面遍历它渲染"每个状态都有文案"；`idle` 同时是 `缺省字段` 的兜底值。
  */
 export const UPDATE_STATUSES = [
   UPDATE_STATUS_IDLE,
@@ -191,11 +191,11 @@ export interface UpdateCheckResponse {
   digest: string
   /** release notes（Markdown；按纯文本渲染）。 */
   body: string
-  /** 检查失败原因（网络 / 解析问题），成功时为 `undefined`（Rust 的 `None`）。 */
+  /** 检查失败原因（网络 / 解析问题），成功时为 `undefined`（的 `None`）。 */
   error?: string
 }
 
-/** {@link UpdateCheckResponse} 的缺省值（Rust `UpdateCheckResponse::default()`）。 */
+/** {@link UpdateCheckResponse} 的缺省值（`UpdateCheckResponse::default()`）。 */
 export function defaultUpdateCheckResponse(): UpdateCheckResponse {
   return {
     hasUpdate: false,
@@ -225,15 +225,15 @@ export interface UpdateSnapshot {
   digest: string
   /** 发行说明（按纯文本渲染；{@link showsReleaseBody} 决定展示与否）。 */
   releaseBody: string
-  /** 失败原因（`failed` 时非空，直接展示给用户）；成功时**没有这个键**（Rust `None`）。 */
+  /** 失败原因（`failed` 时非空，直接展示给用户）；成功时**没有这个键**（`None`）。 */
   error?: string
-  /** 下载进度百分比 0..=100（`downloading` 时有效；Rust 是 `u32`，这里只保证上界 100）。 */
+  /** 下载进度百分比 0..=100（`downloading` 时有效；是 `u32`，这里只保证上界 100）。 */
   percent: number
   /** 已格式化的下载速度（例如 `2.0 KB/s`；与百分比同源，界面不要再换算）。 */
   speed: string
 }
 
-/** {@link UpdateSnapshot} 的缺省值：`idle` + 空字段（Rust `UpdateSnapshot::default()`）。 */
+/** {@link UpdateSnapshot} 的缺省值：`idle` + 空字段（`UpdateSnapshot::default()`）。 */
 export function defaultUpdateSnapshot(): UpdateSnapshot {
   return {
     status: UPDATE_STATUS_IDLE,
@@ -249,7 +249,7 @@ export function defaultUpdateSnapshot(): UpdateSnapshot {
 /**
  * 已发现的更新（检查成功、且版本比当前新）。
  *
- * Rust 里它没有 serde 派生（只在本模块内部传递），所以字段名保持原样，不做 camelCase。
+ * 里它没有 序列化 派生（只在本模块内部传递），所以字段名保持原样，不做 camelCase。
  */
 export interface AvailableUpdate {
   version: string
@@ -266,7 +266,7 @@ export interface AvailableUpdate {
  * 事件**自带完整结果**（检查的返回、下载的成败、进度），因此不需要第二个数据源 ——
  * 界面拿到的快照永远是完整的。
  *
- * `type` 的取值是 TS 侧的判别标签（Rust 的 `UpdateEvent` 不跨进程序列化）。
+ * `type` 的取值是 TS 侧的判别标签（的 `UpdateEvent` 不跨进程序列化）。
  */
 export type UpdateEvent =
   /** 开始检查更新。 */
@@ -299,7 +299,7 @@ export type UpdateEvent =
  * * "检查失败 ≠ 已是最新"：`check-finished` 带 `error` 一律进 `failed`；
  * * "只有下载中收进度"：`downloading` 之外的进度 / 完成 / 失败事件被丢弃，状态不会倒退。
  *
- * 事件与状态的关系（与 Rust 一致，含几处"不设前置条件"的落点）：
+ * 事件与状态的关系（与 一致，含几处"不设前置条件"的落点）：
  *
  * | 事件 | 生效条件 | 落点 |
  * |---|---|---|
@@ -462,11 +462,11 @@ export function isDownloaded(snapshot: UpdateSnapshot): boolean {
 
 // ---------------------------------------------------------------- 纯函数（原先在主进程里）
 
-/** `u64` 上界；超出的版本段按 Rust `parse::<u64>()` 的失败处理（记 0）。 */
+/** `u64` 上界；超出的版本段按 `parse::<u64>()` 的失败处理（记 0）。 */
 const U64_MAX = 0xffff_ffff_ffff_ffffn
 
 /**
- * Rust `str::parse::<u64>()`：可选一个 `+`、至少一位 ASCII 数字、不超 `u64` 上界；
+ * `str::parse::<u64>()`：可选一个 `+`、至少一位 ASCII 数字、不超 `u64` 上界；
  * 其它情况（空串、符号、空格、溢出）都是 `0`（对应 `unwrap_or(0)`）。
  *
  * 用 `BigInt` 而不是 `number`：`u64` 的取值超过 `Number.MAX_SAFE_INTEGER`，
@@ -485,7 +485,7 @@ function parseU64Segment(text: string): bigint {
   return value
 }
 
-/** Rust `str::trim_start_matches('v')`：剥掉**所有**前导 `v`（不是只剥一个）。 */
+/** `str::trim_start_matches('v')`：剥掉**所有**前导 `v`（不是只剥一个）。 */
 function trimLeadingVs(version: string): string {
   let start = 0
   while (start < version.length && version.charCodeAt(start) === 0x76) start += 1
@@ -515,7 +515,7 @@ export function isNewerVersion(latest: string, current: string): boolean {
   return false
 }
 
-/** Rust `str::to_ascii_lowercase`：只折叠 ASCII 大小写，非 ASCII 原样保留。 */
+/** `str::to_ascii_lowercase`：只折叠 ASCII 大小写，非 ASCII 原样保留。 */
 function asciiLowercase(value: string): string {
   let result = ''
   for (let index = 0; index < value.length; index += 1) {
@@ -529,7 +529,7 @@ function asciiLowercase(value: string): string {
  * 规范化 GitHub 的 `digest` 字段：`sha256:ABCD…` → 小写十六进制串。
  * 缺失、空串或只有前缀时返回 `null`，表示**跳过校验**。
  *
- * 与 Rust `trim_start_matches("sha256:")` 一致：前缀会被**反复**剥掉
+ * 与 `trim_start_matches("sha256:")` 一致：前缀会被**反复**剥掉
  *（`sha256:sha256:AB` → `ab`），且前缀本身大小写敏感（`SHA256:AB` → `sha256:ab`）。
  */
 export function normalizeDigest(digest: string | null): string | null {
@@ -552,20 +552,20 @@ export function digestMatches(expected: string | null, actualHex: string): boole
 const KIB = 1024
 const MIB = 1_048_576
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
-/** Rust `format!("{value}")` 的 `-0` 表现（JS 的 `String(-0)` 会吞掉负号）。 */
+/** `format!("{value}")` 的 `-0` 表现（JS 的 `String(-0)` 会吞掉负号）。 */
 function formatF64(value: number): string {
   return Object.is(value, -0) ? '-0' : String(value)
 }
 
 /**
- * Rust `format!("{value:.1}")`：保留一位小数、**四舍六入五成双**（ties-to-even）。
+ * `format!("{value:.1}")`：保留一位小数、**四舍六入五成双**（ties-to-even）。
  *
- * JS 的 `toFixed` 对半值远离零（`(1.25).toFixed(1) === "1.3"`，Rust 是 `1.2`），
+ * JS 的 `toFixed` 对半值远离零（`(1.25).toFixed(1) === "1.3"`，是 `1.2`），
  * 所以半值单独按偶数位取。这里的入参都 ≥ 1（KB/s、MB/s 两档），
  * 而能构成十进制半值的只可能是 `x.25` / `x.75` 这类二进制精确值，`×4` 判断可靠。
  */
@@ -585,7 +585,7 @@ function formatFixedOne(value: number): string {
  *
  * 展示契约：界面**直接显示**这个串，不再换算，所以它算用户可见文案。
  *
- * 与 Rust 的已知差异只在极端值：`{:.1}` 对 ±∞ 输出 `inf` / `-inf`，`toFixed` 输出
+ * 与 的已知差异只在极端值：`{:.1}` 对 ±∞ 输出 `inf` / `-inf`，`toFixed` 输出
  * `Infinity` / `-Infinity`；`{}` 对 ≥ 1e21 的整数输出完整数字，JS 会转成 `1e+21`。
  * 下载速度不会落在这些区间。
  */

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { closeWorkspace, currentWorkspace, hasWorkspace, openWorkspace } from '../../electron/db'
 import { openDatabase } from '../../electron/db/driver'
-import { AppError, ERR_CODE_COMPAT_WORKSPACE } from '../../shared/errors'
+import { AppError, ERR_CODE_SOURCE_WORKSPACE } from '../../shared/errors'
 
 const directories: string[] = []
 
@@ -62,18 +62,18 @@ describe('workspace database', () => {
     expect(count.count).toBe(0)
   })
 
-  it('rejects a compat workspace with the dedicated error code', () => {
+  it('rejects a source workspace with the dedicated error code', () => {
     const directory = temporaryDirectory()
-    const compat = openDatabase(join(directory, 'transactions.db'))
-    compat.exec('CREATE TABLE tbl_billadm_schema_migration (id TEXT, applied_at INTEGER)')
-    compat.close()
+    const source = openDatabase(join(directory, 'transactions.db'))
+    source.exec('CREATE TABLE tbl_billadm_schema_migration (id TEXT, applied_at INTEGER)')
+    source.close()
 
     try {
       openWorkspace(directory)
       throw new Error('应当拒绝源库')
     } catch (error) {
       expect(error).toBeInstanceOf(AppError)
-      expect((error as AppError).code).toBe(ERR_CODE_COMPAT_WORKSPACE)
+      expect((error as AppError).code).toBe(ERR_CODE_SOURCE_WORKSPACE)
     }
   })
 

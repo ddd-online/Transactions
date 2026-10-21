@@ -62,7 +62,7 @@ describe('section state', () => {
         }
       }
     }
-    // 失败优先：有内容但这次取数失败了 ⇒ Failed（不拿旧内容掩盖失败）
+    // 失败优先：有内容但这次取数失败了 ⇒ Failed（不拿先前内容掩盖失败）
     expect(sectionStateKeepingContent(false, false, true, '查询待办失败')).toBe(
       SectionState.Failed,
     )

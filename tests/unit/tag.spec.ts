@@ -226,7 +226,7 @@ describe('tag service', () => {
   })
 
   // 分类服务删除分类时走的就是这个 DAO 入口（见 category::deleteCategory 的同一事务）；
-  // 旧实现里服务层 delete_tags_by_category 的包装已删掉，直接测活路径。
+  // 既有行为里服务层 delete_tags_by_category 的包装已删掉，直接测活路径。
   it('delete tags by category only touches that category', () => {
     const workspace = openedWorkspace()
     createTag(workspace.db, 'l1', '三餐', '餐饮美食:expense')

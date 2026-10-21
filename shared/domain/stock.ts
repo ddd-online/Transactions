@@ -1,7 +1,7 @@
 /**
  * 股票域的**换算口径**：手 ↔ 股、价格 × 股数 = 成交额（全为整数分）。
  *
- * 这条链在 Rust 版里曾散在四处各写一遍（`total_lots * 100`、`fill.lots * 100`、`lots * 100`、
+ * 这条链在 版里曾散在四处各写一遍（`total_lots * 100`、`fill.lots * 100`、`lots * 100`、
  * 内联的 `price * lots * 100`）—— 而 `100` 是**A 股的每手股数**，属于那种"散在代码里、
  * 改一次要全文件找"的魔数。这里只放"手 → 股 → 金额"与"当前轮次的切法"这类能纯函数断言的算法，
  * 写入流水线与轮次推导不归这里。
@@ -174,7 +174,7 @@ export function currentRoundFee(tradesAsc: readonly StockTrade[]): RoundFee | nu
   return currentRoundTrades(tradesAsc)[0]?.roundFee ?? null
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }

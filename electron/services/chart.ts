@@ -1,11 +1,11 @@
 /**
  * 图表服务：预设图表的补齐与图表的增 / 删 / 改 / 查。
  *
- * 与旧 `tr-service/src/chart.rs` 的自由函数风格一致：无状态函数 + 显式 `Db` 入参。
+ * 与既有实现 的自由函数风格一致：无状态函数 + 显式 `Db` 入参。
  * `chart_lines` 的 JSON 编码是紧凑格式且字段顺序固定（预设图表的落库文本因此逐字节稳定）；
- * 解码时字段缺省按旧 DTO 的 `#[serde(default)]` 语义补默认值。
+ * 解码时字段缺省按既有 DTO 的 `缺省字段` 语义补默认值。
  *
- * 错误文案保持旧实现的固定前缀（`create chart failed` / `get chart failed` /
+ * 错误文案保持既有行为的固定前缀（`create chart failed` / `get chart failed` /
  * `unmarshal chart lines failed` / `marshal {title}` / `seed {title}`）——这些文本会原样
  * 经错误信封展示给用户，属于回归契约。
  */
@@ -140,9 +140,9 @@ function decodeConditionItem(value: unknown): QueryConditionItem {
 }
 
 /**
- * JSON → 曲线配置（旧 `decode_chart_lines` 的移植）。
+ * JSON → 曲线配置（既有 `decode_chart_lines` 的移植）。
  *
- * 缺字段补默认值（对应 DTO 的 `#[serde(default)]`）；未知字段丢弃（与 serde 的默认行为一致，
+ * 缺字段补默认值（对应 DTO 的 `缺省字段`）；未知字段丢弃（与 序列化 的默认行为一致，
  * 因此 decode → encode 往返不会把未知键带回去）。
  */
 function decodeChartLines(text: string): ChartLine[] {
@@ -312,7 +312,7 @@ export function listChartsByLedgerId(db: Db, ledgerId: string): ChartDto[] {
 /**
  * 更新图表（标题 / 粒度 / 曲线 / 类型 / 排序号）。
  *
- * 整行回写但保留 `isPreset` 与 `createdAt`（从库里读出的旧值），因此预设图表改完仍是预设。
+ * 整行回写但保留 `isPreset` 与 `createdAt`（从库里读出的原值），因此预设图表改完仍是预设。
  */
 export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
   let chart: Chart | null
@@ -321,7 +321,7 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
   } catch (error) {
     throw new AppError(`get chart failed: ${errorText(error)}`, { status: 500 })
   }
-  // 旧 DAO 的 `query_by_id` 返回 QueryReturnedNoRows，ServiceError 的 Display 固定为
+  // 既有 DAO 的 `query_by_id` 返回 QueryReturnedNoRows，ServiceError 的 Display 固定为
   // `record not found`；这里保持同一文案（服务层测试逐字断言）。
   if (chart === null) {
     throw new AppError('get chart failed: record not found', { status: 500 })

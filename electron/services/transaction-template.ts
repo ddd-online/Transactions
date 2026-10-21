@@ -13,7 +13,7 @@ import {
   updateTemplateSort,
 } from '../db/dao/transaction-template'
 
-/** 模板校验失败沿旧实现收敛为 500（不是 400）。 */
+/** 模板校验失败沿既有行为收敛为 500（不是 400）。 */
 function validate(dto: TransactionTemplateDto): void {
   if (!dto.templateName) throw new AppError('模板名称不能为空', { status: 500 })
   if (!(TRANSACTION_TYPES as readonly string[]).includes(dto.transactionType)) {

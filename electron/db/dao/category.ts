@@ -22,7 +22,7 @@ function fromRow(row: CategoryRow): Category {
 /**
  * 分类 DAO。
  *
- * 行为约定（与旧 `tr-store/src/dao/category.rs` 一致）：
+ * 行为约定（与既有 `tr-store/src/dao/category.rs` 一致）：
  * - `Category` 没有时间戳列，`create` / `update` 不碰 `created_at` / `updated_at`
  * - 列表排序固定为 `ORDER BY sort_order ASC, name DESC`
  * - 唯一键是 `(ledger_id, name, transaction_type)`，重复插入由 SQLite 报错；

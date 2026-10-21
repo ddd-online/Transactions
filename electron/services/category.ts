@@ -24,7 +24,7 @@ export type DefaultCategoryGroup = readonly [
 ]
 
 /**
- * 默认分类与标签（逐字固定，改动即破坏既有工作空间的数据兼容）：
+ * 默认分类与标签（逐字固定，改动即破坏既有工作空间的数据既有）：
  * 交易类型 → 分类名 → 标签名列表。共 19 个分类 / 57 个标签。
  */
 export const DEFAULT_DATA: readonly DefaultCategoryGroup[] = [
@@ -93,7 +93,7 @@ function errorText(error: unknown): string {
 }
 
 /**
- * 底层错误 → 500 + 原始错误文本（与旧 `ServiceError::Database` 的收敛方式一致）：
+ * 底层错误 → 500 + 原始错误文本（与既有 `ServiceError::Database` 的收敛方式一致）：
  * 排障信息不丢，重复插入仍能在文案里看到 `UNIQUE constraint failed`。
  */
 function internalError(action: string, error: unknown): AppError {
@@ -105,7 +105,7 @@ function internalError(action: string, error: unknown): AppError {
 /**
  * 写入默认分类与标签，返回 `[分类数, 标签数]`。
  *
- * **不使用事务**（与旧实现一致）：逐行插入，任一行失败即整体报错（已插入的行保留）。
+ * **不使用事务**（与既有行为一致）：逐行插入，任一行失败即整体报错（已插入的行保留）。
  */
 export function seedDefaultData(db: Db, ledgerId: string): [number, number] {
   let categoryCount = 0
@@ -246,7 +246,7 @@ export function countRecordsByCategories(
  * 为账本初始化默认分类与标签，返回 `[分类数, 标签数]`。
  *
  * 已有分类时报错（文案："该账本已有分类，无需初始化"）。
- * 该错误在旧实现里走 `ServiceError::Internal` 兜底为 500，不是 400。
+ * 该错误在既有行为里走 `ServiceError::Internal` 兜底为 500，不是 400。
  */
 export function initializeCategories(db: Db, ledgerId: string): [number, number] {
   logInfo(`开始初始化账本 ${ledgerId} 的分类`)

@@ -1,14 +1,14 @@
 /**
  * 股票持仓 + 账户总览服务。
  *
- * 逐条移植自兼容 `tr-service/src/stock.rs` 的 `get_overview` / `list_positions` /
+ * 逐条移植自既有实现 的 `get_overview` / `list_positions` /
  * `update_position_review` / `update_position_tag` 及其辅助函数（`trades_by_code` /
  * `has_open_round` / `compute_held_market_value` / `round_flows_of` / `fetch_held_quotes` /
  * `round_opened_on` / `flow_of` / `effective_position_tag`）。
  *
  * 行情源作为参数注入（{@link StockQuoteFetcher}），服务层**不自己创建** adapter：
  * 生产端用 `stock-quote` 的腾讯实现，测试注入确定性 stub。因为 Node 的网络 API 是异步的，
- * 读入口（{@link getOverview} / {@link listPositions}）返回 `Promise`（兼容是同步）。
+ * 读入口（{@link getOverview} / {@link listPositions}）返回 `Promise`（既有是同步）。
  *
  * 四条口径不能改：
  * * **可用现金** = 本金 + 累计利息归本 + Σ卖出净盈亏 − 累计支取 − 持仓成本
@@ -18,7 +18,7 @@
  * * **浮动盈亏** = Σ（持仓市值 + **本轮**资金变动），本轮资金变动由 `roundFlow` 给出；
  * * **行情缺失**按持仓成本计入市值，并计入 `quoteFailedCount`，绝不让总资产因外部接口失真。
  *
- * 一处切片边界：每日复盘的 DAO 还没随本切片移植，`dayReviews` 按旧 DAO 的同一条 SQL
+ * 一处切片边界：每日复盘的 DAO 还没随本切片移植，`dayReviews` 按既有 DAO 的同一条 SQL
  * （表 / 列 / `round_id = ''` / 日期倒序）就地读取，等每日复盘切片落地后再收进 DAO。
  */
 
@@ -55,14 +55,14 @@ import type { StockQuoteFetcher } from './stock-quote'
 /** 复盘 / 每日复盘正文上限（Unicode 码点）。 */
 const REVIEW_MAX_CHARS = 500
 
-/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成既有的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
   return new AppError(message, { status: 500 })
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
@@ -213,7 +213,7 @@ interface DayReviewRow {
 /**
  * 当前轮（`round_id = ''`）的每日复盘：一次取全账本，按股票分组（避免逐股查库）。
  *
- * SQL 与旧 `StockDao::list_unattached_day_reviews` 逐字一致；见文件头的切片边界说明。
+ * SQL 与既有 `StockDao::list_unattached_day_reviews` 逐字一致；见文件头的切片边界说明。
  */
 function dayReviewsByCode(db: Db, ledgerId: string): Map<string, StockDayReviewDto[]> {
   const rows = db
@@ -375,7 +375,7 @@ export async function listPositions(
 
 // ---------------------------------------------------------------- 持仓复盘 / 标签
 
-/** 取持仓；不存在时按兼容文案报 404。 */
+/** 取持仓；不存在时按既有文案报 404。 */
 function requirePosition(db: Db, ledgerId: string, stockCode: string): StockPosition {
   try {
     return getPosition(db, ledgerId, stockCode)

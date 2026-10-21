@@ -208,12 +208,12 @@ export function lotsOf(shares: number): number {
   return Math.floor(shares / SHARES_PER_LOT)
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
-/** Rust `format!("{value}")` 的 `-0` 表现（JS 的 `String(-0)` 会吞掉负号）。 */
+/** `format!("{value}")` 的 `-0` 表现（JS 的 `String(-0)` 会吞掉负号）。 */
 function formatF64(value: number): string {
   return Object.is(value, -0) ? '-0' : String(value)
 }
@@ -270,7 +270,7 @@ export function tradeTypeLabel(tradeType: string): string {
 
 /** 是否为买入方向（`open` / `add`）。 */
 export function isBuy(tradeType: string): boolean {
-  // 判据只有一份：与 Rust `tr_domain::stock::is_buy` 一致（用成交类型常量，不是裸字面量）
+  // 判据只有一份：与 `stock::is_buy` 一致（用成交类型常量，不是裸字面量）
   return tradeType === 'open' || tradeType === 'add'
 }
 
@@ -288,7 +288,7 @@ export function resultClass(pnl: number): string {
   return 'result-even'
 }
 
-/** Rust `parse::<u32>()`：可选 `+`、纯 ASCII 数字、且不超过 `u32` 上界。 */
+/** `parse::<u32>()`：可选 `+`、纯 ASCII 数字、且不超过 `u32` 上界。 */
 function parseU32(text: string): number | null {
   if (!/^\+?[0-9]+$/.test(text)) return null
   const value = Number(text)
@@ -304,7 +304,7 @@ export function shortDate(date: string): string {
   return `${month}-${day}`
 }
 
-/** 截断文本（超出时补 `…`，按**字符**计数，规则与 Rust `tr_domain::util` 一致）。 */
+/** 截断文本（超出时补 `…`，按**字符**计数，规则与 `util` 一致）。 */
 export function truncate(text: string, max: number): string {
   const chars = Array.from(text)
   if (chars.length <= max) return text

@@ -16,7 +16,7 @@ export type SortChange = readonly [index: number, key: string]
  * 重排列表并算出"需要落库的项"。
  *
  * 返回 `[新顺序, 需要落库的项]`；下标越界或原位返回 `null`（调用方据此什么都不做）。
- * `key` / `sortOrder` 直接对应旧实现里的闭包，`sortOrder` 用与下标相同的整数口径。
+ * `key` / `sortOrder` 直接对应既有行为里的闭包，`sortOrder` 用与下标相同的整数口径。
  */
 export function reorderWithChanges<T>(
   list: readonly T[],

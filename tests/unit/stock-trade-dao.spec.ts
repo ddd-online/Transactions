@@ -574,7 +574,7 @@ describe('stock-trade DAO', () => {
     )
     expect(queryStockName(workspace.db, '600000')).toBe('浦发银行')
 
-    // 最近一笔是空名称时按"查无记录"处理（与旧 SQL 的取行口径一致）
+    // 最近一笔是空名称时按"查无记录"处理（与既有 SQL 的取行口径一致）
     createTrade(workspace.db, makeTrade('newest-empty', 'o3', 1, 300, { stockName: '' }), 300)
     expectNotFound(() => queryStockName(workspace.db, '600000'))
   })

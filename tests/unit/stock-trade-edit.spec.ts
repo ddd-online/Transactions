@@ -28,10 +28,10 @@
  * * `create_then_edit_then_delete_stays_consistent`：建仓 → 改价 → 删委托的整条链路，
  *   以及删掉目标之后回滚走 `skipped` 路径。
  *
- * 时间戳全部用固定常量（`T1`–`T4` 或兼容原值），保证断言确定；资金记录的 `createdAt`
+ * 时间戳全部用固定常量（`T1`–`T4` 或既有原值），保证断言确定；资金记录的 `createdAt`
  * 是派生值（DAO 的 `MAX(now, 已有最大 + 1)`），只在明确要验"重放确定性"的地方比对。
  *
- * 每日复盘的 DAO 尚未随本切片移植（与兼容一样在服务里就地读写），测试也按旧表结构
+ * 每日复盘的 DAO 尚未随本切片移植（与既有一样在服务里就地读写），测试也按源表结构
  * 用参数化 SQL 造数 / 读回。
  */
 
@@ -102,7 +102,7 @@ const CODE = '600000'
 const NAME = '浦发银行'
 const CODE_B = '000001'
 const NAME_B = '平安银行'
-/** 协和电子：兼容"一次委托两笔成交"的回归标的。 */
+/** 协和电子：既有"一次委托两笔成交"的回归标的。 */
 const ORDER_CODE = '605258'
 const ORDER_NAME = '协和电子'
 
@@ -208,7 +208,7 @@ function closeRoundHelper(
   })
 }
 
-/** 兼容 `create_xiehe_order`：协和电子建仓 2 手 + 清仓两笔，返回**清仓**委托的成交。 */
+/** 既有 `create_xiehe_order`：协和电子建仓 2 手 + 清仓两笔，返回**清仓**委托的成交。 */
 function createXieheOrder(workspace: OpenedWorkspace) {
   setPrincipal(workspace.db, LEDGER, 10_000_000)
   createTradeOrder(workspace.db, {
@@ -234,7 +234,7 @@ function fundRecordOf(workspace: OpenedWorkspace, eventType: string) {
   return record
 }
 
-/** 某股持仓：行不存在时视为 (0, 0)（兼容 `position_of`）。 */
+/** 某股持仓：行不存在时视为 (0, 0)（既有 `position_of`）。 */
 function positionOf(workspace: OpenedWorkspace, code: string): [number, number] {
   try {
     const position = getPosition(workspace.db, LEDGER, code)
@@ -863,7 +863,7 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     ).toBe(true)
   })
 
-  it('treats an order-less compat trade as its own order', () => {
+  it('treats an order-less source trade as its own order', () => {
     const workspace = newWorkspace()
     setPrincipal(workspace.db, LEDGER, 10_000_000)
     const trade = createTrade(workspace.db, singleRequest({ tradeTime: T1 }))
@@ -882,7 +882,7 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     expect(updated.orderSeq).toBe(1)
     expect(getPosition(workspace.db, LEDGER, CODE).quantity).toBe(200)
 
-    // 删除时把 orderId 当作单笔成交 ID（同一兼容口径）
+    // 删除时把 orderId 当作单笔成交 ID（同一既有口径）
     deleteTradeOrder(workspace.db, { ledgerId: LEDGER, orderId: trade.id })
     expect(listTradesAsc(workspace.db, LEDGER, CODE)).toHaveLength(0)
     expect(positionOf(workspace, CODE)).toEqual([0, 0])

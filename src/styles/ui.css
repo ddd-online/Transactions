@@ -2149,7 +2149,7 @@
  *
  * 分两层：
  *   * `.chart__plot` 里是 **plotters 生成的 SVG**（网格 / Y 轴刻度 / 轴线 / 参考线 / 折线），
- *     它的颜色由 Rust 解析令牌后写进 SVG，**不再由 CSS 上色** ——
+ *     它的颜色由 解析令牌后写进 SVG，**不再由 CSS 上色** ——
  *     所以原来 `.chart__grid` / `.chart__axis` / `.chart__reference` / `.chart__ytick` /
  *     `.chart__line` 这几条规则已删除（plotters 的元素没有类名）。
  *   * `.chart__overlay` 是叠层：X 轴类目标签、悬停竖线、命中点。

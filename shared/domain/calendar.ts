@@ -27,14 +27,14 @@ export interface Ymd {
 
 const WEEKDAY_CN = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'] as const
 
-/** Rust `i32` 的取值范围（`parse` 溢出返回 `None`）。 */
+/** `i32` 的取值范围（`parse` 溢出返回 `None`）。 */
 const I32_MIN = -2_147_483_648
 const I32_MAX = 2_147_483_647
-/** Rust `u32` 的取值范围。 */
+/** `u32` 的取值范围。 */
 const U32_MAX = 4_294_967_295
 
 /**
- * 按 Rust 的 `str::parse::<i32>` 口径解析：允许前导 `+` / `-`，纯十进制数字，
+ * 按 的 `str::parse::<i32>` 口径解析：允许前导 `+` / `-`，纯十进制数字，
  * 不接受空白（整体 `trim` 由调用方负责），越界当解析失败。
  */
 function parseI32(raw: string): number | null {
@@ -44,7 +44,7 @@ function parseI32(raw: string): number | null {
   return value
 }
 
-/** 按 Rust 的 `str::parse::<u32>` 口径解析：不允许负号，越界当解析失败。 */
+/** 按 的 `str::parse::<u32>` 口径解析：不允许负号，越界当解析失败。 */
 function parseU32(raw: string): number | null {
   if (!/^\+?[0-9]+$/.test(raw)) return null
   const value = Number(raw)
@@ -53,7 +53,7 @@ function parseU32(raw: string): number | null {
 }
 
 /**
- * 按 Rust 的格式化宽度补零：宽度**包含符号位**（`{:04}` 对 -1 得 `-001`），
+ * 按 的格式化宽度补零：宽度**包含符号位**（`{:04}` 对 -1 得 `-001`），
  * 数字本身超宽时不截断。负年份只可能来自 {@link addDays} 的下溢。
  */
 function padNumber(value: number, width: number): string {
@@ -181,7 +181,7 @@ function isLeapYear(year: number): boolean {
 /** 月份加减（`delta` 可负）。 */
 export function addMonths(year: number, month: number, delta: number): [number, number] {
   const total = year * 12 + (month - 1) + delta
-  // Rust 的 div_euclid / rem_euclid：除数为正时就是向下取整与欧几里得余数
+  // 的 div_euclid / rem_euclid：除数为正时就是向下取整与欧几里得余数
   const nextYear = Math.floor(total / 12)
   const nextMonth = (((total % 12) + 12) % 12) + 1
   return [nextYear, nextMonth]
@@ -210,7 +210,7 @@ function weekdayIndex(year: number, month: number, day: number): number {
  */
 function dayNumber(date: Ymd): number {
   const year = date.month <= 2 ? date.year - 1 : date.year
-  // Rust 的整数除法向零截断；负数年份先减 399，保证 era 取到数学上的 floor
+  // 的整数除法向零截断；负数年份先减 399，保证 era 取到数学上的 floor
   const era = Math.trunc((year >= 0 ? year : year - 399) / 400)
   const yearOfEra = year - era * 400
   const shiftedMonth = (date.month + 9) % 12

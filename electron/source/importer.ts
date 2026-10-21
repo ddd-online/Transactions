@@ -18,14 +18,14 @@ import { openDatabase } from '../db/driver'
 import { migrate } from '../db/migrate'
 import { AppError } from '../../shared/errors'
 import type {
-  CompatImportProbe,
-  CompatImportProgress,
-  CompatImportReport,
-  CompatImportSumReport,
+  SourceImportProbe,
+  SourceImportProgress,
+  SourceImportReport,
+  SourceImportSumReport,
 } from '../../shared/types/import'
 
-/** 源格式 的 15 条迁移 id；缺一条就说明源库还没升级到可导入的格式。 */
-export const COMPAT_MIGRATIONS = [
+/** 源格式的 15 条迁移 id；缺一条就说明源库还没升级到可导入的格式。 */
+export const SOURCE_MIGRATIONS = [
   '20260101_key_event_ledger_date_composite_unique',
   '20260101_key_event_image_backfill_ledger_id',
   '20260918_stock_trade_backfill_order_id',
@@ -209,11 +209,11 @@ function tableRowCount(db: DatabaseSync | Db, table: string): number {
   return Number(row.count)
 }
 
-/** 只读探测：源库是否存在、是否已经是 源格式 格式、各表行数与金额合计。 */
-export function probeCompatWorkspace(sourceDir: string): CompatImportProbe {
+/** 只读探测：源库是否存在、是否已经是 源格式、各表行数与金额合计。 */
+export function probeSourceWorkspace(sourceDir: string): SourceImportProbe {
   const databasePath = join(sourceDir, 'transactions.db')
-  const base: CompatImportProbe = {
-    compat: false,
+  const base: SourceImportProbe = {
+    source: false,
     ready: false,
     sourceDir,
     databasePath,
@@ -229,13 +229,13 @@ export function probeCompatWorkspace(sourceDir: string): CompatImportProbe {
   const db = new DatabaseSync(databasePath, { readOnly: true })
   try {
     if (!tableExists(db, 'tbl_billadm_schema_migration')) {
-      return { ...base, message: '这不是 源格式 的 Transactions 工作空间（缺少迁移登记表）' }
+      return { ...base, message: '这不是 源格式的 Transactions 工作空间（缺少迁移登记表）' }
     }
     const rows = db.prepare('SELECT id FROM tbl_billadm_schema_migration').all() as Array<{
       id: string
     }>
     const ids = rows.map((row) => String(row.id))
-    const missing = COMPAT_MIGRATIONS.filter((id) => !ids.includes(id))
+    const missing = SOURCE_MIGRATIONS.filter((id) => !ids.includes(id))
     const counts: Record<string, number> = {}
     for (const spec of COPY_SPECS) {
       if (tableExists(db, spec.from)) counts[spec.to] = tableRowCount(db, spec.from)
@@ -246,7 +246,7 @@ export function probeCompatWorkspace(sourceDir: string): CompatImportProbe {
     }
     return {
       ...base,
-      compat: true,
+      source: true,
       ready: missing.length === 0,
       migrationCount: ids.length,
       missingMigrations: missing,
@@ -438,16 +438,16 @@ function missingAssetReferences(source: DatabaseSync, sourceDir: string): string
 }
 
 /**
- * 一次性导入旧工作空间。
+ * 一次性导入源工作空间。
  *
  * 源目录**只读**（先做 SQLite 快照再读）；目标目录必须是空的；
  * 失败时清掉目标里的半成品；成功时写 `import-report.json`。
  */
-export async function importCompatWorkspace(options: {
+export async function importSourceWorkspace(options: {
   sourceDir: string
   targetDir: string
-  onProgress?: (progress: CompatImportProgress) => void
-}): Promise<CompatImportReport> {
+  onProgress?: (progress: SourceImportProgress) => void
+}): Promise<SourceImportReport> {
   const sourceDir = resolve(options.sourceDir)
   const targetDir = resolve(options.targetDir)
   if (sourceDir.toLowerCase() === targetDir.toLowerCase()) {
@@ -461,8 +461,8 @@ export async function importCompatWorkspace(options: {
     throw new AppError('目标目录不是空目录，请换一个目录', { status: 409 })
   }
 
-  const probe = probeCompatWorkspace(sourceDir)
-  if (!probe.compat) throw new AppError(probe.message, { status: 409 })
+  const probe = probeSourceWorkspace(sourceDir)
+  if (!probe.source) throw new AppError(probe.message, { status: 409 })
   if (!probe.ready) throw new AppError(probe.message, { status: 409 })
 
   options.onProgress?.({ phase: 'probe' })
@@ -470,8 +470,8 @@ export async function importCompatWorkspace(options: {
   const targetWasCreated = !existsSync(targetDir)
   mkdirSync(targetDir, { recursive: true })
 
-  const temporary = mkdtempSync(join(tmpdir(), 'tr-compat-import-'))
-  const snapshotPath = join(temporary, 'compat.db')
+  const temporary = mkdtempSync(join(tmpdir(), 'tr-source-import-'))
+  const snapshotPath = join(temporary, 'source.db')
   const sourceDatabasePath = join(sourceDir, 'transactions.db')
   const sourceHashBefore = sha256File(sourceDatabasePath)
 
@@ -495,7 +495,7 @@ export async function importCompatWorkspace(options: {
 
     const warnings: string[] = []
     const tables: Array<{ table: string; rows: number }> = []
-    let sums: CompatImportSumReport[] = []
+    let sums: SourceImportSumReport[] = []
 
     const context: CopyContext = {
       source: snapshot,
@@ -552,7 +552,7 @@ export async function importCompatWorkspace(options: {
       throw new AppError('源数据库在导入过程中被修改，已中止', { status: 500 })
     }
 
-    const report: CompatImportReport = {
+    const report: SourceImportReport = {
       sourceDir,
       targetDir,
       sourceDigest,

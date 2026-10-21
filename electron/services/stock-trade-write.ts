@@ -41,7 +41,7 @@
  * ## 没有随本切片移植的部分
  *
  * `order_key_of` / `round_meta_key` 属"编辑成交 / 删除委托 / 回放"那条写入路径（`rebuild_trades`
- * 用它们给委托与轮次分组），`day_after` 属数据订正（`repair_compat_trade_fund_dates`）；
+ * 用它们给委托与轮次分组），`day_after` 属数据订正（`repair_source_trade_fund_dates`）；
  * 三者都不在下单语义里，等对应切片落地时随那片一起移植。
  */
 
@@ -109,12 +109,12 @@ import { ensureStockHistoryBackfill } from './stock-history'
 
 // ---------------------------------------------------------------- 小工具
 
-/** 旧 DAO 以 404 表示"查无此行"。 */
+/** 既有 DAO 以 404 表示"查无此行"。 */
 function isNotFound(error: unknown): boolean {
   return error instanceof AppError && error.status === 404
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
@@ -124,7 +124,7 @@ function emptyFee(): FeeBreakdown {
   return { commission: 0, stampDuty: 0, transferFee: 0, total: 0 }
 }
 
-/** 只留费用算法要的四项（旧 `RoundFee::from(&StockFeeSetting)`）。 */
+/** 只留费用算法要的四项（既有 `RoundFee::from(&StockFeeSetting)`）。 */
 function roundFeeOfSetting(setting: StockFeeSetting): RoundFee {
   return {
     commissionRate: setting.commissionRate,
@@ -134,7 +134,7 @@ function roundFeeOfSetting(setting: StockFeeSetting): RoundFee {
   }
 }
 
-/** 折成费用算法要的形态（旧 `RoundFee::to_setting`；`id` / `ledgerId` 留空）。 */
+/** 折成费用算法要的形态（既有 `RoundFee::to_setting`；`id` / `ledgerId` 留空）。 */
 function settingOfRoundFee(round: RoundFee): StockFeeSetting {
   return {
     id: '',
@@ -330,7 +330,7 @@ function attachUnattachedDayReviews(
   stockCode: string,
   roundId: string,
 ): void {
-  // 每日复盘的 DAO 尚未随本切片移植：按旧 DAO 的同一条 SQL 就地更新（列名 / 判定逐字一致）。
+  // 每日复盘的 DAO 尚未随本切片移植：按既有 DAO 的同一条 SQL 就地更新（列名 / 判定逐字一致）。
   db.prepare(
     'UPDATE stock_day_review SET round_id = ? ' +
       "WHERE ledger_id = ? AND stock_code = ? AND round_id = ''",
@@ -358,7 +358,7 @@ function closeRound(
   tag: string,
   review: string,
 ): string {
-  // 兼容存量数据：先归档历史上已完成但未挂接的轮次，避免与当前轮次混淆
+  // 既有存量数据：先归档历史上已完成但未挂接的轮次，避免与当前轮次混淆
   ensureStockHistoryBackfill(db, ledgerId, stockCode)
 
   let history: StockTradeHistory
@@ -411,7 +411,7 @@ function closeRound(
 /**
  * 记录一笔委托（不指定本轮费用设置：建仓时取账本系统配置）。
  *
- * 等价于旧 `create_trade_order`：它就是把 `round_fee = None` 转发给
+ * 等价于既有 `create_trade_order`：它就是把 `round_fee = None` 转发给
  * {@link createTradeOrderWithRoundFee}。
  */
 export function createTradeOrder(db: Db, request: CreateTradeOrderRequest): StockTradeDto[] {

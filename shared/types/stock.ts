@@ -1,13 +1,13 @@
 /**
  * 股票账户 / 设置 / 资金记录这一段的模型与 DTO 形状。
  *
- * 对应兼容：
- * * `tr-domain/src/models/stock.rs` 的 `StockAccount` / `StockFundRecord` /
+ * 对应既有：
+ * * `模型 stock.rs` 的 `StockAccount` / `StockFundRecord` /
  *   `StockTradeTagSetting` / `StockReviewSetting` / `StockOperation`；
- * * `tr-domain/src/dto/stock.rs` 的 `StockFundRecordDto` / `StockFundRecordPage` /
+ * * `DTO stock.rs` 的 `StockFundRecordDto` / `StockFundRecordPage` /
  *   `StockTradeTagSettingDto` / `StockReviewSettingDto` / `StockOperationDto`。
  *
- * 字段名是 **wire 契约**：Rust 侧 `#[serde(rename = "…")]` 把 snake_case 序列化成 camelCase，
+ * 字段名是 **wire 契约**：侧 `#[序列化(rename = "…")]` 把 snake_case 序列化成 camelCase，
  * 所以这里一律 camelCase；库列名仍是 snake_case，映射在 DAO 层显式书写。
  * 金额恒为整数「分」，时间戳恒为 Unix 秒。费用设置与 `RoundFee` 是共享模型
  * （`shared/domain/models`），不在这里重复声明。
@@ -117,9 +117,9 @@ export interface StockOperationDto {
 /**
  * 账户资金口径的回读结果（本切片能算出来的那部分）。
  *
- * 兼容 `set_principal` / `add_principal*` / `add_withdraw*` / `add_interest*` 回读的是
+ * 既有 `set_principal` / `add_principal*` / `add_withdraw*` / `add_interest*` 回读的是
  * `StockOverviewDto`；那份 DTO 里的持仓市值 / 浮动盈亏 / 行情失败数要有行情与成交流，
- * 属于持仓 / 成交切片。这里只给**现金口径**，公式与兼容一致：
+ * 属于持仓 / 成交切片。这里只给**现金口径**，公式与既有一致：
  * `availableCash = principal + interestTotal + sellNetPnlTotal − withdrawnTotal − positionCost`。
  */
 export interface StockAccountSummary {

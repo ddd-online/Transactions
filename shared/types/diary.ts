@@ -1,12 +1,12 @@
 /**
- * 日记的请求 / 响应形状（旧 `tr-domain/src/dto/diary.rs` + `wire.rs`）。
+ * 日记的请求 / 响应形状（既有 `DTO diary.rs` + `wire.rs`）。
  *
  * 模型本身（`DiaryEntry` / `DiaryDateItem`）在 `shared/domain/models`；这里只放
  * 跨进程边界的 DTO。
  *
- * **请求字段保持旧 wire 的 snake_case**：`ledger_id` 是账本的硬契约（与
- * `tr_linked_by_date` 等命令一致），不是内部模型的 camelCase。旧 DTO 全部
- * `#[serde(default)]`：缺字段时字符串退化为空串、`Option` 退化 `None`，请求类型里
+ * **请求字段保持既有 wire 的 snake_case**：`ledger_id` 是账本的硬契约（与
+ * `tr_linked_by_date` 等命令一致），不是内部模型的 camelCase。既有 DTO 全部
+ * `缺省字段`：缺字段时字符串退化为空串、`Option` 退化 `None`，请求类型里
  * 用可选字段表达这一层默认。
  *
  * **日记按账本隔离**：除扫描目录（纯文件系统操作）外，所有请求都带 `ledger_id`。

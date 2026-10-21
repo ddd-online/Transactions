@@ -9,7 +9,7 @@
  *
  * 取整口径：`Math.round` 对正数就是"四舍五入"；费用金额恒为正，
  * 因此正数上的取整结果不存在歧义。负数的半值走 `roundHalfAwayFromZero`，
- * 与 Rust `f64::round`（远离零）一致。
+ * 与 `f64::round`（远离零）一致。
  *
  * ## 收哪些费由**品种**决定（[`Instrument`]）
  *
@@ -159,7 +159,7 @@ export function withTotal(fee: Omit<FeeBreakdown, 'total'>): FeeBreakdown {
   }
 }
 
-/** Rust `f64::round`：四舍五入、远离零。费用恒为正，这里只是守住负半值的口径。 */
+/** `f64::round`：四舍五入、远离零。费用恒为正，这里只是守住负半值的口径。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }

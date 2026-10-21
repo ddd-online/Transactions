@@ -223,7 +223,7 @@ describe('fee', () => {
     // 非法代码回落到 sz（与从前一致，调用方会先校验）
     expect(marketPrefix('113050')).toBe('sz')
 
-    // 品种本身也带市场前缀（Rust `Instrument::market_prefix`）
+    // 品种本身也带市场前缀（`Instrument::market_prefix`）
     const fund: Instrument = 'shanghaiFund'
     expect(marketPrefix(fund)).toBe('sh')
   })

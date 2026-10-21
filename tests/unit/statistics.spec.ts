@@ -26,7 +26,7 @@ import {
   type StatisticsFilter,
 } from '../../shared/domain/statistics'
 
-/** 把 Rust 测试里的 `Err(message)` 断言落成"抛的是不是同一句文案"。 */
+/** 把 测试里的 `Err(message)` 断言落成"抛的是不是同一句文案"。 */
 function thrownMessage(run: () => unknown): string {
   try {
     run()
@@ -37,7 +37,7 @@ function thrownMessage(run: () => unknown): string {
 }
 
 describe('recent parsing', () => {
-  // Rust: missing_blank_and_unparsable_all_mean_no_limit
+  // : missing_blank_and_unparsable_all_mean_no_limit
   it('treats missing, blank and unparsable text as no limit', () => {
     expect(normalizeRecent(null)).toBeNull()
     expect(normalizeRecent(parseRecentText(''))).toBeNull()
@@ -47,14 +47,14 @@ describe('recent parsing', () => {
     expect(() => normalizeRecent(parseRecentText('abc'))).not.toThrow()
   })
 
-  // Rust: positive_numbers_are_kept
+  // : positive_numbers_are_kept
   it('keeps positive numbers', () => {
     expect(normalizeRecent(parseRecentText('1'))).toBe(1)
     expect(normalizeRecent(parseRecentText('20'))).toBe(20)
     expect(normalizeRecent(7)).toBe(7)
   })
 
-  // Rust: zero_and_negative_are_rejected_with_the_shared_message
+  // : zero_and_negative_are_rejected_with_the_shared_message
   it('rejects zero and negative numbers with the shared message', () => {
     expect(thrownMessage(() => normalizeRecent(0))).toBe(RECENT_NOT_POSITIVE)
     expect(thrownMessage(() => normalizeRecent(-5))).toBe(RECENT_NOT_POSITIVE)
@@ -62,12 +62,12 @@ describe('recent parsing', () => {
     expect(RECENT_NOT_POSITIVE).toBe('recent 必须为正整数')
   })
 
-  // Rust: text_is_not_trimmed
+  // : text_is_not_trimmed
   it('does not trim recent text', () => {
     expect(parseRecentText(' 5')).toBeNull()
   })
 
-  // Rust: months_are_half_open
+  // : months_are_half_open
   it('normalizes months, letting each end be open', () => {
     expect(normalizeMonth('')).toBeNull()
     expect(normalizeMonth('   ')).toBeNull()
@@ -77,7 +77,7 @@ describe('recent parsing', () => {
 })
 
 describe('filter shape', () => {
-  // Rust: an_empty_filter_is_unfiltered
+  // : an_empty_filter_is_unfiltered
   it('treats an empty filter as unfiltered', () => {
     const filter = defaultStatisticsFilter()
     expect(isUnfiltered(filter)).toBe(true)
@@ -86,7 +86,7 @@ describe('filter shape', () => {
     expect(filterTag(filter)).toBeNull()
   })
 
-  // Rust: each_part_alone_makes_it_filtered
+  // : each_part_alone_makes_it_filtered
   it('makes the filter filtered when any single part is set', () => {
     expect(isUnfiltered(createStatisticsFilter('2026-01', '', null, ''))).toBe(false)
     expect(isUnfiltered(createStatisticsFilter('', '2026-12', null, ''))).toBe(false)
@@ -94,7 +94,7 @@ describe('filter shape', () => {
     expect(isUnfiltered(createStatisticsFilter('', '', null, '打新'))).toBe(false)
   })
 
-  // Rust: range_and_recent_are_mutually_exclusive
+  // : range_and_recent_are_mutually_exclusive
   it('rejects a month range combined with a recent limit', () => {
     expect(
       thrownMessage(() => validateFilter(createStatisticsFilter('2026-01', '2026-06', 5, ''))),
@@ -117,14 +117,14 @@ describe('filter shape', () => {
     expect(() => validateFilter(createStatisticsFilter('   ', '', 5, ''))).not.toThrow()
   })
 
-  // Rust: a_negative_recent_is_rejected_wherever_it_comes_from
+  // : a_negative_recent_is_rejected_wherever_it_comes_from
   it('rejects a negative recent wherever it comes from', () => {
     expect(thrownMessage(() => validateFilter(createStatisticsFilter('', '', -1, '')))).toBe(
       RECENT_NOT_POSITIVE,
     )
   })
 
-  // Rust: the_default_strategy_is_cumulative
+  // : the_default_strategy_is_cumulative
   it('defaults to the cumulative strategy', () => {
     expect(createStatisticsFilter('', '', null, '').strategy).toBe('cumulative')
     expect(defaultStatisticsFilter().strategy).toBe('cumulative')
@@ -133,7 +133,7 @@ describe('filter shape', () => {
 })
 
 describe('statistics strategy', () => {
-  // Rust: strategy_wire_text_is_exact
+  // : strategy_wire_text_is_exact
   it('parses the exact wire text', () => {
     expect(parseStrategyWire('')).toBe('cumulative')
     for (const strategy of STATISTICS_STRATEGIES) {
@@ -144,7 +144,7 @@ describe('statistics strategy', () => {
     expect(thrownMessage(() => parseStrategyWire(' '))).toBe(STRATEGY_INVALID)
   })
 
-  // Rust: every_strategy_has_a_name
+  // : every_strategy_has_a_name
   it('gives every strategy a distinct non-empty name and wire value', () => {
     const labels = STATISTICS_STRATEGIES.map(strategyLabel)
     expect(labels).toEqual(['逐笔累计', '分组统计'])
@@ -156,7 +156,7 @@ describe('statistics strategy', () => {
     expect(wires).toEqual(['cumulative', 'grouped'])
   })
 
-  // Rust: grouped_requires_a_size_in_range
+  // : grouped_requires_a_size_in_range
   it('requires a group size within range for grouped statistics', () => {
     const grouped = (size: number | null): StatisticsFilter =>
       withStrategy(createStatisticsFilter('', '', null, ''), 'grouped', size)
@@ -175,7 +175,7 @@ describe('statistics strategy', () => {
     expect(thrownMessage(() => validateFilter(grouped(null)))).toBe(GROUP_SIZE_INVALID)
   })
 
-  // Rust: a_size_is_ignored_under_cumulative
+  // : a_size_is_ignored_under_cumulative
   it('ignores the group size under cumulative statistics', () => {
     const filter = withStrategy(createStatisticsFilter('', '', null, ''), 'cumulative', 1)
     expect(() => validateFilter(filter)).not.toThrow()
@@ -187,7 +187,7 @@ describe('statistics strategy', () => {
     ).not.toThrow()
   })
 
-  // Rust: grouping_does_not_make_a_filter
+  // : grouping_does_not_make_a_filter
   it('does not treat grouping as filtering', () => {
     const filter = withStrategy(createStatisticsFilter('', '', null, ''), 'grouped', 5)
     expect(isUnfiltered(filter)).toBe(true)

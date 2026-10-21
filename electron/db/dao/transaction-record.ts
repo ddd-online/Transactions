@@ -16,7 +16,7 @@ import {
 import { AppError } from '../../../shared/errors'
 
 /**
- * 消费记录 DAO（旧 `tr-store/src/dao/transaction_record.rs` 的逐条移植）。
+ * 消费记录 DAO（既有 `tr-store/src/dao/transaction_record.rs` 的逐条移植）。
  *
  * 行为约定：
  * - 筛选、排序、统计、图表分桶**全部在 SQL 里完成**，SQL 形状逐条固定；
@@ -29,7 +29,7 @@ import { AppError } from '../../../shared/errors'
  * - 看板分类聚合按**时段合计**，不分桶。
  *
  * SQL 只拼常量片段：值一律 `?`，`ORDER BY` 的列名与方向都来自白名单。
- * 旧表的 `price` 列在新 schema 里叫 `amount_cents`（金额恒为整数分）。
+ * 源表的 `price` 列在新 schema 里叫 `amount_cents`（金额恒为整数分）。
  */
 
 const TABLE = 'transaction_record'
@@ -39,7 +39,7 @@ const COLUMNS =
   'transaction_id, ledger_id, amount_cents, transaction_type, category, description, ' +
   'flags, key_event_date, transaction_at, created_at, updated_at'
 
-/** 排序白名单：旧 wire 字段名 → 新列名（`price` 列已改名为 `amount_cents`）。 */
+/** 排序白名单：既有 wire 字段名 → 新列名（`price` 列已改名为 `amount_cents`）。 */
 const SORT_COLUMNS: Readonly<Record<string, string>> = {
   transactionAt: 'transaction_at',
   transactionType: 'transaction_type',
@@ -83,7 +83,7 @@ function nowUnix(): number {
   return Math.floor(Date.now() / 1000)
 }
 
-/** 旧 DAO 以 `QueryReturnedNoRows` 表示"查无此行"；这里对应 404。 */
+/** 既有 DAO 以 `QueryReturnedNoRows` 表示"查无此行"；这里对应 404。 */
 function notFound(transactionId: string): AppError {
   return new AppError(`交易记录不存在: ${transactionId}`, { status: 404 })
 }
@@ -135,7 +135,7 @@ export function createBatch(db: Db, records: readonly TransactionRecord[]): void
   }
 }
 
-/** 按 ID 查询；不存在时抛 404（旧 DAO 抛 `QueryReturnedNoRows`）。 */
+/** 按 ID 查询；不存在时抛 404（既有 DAO 抛 `QueryReturnedNoRows`）。 */
 export function queryById(db: Db, transactionId: string): TransactionRecord {
   const row = db
     .prepare(`SELECT ${COLUMNS} FROM ${TABLE} WHERE transaction_id = ?`)
@@ -273,7 +273,7 @@ export function queryChartLineData(
  * 支出按分类分组（金额降序、同额按分类名升序）。返回分类、金额（分）、笔数。
  *
  * `tsRange` 必须是 `[起, 止]` 两个端点（服务层负责算出本地边界）；缺项按 0 处理，
- * 与旧 DAO 的 `range_args` 一致。
+ * 与既有 DAO 的 `range_args` 一致。
  */
 export function sumExpenseByCategory(
   db: Db,

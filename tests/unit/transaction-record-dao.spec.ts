@@ -325,7 +325,7 @@ describe('transaction record dao', () => {
     })
     expect(ids(queryFiltered(db, allNot))).toEqual(['t3', 't2'])
 
-    // 未知 policy 按 any 处理（旧 DAO 的 else 分支）。
+    // 未知 policy 按 any 处理（既有 DAO 的 else 分支）。
     expect(
       ids(
         queryFiltered(
@@ -438,7 +438,7 @@ describe('transaction record dao', () => {
     // 只有 offset（limit <= 0）：SQLite 用 LIMIT -1 OFFSET ? 表示不限制。
     expect(ids(queryFiltered(db, condition({ limit: -1, offset: 2 })))).toEqual(['t2', 't1'])
 
-    // limit = 0 与 offset = 0 都不算分页（旧 DAO 只在 > 0 时拼子句）。
+    // limit = 0 与 offset = 0 都不算分页（既有 DAO 只在 > 0 时拼子句）。
     expect(queryFiltered(db, condition({ limit: 0 })).items).toHaveLength(4)
     expect(ids(queryFiltered(db, condition({ limit: 2, offset: 0 })))).toEqual(['t4', 't3'])
 
@@ -469,7 +469,7 @@ describe('transaction record dao', () => {
       ids(queryFiltered(db, condition({ sortFields: [{ field: 'transactionAt', order: 'desc' }] }))),
     ).toEqual(['t2', 't3', 't1'])
 
-    // 旧 wire 的金额排序字段仍叫 price，映射到新列 amount_cents。
+    // 既有 wire 的金额排序字段仍叫 price，映射到新列 amount_cents。
     expect(
       ids(queryFiltered(db, condition({ sortFields: [{ field: 'price', order: 'asc' }] }))),
     ).toEqual(['t2', 't3', 't1'])
@@ -695,7 +695,7 @@ describe('transaction record dao', () => {
       { category: 'a', amountCents: 200, count: 1 },
     ])
 
-    // 旧 DAO 的垃圾进垃圾出：缺端点按 0 处理，因此空区间没有命中。
+    // 既有 DAO 的垃圾进垃圾出：缺端点按 0 处理，因此空区间没有命中。
     expect(sumExpenseByCategory(db, 'l1', [])).toEqual([])
     expect(sumExpenseByCategory(db, 'l1', [0])).toEqual([])
   })

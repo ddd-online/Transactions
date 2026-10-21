@@ -1,5 +1,5 @@
 /**
- * 日记 DAO（**按账本隔离**），逐条移植自旧 `tr-store/src/dao/diary.rs`。
+ * 日记 DAO（**按账本隔离**），逐条移植自既有 `tr-store/src/dao/diary.rs`。
  *
  * 三处必须照抄的细节：
  * 1. `listDates` / `listDatesByKeyword` 只 SELECT `date, word_count, mood`，其余字段保持
@@ -43,7 +43,7 @@ function nowUnix(): number {
   return Math.floor(Date.now() / 1000)
 }
 
-/** 旧 DAO 以 `QueryReturnedNoRows` 表示"查无此行"；对外文案固定为 `record not found`。 */
+/** 既有 DAO 以 `QueryReturnedNoRows` 表示"查无此行"；对外文案固定为 `record not found`。 */
 function notFound(): AppError {
   return new AppError('record not found', { status: 404 })
 }
@@ -114,7 +114,7 @@ export function queryByDate(db: Db, ledgerId: string, date: string): DiaryEntry 
  * 幂等写入（同账本同日期冲突则更新正文 / 字数 / 心情）。
  *
  * `now` 只用于**新插入**那一行；冲突分支不触碰 `created_at` / `updated_at`，
- * 与旧 DAO 的 `ON CONFLICT ... DO UPDATE` 更新列表逐字一致。
+ * 与既有 DAO 的 `ON CONFLICT ... DO UPDATE` 更新列表逐字一致。
  */
 export function upsert(db: Db, entry: DiaryEntry, now = nowUnix()): void {
   db.prepare(

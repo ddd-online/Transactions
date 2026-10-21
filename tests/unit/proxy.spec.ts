@@ -18,7 +18,7 @@ import {
 } from '../../shared/domain/proxy'
 
 /**
- * 模拟配置层的 serde `#[serde(default)]`：空对象 / 缺字段 → 回落到默认（auto）。
+ * 模拟配置层的 序列化 `缺省字段`：空对象 / 缺字段 → 回落到默认（auto）。
  * 真正的配置解码归外壳，这里只用来断言「缺省 = auto」这一契约。
  */
 function decodeStoredProxy(raw: unknown): ProxySetting {

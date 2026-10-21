@@ -28,8 +28,8 @@ import {
 } from '../../shared/domain/chart'
 
 // 图表几何与取数断言：
-// 测试名、SVG 探针、断言里的字符串与数字都与 Rust 版一致。
-// Rust 的 `assert_eq!(option, Some(x))` 在这里是 `expect(...).toBe(x)`，`None` 是 `toBeNull()`。
+// 测试名、SVG 探针、断言里的字符串与数字都与 版一致。
+// 的 `assert_eq!(option, Some(x))` 在这里是 `expect(...).toBe(x)`，`None` 是 `toBeNull()`。
 // `f32::EPSILON` 不是 `Number.EPSILON`（后者是 f64 的），单独写出来。
 const F32_EPSILON = 1.1920928955078125e-7
 
@@ -70,7 +70,7 @@ function ticks(min: number, max: number, splits: number): number[] {
   return Array.from({ length: splits + 1 }, (_, index) => min + step * index)
 }
 
-/** Rust 测试里的 `.unwrap()`：算不出范围就让测试直接失败。 */
+/** 测试里的 `.unwrap()`：算不出范围就让测试直接失败。 */
 function unwrapRange(
   range: readonly [number, number, number] | null,
 ): readonly [number, number, number] {

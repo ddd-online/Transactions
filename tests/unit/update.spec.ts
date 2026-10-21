@@ -39,7 +39,7 @@ import {
   type UpdateStatus,
 } from '../../shared/domain/update'
 
-/** 测试里反复出现的安装包地址（与 Rust 测试里的 `x.exe` 一致）。 */
+/** 测试里反复出现的安装包地址（与 测试里的 `x.exe` 一致）。 */
 const DOWNLOAD_URL = 'https://github.com/ddd-online/Transactions/x.exe'
 
 /** 造一份"检查成功、有新版本"的快照（状态机的起点）。 */
@@ -71,7 +71,7 @@ function failedCheck(message: string): UpdateCheckResponse {
 }
 
 /**
- * 模拟 Rust `#[serde(default)]` 的快照反序列化：缺字段回落到默认值、`error` 缺省为
+ * 模拟 `缺省字段` 的快照反序列化：缺字段回落到默认值、`error` 缺省为
  * `undefined`。真正的解码归外壳（IPC 信封），这里只用来断言"缺字段的旧载荷不会炸"。
  */
 function decodeSnapshot(raw: unknown): UpdateSnapshot {
@@ -93,7 +93,7 @@ function decodeSnapshot(raw: unknown): UpdateSnapshot {
   }
 }
 
-/** 状态取值集合的运行时成员检查（serde 反序列化会拒绝词表外的词）。 */
+/** 状态取值集合的运行时成员检查（序列化 反序列化会拒绝词表外的词）。 */
 function isUpdateStatus(value: unknown): value is UpdateStatus {
   return typeof value === 'string' && (UPDATE_STATUSES as readonly string[]).includes(value)
 }
@@ -397,7 +397,7 @@ describe('update', () => {
     expect(word(UPDATE_STATUS_DOWNLOADING)).toBe('"downloading"')
     expect(word(UPDATE_STATUS_DOWNLOADED)).toBe('"downloaded"')
     expect(word(UPDATE_STATUS_FAILED)).toBe('"failed"')
-    // 缺省状态是 idle（`#[serde(default)]` 的兜底）
+    // 缺省状态是 idle（`缺省字段` 的兜底）
     expect(defaultUpdateSnapshot().status).toBe(UPDATE_STATUS_IDLE)
   })
 
@@ -420,7 +420,7 @@ describe('update', () => {
     // 成功时不该带 error 字段（`skip_serializing_if = "Option::is_none"`）
     expect('error' in value).toBe(false)
 
-    // 缺字段的载荷按默认值反序列化（兼容本进程 / 手写测试数据）
+    // 缺字段的载荷按默认值反序列化（既有本进程 / 手写测试数据）
     const partial = decodeSnapshot(JSON.parse('{"status":"failed","error":"坏了"}'))
     expect(partial.status).toBe(UPDATE_STATUS_FAILED)
     expect(partial.error).toBe('坏了')
@@ -470,7 +470,7 @@ describe('update', () => {
 
   // ------------------------------------------------------------ 补充覆盖
   //
-  // Rust 版的单测只直接断言了"允许的迁移"；下面三条把迁移表里**不生效**的分支、
+  // 版的单测只直接断言了"允许的迁移"；下面三条把迁移表里**不生效**的分支、
   // 两个不设前置条件的事件，以及 `available_info` / `back_to_available` 的边界补上。
 
   /** 当前状态不允许的事件等于原样返回（宽进：不报错、不改值、不倒退）。 */
@@ -491,7 +491,7 @@ describe('update', () => {
     // `check-started` 不看当前状态：终态只能靠"重新检查"离开（按钮可用性由 allowsNewCheck 管）
     expect(applyUpdateEvent(done, { type: 'check-started' }).status).toBe(UPDATE_STATUS_CHECKING)
 
-    // `download-cancelled` 同样不看前置条件：idle 上取消 → available（Rust 原样保留）
+    // `download-cancelled` 同样不看前置条件：idle 上取消 → available（原样保留）
     const cancelledFromIdle = applyUpdateEvent(defaultUpdateSnapshot(), { type: 'download-cancelled' })
     expect(cancelledFromIdle.status).toBe(UPDATE_STATUS_AVAILABLE)
     expect(cancelledFromIdle.latestVersion).toBe('')

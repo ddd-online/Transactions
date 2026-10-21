@@ -1,4 +1,4 @@
-# fixtures/compat
+# fixtures/source
 
 导入器测试使用的源格式基线，全部为合成数据。
 
@@ -9,7 +9,7 @@
 重新生成：
 
 ```powershell
-node scripts/generate-compat-seed-sql.mjs <source.db> fixtures\compat\seed.sql
+node scripts/generate-source-seed-sql.mjs <source.db> fixtures\source\seed.sql
 ```
 
 真实个人数据绝不进入本目录。

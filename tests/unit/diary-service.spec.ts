@@ -58,7 +58,7 @@ describe('diary dao', () => {
     diaryDao.upsert(db, makeEntry('d1', 'l1', '2026-01-02', '第一天', '开心'), 1_700_000_000)
     const first = diaryDao.queryByDate(db, 'l1', '2026-01-02')
 
-    // 旧测试用 1.1 秒的 sleep 制造时间差；这里显式传入 now，行为等价且不拖慢用例
+    // 既有测试用 1.1 秒的 sleep 制造时间差；这里显式传入 now，行为等价且不拖慢用例
     diaryDao.upsert(db, makeEntry('d2', 'l1', '2026-01-02', '第一天改', '平静'), 1_700_000_100)
     const second = diaryDao.queryByDate(db, 'l1', '2026-01-02')
 

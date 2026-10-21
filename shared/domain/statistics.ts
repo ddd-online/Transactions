@@ -21,7 +21,7 @@
  * "筛掉哪些记录"，而是"把入选的记录切成哪些统计点"，所以 {@link isUnfiltered} 不看它 ——
  * 全量 + 分组依然是"没筛"。
  *
- * Rust 的 `Result<_, &'static str>` 在这里一律是"抛 `new Error(同一句文案)`"；
+ * 的 `Result<_, &'static str>` 在这里一律是"抛 `new Error(同一句文案)`"；
  * `Option<T>` 是 `T | null`。
  */
 
@@ -61,7 +61,7 @@ export const GROUP_SIZE_MAX = 1000
  */
 export type StatisticsStrategy = 'cumulative' | 'grouped'
 
-/** 两个口径（顺序即界面下拉里的顺序）。对应 Rust 的 `StatisticsStrategy::ALL`。 */
+/** 两个口径（顺序即界面下拉里的顺序）。对应 的 `StatisticsStrategy::ALL`。 */
 export const STATISTICS_STRATEGIES: readonly StatisticsStrategy[] = ['cumulative', 'grouped']
 
 /** 默认口径：逐笔累计（字段缺省、空串都是它）。 */
@@ -100,18 +100,18 @@ export function parseStrategyWire(raw: string): StatisticsStrategy {
   }
 }
 
-/** Rust `i64` 的上下界：解析超界的文本按"解析失败"处理。 */
+/** `i64` 的上下界：解析超界的文本按"解析失败"处理。 */
 const I64_MIN = -(2n ** 63n)
 const I64_MAX = 2n ** 63n - 1n
 
-/** Rust `i64::from_str` 认的写法：可选正负号 + ASCII 数字，不接受空白 / 小数点 / 下划线。 */
+/** `i64::from_str` 认的写法：可选正负号 + ASCII 数字，不接受空白 / 小数点 / 下划线。 */
 const INTEGER_TEXT = /^[+-]?[0-9]+$/
 
 /**
  * 文本 → 数字那一半：**解析失败一律 `null`**（宽松，与既有行为逐字一致；不做 trim）。
  *
  * 超出 `i64` 范围也算解析失败。TS 的 `number` 超过 `Number.MAX_SAFE_INTEGER` 时会舍入，
- * 但调用方只用它判断"正数 / 不限"并取笔数，故按 Rust 的值域收下。
+ * 但调用方只用它判断"正数 / 不限"并取笔数，故按 的值域收下。
  */
 export function parseRecentText(raw: string): number | null {
   if (!INTEGER_TEXT.test(raw)) return null
@@ -175,7 +175,7 @@ export function createStatisticsFilter(
   }
 }
 
-/** Rust 的 `StatisticsFilter::default()`：两端 / 标签为空、不限额、逐笔累计、无组大小。 */
+/** 的 `StatisticsFilter::default()`：两端 / 标签为空、不限额、逐笔累计、无组大小。 */
 export function defaultStatisticsFilter(): StatisticsFilter {
   return createStatisticsFilter('', '', null, '')
 }
@@ -194,22 +194,22 @@ export function withStrategy(
   return { ...filter, strategy, groupSize: size }
 }
 
-/** 月份区间那一端（`null` = 不限）。对应 Rust 的 `StatisticsFilter::start`。 */
+/** 月份区间那一端（`null` = 不限）。对应 的 `StatisticsFilter::start`。 */
 export function filterStart(filter: StatisticsFilter): string | null {
   return normalizeMonth(filter.startMonth)
 }
 
-/** 月份区间那一端（`null` = 不限）。对应 Rust 的 `StatisticsFilter::end`。 */
+/** 月份区间那一端（`null` = 不限）。对应 的 `StatisticsFilter::end`。 */
 export function filterEnd(filter: StatisticsFilter): string | null {
   return normalizeMonth(filter.endMonth)
 }
 
-/** 标签筛选（`null` = 不限）。对应 Rust 的 `StatisticsFilter::tag_filter`。 */
+/** 标签筛选（`null` = 不限）。对应 的 `StatisticsFilter::tag_filter`。 */
 export function filterTag(filter: StatisticsFilter): string | null {
   return normalizeMonth(filter.tag)
 }
 
-/** 是不是"什么都不筛"（全量）；统计口径不参与判断。对应 Rust 的 `is_unfiltered`。 */
+/** 是不是"什么都不筛"（全量）；统计口径不参与判断。对应 的 `is_unfiltered`。 */
 export function isUnfiltered(filter: StatisticsFilter): boolean {
   return (
     filterStart(filter) === null &&
@@ -226,8 +226,8 @@ export function isUnfiltered(filter: StatisticsFilter): boolean {
  * 的口径从前只写在服务层的 `if` 里。
  *
  * 注意 `recent` 已是"归一化之后"的值（`null` = 不限），所以这里不处理 `recent == 0`；
- * 负数只在调用方绕过归一化时才会出现，保留判断以防万一（非整数同理，Rust 侧由 `i64` 保证）。
- * 校验顺序与 Rust 一致：`recent` 负数 → 区间与笔数互斥 → 分组笔数。
+ * 负数只在调用方绕过归一化时才会出现，保留判断以防万一（非整数同理，侧由 `i64` 保证）。
+ * 校验顺序与 一致：`recent` 负数 → 区间与笔数互斥 → 分组笔数。
  */
 export function validateFilter(filter: StatisticsFilter): void {
   if (filter.recent !== null && (!Number.isInteger(filter.recent) || filter.recent < 0)) {

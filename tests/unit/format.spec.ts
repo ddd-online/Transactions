@@ -65,7 +65,7 @@ describe('format', () => {
     expect(signedYuan(12_345)).toBe('+123.45')
     expect(signedYuan(-12_345)).toBe('-123.45')
     expect(signedYuan(0)).toBe('0.00')
-    // Rust 用 `i64::MIN` 验证 saturating_abs；JS 的 number 存不下 i64::MIN，
+    // 用 `i64::MIN` 验证 saturating_abs；JS 的 number 存不下 i64::MIN，
     // 改用安全整数下界验证同一条契约：不会出现 `--`。
     expect(signedYuan(Number.MIN_SAFE_INTEGER)).toBe('-90071992547409.91')
   })

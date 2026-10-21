@@ -48,9 +48,9 @@ import {
 import { logError } from '../logging'
 
 /**
- * 待办服务：卡片（主题） / 事项 / 进度记录（旧 `tr-service/src/todo.rs` 的逐条移植）。
+ * 待办服务：卡片（主题） / 事项 / 进度记录（既有实现 的逐条移植）。
  *
- * 三条纪律（与旧实现一致）：
+ * 三条纪律（与既有行为一致）：
  * * **按账本隔离**：每个带账本的写操作都先取行再比 `ledgerId`，取到的行不属于本账本时
  *   一律当作「不存在」（不区分「没有这行」与「是别的账本的」）；
  * * **完成不搬数据**：把 `status` 写成 `done` 并记完成时刻即可 —— 卡片视图只取进行中的、
@@ -62,14 +62,14 @@ import { logError } from '../logging'
  * （源库 11 档数据由迁移 `20260929_todo_levels_snap` 就近归档，导入前置条件保证已跑过），
  * 这里不静默改写用户本次输入。
  *
- * 错误状态码沿用旧 `AppError`：校验 400、查无此行 404、其它 500。
+ * 错误状态码沿用既有 `AppError`：校验 400、查无此行 404、其它 500。
  */
 
 // ---------------------------------------------------------------- 校验
 
 /**
  * 去掉首尾空白、校验非空，并按**字符**（Unicode 码点，不是 UTF-16 码元、不是字节）
- * 截断到上限。与旧 `tr_domain::util::truncate_chars` 同一口径。
+ * 截断到上限。与既有 `util::truncate_chars` 同一口径。
  */
 function requireText(value: string, emptyMessage: string, maxChars: number): string {
   const text = value.trim()
@@ -84,7 +84,7 @@ const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 /**
  * 日期：**空串允许**（= 没填），否则必须是严格的 `YYYY-MM-DD`。
  *
- * 与旧 `stock::parse_strict_date` 同一口径：**恰好 10 个 ASCII 字符、零填充、日期真实存在**
+ * 与既有 `stock::parse_strict_date` 同一口径：**恰好 10 个 ASCII 字符、零填充、日期真实存在**
  * （含闰年），`2026/01/05` 与 `2026-1-5` 都会被拒绝。日记的校验是同一套规则。
  */
 function normalizeDate(value: string): string {
@@ -106,7 +106,7 @@ function normalizeDate(value: string): string {
 /**
  * 紧急度 / 重要度只能是六档之一（低 / 中低 / 次低 / 次高 / 中高 / 高）。
  *
- * 旧测试明确断言 `0` / `±4` / `6` 不再合法（上一版的 11 档与「没填」的 0 已由迁移归档）。
+ * 既有测试明确断言 `0` / `±4` / `6` 不再合法（上一版的 11 档与「没填」的 0 已由迁移归档）。
  */
 function checkLevel(value: number, label: string): void {
   if ((TODO_LEVELS as readonly number[]).includes(value)) return
@@ -291,7 +291,7 @@ export function updateCardSort(db: Db, cardId: string, sortOrder: number): void 
  * 删卡片：同一个事务里连它的事项与进度记录一起删。
  *
  * 删除只按 id（与图表 / 模板 / 事件的删除同一约定）：界面上的行本来就来自当前账本，
- * 而旧 wire 的 `IdRequest` 只带 id —— 不为此多定义一个请求结构。
+ * 而既有 wire 的 `IdRequest` 只带 id —— 不为此多定义一个请求结构。
  */
 export function deleteCard(db: Db, cardId: string): void {
   try {

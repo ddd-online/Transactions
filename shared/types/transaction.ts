@@ -1,20 +1,20 @@
 /**
- * 消费记录 DAO 的查询形状（对应旧 `tr-domain/src/dto/core.rs` 的 DTO）。
+ * 消费记录 DAO 的查询形状（对应既有 `DTO core.rs` 的 DTO）。
  *
- * 字段名与旧 wire 契约一致（camelCase）；模型本身在 `shared/domain/models`。
+ * 字段名与既有 wire 契约一致（camelCase）；模型本身在 `shared/domain/models`。
  * 金额恒为整数分，时间戳恒为 Unix 秒。
  */
 
 import type { QueryConditionItem, TransactionRecord } from '../domain/models'
 
-/** 排序字段（旧 `QueryConditionSortField`）；`field` 的取值走 DAO 的白名单。 */
+/** 排序字段（既有 `QueryConditionSortField`）；`field` 的取值走 DAO 的白名单。 */
 export interface QueryConditionSortField {
   field: string
   /** `asc` 升序；其它值（含空串）一律按降序。 */
   order: string
 }
 
-/** 消费记录查询条件（旧 `TrQueryCondition`）。 */
+/** 消费记录查询条件（既有 `TrQueryCondition`）。 */
 export interface TrQueryCondition {
   ledgerId: string
   /** 默认 -1（不分页）；只有 `> 0` 才生效。 */
@@ -42,14 +42,14 @@ export interface TrFilterResult {
   statistics: TrStatistics
 }
 
-/** 单条曲线的分桶点（旧 `ChartPoint`：`%Y-%m` 或 `%Y`）。 */
+/** 单条曲线的分桶点（既有 `ChartPoint`：`%Y-%m` 或 `%Y`）。 */
 export interface ChartPoint {
   time: string
   /** 合计金额（分） */
   amount: number
 }
 
-/** 看板「支出按分类」聚合的一行（旧 DAO 返回 `(分类, 金额, 笔数)` 元组）。 */
+/** 看板「支出按分类」聚合的一行（既有 DAO 返回 `(分类, 金额, 笔数)` 元组）。 */
 export interface CategoryExpense {
   category: string
   /** 合计金额（分） */
@@ -57,7 +57,7 @@ export interface CategoryExpense {
   count: number
 }
 
-/** 新建/编辑一条消费记录的 wire 形状（旧 `TransactionRecordDto`；金额字段名仍是 `price`）。 */
+/** 新建/编辑一条消费记录的 wire 形状（既有 `TransactionRecordDto`；金额字段名仍是 `price`）。 */
 export interface TransactionRecordDto {
   ledgerId: string
   transactionId: string
@@ -72,7 +72,7 @@ export interface TransactionRecordDto {
   keyEventDate: string
 }
 
-/** 条件查询的返回（旧 `TrQueryResult`）。 */
+/** 条件查询的返回（既有 `TrQueryResult`）。 */
 export interface TrQueryResult {
   items: TransactionRecordDto[]
   total: number
@@ -82,7 +82,7 @@ export interface TrQueryResult {
   trStatistics: Record<string, number>
 }
 
-/** 一条图表曲线的查询条件（旧 `ChartLineCondition`）。 */
+/** 一条图表曲线的查询条件（既有 `ChartLineCondition`）。 */
 export interface ChartLineCondition {
   label: string
   transactionType: string

@@ -22,7 +22,7 @@ function fromRow(row: TagRow): Tag {
 /**
  * 标签 DAO。
  *
- * 行为约定（与旧 `tr-store/src/dao/tag.rs` 一致）：
+ * 行为约定（与既有 `tr-store/src/dao/tag.rs` 一致）：
  * - `Tag` 没有时间戳列，`create` / `update` 不碰时间
  * - 列表排序固定为 `ORDER BY sort_order ASC, name DESC`
  * - 唯一键是 `(ledger_id, name, category_transaction_type)`

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { Db, openDatabase } from './driver'
 import { migrate } from './migrate'
-import { AppError, ERR_CODE_DEFAULT, compatWorkspace } from '../../shared/errors'
+import { AppError, ERR_CODE_DEFAULT, sourceWorkspace } from '../../shared/errors'
 
 export interface OpenedWorkspace {
   directory: string
@@ -38,7 +38,7 @@ export function openWorkspace(directory: string): OpenedWorkspace {
 
   try {
     if (tableExists(db, 'tbl_billadm_schema_migration')) {
-      throw compatWorkspace()
+      throw sourceWorkspace()
     }
     if (!isNew && !tableExists(db, 'app_meta')) {
       throw new AppError('不是 Transactions 工作空间：缺少 app_meta', {

@@ -6,7 +6,7 @@ import { AppError } from '../../shared/errors'
 /**
  * 工作空间资产：`<workspace>/data/assets`。
  *
- * 关键事件图片布局（与兼容一致）：
+ * 关键事件图片布局（与既有一致）：
  *   key_events/<YYYY-MM-DD>/<uuid>.<ext>       原图
  *   key_events/<YYYY-MM-DD>/thumb_<uuid>.jpg   缩略图
  *
@@ -159,7 +159,7 @@ export function removeImageFiles(
     try {
       rmSync(resolveAsset(workspaceDir, relativePath), { force: true })
     } catch {
-      // 手工清理过/路径异常都只忽略（与旧实现一致）
+      // 手工清理过/路径异常都只忽略（与既有行为一致）
     }
   }
 }

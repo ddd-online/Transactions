@@ -1,10 +1,10 @@
 /**
  * 成交流水 / 统计模块消费的股票 DTO 形状。
  *
- * 字段名是 **wire 契约**：`tr-domain/src/dto/stock.rs` 用 `#[serde(rename = "…")]` 把
- * snake_case 的 Rust 字段序列化成 camelCase，所以这里一律 camelCase（`orderId`、`orderSeq`、
+ * 字段名是 **wire 契约**：`DTO stock.rs` 用 `#[序列化(rename = "…")]` 把
+ * snake_case 的 字段序列化成 camelCase，所以这里一律 camelCase（`orderId`、`orderSeq`、
  * `realizedPnl` …）。`id` / `price` / `lots` / `shares` / `amount` / `fee` / `commission`
- * 这类单词字段的 serde 名与 Rust 字段同名。
+ * 这类单词字段的 序列化 名与 字段同名。
  *
  * **只收这两个模块真正读的字段**，不是整份 DTO 的镜像：`StockTradeDto` 里的 `ledgerId`、
  * `stockCode`、`roundId`、`roundFee` 等字段成交流水行与统计指标都不读，故不在这里重复声明。

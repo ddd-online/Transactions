@@ -17,7 +17,7 @@ test('导入：非源目录给出明确拒绝且不能开始', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-import-bad-'))
   const home = join(root, 'home')
-  const source = join(root, 'not-compat')
+  const source = join(root, 'not-source')
   const target = join(root, 'target')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })

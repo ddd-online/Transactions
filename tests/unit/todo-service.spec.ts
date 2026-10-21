@@ -34,7 +34,7 @@ import {
 import { AppError } from '../../shared/errors'
 
 /**
- * 待办服务的行为测试：逐条移植旧 `tr-service/src/todo.rs` 的四个测试
+ * 待办服务的行为测试：逐条移植既有实现 的四个测试
  * （流程 / 校验与账本隔离 / 删卡片级联 / 排序与打勾），并按新 schema 补上
  * 档位网格、历史排序、文本上限、日期口径与「编辑不动状态」的覆盖。
  *
@@ -355,7 +355,7 @@ describe('todo service', () => {
     expect(listHistory(db, LEDGER).map((row) => row.title)).toEqual(['后完成', '先完成'])
     expect(listHistory(db, LEDGER).map((row) => row.cardTitle)).toEqual(['乙', '甲'])
 
-    // 同一完成时刻按 rowid 倒序（后插入的在前），与旧 SQL 的 tiebreaker 一致
+    // 同一完成时刻按 rowid 倒序（后插入的在前），与既有 SQL 的 tiebreaker 一致
     db.prepare('UPDATE todo_item SET completed_at = ?').run(3_000)
     expect(listHistory(db, LEDGER).map((row) => row.title)).toEqual(['后完成', '先完成'])
 

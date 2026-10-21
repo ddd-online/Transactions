@@ -8,7 +8,7 @@
  * * `create_trade_order_charges_fee_once_per_order`
  * * `create_trade_order_persists_remark_on_every_fill`
  * * `a_round_fee_is_snapshotted_at_open_and_kept_for_the_round`
- * * `compat_trades_without_a_snapshot_follow_the_system_setting`
+ * * `source_trades_without_a_snapshot_follow_the_system_setting`
  * * `a_reduce_to_zero_does_not_archive_the_round`
  * * `a_zero_lot_close_archives_without_money_movement`
  * * `a_partial_close_is_rejected`
@@ -64,7 +64,7 @@ const CODE = '600000'
 const NAME = '浦发银行'
 const CODE_B = '000001'
 const NAME_B = '平安银行'
-/** 协和电子：兼容"一次委托两笔成交"的回归标的。 */
+/** 协和电子：既有"一次委托两笔成交"的回归标的。 */
 const ORDER_CODE = '605258'
 const ORDER_NAME = '协和电子'
 /** 沪深300ETF：场内基金，价格带厘位、免印花税与过户费。 */
@@ -340,7 +340,7 @@ describe('stock-trade-write: create order', () => {
     })
   })
 
-  it('follows the system setting for compat trades whose snapshot is NULL', () => {
+  it('follows the system setting for source trades whose snapshot is NULL', () => {
     const workspace = newWorkspace()
     setPrincipal(workspace.db, LEDGER, 10_000_000)
 

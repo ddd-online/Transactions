@@ -23,7 +23,7 @@ function names(list: readonly Row[]): string[] {
   return list.map((row) => row.name)
 }
 
-/** Rust 测试里的 `.unwrap()`：测试数据都该拿到结果。 */
+/** 测试里的 `.unwrap()`：测试数据都该拿到结果。 */
 function unwrap<T>(value: T | null): T {
   if (value === null) throw new Error('expected a reorder result')
   return value

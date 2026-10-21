@@ -2,7 +2,7 @@
  * 日记服务：日期树（列表 / 查询）、导入（扫描目录 + 逐文件导入）、导出（按月 / 年筛选后
  * 写 `<date>.txt`）。
  *
- * 逐条移植自旧 `tr-service/src/diary.rs`。导入与导出**都只支持 `.txt`**：正文是纯文本
+ * 逐条移植自既有实现。导入与导出**都只支持 `.txt`**：正文是纯文本
  * （界面不做 Markdown 渲染），扫描时只认 `YYYY-MM-DD.txt`，导出也一律写 `.txt`，
  * 两个方向对称、导出即可再导入。
  *
@@ -10,13 +10,13 @@
  * 导入落到指定账本，导出只导指定账本。
  *
  * 编码回退链（顺序是历史日记文件能正确导入的关键）：
- * 1. 合法 UTF-8 直接用（BOM 保留，与 Rust `str::from_utf8` 一致）；
+ * 1. 合法 UTF-8 直接用（BOM 保留，与 `str::from_utf8` 一致）；
  * 2. 带 BOM 的 UTF-16（LE / BE）解码；
  * 3. 否则按 GBK 解码；
- * 4. 仍不合法则把非法 UTF-8 序列替换为 `?`（逐字节模拟 Rust 的 `Utf8Error::error_len`，
+ * 4. 仍不合法则把非法 UTF-8 序列替换为 `?`（逐字节模拟 的 `Utf8Error::error_len`，
  *    见 {@link replaceInvalidUtf8}）。
  *
- * 错误文案保持旧实现的原文（`扫描目录失败:` / `读取文件失败` /
+ * 错误文案保持既有行为的原文（`扫描目录失败:` / `读取文件失败` /
  * `只支持 YYYY-MM-DD.txt 格式的日记文件` / `创建导出目录失败:`），它们会原样经错误信封
  * 展示给用户，属于回归契约。
  */
@@ -49,7 +49,7 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** Unicode 码点数（不是字节数）——与旧 `tr_domain::util::char_count` 同一口径。 */
+/** Unicode 码点数（不是字节数）——与既有 `util::char_count` 同一口径。 */
 function charCount(text: string): number {
   return Array.from(text).length
 }
@@ -59,7 +59,7 @@ function charCount(text: string): number {
 /**
  * `YYYY-MM-DD` 严格校验（含闰年）：格式不合法或日期不存在都算非法。
  *
- * 与旧 `stock::parse_strict_date` 同一口径：**恰好 10 个 ASCII 字符、零填充**，
+ * 与既有 `stock::parse_strict_date` 同一口径：**恰好 10 个 ASCII 字符、零填充**，
  * `2026-1-01` / `2026/01/01` / `2026-02-29` 全部拒绝。
  */
 export function isValidDiaryDate(value: string): boolean {
@@ -82,7 +82,7 @@ export function parseDiaryYearMonth(value: string): [number, number] | null {
  * 匹配 `^(\d{4}-\d{2}-\d{2})\.txt$`，并校验日期真实存在。
  *
  * 只认 `.txt`：别的扩展名（`.md` / `.markdown` / 无扩展名…）一律跳过，不猜内容格式。
- * 扩展名大小写敏感（`TXT` 不认），与旧实现的 `rsplit_once('.')` 一致。
+ * 扩展名大小写敏感（`TXT` 不认），与既有行为的 `rsplit_once('.')` 一致。
  */
 function parseDiaryFileName(name: string): string | null {
   const dot = name.lastIndexOf('.')
@@ -136,9 +136,9 @@ function decodeUtf8CodePoint(raw: Uint8Array, index: number, length: number): st
 /**
  * 把非法 UTF-8 序列替换为 `?`（合法前缀原样保留）。
  *
- * 跳过长度按 Rust 的 `Utf8Error::error_len` 口径：首字节非法 / 约束不满足时推进到
+ * 跳过长度按 的 `Utf8Error::error_len` 口径：首字节非法 / 约束不满足时推进到
  * **出错的那个字节**（可能只推进 1 字节），序列在文件末尾被截断时只推进 1 字节。
- * 这样同一段坏字节在 Rust 与这里产生的 `?` 数量一致。
+ * 这样同一段坏字节在 与这里产生的 `?` 数量一致。
  */
 function replaceInvalidUtf8(raw: Uint8Array): string {
   const output: string[] = []
@@ -160,7 +160,7 @@ function replaceInvalidUtf8(raw: Uint8Array): string {
     let skip = 0
     for (let offset = 1; offset < sequence.length; offset += 1) {
       if (index + offset >= raw.length) {
-        // 文件在字符中间结束：Rust 的 error_len 是 None，替换循环按 1 字节推进
+        // 文件在字符中间结束：的 error_len 是 None，替换循环按 1 字节推进
         skip = 1
         break
       }
@@ -194,7 +194,7 @@ function decodeUtf16(raw: Uint8Array): string | null {
   } else {
     return null
   }
-  // Rust 用 chunks_exact(2) 丢掉末尾的孤立字节；这里同样先裁成偶数长度
+  // 用 chunks_exact(2) 丢掉末尾的孤立字节；这里同样先裁成偶数长度
   const bodyLength = raw.length - 2 - ((raw.length - 2) % 2)
   const body = raw.subarray(2, 2 + bodyLength)
   return new TextDecoder(littleEndian ? 'utf-16le' : 'utf-16be', { ignoreBOM: true }).decode(body)
@@ -203,7 +203,7 @@ function decodeUtf16(raw: Uint8Array): string | null {
 /**
  * 文本解码回退链：UTF-8 → UTF-16(BOM) → GBK → 非法序列替换为 `?`。
  *
- * `ignoreBOM: true` 是刻意的：Rust 的 `str::from_utf8` 不剥 UTF-8 BOM，导出再导入时
+ * `ignoreBOM: true` 是刻意的：的 `str::from_utf8` 不剥 UTF-8 BOM，导出再导入时
  * 正文必须逐字节还原（默认的 TextDecoder 会把 BOM 吃掉）。
  */
 function decodeText(raw: Uint8Array): string {
@@ -241,7 +241,7 @@ export function getByDate(db: Db, ledgerId: string, date: string): DiaryEntry {
  * 保存日记，返回写入后的条目（字数按 Unicode 码点数计算）。
  *
  * 同账本同日期是覆盖保存：DAO 保留原 `id` / `created_at` / `updated_at`，但返回值仍是
- * 本次构造的新条目（与旧实现一致）。
+ * 本次构造的新条目（与既有行为一致）。
  */
 export function upsert(
   db: Db,
@@ -331,7 +331,7 @@ export function importFile(
 /**
  * 把某账本的日记导出到目录：`year` / `month` 为 0 表示不限（`month` 需配合 `year`）。
  *
- * 写文件用 UTF-8（旧实现的 `content.as_bytes()`），因此导出的目录可以直接再扫描导入。
+ * 写文件用 UTF-8（既有行为的 `content.as_bytes()`），因此导出的目录可以直接再扫描导入。
  */
 export function exportToDirectory(
   db: Db,

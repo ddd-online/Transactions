@@ -29,7 +29,7 @@ export type ProxyMode = typeof PROXY_MODE_OFF | typeof PROXY_MODE_AUTO | typeof 
 /**
  * 代理设置（`~/.tr.json` 的 `proxy` 键；字段名是配置契约，不可改）。
  *
- * 缺省 / 旧配置里没有 `proxy` 键时 = {@link defaultProxySetting}（自动探测）。
+ * 缺省 / 已有配置里没有 `proxy` 键时 = {@link defaultProxySetting}（自动探测）。
  */
 export interface ProxySetting {
   /** `off` / `auto` / `manual`；未知取值按 `auto` 处理（见 {@link effectiveProxyMode}）。 */
@@ -39,7 +39,7 @@ export interface ProxySetting {
 }
 
 /**
- * 缺省 = **自动探测**（旧配置里没有 `proxy` 键时也是它）：本机有代理就跟着走。
+ * 缺省 = **自动探测**（已有配置里没有 `proxy` 键时也是它）：本机有代理就跟着走。
  */
 export function defaultProxySetting(): ProxySetting {
   return { mode: PROXY_MODE_AUTO, url: '' }
@@ -240,10 +240,10 @@ export function pickEnvProxy(lookup: (key: string) => string | null): string | n
 }
 
 /**
- * Rust `char::is_whitespace`（Unicode White_Space）的精确集合。
+ * `char::is_whitespace`（Unicode White_Space）的精确集合。
  * JS 的 `trim()` / `\s` 少了 U+0085、多了 U+FEFF，不能直接替。
  */
-function isRustWhitespaceAt(value: string, index: number): boolean {
+function isWhitespaceAt(value: string, index: number): boolean {
   const code = value.charCodeAt(index)
   return (
     (code >= 0x09 && code <= 0x0d) ||
@@ -260,24 +260,24 @@ function isRustWhitespaceAt(value: string, index: number): boolean {
   )
 }
 
-/** Rust `str::trim`：按 Unicode White_Space 裁掉两端。 */
+/** `str::trim`：按 Unicode White_Space 裁掉两端。 */
 function rustTrim(value: string): string {
   let start = 0
   let end = value.length
-  while (start < end && isRustWhitespaceAt(value, start)) start += 1
-  while (end > start && isRustWhitespaceAt(value, end - 1)) end -= 1
+  while (start < end && isWhitespaceAt(value, start)) start += 1
+  while (end > start && isWhitespaceAt(value, end - 1)) end -= 1
   return value.slice(start, end)
 }
 
-/** Rust `str::chars().any(char::is_whitespace)`。 */
+/** `str::chars().any(char::is_whitespace)`。 */
 function containsWhitespace(value: string): boolean {
   for (let index = 0; index < value.length; index += 1) {
-    if (isRustWhitespaceAt(value, index)) return true
+    if (isWhitespaceAt(value, index)) return true
   }
   return false
 }
 
-/** Rust `str::eq_ignore_ascii_case`：只折叠 ASCII 大小写，非 ASCII 原样比较。 */
+/** `str::eq_ignore_ascii_case`：只折叠 ASCII 大小写，非 ASCII 原样比较。 */
 function asciiEqualsIgnoreCase(left: string, right: string): boolean {
   if (left.length !== right.length) return false
   for (let index = 0; index < left.length; index += 1) {
@@ -290,7 +290,7 @@ function asciiLower(code: number): number {
   return code >= 0x41 && code <= 0x5a ? code + 0x20 : code
 }
 
-/** Rust `str::trim_end_matches(pattern)`：反复剥掉结尾的 pattern。 */
+/** `str::trim_end_matches(pattern)`：反复剥掉结尾的 pattern。 */
 function trimEndMatches(value: string, pattern: string): string {
   let result = value
   while (result.endsWith(pattern)) result = result.slice(0, result.length - pattern.length)
@@ -298,7 +298,7 @@ function trimEndMatches(value: string, pattern: string): string {
 }
 
 /**
- * Rust `str::parse::<u16>()`：可带一个 `+`、只认 ASCII 数字，范围 0-65535；
+ * `str::parse::<u16>()`：可带一个 `+`、只认 ASCII 数字，范围 0-65535；
  * 溢出 / 空串 / 其它字符都是 `null`。
  */
 function parsePort(raw: string): number | null {

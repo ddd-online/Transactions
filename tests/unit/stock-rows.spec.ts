@@ -8,7 +8,7 @@ import {
 import { groupTrades, impactSummary, removedRoundsText } from '../../shared/domain/stock-rows'
 import { SHARES_PER_LOT } from '../../shared/domain/stock'
 
-/** 一条成交（对应 Rust 测试里的 `fill`，其余字段留 0 / null）。 */
+/** 一条成交（对应 测试里的 `fill`，其余字段留 0 / null）。 */
 function fill(
   id: string,
   orderId: string,
@@ -34,7 +34,7 @@ function fill(
   }
 }
 
-/** 一个失效轮次（对应 Rust 的 `StockTradeImpactRoundDto::default()` + 覆盖字段）。 */
+/** 一个失效轮次（对应 的 `StockTradeImpactRoundDto::default()` + 覆盖字段）。 */
 function impactRound(
   roundNo: number,
   overrides: Partial<StockTradeImpactRoundDto> = {},

@@ -3,7 +3,7 @@
  *
  * 日记树构建。三条规则值得能被断言：
  *
- * * **分组与排序**：年 / 月键按**升序**迭代（与 Rust `BTreeMap` 一致，渲染侧从后往前读
+ * * **分组与排序**：年 / 月键按**升序**迭代（与 `有序映射` 一致，渲染侧从后往前读
  *   就是"新的在前"）；同一天内的多个日期按 `date` 字符串**降序**
  *   （`YYYY-MM-DD` 的字典序就是时间序）；解析不出的日期直接跳过；
  * * **节点 id**：渲染侧与"滚动定位"侧必须用**同一份**规则（滚动靠 id 反查元素），
@@ -21,7 +21,7 @@ export interface DayNode {
   mood: string
 }
 
-/** 年 → 月 → 日的分组结果（键的迭代顺序为升序，等价于 Rust 的 `BTreeMap`）。 */
+/** 年 → 月 → 日的分组结果（键的迭代顺序为升序，等价于 的 `有序映射`）。 */
 export type TreeMap = Map<number, Map<number, DayNode[]>>
 
 /**
@@ -55,7 +55,7 @@ export function buildTree(items: readonly DiaryDateItem[]): TreeMap {
 
   for (const months of grouped.values()) {
     for (const days of months.values()) {
-      // 降序；`Array.prototype.sort` 稳定，同日期保持入参顺序（与 Rust 的稳定排序一致）
+      // 降序；`Array.prototype.sort` 稳定，同日期保持入参顺序（与 的稳定排序一致）
       days.sort((left, right) => {
         if (left.date === right.date) return 0
         return left.date < right.date ? 1 : -1
@@ -63,7 +63,7 @@ export function buildTree(items: readonly DiaryDateItem[]): TreeMap {
     }
   }
 
-  // Rust `BTreeMap` 的迭代顺序是键升序；JS `Map` 是插入顺序，所以这里重建一份
+  // `有序映射` 的迭代顺序是键升序；JS `Map` 是插入顺序，所以这里重建一份
   const sorted: TreeMap = new Map()
   const years = [...grouped.entries()].sort((left, right) => left[0] - right[0])
   for (const [year, months] of years) {

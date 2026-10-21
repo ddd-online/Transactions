@@ -1,11 +1,11 @@
 /**
- * 待办的模型 / DTO / 请求形状（旧 `tr-domain/src/models/todo.rs` +
- * `tr-domain/src/dto/todo.rs` + `tr-domain/src/wire.rs` 的待办段）。
+ * 待办的模型 / DTO / 请求形状（既有 `模型 todo.rs` +
+ * `DTO todo.rs` + `wire 契约` 的待办段）。
  *
- * 两条命名纪律（与旧实现逐字一致，**不允许"顺手统一"**）：
+ * 两条命名纪律（与既有行为逐字一致，**不允许"顺手统一"**）：
  * * 库列名 / 模型字段在 DAO 层显式映射；模型对外是 camelCase（`ledgerId` / `cardId` …）；
- * * 请求字段保持旧 wire 的 snake_case（`ledger_id` / `card_id` / `start_date` …）——
- *   它是 IPC 契约的一部分。旧结构体全部 `#[serde(default)]`，缺字段时字符串退化为空串、
+ * * 请求字段保持既有 wire 的 snake_case（`ledger_id` / `card_id` / `start_date` …）——
+ *   它是 IPC 契约的一部分。旧结构体全部 `缺省字段`，缺字段时字符串退化为空串、
  *   数值退化为 0、布尔退化为 false，所以请求类型里的载荷字段都是可选的。
  *
  * 「完成」不是搬表：事项留在 `todo_item` 里，只把 `status` 置成 `done` 并记

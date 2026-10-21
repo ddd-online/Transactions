@@ -278,14 +278,14 @@ describe('command catalog', () => {
   })
 
   it('validates import requests', () => {
-    expect(commandSchemas.compat_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
+    expect(commandSchemas.source_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
       true,
     )
-    expect(commandSchemas.compat_import_probe.safeParse({}).success).toBe(false)
+    expect(commandSchemas.source_import_probe.safeParse({}).success).toBe(false)
     expect(
-      commandSchemas.compat_import_start.safeParse({ sourceDir: 'a', targetDir: 'b' }).success,
+      commandSchemas.source_import_start.safeParse({ sourceDir: 'a', targetDir: 'b' }).success,
     ).toBe(true)
-    expect(commandSchemas.compat_import_start.safeParse({ sourceDir: 'a' }).success).toBe(false)
+    expect(commandSchemas.source_import_start.safeParse({ sourceDir: 'a' }).success).toBe(false)
   })
 })
 

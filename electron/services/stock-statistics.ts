@@ -1,7 +1,7 @@
 /**
  * 股票统计读层：逐笔结算统计 / 分组统计 / 筛选（月区间、最近 N 笔、标签）。
  *
- * 逐条移植自兼容 `tr-service/src/stock_statistics.rs`。模块文档里的口径一条不改：
+ * 逐条移植自既有实现。模块文档里的口径一条不改：
  *
  * **时间轴 = 建仓时间。** 一轮的锚点是它**首次建仓**的委托时间（`round.openedAt`）：排序、
  * 月份区间与「最近 N 笔」的日期、资金事件（追加本金 / 支取）的插值时点、明细表与曲线上的
@@ -58,19 +58,19 @@ import { logError } from '../logging'
 import { getOrCreateAccount, getTradeTags, unixToDate } from './stock-account'
 import { ensureTradeHistoryBackfill, percentOf, roundPnl } from './stock-history'
 
-/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成既有的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
   return new AppError(message, { status: 500 })
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
-/** 字符串比较：与 Rust 的 `str::cmp`（按字节）在 ASCII 上一致。 */
+/** 字符串比较：与 的 `str::cmp`（按字节）在 ASCII 上一致。 */
 function compareText(left: string, right: string): number {
   if (left < right) return -1
   if (left > right) return 1
@@ -213,7 +213,7 @@ export function getStatisticsFor(
     throw new AppError(error instanceof Error ? error.message : String(error), { status: 400 })
   }
 
-  // 兼容用的是**原始** `filter.tag`（不 trim）：空白标签不会在这里被当成"不限"
+  // 既有用的是**原始** `filter.tag`（不 trim）：空白标签不会在这里被当成"不限"
   const tag = filter.tag
   try {
     if (tag !== '') {

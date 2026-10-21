@@ -3,9 +3,9 @@ import { useCallback, useState, type JSX } from 'react'
 import { notify } from '../components/toast'
 import { Spin } from '../components/spin'
 import type {
-  CompatImportProbe,
-  CompatImportProgress,
-  CompatImportReport,
+  SourceImportProbe,
+  SourceImportProgress,
+  SourceImportReport,
 } from '../../shared/types/import'
 
 function errorMessage(error: unknown): string {
@@ -25,7 +25,7 @@ const PHASE_LABELS: Record<string, string> = {
 }
 
 export interface ImportWizardProps {
-  progress: CompatImportProgress | null
+  progress: SourceImportProgress | null
   onImported: (targetDir: string) => Promise<void>
 }
 
@@ -33,8 +33,8 @@ export interface ImportWizardProps {
 export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.Element {
   const [sourceDir, setSourceDir] = useState('')
   const [targetDir, setTargetDir] = useState('')
-  const [probe, setProbe] = useState<CompatImportProbe | null>(null)
-  const [report, setReport] = useState<CompatImportReport | null>(null)
+  const [probe, setProbe] = useState<SourceImportProbe | null>(null)
+  const [report, setReport] = useState<SourceImportReport | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -48,7 +48,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     setError('')
     setReport(null)
     try {
-      const result = await window.api.invoke('compat_import_probe', { workspaceDir: sourceDir })
+      const result = await window.api.invoke('source_import_probe', { workspaceDir: sourceDir })
       setProbe(result)
     } catch (probeError) {
       setProbe(null)
@@ -63,7 +63,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     setError('')
     setReport(null)
     try {
-      const result = await window.api.invoke('compat_import_start', { sourceDir, targetDir })
+      const result = await window.api.invoke('source_import_start', { sourceDir, targetDir })
       setReport(result)
       notify('数据导入完成')
       await onImported(targetDir)

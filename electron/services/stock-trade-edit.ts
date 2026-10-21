@@ -32,18 +32,18 @@
  * ## 操作记录不参与重放
  *
  * 操作记录（`stock_operation`）是**追加式**的正向操作日志，不是由成交推导出来的派生数据；
- * 兼容重放从不碰它（只有回滚会弹掉栈顶那一条），这里保持一致。删委托 / 改成交本身也不记
- * 操作记录（兼容同样不记）。
+ * 既有重放从不碰它（只有回滚会弹掉栈顶那一条），这里保持一致。删委托 / 改成交本身也不记
+ * 操作记录（既有同样不记）。
  *
  * ## 没有随本切片移植的部分
  *
- * `repair_compat_trade_fund_dates`（数据按本地时区订正资金记录日期）与它的 `day_after` /
- * `has_compat_trade_fund_date` 属独立的数据维护路径，不在编辑 / 删除 / 回滚语义里。
+ * `repair_source_trade_fund_dates`（数据按本地时区订正资金记录日期）与它的 `day_after` /
+ * `has_source_trade_fund_date` 属独立的数据维护路径，不在编辑 / 删除 / 回滚语义里。
  *
- * ## 与兼容的唯一结构差异
+ * ## 与既有的唯一结构差异
  *
  * `stock-trade-write.ts` 里的若干小工具（`instrument_of` / `cost_basis_of` /
- * `trade_order_remark` / `RoundFee ↔ StockFeeSetting`）在兼容是同一模块的私有函数；本切片
+ * `trade_order_remark` / `RoundFee ↔ StockFeeSetting`）在既有是同一模块的私有函数；本切片
  * 不改动那个文件，所以这里按**逐字相同**的口径各留一份。两处一旦分叉，下单与重放算出来的
  * 费用 / 备注就会对不上 —— 新增口径请同时改两边（或把它们收进 `shared/domain`）。
  */
@@ -126,12 +126,12 @@ import {
 // ---------------------------------------------------------------- 预演哨兵
 
 /**
- * 预演专用哨兵文案：事务内执行改动后强制回滚，**不对外暴露**（与兼容
+ * 预演专用哨兵文案：事务内执行改动后强制回滚，**不对外暴露**（与既有
  * `ERR_PREVIEW_ROLLBACK` 同一个字符串）。
  */
 const PREVIEW_ROLLBACK = 'trade impact preview rollback'
 
-/** 兼容 `is_not_found`：404 = 目标不存在（回滚时据此区分"跳过"与真错误）。 */
+/** 既有 `is_not_found`：404 = 目标不存在（回滚时据此区分"跳过"与真错误）。 */
 function isNotFound(error: unknown): boolean {
   return error instanceof AppError && error.status === 404
 }
@@ -147,17 +147,17 @@ function isPreviewSentinel(error: unknown): boolean {
 
 // ---------------------------------------------------------------- 小工具（与下单切片同一口径）
 
-/** 成交所属委托 ID；存量数据未标记委托时以自身为独立委托（旧 `order_key_of`）。 */
+/** 成交所属委托 ID；存量数据未标记委托时以自身为独立委托（既有 `order_key_of`）。 */
 function orderKeyOf(trade: StockTrade): string {
   return trade.orderId === '' ? trade.id : trade.orderId
 }
 
-/** 轮次索引键：股票 + 轮次序号（旧 `round_meta_key`）。 */
+/** 轮次索引键：股票 + 轮次序号（既有 `round_meta_key`）。 */
 function roundMetaKey(stockCode: string, roundNo: number): string {
   return `${stockCode}#${roundNo}`
 }
 
-/** Rust `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
+/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
 function roundHalfAwayFromZero(value: number): number {
   return value < 0 ? -Math.round(-value) : Math.round(value)
 }
@@ -175,13 +175,13 @@ function costBasisOf(totalCost: number, shares: number, quantity: number): numbe
 /**
  * 品种判定（决定收哪些费）：老数据里可能存着不在支持范围的代码（例如北交所），
  * 这种记录按**深市股票**处理 —— 与引入品种之前的默认行为一致，不让一条历史记录把
- * 整轮重放 / 编辑打断（旧 `instrument_of`）。
+ * 整轮重放 / 编辑打断（既有 `instrument_of`）。
  */
 function instrumentOf(stockCode: string): Instrument {
   return feeInstrumentOf(stockCode) ?? 'shenzhenStock'
 }
 
-/** 折成费用算法要的形态（旧 `RoundFee::to_setting`；`id` / `ledgerId` 留空）。 */
+/** 折成费用算法要的形态（既有 `RoundFee::to_setting`；`id` / `ledgerId` 留空）。 */
 function settingOfRoundFee(round: RoundFee): StockFeeSetting {
   return {
     id: '',
@@ -243,7 +243,7 @@ function tradeDto(trade: StockTrade): StockTradeDto {
 /**
  * 每个轮次的每日复盘条数（`round_id` 非空）：影响预演据此说明"这一轮会丢几篇"。
  *
- * 每日复盘的 DAO 尚未随本切片移植：按旧 DAO 的同一条 SQL（表 / 列 / 分组口径逐字一致）就地读。
+ * 每日复盘的 DAO 尚未随本切片移植：按既有 DAO 的同一条 SQL（表 / 列 / 分组口径逐字一致）就地读。
  * 值一律 `?`，只拼接常量。
  */
 function countDayReviewsByRounds(db: Db, ledgerId: string): Array<[string, number]> {
@@ -264,7 +264,7 @@ function deleteDayReviewsByRound(db: Db, roundId: string): void {
 // ---------------------------------------------------------------- 轮次索引 / 影响预演
 
 /**
- * 读取当前轮次索引（用于比对编辑 / 删除后哪些轮次会失效），旧 `round_meta_index`。
+ * 读取当前轮次索引（用于比对编辑 / 删除后哪些轮次会失效），既有 `round_meta_index`。
  *
  * 键 = `股票#轮次序号`；股票名取自交易历史集合（没有历史集合时为空串）。
  */
@@ -296,7 +296,7 @@ function roundMetaIndex(
   return index
 }
 
-/** 失效轮次的排序：股票代码 → 轮次序号（旧 `sort_by`）。 */
+/** 失效轮次的排序：股票代码 → 轮次序号（既有 `sort_by`）。 */
 function sortImpactRounds(rounds: StockTradeImpactRoundDto[]): void {
   rounds.sort((left, right) => {
     if (left.stockCode !== right.stockCode) return left.stockCode < right.stockCode ? -1 : 1
@@ -307,7 +307,7 @@ function sortImpactRounds(rounds: StockTradeImpactRoundDto[]): void {
 // ---------------------------------------------------------------- 成交编辑 / 委托删除
 
 /**
- * 事务内编辑一笔成交并重放，返回该成交所属股票代码（旧 `update_trade_fill_tx`）。
+ * 事务内编辑一笔成交并重放，返回该成交所属股票代码（既有 `update_trade_fill_tx`）。
  *
  * 用**这一笔自己的本轮快照**重算（本轮内费率不可改）；老数据（NULL）退回账本系统配置 ——
  * 与它当初被算出来时的口径一致。费用按**委托**重算一次再分摊到各笔，然后整体重放。
@@ -334,7 +334,7 @@ function updateTradeFillTx(
   const orderId = orderKeyOf(trade)
   let orderTrades = listTradesByOrder(db, ledgerId, orderId)
   if (orderTrades.length === 0) {
-    // 兼容未回填委托的历史数据：该成交本身就是一笔独立委托
+    // 既有未回填委托的历史数据：该成交本身就是一笔独立委托
     orderTrades = [{ ...trade, orderId, orderSeq: 1 }]
   }
 
@@ -378,7 +378,7 @@ function updateTradeFillTx(
 }
 
 /**
- * 事务内删除整笔委托并重放，返回被删委托所属股票代码（旧 `delete_trade_order_tx`）。
+ * 事务内删除整笔委托并重放，返回被删委托所属股票代码（既有 `delete_trade_order_tx`）。
  */
 function deleteTradeOrderTx(db: Db, ledgerId: string, orderId: string): string {
   if (orderId === '') {
@@ -386,7 +386,7 @@ function deleteTradeOrderTx(db: Db, ledgerId: string, orderId: string): string {
   }
   let trades = listTradesByOrder(db, ledgerId, orderId)
   if (trades.length === 0) {
-    // 兼容未回填委托的历史数据：把 orderId 当作单笔交易 ID
+    // 既有未回填委托的历史数据：把 orderId 当作单笔交易 ID
     let trade: StockTrade
     try {
       trade = getTrade(db, orderId)
@@ -409,7 +409,7 @@ function deleteTradeOrderTx(db: Db, ledgerId: string, orderId: string): string {
 
 // ---------------------------------------------------------------- 整体重放
 
-/** 重放过程中累积的一笔委托（旧 `ReplayOrder`）。 */
+/** 重放过程中累积的一笔委托（既有 `ReplayOrder`）。 */
 interface ReplayOrder {
   key: string
   stockCode: string
@@ -427,7 +427,7 @@ interface ReplayOrder {
   indexes: number[]
 }
 
-/** 重放过程中的可变状态（旧 `rebuild_trades` 里的那几个 map + `last_record_created_at`）。 */
+/** 重放过程中的可变状态（既有 `rebuild_trades` 里的那几个 map + `last_record_created_at`）。 */
 interface ReplayState {
   positions: Map<string, StockPosition>
   histories: Map<string, StockTradeHistory>
@@ -628,7 +628,7 @@ function rebuildTrades(db: Db, ledgerId: string): void {
 /**
  * 结束当前委托的重放：写一条资金记录，必要时归档轮次，并回写各笔成交的派生字段。
  *
- * 抽成独立函数是因为一棵同时读写 `trades` 与多个 map 的循环体更难读（兼容同一拆分，
+ * 抽成独立函数是因为一棵同时读写 `trades` 与多个 map 的循环体更难读（既有同一拆分，
  * 那里是借用检查器的原因，这里是可读性）。
  */
 function flushReplayOrder(
@@ -757,7 +757,7 @@ function flushReplayOrder(
  * 编辑一笔成交（成交价 / 手数 / 委托时间）：
  * 按当前费用设置重算所属委托的全部费用后分摊，再重放持仓、资金记录与轮次。
  *
- * 旧 `update_trade_fill`：校验在事务前，失败整体回滚。
+ * 既有 `update_trade_fill`：校验在事务前，失败整体回滚。
  */
 export function updateTradeFill(db: Db, request: UpdateTradeFillRequest): StockTradeDto {
   const { ledgerId, tradeId, priceMilli, lots, tradeTime } = request
@@ -790,7 +790,7 @@ export function updateTradeFill(db: Db, request: UpdateTradeFillRequest): StockT
 /**
  * 删除整笔委托（含全部成交明细），并重放重建持仓、资金记录与轮次。
  *
- * 旧 `delete_trade_order`：校验在事务前，失败整体回滚。
+ * 既有 `delete_trade_order`：校验在事务前，失败整体回滚。
  */
 export function deleteTradeOrder(db: Db, request: DeleteTradeOrderRequest): void {
   const { ledgerId, orderId } = request
@@ -814,7 +814,7 @@ export function deleteTradeOrder(db: Db, request: DeleteTradeOrderRequest): void
  * 预演编辑 / 删除的影响：同一事务内执行改动并重放后强制回滚，
  * 返回变动后的持仓、可用现金，以及会因此失效（复盘丢失）的轮次。
  *
- * 旧 `preview_trade_change`：`update_trade` / `delete_order` 复用同一入口。
+ * 既有 `preview_trade_change`：`update_trade` / `delete_order` 复用同一入口。
  */
 export function previewTradeChange(
   db: Db,

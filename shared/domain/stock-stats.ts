@@ -39,10 +39,10 @@ export const Metric = {
   MaxDrawdown: 'max_drawdown',
 } as const
 
-/** 七档指标之一（对应 Rust 的 `Metric` 枚举）。 */
+/** 七档指标之一（对应 的 `Metric` 枚举）。 */
 export type Metric = (typeof Metric)[keyof typeof Metric]
 
-/** 全部指标（顺序即渲染顺序）。对应 Rust 的 `Metric::ALL`。 */
+/** 全部指标（顺序即渲染顺序）。对应 的 `Metric::ALL`。 */
 export const METRICS: readonly Metric[] = [
   Metric.TotalPnl,
   Metric.WinRate,

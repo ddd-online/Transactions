@@ -15,7 +15,7 @@ describe('buildTree grouping', () => {
       item('2026-05-31', 7, '平静'),
       item('2025-12-31', 1, ''),
     ])
-    expect([...tree.keys()], '年升序（BTreeMap 顺序）').toEqual([2025, 2026])
+    expect([...tree.keys()], '年升序（有序映射 顺序）').toEqual([2025, 2026])
     const june = tree.get(2026)!.get(6)!
     expect(june.map((node) => node.date), '同月内日降序').toEqual([
       '2026-06-19',

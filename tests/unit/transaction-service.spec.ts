@@ -25,7 +25,7 @@ import type { Db } from '../../electron/db/driver'
 const directories: string[] = []
 
 function workspaceDirectory(): string {
-  const directory = mkdtempSync(join(tmpdir(), 'tr-service-test-'))
+  const directory = mkdtempSync(join(tmpdir(), 'tr-transaction-test-'))
   directories.push(directory)
   return directory
 }

@@ -6,12 +6,12 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { openDatabase } from '../../electron/db/driver'
 import { openWorkspace, closeWorkspace } from '../../electron/db'
-import { AppError, ERR_CODE_COMPAT_WORKSPACE } from '../../shared/errors'
+import { AppError, ERR_CODE_SOURCE_WORKSPACE } from '../../shared/errors'
 
 const directories: string[] = []
 
 function temporaryDirectory(): string {
-  const directory = mkdtempSync(join(tmpdir(), 'tr-compat-fixture-'))
+  const directory = mkdtempSync(join(tmpdir(), 'tr-source-fixture-'))
   directories.push(directory)
   return directory
 }
@@ -23,17 +23,17 @@ afterEach(() => {
   }
 })
 
-function buildCompatDatabase(): string {
+function buildSourceDatabase(): string {
   const directory = temporaryDirectory()
   const database = openDatabase(join(directory, 'transactions.db'))
-  database.exec(readFileSync('fixtures/compat/seed.sql', 'utf8'))
+  database.exec(readFileSync('fixtures/source/seed.sql', 'utf8'))
   database.close()
   return directory
 }
 
-describe('compat seed fixture', () => {
+describe('source seed fixture', () => {
   it('builds a 源格式-shaped database with the expected content', () => {
-    const directory = buildCompatDatabase()
+    const directory = buildSourceDatabase()
     const database = openDatabase(join(directory, 'transactions.db'))
 
     const tables = database
@@ -59,14 +59,14 @@ describe('compat seed fixture', () => {
     database.close()
   })
 
-  it('is recognized as a compat workspace by the new app', () => {
-    const directory = buildCompatDatabase()
+  it('is recognized as a source workspace by the new app', () => {
+    const directory = buildSourceDatabase()
     try {
       openWorkspace(directory)
       throw new Error('应当拒绝源库')
     } catch (error) {
       expect(error).toBeInstanceOf(AppError)
-      expect((error as AppError).code).toBe(ERR_CODE_COMPAT_WORKSPACE)
+      expect((error as AppError).code).toBe(ERR_CODE_SOURCE_WORKSPACE)
     }
   })
 })

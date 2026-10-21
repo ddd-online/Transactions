@@ -92,7 +92,7 @@ function seedPrincipal(workspace: OpenedWorkspace, amount: number): void {
   setPrincipal(workspace.db, LEDGER, amount)
 }
 
-/** 直接种一条资金记录（本切片不拥有建仓 / 清仓，用 DAO 复刻旧测试里的买卖流水）。 */
+/** 直接种一条资金记录（本切片不拥有建仓 / 清仓，用 DAO 复刻既有测试里的买卖流水）。 */
 function seedFundRecord(
   workspace: OpenedWorkspace,
   fields: Partial<StockFundRecord> & Pick<StockFundRecord, 'recordDate' | 'eventType'>,

@@ -12,7 +12,7 @@ import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
 import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
 import { logInfo } from '../logging'
-import { importCompatWorkspace, probeCompatWorkspace } from '../compat/importer'
+import { importSourceWorkspace, probeSourceWorkspace } from '../source/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
@@ -240,22 +240,22 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       return String(asObject(request).message ?? '')
     },
 
-    compat_import_probe(request) {
+    source_import_probe(request) {
       const workspaceDir = String(asObject(request).workspaceDir ?? '').trim()
       if (!workspaceDir) {
-        throw new AppError('请选择旧工作空间目录', { status: 400 })
+        throw new AppError('请选择源工作空间目录', { status: 400 })
       }
-      return probeCompatWorkspace(workspaceDir)
+      return probeSourceWorkspace(workspaceDir)
     },
 
-    async compat_import_start(request) {
+    async source_import_start(request) {
       const raw = asObject(request)
       const sourceDir = String(raw.sourceDir ?? '').trim()
       const targetDir = String(raw.targetDir ?? '').trim()
       if (!sourceDir || !targetDir) {
         throw new AppError('源目录与目标目录都不能为空', { status: 400 })
       }
-      const report = await importCompatWorkspace({
+      const report = await importSourceWorkspace({
         sourceDir,
         targetDir,
         onProgress: (progress) => sendEvent(IMPORT_PROGRESS, progress),

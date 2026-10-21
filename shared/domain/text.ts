@@ -44,7 +44,7 @@ export function parseAmountCents(input: string): number {
  * 费率文本 → `number`（股票费用设置：佣金率 / 印花税率 / 过户费率）。
  *
  * 非数字、非有限值（`NaN` / `Infinity`）与空串一律 `null` —— 调用方据此提示"费率不合法"。
- * 接受的记法与 Rust `f64::from_str` 的十进制文法一致（不接受 `0x10` 这类 JS 扩展记法）。
+ * 接受的记法与 `f64::from_str` 的十进制文法一致（不接受 `0x10` 这类 JS 扩展记法）。
  */
 export function parseRate(input: string): number | null {
   const trimmed = input.trim()

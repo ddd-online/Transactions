@@ -1,17 +1,17 @@
 /**
  * 持仓 / 账户总览 / 行情这一段的 DTO 形状。
  *
- * 对应兼容 `tr-domain/src/dto/stock.rs` 的 `StockOverviewDto`、`StockPositionDto`、
+ * 对应既有 `DTO stock.rs` 的 `StockOverviewDto`、`StockPositionDto`、
  * `StockQuoteDto`、`StockNameDto` 与 `StockDayReviewDto`。字段名是 **wire 契约**：
- * Rust 侧 `#[serde(rename = "…")]` 把 snake_case 序列化成 camelCase，所以这里一律 camelCase。
+ * 侧 `#[序列化(rename = "…")]` 把 snake_case 序列化成 camelCase，所以这里一律 camelCase。
  *
- * 单位口径（与兼容逐字一致，别在界面层再换算一次）：
+ * 单位口径（与既有逐字一致，别在界面层再换算一次）：
  * * 金额恒为整数**分**（`totalCost` / `roundCashFlow` / `realizedPnl` / 总览的全部金额字段）；
  * * 股票价格恒为整数**厘**（`latestPrice` / `prevClose`，1/1000 元）；
  * * 百分比是「百分数」而不是小数（`12.5` 表示 12.5%）。
  *
  * `Option<T>` → `T | null`；但 `roundFee` / `latestPrice` / `prevClose` / `quoteTime`
- * 在兼容是 `skip_serializing_if = "Option::is_none"`，**省略**而不是 `null`，
+ * 在既有是 `skip_serializing_if = "Option::is_none"`，**省略**而不是 `null`，
  * 所以这里用可选字段（`undefined`）表示"没有这一个键"。
  */
 

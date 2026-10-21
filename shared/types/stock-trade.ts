@@ -1,19 +1,19 @@
 /**
  * 股票**下单**（委托创建）这一段的请求 / 成交明细 / 回读形状。
  *
- * 对应兼容：
- * * `tr-service/src/stock.rs` 的 `TradeFill`（委托内的一笔成交，价格单位是**厘**）；
- * * `tr-service/src/stock/write.rs` 的 `create_trade_order_with_round_fee` /
+ * 对应既有：
+ * * 既有实现 的 `TradeFill`（委托内的一笔成交，价格单位是**厘**）；
+ * * 既有实现 的 `create_trade_order_with_round_fee` /
  *   `create_trade_with_round_fee` 的入参（账本、股票、交易类型、成交明细、委托时间、备注、标签、
  *   本轮费用设置）；
- * * `tr-domain/src/dto/stock.rs` 的 `StockTradeDto`（创建成功后逐笔回读）。
+ * * `DTO stock.rs` 的 `StockTradeDto`（创建成功后逐笔回读）。
  *
- * 单位口径（硬契约，与兼容逐字一致）：
+ * 单位口径（硬契约，与既有逐字一致）：
  * * 价格恒为整数**厘**（1/1000 元）—— `priceMilli`；场内基金的 0.001 元报价靠它；
  * * 金额 / 费用恒为整数**分**；
  * * 时间戳恒为 Unix 秒；`tradeTime <= 0` 时由服务层取当前时间。
  *
- * 这里**不做**"元 → 厘"的换算：兼容那条换算在 IPC 命令面（`price_yuan_to_milli`，wire 上的
+ * 这里**不做**"元 → 厘"的换算：既有那条换算在 IPC 命令面（`price_yuan_to_milli`，wire 上的
  * `price` 是元）。本切片是服务层，收的就是厘；把 wire 形状与落库形状混在一起会让两处单位
  * 各说一句话。
  */
@@ -27,7 +27,7 @@ import type { RoundFee } from '../domain/models'
  */
 export type { StockTradeDto } from './stock-history'
 
-/** 委托内的一笔成交（旧 `TradeFill`）：价格单位是**厘**（每股），手数是整数手。 */
+/** 委托内的一笔成交（既有 `TradeFill`）：价格单位是**厘**（每股），手数是整数手。 */
 export interface StockTradeFill {
   /** 成交价（厘 / 股） */
   priceMilli: number
@@ -38,7 +38,7 @@ export interface StockTradeFill {
 /**
  * 记录一笔委托（不指定本轮费用设置：建仓时取账本的系统配置）。
  *
- * 旧 `create_trade_order` 的同名入参；一次委托可含多笔成交明细（`fills`）。
+ * 既有 `create_trade_order` 的同名入参；一次委托可含多笔成交明细（`fills`）。
  */
 export interface CreateTradeOrderRequest {
   ledgerId: string
@@ -58,7 +58,7 @@ export interface CreateTradeOrderRequest {
 }
 
 /**
- * 记录一笔委托，并在**建仓**时指定本轮的费用设置（旧 `create_trade_order_with_round_fee`）。
+ * 记录一笔委托，并在**建仓**时指定本轮的费用设置（既有 `create_trade_order_with_round_fee`）。
  *
  * `roundFee` 只在建仓（本轮第一笔买入）被接受；本轮已开始的加仓 / 减仓 / 清仓再带就是
  * 调用方的错（服务层报 400）。
@@ -69,7 +69,7 @@ export interface CreateTradeOrderWithRoundFeeRequest extends CreateTradeOrderReq
 }
 
 /**
- * 记录单笔成交（等价于只含一笔明细的委托）—— 旧 `create_trade`。
+ * 记录单笔成交（等价于只含一笔明细的委托）—— 既有 `create_trade`。
  *
  * 字段与 {@link CreateTradeOrderRequest} 一一对应，只是明细摊平成 `priceMilli` / `lots`。
  */
@@ -87,7 +87,7 @@ export interface CreateTradeRequest {
   tag: string
 }
 
-/** 记录单笔成交并指定本轮费用设置（旧 `create_trade_with_round_fee`）。 */
+/** 记录单笔成交并指定本轮费用设置（既有 `create_trade_with_round_fee`）。 */
 export interface CreateTradeWithRoundFeeRequest extends CreateTradeRequest {
   roundFee?: RoundFee
 }
