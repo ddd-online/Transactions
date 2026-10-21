@@ -668,3 +668,60 @@
   flex-direction: column;
   gap: 6px;
 }
+
+.events-layout.is-links-collapsed {
+  grid-template-columns: 300px minmax(0, 1fr) 44px;
+}
+
+.events-links-toggle {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-major-background);
+  color: var(--transactions-color-text-secondary);
+  cursor: pointer;
+}
+
+.events-links.is-collapsed {
+  align-items: center;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.stock-funds-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.events-editor {
+  min-width: 0;
+}
+
+.events-editor-head .m0-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.events-editor-head .m0-input[data-testid='event-color'] {
+  flex: 0 0 110px;
+}
+
+.events-editor-head .ui-btn {
+  flex: none;
+}
+
+.events-links h3 {
+  display: block;
+}
+
+.chart-config .m0-table {
+  width: 100%;
+}

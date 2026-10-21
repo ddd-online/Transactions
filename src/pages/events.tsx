@@ -60,6 +60,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [event, setEvent] = useState<KeyEvent | null>(null)
   const [images, setImages] = useState<KeyEventImage[]>([])
   const [linked, setLinked] = useState<TransactionRecordDto[]>([])
+  const [linksOpen, setLinksOpen] = useState(true)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [color, setColor] = useState('')
@@ -271,7 +272,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                   </p>
                 ) : null}
 
-                <div className="events-layout">
+                <div className={`events-layout${linksOpen ? '' : ' is-links-collapsed'}`}>
                   <aside className="events-list">
                     {events.length === 0 ? (
                       <p className="m0-muted">这一年还没有事件</p>
@@ -382,23 +383,38 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     </div>
                   </section>
 
-                  <aside className="events-links">
-                    <h3>关联交易</h3>
-                    {linked.length === 0 ? (
-                      <p className="m0-muted">选择事件查看关联交易</p>
-                    ) : (
-                      <ul>
-                        {linked.map((row) => (
-                          <li key={row.transactionId}>
-                            <strong>{row.description || row.category || '交易'}</strong>
-                            <span className="m0-muted">
-                              {row.transactionAt ? new Date(row.transactionAt * 1000).toLocaleDateString('zh-CN') : ''}
-                            </span>
-                            <span>¥{centsToYuan(row.price)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                  <aside className={`events-links${linksOpen ? '' : ' is-collapsed'}`}>
+                    <button
+                      type="button"
+                      className="events-links-toggle"
+                      data-testid="event-links-toggle"
+                      onClick={() => setLinksOpen((open) => !open)}
+                      title={linksOpen ? '收起关联交易' : '展开关联交易'}
+                    >
+                      <Icon name={linksOpen ? 'ChevronRight' : 'ChevronLeft'} size={14} />
+                    </button>
+                    {linksOpen ? (
+                      <>
+                        <h3 data-testid="event-links-title">关联交易</h3>
+                        {linked.length === 0 ? (
+                          <p className="m0-muted">选择事件查看关联交易</p>
+                        ) : (
+                          <ul>
+                            {linked.map((row) => (
+                              <li key={row.transactionId}>
+                                <strong>{row.description || row.category || '交易'}</strong>
+                                <span className="m0-muted">
+                                  {row.transactionAt
+                                    ? new Date(row.transactionAt * 1000).toLocaleDateString('zh-CN')
+                                    : ''}
+                                </span>
+                                <span>¥{centsToYuan(row.price)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    ) : null}
                   </aside>
                 </div>
 
@@ -415,6 +431,9 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         </section>
   )
 }
+
+
+
 
 
 

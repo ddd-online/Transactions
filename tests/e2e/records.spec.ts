@@ -83,6 +83,13 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await page.getByTestId('chart-title').fill('自定义图表')
     await page.getByTestId('chart-create').click()
     await expect(page.getByTestId('chart-select')).toContainText('自定义图表')
+    await page.getByTestId('chart-item').filter({ hasText: '自定义图表' }).click()
+    await page.getByTestId('chart-rename').click()
+    await page.getByTestId('chart-rename-input').fill('改名图表')
+    await page.getByTestId('chart-rename-save').click()
+    await expect(page.getByTestId('chart-select')).toContainText('改名图表')
+    await page.getByTestId('chart-delete').click()
+    await expect(page.getByTestId('chart-select')).not.toContainText('改名图表')
     await page.getByTestId('chart-delete').click()
     await expect(page.getByTestId('chart-select')).not.toContainText('自定义图表')
 
@@ -182,6 +189,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
 
 
 

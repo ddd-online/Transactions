@@ -29,6 +29,9 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [data, setData] = useState<ChartQueryResponse | null>(null)
   const [error, setError] = useState('')
   const [newTitle, setNewTitle] = useState('')
+  const [renaming, setRenaming] = useState(false)
+  const [renameDraft, setRenameDraft] = useState('')
+  const [dragChartId, setDragChartId] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -74,6 +77,47 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       setError(errorMessage(createError))
     }
   }, [granularity, ledgerId, newTitle])
+
+  const saveRename = useCallback(async (): Promise<void> => {
+    if (!selected) return
+    const title = renameDraft.trim()
+    if (!title) return
+    try {
+      await window.api.invoke('chart_update', {
+        chartId: selected.chartId,
+        title,
+        granularity: selected.granularity,
+        lines: selected.lines,
+        chartType: selected.chartType,
+        sortOrder: selected.sortOrder,
+      })
+      setRenaming(false)
+      setCharts(await window.api.invoke('chart_list', { ledgerId }))
+    } catch (renameError) {
+      setError(errorMessage(renameError))
+    }
+  }, [ledgerId, renameDraft, selected])
+
+  const moveChart = useCallback(async (sourceId: string, targetId: string): Promise<void> => {
+    if (sourceId === targetId) return
+    const from = charts.findIndex((chart) => chart.chartId === sourceId)
+    const to = charts.findIndex((chart) => chart.chartId === targetId)
+    if (from < 0 || to < 0) return
+    const next = [...charts]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    setCharts(next)
+    try {
+      await Promise.all(
+        next.map((chart, index) =>
+          window.api.invoke('chart_update_sort', { chartId: chart.chartId, sortOrder: index + 1 }),
+        ),
+      )
+      setCharts(await window.api.invoke('chart_list', { ledgerId }))
+    } catch (moveError) {
+      setError(errorMessage(moveError))
+    }
+  }, [charts, ledgerId])
 
   const deleteChart = useCallback(async (): Promise<void> => {
     if (!selectedId) return
@@ -183,6 +227,13 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               type="button"
               className={`chart-item${chart.chartId === selectedId ? ' is-active' : ''}`}
               data-testid="chart-item"
+              draggable
+              onDragStart={() => setDragChartId(chart.chartId)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                if (dragChartId) void moveChart(dragChartId, chart.chartId)
+                setDragChartId(null)
+              }}
               onClick={() => setSelectedId(chart.chartId)}
             >
               <Icon name="LineChart" size={16} />
@@ -213,7 +264,38 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
         <section className="charts-main">
           <div className="charts-main-head">
-            <h2>{selected?.title ?? '图表'}</h2>
+            {renaming ? (
+              <div className="m0-actions">
+                <input
+                  className="m0-input"
+                  data-testid="chart-rename-input"
+                  value={renameDraft}
+                  onChange={(event) => setRenameDraft(event.target.value)}
+                />
+                <button type="button" className="ui-btn ui-btn--primary" data-testid="chart-rename-save" onClick={() => void saveRename()}>
+                  保存
+                </button>
+                <button type="button" className="ui-btn ui-btn--text" onClick={() => setRenaming(false)}>
+                  取消
+                </button>
+              </div>
+            ) : (
+              <h2>{selected?.title ?? '图表'}</h2>
+            )}
+              {!renaming ? (
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--text"
+                  data-testid="chart-rename"
+                  disabled={!selected}
+                  onClick={() => {
+                    setRenameDraft(selected?.title ?? '')
+                    setRenaming(true)
+                  }}
+                >
+                  重命名
+                </button>
+              ) : null}
             <div className="m0-actions">
               <Segmented
                 testId="chart-granularity"
@@ -333,4 +415,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     </>
   )
 }
+
+
+
+
 

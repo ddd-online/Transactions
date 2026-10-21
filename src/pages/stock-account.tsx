@@ -39,6 +39,7 @@ export function StockAccountPanel({
   const [summary, setSummary] = useState<StockAccountSummary | null>(null)
   const [tags, setTags] = useState<StockTradeTagSettingDto | null>(null)
   const [funds, setFunds] = useState<StockFundRecordPage | null>(null)
+  const [fundPage, setFundPage] = useState(1)
   const [overview, setOverview] = useState<StockOverviewDto | null>(null)
   const [positions, setPositions] = useState<StockPositionDto[]>([])
   const [operations, setOperations] = useState<StockOperationDto[]>([])
@@ -77,7 +78,7 @@ export function StockAccountPanel({
         window.api.invoke('stock_account_summary', { ledger_id: ledgerId }),
         window.api.invoke('stock_fee_settings_get', { ledger_id: ledgerId }),
         window.api.invoke('stock_tag_settings_get', { ledger_id: ledgerId }),
-        window.api.invoke('stock_fund_records', { ledger_id: ledgerId, page: 1, pageSize: 20 }),
+        window.api.invoke('stock_fund_records', { ledger_id: ledgerId, page: fundPage, pageSize: 20 }),
         window.api.invoke('stock_overview', { ledger_id: ledgerId }),
           window.api.invoke('stock_positions', { ledger_id: ledgerId }),
           window.api.invoke('stock_operation_list', { ledger_id: ledgerId }),
@@ -570,6 +571,7 @@ export function StockAccountPanel({
       {section === 'account' ? (<> 
       <h3 className="m0-subtitle">资金记录</h3>
       {funds && funds.items.length > 0 ? (
+        <>
         <table className="m0-table">
           <thead>
             <tr>
@@ -592,6 +594,29 @@ export function StockAccountPanel({
             ))}
           </tbody>
         </table>
+        <div className="stock-funds-foot">
+          <span className="m0-muted">共 {funds?.total ?? 0} 条</span>
+          <button
+            type="button"
+            className="ui-btn ui-btn--text"
+            disabled={fundPage <= 1}
+            onClick={() => setFundPage((page) => Math.max(1, page - 1))}
+          >
+            上一页
+          </button>
+          <span className="m0-muted">
+            {fundPage}/{Math.max(1, Math.ceil((funds?.total ?? 0) / (funds?.pageSize || 20)))}
+          </span>
+          <button
+            type="button"
+            className="ui-btn ui-btn--text"
+            disabled={fundPage >= Math.max(1, Math.ceil((funds?.total ?? 0) / (funds?.pageSize || 20)))}
+            onClick={() => setFundPage((page) => page + 1)}
+          >
+            下一页
+          </button>
+        </div>
+        </>
       ) : (
         <EmptyState
           testId="fund-empty"
@@ -682,6 +707,10 @@ export function StockAccountPanel({
     </section>
   )
 }
+
+
+
+
 
 
 

@@ -224,7 +224,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               onClick={() => setTodoMode('cards')}
             >
               <span className="page-rail-btn-icon">
-                <Icon name="CheckCircle" size={18} />
+                <Icon name="FileText" size={18} />
               </span>
             </button>
             <button
@@ -236,7 +236,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               onClick={() => setTodoMode('history')}
             >
               <span className="page-rail-btn-icon">
-                <Icon name="ClockCircle" size={18} />
+                <Icon name="History" size={18} />
               </span>
             </button>
           </div>
@@ -470,6 +470,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     </section>
   )
 }
+
+
 
 
 
