@@ -347,7 +347,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 ### Help tooltips
 
 - **Trigger:** a 12px `Icon::InfoCircle` placed immediately after the label it explains — `--transactions-color-text-tertiary`, `cursor: help`, the same glyph the settings panels use for their fee notes. It is focusable, so the component's own `:focus-within` rule shows the bubble to keyboard users too; give it the standard 2px focus ring.
-- **Bubble:** the `Tooltip` component's CSS bubble, holding one sentence in the reader's own words. The wording lives next to the vocabulary it explains (`Metric::hint` in tr-draw), not in the page, so a renamed label and its explanation move together. No formulas here — the number's own sub-line carries the arithmetic.
+- **Bubble:** the `Tooltip` component's CSS bubble, holding one sentence in the reader's own words. The wording lives next to the vocabulary it explains, not in the page, so a renamed label and its explanation move together. No formulas here — the number's own sub-line carries the arithmetic.
 - **Width:** cap it from the trigger's own class (180–320px) whenever the trigger sits inside a grid, table or panel: `overflow: hidden` ancestors clip an over-wide bubble mid-sentence, and a truncated definition reads as a wrong one.
 
 ### Segmented / Switch

@@ -6,7 +6,7 @@ export interface EmptyStateProps {
   testId?: string
 }
 
-/** 旧版 `ui-empty` 空态：居中标题 + 可选说明。 */
+/** 空态：居中标题 + 可选说明。 */
 export function EmptyState({ title, description, testId }: EmptyStateProps): JSX.Element {
   return (
     <div className="ui-empty" data-testid={testId}>

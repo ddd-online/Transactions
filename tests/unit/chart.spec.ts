@@ -27,7 +27,7 @@ import {
   type MeasuredPoints,
 } from '../../shared/domain/chart'
 
-// 从 `crates/tr-draw/src/chart.rs` 的 `#[cfg(test)] mod tests` 逐条搬来：
+// 图表几何与取数断言：
 // 测试名、SVG 探针、断言里的字符串与数字都与 Rust 版一致。
 // Rust 的 `assert_eq!(option, Some(x))` 在这里是 `expect(...).toBe(x)`，`None` 是 `toBeNull()`。
 // `f32::EPSILON` 不是 `Number.EPSILON`（后者是 f64 的），单独写出来。

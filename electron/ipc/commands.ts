@@ -12,7 +12,7 @@ import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
 import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
 import { logInfo } from '../logging'
-import { importLegacyWorkspace, probeLegacyWorkspace } from '../legacy/importer'
+import { importCompatWorkspace, probeCompatWorkspace } from '../compat/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
@@ -240,27 +240,27 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       return String(asObject(request).message ?? '')
     },
 
-    legacy_import_probe(request) {
+    compat_import_probe(request) {
       const workspaceDir = String(asObject(request).workspaceDir ?? '').trim()
       if (!workspaceDir) {
         throw new AppError('请选择旧工作空间目录', { status: 400 })
       }
-      return probeLegacyWorkspace(workspaceDir)
+      return probeCompatWorkspace(workspaceDir)
     },
 
-    async legacy_import_start(request) {
+    async compat_import_start(request) {
       const raw = asObject(request)
       const sourceDir = String(raw.sourceDir ?? '').trim()
       const targetDir = String(raw.targetDir ?? '').trim()
       if (!sourceDir || !targetDir) {
         throw new AppError('源目录与目标目录都不能为空', { status: 400 })
       }
-      const report = await importLegacyWorkspace({
+      const report = await importCompatWorkspace({
         sourceDir,
         targetDir,
         onProgress: (progress) => sendEvent(IMPORT_PROGRESS, progress),
       })
-      logInfo(`旧数据导入完成: ${sourceDir} -> ${targetDir}`)
+      logInfo(`数据导入完成: ${sourceDir} -> ${targetDir}`)
       return report
     },
 

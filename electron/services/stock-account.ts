@@ -79,14 +79,14 @@ import { logError } from '../logging'
  *   （链起点 = 本金 − Σ追加本金），所以**倒填**的日期只是让那一行排到它该在的位置，
  *   金额不会被跳过；
  * * **支取上限取链末条的余额**，文案在 `fund.ts`（用户可见）；
- * * 校验文案、状态码（400 校验 / 409 冲突）与旧版逐字一致。
+ * * 校验文案、状态码（400 校验 / 409 冲突）与兼容逐字一致。
  *
- * 与旧版的唯一差别在**回读形状**：旧版几个写入入口回读 `StockOverviewDto`（含持仓市值 /
+ * 与兼容的唯一差别在**回读形状**：兼容几个写入入口回读 `StockOverviewDto`（含持仓市值 /
  * 浮动盈亏 / 行情失败数），那几项需要行情与成交流 —— 属于持仓 / 成交切片。这里回读
  * {@link StockAccountSummary}（同一套现金公式，只少行情相关字段）。
  */
 
-/** 把非 `AppError` 的异常折成旧版的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
@@ -101,7 +101,7 @@ const STRICT_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
  * 归一化资金变化的发生日期；空串按当天记录，非法格式报错。
  *
  * 只接受严格的 `YYYY-MM-DD`（`2026/01/05` 与 `2026-1-5` 都会被拒绝）。日期按**宿主本地时区**
- * 取当天（与旧版 `chrono::Local` 一致）。
+ * 取当天（与兼容 `chrono::Local` 一致）。
  */
 export function normalizeStockRecordDate(date: string): string {
   if (date === '') return todayYmd()
@@ -119,7 +119,7 @@ export function normalizeStockRecordDate(date: string): string {
 }
 
 /**
- * Unix 秒 → `YYYY-MM-DD`，**按宿主本地时区**（旧版 `chrono::Local`）。
+ * Unix 秒 → `YYYY-MM-DD`，**按宿主本地时区**（兼容 `chrono::Local`）。
  *
  * 股票域的时间戳落在**本地 00:00**（界面只让用户选日期），按 UTC 取会得到"早一天"。
  * 超出 `Date` 可表示范围的极端值退回 Unix 纪元当天，避免 `NaN-NaN-NaN`。
@@ -137,7 +137,7 @@ function getOrCreateAccountIn(db: Db, ledgerId: string): StockAccount {
   const existing = getAccount(db, ledgerId)
   if (existing) return existing
   createAccount(db, { id: randomUUID(), ledgerId, principal: 0 })
-  // 回读一次拿 DAO 填的时间戳（旧版这里返回的是内存里 created_at = 0 的副本）
+  // 回读一次拿 DAO 填的时间戳（兼容这里返回的是内存里 created_at = 0 的副本）
   const saved = getAccount(db, ledgerId)
   if (!saved) throw new AppError('创建股票账户失败', { status: 500 })
   return saved
@@ -183,7 +183,7 @@ export function getOrCreateFeeSetting(db: Db, ledgerId: string): StockFeeSetting
   }
 }
 
-/** 旧版 `tags_to_json`：序列化失败时退回 `[]`（这里只有字符串数组，不会失败）。 */
+/** 兼容 `tags_to_json`：序列化失败时退回 `[]`（这里只有字符串数组，不会失败）。 */
 function tagsToJson(tags: readonly string[]): string {
   return JSON.stringify(tags)
 }
@@ -205,7 +205,7 @@ function getOrCreateTradeTagSettingIn(db: Db, ledgerId: string): StockTradeTagSe
 /**
  * 返回某账本当前可用的交易标签（有序）。
  *
- * 解析异常或空列表时回退默认列表**并修复存储**（旧版同一口径）。
+ * 解析异常或空列表时回退默认列表**并修复存储**（兼容同一口径）。
  */
 export function getTradeTags(db: Db, ledgerId: string): string[] {
   let setting: StockTradeTagSetting
@@ -287,7 +287,7 @@ export function saveFeeSettings(db: Db, ledgerId: string, fee: RoundFee): StockF
  * 保存某账本可用交易标签：去空白、去重并保留顺序；
  * 默认标签「分析」不可删除，列表至少保留一项，单个标签不超过 8 字、总数不超过 20 个。
  *
- * 校验顺序与旧版一致：重复 → 单标签超长 → 总数超限。
+ * 校验顺序与兼容一致：重复 → 单标签超长 → 总数超限。
  */
 export function saveTradeTags(
   db: Db,
@@ -438,9 +438,9 @@ function logOperation(
 // ---------------------------------------------------------------- 账户总览（现金口径）
 
 /**
- * 账户资金口径的回读：`availableCash` 的公式与旧版 `get_overview` 一致。
+ * 账户资金口径的回读：`availableCash` 的公式与兼容 `get_overview` 一致。
  *
- * 旧版的 `realizedPnl` 只算已清仓轮次；现金口径的「卖出净额」含未清仓轮次里已减仓的部分，
+ * 兼容的 `realizedPnl` 只算已清仓轮次；现金口径的「卖出净额」含未清仓轮次里已减仓的部分，
  * 两者别互换（见 `StockAccountSummary.sellNetPnlTotal`）。
  */
 export function getAccountSummary(db: Db, ledgerId: string): StockAccountSummary {
@@ -622,7 +622,7 @@ export function addInterestAtDate(
         createdAt: 0,
       }
       createFundRecord(db, record)
-      // 复算里会补建账户（旧版同一路径）
+      // 复算里会补建账户（兼容同一路径）
       recalculateCashChain(db, ledgerId)
       logOperation(db, ledgerId, STOCK_OP_KIND_FUND, '利息归本', amountDetail(amount), record.id)
     })

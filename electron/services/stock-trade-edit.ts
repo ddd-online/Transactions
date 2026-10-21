@@ -1,7 +1,7 @@
 /**
  * 股票成交编辑 / 委托删除 / 整体重放 / 回滚 —— 一个意图 = 一个事务。
  *
- * 逐条移植自旧版 `crates/tr-service/src/stock/write.rs` 的「成交编辑 / 委托删除 / 重放」段
+ * 成交编辑 / 委托删除 / 重放
  * 与「回滚」段：
  *
  * * `update_trade_fill` / `update_trade_fill_tx`：改一笔成交，按当前费用重算**所属委托**的
@@ -32,18 +32,18 @@
  * ## 操作记录不参与重放
  *
  * 操作记录（`stock_operation`）是**追加式**的正向操作日志，不是由成交推导出来的派生数据；
- * 旧版重放从不碰它（只有回滚会弹掉栈顶那一条），这里保持一致。删委托 / 改成交本身也不记
- * 操作记录（旧版同样不记）。
+ * 兼容重放从不碰它（只有回滚会弹掉栈顶那一条），这里保持一致。删委托 / 改成交本身也不记
+ * 操作记录（兼容同样不记）。
  *
  * ## 没有随本切片移植的部分
  *
- * `repair_legacy_trade_fund_dates`（旧数据按本地时区订正资金记录日期）与它的 `day_after` /
- * `has_legacy_trade_fund_date` 属独立的旧数据维护路径，不在编辑 / 删除 / 回滚语义里。
+ * `repair_compat_trade_fund_dates`（数据按本地时区订正资金记录日期）与它的 `day_after` /
+ * `has_compat_trade_fund_date` 属独立的数据维护路径，不在编辑 / 删除 / 回滚语义里。
  *
- * ## 与旧版的唯一结构差异
+ * ## 与兼容的唯一结构差异
  *
  * `stock-trade-write.ts` 里的若干小工具（`instrument_of` / `cost_basis_of` /
- * `trade_order_remark` / `RoundFee ↔ StockFeeSetting`）在旧版是同一模块的私有函数；本切片
+ * `trade_order_remark` / `RoundFee ↔ StockFeeSetting`）在兼容是同一模块的私有函数；本切片
  * 不改动那个文件，所以这里按**逐字相同**的口径各留一份。两处一旦分叉，下单与重放算出来的
  * 费用 / 备注就会对不上 —— 新增口径请同时改两边（或把它们收进 `shared/domain`）。
  */
@@ -126,12 +126,12 @@ import {
 // ---------------------------------------------------------------- 预演哨兵
 
 /**
- * 预演专用哨兵文案：事务内执行改动后强制回滚，**不对外暴露**（与旧版
+ * 预演专用哨兵文案：事务内执行改动后强制回滚，**不对外暴露**（与兼容
  * `ERR_PREVIEW_ROLLBACK` 同一个字符串）。
  */
 const PREVIEW_ROLLBACK = 'trade impact preview rollback'
 
-/** 旧版 `is_not_found`：404 = 目标不存在（回滚时据此区分"跳过"与真错误）。 */
+/** 兼容 `is_not_found`：404 = 目标不存在（回滚时据此区分"跳过"与真错误）。 */
 function isNotFound(error: unknown): boolean {
   return error instanceof AppError && error.status === 404
 }
@@ -628,7 +628,7 @@ function rebuildTrades(db: Db, ledgerId: string): void {
 /**
  * 结束当前委托的重放：写一条资金记录，必要时归档轮次，并回写各笔成交的派生字段。
  *
- * 抽成独立函数是因为一棵同时读写 `trades` 与多个 map 的循环体更难读（旧版同一拆分，
+ * 抽成独立函数是因为一棵同时读写 `trades` 与多个 map 的循环体更难读（兼容同一拆分，
  * 那里是借用检查器的原因，这里是可读性）。
  */
 function flushReplayOrder(

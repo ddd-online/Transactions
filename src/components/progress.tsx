@@ -5,7 +5,7 @@ export interface ProgressProps {
   total: number
 }
 
-/** 旧版 ui-progress：轨道 + 百分比。 */
+/** 进度条：轨道 + 百分比。 */
 export function Progress({ done, total }: ProgressProps): JSX.Element | null {
   if (total <= 0) return null
   const percent = Math.round((Math.min(done, total) / total) * 100)

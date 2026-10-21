@@ -1,7 +1,7 @@
 /**
  * 股票统计读层：逐笔结算统计 / 分组统计 / 筛选（月区间、最近 N 笔、标签）。
  *
- * 逐条移植自旧版 `tr-service/src/stock_statistics.rs`。模块文档里的口径一条不改：
+ * 逐条移植自兼容 `tr-service/src/stock_statistics.rs`。模块文档里的口径一条不改：
  *
  * **时间轴 = 建仓时间。** 一轮的锚点是它**首次建仓**的委托时间（`round.openedAt`）：排序、
  * 月份区间与「最近 N 笔」的日期、资金事件（追加本金 / 支取）的插值时点、明细表与曲线上的
@@ -58,7 +58,7 @@ import { logError } from '../logging'
 import { getOrCreateAccount, getTradeTags, unixToDate } from './stock-account'
 import { ensureTradeHistoryBackfill, percentOf, roundPnl } from './stock-history'
 
-/** 把非 `AppError` 的异常折成旧版的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
@@ -213,7 +213,7 @@ export function getStatisticsFor(
     throw new AppError(error instanceof Error ? error.message : String(error), { status: 400 })
   }
 
-  // 旧版用的是**原始** `filter.tag`（不 trim）：空白标签不会在这里被当成"不限"
+  // 兼容用的是**原始** `filter.tag`（不 trim）：空白标签不会在这里被当成"不限"
   const tag = filter.tag
   try {
     if (tag !== '') {

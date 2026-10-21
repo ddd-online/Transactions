@@ -1,7 +1,7 @@
 /**
  * 股票账户 / 设置 / 资金记录这一段的模型与 DTO 形状。
  *
- * 对应旧版：
+ * 对应兼容：
  * * `tr-domain/src/models/stock.rs` 的 `StockAccount` / `StockFundRecord` /
  *   `StockTradeTagSetting` / `StockReviewSetting` / `StockOperation`；
  * * `tr-domain/src/dto/stock.rs` 的 `StockFundRecordDto` / `StockFundRecordPage` /
@@ -117,9 +117,9 @@ export interface StockOperationDto {
 /**
  * 账户资金口径的回读结果（本切片能算出来的那部分）。
  *
- * 旧版 `set_principal` / `add_principal*` / `add_withdraw*` / `add_interest*` 回读的是
+ * 兼容 `set_principal` / `add_principal*` / `add_withdraw*` / `add_interest*` 回读的是
  * `StockOverviewDto`；那份 DTO 里的持仓市值 / 浮动盈亏 / 行情失败数要有行情与成交流，
- * 属于持仓 / 成交切片。这里只给**现金口径**，公式与旧版一致：
+ * 属于持仓 / 成交切片。这里只给**现金口径**，公式与兼容一致：
  * `availableCash = principal + interestTotal + sellNetPnlTotal − withdrawnTotal − positionCost`。
  */
 export interface StockAccountSummary {

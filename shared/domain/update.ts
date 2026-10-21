@@ -1,7 +1,7 @@
 /**
  * 应用更新流程的**状态词表与状态机**（纯逻辑，主进程与渲染进程共用）。
  *
- * 从 Rust 版 `crates/tr-domain/src/update.rs` 移植。「检查 → 下载 → 安装」这条链路的状态
+ * 更新器状态机。「检查 → 下载 → 安装」这条链路的状态
  * 只有一个持有者：**主进程**（只有它能做 I/O）。它推进这里的状态机、把 {@link UpdateSnapshot}
  * 发给界面；界面只渲染快照，自己不再拼状态、不再判断"失败还是最新"。因此本模块里**没有** I/O：
  * 既不知道 HTTP，也不知道文件系统。
@@ -61,7 +61,7 @@ export const UPDATE_STATUS_FAILED = 'failed' as const
 /**
  * 更新流程的状态词表。
  *
- * **序列化取值就是契约**（界面 `switch` 的分支、旧版字符串比较的对象）：
+ * **序列化取值就是契约**（界面 `switch` 的分支、兼容字符串比较的对象）：
  * `idle` / `checking` / `available` / `no-update` / `downloading` / `downloaded` / `failed`。
  */
 export type UpdateStatus =

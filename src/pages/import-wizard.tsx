@@ -3,9 +3,9 @@ import { useCallback, useState, type JSX } from 'react'
 import { notify } from '../components/toast'
 import { Spin } from '../components/spin'
 import type {
-  LegacyImportProbe,
-  LegacyImportProgress,
-  LegacyImportReport,
+  CompatImportProbe,
+  CompatImportProgress,
+  CompatImportReport,
 } from '../../shared/types/import'
 
 function errorMessage(error: unknown): string {
@@ -25,16 +25,16 @@ const PHASE_LABELS: Record<string, string> = {
 }
 
 export interface ImportWizardProps {
-  progress: LegacyImportProgress | null
+  progress: CompatImportProgress | null
   onImported: (targetDir: string) => Promise<void>
 }
 
-/** 一次性旧版工作空间导入：0.20.0 库 + 资产 → 新账本库。 */
+/** 从既有工作空间导入账本、业务数据与资产。 */
 export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.Element {
   const [sourceDir, setSourceDir] = useState('')
   const [targetDir, setTargetDir] = useState('')
-  const [probe, setProbe] = useState<LegacyImportProbe | null>(null)
-  const [report, setReport] = useState<LegacyImportReport | null>(null)
+  const [probe, setProbe] = useState<CompatImportProbe | null>(null)
+  const [report, setReport] = useState<CompatImportReport | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -48,7 +48,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     setError('')
     setReport(null)
     try {
-      const result = await window.api.invoke('legacy_import_probe', { workspaceDir: sourceDir })
+      const result = await window.api.invoke('compat_import_probe', { workspaceDir: sourceDir })
       setProbe(result)
     } catch (probeError) {
       setProbe(null)
@@ -63,9 +63,9 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
     setError('')
     setReport(null)
     try {
-      const result = await window.api.invoke('legacy_import_start', { sourceDir, targetDir })
+      const result = await window.api.invoke('compat_import_start', { sourceDir, targetDir })
       setReport(result)
-      notify('旧版数据导入完成')
+      notify('数据导入完成')
       await onImported(targetDir)
     } catch (importError) {
       setError(errorMessage(importError))
@@ -76,14 +76,14 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
 
   return (
     <section className="m0-card m0-card--wide">
-      <h2>导入旧版数据</h2>
+      <h2>导入数据</h2>
       <p className="m0-muted">
-        仅支持 0.20.0 旧库；导入到空目录，源库只读，完成后写入 import-report.json。
+        选择包含 transactions.db 的源目录，导入到空目录；源库只读，完成后写入 import-report.json。
       </p>
 
       <div className="m0-import-row">
         <label className="m0-field m0-import-field">
-          旧版目录
+          源目录
           <input
             className="m0-input"
             data-testid="import-source"
@@ -121,7 +121,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
           disabled={!sourceDir || busy}
           onClick={() => void check()}
         >
-          检查旧库
+          检查源库
         </button>
         <button
           type="button"

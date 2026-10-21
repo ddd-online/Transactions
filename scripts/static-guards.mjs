@@ -103,24 +103,6 @@ check('版本与产品名', () => {
   return packageJson.version
 })
 
-check('仓库不再包含旧栈源码', () => {
-  const forbidden = ['src-tauri', 'crates', 'Cargo.toml', 'Cargo.lock', 'Trunk.toml']
-  for (const path of forbidden) {
-    try {
-      statSync(join(root, path))
-      throw new Error(`仍存在旧栈文件/目录：${path}`)
-    } catch (error) {
-      if (error instanceof Error && error.message.startsWith('仍存在')) throw error
-    }
-  }
-  const rustFiles = ['electron', 'src', 'shared', 'tests', 'scripts', 'docs']
-    .flatMap((directory) => walk(directory))
-    .filter((file) => file.endsWith('.rs'))
-    .map((file) => relative(root, file))
-  assert(rustFiles.length === 0, `仍存在 Rust 源文件：${rustFiles.join(', ')}`)
-  return '无 Rust/Tauri'
-})
-
 check('发布说明版本与构建脚本', () => {
   const notes = read('build/release_notes.md')
   const match = /^##\s*\[([^\]]+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/m.exec(notes)

@@ -1,4 +1,4 @@
-/** 股票域的共享模型（字段名与旧版 wire 契约一致：camelCase）。 */
+/** 股票域的共享模型（字段名与兼容 wire 契约一致：camelCase）。 */
 
 export interface StockFeeSetting {
   id: string
@@ -89,7 +89,7 @@ export interface TransactionRecordFlags {
 export interface TransactionRecord {
   transactionId: string
   ledgerId: string
-  /** 交易金额（分；旧库列名 price） */
+  /** 交易金额（分；源库列名 price） */
   amountCents: number
   transactionType: string
   category: string

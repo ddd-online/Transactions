@@ -10,7 +10,7 @@ export interface ConfirmDialogProps {
   onCancel: () => void
 }
 
-/** 旧版 `ui-modal` 风格的确认框；用于删除/重置等不可撤销操作。 */
+/** 统一确认框；用于删除/重置等不可撤销操作。 */
 export function ConfirmDialog({
   open,
   title,

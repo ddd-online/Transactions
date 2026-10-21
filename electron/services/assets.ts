@@ -6,7 +6,7 @@ import { AppError } from '../../shared/errors'
 /**
  * 工作空间资产：`<workspace>/data/assets`。
  *
- * 关键事件图片布局（与旧版一致）：
+ * 关键事件图片布局（与兼容一致）：
  *   key_events/<YYYY-MM-DD>/<uuid>.<ext>       原图
  *   key_events/<YYYY-MM-DD>/thumb_<uuid>.jpg   缩略图
  *

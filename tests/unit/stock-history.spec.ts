@@ -380,7 +380,7 @@ describe('stock history read layer', () => {
     expect(detail.totalPnl).toBe(detail.rounds[0].pnl + detail.rounds[1].pnl)
   })
 
-  it('backfills legacy trades idempotently', async () => {
+  it('backfills compat trades idempotently', async () => {
     const workspace = newWorkspace()
     const code = '600000'
     const name = '浦发银行'

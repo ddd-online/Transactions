@@ -21,7 +21,7 @@ web
 
 ## Operating Context
 
-- Windows 桌面应用（Electron 44 + React 19 + TypeScript 重写中，旧版为 Tauri 2 + Rust + Leptos/WASM），无边框自绘标题栏，单实例运行。
+- Windows 桌面应用（Electron 44 + React 19 + TypeScript），无边框自绘标题栏，单实例运行。
 - 每个工作空间一个独立 SQLite 数据库，工作空间内包含多个账本（ledger）。
 - 金额一律以整数分存储，界面层负责分/元换算。
 - 开发调试用 `pnpm dev` 启动 Vite(:16000) + Electron；构建走 `pnpm build` / `pnpm package`，发布走 `build/` 脚本与 GitHub Release。
@@ -40,7 +40,7 @@ web
 ## Brand Commitments
 
 - 产品名：Transactions（一款桌面端记账工具）。
-- 应用内「Tr」图形（`crates/tr-ui/src/icons.rs` 的 `app_mark()`，侧栏与「关于软件」共用同一份 markup）是唯一品牌图形；无外部品牌资产。
+- 应用内「Tr」图形是唯一品牌图形；侧栏与「关于软件」共用同一份标识。
 - 中文界面与文案；公开分发渠道为 GitHub Release。
 
 ## Evidence on Hand

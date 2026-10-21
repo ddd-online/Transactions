@@ -1,7 +1,7 @@
-/** 旧数据导入（一次性）的请求/响应形状。 */
+/** 数据导入（一次性）的请求/响应形状。 */
 
-export interface LegacyImportProbe {
-  legacy: boolean
+export interface CompatImportProbe {
+  compat: boolean
   ready: boolean
   sourceDir: string
   databasePath: string
@@ -13,12 +13,12 @@ export interface LegacyImportProbe {
   message: string
 }
 
-export interface LegacyImportTableReport {
+export interface CompatImportTableReport {
   table: string
   rows: number
 }
 
-export interface LegacyImportSumReport {
+export interface CompatImportSumReport {
   table: string
   column: string
   before: number
@@ -26,18 +26,18 @@ export interface LegacyImportSumReport {
   ok: boolean
 }
 
-export interface LegacyImportReport {
+export interface CompatImportReport {
   sourceDir: string
   targetDir: string
   sourceDigest: string
   importedAt: number
-  tables: LegacyImportTableReport[]
-  sums: LegacyImportSumReport[]
+  tables: CompatImportTableReport[]
+  sums: CompatImportSumReport[]
   assets: { copied: number; missing: string[] }
   warnings: string[]
 }
 
-export interface LegacyImportProgress {
+export interface CompatImportProgress {
   phase: 'probe' | 'tables' | 'assets' | 'verify' | 'done'
   table?: string
   index?: number

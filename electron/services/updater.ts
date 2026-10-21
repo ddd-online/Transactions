@@ -34,7 +34,7 @@ import {
 } from '../../shared/events'
 
 export const RELEASE_API =
-  'https://api.github.com/repos/ddd-online/Transactions-Rust/releases/latest'
+  'https://api.github.com/repos/ddd-online/Transactions/releases/latest'
 export const CHECK_TIMEOUT_MS = 15_000
 
 export type UpdateFetch = (

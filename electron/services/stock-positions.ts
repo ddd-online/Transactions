@@ -1,14 +1,14 @@
 /**
  * 股票持仓 + 账户总览服务。
  *
- * 逐条移植自旧版 `tr-service/src/stock.rs` 的 `get_overview` / `list_positions` /
+ * 逐条移植自兼容 `tr-service/src/stock.rs` 的 `get_overview` / `list_positions` /
  * `update_position_review` / `update_position_tag` 及其辅助函数（`trades_by_code` /
  * `has_open_round` / `compute_held_market_value` / `round_flows_of` / `fetch_held_quotes` /
  * `round_opened_on` / `flow_of` / `effective_position_tag`）。
  *
  * 行情源作为参数注入（{@link StockQuoteFetcher}），服务层**不自己创建** adapter：
  * 生产端用 `stock-quote` 的腾讯实现，测试注入确定性 stub。因为 Node 的网络 API 是异步的，
- * 读入口（{@link getOverview} / {@link listPositions}）返回 `Promise`（旧版是同步）。
+ * 读入口（{@link getOverview} / {@link listPositions}）返回 `Promise`（兼容是同步）。
  *
  * 四条口径不能改：
  * * **可用现金** = 本金 + 累计利息归本 + Σ卖出净盈亏 − 累计支取 − 持仓成本
@@ -55,7 +55,7 @@ import type { StockQuoteFetcher } from './stock-quote'
 /** 复盘 / 每日复盘正文上限（Unicode 码点）。 */
 const REVIEW_MAX_CHARS = 500
 
-/** 把非 `AppError` 的异常折成旧版的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
@@ -375,7 +375,7 @@ export async function listPositions(
 
 // ---------------------------------------------------------------- 持仓复盘 / 标签
 
-/** 取持仓；不存在时按旧版文案报 404。 */
+/** 取持仓；不存在时按兼容文案报 404。 */
 function requirePosition(db: Db, ledgerId: string, stockCode: string): StockPosition {
   try {
     return getPosition(db, ledgerId, stockCode)

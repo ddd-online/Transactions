@@ -1,7 +1,7 @@
 /**
  * 股票交易历史读层：集合列表 / 单股详情 / 总览，以及存量交易的「建仓 → 清仓」回填。
  *
- * 逐条移植自旧版 `tr-service/src/stock.rs` 的历史与详情段
+ * 逐条移植自兼容 `tr-service/src/stock.rs` 的历史与详情段
  * （`ensure_trade_history_backfill` / `ensure_stock_history_backfill` /
  * `derive_trade_cycles` / `list_trade_histories` / `build_history_dto` /
  * `get_trade_history_detail` / `get_trade_history_summary` / `attach_history_quotes` /
@@ -16,11 +16,11 @@
  * * **盈亏**：买入成本 = Σ(成交额 + 费用)，卖出净额 = Σ(成交额 − 费用)，盈亏 = 卖出净额 −
  *   买入成本；盈亏率 = 盈亏 ÷ 买入成本（%）。
  * * **0 手的标记成交**（清仓时"只归档"那一笔）在详情里不算成交（不进列表、不计 `tradeCount`），
- *   但集合列表与总览沿用旧版的 `round_pnl` 全量口径（那笔金额 / 费用为 0）。
+ *   但集合列表与总览沿用兼容的 `round_pnl` 全量口径（那笔金额 / 费用为 0）。
  * * 金额恒为整数分，价格恒为整数厘；百分比是百分数（`12.5` = 12.5%）。
  *
  * 行情源作为参数注入（{@link StockQuoteFetcher}），与持仓服务同一套端口；因为 Node 的网络
- * API 是异步的，{@link listTradeHistories} 返回 `Promise`（旧版是同步）。
+ * API 是异步的，{@link listTradeHistories} 返回 `Promise`（兼容是同步）。
  *
  * 每日复盘的 DAO 尚未随本切片移植：`list_day_reviews_by_stock` 按旧 DAO 的同一条 SQL
  * （表 / 列 / `round_id` 分组 / 日期倒序）就地读取，等每日复盘切片落地后再收进 DAO。
@@ -63,7 +63,7 @@ import {
 import { logError } from '../logging'
 import type { StockQuoteFetcher } from './stock-quote'
 
-/** 把非 `AppError` 的异常折成旧版的 `Database` 错误（500），并记日志。 */
+/** 把非 `AppError` 的异常折成兼容的 `Database` 错误（500），并记日志。 */
 function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
@@ -83,7 +83,7 @@ function roundHalfAwayFromZero(value: number): number {
 /**
  * 占比百分比：`round(part / whole * 10000) / 100`（保留两位小数）。
  *
- * `whole <= 0` 时返回 `0`（旧版 `percent_of` 的防除零分支）；调用点仍各自保留
+ * `whole <= 0` 时返回 `0`（兼容 `percent_of` 的防除零分支）；调用点仍各自保留
  * `whole > 0` 守卫。
  */
 export function percentOf(part: number, whole: number): number {
@@ -181,7 +181,7 @@ export function deriveTradeCycles(trades: readonly StockTrade[]): TradeCycle[] {
 /**
  * 为有交易记录但尚无历史集合的股票补齐历史（幂等）。
  *
- * 与旧版一致：逐只股票调用 {@link ensureStockHistoryBackfill}，第一处失败即向上抛。
+ * 与兼容一致：逐只股票调用 {@link ensureStockHistoryBackfill}，第一处失败即向上抛。
  */
 export function ensureTradeHistoryBackfill(db: Db, ledgerId: string): void {
   try {
@@ -322,7 +322,7 @@ function buildHistoryDto(db: Db, history: StockTradeHistory): StockTradeHistoryD
   let totalPnl = 0
   let totalBuyCost = 0
   for (const round of rounds) {
-    // 列表口径沿用旧版：不过滤 0 手的归档标记成交（那笔金额 / 费用为 0）
+    // 列表口径沿用兼容：不过滤 0 手的归档标记成交（那笔金额 / 费用为 0）
     const { pnl, buyCost } = roundPnl(listTradesByRound(db, round.id))
     totalPnl += pnl
     totalBuyCost += buyCost
@@ -472,7 +472,7 @@ export function getTradeHistorySummary(db: Db, ledgerId: string): StockTradeHist
       summary.stockCount += 1
       const rounds = listTradeRoundsByStock(db, ledgerId, history.stockCode)
       for (const round of rounds) {
-        // 总览沿用旧版的全量 `round_pnl`（不过滤 0 手标记成交）
+        // 总览沿用兼容的全量 `round_pnl`（不过滤 0 手标记成交）
         const { pnl, buyCost } = roundPnl(listTradesByRound(db, round.id))
         summary.roundCount += 1
         summary.totalPnl += pnl

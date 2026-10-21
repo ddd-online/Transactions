@@ -15,7 +15,7 @@ describe('write target', () => {
     expect(target.isStale(''), '切到「没有账本」也算过期').toBe(true)
   })
 
-  // 还没选账本就发出去的写永远算过期（后端迟早会拒，落地只会闪出旧数据）。
+  // 还没选账本就发出去的写永远算过期（后端迟早会拒，落地只会闪出数据）。
   it('a write without a ledger is always stale', () => {
     const target = writeTarget('')
     expect(target.isStale('')).toBe(true)

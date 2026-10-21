@@ -21,7 +21,7 @@ export interface DatePickerProps {
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
 
-/** 旧版日历风格的日期输入：可直接输入 YYYY-MM-DD，也可点开日历选择。 */
+/** 日期输入：可直接输入 YYYY-MM-DD，也可点开日历选择。 */
 export function DatePicker({
   value,
   onChange,

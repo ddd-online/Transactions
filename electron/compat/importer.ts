@@ -18,14 +18,14 @@ import { openDatabase } from '../db/driver'
 import { migrate } from '../db/migrate'
 import { AppError } from '../../shared/errors'
 import type {
-  LegacyImportProbe,
-  LegacyImportProgress,
-  LegacyImportReport,
-  LegacyImportSumReport,
+  CompatImportProbe,
+  CompatImportProgress,
+  CompatImportReport,
+  CompatImportSumReport,
 } from '../../shared/types/import'
 
-/** 0.20.0 的 15 条迁移 id；缺一条就说明旧库还没升级到可导入的格式。 */
-export const LEGACY_MIGRATIONS = [
+/** 源格式 的 15 条迁移 id；缺一条就说明源库还没升级到可导入的格式。 */
+export const COMPAT_MIGRATIONS = [
   '20260101_key_event_ledger_date_composite_unique',
   '20260101_key_event_image_backfill_ledger_id',
   '20260918_stock_trade_backfill_order_id',
@@ -209,11 +209,11 @@ function tableRowCount(db: DatabaseSync | Db, table: string): number {
   return Number(row.count)
 }
 
-/** 只读探测：旧库是否存在、是否已经是 0.20.0 格式、各表行数与金额合计。 */
-export function probeLegacyWorkspace(sourceDir: string): LegacyImportProbe {
+/** 只读探测：源库是否存在、是否已经是 源格式 格式、各表行数与金额合计。 */
+export function probeCompatWorkspace(sourceDir: string): CompatImportProbe {
   const databasePath = join(sourceDir, 'transactions.db')
-  const base: LegacyImportProbe = {
-    legacy: false,
+  const base: CompatImportProbe = {
+    compat: false,
     ready: false,
     sourceDir,
     databasePath,
@@ -229,13 +229,13 @@ export function probeLegacyWorkspace(sourceDir: string): LegacyImportProbe {
   const db = new DatabaseSync(databasePath, { readOnly: true })
   try {
     if (!tableExists(db, 'tbl_billadm_schema_migration')) {
-      return { ...base, message: '这不是 0.20.0 的 Transactions 工作空间（缺少迁移登记表）' }
+      return { ...base, message: '这不是 源格式 的 Transactions 工作空间（缺少迁移登记表）' }
     }
     const rows = db.prepare('SELECT id FROM tbl_billadm_schema_migration').all() as Array<{
       id: string
     }>
     const ids = rows.map((row) => String(row.id))
-    const missing = LEGACY_MIGRATIONS.filter((id) => !ids.includes(id))
+    const missing = COMPAT_MIGRATIONS.filter((id) => !ids.includes(id))
     const counts: Record<string, number> = {}
     for (const spec of COPY_SPECS) {
       if (tableExists(db, spec.from)) counts[spec.to] = tableRowCount(db, spec.from)
@@ -246,7 +246,7 @@ export function probeLegacyWorkspace(sourceDir: string): LegacyImportProbe {
     }
     return {
       ...base,
-      legacy: true,
+      compat: true,
       ready: missing.length === 0,
       migrationCount: ids.length,
       missingMigrations: missing,
@@ -255,7 +255,7 @@ export function probeLegacyWorkspace(sourceDir: string): LegacyImportProbe {
       message:
         missing.length === 0
           ? `可导入：${counts.ledger ?? 0} 个账本`
-          : '旧库还没升级到 0.20.0：请先用旧版打开该工作空间完成升级',
+          : '源库还没升级到 源格式：请先用打开该工作空间完成升级',
     }
   } finally {
     db.close()
@@ -344,7 +344,7 @@ function normalizeValue(
 function copyTable(context: CopyContext, spec: CopySpec): number {
   const { source, target } = context
   if (!tableExists(source, spec.from)) {
-    context.warnings.push(`旧库缺少表 ${spec.from}，已跳过`)
+    context.warnings.push(`源库缺少表 ${spec.from}，已跳过`)
     return 0
   }
 
@@ -393,7 +393,7 @@ function ensureDefaultLedger(context: CopyContext): string {
   context.target
     .prepare('INSERT INTO ledger (id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
     .run(id, '默认账本', '', now, now)
-  context.warnings.push('旧库没有账本，已创建「默认账本」承载空 ledger_id 的历史数据')
+  context.warnings.push('源库没有账本，已创建「默认账本」承载空 ledger_id 的历史数据')
   return id
 }
 
@@ -443,11 +443,11 @@ function missingAssetReferences(source: DatabaseSync, sourceDir: string): string
  * 源目录**只读**（先做 SQLite 快照再读）；目标目录必须是空的；
  * 失败时清掉目标里的半成品；成功时写 `import-report.json`。
  */
-export async function importLegacyWorkspace(options: {
+export async function importCompatWorkspace(options: {
   sourceDir: string
   targetDir: string
-  onProgress?: (progress: LegacyImportProgress) => void
-}): Promise<LegacyImportReport> {
+  onProgress?: (progress: CompatImportProgress) => void
+}): Promise<CompatImportReport> {
   const sourceDir = resolve(options.sourceDir)
   const targetDir = resolve(options.targetDir)
   if (sourceDir.toLowerCase() === targetDir.toLowerCase()) {
@@ -461,8 +461,8 @@ export async function importLegacyWorkspace(options: {
     throw new AppError('目标目录不是空目录，请换一个目录', { status: 409 })
   }
 
-  const probe = probeLegacyWorkspace(sourceDir)
-  if (!probe.legacy) throw new AppError(probe.message, { status: 409 })
+  const probe = probeCompatWorkspace(sourceDir)
+  if (!probe.compat) throw new AppError(probe.message, { status: 409 })
   if (!probe.ready) throw new AppError(probe.message, { status: 409 })
 
   options.onProgress?.({ phase: 'probe' })
@@ -470,8 +470,8 @@ export async function importLegacyWorkspace(options: {
   const targetWasCreated = !existsSync(targetDir)
   mkdirSync(targetDir, { recursive: true })
 
-  const temporary = mkdtempSync(join(tmpdir(), 'tr-legacy-import-'))
-  const snapshotPath = join(temporary, 'legacy.db')
+  const temporary = mkdtempSync(join(tmpdir(), 'tr-compat-import-'))
+  const snapshotPath = join(temporary, 'compat.db')
   const sourceDatabasePath = join(sourceDir, 'transactions.db')
   const sourceHashBefore = sha256File(sourceDatabasePath)
 
@@ -495,7 +495,7 @@ export async function importLegacyWorkspace(options: {
 
     const warnings: string[] = []
     const tables: Array<{ table: string; rows: number }> = []
-    let sums: LegacyImportSumReport[] = []
+    let sums: CompatImportSumReport[] = []
 
     const context: CopyContext = {
       source: snapshot,
@@ -552,7 +552,7 @@ export async function importLegacyWorkspace(options: {
       throw new AppError('源数据库在导入过程中被修改，已中止', { status: 500 })
     }
 
-    const report: LegacyImportReport = {
+    const report: CompatImportReport = {
       sourceDir,
       targetDir,
       sourceDigest,

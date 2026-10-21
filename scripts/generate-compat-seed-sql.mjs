@@ -1,18 +1,18 @@
 /**
- * 把旧版（0.20.0）种子工作空间的 SQLite 文件转成可提交的 SQL 文本。
+ * 把合成种子工作空间的 SQLite 文件转成可提交的 SQL 文本。
  *
- * 旧仓库没有 sqlite3 CLI 时也能用：读 `seed-ws/transactions.db`，写出表结构 + 全部 INSERT。
- * 生成的文件只含合成数据（xtask seed 的产物），用于导入器/服务层回归。
+ * 读 `seed-ws/transactions.db`，写出表结构 + 全部 INSERT。
+ * 生成的文件只含合成数据，用于导入器/服务层回归。
  *
  * 用法：
- *   node scripts/generate-legacy-seed-sql.mjs <seed.db> <out.sql>
+ *   node scripts/generate-compat-seed-sql.mjs <seed.db> <out.sql>
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 
 const [databasePath, outputPath] = process.argv.slice(2)
 if (!databasePath || !outputPath) {
-  console.error('用法: node scripts/generate-legacy-seed-sql.mjs <seed.db> <out.sql>')
+  console.error('用法: node scripts/generate-compat-seed-sql.mjs <seed.db> <out.sql>')
   process.exit(1)
 }
 
@@ -43,9 +43,7 @@ const objects = db
   .all()
 
 const lines = []
-lines.push('-- 旧版 0.20.0 种子工作空间的 SQL dump（合成数据，不含真实个人数据）。')
-lines.push('-- 来源：D:\\github\\Transactions-Rust（commit 77071cb）`cargo xtask seed`。')
-lines.push('-- 用 `scripts/generate-legacy-seed-sql.mjs` 生成；仅供导入器/服务层回归使用。')
+lines.push('-- 源格式 种子工作空间的 SQL dump（合成数据，不含真实个人数据）。')
 lines.push('PRAGMA foreign_keys = OFF;')
 lines.push('BEGIN TRANSACTION;')
 

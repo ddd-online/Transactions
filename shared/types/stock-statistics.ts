@@ -1,9 +1,9 @@
 /**
  * 股票统计（逐笔结算统计）的 DTO 形状。
  *
- * 对应旧版 `tr-domain/src/dto/stock.rs` 的 `StockStatisticsDto` /
+ * 对应兼容 `tr-domain/src/dto/stock.rs` 的 `StockStatisticsDto` /
  * `StockStatisticsPointDto`。字段名是 **wire 契约**（Rust 侧 serde rename 成 camelCase），
- * 单位口径与旧版逐字一致：
+ * 单位口径与兼容逐字一致：
  *
  * * 金额恒为整数**分**；
  * * 百分比是「百分数」（`66.67` 表示 66.67%）；比率是倍数（`1.2`）；

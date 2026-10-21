@@ -1,19 +1,19 @@
 /**
  * 股票**下单**（委托创建）这一段的请求 / 成交明细 / 回读形状。
  *
- * 对应旧版：
+ * 对应兼容：
  * * `tr-service/src/stock.rs` 的 `TradeFill`（委托内的一笔成交，价格单位是**厘**）；
  * * `tr-service/src/stock/write.rs` 的 `create_trade_order_with_round_fee` /
  *   `create_trade_with_round_fee` 的入参（账本、股票、交易类型、成交明细、委托时间、备注、标签、
  *   本轮费用设置）；
  * * `tr-domain/src/dto/stock.rs` 的 `StockTradeDto`（创建成功后逐笔回读）。
  *
- * 单位口径（硬契约，与旧版逐字一致）：
+ * 单位口径（硬契约，与兼容逐字一致）：
  * * 价格恒为整数**厘**（1/1000 元）—— `priceMilli`；场内基金的 0.001 元报价靠它；
  * * 金额 / 费用恒为整数**分**；
  * * 时间戳恒为 Unix 秒；`tradeTime <= 0` 时由服务层取当前时间。
  *
- * 这里**不做**"元 → 厘"的换算：旧版那条换算在 IPC 命令面（`price_yuan_to_milli`，wire 上的
+ * 这里**不做**"元 → 厘"的换算：兼容那条换算在 IPC 命令面（`price_yuan_to_milli`，wire 上的
  * `price` 是元）。本切片是服务层，收的就是厘；把 wire 形状与落库形状混在一起会让两处单位
  * 各说一句话。
  */

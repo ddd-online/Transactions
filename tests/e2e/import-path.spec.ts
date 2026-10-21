@@ -18,7 +18,7 @@ test('导入：源与目标相同或目标在源内都被拒绝', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-import-path-'))
   const home = join(root, 'home')
-  const source = join(root, 'legacy')
+  const source = join(root, 'compat')
   const nested = join(source, 'nested-target')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })
@@ -28,10 +28,10 @@ test('导入：源与目标相同或目标在源内都被拒绝', async () => {
     join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
-  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'legacy', 'seed.sql'), 'utf8')
-  const legacy = new DatabaseSync(join(source, 'transactions.db'))
-  legacy.exec(seed)
-  legacy.close()
+  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'compat', 'seed.sql'), 'utf8')
+  const compat = new DatabaseSync(join(source, 'transactions.db'))
+  compat.exec(seed)
+  compat.close()
 
   const electronApp = await electron.launch({
     args: ['.'],

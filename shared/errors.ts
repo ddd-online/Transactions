@@ -1,7 +1,7 @@
 /** 失败种类（界面按 code 分支，不比文案）。 */
 export const ERR_CODE_DEFAULT = -1
 export const ERR_CODE_WORKSPACE_NOT_OPENED = -2
-export const ERR_CODE_LEGACY_WORKSPACE = -3
+export const ERR_CODE_COMPAT_WORKSPACE = -3
 
 export interface ErrorEnvelope {
   code: number
@@ -28,9 +28,9 @@ export function workspaceNotOpened(): AppError {
   })
 }
 
-export function legacyWorkspace(): AppError {
-  return new AppError('这是旧版工作空间，请先导入旧数据', {
-    code: ERR_CODE_LEGACY_WORKSPACE,
+export function compatWorkspace(): AppError {
+  return new AppError('这是兼容工作空间，请先导入数据', {
+    code: ERR_CODE_COMPAT_WORKSPACE,
     status: 409,
   })
 }

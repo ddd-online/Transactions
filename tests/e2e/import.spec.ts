@@ -14,11 +14,11 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
+test('导入：源格式 库 → 新工作空间', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-import-'))
   const home = join(root, 'home')
-  const source = join(root, 'legacy')
+  const source = join(root, 'compat')
   const target = join(root, 'imported')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })
@@ -29,13 +29,13 @@ test('导入：旧版 0.20.0 库 → 新工作空间', async () => {
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 
-  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'legacy', 'seed.sql'), 'utf8')
-  const legacy = new DatabaseSync(join(source, 'transactions.db'))
-  legacy.exec(seed)
-  const expected = legacy
+  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'compat', 'seed.sql'), 'utf8')
+  const compat = new DatabaseSync(join(source, 'transactions.db'))
+  compat.exec(seed)
+  const expected = compat
     .prepare('SELECT COUNT(*) AS count FROM tbl_billadm_transaction_record')
     .get() as { count: number }
-  legacy.close()
+  compat.close()
   expect(expected.count).toBeGreaterThan(0)
 
   const electronApp = await electron.launch({

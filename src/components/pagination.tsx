@@ -9,7 +9,7 @@ export interface PaginationProps {
   showSummary?: boolean
 }
 
-/** 旧版分页条：上一页 / 页码 / 下一页，两端保留 testid。 */
+/** 分页条：上一页 / 页码 / 下一页。 */
 export function Pagination({
   page,
   totalPages,

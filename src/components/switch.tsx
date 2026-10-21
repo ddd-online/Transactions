@@ -8,7 +8,7 @@ export interface SwitchProps {
   onChange: (checked: boolean) => void
 }
 
-/** 旧版 ui-switch：原生 checkbox 保留语义，视觉用轨道 + 滑块。 */
+/** 开关：原生 checkbox 保留语义，视觉用轨道 + 滑块。 */
 export function Switch({
   checked,
   disabled = false,

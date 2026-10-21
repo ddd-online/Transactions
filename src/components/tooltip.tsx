@@ -5,7 +5,7 @@ export interface TooltipProps {
   children: ReactNode
 }
 
-/** 旧版 ui-tooltip：纯 CSS 气泡，包裹任意元素。 */
+/** 纯 CSS 气泡提示，包裹任意元素。 */
 export function Tooltip({ text, children }: TooltipProps): JSX.Element {
   return (
     <span className="ui-tooltip" data-tooltip={text}>

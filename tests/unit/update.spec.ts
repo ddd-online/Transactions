@@ -40,7 +40,7 @@ import {
 } from '../../shared/domain/update'
 
 /** 测试里反复出现的安装包地址（与 Rust 测试里的 `x.exe` 一致）。 */
-const DOWNLOAD_URL = 'https://github.com/ddd-online/Transactions-Rust/x.exe'
+const DOWNLOAD_URL = 'https://github.com/ddd-online/Transactions/x.exe'
 
 /** 造一份"检查成功、有新版本"的快照（状态机的起点）。 */
 function available(): UpdateSnapshot {
@@ -420,7 +420,7 @@ describe('update', () => {
     // 成功时不该带 error 字段（`skip_serializing_if = "Option::is_none"`）
     expect('error' in value).toBe(false)
 
-    // 缺字段的载荷按默认值反序列化（旧版本进程 / 手写测试数据）
+    // 缺字段的载荷按默认值反序列化（兼容本进程 / 手写测试数据）
     const partial = decodeSnapshot(JSON.parse('{"status":"failed","error":"坏了"}'))
     expect(partial.status).toBe(UPDATE_STATUS_FAILED)
     expect(partial.error).toBe('坏了')

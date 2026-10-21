@@ -7,7 +7,7 @@ describe('event names', () => {
     expect(new Set(ALL).size).toBe(ALL.length)
   })
 
-  it('keep the legacy names without a namespace', () => {
+  it('keep the compat names without a namespace', () => {
     expect(ALL).toContain('workspace-changed')
     expect(ALL).toContain('window-state-changed')
   })

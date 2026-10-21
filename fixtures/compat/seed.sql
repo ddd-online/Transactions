@@ -1,6 +1,6 @@
--- 旧版 0.20.0 种子工作空间的 SQL dump（合成数据，不含真实个人数据）。
--- 来源：D:\github\Transactions-Rust（commit 77071cb）`cargo xtask seed`。
--- 用 `scripts/generate-legacy-seed-sql.mjs` 生成；仅供导入器/服务层回归使用。
+-- 合成工作空间种子数据（不含真实个人数据）
+-- 由 scripts/generate-compat-seed-sql.mjs 生成。
+
 PRAGMA foreign_keys = OFF;
 BEGIN TRANSACTION;
 CREATE TABLE `tbl_billadm_ledger` (`id` text,`name` text NOT NULL,`description` text,`created_at` integer NOT NULL,`updated_at` integer NOT NULL,PRIMARY KEY (`id`));

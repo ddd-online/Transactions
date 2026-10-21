@@ -16,10 +16,10 @@ import type { Db } from '../driver'
  *   仍然是确定的；
  * * 时间戳由 DAO 在 INSERT / UPDATE 时填（秒级 Unix 秒），服务层不用自己补；
  * * SQL 只拼固定列名常量，值一律 `?`；
- * * 「不存在」在 DAO 层是 `null`（旧版是 `QueryReturnedNoRows`），服务层负责 get-or-create。
+ * * 「不存在」在 DAO 层是 `null`（兼容是 `QueryReturnedNoRows`），服务层负责 get-or-create。
  *
- * 与旧版的差别只有列名映射（`principal` → `principal_cents` 等）与 NULL 的兜底写法一致
- * （旧版 `Option::unwrap_or_default` → 这里 `?? ''`）。
+ * 与兼容的差别只有列名映射（`principal` → `principal_cents` 等）与 NULL 的兜底写法一致
+ * （兼容 `Option::unwrap_or_default` → 这里 `?? ''`）。
  */
 
 const ACCOUNT_COLUMNS = 'id, ledger_id, principal_cents, created_at, updated_at'
@@ -92,7 +92,7 @@ function feeSettingFromRow(row: FeeSettingRow): StockFeeSetting {
   }
 }
 
-/** 旧版 `tag_setting_from_row`：NULL 兜底空串（老库可能缺这一列的值）。 */
+/** 兼容 `tag_setting_from_row`：NULL 兜底空串（老库可能缺这一列的值）。 */
 function tagSettingFromRow(row: TagSettingRow): StockTradeTagSetting {
   return {
     id: row.id,
@@ -103,7 +103,7 @@ function tagSettingFromRow(row: TagSettingRow): StockTradeTagSetting {
   }
 }
 
-/** 旧版 `review_setting_from_row`：NULL 兜底空串。 */
+/** 兼容 `review_setting_from_row`：NULL 兜底空串。 */
 function reviewSettingFromRow(row: ReviewSettingRow): StockReviewSetting {
   return {
     id: row.id,

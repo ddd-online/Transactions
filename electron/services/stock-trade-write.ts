@@ -1,7 +1,7 @@
 /**
  * 股票下单写入：一次委托 = 一个事务。
  *
- * 逐条移植自旧版 `crates/tr-service/src/stock/write.rs` 的「委托创建」段
+ * 委托创建
  * （`normalize_trade_fills` / `instrument_of` / `resolve_round_fee` / `trade_order_remark` /
  * `create_trade_order[_with_round_fee]` / `create_trade[_with_round_fee]` / `close_round`）
  * 与它依赖的 `cost_basis_of`、`log_operation`、`amount_detail`、`trade_operation_label`。
@@ -41,7 +41,7 @@
  * ## 没有随本切片移植的部分
  *
  * `order_key_of` / `round_meta_key` 属"编辑成交 / 删除委托 / 回放"那条写入路径（`rebuild_trades`
- * 用它们给委托与轮次分组），`day_after` 属旧数据订正（`repair_legacy_trade_fund_dates`）；
+ * 用它们给委托与轮次分组），`day_after` 属数据订正（`repair_compat_trade_fund_dates`）；
  * 三者都不在下单语义里，等对应切片落地时随那片一起移植。
  */
 

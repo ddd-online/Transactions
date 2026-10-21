@@ -13,7 +13,7 @@ export interface Migration {
 /**
  * 迁移清单：**只增不改**。
  *
- * v1 是新应用的第一份结构；旧库的 15 条历史迁移不在这里（ADR 0006）。
+ * v1 是新应用的第一份结构；源库的 15 条历史迁移不在这里（ADR 0006）。
  * 之后每次结构变更追加一条，`version` 必须连续递增。
  */
 export const MIGRATIONS: readonly Migration[] = [

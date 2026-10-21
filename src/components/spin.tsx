@@ -4,7 +4,7 @@ export interface SpinProps {
   size?: 'sm' | 'lg'
 }
 
-/** 旧版 ui-spin 加载指示器。 */
+/** 加载指示器。 */
 export function Spin({ size = 'sm' }: SpinProps): JSX.Element {
   return (
     <span

@@ -7,7 +7,7 @@ import { logWarn } from '../logging'
  * 把应用代理设置应用到默认 session。
  *
  * - `off`：直连（显式 direct，避免继承环境变量）
- * - `manual`：固定 HTTP 代理（只支持 HTTP，与旧版一致）
+ * - `manual`：固定 HTTP 代理（只支持 HTTP，与兼容一致）
  * - `auto`：跟随系统代理
  */
 export async function applyProxy(setting: ProxySetting): Promise<void> {

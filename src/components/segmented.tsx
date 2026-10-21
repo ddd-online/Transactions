@@ -14,7 +14,7 @@ export interface SegmentedProps {
   disabled?: boolean
 }
 
-/** 旧版 ui-segmented 分段控件。 */
+/** 分段控件。 */
 export function Segmented({
   value,
   options,

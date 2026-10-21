@@ -29,7 +29,7 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
   return parts
 }
 
-/** 旧版 Markdown 的轻量安全渲染：标题 / 列表 / 代码 / 粗斜体 / https 链接。 */
+/** 轻量安全 Markdown 渲染：标题 / 列表 / 代码 / 粗斜体 / https 链接。 */
 export function Markdown({ source, testId }: MarkdownProps): JSX.Element {
   const lines = source.replace(/\r\n/g, '\n').split('\n')
   const blocks: ReactNode[] = []

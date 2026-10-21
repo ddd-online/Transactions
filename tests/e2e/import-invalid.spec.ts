@@ -13,11 +13,11 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('导入：非旧版目录给出明确拒绝且不能开始', async () => {
+test('导入：非源目录给出明确拒绝且不能开始', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-import-bad-'))
   const home = join(root, 'home')
-  const source = join(root, 'not-legacy')
+  const source = join(root, 'not-compat')
   const target = join(root, 'target')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })

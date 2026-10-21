@@ -1,7 +1,7 @@
 /**
  * 股票成交编辑 / 委托删除 / 整体重放 / 回滚（`electron/services/stock-trade-edit.ts`）的行为测试。
  *
- * 逐条对照旧版 `crates/tr-service/src/stock.rs` 的 `mod tests`：
+ * 成交编辑 / 删除 / 重放：
  *
  * * 编辑 / 删除 / 重放：
  *   `create_order_after_rebuild_reads_fresh_state`、`phase3_reduce_sequence_matches_expected_lots`、
@@ -28,10 +28,10 @@
  * * `create_then_edit_then_delete_stays_consistent`：建仓 → 改价 → 删委托的整条链路，
  *   以及删掉目标之后回滚走 `skipped` 路径。
  *
- * 时间戳全部用固定常量（`T1`–`T4` 或旧版原值），保证断言确定；资金记录的 `createdAt`
+ * 时间戳全部用固定常量（`T1`–`T4` 或兼容原值），保证断言确定；资金记录的 `createdAt`
  * 是派生值（DAO 的 `MAX(now, 已有最大 + 1)`），只在明确要验"重放确定性"的地方比对。
  *
- * 每日复盘的 DAO 尚未随本切片移植（与旧版一样在服务里就地读写），测试也按旧表结构
+ * 每日复盘的 DAO 尚未随本切片移植（与兼容一样在服务里就地读写），测试也按旧表结构
  * 用参数化 SQL 造数 / 读回。
  */
 
@@ -102,7 +102,7 @@ const CODE = '600000'
 const NAME = '浦发银行'
 const CODE_B = '000001'
 const NAME_B = '平安银行'
-/** 协和电子：旧版"一次委托两笔成交"的回归标的。 */
+/** 协和电子：兼容"一次委托两笔成交"的回归标的。 */
 const ORDER_CODE = '605258'
 const ORDER_NAME = '协和电子'
 
@@ -208,7 +208,7 @@ function closeRoundHelper(
   })
 }
 
-/** 旧版 `create_xiehe_order`：协和电子建仓 2 手 + 清仓两笔，返回**清仓**委托的成交。 */
+/** 兼容 `create_xiehe_order`：协和电子建仓 2 手 + 清仓两笔，返回**清仓**委托的成交。 */
 function createXieheOrder(workspace: OpenedWorkspace) {
   setPrincipal(workspace.db, LEDGER, 10_000_000)
   createTradeOrder(workspace.db, {
@@ -234,7 +234,7 @@ function fundRecordOf(workspace: OpenedWorkspace, eventType: string) {
   return record
 }
 
-/** 某股持仓：行不存在时视为 (0, 0)（旧版 `position_of`）。 */
+/** 某股持仓：行不存在时视为 (0, 0)（兼容 `position_of`）。 */
 function positionOf(workspace: OpenedWorkspace, code: string): [number, number] {
   try {
     const position = getPosition(workspace.db, LEDGER, code)
@@ -863,7 +863,7 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     ).toBe(true)
   })
 
-  it('treats an order-less legacy trade as its own order', () => {
+  it('treats an order-less compat trade as its own order', () => {
     const workspace = newWorkspace()
     setPrincipal(workspace.db, LEDGER, 10_000_000)
     const trade = createTrade(workspace.db, singleRequest({ tradeTime: T1 }))

@@ -1,12 +1,7 @@
--- Transactions 工作空间「当前 schema」基线
+-- 源格式工作空间 schema（导入器识别用）
 --
--- 来源：`sqlite3 transactions.db .schema` 输出的原始 DDL，逐字节复制，未做任何改写。
--- 用途：为**全新工作空间**建库时执行本文件，使库结构与基线逐字节一致
---       （由 `cargo xtask schema-diff` 校验）。
---
--- 纪律（见 AGENTS.md）：本文件只在「数据库文件不存在」时执行一次；
--- 打开既有工作空间时**绝不**执行任何 DDL/DML，只做只读校验。
--- 本仓库不包含任何 schema 迁移逻辑：更早格式的工作空间会被明确拒绝，而不是被就地升级。
+-- 本文件只在测试夹具中用于生成源格式数据库；新库 schema 见
+-- electron/db/schema/0001_init.sql。
 
 CREATE TABLE `tbl_billadm_ledger` (`id` text,`name` text NOT NULL,`description` text,`created_at` integer NOT NULL,`updated_at` integer NOT NULL,PRIMARY KEY (`id`));
 CREATE TABLE `tbl_billadm_transaction_record` (`transaction_id` text,`ledger_id` text NOT NULL,`price` integer NOT NULL,`transaction_type` text NOT NULL,`category` text NOT NULL,`description` text,`flags` text,`key_event_date` varchar(10) DEFAULT "",`transaction_at` integer NOT NULL,`created_at` integer NOT NULL,`updated_at` integer NOT NULL,PRIMARY KEY (`transaction_id`));

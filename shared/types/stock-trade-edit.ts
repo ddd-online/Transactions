@@ -1,14 +1,14 @@
 /**
  * 股票**成交编辑 / 委托删除 / 影响预演 / 回滚**这一段的请求与回读形状。
  *
- * 对应旧版：
+ * 对应兼容：
  * * `tr-service/src/stock.rs` 的 `update_trade_fill` / `delete_trade_order` /
  *   `preview_trade_change` / `preview_rollback` / `rollback_latest` 的入参；
  * * `tr-domain/src/dto/stock.rs` 的 `StockTradeImpactRoundDto` / `StockTradeImpactDto` /
  *   `StockOperationRollbackPreviewDto` / `StockOperationRollbackDto`。
  *
  * 字段名是 **wire 契约**（Rust 侧 `#[serde(rename = "…")]` 序列化成 camelCase），所以这里
- * 一律 camelCase；与旧版一样，DTO 的 `Vec` → 数组、`Option<T>` → `T | null`。
+ * 一律 camelCase；与兼容一样，DTO 的 `Vec` → 数组、`Option<T>` → `T | null`。
  *
  * 单位口径与下单切片一致：价格恒为整数**厘**、金额恒为整数**分**、时间恒为 Unix 秒。
  */
@@ -40,7 +40,7 @@ export interface DeleteTradeOrderRequest {
  * 影响预演：与命令面一一对应（`update_trade` / `delete_order` 复用同一入口）。
  *
  * 旧 `preview_trade_change(workspace, ledger_id, action, trade_id, order_id, price_milli, lots,
- * trade_time)` —— 未用到的字段传 0 / 空串。`action` 保持 `string`（与旧版一致，未知动作由服务层
+ * trade_time)` —— 未用到的字段传 0 / 空串。`action` 保持 `string`（与兼容一致，未知动作由服务层
  * 报 400「无效的预演动作」），不在类型层收窄。
  */
 export interface PreviewTradeChangeRequest {

@@ -1,12 +1,12 @@
 /**
  * 交易历史（左栏列表 / 右栏详情 / 汇总）的 DTO 形状。
  *
- * 对应旧版 `tr-domain/src/dto/stock.rs` 的 `StockTradeHistoryDto` /
+ * 对应兼容 `tr-domain/src/dto/stock.rs` 的 `StockTradeHistoryDto` /
  * `StockTradeRoundDto` / `StockTradeHistoryDetailDto` / `StockTradeHistorySummaryDto`
  * 与它们内嵌的 `StockTradeDto`。
  *
  * 字段名是 **wire 契约**：Rust 侧 `#[serde(rename = "…")]` 把 snake_case 序列化成 camelCase，
- * 所以这里一律 camelCase。单位口径与旧版逐字一致：
+ * 所以这里一律 camelCase。单位口径与兼容逐字一致：
  *
  * * 金额恒为整数**分**（`totalPnl` / `pnl` / `amount` / `fee` …）；
  * * 股票价格恒为整数**厘**（`price` / `latestPrice`，1/1000 元）；

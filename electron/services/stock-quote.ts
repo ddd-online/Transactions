@@ -1,22 +1,22 @@
 /**
  * 行情抓取抽象：按股票代码取最新价 / 昨收价，以及查询股票名称。
  *
- * 逐条移植自旧版 `tr-service/src/quote.rs`。拆成独立模块的理由与旧版一致：
+ * 逐条移植自兼容 `tr-service/src/quote.rs`。拆成独立模块的理由与兼容一致：
  * 服务层（`stock-positions`）只依赖 {@link StockQuoteFetcher} trait 的 TS 版本，
  * 从而可以在没有网络的环境里用 stub 做确定性测试；真实实现（腾讯行情 `qt.gtimg.cn`）
  * 集中在这里，并且**解析逻辑与网络分离**（{@link parseTencentQuotePayload} 是纯函数，
  * 可以直接用固定 payload 断言）。
  *
- * 网络约束（旧版逐字保留）：
+ * 网络约束（兼容逐字保留）：
  * * `http://qt.gtimg.cn/q=<market><code>[,<market><code>...]`，**3 秒超时**；
  * * 响应是 GBK 编码，需要按 GBK 解码后再按 `~` 切分；
  * * 停牌（最新价 0）或非法价格视为"该股无行情"，静默跳过；
  * * 任何网络 / 解码 / HTTP 失败都返回**空映射**而不是错误 —— 行情是临时外部数据，
  *   **不得阻塞录入**（`fetchName` 失败返回空串）。
  *
- * 与旧版的差异只有两处，都是运行环境带来的：
- * 1. Node 的网络 API 只有异步的，所以端口签名是 `Promise`（旧版是同步 trait）；
- * 2. 旧版把 ureq 的代理设置注入 agent；本仓库目前只有 `shared/domain/proxy` 的纯逻辑，
+ * 与兼容的差异只有两处，都是运行环境带来的：
+ * 1. Node 的网络 API 只有异步的，所以端口签名是 `Promise`（兼容是同步 trait）；
+ * 2. 兼容把 ureq 的代理设置注入 agent；本仓库目前只有 `shared/domain/proxy` 的纯逻辑，
  *    还没有 HTTP 客户端侧的代理解析器，因此这个 adapter 走直连。`fetchImpl` 可注入，
  *    以后接上代理只需替换它，不动解析与端口。
  */
@@ -30,7 +30,7 @@ import { logWarn } from '../logging'
 /** 腾讯行情字段分隔符。 */
 const FIELD_SEPARATOR = '~'
 
-/** 行情请求超时：3 秒（与旧版 `QUOTE_TIMEOUT` 一致）。 */
+/** 行情请求超时：3 秒（与兼容 `QUOTE_TIMEOUT` 一致）。 */
 export const QUOTE_TIMEOUT_MS = 3_000
 
 /** 腾讯行情请求地址前缀。 */
@@ -40,7 +40,7 @@ const QUOTE_ENDPOINT = 'http://qt.gtimg.cn/q='
  * 批量行情源：按股票代码返回最新价与昨收价。
  *
  * 返回的映射只包含请求中解析成功的股票；失败时返回空映射（**不抛错**）。
- * 旧版的实现者要求 `Send + Sync`；TS 这边只要是无共享可变状态的普通对象即可。
+ * 兼容的实现者要求 `Send + Sync`；TS 这边只要是无共享可变状态的普通对象即可。
  */
 export interface StockQuoteFetcher {
   /** 批量拉取行情。 */
@@ -244,7 +244,7 @@ export function parseTencentName(payload: string): string {
 /**
  * 解析 `YYYYMMDDHHMMSS`（**UTC 语义**）为 Unix 秒。非法时返回 `null`。
  *
- * 旧版 `parse_quote_timestamp` 用的是 `NaiveDateTime::and_utc()`：注释虽写"本地时区语义"，
+ * 兼容 `parse_quote_timestamp` 用的是 `NaiveDateTime::and_utc()`：注释虽写"本地时区语义"，
  * 实际按 UTC 折算，这里保持同一行为（抓到的只是行情时刻，差几小时不影响"什么时候抓的"）。
  * 严格的 14 位数字 + 真实日期时间校验：`20261304150000` 这类畸形值一律 `null`。
  */

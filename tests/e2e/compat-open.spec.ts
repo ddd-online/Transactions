@@ -14,11 +14,11 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('旧版工作空间：打开被拒绝并引导到导入向导', async () => {
+test('兼容工作空间：打开被拒绝并引导到导入向导', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
-  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-legacy-open-'))
+  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-compat-open-'))
   const home = join(root, 'home')
-  const source = join(root, 'legacy')
+  const source = join(root, 'compat')
   const userData = join(root, 'user-data')
   mkdirSync(home, { recursive: true })
   mkdirSync(source, { recursive: true })
@@ -27,10 +27,10 @@ test('旧版工作空间：打开被拒绝并引导到导入向导', async () =>
     join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
-  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'legacy', 'seed.sql'), 'utf8')
-  const legacy = new DatabaseSync(join(source, 'transactions.db'))
-  legacy.exec(seed)
-  legacy.close()
+  const seed = readFileSync(join(repositoryRoot, 'fixtures', 'compat', 'seed.sql'), 'utf8')
+  const compat = new DatabaseSync(join(source, 'transactions.db'))
+  compat.exec(seed)
+  compat.close()
 
   const electronApp = await electron.launch({
     args: ['.'],
@@ -47,7 +47,7 @@ test('旧版工作空间：打开被拒绝并引导到导入向导', async () =>
   try {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
-    await expect(page.getByTestId('error')).toContainText('旧版工作空间')
+    await expect(page.getByTestId('error')).toContainText('兼容工作空间')
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('import-source')).toBeVisible()
     await expect(page.getByTestId('workspace-state')).toContainText('未打开工作空间')

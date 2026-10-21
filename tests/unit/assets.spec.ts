@@ -42,7 +42,7 @@ function jpegUri(): string {
 }
 
 describe('workspace assets', () => {
-  it('saves an image and its thumbnail in the legacy layout', () => {
+  it('saves an image and its thumbnail in the compat layout', () => {
     const directory = workspace()
     const saved = saveImage(directory, '2026-01-01', 'img-1', pngUri(), jpegUri())
     expect(saved.filePath).toBe('key_events/2026-01-01/img-1.png')

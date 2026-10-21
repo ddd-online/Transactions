@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
-import type { LegacyImportProbe, LegacyImportReport } from './types/import'
+import type { CompatImportProbe, CompatImportReport } from './types/import'
 import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
 import type { ChartDto } from './types/chart'
 import type {
@@ -107,7 +107,6 @@ const updateChartSchema = z.object({
 /**
  * IPC 命令目录：名字 + 请求形状。
  *
- * 名字与旧版 0.20.0 的 117 条保持一致；M0 先落最小集合，其余在 M1–M3 补齐。
  * 请求形状用 zod 在 main 边界解析，响应类型单独映射（`CommandResponses`）。
  */
 export const commandSchemas = {
@@ -127,8 +126,8 @@ export const commandSchemas = {
   /** M0 冒烟用：写一张 1×1 PNG 到工作空间资产目录，验证 trasset://。 */
   debug_write_asset: z.undefined(),
   debug_echo: z.object({ message: z.string() }),
-  legacy_import_probe: z.object({ workspaceDir: z.string() }),
-  legacy_import_start: z.object({ sourceDir: z.string(), targetDir: z.string() }),
+  compat_import_probe: z.object({ workspaceDir: z.string() }),
+  compat_import_start: z.object({ sourceDir: z.string(), targetDir: z.string() }),
   ledger_list: z.object({ id: z.string() }),
   ledger_create: z.object({
     name: z.string().optional(),
@@ -479,8 +478,8 @@ export interface CommandResponses {
   window_control: null
   debug_write_asset: string
   debug_echo: string
-  legacy_import_probe: LegacyImportProbe
-  legacy_import_start: LegacyImportReport
+  compat_import_probe: CompatImportProbe
+  compat_import_start: CompatImportReport
   ledger_list: Ledger[]
   ledger_create: string
   ledger_get: Ledger

@@ -69,7 +69,7 @@ describe('config store', () => {
         width: 800,
         workspaceDir: 'D:\\ws',
         futureFeature: { enabled: true },
-        legacyNumber: 7,
+        compatNumber: 7,
       }),
       'utf8',
     )
@@ -85,7 +85,7 @@ describe('config store', () => {
     expect(reloaded.closeBehavior).toBe('tray')
     expect(reloaded.sidebarCollapsed).toBe(true)
     expect(reloaded.futureFeature).toEqual({ enabled: true })
-    expect(reloaded.legacyNumber).toBe(7)
+    expect(reloaded.compatNumber).toBe(7)
   })
 
   it('returns a snapshot with configPath and isDev', () => {

@@ -11,7 +11,7 @@ interface Notice {
 let listener: ((notice: Notice) => void) | null = null
 let nextId = 1
 
-/** 显示一条底部提示（旧版 notice-message）。 */
+/** 显示一条底部提示。 */
 export function notify(message: string, type: NoticeType = 'success'): void {
   listener?.({ id: nextId++, message, type })
 }
