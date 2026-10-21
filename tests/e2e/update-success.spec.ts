@@ -37,7 +37,7 @@ test('更新：检查到新版本、下载并校验 SHA256', async () => {
   mkdirSync(userData, { recursive: true })
   mkdirSync(updateDir, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({
       width: 1400,
       height: 1000,

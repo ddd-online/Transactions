@@ -6,7 +6,7 @@ import type { AppConfig, ConfigSnapshot, FeatureFlags, ProxySetting } from '../s
 import { defaultFeatures, defaultProxy } from '../shared/types/config'
 
 export const CONFIG_FILE = '.tr.json'
-export const CONFIG_FILE_DEV = '.tr-dev.json'
+export const CONFIG_FILE_DEV = '.tr.dev.json'
 
 export function configPath(isDev: boolean): string {
   return join(homedir(), isDev ? CONFIG_FILE_DEV : CONFIG_FILE)

@@ -23,7 +23,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 

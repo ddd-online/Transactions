@@ -34,7 +34,7 @@ test('更新：慢速下载可取消并回到可下载状态', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({
       width: 1400,
       height: 1000,

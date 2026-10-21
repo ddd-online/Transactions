@@ -23,7 +23,7 @@ test('单实例：第二个进程立即退出', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1200, height: 800, closeBehavior: 'quit', appearance: 'light' }),
   )
 

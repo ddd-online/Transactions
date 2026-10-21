@@ -5,6 +5,7 @@ import { todayYmd } from '../../shared/domain/time'
 import { formatYmdCn, weekdayCn } from '../../shared/domain/calendar'
 import { notify } from '../components/toast'
 import { DatePicker } from '../components/date-picker'
+import { PageLayout } from '../components/page-layout'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -186,11 +187,8 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   }, [date, ledgerId, loadDates])
 
   return (
-    <section className="page">
-      <div className="page-region">
-        <div className="page-main">
-          <div className="page-content">
-            <div className="page-toolbar">
+    <PageLayout
+      toolbar={<>
               <div className="m0-actions">
                 <button type="button" className="ui-btn ui-btn--secondary" onClick={() => setDate(todayYmd())}>
                   今天
@@ -217,7 +215,8 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   删除
                 </button>
               </div>
-            </div>
+      </>}
+    >
 
             {error ? (
               <p className="m0-error" data-testid="diary-error">
@@ -321,9 +320,6 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                 </div>
               </section>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    </PageLayout>
   )
 }

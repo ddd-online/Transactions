@@ -23,7 +23,7 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 

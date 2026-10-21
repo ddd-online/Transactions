@@ -6,6 +6,7 @@ import { centsToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
 import { DatePicker } from '../components/date-picker'
+import { PageLayout } from '../components/page-layout'
 import { Tooltip } from '../components/tooltip'
 import { Icon } from '../components/icon'
 import { Markdown } from '../components/markdown'
@@ -237,11 +238,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   )
 
   return (
-        <section className="page">
-          <div className="page-region">
-            <div className="page-main">
-              <div className="page-content">
-                <div className="page-toolbar">
+        <PageLayout
+          toolbar={<>
                   <div className="m0-actions">
                     <button
                       type="button"
@@ -264,7 +262,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     value={date}
                     onChange={(value) => setDate(value)}
                   />
-                </div>
+          </>}
+        >
 
                 {error ? (
                   <p className="m0-error" data-testid="event-error">
@@ -425,10 +424,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     onConfirm={(data) => void commitImage(data)}
                   />
                 ) : null}
-              </div>
-            </div>
-          </div>
-        </section>
+        </PageLayout>
   )
 }
 

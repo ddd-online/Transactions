@@ -23,7 +23,7 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 

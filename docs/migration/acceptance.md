@@ -60,8 +60,8 @@
 | Vitest | 591 条通过 |
 | 静态护栏 | 9 项通过 |
 | Playwright | 29 条通过 + 打包产物 1 条 |
-| 安装版 | `output/Transactions-1.0.2-setup.exe` |
-| 便携版 | `output/Transactions-1.0.2-portable.exe` |
+| 安装版 | `output/Transactions-1.0.3-setup.exe` |
+| 便携版 | `output/Transactions-1.0.3-portable.exe` |
 
 ## 8. 验收清单（全部完成）
 
@@ -91,7 +91,7 @@
 ## 9. 切换步骤（草案）
 
 1. 用旧版 0.20.0 打开一次目标工作空间，确认迁移到最新格式并备份。
-2. 安装 `Transactions-1.0.2-setup.exe`（或运行便携版）。
+2. 安装 `Transactions-1.0.3-setup.exe`（或运行便携版）。
 3. 首启动选择新目录后，走「设置 → 导入旧版数据」，源目录选旧工作空间。
 4. 核对导入报告、账本/记录/股票/事件/日记/待办数量与金额。
 5. 旧目录保持只读备份；旧版应用不自动升级，可随时回退。

@@ -23,7 +23,7 @@ test('工作空间：切换后账本隔离并写回配置', async () => {
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   writeFileSync(
-    join(home, '.tr-dev.json'),
+    join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 
@@ -58,7 +58,7 @@ test('工作空间：切换后账本隔离并写回配置', async () => {
     await expect(page.getByTestId('ledger-item')).toHaveText(/B 账本/)
 
     const config = JSON.parse(
-      readFileSync(join(home, '.tr-dev.json'), 'utf8'),
+      readFileSync(join(home, '.tr.dev.json'), 'utf8'),
     ) as { workspaceDir: string }
     expect(config.workspaceDir).toBe(second)
   } finally {

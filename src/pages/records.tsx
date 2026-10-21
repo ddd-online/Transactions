@@ -595,8 +595,9 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             onChange={(next) => setPage(next)}
           />
           <select
-            className="ui-select"
+            className="m0-input tr-page-size"
             data-testid="tr-page-size"
+            style={{ width: 110 }}
             value={pageSize}
             onChange={(event) => {
               setPageSize(Number(event.target.value))
@@ -612,6 +613,8 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     </section>
   )
 }
+
+
 
 
 
