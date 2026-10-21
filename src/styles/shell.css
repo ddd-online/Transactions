@@ -961,3 +961,13 @@
   color: var(--transactions-color-text-tertiary);
   cursor: grab;
 }
+
+/* 记录页的底栏是 page-content 的直接子节点：父级不再留底部内边距，
+   否则 44px 底栏下面会多出一圈 16px 空白。 */
+.page-content:has(> .page-footer-bar) {
+  padding-bottom: 0;
+}
+
+.page-content > .page-footer-bar {
+  margin-bottom: 0;
+}
