@@ -461,35 +461,6 @@
   padding: 4px 2px 8px;
 }
 
-.diary-group h4 {
-  margin: 10px 0 4px;
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-caption);
-}
-
-.diary-date-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 8px 10px;
-  border: none;
-  border-radius: var(--transactions-radius-md);
-  background: transparent;
-  color: var(--transactions-color-text-major);
-  cursor: pointer;
-  text-align: left;
-}
-
-.diary-date-item:hover {
-  background: var(--transactions-color-hover-bg);
-}
-
-.diary-date-item.is-active {
-  background: var(--transactions-color-active-bg);
-  color: var(--transactions-color-primary);
-}
-
 .diary-editor {
   display: flex;
   flex-direction: column;

@@ -4,7 +4,7 @@ import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { formatYmdCn, weekdayCn } from '../../shared/domain/calendar'
 import { notify } from '../components/toast'
-import { Input } from 'antd'
+import { Input, Tree, type TreeDataNode } from 'antd'
 
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
@@ -18,21 +18,58 @@ function errorMessage(error: unknown): string {
   return String(error)
 }
 
-function groupByYearMonth(dates: DiaryDateItem[]): Array<{ key: string; label: string; items: DiaryDateItem[] }> {
-  const groups = new Map<string, DiaryDateItem[]>()
+function buildDiaryTree(dates: DiaryDateItem[]): TreeDataNode[] {
+  const years = new Map<string, Map<string, DiaryDateItem[]>>()
   for (const item of dates) {
-    const key = item.date.slice(0, 7)
-    const list = groups.get(key) ?? []
-    list.push(item)
-    groups.set(key, list)
+    const year = item.date.slice(0, 4)
+    const month = item.date.slice(0, 7)
+    const months = years.get(year) ?? new Map<string, DiaryDateItem[]>()
+    const items = months.get(month) ?? []
+    items.push(item)
+    months.set(month, items)
+    years.set(year, months)
   }
-  return [...groups.entries()]
+
+  return [...years.entries()]
     .sort(([left], [right]) => right.localeCompare(left))
-    .map(([key, items]) => ({
-      key,
-      label: `${key.slice(0, 4)}年${Number(key.slice(5))}月`,
-      items,
-    }))
+    .map(([year, months]) => {
+      const monthNodes = [...months.entries()]
+        .sort(([left], [right]) => right.localeCompare(left))
+        .map(([month, items]) => ({
+          key: month,
+          title: (
+            <span className="diary-tree-month">
+              {Number(month.slice(5))}月
+              <span className="diary-tree-count">{items.length}</span>
+            </span>
+          ),
+          children: items
+            .slice()
+            .sort((left, right) => right.date.localeCompare(left.date))
+            .map((item) => ({
+              key: item.date,
+              isLeaf: true,
+              title: (
+                <span className="diary-tree-date" data-testid="diary-date-item">
+                  <span>{item.date}</span>
+                  <span className="m0-muted">{item.wordCount} 字</span>
+                </span>
+              ),
+            })),
+        }))
+
+      const count = [...months.values()].reduce((sum, items) => sum + items.length, 0)
+      return {
+        key: `year-${year}`,
+        title: (
+          <span className="diary-tree-year">
+            {year}年
+            <span className="diary-tree-count">{count}</span>
+          </span>
+        ),
+        children: monthNodes,
+      }
+    })
 }
 
 export interface DiaryPageProps {
@@ -49,6 +86,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   const [transferStatus, setTransferStatus] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
 
   const loadDates = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -66,6 +104,18 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
   useEffect(() => {
     void loadDates()
   }, [loadDates])
+
+  useEffect(() => {
+    const keys = new Set<string>()
+    for (const item of dates) {
+      keys.add(`year-${item.date.slice(0, 4)}`)
+      keys.add(item.date.slice(0, 7))
+    }
+    setExpandedKeys((current) => {
+      const next = current.filter((key) => keys.has(key))
+      return [...new Set([...next, ...keys])]
+    })
+  }, [dates])
 
   useEffect(() => {
     let alive = true
@@ -236,23 +286,19 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                     {ledgerId ? '还没有日记' : '请先创建/选择账本'}
                   </p>
                 ) : (
-                  groupByYearMonth(dates).map((group) => (
-                    <div key={group.key} className="diary-group">
-                      <h4>{group.label}</h4>
-                      {group.items.map((item) => (
-                        <button
-                          key={item.date}
-                          type="button"
-                          className={`diary-date-item${item.date === date ? ' is-active' : ''}`}
-                          data-testid="diary-date-item"
-                          onClick={() => setDate(item.date)}
-                        >
-                          <span>{item.date}</span>
-                          <span className="m0-muted">{item.wordCount} 字</span>
-                        </button>
-                      ))}
-                    </div>
-                  ))
+                  <Tree
+                    className="diary-tree"
+                    blockNode
+                    showLine={{ showLeafIcon: false }}
+                    treeData={buildDiaryTree(dates)}
+                    selectedKeys={[date]}
+                    expandedKeys={expandedKeys}
+                    onExpand={(keys) => setExpandedKeys(keys.map(String))}
+                    onSelect={(keys) => {
+                      const next = String(keys[0] ?? '')
+                      if (/^\d{4}-\d{2}-\d{2}$/.test(next)) setDate(next)
+                    }}
+                  />
                 )}
               </aside>
 

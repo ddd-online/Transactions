@@ -267,3 +267,90 @@
 .tr-pagination .ant-pagination-item-active a {
   color: #ffffff !important;
 }
+
+/* 日记列表：AntD Tree 的层级 + 现有紧凑排版。 */
+.diary-tree.ant-tree {
+  background: transparent;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.diary-tree .ant-tree-treenode {
+  width: 100%;
+  padding: 1px 0;
+}
+
+.diary-tree .ant-tree-node-content-wrapper {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border-radius: var(--transactions-radius-md);
+}
+
+.diary-tree .ant-tree-node-content-wrapper:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.diary-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background: var(--transactions-color-active-bg);
+}
+
+.diary-tree .ant-tree-title {
+  display: block;
+  width: 100%;
+}
+
+.diary-tree-year,
+.diary-tree-month {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-secondary);
+}
+
+.diary-tree-count {
+  display: inline-flex;
+  min-width: 18px;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-tertiary);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  font-weight: var(--transactions-weight-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.diary-tree-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+  color: var(--transactions-color-text-major);
+}
+
+.diary-tree .ant-tree-node-selected .diary-tree-date {
+  color: var(--transactions-color-primary);
+}
+
+.diary-editor-head .ant-input {
+  width: 120px;
+  flex: none;
+}
+
+.diary-io .m0-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.diary-io .m0-field .ant-input {
+  flex: 1;
+  min-width: 0;
+}
