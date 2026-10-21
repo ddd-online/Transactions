@@ -11,3 +11,5 @@ transactions.db
 transactions.db-wal
 transactions.db-shm
 .DS_Store
+
+/.dsh/
