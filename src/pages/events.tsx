@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
+import type { TransactionRecordDto } from '../../shared/types/transaction'
+import { centsToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import { ImageCrop } from '../components/image-crop'
 import { DatePicker } from '../components/date-picker'
@@ -57,6 +59,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [events, setEvents] = useState<KeyEvent[]>([])
   const [event, setEvent] = useState<KeyEvent | null>(null)
   const [images, setImages] = useState<KeyEventImage[]>([])
+  const [linked, setLinked] = useState<TransactionRecordDto[]>([])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [color, setColor] = useState('')
@@ -110,6 +113,32 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   useEffect(() => {
     void loadEvent()
   }, [loadEvent])
+
+  useEffect(() => {
+    let alive = true
+    if (!ledgerId || !date) {
+      setLinked([])
+      return
+    }
+    void (async () => {
+      try {
+        const result = await window.api.invoke('tr_query', {
+          ledgerId,
+          offset: 0,
+          limit: 500,
+          tsRange: [],
+          items: [],
+          sortFields: [{ field: 'transactionAt', order: 'desc' }],
+        })
+        if (alive) setLinked(result.items.filter((row) => row.keyEventDate === date))
+      } catch {
+        if (alive) setLinked([])
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [date, ledgerId])
 
   const save = useCallback(async (): Promise<void> => {
     if (!ledgerId) return
@@ -352,6 +381,25 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       ))}
                     </div>
                   </section>
+
+                  <aside className="events-links">
+                    <h3>关联交易</h3>
+                    {linked.length === 0 ? (
+                      <p className="m0-muted">选择事件查看关联交易</p>
+                    ) : (
+                      <ul>
+                        {linked.map((row) => (
+                          <li key={row.transactionId}>
+                            <strong>{row.description || row.category || '交易'}</strong>
+                            <span className="m0-muted">
+                              {row.transactionAt ? new Date(row.transactionAt * 1000).toLocaleDateString('zh-CN') : ''}
+                            </span>
+                            <span>¥{centsToYuan(row.price)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </aside>
                 </div>
 
                 {cropSrc ? (
@@ -367,6 +415,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         </section>
   )
 }
+
+
 
 
 

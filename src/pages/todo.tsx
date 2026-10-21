@@ -29,7 +29,7 @@ export interface TodoPageProps {
 export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [cards, setCards] = useState<TodoCardDto[]>([])
   const [dragCardId, setDragCardId] = useState<string | null>(null)
-  const [todoMode, setTodoMode] = useState<'cards' | 'history'>('cards')
+  const [todoMode, setTodoMode] = useState<'cards' | 'quadrant' | 'history'>('cards')
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
   const [cardTitle, setCardTitle] = useState('')
   const [itemTitles, setItemTitles] = useState<Record<string, string>>({})
@@ -423,6 +423,31 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         </>
       ) : null}
 
+      {todoMode === 'quadrant' ? (
+        <div className="todo-quadrants">
+          {[
+            ['紧急重要', (item: TodoCardDto['items'][number]) => item.urgency >= 0 && item.importance >= 0],
+            ['重要不紧急', (item: TodoCardDto['items'][number]) => item.urgency < 0 && item.importance >= 0],
+            ['紧急不重要', (item: TodoCardDto['items'][number]) => item.urgency >= 0 && item.importance < 0],
+            ['不紧急不重要', (item: TodoCardDto['items'][number]) => item.urgency < 0 && item.importance < 0],
+          ].map(([label, predicate]) => (
+            <section key={label as string} className="todo-quadrant">
+              <h3>{label as string}</h3>
+              <ul>
+                {cards
+                  .flatMap((card) => card.items.map((item) => ({ ...item, cardTitle: card.title })))
+                  .filter(predicate as (item: TodoCardDto['items'][number]) => boolean)
+                  .map((item) => (
+                    <li key={item.id}>
+                      <span className="m0-muted">{item.cardTitle}</span> · {item.title}
+                    </li>
+                  ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : null}
+
       {todoMode === 'history' ? (
         <>
       <h3 className="m0-subtitle">历史</h3>
@@ -445,6 +470,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     </section>
   )
 }
+
 
 
 
