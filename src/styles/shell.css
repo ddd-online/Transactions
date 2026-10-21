@@ -327,8 +327,9 @@
 /* 窗口控制必须显式 no-drag：标题栏整条是拖动区，仅靠父级 no-drag
  * 在部分 Electron/Windows 组合下仍会把三键当成拖动区。 */
 .app-top-bar {
-  z-index: 1000;
-  pointer-events: none;
+  z-index: 2000;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
 }
 
 .app-top-bar .window-controls,
@@ -352,9 +353,6 @@
 }
 
 /* 顶栏只放窗口三键；不再整条设为拖动区，拖动交给下面的 .page-header。 */
-.app-top-bar {
-  -webkit-app-region: no-drag;
-}
 
 .events-layout {
   flex: 1;
