@@ -1,13 +1,13 @@
 #Requires -Version 5.1
 <#
-  清理构建产物（只删仓库内的 out/ 与 dist/）。
+  清理构建产物（只删仓库内的 out/、output/ 与旧 dist/）。
 #>
 [CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-foreach ($name in @('out', 'dist')) {
+foreach ($name in @('out', 'output', 'dist')) {
     $path = Join-Path $root $name
     if (Test-Path -LiteralPath $path) {
         $resolved = (Resolve-Path -LiteralPath $path).Path
@@ -19,3 +19,4 @@ foreach ($name in @('out', 'dist')) {
     }
 }
 Write-Host '[clean] 完成'
+

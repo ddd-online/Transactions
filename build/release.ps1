@@ -34,8 +34,8 @@ try {
         throw "工作树不干净，先提交再发布：`n$status"
     }
 
-    $setup = Join-Path $root "dist\Transactions-$version-setup.exe"
-    $portable = Join-Path $root "dist\Transactions-$version-portable.exe"
+    $setup = Join-Path $root "output\Transactions-$version-setup.exe"
+    $portable = Join-Path $root "output\Transactions-$version-portable.exe"
     foreach ($path in @($setup, $portable)) {
         if (-not (Test-Path -LiteralPath $path)) {
             throw "缺少发布产物: $path（先运行 build/build.ps1）"
@@ -69,3 +69,4 @@ try {
 finally {
     Pop-Location
 }
+

@@ -24,7 +24,7 @@ web
 - Windows 桌面应用（Electron 44 + React 19 + TypeScript 重写中，旧版为 Tauri 2 + Rust + Leptos/WASM），无边框自绘标题栏，单实例运行。
 - 每个工作空间一个独立 SQLite 数据库，工作空间内包含多个账本（ledger）。
 - 金额一律以整数分存储，界面层负责分/元换算。
-- 开发调试用 `pnpm dev` 启动 Vite(:16000) + Electron；构建走 `pnpm build` / `pnpm dist`，发布走 `build/` 脚本与 GitHub Release。
+- 开发调试用 `pnpm dev` 启动 Vite(:16000) + Electron；构建走 `pnpm build` / `pnpm package`，发布走 `build/` 脚本与 GitHub Release。
 - 界面语言为中文。
 
 ## Capabilities and Constraints
@@ -55,3 +55,4 @@ web
 - 一体化个人财务工作台：记账、分析、事件、日记与股票在同一工作空间内协同。
 - 公开分发不改变个人工具的本质：以本人真实使用为基准打磨，克制复杂功能堆砌。
 - 桌面效率优先：信息密度、键盘可达与操作流畅优先于表达性。
+

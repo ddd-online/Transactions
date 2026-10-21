@@ -36,9 +36,9 @@ try {
     pnpm exec electron-builder --win --x64
     if ($LASTEXITCODE -ne 0) { throw "electron-builder 失败（exit $LASTEXITCODE）" }
 
-    $setup = Join-Path $root "dist\Transactions-$version-setup.exe"
-    $portable = Join-Path $root "dist\Transactions-$version-portable.exe"
-    $unpacked = Join-Path $root 'dist\win-unpacked\Transactions.exe'
+    $setup = Join-Path $root "output\Transactions-$version-setup.exe"
+    $portable = Join-Path $root "output\Transactions-$version-portable.exe"
+    $unpacked = Join-Path $root 'output\win-unpacked\Transactions.exe'
     foreach ($path in @($setup, $portable, $unpacked)) {
         if (-not (Test-Path -LiteralPath $path)) {
             throw "缺少构建产物: $path"
@@ -65,4 +65,5 @@ try {
 finally {
     Pop-Location
 }
+
 

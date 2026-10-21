@@ -37,12 +37,12 @@ pnpm build            # out/main + out/preload + out/renderer
 pnpm typecheck        # tsc --noEmit
 pnpm test:unit        # Vitest
 pnpm test:e2e         # 先 build 再 Playwright（真实 Electron）
-pnpm dist:dir         # dist/win-unpacked/Transactions.exe（E2E 可用）
-pnpm dist             # NSIS + portable
+pnpm package:dir      # output/win-unpacked/Transactions.exe（E2E 可用）
+pnpm package         # NSIS + portable，产物在 output/
 ```
 
-`pnpm test:e2e:packaged` 需要先 `pnpm dist:dir`，并设置 `TRANSACTIONS_PACKAGED_EXE` 指向
-`dist/win-unpacked/Transactions.exe`。
+`pnpm test:e2e:packaged` 需要先 `pnpm package:dir`，并设置 `TRANSACTIONS_PACKAGED_EXE` 指向
+`output/win-unpacked/Transactions.exe`。
 
 ## 本机环境的硬事实
 

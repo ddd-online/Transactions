@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  便携版启动冒烟：启动 dist\Transactions-*-portable.exe，等到主窗口出现后结束进程。
+  便携版启动冒烟：启动 output\Transactions-*-portable.exe，等到主窗口出现后结束进程。
 
 .DESCRIPTION
   本机若全局设置了 ELECTRON_RUN_AS_NODE=1（DSH / Electron 开发环境常见），
@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 if (-not $Portable) {
-  $Portable = Get-ChildItem (Join-Path $repo 'dist') -Filter 'Transactions-*-portable.exe' |
+  $Portable = Get-ChildItem (Join-Path $repo 'output') -Filter 'Transactions-*-portable.exe' |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1 -ExpandProperty FullName
 }
@@ -51,3 +51,4 @@ finally {
   if (-not $wrapper.HasExited) { Stop-Process -Id $wrapper.Id -Force -ErrorAction SilentlyContinue }
   if ($oldRunAsNode) { $env:ELECTRON_RUN_AS_NODE = $oldRunAsNode }
 }
+

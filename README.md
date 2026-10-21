@@ -20,8 +20,8 @@ pnpm dev            # Vite + Electron（渲染层 HMR）
 pnpm typecheck
 pnpm test:unit      # Vitest
 pnpm test:e2e       # 先 build，再 Playwright 启动 Electron
-pnpm dist:dir       # 未打包产物：dist/win-unpacked/Transactions.exe
-pnpm dist           # NSIS 安装包 + 便携版到 dist/
+pnpm package:dir    # 未打包产物：output/win-unpacked/Transactions.exe
+pnpm package        # NSIS 安装包 + 便携版到 output/
 
 # 发布链路（产物断言 + 打包产物冒烟）
 pwsh -File build/build.ps1 -E2E

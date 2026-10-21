@@ -2,7 +2,7 @@ appId: com.github.Transactions
 productName: Transactions
 copyright: Copyright © 2026 ddd-online
 directories:
-  output: dist
+  output: output
   buildResources: resources
 
 files:

@@ -60,8 +60,8 @@
 | Vitest | 588 条通过 |
 | 静态护栏 | 9 项通过 |
 | Playwright | 26 条通过 + 打包产物 1 条 |
-| 安装版 | `dist/Transactions-1.0.0-setup.exe` |
-| 便携版 | `dist/Transactions-1.0.0-portable.exe` |
+| 安装版 | `output/Transactions-1.0.0-setup.exe` |
+| 便携版 | `output/Transactions-1.0.0-portable.exe` |
 
 ## 8. 未完成（发布前必须清零）
 
