@@ -203,6 +203,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
 
   return (
     <PageLayout
+      contentClassName="diary-page-content"
       toolbar={<>
               <div className="m0-actions">
                 <Button variant="secondary" onClick={() => setDate(todayYmd())}>
@@ -231,12 +232,6 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
       </>}
     >
 
-            {error ? (
-              <p className="m0-error" data-testid="diary-error">
-                {error}
-              </p>
-            ) : null}
-
             <div className="diary-layout">
               <aside className="diary-list">
                 <div className="diary-list-head">
@@ -259,6 +254,11 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
               </aside>
 
               <section className="diary-editor">
+                {error ? (
+                  <p className="m0-error" data-testid="diary-error">
+                    {error}
+                  </p>
+                ) : null}
                 <div className="diary-editor-head">
                   <h2>
                     {formatYmdCn(date)} <span className="m0-muted">{weekdayCn(date)}</span>
@@ -269,14 +269,15 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   </span>
                 </div>
 
-                <Input.TextArea
-                  className="m0-diary-content"
-                  data-testid="diary-content"
-                  placeholder="写下今天的日记……"
-                  value={content}
-                  onChange={(changeEvent) => setContent(changeEvent.target.value)}
-                />
-
+                <div className="diary-content-card">
+                  <Input.TextArea
+                    className="m0-diary-content"
+                    data-testid="diary-content"
+                    placeholder="写下今天的日记……"
+                    value={content}
+                    onChange={(changeEvent) => setContent(changeEvent.target.value)}
+                  />
+                </div>
               </section>
             </div>
     </PageLayout>
