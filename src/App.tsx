@@ -902,6 +902,7 @@ export function App(): JSX.Element {
               )}
             </section>
 
+            {config?.isDev ? (
             <section className="m0-card">
               <h2>M0 验收</h2>
               <ul>
@@ -937,6 +938,7 @@ export function App(): JSX.Element {
                 </div>
               ) : null}
             </section>
+            ) : null}
           </>
         ) : null}
 
@@ -966,6 +968,7 @@ export function App(): JSX.Element {
     </>
   )
 }
+
 
 
 

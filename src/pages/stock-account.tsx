@@ -244,6 +244,11 @@ export function StockAccountPanel({
         </span>
       </div>
 
+      <div className="stock-hero">
+        <span className="m0-muted">总资产</span>
+        <strong data-testid="stock-total-assets">{money(overview?.totalAssets ?? 0)}</strong>
+      </div>
+
       <div className="m0-stats m0-stock-stats">
         <div className="m0-stat">
           <span className="m0-muted">本金</span>
@@ -310,10 +315,6 @@ export function StockAccountPanel({
       ) : null}
 
       <div className="m0-stats m0-stock-stats">
-        <div className="m0-stat">
-          <span className="m0-muted">总资产</span>
-          <strong data-testid="stock-total-assets">{money(overview?.totalAssets ?? 0)}</strong>
-        </div>
         <div className="m0-stat">
           <span className="m0-muted">持仓市值</span>
           <strong>{money(overview?.positionMarketValue ?? 0)}</strong>
@@ -665,6 +666,7 @@ export function StockAccountPanel({
     </section>
   )
 }
+
 
 
 

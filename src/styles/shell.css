@@ -300,3 +300,26 @@
 .dashboard-row:last-child {
   border-bottom: 0;
 }
+
+.stock-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0 8px;
+}
+
+.stock-hero strong {
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.m0-stock-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.m0-stock-stats .m0-stat strong {
+  font-size: 20px;
+}

@@ -17,8 +17,6 @@ import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
 import { DatePicker } from '../components/date-picker'
 
-const PAGE_SIZE = 20
-
 function rangeOf(period: 'day' | 'month' | 'year', anchor: string): number[] {
   const ymd = parseYmd(anchor)
   if (!ymd) return []
@@ -77,6 +75,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
   const [error, setError] = useState('')
   const [showComposer, setShowComposer] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [pageSize, setPageSize] = useState(15)
   const [period, setPeriod] = useState<'day' | 'month' | 'year'>('day')
   const [anchor, setAnchor] = useState(todayYmd())
 
@@ -120,8 +119,8 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     try {
       const condition: TrQueryCondition = {
         ledgerId,
-        offset: (page - 1) * PAGE_SIZE,
-        limit: PAGE_SIZE,
+        offset: (page - 1) * pageSize,
+        limit: pageSize,
         tsRange: rangeOf(period, anchor),
         items:
           typeFilter || keyword || tagFilter
@@ -147,7 +146,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     } finally {
       setLoading(false)
     }
-  }, [anchor, keyword, ledgerId, page, period, tagFilter, typeFilter])
+  }, [anchor, keyword, ledgerId, page, pageSize, period, tagFilter, typeFilter])
 
   useEffect(() => {
     void load()
@@ -283,7 +282,7 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
     setAnchor(`${ymd.year + delta}-01-01`)
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   return (
     <section className="m0-card m0-card--wide">
@@ -489,13 +488,35 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
       {rows.length === 0 ? (
         <div className="tr-empty" data-testid="tr-empty">
           <span className="tr-empty-icon">
-            <Icon name="Inbox" size={48} />
+            <Icon name="Transaction" size={56} />
           </span>
           <h3>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h3>
           {ledgerId ? <p className="m0-muted">换个时间范围，或直接记一笔。</p> : null}
-          <button type="button" className="ui-btn ui-btn--primary" onClick={() => setShowComposer(true)}>
-            记一笔
-          </button>
+          <div className="m0-actions">
+            <button
+              type="button"
+              className="ui-btn ui-btn--secondary"
+              onClick={() => {
+                setPeriod('month')
+                setAnchor(addDays(anchor, -30) ?? anchor)
+              }}
+            >
+              上月
+            </button>
+            <button
+              type="button"
+              className="ui-btn ui-btn--secondary"
+              onClick={() => {
+                setPeriod('year')
+                setAnchor(todayYmd())
+              }}
+            >
+              今年
+            </button>
+            <button type="button" className="ui-btn ui-btn--primary" onClick={() => setShowComposer(true)}>
+              记一笔
+            </button>
+          </div>
         </div>
       ) : (
         <table className="m0-table">
@@ -573,11 +594,26 @@ export function RecordsPage({ ledgerId, onChanged }: RecordsPageProps): JSX.Elem
             showSummary={false}
             onChange={(next) => setPage(next)}
           />
+          <select
+            className="ui-select"
+            data-testid="tr-page-size"
+            value={pageSize}
+            onChange={(event) => {
+              setPageSize(Number(event.target.value))
+              setPage(1)
+            }}
+          >
+            <option value={15}>15 条/页</option>
+            <option value={30}>30 条/页</option>
+            <option value={50}>50 条/页</option>
+          </select>
         </div>
       </div>
     </section>
   )
 }
+
+
 
 
 
