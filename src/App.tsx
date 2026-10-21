@@ -470,7 +470,7 @@ export function App(): JSX.Element {
             <div className="ledger-anchor">
               <button
                 type="button"
-                className={`ledger-btn${ledgerMenuOpen ? ' is-open' : ''}`}
+                className={`ledger-btn${sidebarCollapsed ? ' workspace-btn' : ''}${ledgerMenuOpen ? ' is-open' : ''}`}
                 data-testid="ledger-trigger"
                 aria-label={`切换账本，当前 ${activeLedgerName}`}
                 onClick={() => setLedgerMenuOpen((open) => !open)}
