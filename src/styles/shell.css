@@ -529,3 +529,75 @@
   padding-top: 10px;
   border-top: 1px solid var(--transactions-color-divider);
 }
+
+.charts-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.charts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.charts-create {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.chart-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  background: transparent;
+  color: var(--transactions-color-text-major);
+  text-align: left;
+  cursor: pointer;
+}
+
+.chart-item:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.chart-item.is-active {
+  background: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
+}
+
+.charts-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.charts-main-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.charts-main-head h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.chart-config h3 {
+  margin: 0 0 8px;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+}

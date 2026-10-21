@@ -5,6 +5,7 @@ import type { ChartDto } from '../../shared/types/chart'
 import type { ChartQueryResponse } from '../../shared/types/transaction'
 import { EmptyState } from '../components/empty-state'
 import { Segmented } from '../components/segmented'
+import { Icon } from '../components/icon'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -149,12 +150,48 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   }, [data])
 
   return (
-    <section className="m0-card m0-card--wide">
-      <div className="m0-card-head">
-        <h2>记账 · 图表</h2>
-        <div className="m0-actions m0-period">
+    <>
+      {error ? (
+        <p className="m0-error" data-testid="chart-error">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="charts-layout">
+        <aside className="charts-list">
+          <div className="charts-create">
+            <input
+              className="m0-input"
+              data-testid="chart-title"
+              placeholder="新图表名称"
+              value={newTitle}
+              onChange={(event) => setNewTitle(event.target.value)}
+            />
+            <button
+              type="button"
+              className="ui-btn ui-btn--primary"
+              data-testid="chart-create"
+              onClick={() => void createChart()}
+            >
+              <Icon name="Plus" size={14} /> 新增图表
+            </button>
+          </div>
+
+          {charts.map((chart) => (
+            <button
+              key={chart.chartId}
+              type="button"
+              className={`chart-item${chart.chartId === selectedId ? ' is-active' : ''}`}
+              data-testid="chart-item"
+              onClick={() => setSelectedId(chart.chartId)}
+            >
+              <Icon name="LineChart" size={16} />
+              <span>{chart.title}</span>
+            </button>
+          ))}
+
           <select
-            className="m0-input"
+            className="sr-only"
             data-testid="chart-select"
             value={selectedId}
             onChange={(event) => setSelectedId(event.target.value)}
@@ -165,102 +202,135 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               </option>
             ))}
           </select>
-          <Segmented
-            testId="chart-granularity"
-            value={granularity}
-            onChange={(value) => setGranularity(value)}
-            options={[
-              { value: 'month', label: '按月' },
-              { value: 'year', label: '按年' },
-            ]}
-          />
-          <input
-            className="m0-input"
-            data-testid="chart-title"
-            placeholder="新图表名称"
-            value={newTitle}
-            onChange={(event) => setNewTitle(event.target.value)}
-          />
-          <button type="button" className="m0-link" data-testid="chart-create" onClick={() => void createChart()}>
-            新建
-          </button>
-          <button type="button" className="m0-link" data-testid="chart-delete" onClick={() => void deleteChart()}>
-            删除
-          </button>
-        </div>
-      </div>
 
-      {error ? (
-        <p className="m0-error" data-testid="chart-error">
-          {error}
-        </p>
-      ) : null}
+          {charts.length === 0 ? (
+            <EmptyState
+              testId="chart-empty"
+              title={ledgerId ? '还没有图表' : '请先创建/选择账本'}
+            />
+          ) : null}
+        </aside>
 
-      {!ledgerId || charts.length === 0 ? (
-        <EmptyState
-          testId="chart-empty"
-          title={ledgerId ? '还没有图表' : '请先创建/选择账本'}
-        />
-      ) : (
-        <>
-          {geometry.length > 0 && geometry.some((line) => line.points.length > 0) ? (
-            <svg
-              className="m0-chart"
-              data-testid="chart-svg"
-              viewBox="0 0 880 260"
-              role="img"
-              aria-label={selected?.title ?? '图表'}
-            >
-              <line x1="64" y1="232" x2="864" y2="232" stroke="#e5e6eb" />
-              <line x1="64" y1="16" x2="64" y2="232" stroke="#e5e6eb" />
-              {geometry.map((line) => (
-                <g key={line.label}>
-                  <polyline
-                    points={line.polyline}
-                    fill="none"
-                    stroke={line.color}
-                    strokeWidth="2"
-                    data-testid="chart-line"
-                  />
-                  {line.points.map((item) => (
-                    <circle
-                      key={`${line.label}-${item.point.time}`}
-                      cx={item.x}
-                      cy={item.y}
-                      r="3"
-                      fill={line.color}
+        <section className="charts-main">
+          <div className="charts-main-head">
+            <h2>{selected?.title ?? '图表'}</h2>
+            <div className="m0-actions">
+              <Segmented
+                testId="chart-granularity"
+                value={granularity}
+                onChange={(value) => setGranularity(value)}
+                options={[
+                  { value: 'month', label: '月' },
+                  { value: 'year', label: '年' },
+                ]}
+              />
+              <button
+                type="button"
+                className="ui-btn ui-btn--text"
+                data-testid="chart-delete"
+                disabled={!selectedId}
+                onClick={() => void deleteChart()}
+              >
+                删除
+              </button>
+            </div>
+          </div>
+
+          {charts.length === 0 ? (
+            <EmptyState testId="chart-empty" title="暂无数据" description="先新建一个图表。" />
+          ) : geometry.length > 0 && geometry.some((line) => line.points.length > 0) ? (
+            <>
+              <svg
+                className="m0-chart"
+                data-testid="chart-svg"
+                viewBox="0 0 880 260"
+                role="img"
+                aria-label={selected?.title ?? '图表'}
+              >
+                <line x1="64" y1="232" x2="864" y2="232" stroke="#e5e6eb" />
+                <line x1="64" y1="16" x2="64" y2="232" stroke="#e5e6eb" />
+                {geometry.map((line) => (
+                  <g key={line.label}>
+                    <polyline
+                      points={line.polyline}
+                      fill="none"
+                      stroke={line.color}
+                      strokeWidth="2"
+                      data-testid="chart-line"
                     />
-                  ))}
-                </g>
-              ))}
-            </svg>
+                    {line.points.map((item) => (
+                      <circle
+                        key={`${line.label}-${item.point.time}`}
+                        cx={item.x}
+                        cy={item.y}
+                        r="3"
+                        fill={line.color}
+                      />
+                    ))}
+                  </g>
+                ))}
+              </svg>
+
+              <ul className="m0-chart-legend">
+                {geometry.map((line) => (
+                  <li key={line.label}>
+                    <span className="m0-chart-dot" style={{ background: line.color }} />
+                    {line.label}
+                  </li>
+                ))}
+              </ul>
+
+              {data?.statistics ? (
+                <p className="m0-muted" data-testid="chart-statistics">
+                  合计支出 ¥{centsToYuan(data.statistics.expense ?? 0)} · 合计收入 ¥
+                  {centsToYuan(data.statistics.income ?? 0)}
+                </p>
+              ) : null}
+            </>
           ) : (
-            <EmptyState testId="chart-empty" title="这一期还没有数据" />
+            <EmptyState
+              testId="chart-empty"
+              title="暂无数据"
+              description="这个时间范围里没有可统计的记录，换一个范围试试。"
+            />
           )}
 
-          <ul className="m0-chart-legend">
-            {geometry.map((line) => (
-              <li key={line.label}>
-                <span className="m0-chart-dot" style={{ background: line.color }} />
-                {line.label}
-              </li>
-            ))}
-          </ul>
-
-          {data?.statistics ? (
-            <p className="m0-muted" data-testid="chart-statistics">
-              合计支出 ¥{centsToYuan(data.statistics.expense ?? 0)} · 合计收入 ¥
-              {centsToYuan(data.statistics.income ?? 0)}
-            </p>
+          {selected ? (
+            <div className="chart-config">
+              <h3>曲线配置</h3>
+              <table className="m0-table">
+                <thead>
+                  <tr>
+                    <th>曲线名称</th>
+                    <th>交易类型</th>
+                    <th>包含离群值</th>
+                    <th>筛选条件</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selected.lines.map((line) => (
+                    <tr key={line.label}>
+                      <td>{line.label}</td>
+                      <td>
+                        <span className={`ui-tag ui-tag--${line.transactionType}`}>
+                          {line.transactionType === 'expense'
+                            ? '支出'
+                            : line.transactionType === 'income'
+                              ? '收入'
+                              : '转账'}
+                        </span>
+                      </td>
+                      <td>{line.includeOutlier ? '是' : '否'}</td>
+                      <td>{line.conditions.length === 0 ? '不限' : `${line.conditions.length} 项`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : null}
-        </>
-      )}
-    </section>
+        </section>
+      </div>
+    </>
   )
 }
-
-
-
-
-
 
