@@ -258,6 +258,11 @@
   border-radius: var(--transactions-radius-md);
 }
 
+.app-left-bar.is-collapsed .workspace-btn .workspace-mark {
+  width: 36px;
+  height: 36px;
+}
+
 /* 工作空间标志：铺满所在方块，**圆角继承宿主**（按钮 8px / 设置页预览 12px）。
  * 方形裁剪在导入时就做完了，这里只负责不拉伸。 */
 .workspace-mark {
