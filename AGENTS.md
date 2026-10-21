@@ -44,6 +44,13 @@ pnpm package         # NSIS + portable，产物在 output/
 `pnpm test:e2e:packaged` 需要先 `pnpm package:dir`，并设置 `TRANSACTIONS_PACKAGED_EXE` 指向
 `output/win-unpacked/Transactions.exe`。
 
+## 发布纪律
+
+- **只有用户明确说“发布”时才创建 GitHub Release**；开发、修复、提交、推送都不要自动跑
+  `build/release.ps1` 或 `gh release create`。
+- 日常改动最多本地 `pnpm build` / `pnpm package` 验证，不占用版本号、不更新 release。
+
+
 ## 本机环境的硬事实
 
 - **`ELECTRON_RUN_AS_NODE=1` 可能被全局设置**：Electron 会退化成 Node 直接退出。
