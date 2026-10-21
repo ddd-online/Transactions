@@ -48,7 +48,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 
 - **M0（已完成）**：仓库脚手架、无边框窗口/托盘/单实例、`app://` 与 `trasset://`、`node:sqlite`、
   config/logging、IPC + zod、Vitest + Playwright、打包冒烟。
-- **M1（进行中）**：
+- **M1（已完成）**：
   - 完整 schema v1 + 迁移执行器（单事务、`VACUUM INTO` 备份、版本拒绝）；
   - 领域纯逻辑已移植：money / fee / fund / stock / format / proxy / consts / statistics /
     update 状态机；tr-draw 全部模块（chart / calendar / diary_tree / paging / list_order / crop /
@@ -88,6 +88,7 @@ pwsh -File build/release.ps1 -Tag v1.0.0
 - 详见 `docs/adr/`、`docs/migration/oracle.md` 与验收清单 `docs/migration/acceptance.md`。
 
 真实数据不进入仓库；测试使用合成工作空间（`fixtures/legacy` + 临时目录）。
+
 
 
 
