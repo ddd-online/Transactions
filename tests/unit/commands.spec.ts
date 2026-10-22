@@ -119,13 +119,6 @@ describe('command catalog', () => {
     expect(commandSchemas.todo_progress_done.safeParse({ id: 'p1', done: true }).success).toBe(true)
   })
 
-  it('validates accounting overview requests', () => {
-    expect(
-      commandSchemas.accounting_overview.safeParse({ ledgerId: 'l1', periodKind: 'month' }).success,
-    ).toBe(true)
-    expect(commandSchemas.accounting_overview.safeParse({}).success).toBe(true)
-  })
-
   it('validates stock account requests', () => {
     expect(commandSchemas.stock_account_summary.safeParse({ ledger_id: 'l1' }).success).toBe(true)
     expect(

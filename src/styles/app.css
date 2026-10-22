@@ -408,6 +408,7 @@
  * 以前这里直接写死 Expense 红，那违反 DESIGN.md 的「Semantic Silo Rule」：
  * 收支语义色只能出现在交易/股票数据上，不能出现在导航与外壳上。 */
 .ledger-menu-row:hover .ledger-menu-delete,
+.ledger-menu-row.is-active .ledger-menu-delete,
 .ledger-menu-row .ledger-menu-delete:focus-visible {
   opacity: 1;
 }

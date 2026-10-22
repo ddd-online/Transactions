@@ -44,30 +44,6 @@ export function amount(cents: number): string {
 }
 
 /**
- * 千分位金额（看板卡片用）：`groupedAmount(1_234_567)` → `"¥12,345.67"`。
- *
- * 负号写在 `¥` **之前**（`-¥12,345.67`），不写成 `¥-12,345.67`。
- * 与 {@link amount} 的区别只有这一条：整数部分加千分位。看板一屏要同时读四个五六位数，
- * 不加分隔符时 `¥248630.59` 与 `¥24863.59` 得靠数位才分得清。
- */
-export function groupedAmount(cents: number): string {
-  // 换元只走 `centsToYuan`（金额换算唯一入口），这里只负责插分隔符
-  const text = centsToYuan(cents)
-  const negative = text.startsWith('-')
-  const body = negative ? text.slice(1) : text
-  const dot = body.indexOf('.')
-  const integer = dot >= 0 ? body.slice(0, dot) : body
-  const fraction = dot >= 0 ? body.slice(dot + 1) : '00'
-
-  let grouped = ''
-  for (let index = 0; index < integer.length; index += 1) {
-    if (index > 0 && (integer.length - index) % 3 === 0) grouped += ','
-    grouped += integer[index]
-  }
-  return `${negative ? '-' : ''}¥${grouped}.${fraction}`
-}
-
-/**
  * 带符号金额：支出前缀 `-`、收入前缀 `+`、转账不加符号。
  *
  * 符号由**交易类型**决定，而不是由金额正负决定（与 {@link signedYuan} 相反）。

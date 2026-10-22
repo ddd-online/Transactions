@@ -68,7 +68,8 @@ test('导入：源库 → 新工作空间', async () => {
     await page.getByTestId('nav-accounting').click()
     await page.getByTestId('nav-settings').click()
     await page.getByTestId('settings-tab-general').click()
-    await expect(page.getByTestId('ledger-item').first()).toBeVisible()
+    await page.getByTestId('ledger-trigger').click()
+    await expect(page.getByTestId('ledger-menu-row').first()).toBeVisible()
 
     const database = new DatabaseSync(join(target, 'transactions.db'), { readOnly: true })
     const record = database

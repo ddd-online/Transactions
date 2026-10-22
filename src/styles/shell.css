@@ -279,39 +279,6 @@
   height: 100%;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.4fr);
-  gap: 20px;
-  align-items: start;
-}
-
-.dashboard-card {
-  border: 1px solid var(--transactions-color-divider);
-  border-radius: var(--transactions-radius-lg);
-  background: var(--transactions-color-major-background);
-  padding: 20px 24px;
-}
-
-.dashboard-card h3 {
-  margin: 0 0 8px;
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-semibold);
-}
-
-.dashboard-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.dashboard-row:last-child {
-  border-bottom: 0;
-}
-
 .stock-hero {
   display: flex;
   flex-direction: column;
@@ -740,38 +707,6 @@
   padding: 0 6px;
 }
 
-.dashboard-grid {
-  gap: var(--transactions-space-lg);
-}
-
-.dashboard-card {
-  padding: var(--transactions-space-lg) var(--transactions-space-xl);
-}
-
-.dashboard-card h3 {
-  margin-bottom: var(--transactions-space-md);
-  font-size: var(--transactions-size-text-title-sm);
-  line-height: var(--transactions-height-snug);
-}
-
-.dashboard-row {
-  gap: var(--transactions-space-lg);
-  padding: var(--transactions-space-md) 0;
-}
-
-.dashboard-row strong {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-title);
-  font-weight: var(--transactions-weight-medium);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount-lg);
-}
-
-.m0-slice-amount {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
 .st-file-picker {
   cursor: pointer;
 }
@@ -793,12 +728,6 @@
   font-size: var(--transactions-size-text-title);
   font-weight: var(--transactions-weight-semibold);
   line-height: var(--transactions-height-snug);
-}
-
-@media (max-width: 1080px) {
-  .dashboard-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 1100px) {

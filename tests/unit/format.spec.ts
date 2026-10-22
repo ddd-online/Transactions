@@ -4,7 +4,6 @@ import {
   amount,
   amountClass,
   compactYuan,
-  groupedAmount,
   hasQuote,
   isBuy,
   lotsOf,
@@ -39,17 +38,6 @@ describe('format', () => {
     expect(amount(12_345)).toBe('123.45')
     expect(amount(-12_345)).toBe('-123.45')
     expect(amount(5)).toBe('0.05')
-  })
-
-  it('grouped_amount_adds_thousands_separators', () => {
-    // 千分位只改"分组"，不改小数位；负号在 `¥` 之前。
-    expect(groupedAmount(0)).toBe('¥0.00')
-    expect(groupedAmount(100)).toBe('¥1.00')
-    expect(groupedAmount(99)).toBe('¥0.99')
-    expect(groupedAmount(100_000)).toBe('¥1,000.00')
-    expect(groupedAmount(123_456_789)).toBe('¥1,234,567.89')
-    expect(groupedAmount(-123_456_789)).toBe('-¥1,234,567.89')
-    expect(groupedAmount(-1)).toBe('-¥0.01')
   })
 
   it('signed_amount_follows_the_transaction_type', () => {

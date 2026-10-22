@@ -17,6 +17,8 @@ export interface PageLayoutProps {
   toolbar?: ReactNode
   /** 底部工具栏；渲染成 `.page-footer-bar`。 */
   footer?: ReactNode
+  /** 底栏的附加类名（例如 `page-footer-bar--end` 让内容贴右）。 */
+  footerClassName?: string
   contentClassName?: string
   children: ReactNode
 }
@@ -26,6 +28,7 @@ export function PageLayout({
   rail,
   toolbar,
   footer,
+  footerClassName,
   contentClassName,
   children,
 }: PageLayoutProps): JSX.Element {
@@ -38,7 +41,11 @@ export function PageLayout({
         <div className="page-main">
           {toolbar ? <div className="page-toolbar">{toolbar}</div> : null}
           <div className={`page-content${contentClassName ? ` ${contentClassName}` : ''}`}>{children}</div>
-          {footer ? <div className="page-footer-bar">{footer}</div> : null}
+          {footer ? (
+            <div className={`page-footer-bar${footerClassName ? ` ${footerClassName}` : ''}`}>
+              {footer}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

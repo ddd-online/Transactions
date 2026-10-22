@@ -4,6 +4,8 @@ import { join, resolve } from 'node:path'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
+import { createLedger } from './ledger-helper'
+
 function environment(overrides: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
@@ -45,9 +47,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
 
     await page.getByTestId('nav-settings').click()
-    await page.getByTestId('ledger-name').fill('设置账本')
-    await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-item')).toHaveText(/设置账本/)
+    await createLedger(page, '设置账本')
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
     await page.getByTestId('settings-tab-data').click()

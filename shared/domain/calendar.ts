@@ -101,41 +101,6 @@ export function parseYearMonth(input: string): [number, number] | null {
   return [year, month]
 }
 
-/**
- * 解析**只有年月**的 `YYYY-MM`（看板的期间键就是这个形状）。
- *
- * 与 {@link parseYearMonth} 的分工：那个要求「带日」的区间端点（时间范围选择器用），
- * 这个只认两段。两者不能互相顶替 —— 拿 `2026-10` 去喂 `parseYearMonth` 会得到 `null`，
- * 而看板翻页时把 `null` 当成"保持原样"，表现就是**点了箭头没反应**。
- */
-export function parseMonth(input: string): [number, number] | null {
-  const parts = input.trim().split('-')
-  if (parts.length !== 2) return null
-  const year = parseI32(parts[0])
-  const month = parseU32(parts[1])
-  if (year === null || month === null || month < 1 || month > 12) return null
-  return [year, month]
-}
-
-/**
- * 期间键按粒度前后翻：`month` 走 `YYYY-MM`，`year` 走 `YYYY`。
- *
- * 解析不了就**原样返回**（调用方据此不改变期间）：宁可不动，也不要把 1970 这类
- * 猜出来的期间塞给用户。返回 `(新键, 是否真的翻了)` 之外没有别的信号通道，
- * 所以调用方用"新旧键是否相同"判断有没有翻动。
- */
-export function shiftPeriodKey(key: string, mode: string, delta: number): string {
-  if (mode === 'year') {
-    const year = parseI32(key.trim())
-    if (year === null) return key
-    return String(year + delta)
-  }
-  const parsed = parseMonth(key)
-  if (parsed === null) return key
-  const [year, month] = addMonths(parsed[0], parsed[1], delta)
-  return `${year}-${padNumber(month, 2)}`
-}
-
 /** `YYYY-MM-DD` → `2026年6月19日`（解析失败原样返回）。 */
 export function formatYmdCn(input: string): string {
   const date = parseYmd(input)

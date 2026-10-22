@@ -1,7 +1,6 @@
 import type { Db } from '../driver'
 import type { ChartLine, QueryConditionItem, TransactionRecord } from '../../../shared/domain/models'
 import type {
-  CategoryExpense,
   ChartPoint,
   TrFilterResult,
   TrQueryCondition,
@@ -25,8 +24,7 @@ import { AppError } from '../../../shared/errors'
  * - 标签用子查询：`all` 走 `COUNT(DISTINCT ...) = n`，否则 `EXISTS`，`tag_not` 加 `NOT`；
  * - 排序字段走白名单，非法 / 空回退 `transaction_at desc`；
  * - 统计口径与列表同源：账本 + 时间范围 + 条件项（不含分页与排序）；
- * - 图表分桶用 `strftime(<格式>, transaction_at, 'unixepoch')`，缺省排除 outlier；
- * - 看板分类聚合按**时段合计**，不分桶。
+ * - 图表分桶用 `strftime(<格式>, transaction_at, 'unixepoch')`，缺省排除 outlier。
  *
  * SQL 只拼常量片段：值一律 `?`，`ORDER BY` 的列名与方向都来自白名单。
  * 源表的 `price` 列在新 schema 里叫 `amount_cents`（金额恒为整数分）。
@@ -71,12 +69,6 @@ interface StatisticsRow {
 interface ChartPointRow {
   time: string
   amount: number | null
-}
-
-interface CategoryExpenseRow {
-  category: string
-  amount: number | null
-  count: number
 }
 
 function nowUnix(): number {
@@ -267,37 +259,6 @@ export function queryChartLineData(
     .all(...args) as unknown as ChartPointRow[]
 
   return rows.map((row) => ({ time: row.time, amount: row.amount ?? 0 }))
-}
-
-/**
- * 支出按分类分组（金额降序、同额按分类名升序）。返回分类、金额（分）、笔数。
- *
- * `tsRange` 必须是 `[起, 止]` 两个端点（服务层负责算出本地边界）；缺项按 0 处理，
- * 与既有 DAO 的 `range_args` 一致。
- */
-export function sumExpenseByCategory(
-  db: Db,
-  ledgerId: string,
-  tsRange: readonly number[],
-): CategoryExpense[] {
-  const rows = db
-    .prepare(
-      `SELECT category, SUM(amount_cents) AS amount, COUNT(*) AS count FROM ${TABLE} ` +
-        'WHERE ledger_id = ? AND transaction_type = ? AND transaction_at >= ? AND transaction_at <= ? ' +
-        'GROUP BY category ORDER BY 2 DESC, 1 ASC',
-    )
-    .all(
-      ledgerId,
-      TRANSACTION_TYPE_EXPENSE,
-      tsRange[0] ?? 0,
-      tsRange[1] ?? 0,
-    ) as unknown as CategoryExpenseRow[]
-
-  return rows.map((row) => ({
-    category: row.category,
-    amountCents: row.amount ?? 0,
-    count: row.count,
-  }))
 }
 
 // ---------------------------------------------------------------- SQL 组装

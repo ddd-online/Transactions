@@ -16,13 +16,12 @@ import { RecordsPage } from './pages/records'
 import { ChartsPage } from './pages/charts'
 import { CategoryTagPage } from './pages/category-tag'
 import { TemplatePage } from './pages/templates'
-import { DashboardPage } from './pages/dashboard'
 import { StockPage } from './pages/stock'
 import { EventsPage } from './pages/events'
 import { DiaryPage } from './pages/diary'
 import { TodoPage } from './pages/todo'
 import { AntdProvider } from './components/antd-provider'
-import { Input } from 'antd'
+import { Input, Modal } from 'antd'
 import { AppMark } from './components/app-mark'
 import { Button } from './components/button'
 import { ImportWizard } from './pages/import-wizard'
@@ -70,8 +69,10 @@ export function App(): JSX.Element {
   const [workspace, setWorkspace] = useState('')
   const [ledgers, setLedgers] = useState<Ledger[]>([])
   const [activeLedgerId, setActiveLedgerId] = useState('')
-  const [dataVersion, setDataVersion] = useState(0)
   const [ledgerName, setLedgerName] = useState('')
+  const [ledgerDescription, setLedgerDescription] = useState('')
+  const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false)
+  const [ledgerError, setLedgerError] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
@@ -79,8 +80,8 @@ export function App(): JSX.Element {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [ledgerMenuOpen, setLedgerMenuOpen] = useState(false)
   const [accountingTab, setAccountingTab] = useState<
-    'dashboard' | 'records' | 'charts' | 'tags' | 'templates'
-  >('dashboard')
+    'records' | 'charts' | 'tags' | 'templates'
+  >('records')
   const [importProgress, setImportProgress] = useState<SourceImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
@@ -232,23 +233,37 @@ export function App(): JSX.Element {
   const createLedger = useCallback(async (): Promise<void> => {
     const name = ledgerName.trim()
     if (!name) {
-      setError('请输入账本名称')
+      setLedgerError('请输入账本名称')
       return
     }
     setBusy(true)
-    setError('')
+    setLedgerError('')
     try {
-      const ledgerId = await window.api.invoke('ledger_create', { name, description: '' })
+      const ledgerId = await window.api.invoke('ledger_create', {
+        name,
+        description: ledgerDescription.trim(),
+      })
       await window.api.invoke('category_initialize', { ledgerId })
       setLedgerName('')
+      setLedgerDescription('')
+      setLedgerDialogOpen(false)
       await refreshLedgers()
+      setActiveLedgerId(ledgerId)
       notify('账本已创建')
     } catch (createError) {
-      setError(errorMessage(createError))
+      setLedgerError(errorMessage(createError))
     } finally {
       setBusy(false)
     }
-  }, [ledgerName, refreshLedgers])
+  }, [ledgerDescription, ledgerName, refreshLedgers])
+
+  const openLedgerDialog = useCallback((): void => {
+    setLedgerMenuOpen(false)
+    setLedgerName('')
+    setLedgerDescription('')
+    setLedgerError('')
+    setLedgerDialogOpen(true)
+  }, [])
 
   const deleteLedger = useCallback(
     async (id: string): Promise<void> => {
@@ -486,11 +501,14 @@ export function App(): JSX.Element {
                 <div className="ledger-menu-layer">
                   <div className="ledger-menu" role="menu">
                     {ledgers.length === 0 ? (
-                      <div className="ledger-menu-empty">暂无账本</div>
+                      <div className="ledger-menu-empty" data-testid="ledger-menu-empty">
+                        暂无账本
+                      </div>
                     ) : (
                       ledgers.map((ledger) => (
                         <div
                           key={ledger.id}
+                          data-testid="ledger-menu-row"
                           className={`ledger-menu-row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
                         >
                           <button
@@ -505,6 +523,18 @@ export function App(): JSX.Element {
                             <span className="ledger-dot" />
                             <span className="ledger-menu-name-text">{ledger.name}</span>
                           </button>
+                          <Button
+                            className="ledger-menu-delete"
+                            variant="text-danger"
+                            size="sm"
+                            testId="ledger-delete"
+                            aria-label={`删除账本 ${ledger.name}`}
+                            icon={<Icon name="Trash" size={14} />}
+                            onClick={() => {
+                              setLedgerMenuOpen(false)
+                              setDeleteTarget(ledger.id)
+                            }}
+                          />
                         </div>
                       ))
                     )}
@@ -512,12 +542,9 @@ export function App(): JSX.Element {
                     <button
                       type="button"
                       className="ledger-menu-create"
+                      data-testid="ledger-open-create"
                       role="menuitem"
-                      onClick={() => {
-                        setLedgerMenuOpen(false)
-                        setView('accounting')
-                        setAccountingTab('dashboard')
-                      }}
+                      onClick={openLedgerDialog}
                     >
                       <span className="ledger-menu-create-icon">
                         <Icon name="Plus" size={14} />
@@ -646,7 +673,6 @@ export function App(): JSX.Element {
                 <div className="page-rail-nav">
                   {(
                     [
-                      ['dashboard', '看板', 'Dashboard'],
                       ['records', '记录', 'Transaction'],
                       ['charts', '分析', 'LineChart'],
                       ['tags', '标签', 'Tag'],
@@ -684,14 +710,8 @@ export function App(): JSX.Element {
                     ))}
                   </select>
 
-            {accountingTab === 'dashboard' ? (
-              <DashboardPage ledgerId={activeLedgerId} refreshToken={dataVersion} />
-            ) : null}
             {accountingTab === 'records' ? (
-              <RecordsPage
-                ledgerId={activeLedgerId}
-                onChanged={() => setDataVersion((value) => value + 1)}
-              />
+              <RecordsPage ledgerId={activeLedgerId} ledgers={ledgers} />
             ) : null}
             {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
             {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
@@ -864,56 +884,6 @@ export function App(): JSX.Element {
                           打开
                         </Button>
                       </SettingsRow>
-
-                      <div className="st-card">
-                        <div className="st-card-info">
-                          <span className="st-card-title">账本</span>
-                          <span className="st-card-desc">新建或删除账本；侧栏左上角可切换当前账本</span>
-                        </div>
-                        <div className="st-card-action">
-                          <Input
-                            data-testid="ledger-name"
-                            placeholder="新账本名称"
-                            value={ledgerName}
-                            disabled={busy || !workspace}
-                            onChange={(event) => setLedgerName(event.target.value)}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter') void createLedger()
-                            }}
-                          />
-                          <Button
-                            variant="secondary"
-                            testId="ledger-create"
-                            disabled={busy || !workspace}
-                            onClick={() => void createLedger()}
-                          >
-                            新建
-                          </Button>
-                        </div>
-                      </div>
-
-                      {ledgers.length === 0 ? (
-                        <p className="m0-muted" data-testid="ledger-empty">
-                          {workspace ? '还没有账本' : '请先选择工作空间'}
-                        </p>
-                      ) : (
-                        <ul className="m0-ledgers">
-                          {ledgers.map((ledger) => (
-                            <li key={ledger.id} className="m0-ledger" data-testid="ledger-item">
-                              <span>{ledger.name}</span>
-                              <span className="m0-muted">{ledger.description}</span>
-                              <Button
-                                variant="text-danger"
-                                size="sm"
-                                disabled={busy}
-                                onClick={() => setDeleteTarget(ledger.id)}
-                              >
-                                删除
-                              </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
                     </div>
                   ) : null}
 
@@ -1006,6 +976,63 @@ export function App(): JSX.Element {
                   ) : null}
           </PageLayout>
         ) : null}
+
+        <Modal
+          open={ledgerDialogOpen}
+          title="创建账本"
+          width={400}
+          centered
+          destroyOnHidden
+          footer={null}
+          onCancel={() => setLedgerDialogOpen(false)}
+        >
+          <div className="tr-modal-form">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">名称</span>
+              <Input
+                data-testid="ledger-name"
+                placeholder="请输入账本名称"
+                value={ledgerName}
+                disabled={busy || !workspace}
+                onChange={(event) => setLedgerName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') void createLedger()
+                }}
+              />
+            </div>
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">描述</span>
+              <Input
+                data-testid="ledger-description"
+                placeholder="请输入账本描述"
+                value={ledgerDescription}
+                disabled={busy || !workspace}
+                onChange={(event) => setLedgerDescription(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') void createLedger()
+                }}
+              />
+            </div>
+            {ledgerError ? (
+              <p className="m0-error" data-testid="ledger-error">
+                {ledgerError}
+              </p>
+            ) : null}
+            <div className="tr-modal-footer">
+              <Button variant="secondary" onClick={() => setLedgerDialogOpen(false)}>
+                取消
+              </Button>
+              <Button
+                variant="primary"
+                testId="ledger-create"
+                disabled={busy || !workspace}
+                onClick={() => void createLedger()}
+              >
+                创建
+              </Button>
+            </div>
+          </div>
+        </Modal>
 
         <ConfirmDialog
           open={deleteTarget !== null}

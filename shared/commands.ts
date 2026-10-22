@@ -11,7 +11,6 @@ import type {
   KeyEventImage,
 } from './domain/models'
 import type { DiaryExportResult, DiaryScanResponse } from './types/diary'
-import type { AccountingOverviewDto } from './types/accounting'
 import type {
   StockAccountSummary,
   StockFundRecordPage,
@@ -289,11 +288,6 @@ export const commandSchemas = {
   }),
   todo_progress_delete: z.object({ id: z.string() }),
   todo_progress_done: z.object({ id: z.string(), done: z.boolean().nullable().optional() }),
-  accounting_overview: z.object({
-    ledgerId: z.string().default(''),
-    periodKind: z.string().default('month'),
-    periodKey: z.string().default(''),
-  }),
   stock_account_summary: z.object({ ledger_id: z.string() }),
   stock_principal_add: z.object({
     ledger_id: z.string(),
@@ -540,7 +534,6 @@ export interface CommandResponses {
   todo_progress_add: TodoProgressDto
   todo_progress_delete: null
   todo_progress_done: null
-  accounting_overview: AccountingOverviewDto
   stock_account_summary: StockAccountSummary
   stock_principal_add: StockAccountSummary
   stock_interest_add: StockAccountSummary

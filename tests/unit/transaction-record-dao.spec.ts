@@ -16,7 +16,6 @@ import {
   queryChartLineData,
   queryFiltered,
   queryStatistics,
-  sumExpenseByCategory,
   updateKeyEventDate,
 } from '../../electron/db/dao/transaction-record'
 import {
@@ -666,38 +665,6 @@ describe('transaction record dao', () => {
     expect(
       queryChartLineData(db, 'l1', [], 'month', { ...categoryLine, includeOutlier: true }),
     ).toEqual([{ time: '2026-01', amount: 250 }])
-  })
-
-  it('sums expenses by category with cents and amount-desc / name-asc ordering', () => {
-    const workspace = openedWorkspace()
-    const db = workspace.db
-    insertLedger(db, 'l1')
-    insertLedger(db, 'l2')
-    seedRecords(db, [
-      record('t1', 100, 'expense', 'a', 10),
-      record('t2', 200, 'expense', 'a', 20),
-      record('t3', 500, 'expense', 'b', 30),
-      record('t4', 500, 'expense', 'c', 35),
-      record('t5', 999, 'income', 'a', 40),
-      record('t6', 777, 'expense', 'a', 50, { ledgerId: 'l2' }),
-      record('t7', 300, 'expense', 'a', 100),
-    ])
-
-    // 金额降序（b / c 并列 500，按分类名升序），再是 a 的 300；收入、其它账本、区间外都不算。
-    expect(sumExpenseByCategory(db, 'l1', [0, 50])).toEqual([
-      { category: 'b', amountCents: 500, count: 1 },
-      { category: 'c', amountCents: 500, count: 1 },
-      { category: 'a', amountCents: 300, count: 2 },
-    ])
-
-    // 区间收窄到 15..25：只剩 a 的 t2。
-    expect(sumExpenseByCategory(db, 'l1', [15, 25])).toEqual([
-      { category: 'a', amountCents: 200, count: 1 },
-    ])
-
-    // 既有 DAO 的垃圾进垃圾出：缺端点按 0 处理，因此空区间没有命中。
-    expect(sumExpenseByCategory(db, 'l1', [])).toEqual([])
-    expect(sumExpenseByCategory(db, 'l1', [0])).toEqual([])
   })
 })
 

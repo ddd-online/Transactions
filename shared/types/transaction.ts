@@ -49,14 +49,6 @@ export interface ChartPoint {
   amount: number
 }
 
-/** 看板「支出按分类」聚合的一行（既有 DAO 返回 `(分类, 金额, 笔数)` 元组）。 */
-export interface CategoryExpense {
-  category: string
-  /** 合计金额（分） */
-  amountCents: number
-  count: number
-}
-
 /** 新建/编辑一条消费记录的 wire 形状（既有 `TransactionRecordDto`；金额字段名仍是 `price`）。 */
 export interface TransactionRecordDto {
   ledgerId: string

@@ -11,6 +11,13 @@
  * 且表格的盒子正好等于面板的内边距盒（不会比 `.page-content` 宽，**不产生横向滚动条**）。
  * ⚠ 这两条必须成对：`margin: 0 -16px` 的父级没有同档内边距时，负外边距就变成纯粹的溢出
  * （实测：模板页底部冒出一条横向滚动条）。 */
+/* 页面内容自己留内边距，表格才能通到版心边缘。
+ * 用两个类名压过 shell.css 里后导入的 `.page-content`（同权重时后者会胜出）。 */
+.page-content.tpl-page-content {
+  padding: 0;
+  overflow: hidden;
+}
+
 .tpl-pane {
   padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
 }

@@ -43,26 +43,37 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
-    await page.getByTestId('nav-settings').click()
-    await expect(page.getByTestId('ledger-empty')).toContainText('还没有账本')
+    await page.getByTestId('ledger-trigger').click()
+    await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
+    await page.getByTestId('ledger-open-create').click()
     await page.getByTestId('ledger-name').fill('测试账本')
+    await page.getByTestId('ledger-description').fill('测试描述')
     await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-item')).toHaveText(/测试账本/)
+    await expect(page.getByTestId('ledger-trigger')).toContainText('测试账本')
     await expect(page.getByTestId('toast').first()).toContainText('账本已创建')
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
-    const rows = database.prepare('SELECT id, name FROM ledger').all() as Array<{
+    const rows = database.prepare('SELECT id, name, description FROM ledger').all() as Array<{
       id: string
       name: string
+      description: string
     }>
     database.close()
     expect(rows).toHaveLength(1)
     expect(rows[0]?.name).toBe('测试账本')
+    expect(rows[0]?.description).toBe('测试描述')
 
-    await page.getByTestId('ledger-item').getByRole('button', { name: '删除' }).click()
+    await page.getByTestId('ledger-trigger').click()
+    await page
+      .getByTestId('ledger-menu-row')
+      .filter({ hasText: '测试账本' })
+      .getByTestId('ledger-delete')
+      .click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await page.getByTestId('confirm-dialog-confirm').click()
-    await expect(page.getByTestId('ledger-empty')).toContainText('还没有账本')
+    await expect(page.getByTestId('ledger-trigger')).toContainText('默认账本')
+    await page.getByTestId('ledger-trigger').click()
+    await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
 
     const after = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const count = after.prepare('SELECT COUNT(*) AS count FROM ledger').get() as { count: number }

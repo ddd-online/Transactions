@@ -82,6 +82,18 @@
 
 /* ========== 主体：240px 分类栏 + 1fr 标签栏 ========== */
 
+/* 页面内容自己排两栏：外层的 16px 内边距交给每列，竖线才能从版心顶贯通到底。
+ * 用两个类名压过 shell.css 里后导入的 `.page-content`（同权重时后者会胜出）。 */
+.page-content.ct-page-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ct-error {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
 /* 两栏是**同一张纸上的两列**，不是两张卡：
  * 底色透明（版心本身不填色），靠一条竖直发丝线分栏 ——
  * 之前两栏各自是"白底 + 描边 + 12px 圆角"，正好套在版心里，视觉上成了双层卡片。 */

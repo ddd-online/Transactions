@@ -4,6 +4,8 @@ import { join, resolve } from 'node:path'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
+import { createLedger } from './ledger-helper'
+
 function environment(overrides: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
@@ -44,18 +46,14 @@ test('工作空间：切换后账本隔离并写回配置', async () => {
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText(first)
     await page.getByTestId('nav-settings').click()
-    await page.getByTestId('ledger-name').fill('A 账本')
-    await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-item')).toHaveText(/A 账本/)
+    await createLedger(page, 'A 账本')
 
     await page.getByTestId('nav-settings').click()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText(second)
-    await expect(page.getByTestId('ledger-empty')).toContainText('还没有账本')
+    await expect(page.getByTestId('ledger-trigger')).toContainText('默认账本')
     await page.getByTestId('nav-settings').click()
-    await page.getByTestId('ledger-name').fill('B 账本')
-    await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-item')).toHaveText(/B 账本/)
+    await createLedger(page, 'B 账本')
 
     const config = JSON.parse(
       readFileSync(join(home, '.tr.dev.json'), 'utf8'),

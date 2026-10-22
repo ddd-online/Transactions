@@ -11,56 +11,14 @@ import {
   monthSpan,
   normalizeRange,
   padded,
-  parseMonth,
   parseYmd,
   parseYearMonth,
   shiftPeriod,
-  shiftPeriodKey,
   weekBounds,
   weekdayCn,
   yearSpan,
   type Ymd,
 } from '../../shared/domain/calendar'
-
-/**
- * 期间键的两种形状：`YYYY-MM`（月）与 `YYYY`（年）。
- *
- * 这条测试是为一个真实 bug 补的：看板原来拿 `2026-10` 去喂 `parseYearMonth`
- * （那个函数要求带"日"的区间端点），解析失败后"原样返回"，于是**点箭头没任何反应**，
- * 而且因为返回值等于输入，连"没变"都看不出来。
- */
-describe('period keys', () => {
-  it('shift by month and year', () => {
-    expect(shiftPeriodKey('2026-10', 'month', -1)).toBe('2026-09')
-    expect(shiftPeriodKey('2026-10', 'month', 1)).toBe('2026-11')
-    expect(shiftPeriodKey('2026-01', 'month', -1)).toBe('2025-12')
-    expect(shiftPeriodKey('2026-12', 'month', 1)).toBe('2027-01')
-    expect(shiftPeriodKey('2026', 'year', -1)).toBe('2025')
-    expect(shiftPeriodKey('2026', 'year', 1)).toBe('2027')
-    // 解析不了就原样返回，不猜一个 1970 出来
-    expect(shiftPeriodKey('', 'month', -1)).toBe('')
-    expect(shiftPeriodKey('不是日期', 'month', -1)).toBe('不是日期')
-    expect(shiftPeriodKey('2026-13', 'month', -1)).toBe('2026-13')
-    expect(shiftPeriodKey('2026-10-18', 'month', -1)).toBe('2026-10-18')
-    expect(shiftPeriodKey('2026-10', 'year', 1)).toBe('2026-10')
-  })
-})
-
-/** `parseMonth` 只认两段，`parseYearMonth` 要求至少三段 —— 两者的边界写死在这里。 */
-describe('parseMonth', () => {
-  it('accepts exactly year and month', () => {
-    expect(parseMonth('2026-10')).toEqual([2026, 10])
-    expect(parseMonth(' 2026-10 ')).toEqual([2026, 10])
-    expect(parseMonth('2026-13')).toBeNull()
-    expect(parseMonth('2026-00')).toBeNull()
-    expect(parseMonth('2026')).toBeNull()
-    expect(parseMonth('2026-10-18')).toBeNull()
-    expect(parseMonth('abc')).toBeNull()
-    // 对照：同一个字符串，两个函数的分工
-    expect(parseYearMonth('2026-10')).toBeNull()
-    expect(parseYearMonth('2026-10-18')).toEqual([2026, 10])
-  })
-})
 
 /** 月长：闰年规则四条分支都要走到（含"百年不闰、四百年又闰"）。 */
 describe('daysInMonth', () => {

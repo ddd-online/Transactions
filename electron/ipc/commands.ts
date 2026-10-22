@@ -22,7 +22,6 @@ import * as chartService from '../services/chart'
 import * as diaryService from '../services/diary'
 import * as keyEventService from '../services/key-event'
 import * as todoService from '../services/todo'
-import { accountingOverview } from '../services/accounting-overview'
 import * as stockAccount from '../services/stock-account'
 import {
   getOverview,
@@ -858,17 +857,6 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       if (!id) throw new AppError('id is required', { status: 400 })
       todoService.setProgressDone(workspaceDb(), id, raw.done === true)
       return null
-    },
-
-    accounting_overview(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledgerId ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return accountingOverview(workspaceDb(), {
-        ledgerId,
-        periodKind: String(raw.periodKind ?? 'month'),
-        periodKey: String(raw.periodKey ?? ''),
-      })
     },
 
     stock_account_summary(request) {

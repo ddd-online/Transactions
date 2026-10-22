@@ -14,7 +14,6 @@ import {
   CloseOutlined,
   CompressOutlined,
   CopyOutlined,
-  DashboardOutlined,
   DeleteOutlined,
   DownloadOutlined,
   DownOutlined,
@@ -30,7 +29,6 @@ import {
   InfoCircleOutlined,
   LeftOutlined,
   LineChartOutlined,
-  LinkOutlined,
   LoadingOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -58,7 +56,6 @@ import {
 export type IconName =
   | 'Tag'
   | 'Transaction'
-  | 'Dashboard'
   | 'LineChart'
   | 'Stock'
   | 'Star'
@@ -91,7 +88,6 @@ export type IconName =
   | 'CaretRight'
   | 'ChevronRight'
   | 'ChevronLeft'
-  | 'Link'
   | 'Upload'
   | 'FileText'
   | 'BarChart'
@@ -121,7 +117,6 @@ type IconComponent = ComponentType<{
 const ICONS: Record<IconName, IconComponent> = {
   Tag: TagOutlined,
   Transaction: TransactionOutlined,
-  Dashboard: DashboardOutlined,
   LineChart: LineChartOutlined,
   Stock: StockOutlined,
   Star: StarOutlined,
@@ -154,7 +149,6 @@ const ICONS: Record<IconName, IconComponent> = {
   CaretRight: CaretRightOutlined,
   ChevronRight: RightOutlined,
   ChevronLeft: LeftOutlined,
-  Link: LinkOutlined,
   Upload: UploadOutlined,
   FileText: FileTextOutlined,
   BarChart: BarChartOutlined,

@@ -76,6 +76,54 @@
   gap: var(--transactions-space-xs);
 }
 
+/* 行内动作：28px 方形图标键，静止是图标色，悬停才升到正文色 */
+.tr-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-icon);
+  cursor: pointer;
+  transition:
+    background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.tr-icon-btn:hover {
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
+}
+
+.tr-icon-btn:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+.tr-icon-btn.is-danger:hover {
+  background-color: var(--transactions-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
+}
+
+/* 常显的危险图标（模板行的删除）：不靠 hover 才变红 */
+.tr-icon-btn.is-danger-static {
+  color: var(--transactions-color-expense);
+}
+
+.tr-icon-btn.is-danger-static:hover {
+  background-color: var(--transactions-color-danger-hover-bg);
+  color: var(--transactions-color-expense);
+}
+
+.tr-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .tr-sync {
   position: relative;
   display: inline-flex;
@@ -154,8 +202,38 @@
  * 4. 记一笔 / 编辑弹窗
  * ============================================ */
 
-.tr-modal-form .ui-form-item__control > * {
+.tr-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-lg);
+}
+
+/* 一个字段 = 标签 + 控件，控件统一吃满弹窗宽度 */
+.tr-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.tr-modal-field .ant-select,
+.tr-modal-field .ant-input,
+.tr-modal-field .ant-picker,
+.tr-modal-field .tr-date-picker,
+.tr-modal-field .tr-date-picker .ant-picker,
+.tr-modal-field .tr-segmented {
   width: 100%;
+}
+
+.tr-modal-label {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.tr-modal-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-sm);
 }
 
 .tr-modal-template {
@@ -319,6 +397,25 @@
   gap: var(--transactions-space-lg);
 }
 
+/* 一个条件组：字段上下排；多组之间用发丝线隔开 */
+.tr-filter__condition {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-md);
+}
+
+.tr-filter__condition + .tr-filter__condition {
+  padding-top: var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.tr-filter__condition-remove {
+  position: absolute;
+  top: calc(-1 * var(--transactions-space-xs));
+  right: 0;
+}
+
 .tr-filter__field {
   display: flex;
   flex-direction: column;
@@ -348,7 +445,8 @@
 }
 
 .tr-filter__add {
-  margin-top: var(--transactions-space-xs);
+  border-style: dashed;
+  color: var(--transactions-color-text-secondary);
 }
 
 .tr-filter__list {
@@ -546,7 +644,21 @@
   min-height: 0;
 }
 
+/* 记录页是贴边型：表格通到版心边缘，工具栏/分页行各自带 16px 内边距。
+ * 用两个类名压过 shell.css 里后导入的 `.page-content`。 */
+.page-content.tr-page-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.tr-error {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
 .tr-content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: auto;

@@ -289,6 +289,7 @@
  * ============================================ */
 
 .ui-time {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--transactions-space-sm);
@@ -345,6 +346,7 @@
   z-index: 1050;
   top: calc(100% + var(--transactions-space-xs));
   left: 0;
+  width: 280px;
   min-width: 280px;
   padding: var(--transactions-space-md);
   border: 1px solid var(--transactions-color-window-border);
@@ -352,6 +354,64 @@
   background-color: var(--transactions-color-elevated);
   box-shadow: var(--transactions-shadow-lg);
   animation: tr-rise-in var(--transactions-transition-enter);
+}
+
+/* 日粒度日历：与月/年格子同一套语言 */
+.ui-time__cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: var(--transactions-space-2xs);
+  color: var(--transactions-color-text-tertiary);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  text-align: center;
+}
+
+.ui-time__cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.ui-time__cal-cell {
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.ui-time__cal-cell:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.ui-time__cal-cell.is-outside {
+  color: var(--transactions-color-text-disabled);
+}
+
+.ui-time__cal-cell.is-today {
+  border-color: var(--transactions-color-primary);
+}
+
+.ui-time__cal-cell.is-start {
+  border-color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-primary);
+  color: var(--transactions-color-text-inverse);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.ui-time__cal-cell.is-in-range {
+  background-color: var(--transactions-color-primary-tint);
+  color: var(--transactions-color-primary);
 }
 
 /* 面板内嵌的区间选择器：去掉自带的下拉定位，直接作为面板内容 */

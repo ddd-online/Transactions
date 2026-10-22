@@ -91,32 +91,6 @@ body {
   font: inherit;
 }
 
-.m0-ledgers {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.m0-ledger {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid var(--transactions-color-border-l1);
-  border-radius: var(--transactions-radius-md);
-}
-
-.m0-ledger > span:first-child {
-  font-weight: 600;
-}
-
-.m0-ledger > span:nth-child(2) {
-  flex: 1;
-}
-
 .m0-link {
   border: 0;
   background: transparent;
@@ -142,11 +116,6 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.m0-ledger-select {
-  grid-column: 1 / -1;
-  margin: 0;
 }
 
 .m0-card-head {
@@ -211,20 +180,6 @@ body {
   margin-bottom: 0;
 }
 
-.m0-templates {
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.m0-template {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--transactions-space-2xs);
-  padding: 2px 6px;
-  border-radius: var(--transactions-radius-sm);
-  background: var(--transactions-color-minor-background);
-}
-
 .m0-period {
   margin: 0;
   align-items: center;
@@ -248,49 +203,6 @@ body {
 
 .m0-stat strong {
   font-size: var(--transactions-size-text-title);
-  font-variant-numeric: tabular-nums;
-}
-
-.m0-slices {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.m0-slice {
-  display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) 150px;
-  align-items: center;
-  gap: 12px;
-  font-size: var(--transactions-size-text-body-sm);
-}
-
-.m0-slice-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.m0-slice-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--transactions-color-minor-background);
-  overflow: hidden;
-}
-
-.m0-slice-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--transactions-color-primary);
-}
-
-.m0-slice-amount {
-  text-align: right;
-  color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 

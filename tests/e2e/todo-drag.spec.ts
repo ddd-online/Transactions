@@ -5,6 +5,8 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
+import { createLedger } from './ledger-helper'
+
 function environment(overrides: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
@@ -44,9 +46,7 @@ test('待办：拖动主题后排序落库', async () => {
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('nav-settings').click()
-    await page.getByTestId('ledger-name').fill('待办账本')
-    await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-item')).toHaveText(/待办账本/)
+    await createLedger(page, '待办账本')
     await page.getByTestId('nav-todo').click()
 
     await page.getByTestId('todo-card-title').fill('第一个主题')

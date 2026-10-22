@@ -5,6 +5,8 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
+import { createLedger } from './ledger-helper'
+
 const PNG_1X1 = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   'base64',
@@ -49,9 +51,7 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('nav-settings').click()
-    await page.getByTestId('ledger-name').fill('事件账本')
-    await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-item')).toHaveText(/事件账本/)
+    await createLedger(page, '事件账本')
     await page.getByTestId('nav-events').click()
 
     await page.getByTestId('event-date').fill('2026-01-15')

@@ -5,6 +5,18 @@
 
 /* 工具栏：直接用共享的 `TimeRangePicker`（`.ui-time*` 见 ui.css），这里不再有本页专属样式。 */
 
+/* 页面自己留内边距：`.da-main` 的 16px 是版心内边距的唯一来源。
+ * 用两个类名压过 shell.css 里后导入的 `.page-content`。 */
+.page-content.da-page-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.da-error {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
 .da-main {
   flex: 1;
   min-height: 0;
@@ -110,14 +122,17 @@
   flex-shrink: 0;
 }
 
-/* 列表项上的删除按钮：只在 hover / 选中时出现（组件本体样式见 ui.css 的 .ui-icon-btn） */
-.da-list__delete {
+/* 列表项上的删除按钮：只在 hover / 选中时出现。
+ * 选择器写到三层，压过 `.tr-icon-btn` 的 display（它也是单类选择器）。 */
+.da-list .da-list__item .da-list__delete {
   display: none;
+  visibility: hidden;
 }
 
-.da-list__item:hover .da-list__delete,
-.da-list__item.is-active .da-list__delete {
+.da-list .da-list__item:hover .da-list__delete,
+.da-list .da-list__item.is-active .da-list__delete {
   display: inline-flex;
+  visibility: visible;
 }
 
 .da-content {
@@ -204,7 +219,7 @@
 /* 图表画布：只是一块绘图区，**不再套白卡**（卡片里的白卡就是"卡中卡"）。
  * 图表的边界靠它自己的坐标轴与网格线表达，不需要再加一圈描边。 */
 .da-chart__canvas {
-  /* 撑满图表列剩余高度 → 图表自适应高宽（plotters 按实测尺寸渲染） */
+  /* 撑满图表列剩余高度 → 图表自适应高宽 */
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -212,6 +227,41 @@
   /* 弹性列：空态/加载态靠 `flex: 1` 撑满画布，才能真正在区域内居中 */
   display: flex;
   flex-direction: column;
+}
+
+/* AntV 画布：尺寸交给外层 `.da-chart__canvas`，G2 用 autoFit 跟着它伸缩 */
+.antv-chart {
+  flex: 1;
+  width: 100%;
+  min-height: 280px;
+}
+
+/* 图例自绘：AntV 自带图例在窄容器里会被裁切，这里用 HTML 固定成一行 */
+.da-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-xs) var(--transactions-space-md);
+  margin: 0;
+  padding: var(--transactions-space-xs) 0;
+  list-style: none;
+  flex-shrink: 0;
+}
+
+.da-chart__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.da-chart__legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .da-chart__loading,
