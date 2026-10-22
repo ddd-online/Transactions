@@ -9,7 +9,7 @@ Windows 桌面个人记账应用：本地优先、单工作空间多账本，覆
 - Node 内置 `node:sqlite`（WAL）
 - 无原生模块、无本地监听端口
 - 渲染进程 `sandbox` + `contextIsolation`，只经 preload 暴露的 `window.api` 访问主进程
-- UI：Ant Design 6 提供通用控件，外观由 `--transactions-*` 令牌约束；页面骨架、图表、图片裁剪保持自研
+- UI：Ant Design 6 提供通用控件，外观由 `--transactions-*` 令牌约束；图表由 AntV G2 渲染，滚动条由 OverlayScrollbars 覆盖绘制；页面骨架、图片裁剪保持自研
 
 ## 功能
 

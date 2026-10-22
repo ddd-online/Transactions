@@ -30,12 +30,17 @@
 .da-sidebar {
   flex: 0 0 220px;
   min-width: 0;
+  display: block;
+  overflow: hidden;
+  padding-right: var(--transactions-space-lg);
+  border-right: 1px solid var(--transactions-color-divider);
+}
+
+.da-sidebar > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-sm);
-  padding-right: var(--transactions-space-lg);
-  border-right: 1px solid var(--transactions-color-divider);
-  overflow-y: auto;
+  min-height: 100%;
 }
 
 /* 侧栏列表：**撑满侧栏剩余高度** —— 列表为空时空态才能在剩余空间里垂直居中

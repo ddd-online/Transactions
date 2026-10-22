@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import 'overlayscrollbars/overlayscrollbars.css'
 
 import { App } from './App'
 import './styles/tokens.css'

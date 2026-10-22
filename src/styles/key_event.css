@@ -1,10 +1,21 @@
 /* ============================================
  * 事件页（`/key_event_view`）
  * 取值全部走 `--transactions-*` 令牌。
- * 布局：工具栏（年份导航）+ 三栏（事件列表 / 自适应详情卡 / 关联消费记录；
+ * 布局：工具栏（年份）+ 三栏（事件列表 / 自适应详情卡 / 关联消费记录；
  * 两侧宽度跟着窗口在 200~280px / 180~280px 之间收放，见 `.key-event-body`）。
  * 右栏可收起（`is-rail-collapsed`）：栏宽归 0、竖线隐去，中栏吃满；把手一直骑在竖线上。
  * ============================================ */
+
+/* 这一页是三栏铺满的版心：页面自己不吃内边距，左/右轨的底色与竖线才能通到工具栏底边。 */
+.page-content.key-event-page {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.page-content.key-event-page > .m0-error {
+  margin: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
 
 .key-event-page .page-header {
   align-items: center;
@@ -83,10 +94,12 @@
 
 .key-event-panel--left {
   border-right: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-minor-background);
 }
 
 .key-event-panel--right {
   border-left: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-minor-background);
   /* 收起时才切 `visibility`，且**延迟到收起动画结束**：动画期间内容还在（不会先空掉），
    * 收完才退出无障碍树与键盘序（`visibility: hidden` 的元素不可聚焦、也不被读屏念）。 */
   transition: border-color var(--key-event-rail-dur) var(--transactions-ease-out-expo),
@@ -114,7 +127,13 @@
   z-index: 2;
   width: 24px;
   height: 48px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--transactions-radius-full);
+  border: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-major-background);
   /* 尖角按 body 档（14px）画：药丸只有 24px 宽，caption 档的尖角太小、
    * 作为"这一栏唯一的开关"不够显眼。 */
   font-size: var(--transactions-size-text-body);
@@ -156,12 +175,16 @@
 
 .key-event-cards {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: var(--transactions-space-xs);
+  min-height: 0;
+  overflow: hidden;
+  display: block;
+}
+
+.key-event-cards > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-sm);
+  padding-right: var(--transactions-space-sm);
 }
 
 .key-event-empty {
@@ -375,6 +398,96 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+}
+
+/* 标题是卡片里的主标题：无边框输入，聚焦时只留光标，不再画一圈控件框。 */
+.key-event-detail__head {
+  flex-shrink: 0;
+  padding-bottom: var(--transactions-space-sm);
+}
+
+.key-event-title.ant-input {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-display-sm);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-display);
+  color: var(--transactions-color-text-major);
+}
+
+.key-event-title.ant-input:focus,
+.key-event-title.ant-input:hover {
+  border: none;
+  box-shadow: none;
+}
+
+/* 图片区：详情里只放缩略图与添加入口，点图不做灯箱（保持这一版的轻量布局）。 */
+.key-event-images {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+  padding-bottom: var(--transactions-space-md);
+}
+
+.key-event-image {
+  position: relative;
+  width: 112px;
+  height: 74px;
+  margin: 0;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-sm);
+  overflow: hidden;
+  background-color: var(--transactions-color-minor-background);
+}
+
+.key-event-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.key-event-image__delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  padding: 0;
+  border: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-elevated);
+  opacity: 0;
+  transition: opacity var(--transactions-transition-fast);
+}
+
+.key-event-image:hover .key-event-image__delete,
+.key-event-image__delete:focus-visible {
+  opacity: 1;
+}
+
+.key-event-content.ant-input {
+  flex: 1;
+  min-height: 180px;
+  resize: none;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-major-warm);
+  padding: var(--transactions-space-md);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-relaxed);
+}
+
+.key-event-content.ant-input:focus {
+  border-color: var(--transactions-color-primary);
+  box-shadow: 0 0 0 2px var(--transactions-color-primary-light);
 }
 
 .key-event-colors {
@@ -686,7 +799,11 @@
 
 .key-event-linked__cards {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.key-event-linked__cards > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
   padding: var(--transactions-space-xs);
 }
 

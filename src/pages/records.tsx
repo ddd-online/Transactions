@@ -32,6 +32,7 @@ import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
 import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
+import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
 
@@ -787,40 +788,47 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
         ) : null}
 
         <div className="tr-content" ref={contentRef}>
-
-      {rows.length === 0 ? (
-        <div className="tr-empty" data-testid="tr-empty">
-          <span className="tr-empty-icon">
-            <Icon name="Transaction" size={56} />
-          </span>
-          <h3>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h3>
-          {ledgerId ? <p className="m0-muted">换个时间范围，或直接记一笔。</p> : null}
-          <div className="m0-actions">
-            <Button variant="secondary" onClick={goLastMonth}>
-              上月
-            </Button>
-            <Button variant="secondary" onClick={goThisYear}>
-              今年
-            </Button>
-            <Button variant="primary" onClick={openComposer}>
-              记一笔
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Table<TransactionRecordDto>
-          className="tr-table"
-          rowKey="transactionId"
-          columns={columns}
-          dataSource={rows}
-          pagination={false}
-          size="small"
-          scroll={{ x: 900 }}
-          sticky={{ getContainer: () => contentRef.current ?? window }}
-          rowClassName={(row) => `row-type-${row.transactionType}`}
-          onRow={() => ({ 'data-testid': 'tr-row' }) as HTMLAttributes<HTMLElement>}
-        />
-      )}
+          <ScrollArea className="tr-scroll" axis="both" notifyResize>
+            {rows.length === 0 ? (
+              <div className="tr-empty" data-testid="tr-empty">
+                <span className="tr-empty-icon">
+                  <Icon name="Transaction" size={56} />
+                </span>
+                <h3>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h3>
+                {ledgerId ? <p className="m0-muted">换个时间范围，或直接记一笔。</p> : null}
+                <div className="m0-actions">
+                  <Button variant="secondary" onClick={goLastMonth}>
+                    上月
+                  </Button>
+                  <Button variant="secondary" onClick={goThisYear}>
+                    今年
+                  </Button>
+                  <Button variant="primary" onClick={openComposer}>
+                    记一笔
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Table<TransactionRecordDto>
+                className="tr-table"
+                rowKey="transactionId"
+                columns={columns}
+                dataSource={rows}
+                pagination={false}
+                size="small"
+                sticky={{
+                  getContainer: () =>
+                    contentRef.current?.querySelector<HTMLElement>(
+                      '[data-overlayscrollbars-viewport]',
+                    ) ??
+                    contentRef.current ??
+                    window,
+                }}
+                rowClassName={(row) => `row-type-${row.transactionType}`}
+                onRow={() => ({ 'data-testid': 'tr-row' }) as HTMLAttributes<HTMLElement>}
+              />
+            )}
+          </ScrollArea>
         </div>
 
         <div className="tr-footer">

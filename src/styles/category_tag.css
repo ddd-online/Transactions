@@ -178,7 +178,11 @@
 
 .ct-column-body {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ct-column-body > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
   padding: var(--transactions-space-xs);
 }
 

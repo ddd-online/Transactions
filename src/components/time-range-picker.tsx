@@ -24,6 +24,8 @@ export interface TimeRangePickerProps {
   mode: TimeRangeMode
   start: string
   end: string
+  /** 只保留年份：隐藏日/月/年分段，整块只做「上一年 / 年份 / 下一年」。 */
+  yearOnly?: boolean
   onModeChange: (mode: TimeRangeMode) => void
   onRangeChange: (start: string, end: string) => void
 }
@@ -112,12 +114,14 @@ export function TimeRangePicker({
   mode,
   start,
   end,
+  yearOnly = false,
   onModeChange,
   onRangeChange,
 }: TimeRangePickerProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState<VisibleMonth>(() => fromStart(start))
   const rootRef = useRef<HTMLDivElement>(null)
+  const activeMode: TimeRangeMode = yearOnly ? 'year' : mode
 
   useEffect(() => {
     if (!open) return
@@ -135,7 +139,7 @@ export function TimeRangePicker({
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open])
 
-  const presets = useMemo(() => presetRanges(mode), [mode, start, end])
+  const presets = useMemo(() => presetRanges(activeMode), [activeMode, start, end])
 
   const changeMode = (next: string): void => {
     const nextMode = next as TimeRangeMode
@@ -154,16 +158,22 @@ export function TimeRangePicker({
   }
 
   const shift = (direction: number): void => {
-    const [from, to] = shiftPeriod(start, end, mode, direction)
+    const [from, to] = shiftPeriod(start, end, activeMode, direction)
     onRangeChange(from, to)
   }
 
   const applyPreset = (preset: Preset): void => {
-    const [from, to] = normalizeRange(preset.from, preset.to, mode)
+    const [from, to] = normalizeRange(preset.from, preset.to, activeMode)
     onRangeChange(from, to)
+    if (yearOnly) setOpen(false)
   }
 
   const pickPeriod = (from: string, to: string): void => {
+    if (yearOnly) {
+      onRangeChange(from, to)
+      setOpen(false)
+      return
+    }
     if (!start || end) {
       onRangeChange(from, '')
     } else if (from < start) {
@@ -203,21 +213,23 @@ export function TimeRangePicker({
   }
 
   return (
-    <div className="ui-time" data-testid={testId} ref={rootRef}>
-      <Segmented
-        testId={`${testId}-mode`}
-        value={mode}
-        onChange={changeMode}
-        options={[
-          { value: 'date', label: '日' },
-          { value: 'month', label: '月' },
-          { value: 'year', label: '年' },
-        ]}
-      />
+    <div className={`ui-time${yearOnly ? ' ui-time--year' : ''}`} data-testid={testId} ref={rootRef}>
+      {yearOnly ? null : (
+        <Segmented
+          testId={`${testId}-mode`}
+          value={mode}
+          onChange={changeMode}
+          options={[
+            { value: 'date', label: '日' },
+            { value: 'month', label: '月' },
+            { value: 'year', label: '年' },
+          ]}
+        />
+      )}
       <button
         type="button"
         className="tr-icon-btn"
-        aria-label="上一周期"
+        aria-label={yearOnly ? '上一年' : '上一周期'}
         onClick={() => shift(-1)}
       >
         <Icon name="Left" size={14} />
@@ -228,16 +240,17 @@ export function TimeRangePicker({
           type="button"
           className="ui-time__trigger"
           data-testid={`${testId}-trigger`}
+          aria-label={yearOnly ? '选择年份' : '选择时间范围'}
           onClick={() => setOpen((current) => !current)}
         >
-          <Icon name="ClockCircle" size={16} />
-          <span className="ui-time__value">{rangeText(start, end, mode)}</span>
+          {yearOnly ? null : <Icon name="ClockCircle" size={16} />}
+          <span className="ui-time__value">{rangeText(start, end, activeMode)}</span>
         </button>
 
         {open ? (
           <>
             <div className="ui-time__panel" data-testid={`${testId}-panel`}>
-              {mode === 'date' ? (
+              {activeMode === 'date' ? (
                 <>
                   <div className="ui-time__panel-head">
                     <button
@@ -289,7 +302,7 @@ export function TimeRangePicker({
                     })}
                   </div>
                 </>
-              ) : mode === 'month' ? (
+              ) : activeMode === 'month' ? (
                 <>
                   <div className="ui-time__panel-head">
                     <button
@@ -402,7 +415,7 @@ export function TimeRangePicker({
       <button
         type="button"
         className="tr-icon-btn"
-        aria-label="下一周期"
+        aria-label={yearOnly ? '下一年' : '下一周期'}
         onClick={() => shift(1)}
       >
         <Icon name="Right" size={14} />

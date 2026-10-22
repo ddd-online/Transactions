@@ -1,5 +1,7 @@
 import { createContext, useContext, type JSX, type ReactNode } from 'react'
 
+import { ScrollArea } from './scroll-area'
+
 const PageRailContext = createContext<ReactNode>(null)
 
 export function PageRailProvider({ rail, children }: { rail: ReactNode; children: ReactNode }): JSX.Element {
@@ -17,6 +19,8 @@ export interface PageLayoutProps {
   toolbar?: ReactNode
   /** 底部工具栏；渲染成 `.page-footer-bar`。 */
   footer?: ReactNode
+  /** 页面内容由统一的悬浮滚动条接管（适合内容整体滚动的页面）。 */
+  scrollable?: boolean
   /** 底栏的附加类名（例如 `page-footer-bar--end` 让内容贴右）。 */
   footerClassName?: string
   contentClassName?: string
@@ -28,6 +32,7 @@ export function PageLayout({
   rail,
   toolbar,
   footer,
+  scrollable = false,
   footerClassName,
   contentClassName,
   children,
@@ -40,7 +45,19 @@ export function PageLayout({
         {railContent ? <aside className="page-rail">{railContent}</aside> : null}
         <div className="page-main">
           {toolbar ? <div className="page-toolbar">{toolbar}</div> : null}
-          <div className={`page-content${contentClassName ? ` ${contentClassName}` : ''}`}>{children}</div>
+          <div
+            className={`page-content${scrollable ? ' page-content--scroll' : ''}${
+              contentClassName ? ` ${contentClassName}` : ''
+            }`}
+          >
+            {scrollable ? (
+              <ScrollArea className="page-scroll" notifyResize>
+                {children}
+              </ScrollArea>
+            ) : (
+              children
+            )}
+          </div>
           {footer ? (
             <div className={`page-footer-bar${footerClassName ? ` ${footerClassName}` : ''}`}>
               {footer}

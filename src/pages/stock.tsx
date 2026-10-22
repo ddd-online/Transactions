@@ -26,7 +26,9 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [tab, setTab] = useState<StockTab>('account')
 
   return (
-    <PageLayout rail={
+    <PageLayout
+      scrollable
+      rail={
           <div className="page-rail-nav">
             {TABS.map(([key, label, icon]) => (
               <button

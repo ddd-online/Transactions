@@ -67,7 +67,7 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     await page.getByTestId('nav-stock').click()
     await expect(page.getByTestId('stock-tab-account')).toBeVisible()
     await page.getByTestId('nav-events').click()
-    await expect(page.getByTestId('event-date')).toBeVisible()
+    await expect(page.getByTestId('event-year-trigger')).toBeVisible()
     await page.getByTestId('nav-diary').click()
     await expect(page.getByTestId('diary-date')).toBeVisible()
     await page.getByTestId('nav-todo').click()

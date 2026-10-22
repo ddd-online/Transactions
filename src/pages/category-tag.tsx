@@ -7,6 +7,7 @@ import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
+import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 
 function errorMessage(error: unknown): string {
@@ -324,7 +325,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
               : categories.length === 0
                 ? emptyHint('暂无分类')
                 : (
-                    <div className="ct-column-body">
+                    <ScrollArea className="ct-column-body">
                       {categories.map((category, index) => (
                         <div
                           key={category.name}
@@ -374,7 +375,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                           </div>
                         </div>
                       ))}
-                    </div>
+                    </ScrollArea>
                   )}
           </div>
         </section>
@@ -405,7 +406,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
               : tags.length === 0
                 ? emptyHint('暂无标签')
                 : (
-                    <div className="ct-column-body">
+                    <ScrollArea className="ct-column-body">
                       {tags.map((tag, index) => (
                         <div
                           key={tag.name}
@@ -451,7 +452,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                           </div>
                         </div>
                       ))}
-                    </div>
+                    </ScrollArea>
                   )}
           </div>
         </section>

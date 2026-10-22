@@ -178,6 +178,12 @@ importers:
       dayjs:
         specifier: ^1.11.23
         version: 1.11.23
+      overlayscrollbars:
+        specifier: ^2.17.0
+        version: 2.17.0
+      overlayscrollbars-react:
+        specifier: ^0.5.7
+        version: 0.5.7(overlayscrollbars@2.17.0)(react@19.3.1)
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -2215,6 +2221,15 @@ packages:
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
+
+  overlayscrollbars-react@0.5.7:
+    resolution: {integrity: sha512-pjWnZNmVkv4J0k/YzdazWJpBuu1mTTKR6K0pzjqK9BfHkB53hREqBGV8LONH23G5ulGXeXBLgD91HjcQuvq2WA==}
+    peerDependencies:
+      overlayscrollbars: ^2.0.0
+      react: '>=16.8.0'
+
+  overlayscrollbars@2.17.0:
+    resolution: {integrity: sha512-tyFSxFVJ2FcTTiEkwMthAb+Ogs8vgpW31Sy5z2TL1Q6Kw7579zrcd4xDm38lmdD934LjiTHyrzR90KMDrbCXoA==}
 
   p-cancelable@2.1.1:
     resolution: {integrity: sha512-BZOr3nRQHOntUjTrH8+Lh54smKHoHyur8We1V8DSMVrl5A2malOOwuJRnKRDjSnkoeBh4at6BwEnb5I7Jl31wg==}
@@ -4924,6 +4939,13 @@ snapshots:
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
+
+  overlayscrollbars-react@0.5.7(overlayscrollbars@2.17.0)(react@19.3.1):
+    dependencies:
+      overlayscrollbars: 2.17.0
+      react: 19.3.1
+
+  overlayscrollbars@2.17.0: {}
 
   p-cancelable@2.1.1: {}
 

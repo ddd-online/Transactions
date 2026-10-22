@@ -669,7 +669,20 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
+}
+
+.tr-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+/* OverlayScrollbars 的 content 是滚动内容的实际容器：让空态也能撑满高度，
+ * 表格本身则保持正常块级流。 */
+.tr-scroll > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 /* 分页行（版心的最后一行，底栏之上）：左侧「共 N 条」+ 右侧翻页控件，整行贴右。

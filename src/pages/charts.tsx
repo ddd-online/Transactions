@@ -13,6 +13,7 @@ import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
+import { ScrollArea } from '../components/scroll-area'
 import { Spin } from '../components/spin'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { notify } from '../components/toast'
@@ -344,7 +345,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       ) : null}
 
       <div className="da-main">
-        <aside className="da-sidebar">
+        <ScrollArea className="da-sidebar">
           <Button
             variant="primary"
             block
@@ -413,7 +414,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               ))
             )}
           </div>
-        </aside>
+        </ScrollArea>
 
         <div className="da-content">
           {!selected ? (

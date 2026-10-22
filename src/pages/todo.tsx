@@ -215,7 +215,9 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   )
 
   return (
-    <PageLayout rail={
+    <PageLayout
+      scrollable
+      rail={
           <div className="page-rail-nav">
             <button
               type="button"

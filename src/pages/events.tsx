@@ -1,19 +1,49 @@
-import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type JSX,
+  type KeyboardEvent,
+} from 'react'
+import { Input, Modal } from 'antd'
 
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import type { TransactionRecordDto } from '../../shared/types/transaction'
 import { centsToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
-import { ImageCrop } from '../components/image-crop'
-import { Input } from 'antd'
-
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
-import { PageLayout } from '../components/page-layout'
 import { FileButton } from '../components/file-button'
-import { Tooltip } from '../components/tooltip'
 import { Icon } from '../components/icon'
-import { Markdown } from '../components/markdown'
+import { ImageCrop } from '../components/image-crop'
+import { PageLayout } from '../components/page-layout'
+import { ScrollArea } from '../components/scroll-area'
+import { TimeRangePicker } from '../components/time-range-picker'
+
+const EVENT_COLORS: Array<[string, string]> = [
+  ['#D9705A', '砖红'],
+  ['#C25460', '玫红'],
+  ['#D07048', '橘红'],
+  ['#D48838', '橘黄'],
+  ['#C6963A', '土黄'],
+  ['#A09040', '橄榄黄'],
+  ['#5C9858', '草绿'],
+  ['#4A8E70', '松绿'],
+  ['#5C9E7C', '豆绿'],
+  ['#3D8878', '墨绿'],
+  ['#389098', '青蓝'],
+  ['#4A78A0', '钢蓝'],
+  ['#5C8DB5', '天蓝'],
+  ['#6070A0', '靛蓝'],
+  ['#7868A0', '蓝紫'],
+  ['#8C6B9E', '紫罗兰'],
+  ['#A06088', '紫红'],
+  ['#B06078', '胭脂'],
+  ['#8C7B6E', '茶褐'],
+  ['#7E8890', '青灰'],
+]
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -54,13 +84,26 @@ function readDataUrl(file: File): Promise<string> {
   })
 }
 
+function shortDate(date: string): string {
+  return date.length >= 10 ? date.slice(5) : date
+}
+
+function summaryOf(content: string): string {
+  return content.replace(/\s+/g, ' ').trim().slice(0, 30)
+}
+
+function signedAmount(row: TransactionRecordDto): string {
+  const sign = row.transactionType === 'expense' ? '-' : row.transactionType === 'income' ? '+' : ''
+  return `${sign}¥${centsToYuan(row.price)}`
+}
+
 export interface EventsPageProps {
   ledgerId: string
 }
 
 export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [year, setYear] = useState(String(new Date().getFullYear()))
-  const [date, setDate] = useState(todayYmd())
+  const [date, setDate] = useState('')
   const [events, setEvents] = useState<KeyEvent[]>([])
   const [event, setEvent] = useState<KeyEvent | null>(null)
   const [images, setImages] = useState<KeyEventImage[]>([])
@@ -72,23 +115,47 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [cropSrc, setCropSrc] = useState('')
+  const [addOpen, setAddOpen] = useState(false)
+  const [addDate, setAddDate] = useState(todayYmd())
+  const [addTitle, setAddTitle] = useState('')
+  const [addBusy, setAddBusy] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
+  const clearSelection = useCallback((): void => {
+    setDate('')
+    setEvent(null)
+    setImages([])
+    setLinked([])
+    setTitle('')
+    setContent('')
+    setColor('')
+  }, [])
+
   const loadDates = useCallback(async (): Promise<void> => {
-    if (!ledgerId || !year) return
+    if (!ledgerId || !year) {
+      setEvents([])
+      return
+    }
     try {
       const rows = await window.api.invoke('key_event_list_by_year', {
         ledger_id: ledgerId,
         year,
       })
-      setEvents(rows)
+      setEvents([...rows].sort((left, right) => right.date.localeCompare(left.date)))
     } catch (loadError) {
       setError(errorMessage(loadError))
     }
   }, [ledgerId, year])
 
   const loadEvent = useCallback(async (): Promise<void> => {
-    if (!ledgerId || !date) return
+    if (!ledgerId || !date) {
+      setEvent(null)
+      setImages([])
+      setTitle('')
+      setContent('')
+      setColor('')
+      return
+    }
     try {
       const row = await window.api.invoke('key_event_get', { ledger_id: ledgerId, date })
       setEvent(row)
@@ -147,7 +214,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   }, [date, ledgerId])
 
   const save = useCallback(async (): Promise<void> => {
-    if (!ledgerId) return
+    if (!ledgerId || !date) return
     setBusy(true)
     setError('')
     try {
@@ -166,23 +233,65 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     }
   }, [color, content, date, ledgerId, loadDates, loadEvent, title])
 
-  const remove = useCallback(async (): Promise<void> => {
-    setBusy(true)
+  const removeEvent = useCallback(
+    async (targetDate: string): Promise<void> => {
+      if (!ledgerId || !targetDate) return
+      setBusy(true)
+      setError('')
+      try {
+        await window.api.invoke('key_event_delete', { ledger_id: ledgerId, date: targetDate })
+        if (date === targetDate) clearSelection()
+        await loadDates()
+      } catch (deleteError) {
+        setError(errorMessage(deleteError))
+      } finally {
+        setBusy(false)
+      }
+    },
+    [clearSelection, date, ledgerId, loadDates],
+  )
+
+  const openAdd = useCallback((): void => {
+    const today = todayYmd()
+    setAddDate(date || (today.startsWith(year) ? today : `${year}-01-01`))
+    setAddTitle('')
+    setAddOpen(true)
+  }, [date, year])
+
+  const createEvent = useCallback(async (): Promise<void> => {
+    if (!ledgerId || !addDate) return
+    setAddBusy(true)
     setError('')
     try {
-      await window.api.invoke('key_event_delete', { ledger_id: ledgerId, date })
-      setEvent(null)
-      setTitle('')
-      setContent('')
-      setColor('')
-      setImages([])
-      await loadDates()
-    } catch (deleteError) {
-      setError(errorMessage(deleteError))
+      const savedDate = (await window.api.invoke('key_event_upsert', {
+        ledger_id: ledgerId,
+        date: addDate,
+        title: addTitle.trim(),
+        content: '',
+        color: '',
+      })) as string
+      const target = savedDate || addDate
+      setAddOpen(false)
+      setAddTitle('')
+      setYear(target.slice(0, 4))
+      setDate(target)
+      if (target.slice(0, 4) === year) await loadDates()
+    } catch (createError) {
+      setError(errorMessage(createError))
     } finally {
-      setBusy(false)
+      setAddBusy(false)
     }
-  }, [date, ledgerId, loadDates])
+  }, [addDate, addTitle, ledgerId, loadDates, year])
+
+  const changeYear = useCallback(
+    (start: string): void => {
+      const next = start.slice(0, 4)
+      if (!next || next === year) return
+      clearSelection()
+      setYear(next)
+    },
+    [clearSelection, year],
+  )
 
   const addImage = useCallback(async (file: File | undefined): Promise<void> => {
     if (!file || !ledgerId) return
@@ -241,201 +350,308 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [loadEvent],
   )
 
+  const onCardKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>, targetDate: string): void => {
+    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+      keyboardEvent.preventDefault()
+      setDate(targetDate)
+    }
+  }
+
   return (
-        <PageLayout
-          toolbar={<>
-                  <div className="m0-actions event-year-nav">
-                    <Button
-                      variant="text"
-                      size="sm"
-                      aria-label="上一年"
-                      onClick={() => setYear(String(Number(year) - 1))}
+    <PageLayout
+      contentClassName="key-event-page"
+      toolbar={
+        <TimeRangePicker
+          testId="event-year"
+          yearOnly
+          mode="year"
+          start={`${year}-01-01`}
+          end={`${year}-12-31`}
+          onModeChange={() => undefined}
+          onRangeChange={changeYear}
+        />
+      }
+    >
+      {error ? (
+        <p className="m0-error" data-testid="event-error">
+          {error}
+        </p>
+      ) : null}
+
+      <div className={`key-event-body${linksOpen ? '' : ' is-rail-collapsed'}`}>
+        <aside className="key-event-panel key-event-panel--left">
+          <div className="key-event-list">
+            {events.length === 0 ? (
+              <div className="key-event-empty">
+                <span className="key-event-empty__text">暂无事件</span>
+              </div>
+            ) : (
+              <ScrollArea className="key-event-cards">
+                {events.map((item) => {
+                  const active = item.date === date
+                  return (
+                    <div
+                      key={item.id}
+                      className={`key-event-card${active ? ' is-active' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-selected={active}
+                      data-testid="event-date-item"
+                      onClick={() => setDate(item.date)}
+                      onKeyDown={(keyboardEvent) => onCardKeyDown(keyboardEvent, item.date)}
                     >
-                      <Icon name="Left" size={16} />
-                    </Button>
-                    <strong className="event-year-label">{year}</strong>
-                    <Button
-                      variant="text"
-                      size="sm"
-                      aria-label="下一年"
-                      onClick={() => setYear(String(Number(year) + 1))}
-                    >
-                      <Icon name="Right" size={16} />
-                    </Button>
-                  </div>
-                  <DatePicker
-                    testId="event-date"
-                    value={date}
-                    onChange={(value) => setDate(value)}
+                      <div
+                        className="key-event-card__bar"
+                        style={{ backgroundColor: item.color || 'var(--transactions-color-primary)' }}
+                      />
+                      <div className="key-event-card__body">
+                        <div className="key-event-card__name">{item.title || item.date}</div>
+                        <div className="key-event-card__date">{shortDate(item.date)}</div>
+                        {summaryOf(item.content) ? (
+                          <div className="key-event-card__desc">{summaryOf(item.content)}</div>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        className="tr-icon-btn key-event-card__delete"
+                        aria-label="删除事件"
+                        title="删除事件"
+                        onClick={(clickEvent) => {
+                          clickEvent.stopPropagation()
+                          void removeEvent(item.date)
+                        }}
+                      >
+                        <Icon name="Close" size={13} />
+                      </button>
+                    </div>
+                  )
+                })}
+              </ScrollArea>
+            )}
+
+            <div className="key-event-list__footer">
+              <Button variant="primary" block testId="event-add" onClick={openAdd}>
+                新增事件
+              </Button>
+            </div>
+          </div>
+        </aside>
+
+        <section className="key-event-panel key-event-panel--center">
+          <div
+            className="key-event-detail"
+            style={color ? ({ '--event-accent': color } as CSSProperties) : undefined}
+          >
+            {event ? (
+              <div className="key-event-detail__body">
+                <div className="key-event-detail__head">
+                  <Input
+                    className="key-event-title"
+                    data-testid="event-title"
+                    placeholder="事件标题"
+                    value={title}
+                    maxLength={200}
+                    onChange={(changeEvent) => setTitle(changeEvent.target.value)}
                   />
-          </>}
-        >
-
-                {error ? (
-                  <p className="m0-error" data-testid="event-error">
-                    {error}
-                  </p>
-                ) : null}
-
-                <div className={`events-layout${linksOpen ? '' : ' is-links-collapsed'}`}>
-                  <aside className="events-list">
-                    {events.length === 0 ? (
-                      <p className="m0-muted">这一年还没有事件</p>
-                    ) : (
-                      events.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className={`event-card${item.date === date ? ' is-active' : ''}`}
-                          data-testid="event-date-item"
-                          onClick={() => setDate(item.date)}
-                        >
-                          <strong>{item.title || '未命名事件'}</strong>
-                          <span className="m0-muted">{item.date}</span>
-                          <span className="event-card-excerpt">
-                            {item.content.replace(/\s+/g, ' ').slice(0, 60) || '（无正文）'}
-                          </span>
-                        </button>
-                      ))
-                    )}
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        const today = todayYmd()
-                        setYear(today.slice(0, 4))
-                        setDate(today)
-                        setTitle('')
-                        setContent('')
-                        setColor('')
-                      }}
-                    >
-                      新增事件
-                    </Button>
-                  </aside>
-
-                  <section className="events-editor">
-                    <div className="events-editor-head">
-                      <Input
-                        data-testid="event-title"
-                        placeholder="事件标题"
-                        value={title}
-                        onChange={(changeEvent) => setTitle(changeEvent.target.value)}
-                      />
-                      <Input
-                        data-testid="event-color"
-                        placeholder="颜色"
-                        value={color}
-                        onChange={(changeEvent) => setColor(changeEvent.target.value)}
-                      />
-                      <Button
-                        variant="primary"
-                        testId="event-save"
-                        disabled={!ledgerId || busy}
-                        onClick={() => void save()}
-                      >
-                        保存
-                      </Button>
-                      <Button
-                        variant="text-danger"
-                        testId="event-delete"
-                        disabled={!event || busy}
-                        onClick={() => void remove()}
-                      >
-                        删除
-                      </Button>
-                    </div>
-
-                    <Input.TextArea
-                      className="m0-event-content"
-                      data-testid="event-content"
-                      placeholder="写下这件事……"
-                      value={content}
-                      onChange={(changeEvent) => setContent(changeEvent.target.value)}
-                    />
-                    {content ? <Markdown source={content} testId="event-content-preview" /> : null}
-
-                    <div className="m0-actions">
-                      <FileButton
-                        testId="event-image-input"
-                        accept="image/png,image/jpeg,image/webp,image/gif"
-                        inputRef={fileRef}
-                        onSelect={(file) => void addImage(file)}
-                      />
-                    </div>
-
-                    <div className="m0-event-images">
-                      {images.map((image) => (
-                        <figure key={image.id} className="m0-event-image">
-                          <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
-                          <Tooltip text="删除这张图片">
-                            <Button
-                              variant="text-danger"
-                              size="sm"
-                              testId="event-image-delete"
-                              onClick={() => void removeImage(image.id)}
-                            >
-                              删除图片
-                            </Button>
-                          </Tooltip>
-                        </figure>
-                      ))}
-                    </div>
-                  </section>
-
-                  <aside className={`events-links${linksOpen ? '' : ' is-collapsed'}`}>
-                    <button
-                      type="button"
-                      className="events-links-toggle"
-                      data-testid="event-links-toggle"
-                      onClick={() => setLinksOpen((open) => !open)}
-                      title={linksOpen ? '收起关联交易' : '展开关联交易'}
-                    >
-                      <Icon name={linksOpen ? 'ChevronRight' : 'ChevronLeft'} size={14} />
-                    </button>
-                    {linksOpen ? (
-                      <>
-                        <h3 data-testid="event-links-title">关联交易</h3>
-                        {linked.length === 0 ? (
-                          <p className="m0-muted">选择事件查看关联交易</p>
-                        ) : (
-                          <ul>
-                            {linked.map((row) => (
-                              <li key={row.transactionId}>
-                                <strong>{row.description || row.category || '交易'}</strong>
-                                <span className="m0-muted">
-                                  {row.transactionAt
-                                    ? new Date(row.transactionAt * 1000).toLocaleDateString('zh-CN')
-                                    : ''}
-                                </span>
-                                <span>¥{centsToYuan(row.price)}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </>
-                    ) : null}
-                  </aside>
                 </div>
 
-                {cropSrc ? (
-                  <ImageCrop
-                    src={cropSrc}
-                    onCancel={() => setCropSrc('')}
-                    onConfirm={(data) => void commitImage(data)}
+                <div className="key-event-colors">
+                  {EVENT_COLORS.map(([value, name], index) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`key-event-swatch${color === value ? ' is-selected' : ''}`}
+                      style={{ backgroundColor: value }}
+                      title={name}
+                      aria-label={name}
+                      data-testid={`event-color-${index}`}
+                      onClick={() => setColor(value)}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className={`key-event-swatch key-event-swatch--empty${color ? '' : ' is-selected'}`}
+                    title="使用默认颜色"
+                    aria-label="使用默认颜色"
+                    data-testid="event-color-none"
+                    onClick={() => setColor('')}
                   />
-                ) : null}
-        </PageLayout>
+                </div>
+
+                <div className="key-event-images">
+                  {images.map((image) => (
+                    <figure key={image.id} className="key-event-image">
+                      <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
+                      <button
+                        type="button"
+                        className="tr-icon-btn key-event-image__delete"
+                        aria-label="删除图片"
+                        title="删除图片"
+                        data-testid="event-image-delete"
+                        onClick={() => void removeImage(image.id)}
+                      >
+                        <Icon name="Close" size={12} />
+                      </button>
+                    </figure>
+                  ))}
+                  <FileButton
+                    testId="event-image-input"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    label="添加图片"
+                    inputRef={fileRef}
+                    onSelect={(file) => void addImage(file)}
+                  />
+                </div>
+
+                <div className="key-event-description">
+                  <Input.TextArea
+                    className="key-event-content"
+                    data-testid="event-content"
+                    placeholder="写下这件事……"
+                    value={content}
+                    maxLength={5000}
+                    autoSize={{ minRows: 6, maxRows: 14 }}
+                    onChange={(changeEvent) => setContent(changeEvent.target.value)}
+                  />
+                </div>
+
+                <div className="key-event-detail__footer">
+                  <Button
+                    variant="danger-outline"
+                    testId="event-delete"
+                    disabled={busy}
+                    onClick={() => void removeEvent(date)}
+                  >
+                    删除
+                  </Button>
+                  <Button
+                    variant="primary"
+                    testId="event-save"
+                    disabled={!ledgerId || busy}
+                    onClick={() => void save()}
+                  >
+                    保存
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="key-event-empty key-event-empty--detail">
+                <span className="key-event-empty__icon">
+                  <Icon name="Star" size={28} />
+                </span>
+                <span className="key-event-empty__text">选择左侧事件查看详情</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <aside className="key-event-panel key-event-panel--right">
+          <div className="key-event-linked">
+            {!date ? (
+              <div className="key-event-empty">
+                <span className="key-event-empty__text">选择事件查看关联交易</span>
+              </div>
+            ) : linked.length === 0 ? (
+              <div className="key-event-empty">
+                <span className="key-event-empty__text">暂无关联交易</span>
+              </div>
+            ) : (
+              <ScrollArea className="key-event-linked__cards">
+                {linked.map((row) => (
+                  <div key={row.transactionId} className="key-event-linked__card">
+                    <div className="key-event-linked__body">
+                      <div className="key-event-linked__row">
+                        <span className="key-event-linked__value">
+                          {row.description || row.category || '交易'}
+                        </span>
+                        <span
+                          className={`key-event-linked__amount amount-${row.transactionType}`}
+                        >
+                          {signedAmount(row)}
+                        </span>
+                      </div>
+                      <div className="key-event-linked__meta">
+                        <div className="key-event-linked__tags">
+                          {row.tags.map((tag) => (
+                            <span key={tag} className="key-event-linked__tag">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <span className="key-event-linked__desc">
+                          {row.transactionAt
+                            ? new Date(row.transactionAt * 1000).toLocaleDateString('zh-CN')
+                            : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </ScrollArea>
+            )}
+          </div>
+        </aside>
+
+        <button
+          type="button"
+          className="tr-icon-btn key-event-rail-toggle"
+          data-testid="event-links-toggle"
+          aria-label={linksOpen ? '收起关联交易' : '展开关联交易'}
+          aria-expanded={linksOpen}
+          title={linksOpen ? '收起关联交易' : '展开关联交易'}
+          onClick={() => setLinksOpen((open) => !open)}
+        >
+          <Icon name={linksOpen ? 'ChevronRight' : 'ChevronLeft'} size={14} />
+        </button>
+      </div>
+
+      <Modal
+        open={addOpen}
+        title="新增事件"
+        width={420}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={() => setAddOpen(false)}
+      >
+        <div className="tr-modal-form">
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">日期</span>
+            <DatePicker testId="event-add-date" value={addDate} onChange={setAddDate} />
+          </div>
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">标题</span>
+            <Input
+              data-testid="event-add-title"
+              placeholder="事件标题"
+              value={addTitle}
+              maxLength={200}
+              onChange={(changeEvent) => setAddTitle(changeEvent.target.value)}
+            />
+          </div>
+          <div className="tr-modal-footer">
+            <Button variant="secondary" testId="event-add-cancel" onClick={() => setAddOpen(false)}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              testId="event-add-confirm"
+              disabled={!addDate || addBusy}
+              onClick={() => void createEvent()}
+            >
+              新增
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {cropSrc ? (
+        <ImageCrop
+          src={cropSrc}
+          onCancel={() => setCropSrc('')}
+          onConfirm={(data) => void commitImage(data)}
+        />
+      ) : null}
+    </PageLayout>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-

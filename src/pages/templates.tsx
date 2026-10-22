@@ -7,6 +7,7 @@ import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
+import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { notify } from '../components/toast'
 
@@ -280,7 +281,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           </p>
         ) : null}
 
-        <div className="tpl-table">
+        <ScrollArea className="tpl-table">
           <div className="tpl-thead">
             <div className="tpl-th tpl-th--drag" />
             <div className="tpl-th">模板名称</div>
@@ -387,7 +388,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
               ))
             )}
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
       <Modal

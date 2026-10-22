@@ -363,12 +363,12 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Do** confine income/expense/transfer/outlier colors to transaction and stock data.
 - **Do** layer surfaces with tone and 1px hairlines before reaching for shadows.
 - **Do** add a 2px Clarity Blue focus ring to every interactive element.
+- **Do** use the shared `ScrollArea` wrapper（`src/components/scroll-area.tsx`）for scrollable regions; it renders the overlay scrollbar through OverlayScrollbars and does not reserve layout width.
 - **Do** honor `prefers-reduced-motion`（全局兜底在 `base.css`）。
-- **Do** leave scrollbars alone：全站是 WebView2 的**覆盖式**滚动条（`shell.rs` 的 WEBVIEW_ARGS），配色跟随 `color-scheme`。
 
 ### Don't:
 
-- **Don't** draw your own scrollbars（`::-webkit-scrollbar` / `scrollbar-width` 会让 Blink 退回"占宽度"那条老路，`fixtures/static-guards.ps1` 盯着），也别用 OS-native window chrome（the frameless window keeps its custom title bar）。
+- **Don't** hand-write `::-webkit-scrollbar` / `scrollbar-width`（它们会让 Blink 退回"占宽度"那条老路，`fixtures/static-guards.ps1` 盯着）；统一走 `ScrollArea`。也别用 OS-native window chrome（the frameless window keeps its custom title bar）。
 - **Don't** paint chrome or navigation with income/expense/transfer/outlier colors.
 - **Don't** add a second accent color.
 - **Don't** use shadows to create hierarchy where a hairline and a tone will do.

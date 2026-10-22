@@ -31,13 +31,17 @@
 .tpl-table {
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  /* 弹性列：下面的 `.tpl-tbody` 才能撑满，空态/加载态才能在表格区里居中 */
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
   border: none;
   border-radius: 0;
   margin: 0 calc(-1 * var(--transactions-space-lg));
+}
+
+/* OverlayScrollbars 的滚动内容：表头/表体仍然是纵向 flex，表体才能撑满空态。 */
+.tpl-table > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .tpl-thead,

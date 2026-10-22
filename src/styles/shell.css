@@ -60,6 +60,24 @@
   gap: var(--transactions-space-lg);
 }
 
+/* 整页内容交给统一的悬浮滚动条：外层不再滚动，ScrollArea 自己占满剩余高度。 */
+.page-content--scroll {
+  overflow: hidden;
+}
+
+.page-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.page-scroll > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-lg);
+  height: 100%;
+  min-height: 100%;
+}
+
 .app-router-view > * {
   flex-shrink: 0;
 }
