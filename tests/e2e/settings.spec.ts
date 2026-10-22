@@ -94,16 +94,13 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
     await page.getByTestId('settings-tab-features').click()
+    await expect(page.getByTestId('feature-hint')).toContainText('设置账本')
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'settings-features.png'),
+    })
+    await expect(page.getByTestId('feature-row-accounting')).toBeVisible()
     await page.getByTestId('feature-stock').click()
-    await expect
-      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
-      .toBe(false)
-    await page.getByTestId('feature-stock').click()
-    await expect
-      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
-      .toBe(true)
-    await page.getByTestId('ledger-feature-stock').click()
-    await expect(page.getByTestId('ledger-feature-stock')).toHaveAttribute('aria-checked', 'false')
+    await expect(page.getByTestId('feature-stock')).toHaveAttribute('aria-checked', 'false')
     await expect(page.getByTestId('nav-stock')).toHaveCount(0)
     await expect
       .poll(() => {
@@ -114,12 +111,19 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
         return Object.values(features).some((entry) => entry.stock === false)
       })
       .toBe(true)
-    await page.getByTestId('ledger-feature-stock').click()
-    await expect(page.getByTestId('ledger-feature-stock')).toHaveAttribute('aria-checked', 'true')
+    await page.getByTestId('feature-stock').click()
+    await expect(page.getByTestId('feature-stock')).toHaveAttribute('aria-checked', 'true')
     await expect(page.getByTestId('nav-stock')).toHaveCount(1)
     await expect
-      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).features.stock)
-      .toBe(true)  } finally {
+      .poll(() => {
+        const features = JSON.parse(readFileSync(configPath, 'utf8')).ledgerFeatures as Record<
+          string,
+          { stock: boolean }
+        >
+        return Object.values(features).every((entry) => entry.stock !== false)
+      })
+      .toBe(true)
+  } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
   }

@@ -20,6 +20,10 @@
 
 .tpl-pane {
   padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
+  /* 模板页的滚动只发生在表格内部：外层必须允许收缩并占满剩余高度，
+   * 否则 `.page-pane` 的 `flex: 1 0 auto` 会把表格撑出可视区、被 page-content 裁掉。 */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* 模板表：**不是卡片里的卡片**（原来自带描边 + 8px 圆角）。

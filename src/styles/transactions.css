@@ -236,6 +236,14 @@
   gap: var(--transactions-space-sm);
 }
 
+/* 并排的两个字段等分宽度 */
+.tr-modal-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--transactions-space-md);
+}
+
 .tr-modal-template {
   display: flex;
   align-items: center;
@@ -672,7 +680,9 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: var(--transactions-space-md);
-  padding: var(--transactions-space-lg);
+  /* 与顶部工具栏同高：8px 上下内边距 + 36px 控件，上下两条横带因此对齐 */
+  min-height: calc(var(--transactions-btn-height-md) + 2 * var(--transactions-space-sm));
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
 }
 
 .tr-footer-total {
@@ -753,6 +763,29 @@
 /* 表格单元格 */
 .tr-table {
   min-width: 880px;
+}
+
+/* 表头固定 + 表格贴边：AntD 默认给表头/容器加圆角，滚动时左上/右上会露出底色。
+ * 圆角可能来自 `border-*-*-radius` 逻辑属性，这里用高优先级 + important 一并压平。 */
+.tr-table.ant-table-wrapper .ant-table-container,
+.tr-table.ant-table-wrapper .ant-table-content,
+.tr-table.ant-table-wrapper .ant-table-sticky-holder,
+.tr-table.ant-table-wrapper .ant-table-thead > tr > th,
+.tr-table.ant-table-wrapper .ant-table-thead > tr > th:first-child,
+.tr-table.ant-table-wrapper .ant-table-thead > tr > th:last-child {
+  border-radius: 0 !important;
+}
+
+.tr-table.ant-table-wrapper .ant-table-thead > tr > th.ant-table-cell {
+  background-color: var(--transactions-color-minor-background);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* 行高收紧：正文行上下各 4px；操作列的 28px 图标键决定最小行高约 36px。 */
+.tr-table.ant-table-wrapper .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .tr-cell {

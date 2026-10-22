@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type HTMLAttributes, type JSX } from 'react'
+import { useCallback, useEffect, useRef, useState, type HTMLAttributes, type JSX } from 'react'
 
 import { centsToYuan, yuanToCents } from '../../shared/domain/money'
 import type { Ledger } from '../../shared/domain/models'
@@ -16,7 +16,6 @@ import type { TransactionTemplateDto } from '../../shared/types/template'
 import { notify } from '../components/toast'
 import {
   AutoComplete,
-  Checkbox,
   Dropdown,
   Input,
   Modal,
@@ -179,6 +178,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   const [keyEventDate, setKeyEventDate] = useState('')
 
   const [syncingId, setSyncingId] = useState('')
+  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!ledgerId) {
@@ -786,7 +786,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           </p>
         ) : null}
 
-        <div className="tr-content">
+        <div className="tr-content" ref={contentRef}>
 
       {rows.length === 0 ? (
         <div className="tr-empty" data-testid="tr-empty">
@@ -814,8 +814,9 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           columns={columns}
           dataSource={rows}
           pagination={false}
-          size="middle"
+          size="small"
           scroll={{ x: 900 }}
+          sticky={{ getContainer: () => contentRef.current ?? window }}
           rowClassName={(row) => `row-type-${row.transactionType}`}
           onRow={() => ({ 'data-testid': 'tr-row' }) as HTMLAttributes<HTMLElement>}
         />
@@ -889,66 +890,74 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             </div>
           </div>
 
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">日期</span>
-            <DatePicker testId="tr-date" value={recordDate} onChange={setRecordDate} />
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">日期</span>
+              <DatePicker testId="tr-date" value={recordDate} onChange={setRecordDate} />
+            </div>
+
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">类型</span>
+              <Segmented
+                testId="tr-new-type"
+                block
+                value={type}
+                onChange={setType}
+                options={COMPOSER_TYPE_OPTIONS}
+              />
+            </div>
           </div>
 
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">类型</span>
-            <Segmented
-              testId="tr-new-type"
-              block
-              value={type}
-              onChange={setType}
-              options={COMPOSER_TYPE_OPTIONS}
-            />
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">分类</span>
+              <AutoComplete
+                value={category}
+                options={categoryOptionsFor(type)}
+                filterOption
+                onChange={setCategory}
+              >
+                <Input data-testid="tr-category" placeholder="选择或输入分类" />
+              </AutoComplete>
+            </div>
+
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标签</span>
+              <Select
+                data-testid="tr-tags"
+                mode="tags"
+                allowClear
+                placeholder="选择一个或多个标签"
+                value={tagList}
+                onChange={(value: string[]) => setTagList(value)}
+                options={tagSelectOptions}
+              />
+            </div>
           </div>
 
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">分类</span>
-            <AutoComplete
-              value={category}
-              options={categoryOptionsFor(type)}
-              filterOption
-              onChange={setCategory}
-            >
-              <Input data-testid="tr-category" placeholder="选择或输入分类" />
-            </AutoComplete>
-          </div>
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标记</span>
+              <Select
+                data-testid="tr-outlier"
+                mode="multiple"
+                allowClear
+                placeholder="选择标记"
+                value={outlier ? ['outlier'] : []}
+                onChange={(values: string[]) => setOutlier(values.includes('outlier'))}
+                options={[{ value: 'outlier', label: '离群值' }]}
+              />
+            </div>
 
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">标签</span>
-            <Select
-              data-testid="tr-tags"
-              mode="tags"
-              allowClear
-              placeholder="选择一个或多个标签"
-              value={tagList}
-              onChange={(value: string[]) => setTagList(value)}
-              options={tagSelectOptions}
-            />
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">标记</span>
-            <Checkbox
-              data-testid="tr-outlier"
-              checked={outlier}
-              onChange={(event) => setOutlier(event.target.checked)}
-            >
-              离群值
-            </Checkbox>
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">关联事件日期</span>
-            <DatePicker
-              testId="tr-event-date"
-              value={keyEventDate}
-              onChange={setKeyEventDate}
-              allowClear
-            />
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">关联事件日期</span>
+              <DatePicker
+                testId="tr-event-date"
+                value={keyEventDate}
+                onChange={setKeyEventDate}
+                allowClear
+              />
+            </div>
           </div>
 
           <div className="tr-modal-field">
