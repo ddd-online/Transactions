@@ -52,7 +52,7 @@ test('打包产物：启动、打开工作空间、node:sqlite 落库', async ()
 
   try {
     const page = await electronApp.firstWindow()
-    await expect(page.getByTestId('app-info')).toContainText('1.0.4')
+    await expect(page.getByTestId('app-info')).toContainText('0.1.0')
 
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')

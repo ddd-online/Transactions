@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  构建发布产物：类型检查 + 单测 + 静态护栏 → electron-vite build → NSIS/便携版。
+  构建发布产物：类型检查 + 单测 + 静态护栏 → electron-vite build → NSIS 安装包。
 
   用法：
     pwsh -File build/build.ps1
@@ -41,9 +41,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "electron-builder 失败（exit $LASTEXITCODE）" }
 
     $setup = Join-Path $root "output\Transactions-$version-setup.exe"
-    $portable = Join-Path $root "output\Transactions-$version-portable.exe"
     $unpacked = Join-Path $root 'output\win-unpacked\Transactions.exe'
-    foreach ($path in @($setup, $portable, $unpacked)) {
+    foreach ($path in @($setup, $unpacked)) {
         if (-not (Test-Path -LiteralPath $path)) {
             throw "缺少构建产物: $path"
         }
@@ -54,14 +53,10 @@ try {
         $env:TRANSACTIONS_PACKAGED_EXE = $unpacked
         pnpm exec playwright test tests/e2e/packaged.spec.ts
         if ($LASTEXITCODE -ne 0) { throw "打包产物冒烟失败（exit $LASTEXITCODE）" }
-
-        Write-Host "[build] 便携版启动冒烟"
-        pwsh -File (Join-Path $root 'build\smoke-portable.ps1') -Portable $portable
-        if ($LASTEXITCODE -ne 0) { throw "便携版启动冒烟失败（exit $LASTEXITCODE）" }
     }
 
     Write-Host "[build] 完成"
-    Get-Item -LiteralPath $setup, $portable | ForEach-Object {
+    Get-Item -LiteralPath $setup | ForEach-Object {
         $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
         Write-Host ("  {0}  {1:N1} MB  sha256={2}" -f $_.Name, ($_.Length / 1MB), $hash)
     }

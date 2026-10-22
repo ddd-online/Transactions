@@ -30,7 +30,7 @@ pnpm typecheck
 pnpm test:unit      # Vitest
 pnpm test:e2e       # 构建后运行 Playwright
 pnpm package:dir    # output/win-unpacked/Transactions.exe
-pnpm package        # NSIS 安装包 + 便携版到 output/
+pnpm package        # NSIS 安装包到 output/
 ```
 
 构建物料统一在 `output/`：
@@ -40,7 +40,7 @@ output/
 ├─ out/       编译产物（main / preload / renderer）
 ├─ logs/      运行与构建日志
 ├─ win-unpacked/
-└─ Transactions-<version>-setup.exe / portable.exe
+└─ Transactions-<version>-setup.exe
 ```
 
 ## 目录

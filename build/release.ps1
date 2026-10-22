@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-  发布：校验版本 / 工作树 / 产物 → 创建 GitHub Release 并上传安装版与便携版。
+  发布：校验版本 / 工作树 / 产物 → 创建 GitHub Release 并上传安装包。
 
   用法：
     pwsh -File build/release.ps1 -Tag v1.0.0
@@ -35,25 +35,20 @@ try {
     }
 
     $setup = Join-Path $root "output\Transactions-$version-setup.exe"
-    $portable = Join-Path $root "output\Transactions-$version-portable.exe"
-    foreach ($path in @($setup, $portable)) {
-        if (-not (Test-Path -LiteralPath $path)) {
-            throw "缺少发布产物: $path（先运行 build/build.ps1）"
-        }
+    if (-not (Test-Path -LiteralPath $setup)) {
+        throw "缺少发布产物: $setup（先运行 build/build.ps1）"
     }
 
     $notes = Join-Path $root 'build\release_notes.md'
     if (-not (Test-Path -LiteralPath $notes)) { throw "缺少发布说明: $notes" }
 
     Write-Host "[release] 校验产物摘要"
-    foreach ($path in @($setup, $portable)) {
-        $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
-        Write-Host ("  {0} sha256={1}" -f (Split-Path -Leaf $path), $hash)
-    }
+    $hash = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()
+    Write-Host ("  {0} sha256={1}" -f (Split-Path -Leaf $setup), $hash)
 
     $arguments = @(
         'release', 'create', $Tag,
-        $setup, $portable,
+        $setup,
         '--repo', $Repo,
         '--title', "Transactions $version",
         '--notes-file', $notes

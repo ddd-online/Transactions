@@ -11,7 +11,7 @@ Transactions 是 Electron + React + TypeScript 桌面记账应用。每个工作
 | `shared/` | 主进程与渲染进程共用的命令目录、事件名、错误信封、领域纯逻辑与类型 |
 | `tests/unit` | Vitest |
 | `tests/e2e` | Playwright（真实 Electron + 落库断言） |
-| `build/` | 构建、发布、便携版冒烟脚本 |
+| `build/` | 构建、发布、安装包冒烟脚本 |
 | `fixtures/` | 合成测试数据，不含真实个人数据 |
 | `output/` | 构建物料（不入库） |
 
@@ -24,7 +24,7 @@ pnpm typecheck        # tsc --noEmit
 pnpm test:unit        # Vitest
 pnpm test:e2e         # 先 build 再 Playwright（真实 Electron）
 pnpm package:dir      # output/win-unpacked/Transactions.exe（E2E 可用）
-pnpm package          # NSIS + portable，产物在 output/
+pnpm package          # NSIS 安装包，产物在 output/
 ```
 
 `pnpm test:e2e:packaged` 需要先 `pnpm package:dir`，并设置 `TRANSACTIONS_PACKAGED_EXE` 指向
