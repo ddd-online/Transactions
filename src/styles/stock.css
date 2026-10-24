@@ -2475,15 +2475,8 @@
   padding-bottom: var(--transactions-space-xl);
 }
 
-.stock-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 56px;
-  padding: 0 var(--transactions-space-lg);
-}
-
-.stock-topbar__actions {
+.stock-toolbar-actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: var(--transactions-space-sm);
