@@ -92,6 +92,43 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
 
     await page.getByTestId('tr-amount').fill('12.34')
     await page.getByTestId('tr-category').fill('餐饮美食')
+    // 标签选项跟着分类走：只列该分类下的标签（以库里的 分类:类型 归档为准）
+    const tagsOf = (categoryTransactionType: string): string[] => {
+      const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
+      const ledger = database.prepare('SELECT id FROM ledger WHERE name = ?').get('测试账本') as {
+        id: string
+      }
+      const rows = database
+        .prepare(
+          'SELECT name FROM tag WHERE ledger_id = ? AND category_transaction_type = ? ORDER BY sort_order ASC, name DESC',
+        )
+        .all(ledger.id, categoryTransactionType) as Array<{ name: string }>
+      database.close()
+      return rows.map((row) => row.name)
+    }
+    const tagInput = page.getByTestId('tr-tags').locator('input')
+    await page.getByTestId('tr-tags').click()
+    const tagListId = await tagInput.getAttribute('aria-controls')
+    expect(tagListId).toBeTruthy()
+    const tagOptionTitles = (): Promise<(string | null)[]> =>
+      page
+        .locator(`[id="${tagListId}"] .ant-select-item-option`)
+        .evaluateAll((els) => els.map((el) => el.getAttribute('title')))
+    await expect.poll(tagOptionTitles).toEqual(tagsOf('餐饮美食:expense'))
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'record-tags-filtered.png'),
+    })
+    // 已选标签在换分类后必须摘掉，不能把别的分类的标签带进新记录
+    await page.locator(`[id="${tagListId}"] .ant-select-item-option[title="三餐"]`).click()
+    await expect(page.getByTestId('tr-tags')).toContainText('三餐')
+    await page.keyboard.press('Escape')
+    await page.getByTestId('tr-category').fill('交通出行')
+    await expect(page.getByTestId('tr-tags')).not.toContainText('三餐')
+    await page.getByTestId('tr-tags').click()
+    await expect.poll(tagOptionTitles).toEqual(tagsOf('交通出行:expense'))
+    await page.keyboard.press('Escape')
+    await page.getByTestId('tr-category').fill('餐饮美食')
     await page.getByTestId('tr-description').fill('午餐')
     await page.getByTestId('tr-tags').click()
     await page.keyboard.type('三餐')

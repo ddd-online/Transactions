@@ -46,6 +46,25 @@ function composerDefaultDate(start: string, end: string): string {
   return start && start === end ? start : todayYmd()
 }
 
+/**
+ * 某分类 + 交易类型下的标签名（去重）。
+ *
+ * 标签在库里按 `分类:交易类型` 归档，所以选项必须跟着分类走；跨分类把标签全列出来，
+ * 会让人把别的分类的标签记到这条记录上。
+ */
+function tagNamesForCategory(
+  tags: readonly TagDto[],
+  category: string,
+  transactionType: string,
+): string[] {
+  const key = `${category.trim()}:${transactionType}`
+  return Array.from(
+    new Set(
+      tags.filter((tag) => tag.categoryTransactionType === key).map((tag) => tag.name),
+    ),
+  )
+}
+
 /** 选中的日期 → 当天本地的 Unix 秒（记账只关心哪一天，取正午避开时区边界）。 */
 function timestampOfYmd(ymd: string): number {
   const parsed = parseYmd(ymd)
@@ -559,7 +578,30 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
 
   const uniqueTagNames = Array.from(new Set(tagOptions.map((tag) => tag.name)))
   const tagSelectOptions = uniqueTagNames.map((name) => ({ value: name, label: name }))
+  const composerTagOptions = tagNamesForCategory(tagOptions, category, type).map((name) => ({
+    value: name,
+    label: name,
+  }))
   const activeFilterCount = filters.filter(filterHasContent).length
+
+  /** 分类 / 类型一变，已选但不属于新组合的标签要摘掉，避免继续带着别的分类的标签保存。 */
+  const changeComposerCategory = useCallback(
+    (next: string): void => {
+      setCategory(next)
+      const valid = new Set(tagNamesForCategory(tagOptions, next, type))
+      setTagList((current) => current.filter((name) => valid.has(name)))
+    },
+    [tagOptions, type],
+  )
+
+  const changeComposerType = useCallback(
+    (next: string): void => {
+      setType(next)
+      const valid = new Set(tagNamesForCategory(tagOptions, category, next))
+      setTagList((current) => current.filter((name) => valid.has(name)))
+    },
+    [category, tagOptions],
+  )
 
   const categoryOptionsFor = (transactionType: string): Array<{ value: string; label: string }> => {
     const names = new Set<string>()
@@ -935,7 +977,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                 testId="tr-new-type"
                 block
                 value={type}
-                onChange={setType}
+                onChange={changeComposerType}
                 options={COMPOSER_TYPE_OPTIONS}
               />
             </div>
@@ -948,7 +990,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                 value={category}
                 options={categoryOptionsFor(type)}
                 filterOption
-                onChange={setCategory}
+                onChange={changeComposerCategory}
               >
                 <Input data-testid="tr-category" placeholder="选择或输入分类" />
               </AutoComplete>
@@ -960,10 +1002,14 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                 data-testid="tr-tags"
                 mode="tags"
                 allowClear
+                virtual={false}
                 placeholder="选择一个或多个标签"
                 value={tagList}
                 onChange={(value: string[]) => setTagList(value)}
-                options={tagSelectOptions}
+                options={composerTagOptions}
+                notFoundContent={
+                  category.trim() ? '该分类下暂无标签' : '先填写分类，再选择标签'
+                }
               />
             </div>
           </div>
