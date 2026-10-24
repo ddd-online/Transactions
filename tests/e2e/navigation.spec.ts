@@ -71,7 +71,7 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
     await page.getByTestId('nav-diary').click()
     await expect(page.getByTestId('diary-date')).toBeVisible()
     await page.getByTestId('nav-todo').click()
-    await expect(page.getByTestId('todo-card-title')).toBeVisible()
+    await expect(page.getByTestId('todo-card-open')).toBeVisible()
     await page.getByTestId('nav-settings').click()
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toBeVisible()

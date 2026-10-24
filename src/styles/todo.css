@@ -37,8 +37,15 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--transactions-space-lg);
+}
+
+.todo-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .todo-summary {
@@ -54,13 +61,30 @@
   gap: var(--transactions-space-sm);
 }
 
-.todo-new-input {
-  width: 220px;
-}
-
 .todo-error {
   margin: 0;
   padding: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
+/* ---------------- 新建主题弹窗 ---------------- */
+.todo-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+}
+
+.todo-modal__error {
+  margin: 0;
+  color: var(--transactions-color-expense);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-normal);
+}
+
+.todo-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-md);
 }
 
 /* ---------------- 主题卡 ---------------- */
@@ -364,12 +388,12 @@
 }
 
 /* ---------------- 进度面板 ---------------- */
+/* 进度记录不再是灰井：它平铺在事项下方，只有一条上发丝线分节 */
 .todo-progress {
-  margin: 0 var(--transactions-space-lg) var(--transactions-space-sm);
-  padding: var(--transactions-space-sm) var(--transactions-space-md)
+  margin: 0;
+  padding: var(--transactions-space-xs) var(--transactions-space-lg)
     var(--transactions-space-md);
-  border-radius: var(--transactions-radius-md);
-  background-color: var(--transactions-color-minor-background);
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 .todo-progress__list {
@@ -547,10 +571,6 @@
   text-align: center;
 }
 
-.todo-table .is-end {
-  text-align: right;
-}
-
 .todo-table td.todo-table__time {
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
@@ -576,7 +596,7 @@
 .todo-table__actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: var(--transactions-space-xs);
 }
 
@@ -588,10 +608,6 @@
 @media (max-width: 820px) {
   .todo-board {
     padding-bottom: var(--transactions-space-xl);
-  }
-
-  .todo-new-input {
-    width: 160px;
   }
 
   .todo-group__composer .ant-input {

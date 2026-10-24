@@ -49,6 +49,10 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await createLedger(page, '待办账本')
     await page.getByTestId('nav-todo').click()
 
+    await page.getByTestId('todo-card-open').click()
+    await expect(page.getByRole('dialog', { name: '新建主题' })).toBeVisible()
+    await page.getByTestId('todo-card-create').click()
+    await expect(page.getByTestId('todo-card-error')).toContainText('请输入主题名称')
     await page.getByTestId('todo-card-title').fill('工作')
     await page.getByTestId('todo-card-create').click()
     await expect(page.getByTestId('todo-card')).toContainText('工作')

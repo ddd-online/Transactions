@@ -49,8 +49,10 @@ test('待办：拖动主题后排序落库', async () => {
     await createLedger(page, '待办账本')
     await page.getByTestId('nav-todo').click()
 
+    await page.getByTestId('todo-card-open').click()
     await page.getByTestId('todo-card-title').fill('第一个主题')
     await page.getByTestId('todo-card-create').click()
+    await page.getByTestId('todo-card-open').click()
     await page.getByTestId('todo-card-title').fill('第二个主题')
     await page.getByTestId('todo-card-create').click()
     await expect(page.getByTestId('todo-card')).toHaveCount(2)

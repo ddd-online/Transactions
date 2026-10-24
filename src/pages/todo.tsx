@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
-import { Input, Popconfirm } from 'antd'
+import { Input, Modal, Popconfirm } from 'antd'
 
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
@@ -46,7 +46,9 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [todoMode, setTodoMode] = useState<'cards' | 'history'>('cards')
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
-  const [cardTitle, setCardTitle] = useState('')
+  const [cardOpen, setCardOpen] = useState(false)
+  const [cardDraft, setCardDraft] = useState('')
+  const [cardError, setCardError] = useState('')
   const [itemTitles, setItemTitles] = useState<Record<string, string>>({})
   const [progressText, setProgressText] = useState<Record<string, string>>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
@@ -81,19 +83,38 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     void load()
   }, [load])
 
+  const openCardModal = useCallback((): void => {
+    setCardDraft('')
+    setCardError('')
+    setCardOpen(true)
+  }, [])
+
+  const closeCardModal = useCallback((): void => {
+    setCardOpen(false)
+    setCardDraft('')
+    setCardError('')
+  }, [])
+
   const createCard = useCallback(async (): Promise<void> => {
+    const title = cardDraft.trim()
+    if (!title) {
+      setCardError('请输入主题名称')
+      return
+    }
     setBusy(true)
+    setCardError('')
     setError('')
     try {
-      await window.api.invoke('todo_card_create', { ledger_id: ledgerId, title: cardTitle })
-      setCardTitle('')
+      await window.api.invoke('todo_card_create', { ledger_id: ledgerId, title })
+      setCardOpen(false)
+      setCardDraft('')
       await load()
     } catch (createError) {
-      setError(errorMessage(createError))
+      setCardError(errorMessage(createError))
     } finally {
       setBusy(false)
     }
-  }, [cardTitle, ledgerId, load])
+  }, [cardDraft, ledgerId, load])
 
   const createItem = useCallback(
     async (cardId: string): Promise<void> => {
@@ -427,37 +448,30 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         </div>
       }
       toolbar={
-        <div className="todo-toolbar">
-          <span className="todo-summary" data-testid="todo-summary">
-            {todoMode === 'history'
-              ? history.length > 0
-                ? `${history.length} 项已完成`
-                : ''
-              : cards.length > 0
-                ? `${cards.length} 个主题 · ${activeCount} 项待办`
-                : ''}
-          </span>
-          {todoMode === 'cards' ? (
+        todoMode === 'cards' ? (
+          <div className="todo-toolbar">
             <div className="todo-toolbar-actions">
-              <Input
-                className="todo-new-input"
-                data-testid="todo-card-title"
-                placeholder="新主题"
-                value={cardTitle}
-                onChange={(event) => setCardTitle(event.target.value)}
-                onPressEnter={() => void createCard()}
-              />
               <Button
                 variant="primary"
-                testId="todo-card-create"
+                testId="todo-card-open"
+                icon={<Icon name="Plus" size={14} />}
                 disabled={!ledgerId || busy}
-                onClick={() => void createCard()}
+                onClick={openCardModal}
               >
                 新建主题
               </Button>
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : undefined
+      }
+      footer={
+        todoMode === 'cards' && cards.length > 0 ? (
+          <div className="todo-footer">
+            <span className="todo-summary" data-testid="todo-summary">
+              {cards.length} 个主题 · {activeCount} 项待办
+            </span>
+          </div>
+        ) : undefined
       }
     >
       {error ? (
@@ -615,17 +629,17 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               <table className="todo-table">
                 <thead>
                   <tr>
-                    <th>完成时间</th>
+                    <th className="is-center">完成时间</th>
                     <th>主题</th>
                     <th>事项</th>
                     <th className="is-center">进度</th>
-                    <th className="is-end">操作</th>
+                    <th className="is-center">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((item) => (
                     <tr key={item.id} data-testid="todo-history-item">
-                      <td className="todo-table__time">{formatMoment(item.completedAt)}</td>
+                      <td className="is-center todo-table__time">{formatMoment(item.completedAt)}</td>
                       <td className="todo-table__card" title={item.cardTitle}>
                         {item.cardTitle}
                       </td>
@@ -635,7 +649,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                           ? `${item.progress.filter((progress) => progress.done).length}/${item.progress.length}`
                           : '—'}
                       </td>
-                      <td>
+                      <td className="is-center">
                         <div className="todo-table__actions">
                           <Button
                             variant="text"
@@ -673,6 +687,51 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
           )}
         </ScrollArea>
       </div>
+
+      <Modal
+        open={cardOpen}
+        title="新建主题"
+        width={520}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={closeCardModal}
+      >
+        <div className="todo-modal">
+          <Input
+            data-testid="todo-card-title"
+            autoFocus
+            maxLength={200}
+            status={cardError ? 'error' : undefined}
+            placeholder="例如：本周工作"
+            value={cardDraft}
+            onChange={(event) => {
+              setCardDraft(event.target.value)
+              setCardError('')
+            }}
+            onPressEnter={() => void createCard()}
+          />
+          {cardError ? (
+            <p className="todo-modal__error" data-testid="todo-card-error">
+              {cardError}
+            </p>
+          ) : null}
+          <div className="todo-modal__actions">
+            <Button variant="secondary" onClick={closeCardModal}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              testId="todo-card-create"
+              loading={busy}
+              disabled={!ledgerId}
+              onClick={() => void createCard()}
+            >
+              创建
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </PageLayout>
   )
 }
