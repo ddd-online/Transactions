@@ -51,6 +51,9 @@
   gap: var(--transactions-space-2xs);
   flex: 1;
   min-height: 0;
+  /* 「新增图表」与列表之间留出间距：OverlayScrollbars 2.x 的 viewport 就是 contents
+   * 且为 block 布局，上面那条 contents 的 flex/gap 选择器匹配不到，列表本来会贴住按钮。 */
+  margin-top: var(--transactions-space-lg);
 }
 
 /* 空态：吃掉剩余高度并居中（与右侧 `.da-empty` 同一套做法） */
