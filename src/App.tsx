@@ -672,14 +672,7 @@ export function App(): JSX.Element {
               className="window-btn"
               data-testid="window-minimize"
               title="最小化"
-              onPointerDown={(event) => {
-                if (event.button !== 0) return
-                event.preventDefault()
-                void window.api.invoke('window_control', { action: 'minimize' })
-              }}
-              onClick={(event) => {
-                if (event.detail === 0) void window.api.invoke('window_control', { action: 'minimize' })
-              }}
+              onClick={() => void window.api.invoke('window_control', { action: 'minimize' })}
             >
               <Icon name="WindowMinimize" size={16} />
             </button>
@@ -688,14 +681,7 @@ export function App(): JSX.Element {
               className="window-btn"
               data-testid="window-maximize"
               title="最大化"
-              onPointerDown={(event) => {
-                if (event.button !== 0) return
-                event.preventDefault()
-                void window.api.invoke('window_control', { action: 'maximize' })
-              }}
-              onClick={(event) => {
-                if (event.detail === 0) void window.api.invoke('window_control', { action: 'maximize' })
-              }}
+              onClick={() => void window.api.invoke('window_control', { action: 'maximize' })}
             >
               <Icon name="WindowMaximize" size={14} />
             </button>
@@ -704,14 +690,7 @@ export function App(): JSX.Element {
               className="window-btn window-btn--close"
               data-testid="window-close"
               title="关闭"
-              onPointerDown={(event) => {
-                if (event.button !== 0) return
-                event.preventDefault()
-                void window.api.invoke('window_control', { action: 'close' })
-              }}
-              onClick={(event) => {
-                if (event.detail === 0) void window.api.invoke('window_control', { action: 'close' })
-              }}
+              onClick={() => void window.api.invoke('window_control', { action: 'close' })}
             >
               <Icon name="Close" size={16} />
             </button>
