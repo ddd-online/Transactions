@@ -3091,6 +3091,11 @@
   gap: var(--transactions-space-2xs);
 }
 
+/* 区块头已经给了左右 16px，标题自己再带一份就会比「结算统计」多缩进一格。 */
+.stock-chart-head .stock-section__title {
+  padding: 0;
+}
+
 .stock-chart-head .tr-segmented {
   margin-left: auto;
 }
