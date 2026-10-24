@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { Input, Modal, Popconfirm, Select, Table } from 'antd'
 
 import { centsToYuan } from '../../shared/domain/money'
@@ -318,7 +318,11 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const responseLines: ChartLineData[] = data?.lines ?? []
   const hasValues = responseLines.some((line) => line.data.some((point) => point.amount !== 0))
-  const colors = COLORS.slice(0, Math.max(1, responseLines.length))
+  /* 颜色表按曲线条数记忆：`AntvLineChart` 的建图 effect 依赖这个数组，
+   * 以前每次渲染都 `slice()` 出一个新数组 → 重命名弹窗里每敲一个字都销毁重画整张图
+   * （实测 20 个字 = 20 次重建、926ms）。数组现在只在条数变化时换新。 */
+  const lineCount = responseLines.length
+  const colors = useMemo(() => COLORS.slice(0, Math.max(1, lineCount)), [lineCount])
   const lineRows = selected?.lines ?? []
 
   return (

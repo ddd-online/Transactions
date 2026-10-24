@@ -1,4 +1,4 @@
-import { useEffect, useRef, type JSX } from 'react'
+import { memo, useEffect, useRef, type JSX } from 'react'
 import { Chart } from '@antv/g2'
 
 import type { ChartLineData } from '../../shared/types/transaction'
@@ -9,8 +9,15 @@ export interface AntvLineChartProps {
   colors: string[]
 }
 
-/** AntV G2 折线图：只负责把后端返回的曲线画出来。 */
-export function AntvLineChart({ lines, colors }: AntvLineChartProps): JSX.Element {
+/** AntV G2 折线图：只负责把后端返回的曲线画出来。
+ *
+ * `memo` 是必须的：建图 effect 依赖 `lines` / `colors`，而 G2 建图是"销毁 + 重建 + 重画"
+ * （一个 canvas、一堆 DOM、一次完整绘制）。页面里任何无关的状态变化（重命名弹窗里打字、
+ * 拖排序、切选中项）都会让父组件重渲染，没有 `memo` 时整张图跟着重画一遍。 */
+export const AntvLineChart = memo(function AntvLineChart({
+  lines,
+  colors,
+}: AntvLineChartProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -80,4 +87,4 @@ export function AntvLineChart({ lines, colors }: AntvLineChartProps): JSX.Elemen
   }, [colors, lines])
 
   return <div className="antv-chart" data-testid="chart-svg" ref={containerRef} />
-}
+})
