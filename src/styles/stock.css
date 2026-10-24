@@ -3061,6 +3061,10 @@
   padding: 0 0 var(--transactions-space-lg);
 }
 
+.stock-statistics-section--table {
+  padding-top: var(--transactions-space-md);
+}
+
 /* 曲线吃掉剩余高度，而不是固定 420px 后在页面底部留一大块空白。 */
 .stock-statistics-section--chart {
   display: flex;

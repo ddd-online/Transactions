@@ -341,6 +341,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
 
   const points = strategy === 'grouped' ? (data?.groups ?? []) : (data?.points ?? [])
   const latest = points[points.length - 1]
+  const detailPoints = [...points].sort((left, right) => right.openedAt - left.openedAt)
   const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
 
   return (
@@ -500,13 +501,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
           ) : null}
         </>
       ) : (
-        <section className="stock-statistics-section">
-          <div className="stock-statistics-section__head">
-            <h3 className="stock-section__title">结算明细</h3>
-            <span className="stock-muted" data-testid="stock-statistics-count">
-              {points.length} 笔结算
-            </span>
-          </div>
+        <section className="stock-statistics-section stock-statistics-section--table">
           {points.length === 0 ? (
             <EmptyState
               testId="stock-statistics-empty"
@@ -519,10 +514,9 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
               pagination={false}
               size="middle"
               tableLayout="fixed"
-              dataSource={points}
+              dataSource={detailPoints}
               onRow={() => ({ 'data-testid': 'stock-statistics-point' }) as HTMLAttributes<HTMLElement>}
               columns={[
-                { title: '#', dataIndex: 'sequence', align: 'right', width: '3%' },
                 {
                   title: '建仓',
                   dataIndex: 'openedAt',
@@ -539,7 +533,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                 },
                 {
                   title: '股票',
-                  width: '12%',
+                  width: '13%',
                   render: (_, row) => `${row.stockName} ${row.stockCode}`,
                 },
                 {
@@ -613,7 +607,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '回撤',
                   dataIndex: 'maxDrawdownPct',
                   align: 'right',
-                  width: '8%',
+                  width: '10%',
                   render: (value: number, row) => (
                     <span className="stock-stats-drawdown is-down">
                       <span>{stockPercent(value)}</span>
