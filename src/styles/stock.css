@@ -2652,13 +2652,28 @@
   font-weight: var(--transactions-weight-medium);
 }
 
-.stock-master__line {
-  display: flex;
+.stock-master__stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--transactions-space-sm);
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-  font-size: var(--transactions-size-text-caption);
   font-variant-numeric: tabular-nums;
+}
+
+.stock-master__stat-label--end {
+  text-align: right;
+}
+
+.stock-master__stat-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.stock-master__stat-value--end {
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .stock-master__footer {

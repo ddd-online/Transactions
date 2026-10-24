@@ -462,25 +462,21 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     <strong>{position.stockName}</strong>
                     <span className="stock-muted stock-mono">{position.stockCode}</span>
                   </div>
-                  <div className="stock-master__line">
-                    <span className="stock-muted">
-                      现价 <span className="stock-mono">{stockPrice(position.latestPrice)}</span>
+                  <div className="stock-master__stats">
+                    <span className="stock-label">现价 · {position.quantity} 股</span>
+                    <span className="stock-label stock-master__stat-label--end">浮动盈亏</span>
+                    <span className="stock-master__stat-value">
+                      <span className="stock-mono">{stockPrice(position.latestPrice)}</span>
                       {position.latestPrice !== undefined && position.prevClose !== undefined ? (
                         <span className={stockPnlClass(position.latestPrice - position.prevClose)}>
-                          {' '}
                           {stockRoundRate(position.latestPrice, position.prevClose).percent}
                         </span>
                       ) : null}
                     </span>
-                    <span className={stockPnlClass(rowPnl)}>
-                      浮动盈亏 <span className="stock-mono">{money(rowPnl)}</span>
+                    <span className={`stock-master__stat-value stock-master__stat-value--end ${stockPnlClass(rowPnl)}`}>
+                      <span className="stock-mono">{money(rowPnl)}</span>
+                      <span>{stockPercent((rowPnl / position.totalCost) * 100)}</span>
                     </span>
-                  </div>
-                  <div className="stock-master__line">
-                    <span className="stock-muted">
-                      {position.quantity} 股 · 1 轮
-                    </span>
-                    <span className={stockPnlClass(rowPnl)}>{stockPercent((rowPnl / position.totalCost) * 100)}</span>
                   </div>
                 </button>
               )
