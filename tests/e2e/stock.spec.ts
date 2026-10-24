@@ -156,6 +156,15 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('toast').last()).toContainText('成交已记录')
     await expect(page.getByTestId('stock-position-empty')).toContainText('当前没有持仓')
 
+    // 建仓时输入代码自动带出名称：该代码已有成交历史，本地查询即可，不依赖网络
+    await page.getByTestId('stock-position-create').click()
+    await page.getByTestId('trade-code').fill('600000')
+    await expect(page.getByTestId('trade-name')).toHaveValue('浦发银行')
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-trade-auto-name.png'),
+    })
+    await page.getByTestId('trade-cancel').click()
+
     await page.getByTestId('stock-tab-history').click()
     await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
     await page.getByTestId('stock-history-row').click()

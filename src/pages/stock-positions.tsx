@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 
 import { Input, Modal, Select, Table } from 'antd'
 import type { HTMLAttributes } from 'react'
 
-import { computeOrderFee, instrumentOf } from '../../shared/domain/fee'
+import { computeOrderFee, instrumentOf, isValidStockCode } from '../../shared/domain/fee'
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import type { StockPositionDto } from '../../shared/types/stock-position'
@@ -165,6 +165,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [editPrice, setEditPrice] = useState('')
   const [editLots, setEditLots] = useState('1')
   const [deleteOrder, setDeleteOrder] = useState<string | null>(null)
+  /** 当前名称是不是按代码自动带出来的：改代码时只清掉自动值，不覆盖手填的名称。 */
+  const autoTradeName = useRef('')
 
   const selected = useMemo(
     () => positions.find((row) => row.stockCode === selectedCode) ?? positions[0],
@@ -224,7 +226,36 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
     })()
   }, [ledgerId, selected])
 
+  // 建仓时按代码自动带出名称：本地成交历史优先，查不到再走行情；失败静默，允许手填。
+  useEffect(() => {
+    if (!tradeOpen || tradeForm.type !== 'open') return
+    const code = tradeForm.code.trim()
+    if (!isValidStockCode(code)) return
+    let alive = true
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const result = await window.api.invoke('stock_name', { stock_code: code })
+          if (!alive) return
+          autoTradeName.current = result.stockName
+          setTradeForm((current) =>
+            current.code.trim() === code && current.name.trim() === ''
+              ? { ...current, name: result.stockName }
+              : current,
+          )
+        } catch {
+          if (alive) autoTradeName.current = ''
+        }
+      })()
+    }, 400)
+    return () => {
+      alive = false
+      clearTimeout(timer)
+    }
+  }, [tradeForm.code, tradeForm.type, tradeOpen])
+
   const openTrade = (type: string, position?: StockPositionDto): void => {
+    autoTradeName.current = ''
     setTradeForm({
       type,
       code: position?.stockCode ?? '',
@@ -264,10 +295,20 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
     setError('')
     try {
       const rates = feeRatesOf(tradeFee)
+      const stockCode = tradeForm.code.trim()
+      let stockName = tradeForm.name.trim()
+      // 手速快过 400ms 的自动查询时也补一次，避免把建仓记成无名股票。
+      if (tradeForm.type === 'open' && !stockName && isValidStockCode(stockCode)) {
+        try {
+          stockName = (await window.api.invoke('stock_name', { stock_code: stockCode })).stockName
+        } catch {
+          // 查不到名称时与既有行为一致：按空名称保存
+        }
+      }
       await window.api.invoke('stock_trade_create', {
         ledger_id: ledgerId,
-        stock_code: tradeForm.code.trim(),
-        stock_name: tradeForm.name.trim(),
+        stock_code: stockCode,
+        stock_name: stockName,
         trade_type: tradeForm.type,
         trade_time: Math.floor(new Date(`${tradeForm.date}T12:00:00`).getTime() / 1000),
         remark: tradeForm.remark,
@@ -440,6 +481,16 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       fills: current.fills.map((fill, fillIndex) =>
         fillIndex === index ? { ...fill, [key]: value } : fill,
       ),
+    }))
+  }
+
+  const changeTradeCode = (value: string): void => {
+    const auto = autoTradeName.current
+    autoTradeName.current = ''
+    setTradeForm((current) => ({
+      ...current,
+      code: value,
+      name: auto !== '' && current.name === auto ? '' : current.name,
     }))
   }
 
@@ -775,9 +826,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 data-testid="trade-code"
                 value={tradeForm.code}
                 disabled={tradeForm.type !== 'open'}
-                onChange={(event) =>
-                  setTradeForm((current) => ({ ...current, code: event.target.value }))
-                }
+                onChange={(event) => changeTradeCode(event.target.value)}
               />
             </label>
           </div>
@@ -954,7 +1003,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
 
           {error ? <p className="stock-modal-error">{error}</p> : null}
           <div className="stock-modal-actions">
-            <Button variant="secondary" onClick={() => setTradeOpen(false)}>
+            <Button variant="secondary" testId="trade-cancel" onClick={() => setTradeOpen(false)}>
               取消
             </Button>
             <Button
