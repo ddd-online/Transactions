@@ -14,6 +14,7 @@ import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
+import { Segmented } from '../components/segmented'
 import {
   stockDate,
   stockErrorMessage,
@@ -158,37 +159,26 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
     <ScrollArea className="stock-statistics-scroll">
       <div className="stock-statistics-view">
       <div className="stock-statistics-toolbar">
-        <div className="stock-segment-tabs">
-          <button
-            type="button"
-            className={tabs === 'summary' ? 'is-active' : ''}
-            data-testid="statistics-tab-summary"
-            onClick={() => setTabs('summary')}
-          >
-            统计
-          </button>
-          <button
-            type="button"
-            className={tabs === 'detail' ? 'is-active' : ''}
-            data-testid="statistics-tab-detail"
-            onClick={() => setTabs('detail')}
-          >
-            明细
-          </button>
-        </div>
+        <Segmented
+          testId="statistics-tab"
+          value={tabs}
+          onChange={(value) => setTabs(value as 'summary' | 'detail')}
+          options={[
+            { value: 'summary', label: '统计' },
+            { value: 'detail', label: '明细' },
+          ]}
+        />
         <div className="stock-statistics-filters">
-          <div className="stock-range-tabs">
-            {(['all', 'time', 'recent'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                className={rangeMode === mode ? 'is-active' : ''}
-                onClick={() => setRangeMode(mode)}
-              >
-                {mode === 'all' ? '全部' : mode === 'time' ? '按时间' : '最近 N 笔'}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            testId="statistics-range"
+            value={rangeMode}
+            onChange={(value) => setRangeMode(value as RangeMode)}
+            options={[
+              { value: 'all', label: '全部' },
+              { value: 'time', label: '按时间' },
+              { value: 'recent', label: '最近 N 笔' },
+            ]}
+          />
           {rangeMode === 'time' ? (
             <>
               <Input

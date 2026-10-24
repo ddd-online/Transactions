@@ -3033,34 +3033,6 @@
   border-bottom: 1px solid var(--transactions-color-divider);
 }
 
-.stock-segment-tabs,
-.stock-range-tabs {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--transactions-radius-md);
-  background: var(--transactions-color-minor-background);
-}
-
-.stock-segment-tabs button,
-.stock-range-tabs button {
-  padding: 4px 12px;
-  border: 0;
-  border-radius: var(--transactions-radius-sm);
-  background: transparent;
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-body-sm);
-  cursor: pointer;
-}
-
-.stock-segment-tabs button.is-active,
-.stock-range-tabs button.is-active {
-  background: var(--transactions-color-major-background);
-  color: var(--transactions-color-text-major);
-  box-shadow: var(--transactions-shadow-sm);
-}
-
 .stock-statistics-filters {
   display: flex;
   align-items: center;
