@@ -3086,6 +3086,36 @@
   font-size: var(--transactions-size-text-caption);
 }
 
+.stock-chart-head {
+  flex-wrap: wrap;
+}
+
+.stock-chart-head__title {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-2xs);
+}
+
+.stock-chart-head .tr-segmented {
+  margin-left: auto;
+}
+
+.stock-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-stat-hint {
+  display: inline-flex;
+  color: var(--transactions-color-text-disabled);
+  cursor: help;
+}
+
+.stock-stat-hint:hover {
+  color: var(--transactions-color-text-secondary);
+}
+
 .stock-chart-metrics {
   padding: 0 var(--transactions-space-lg);
   margin: var(--transactions-space-sm) 0 var(--transactions-space-xs);

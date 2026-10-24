@@ -15,6 +15,7 @@ import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
+import { Tooltip } from '../components/tooltip'
 import {
   stockDate,
   stockErrorMessage,
@@ -87,6 +88,25 @@ function axisText(value: number, metric: MetricKey): string {
   if (kind === 'percent') return `${value.toFixed(0)}%`
   if (kind === 'ratio') return value.toFixed(0)
   return `${value.toFixed(0)}`
+}
+
+function StatLabel({ text, hint }: { text: string; hint?: string }): JSX.Element {
+  return (
+    <span className="stock-stat-label">
+      {text}
+      {hint ? (
+        <Tooltip text={hint}>
+          <span
+            className="stock-stat-hint"
+            tabIndex={0}
+            aria-label={`${text}：${hint}`}
+          >
+            <Icon name="InfoCircle" size={12} />
+          </span>
+        </Tooltip>
+      ) : null}
+    </span>
+  )
 }
 
 function money(cents: number): string {
@@ -353,36 +373,36 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   <small>按建仓时间 · 截至 {stockDate(latest.openedAt)} · 第 {latest.sequence} 笔结算</small>
                 </div>
                 <div className="stock-stat-cell">
-                  <span className="stock-label">胜率</span>
+                  <StatLabel text="胜率" hint="我赢的次数够不够多" />
                   <strong>{stockPercent(latest.winRate)}</strong>
                   <small>
                     {latest.winCount} 胜 · {latest.lossCount} 负
                   </small>
                 </div>
                 <div className="stock-stat-cell">
-                  <span className="stock-label">盈亏比</span>
+                  <StatLabel text="盈亏比" hint="赢一次的收获等于几次的代价" />
                   <strong>{latest.pnlRatio === null ? '—' : latest.pnlRatio.toFixed(2)}</strong>
                   <small>盈利均值 ÷ 亏损均值</small>
                 </div>
                 <div className="stock-stat-cell">
-                  <span className="stock-label">期望值</span>
+                  <StatLabel text="期望值" hint="每开一笔，长期平均赚多少" />
                   <strong className={stockPnlClass(latest.expectancy)}>
                     {money(latest.expectancy)}
                   </strong>
                   <small>每笔均值</small>
                 </div>
                 <div className="stock-stat-cell">
-                  <span className="stock-label">最大回撤</span>
+                  <StatLabel text="最大回撤" hint="最坏的时候我要忍多少" />
                   <strong>{stockPercent(latest.maxDrawdownPct)}</strong>
                   <small>从高点回落 {money(latest.maxDrawdown)}</small>
                 </div>
                 <div className="stock-stat-cell">
-                  <span className="stock-label">平均盈利</span>
+                  <StatLabel text="平均盈利" hint="赢的时候能赢多少" />
                   <strong className="is-up">{money(latest.avgWin)}</strong>
                   <small>{latest.winCount} 笔盈利</small>
                 </div>
                 <div className="stock-stat-cell">
-                  <span className="stock-label">平均亏损</span>
+                  <StatLabel text="平均亏损" hint="输的时候会输多少" />
                   <strong className="is-down">{money(latest.avgLoss)}</strong>
                   <small>{latest.lossCount} 笔亏损</small>
                 </div>
@@ -397,19 +417,19 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
 
           {points.length > 0 ? (
             <section className="stock-statistics-section">
-              <header className="stock-statistics-section__head">
-                <h3 className="stock-section__title">统计曲线</h3>
-                <Button
-                  variant="text"
-                  size="sm"
-                  testId="stock-chart-expand"
-                  icon={<Icon name="Expand" size={14} />}
-                  onClick={() => setExpandedChart(true)}
-                >
-                  展开
-                </Button>
-              </header>
-              <div className="stock-chart-metrics">
+              <header className="stock-statistics-section__head stock-chart-head">
+                <div className="stock-chart-head__title">
+                  <h3 className="stock-section__title">统计曲线</h3>
+                  <Button
+                    variant="text"
+                    size="sm"
+                    testId="stock-chart-expand"
+                    aria-label="展开统计曲线"
+                    title="展开"
+                    icon={<Icon name="Expand" size={14} />}
+                    onClick={() => setExpandedChart(true)}
+                  />
+                </div>
                 <Segmented
                   testId="statistics-metric"
                   value={metric}
@@ -419,7 +439,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                     label: metricLabel(item.key, strategy === 'grouped'),
                   }))}
                 />
-              </div>
+              </header>
               <div className="stock-chart-legend">
                 <span
                   className={
