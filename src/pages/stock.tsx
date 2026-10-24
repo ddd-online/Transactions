@@ -25,7 +25,7 @@ type AmountAction = 'principal' | 'withdraw' | 'interest'
 
 const TABS: Array<[StockTab, string, IconName]> = [
   ['account', '账户', 'User'],
-  ['positions', '持仓', 'LineChart'],
+  ['positions', '持仓', 'CreditCard'],
   ['history', '记录', 'ClockCircle'],
   ['statistics', '统计', 'BarChart'],
   ['settings', '设置', 'Setting'],

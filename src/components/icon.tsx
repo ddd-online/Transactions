@@ -13,6 +13,7 @@ import {
   CloseCircleOutlined,
   CloseOutlined,
   CompressOutlined,
+  CreditCardOutlined,
   DeleteOutlined,
   DownloadOutlined,
   DownOutlined,
@@ -109,6 +110,7 @@ export type IconName =
   | 'GitHub'
   | 'User'
   | 'Sliders'
+  | 'CreditCard'
 
 type IconComponent = ComponentType<{
   className?: string
@@ -171,6 +173,7 @@ const ICONS: Record<IconName, IconComponent> = {
   GitHub: GithubOutlined,
   User: UserOutlined,
   Sliders: SlidersOutlined,
+  CreditCard: CreditCardOutlined,
 }
 
 export interface IconProps {
