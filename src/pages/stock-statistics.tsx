@@ -88,6 +88,13 @@ function axisText(value: number, metric: MetricKey): string {
   return `${value.toFixed(0)}`
 }
 
+function tooltipText(value: number, metric: MetricKey): string {
+  const kind = METRICS.find((item) => item.key === metric)?.kind
+  if (kind === 'percent') return `${value.toFixed(2)}%`
+  if (kind === 'ratio') return value.toFixed(2)
+  return `${value < 0 ? '-' : ''}¥${Math.abs(value).toFixed(2)}`
+}
+
 function StatLabel({ text, hint }: { text: string; hint?: string }): JSX.Element {
   return (
     <span className="stock-stat-label">
@@ -231,6 +238,20 @@ function ChartBox({
       labelFormatter: (value: string | number) => axisText(Number(value), metric),
     })
     chart.legend(false)
+    const tooltip = {
+      title: (datum: Record<string, unknown>) =>
+        `${String(datum.label ?? '')}${datum.stock ? ` · ${String(datum.stock)}` : ''}`,
+      items: [
+        (datum: Record<string, unknown>) => ({
+          name: label,
+          value: tooltipText(Number(datum.value), metric),
+          color:
+            datum.sign === '盈利'
+              ? 'var(--transactions-color-expense)'
+              : 'var(--transactions-color-income)',
+        }),
+      ],
+    }
     chart
       .area()
       .data(seriesRows)
@@ -238,6 +259,7 @@ function ChartBox({
       .encode('y', 'value')
       .encode('color', 'series')
       .style('opacity', 0.18)
+      .tooltip(tooltip)
     chart
       .line()
       .data(seriesRows)
@@ -245,6 +267,7 @@ function ChartBox({
       .encode('y', 'value')
       .encode('color', 'series')
       .style('lineWidth', 2)
+      .tooltip(tooltip)
     chart
       .point()
       .data(rows)
@@ -252,6 +275,7 @@ function ChartBox({
       .encode('y', 'value')
       .encode('color', 'sign')
       .style('r', 3)
+      .tooltip(tooltip)
     chart.render()
     return () => chart.destroy()
   }, [metric, points])
