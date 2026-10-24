@@ -142,7 +142,7 @@ export function StockAccountPanel({
                 dataSource={funds.items}
                 onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
                 columns={[
-                  { title: '日期', dataIndex: 'recordDate', width: '12%' },
+                  { title: '日期', dataIndex: 'recordDate', align: 'center', width: '12%' },
                   { title: '事件', dataIndex: 'eventText', width: '14%' },
                   {
                     title: '金额变化',
@@ -163,7 +163,13 @@ export function StockAccountPanel({
                     width: '16%',
                     render: (value: number) => stockMoney(value),
                   },
-                  { title: '备注', dataIndex: 'remark', ellipsis: true, width: '42%' },
+                  {
+                    title: '备注',
+                    dataIndex: 'remark',
+                    align: 'right',
+                    ellipsis: true,
+                    width: '42%',
+                  },
                 ]}
               />
               <div className="stock-table-foot">
