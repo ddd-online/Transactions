@@ -323,6 +323,7 @@ export const commandSchemas = {
     ledger_id: z.string().optional(),
     ledgerId: z.string().optional(),
     template: z.string().default(''),
+    daily_template: z.string().optional(),
   }),
   stock_fund_records: z.object({
     ledger_id: z.string(),

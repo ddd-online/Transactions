@@ -60,6 +60,8 @@ export const STOCK_REVIEW_TEMPLATE_DEFAULT =
   '买入理由：\n卖出理由：\n买点审视：\n卖点审视：\n交易心得：\n'
 export const STOCK_REVIEW_TEMPLATE_MAX_CHARS = 200
 
+export const STOCK_DAILY_REVIEW_TEMPLATE_DEFAULT = '今日盘面：\n操作计划：\n情绪与纪律：\n'
+
 // ---------- 待办 ----------
 export const TODO_STATUS_DOING = 'doing'
 export const TODO_STATUS_DONE = 'done'

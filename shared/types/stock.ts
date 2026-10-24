@@ -75,19 +75,22 @@ export interface StockTradeTagSettingDto {
   defaultTag: string
 }
 
-/** 本轮复盘模板设置（每个账本一份）。表 `stock_review_setting`。 */
+/** 复盘模板设置（每个账本一份）。表 `stock_review_setting`。 */
 export interface StockReviewSetting {
   id: string
   ledgerId: string
   /** 空串 = 没设过 ⇒ 用内置模板（服务层返回生效的那份） */
   template: string
+  /** 每日复盘模板；空串 = 用内置每日模板 */
+  dailyTemplate: string
   createdAt: number
   updatedAt: number
 }
 
-/** 本轮复盘模板 DTO：`template` 是**生效的那份**。 */
+/** 复盘模板 DTO：`template` / `dailyTemplate` 都是**生效的那份**。 */
 export interface StockReviewSettingDto {
   template: string
+  dailyTemplate: string
 }
 
 /** 可回滚的操作记录（每个账本最多保留最新 10 条）。表 `stock_operation`。 */

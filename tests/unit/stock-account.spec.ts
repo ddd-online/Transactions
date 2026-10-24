@@ -20,6 +20,7 @@ import {
   addPrincipal,
   addPrincipalAtDate,
   getAccountSummary,
+  getDailyReviewTemplate,
   getOrCreateAccount,
   getOrCreateFeeSetting,
   getReviewTemplate,
@@ -30,6 +31,7 @@ import {
   normalizeStockRecordDate,
   recalculateCashChain,
   saveFeeSettings,
+  saveDailyReviewTemplate,
   saveReviewTemplate,
   saveTradeTags,
   setPrincipal,
@@ -39,6 +41,7 @@ import {
   withdrawAtDate,
 } from '../../electron/services/stock-account'
 import {
+  STOCK_DAILY_REVIEW_TEMPLATE_DEFAULT,
   STOCK_EVENT_ADD_PRINCIPAL,
   STOCK_EVENT_BUY,
   STOCK_EVENT_INTEREST_PRINCIPAL,
@@ -319,6 +322,18 @@ describe('stock account / settings / fund slice', () => {
     expect(getReviewTemplate(workspace.db, OTHER_LEDGER)).toBe(STOCK_REVIEW_TEMPLATE_DEFAULT)
     expect(appError(() => saveReviewTemplate(workspace.db, '', 'x')).message).toBe(
       'ledger_id is required',
+    )
+
+    // 每日复盘模板独立生效，且保存其中一个不会覆盖另一个
+    expect(getDailyReviewTemplate(workspace.db, LEDGER)).toBe(
+      STOCK_DAILY_REVIEW_TEMPLATE_DEFAULT,
+    )
+    const daily = '盘面：\n计划：'
+    expect(saveDailyReviewTemplate(workspace.db, LEDGER, daily)).toBe(daily)
+    expect(getDailyReviewTemplate(workspace.db, LEDGER)).toBe(daily)
+    expect(getReviewTemplate(workspace.db, LEDGER)).toBe(atLimit)
+    expect(getDailyReviewTemplate(workspace.db, OTHER_LEDGER)).toBe(
+      STOCK_DAILY_REVIEW_TEMPLATE_DEFAULT,
     )
   })
 

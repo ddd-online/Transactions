@@ -27,7 +27,8 @@ const FEE_COLUMNS =
   'id, ledger_id, commission_rate, min_commission_cents, stamp_duty_rate, ' +
   'transfer_fee_rate, created_at, updated_at'
 const TAG_SETTING_COLUMNS = 'id, ledger_id, tags, created_at, updated_at'
-const REVIEW_SETTING_COLUMNS = 'id, ledger_id, template, created_at, updated_at'
+const REVIEW_SETTING_COLUMNS =
+  'id, ledger_id, template, daily_template, created_at, updated_at'
 
 interface AccountRow {
   id: string
@@ -60,6 +61,7 @@ interface ReviewSettingRow {
   id: string
   ledger_id: string
   template: string | null
+  daily_template: string | null
   created_at: number
   updated_at: number
 }
@@ -109,6 +111,7 @@ function reviewSettingFromRow(row: ReviewSettingRow): StockReviewSetting {
     id: row.id,
     ledgerId: row.ledger_id,
     template: row.template ?? '',
+    dailyTemplate: row.daily_template ?? '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -263,13 +266,13 @@ export function getReviewSetting(db: Db, ledgerId: string): StockReviewSetting |
 /** 新建复盘模板设置（时间戳由 DAO 补齐）。 */
 export function createReviewSetting(
   db: Db,
-  setting: { id: string; ledgerId: string; template: string },
+  setting: { id: string; ledgerId: string; template: string; dailyTemplate: string },
   now = nowUnix(),
 ): void {
   db.prepare(
-    'INSERT INTO stock_review_setting (id, ledger_id, template, created_at, updated_at) ' +
-      'VALUES (?, ?, ?, ?, ?)',
-  ).run(setting.id, setting.ledgerId, setting.template, now, now)
+    'INSERT INTO stock_review_setting (id, ledger_id, template, daily_template, created_at, updated_at) ' +
+      'VALUES (?, ?, ?, ?, ?, ?)',
+  ).run(setting.id, setting.ledgerId, setting.template, setting.dailyTemplate, now, now)
 }
 
 /** 写模板（空串 = 清除自定义，服务层据此回落到内置模板）。 */
@@ -277,9 +280,10 @@ export function updateReviewSettingTemplate(
   db: Db,
   ledgerId: string,
   template: string,
+  dailyTemplate: string,
   now = nowUnix(),
 ): void {
   db.prepare(
-    'UPDATE stock_review_setting SET template = ?, updated_at = ? WHERE ledger_id = ?',
-  ).run(template, now, ledgerId)
+    'UPDATE stock_review_setting SET template = ?, daily_template = ?, updated_at = ? WHERE ledger_id = ?',
+  ).run(template, dailyTemplate, now, ledgerId)
 }

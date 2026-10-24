@@ -3172,6 +3172,14 @@
   white-space: nowrap;
 }
 
+.stock-template-actions {
+  align-items: center;
+}
+
+.stock-template-actions__spacer {
+  flex: 1;
+}
+
 .stock-statistics-table .stock-stats-date {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);

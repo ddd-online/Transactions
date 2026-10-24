@@ -62,7 +62,7 @@ test('打包产物：启动、打开工作空间、node:sqlite 落库', async ()
     const meta = database.prepare('SELECT value FROM app_meta WHERE key = ?').get('schema_version') as
       | { value: string }
       | undefined
-    expect(meta?.value).toBe('1')
+    expect(meta?.value).toBe('2')
     database.close()
 
     mkdirSync(join(resolve(__dirname, '../..'), 'artifacts', 'tests'), { recursive: true })

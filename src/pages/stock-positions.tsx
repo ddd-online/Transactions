@@ -8,6 +8,7 @@ import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import type { StockPositionDto } from '../../shared/types/stock-position'
 import type { StockTradeDto } from '../../shared/types/stock-history'
+import type { StockReviewSettingDto } from '../../shared/types/stock'
 import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { DatePicker } from '../components/date-picker'
@@ -158,6 +159,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [dailyModalOpen, setDailyModalOpen] = useState(false)
   const [dailyDate, setDailyDate] = useState(todayYmd())
   const [dailyText, setDailyText] = useState('')
+  const [dailyTemplate, setDailyTemplate] = useState('')
   const [roundText, setRoundText] = useState('')
   const [editingTrade, setEditingTrade] = useState<StockTradeDto | null>(null)
   const [editPrice, setEditPrice] = useState('')
@@ -175,15 +177,17 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       return
     }
     try {
-      const [rows, tagSettings, feeSettings] = await Promise.all([
+      const [rows, tagSettings, feeSettings, reviewSettings] = await Promise.all([
         window.api.invoke('stock_positions', { ledger_id: ledgerId }),
         window.api.invoke('stock_tag_settings_get', { ledger_id: ledgerId }),
         window.api.invoke('stock_fee_settings_get', { ledger_id: ledgerId }),
+        window.api.invoke('stock_review_template_get', { ledger_id: ledgerId }),
       ])
       const active = rows.filter((row) => row.quantity > 0)
       setPositions(active)
       setTags(tagSettings.tags)
       setFee(feeSettings)
+      setDailyTemplate((reviewSettings as StockReviewSettingDto).dailyTemplate)
       setSelectedCode((current) =>
         active.some((row) => row.stockCode === current) ? current : active[0]?.stockCode ?? '',
       )
@@ -331,7 +335,9 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const openDailyReview = (): void => {
     const today = todayYmd()
     setDailyDate(today)
-    setDailyText(selected?.dayReviews.find((review) => review.date === today)?.review ?? '')
+    setDailyText(
+      selected?.dayReviews.find((review) => review.date === today)?.review ?? dailyTemplate,
+    )
     setDailyModalOpen(true)
   }
 

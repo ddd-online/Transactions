@@ -18,6 +18,11 @@ export interface Migration {
  */
 export const MIGRATIONS: readonly Migration[] = [
   { version: 1, name: 'init', sql: schemaSql },
+  {
+    version: 2,
+    name: 'stock_review_daily_template',
+    sql: "ALTER TABLE stock_review_setting ADD COLUMN daily_template TEXT NOT NULL DEFAULT '';",
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

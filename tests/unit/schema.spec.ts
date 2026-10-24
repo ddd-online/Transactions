@@ -120,7 +120,7 @@ describe('schema v1', () => {
     const row = workspace.db
       .prepare('SELECT value FROM app_meta WHERE key = ?')
       .get('schema_version') as { value: string }
-    expect(row.value).toBe('1')
+    expect(row.value).toBe('2')
   })
 
   it('allows inserting and reading a ledger with integer cents', () => {

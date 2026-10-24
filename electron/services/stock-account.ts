@@ -6,6 +6,7 @@ import {
   STOCK_EVENT_INTEREST_PRINCIPAL,
   STOCK_EVENT_WITHDRAW,
   STOCK_OP_KIND_FUND,
+  STOCK_DAILY_REVIEW_TEMPLATE_DEFAULT,
   STOCK_REVIEW_TEMPLATE_DEFAULT,
   STOCK_REVIEW_TEMPLATE_MAX_CHARS,
   STOCK_TAG_ANALYSIS,
@@ -339,6 +340,11 @@ function effectiveReviewTemplate(stored: string): string {
   return stored.trim() === '' ? STOCK_REVIEW_TEMPLATE_DEFAULT : stored
 }
 
+/** 「生效的每日模板」的唯一判据：去空白后为空 ⇒ 内置模板。 */
+function effectiveDailyTemplate(stored: string): string {
+  return stored.trim() === '' ? STOCK_DAILY_REVIEW_TEMPLATE_DEFAULT : stored
+}
+
 /** 取某账本**生效的**复盘模板：设过就用设的，没设过（或设成空）就用内置模板。 */
 export function getReviewTemplate(db: Db, ledgerId: string): string {
   try {
@@ -346,6 +352,16 @@ export function getReviewTemplate(db: Db, ledgerId: string): string {
     return effectiveReviewTemplate(setting?.template ?? '')
   } catch (error) {
     throw databaseFailure('读取复盘模板失败', error)
+  }
+}
+
+/** 取某账本**生效的**每日复盘模板。 */
+export function getDailyReviewTemplate(db: Db, ledgerId: string): string {
+  try {
+    const setting = getReviewSetting(db, ledgerId)
+    return effectiveDailyTemplate(setting?.dailyTemplate ?? '')
+  } catch (error) {
+    throw databaseFailure('读取每日复盘模板失败', error)
   }
 }
 
@@ -367,14 +383,37 @@ export function saveReviewTemplate(db: Db, ledgerId: string, template: string): 
   try {
     const existing = getReviewSetting(db, ledgerId)
     if (existing) {
-      updateReviewSettingTemplate(db, ledgerId, stored)
+      updateReviewSettingTemplate(db, ledgerId, stored, existing.dailyTemplate)
     } else {
-      createReviewSetting(db, { id: randomUUID(), ledgerId, template: stored })
+      createReviewSetting(db, { id: randomUUID(), ledgerId, template: stored, dailyTemplate: '' })
     }
   } catch (error) {
     throw databaseFailure('保存复盘模板失败', error)
   }
   return effectiveReviewTemplate(stored)
+}
+
+/** 保存每日复盘模板，返回**生效的那份**。 */
+export function saveDailyReviewTemplate(db: Db, ledgerId: string, template: string): string {
+  if (ledgerId === '') {
+    throw new AppError('ledger_id is required', { status: 400 })
+  }
+  if (Array.from(template).length > STOCK_REVIEW_TEMPLATE_MAX_CHARS) {
+    throw new AppError(`复盘模板不能超过 ${STOCK_REVIEW_TEMPLATE_MAX_CHARS} 字`, { status: 400 })
+  }
+  const stored = template.trim() === '' ? '' : template
+
+  try {
+    const existing = getReviewSetting(db, ledgerId)
+    if (existing) {
+      updateReviewSettingTemplate(db, ledgerId, existing.template, stored)
+    } else {
+      createReviewSetting(db, { id: randomUUID(), ledgerId, template: '', dailyTemplate: stored })
+    }
+  } catch (error) {
+    throw databaseFailure('保存每日复盘模板失败', error)
+  }
+  return effectiveDailyTemplate(stored)
 }
 
 // ---------------------------------------------------------------- 资金口径复算

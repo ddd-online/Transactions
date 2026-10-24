@@ -943,20 +943,24 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     stock_review_template_get(request) {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return { template: stockAccount.getReviewTemplate(workspaceDb(), ledgerId) }
+      const db = workspaceDb()
+      return {
+        template: stockAccount.getReviewTemplate(db, ledgerId),
+        dailyTemplate: stockAccount.getDailyReviewTemplate(db, ledgerId),
+      }
     },
 
     stock_review_template_put(request) {
       const raw = asObject(request)
       const ledgerId = String(raw.ledger_id ?? raw.ledgerId ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return {
-        template: stockAccount.saveReviewTemplate(
-          workspaceDb(),
-          ledgerId,
-          String(raw.template ?? ''),
-        ),
-      }
+      const db = workspaceDb()
+      const template = stockAccount.saveReviewTemplate(db, ledgerId, String(raw.template ?? ''))
+      const dailyTemplate =
+        raw.daily_template === undefined
+          ? stockAccount.getDailyReviewTemplate(db, ledgerId)
+          : stockAccount.saveDailyReviewTemplate(db, ledgerId, String(raw.daily_template))
+      return { template, dailyTemplate }
     },
 
     stock_fund_records(request) {

@@ -72,6 +72,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
     await page.getByTestId('stock-tab-settings').click()
+    await page.getByTestId('fee-open').click()
     await page.getByTestId('fee-commission').fill('1')
     await page.getByTestId('fee-save').click()
     await expect(page.getByTestId('stock-error')).toHaveCount(0)
@@ -131,6 +132,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     expect(trade.total_cost_cents).toBe(50_501)
 
     await page.getByTestId('position-review-open').click()
+    await expect(page.getByTestId('position-review-text')).toHaveValue(/今日盘面/)
     await page.getByTestId('position-review-text').fill('观察一天')
     await page.getByTestId('position-review-save').click()
     await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
