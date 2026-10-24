@@ -2660,6 +2660,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+.stock-master__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
 .stock-master__stat-label--end {
   text-align: right;
 }
