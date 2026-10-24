@@ -2500,8 +2500,9 @@
 }
 
 .stock-hero--flat strong {
-  font-size: var(--transactions-size-text-display-md);
+  font-size: var(--transactions-size-text-display-xl);
   line-height: var(--transactions-height-tight);
+  font-variant-numeric: tabular-nums;
 }
 
 .stock-metrics {
@@ -2521,7 +2522,7 @@
 
 .stock-metric strong {
   font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-body);
+  font-size: var(--transactions-size-text-section);
   font-variant-numeric: tabular-nums;
 }
 
