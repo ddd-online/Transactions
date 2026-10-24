@@ -3,11 +3,13 @@ import { useState, type JSX } from 'react'
 import { Input, Modal } from 'antd'
 
 import { yuanToCents } from '../../shared/domain/money'
+import type { StockTradeHistorySummaryDto } from '../../shared/types/stock-history'
 import { Button } from '../components/button'
 import { Icon, type IconName } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { notify } from '../components/toast'
 import { StockAccountPanel } from './stock-account'
+import { stockMoney, stockPercent, stockPnlClass } from './stock-format'
 import { StockHistoryPanel } from './stock-history'
 import { StockPositionsPanel } from './stock-positions'
 import { StockSettingsPanel } from './stock-settings'
@@ -43,6 +45,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [accountBusy, setAccountBusy] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [accountRefresh, setAccountRefresh] = useState(0)
+  const [historySummary, setHistorySummary] = useState<StockTradeHistorySummaryDto | null>(null)
 
   const closeAccountAction = (): void => {
     setAccountAction(null)
@@ -90,6 +93,46 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   return (
     <PageLayout
       contentClassName="stock-page"
+      footerClassName="page-footer-bar--end"
+      footer={
+        tab === 'history' ? (
+          <div className="statistics-footer stock-history-footer" data-testid="stock-history-summary">
+            <div className="statistics-footer-item">
+              <span className="statistics-footer-item-label">已实现盈亏</span>
+              <span
+                className={`statistics-footer-item-value ${stockPnlClass(historySummary?.totalPnl ?? 0)}`}
+              >
+                {stockMoney(historySummary?.totalPnl ?? 0)}
+              </span>
+            </div>
+            <div className="statistics-footer-divider" />
+            <div className="statistics-footer-item">
+              <span className="statistics-footer-item-label">累计盈亏率</span>
+              <span
+                className={`statistics-footer-item-value ${stockPnlClass(historySummary?.totalPnlRate ?? 0)}`}
+              >
+                {stockPercent(historySummary?.totalPnlRate ?? 0)}
+              </span>
+            </div>
+            <div className="statistics-footer-divider" />
+            <div className="statistics-footer-item">
+              <span className="statistics-footer-item-label">胜负轮次</span>
+              <span className="statistics-footer-item-value">
+                {historySummary
+                  ? `${historySummary.winCount} 胜 · ${historySummary.lossCount} 负`
+                  : '—'}
+              </span>
+            </div>
+            <div className="statistics-footer-divider" />
+            <div className="statistics-footer-item">
+              <span className="statistics-footer-item-label">总轮次</span>
+              <span className="statistics-footer-item-value">
+                {historySummary ? `${historySummary.roundCount} 轮` : '—'}
+              </span>
+            </div>
+          </div>
+        ) : undefined
+      }
       toolbar={
         tab === 'account' ? (
           <div className="stock-toolbar-actions">
@@ -141,7 +184,9 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
         <StockAccountPanel ledgerId={ledgerId} refreshToken={accountRefresh} />
       ) : null}
       {tab === 'positions' ? <StockPositionsPanel ledgerId={ledgerId} /> : null}
-      {tab === 'history' ? <StockHistoryPanel ledgerId={ledgerId} /> : null}
+      {tab === 'history' ? (
+        <StockHistoryPanel ledgerId={ledgerId} onSummaryChange={setHistorySummary} />
+      ) : null}
       {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
       {tab === 'settings' ? (
         <StockSettingsPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />

@@ -29,14 +29,17 @@ import {
 
 export interface StockHistoryPanelProps {
   ledgerId: string
+  onSummaryChange?: (summary: StockTradeHistorySummaryDto | null) => void
 }
 
 function money(cents: number): string {
   return `¥${centsToYuan(cents)}`
 }
 
-export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Element {
-  const [summary, setSummary] = useState<StockTradeHistorySummaryDto | null>(null)
+export function StockHistoryPanel({
+  ledgerId,
+  onSummaryChange,
+}: StockHistoryPanelProps): JSX.Element {
   const [rows, setRows] = useState<StockTradeHistoryDto[]>([])
   const [selectedCode, setSelectedCode] = useState('')
   const [detail, setDetail] = useState<StockTradeHistoryDetailDto | null>(null)
@@ -51,7 +54,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
   const load = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
       setRows([])
-      setSummary(null)
+      onSummaryChange?.(null)
       setDetail(null)
       return
     }
@@ -61,12 +64,12 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         window.api.invoke('stock_history_summary', { ledger_id: ledgerId }),
       ])
       setRows(list)
-      setSummary(total)
+      onSummaryChange?.(total)
       setError('')
     } catch (loadError) {
       setError(stockErrorMessage(loadError))
     }
-  }, [ledgerId])
+  }, [ledgerId, onSummaryChange])
 
   useEffect(() => {
     void load()
@@ -301,31 +304,6 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
             </>
           )}
         </section>
-      </div>
-
-      <div className="stock-history-summary" data-testid="stock-history-summary">
-        <div>
-          <span className="stock-label">已实现盈亏</span>
-          <strong className={stockPnlClass(summary?.totalPnl ?? 0)}>
-            {money(summary?.totalPnl ?? 0)}
-          </strong>
-        </div>
-        <div>
-          <span className="stock-label">累计盈亏率</span>
-          <strong className={stockPnlClass(summary?.totalPnlRate ?? 0)}>
-            {stockPercent(summary?.totalPnlRate ?? 0)}
-          </strong>
-        </div>
-        <div>
-          <span className="stock-label">胜负轮次</span>
-          <strong>
-            {summary ? `${summary.winCount} 胜 · ${summary.lossCount} 负` : '—'}
-          </strong>
-        </div>
-        <div>
-          <span className="stock-label">总轮次</span>
-          <strong>{summary ? `${summary.roundCount} 轮` : '—'}</strong>
-        </div>
       </div>
 
       <ConfirmDialog

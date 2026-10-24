@@ -2917,23 +2917,12 @@
   min-height: 0;
 }
 
-.stock-history-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--transactions-space-md);
-  padding: var(--transactions-space-md) var(--transactions-space-lg);
-  border-top: 1px solid var(--transactions-color-divider);
+.stock-history-footer .is-up {
+  color: var(--transactions-color-expense);
 }
 
-.stock-history-summary > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stock-history-summary strong {
-  font-size: var(--transactions-size-text-body);
-  font-variant-numeric: tabular-nums;
+.stock-history-footer .is-down {
+  color: var(--transactions-color-income);
 }
 
 .stock-history-main {
