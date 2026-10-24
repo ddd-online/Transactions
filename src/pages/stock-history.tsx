@@ -411,12 +411,14 @@ function RoundBlock({
               {
                 title: '时间',
                 dataIndex: 'tradeTime',
+                align: 'center',
                 width: 150,
                 render: (value: number) => stockDateTime(value),
               },
               {
                 title: '类型',
                 dataIndex: 'tradeType',
+                align: 'center',
                 width: 80,
                 render: (value: string) => stockTradeTypeLabel(value),
               },
@@ -439,7 +441,7 @@ function RoundBlock({
               {
                 title: '手数',
                 dataIndex: 'lots',
-                align: 'right',
+                align: 'center',
                 width: 90,
                 render: (value: number, trade) =>
                   trade.tradeType === 'close' || editingId !== trade.id ? (
@@ -468,7 +470,7 @@ function RoundBlock({
               {
                 title: '操作',
                 key: 'actions',
-                align: 'right',
+                align: 'center',
                 width: 150,
                 render: (_, trade) => (
                   <span className="stock-row-actions">

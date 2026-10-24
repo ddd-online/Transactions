@@ -537,12 +537,14 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 {
                   title: '时间',
                   dataIndex: 'tradeTime',
+                  align: 'center',
                   render: (value: number) => stockDateTime(value),
                   width: 150,
                 },
                 {
                   title: '类型',
                   dataIndex: 'tradeType',
+                  align: 'center',
                   width: 80,
                   render: (value: string) => (
                     <span className={`stock-trade-type is-${value}`}>{stockTradeTypeLabel(value)}</span>
@@ -554,7 +556,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                   align: 'right',
                   render: (value: number) => milliToYuan(value),
                 },
-                { title: '手数', dataIndex: 'lots', align: 'right', width: 70 },
+                { title: '手数', dataIndex: 'lots', align: 'center', width: 70 },
                 {
                   title: '成交金额',
                   dataIndex: 'amount',
@@ -582,7 +584,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 {
                   title: '操作',
                   key: 'actions',
-                  align: 'right',
+                  align: 'center',
                   width: 110,
                   render: (_, row) => (
                     <span className="stock-row-actions">
