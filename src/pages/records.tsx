@@ -1205,10 +1205,11 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                     variant="text-danger"
                     size="sm"
                     testId="tr-filter-item-remove"
+                    aria-label="删除筛选条件"
+                    title="删除筛选条件"
+                    icon={<Icon name="Trash" size={14} />}
                     onClick={() => removeFilterCondition(index)}
-                  >
-                    删除
-                  </Button>
+                  />
                 </div>
               ))}
             </div>
