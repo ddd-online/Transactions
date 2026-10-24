@@ -51,6 +51,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
       TRANSACTIONS_TEST_CLOSE: 'quit',
       TRANSACTIONS_TEST_PROXY_TARGET: proxyTargetUrl,
+      TRANSACTIONS_TEST_PROXY_ADDRESS: '127.0.0.1:7890',
     }),
   })
 
@@ -85,6 +86,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).proxy)
       .toEqual({ mode: 'manual', url: 'http://127.0.0.1:7890' })
     await page.getByTestId('proxy-mode-auto').click()
+    await expect(page.getByTestId('proxy-resolved')).toHaveValue('127.0.0.1:7890')
     await expect(page.getByTestId('proxy-save')).toHaveCount(0)
     await expect(page.getByTestId('proxy-url')).toHaveCount(0)
     await page.getByTestId('proxy-detect').click()

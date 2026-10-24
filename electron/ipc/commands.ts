@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { join } from 'node:path'
 
-import { app, dialog } from 'electron'
+import { app, dialog, session } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
@@ -1268,6 +1268,31 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         return ''
       }
       return saveWorkspaceIcon(workspace.directory, data)
+    },
+
+    async proxy_resolve(request) {
+      const raw = asObject(request)
+      const setting = validatedProxySetting(
+        String(raw.mode ?? ''),
+        String(raw.url ?? ''),
+      ) as ProxySetting
+      const testAddress = process.env.TRANSACTIONS_TEST_PROXY_ADDRESS
+      if (testAddress) return { url: testAddress }
+      const saved = options.config.snapshot().proxy
+      let resolved = 'DIRECT'
+      try {
+        await applyProxy(setting)
+        resolved = await session.defaultSession.resolveProxy('https://api.github.com')
+      } finally {
+        await applyProxy(saved)
+      }
+      const first = resolved.split(';')[0]?.trim() ?? ''
+      const url = first.startsWith('PROXY ')
+        ? first.slice('PROXY '.length)
+        : first === 'DIRECT'
+          ? '直连'
+          : first
+      return { url }
     },
 
     async proxy_test(request) {

@@ -28,7 +28,7 @@ import type {
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
 import type { TransactionTemplateDto } from './types/template'
-import type { FileSaveResponse, ProxyTestResponse } from './types/shell'
+import type { FileSaveResponse, ProxyResolveResponse, ProxyTestResponse } from './types/shell'
 import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
 import type {
   StockOperationRollbackDto,
@@ -452,6 +452,7 @@ export const commandSchemas = {
   workspace_icon_get: z.object({}),
   workspace_icon_set: z.object({ data: z.string().default('') }),
   proxy_test: z.object({ mode: z.string(), url: z.string().default('') }),
+  proxy_resolve: z.object({ mode: z.string(), url: z.string().default('') }),
   file_save_image: z.object({ relativePath: z.string() }),
   devtools_get_state: z.object({}),
   devtools_toggle: z.object({ enabled: z.boolean() }),
@@ -580,6 +581,7 @@ export interface CommandResponses {
   workspace_icon_get: string
   workspace_icon_set: string
   proxy_test: ProxyTestResponse
+  proxy_resolve: ProxyResolveResponse
   file_save_image: FileSaveResponse
   devtools_get_state: boolean
   devtools_toggle: boolean

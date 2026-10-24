@@ -8,6 +8,10 @@ export interface ProxyTestResponse {
   message: string
 }
 
+export interface ProxyResolveResponse {
+  url: string
+}
+
 export interface FileSaveResponse {
   success: boolean
   canceled?: boolean

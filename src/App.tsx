@@ -110,6 +110,7 @@ export function App(): JSX.Element {
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
   const [proxyTesting, setProxyTesting] = useState(false)
+  const [proxyResolved, setProxyResolved] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
   const ledgerMenuRef = useRef<HTMLDivElement>(null)
@@ -159,6 +160,26 @@ export function App(): JSX.Element {
     setProxyMode(config.proxy.mode)
     setProxyUrl(config.proxy.url)
   }, [config?.proxy.mode, config?.proxy.url])
+
+  useEffect(() => {
+    if (!config || proxyMode !== 'auto') {
+      setProxyResolved('')
+      return
+    }
+    let alive = true
+    setProxyResolved('探测中…')
+    void (async () => {
+      try {
+        const result = await window.api.invoke('proxy_resolve', { mode: 'auto', url: '' })
+        if (alive) setProxyResolved(result.url || '直连')
+      } catch {
+        if (alive) setProxyResolved('未探测到')
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [config?.proxy.mode, config?.proxy.url, proxyMode])
 
   useEffect(() => {
     const root = document.documentElement
@@ -878,6 +899,16 @@ export function App(): JSX.Element {
                               { value: 'manual', label: '手动' },
                             ]}
                           />
+                          {proxyMode === 'auto' ? (
+                            <Input
+                              className="st-proxy-resolved"
+                              data-testid="proxy-resolved"
+                              readOnly
+                              value={proxyResolved}
+                              placeholder="探测中…"
+                              title="自动探测到的代理地址"
+                            />
+                          ) : null}
                           {proxyMode === 'manual' ? (
                             <Input
                               data-testid="proxy-url"

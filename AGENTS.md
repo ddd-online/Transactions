@@ -60,7 +60,8 @@ pnpm package          # NSIS 安装包，产物在 output/
 - E2E 一律用一次性 `USERPROFILE`、`TRANSACTIONS_USER_DATA` 与临时工作空间；断言落在库/磁盘。
 - 测试缝（仅测试环境变量）：`TRANSACTIONS_TEST_DIALOG_DIR` 绕过原生目录框；
   `TRANSACTIONS_TEST_CLOSE` 固定关闭行为；`TRANSACTIONS_USER_DATA` 隔离单实例锁；
-  `TRANSACTIONS_TEST_PROXY_TARGET` 把代理连通性检测指向本地测试服务。
+  `TRANSACTIONS_TEST_PROXY_TARGET` 把代理连通性检测指向本地测试服务；
+  `TRANSACTIONS_TEST_PROXY_ADDRESS` 固定自动探测返回的地址。
   生产构建不设置这些变量。
 
 | 改动面 | 主要 E2E spec |
