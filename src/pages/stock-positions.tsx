@@ -450,7 +450,6 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
           <EmptyState
             testId="stock-position-empty"
             title={ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
-            description={ledgerId ? '买入后，持仓会显示在这里。' : undefined}
           />
         ) : (
           <div className="stock-master__list">
