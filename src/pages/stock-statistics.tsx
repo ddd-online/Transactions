@@ -605,7 +605,6 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
         onCancel={() => setExpandedChart(false)}
       >
         <div className="stock-chart-modal">
-          <p className="stock-muted">全部 · 共 {points.length} 笔结算</p>
           <div className="stock-chart-metrics">
             <Segmented
               testId="statistics-metric-expanded"

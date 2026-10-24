@@ -3389,12 +3389,6 @@
   color: var(--transactions-color-text-major);
 }
 
-.stock-trade-hint {
-  margin: 0;
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
 @media (max-width: 1080px) {
   .stock-positions-view,
   .stock-history-main {

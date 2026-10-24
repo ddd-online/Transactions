@@ -942,11 +942,6 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 {selected ? feeText(selected, fee) : '本轮费率沿用账本默认'}
               </p>
             )}
-            <p className="stock-trade-hint">
-              {tradeForm.type === 'open'
-                ? '默认是系统配置；填 0 表示本轮不收。建仓这一刻定下来，本轮的加仓 / 减仓 / 清仓都按它算。'
-                : '本轮建仓时确定，不可更改'}
-            </p>
           </section>
 
           {error ? <p className="stock-modal-error">{error}</p> : null}
