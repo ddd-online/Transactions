@@ -97,7 +97,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [busy, setBusy] = useState(false)
   const [tradeOpen, setTradeOpen] = useState(false)
   const [tradeForm, setTradeForm] = useState<TradeForm>(EMPTY_TRADE)
-  const [reviewOpen, setReviewOpen] = useState<'round' | null>(null)
+  const [roundExpanded, setRoundExpanded] = useState(true)
+  const [roundEditing, setRoundEditing] = useState(false)
   const [dailyExpanded, setDailyExpanded] = useState(true)
   const [dailyModalOpen, setDailyModalOpen] = useState(false)
   const [dailyDate, setDailyDate] = useState(todayYmd())
@@ -148,6 +149,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       return
     }
     setRoundText(selected.review)
+    setRoundEditing(false)
     setDailyText(selected.dayReviews[0]?.review ?? '')
     setDailyDate(selected.dayReviews[0]?.date ?? todayYmd())
     void (async () => {
@@ -459,38 +461,60 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               <button
                 type="button"
                 className="stock-section-toggle"
-                onClick={() => setReviewOpen(reviewOpen === 'round' ? null : 'round')}
+                data-testid="position-round-toggle"
+                onClick={() => {
+                  setRoundExpanded((current) => !current)
+                  setRoundEditing(false)
+                }}
               >
-                <Icon name={reviewOpen === 'round' ? 'Down' : 'CaretRight'} size={12} />
+                <Icon name={roundExpanded ? 'Down' : 'CaretRight'} size={12} />
                 本轮复盘
               </button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setReviewOpen('round')}
-              >
-                编辑
-              </Button>
+              {roundExpanded ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  testId="position-round-edit"
+                  onClick={() => setRoundEditing(true)}
+                >
+                  编辑
+                </Button>
+              ) : null}
             </section>
-            {reviewOpen === 'round' ? (
-              <div className="stock-review-box">
-                <Input.TextArea
-                  rows={6}
-                  placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
-                  value={roundText}
-                  onChange={(event) => setRoundText(event.target.value)}
-                />
-                <div className="stock-review-box__footer">
-                  <Button variant="primary" size="sm" onClick={() => void saveRound()}>
-                    保存复盘
-                  </Button>
+            {roundExpanded ? (
+              roundEditing ? (
+                <div className="stock-review-box">
+                  <Input.TextArea
+                    data-testid="position-round-review"
+                    rows={6}
+                    placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
+                    value={roundText}
+                    onChange={(event) => setRoundText(event.target.value)}
+                  />
+                  <div className="stock-review-box__footer">
+                    <Button variant="secondary" size="sm" onClick={() => setRoundEditing(false)}>
+                      取消
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      testId="position-round-save"
+                      onClick={() => {
+                        void saveRound().then(() => setRoundEditing(false))
+                      }}
+                    >
+                      保存复盘
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="stock-review-preview stock-review-preview--lines">
-                {selected.review ? selected.review : '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
-              </div>
-            )}
+              ) : (
+                <div className="stock-review-preview stock-review-preview--lines" data-testid="position-round-preview">
+                  {selected.review
+                    ? selected.review
+                    : '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
+                </div>
+              )
+            ) : null}
 
             <section className="stock-detail__section">
               <span className="stock-section-title">成交记录</span>

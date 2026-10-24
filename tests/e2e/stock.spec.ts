@@ -136,6 +136,15 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
     await expect(page.getByTestId('position-daily-review')).toContainText('观察一天')
 
+    await page.getByTestId('position-round-edit').click()
+    await page.getByTestId('position-round-review').fill('本轮复盘内容')
+    await page.getByTestId('position-round-save').click()
+    await expect(page.getByTestId('position-round-preview')).toContainText('本轮复盘内容')
+    await page.getByTestId('position-round-toggle').click()
+    await expect(page.getByTestId('position-round-preview')).toHaveCount(0)
+    await page.getByTestId('position-round-toggle').click()
+    await expect(page.getByTestId('position-round-preview')).toContainText('本轮复盘内容')
+
     await page.getByTestId('stock-position-close').click()
     await page.getByTestId('trade-price').fill('6')
     await page.getByTestId('trade-lots').fill('1')
