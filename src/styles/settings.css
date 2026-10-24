@@ -234,6 +234,10 @@
   margin-top: var(--transactions-space-xs);
 }
 
+.st-card-action .st-scope-row {
+  margin-top: 0;
+}
+
 .st-scope-input {
   width: 140px;
 }

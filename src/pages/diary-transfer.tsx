@@ -119,6 +119,8 @@ export function DiaryTransfer({ ledgerId }: DiaryTransferProps): JSX.Element {
           <span className="st-card-desc">
             把当前账本的日记导出为纯文本文件（YYYY-MM-DD.txt），可重新导入
           </span>
+        </div>
+        <div className="st-card-action">
           <div className="st-scope-row">
             <Segmented
               testId="diary-export-scope"
@@ -143,8 +145,6 @@ export function DiaryTransfer({ ledgerId }: DiaryTransferProps): JSX.Element {
               />
             ) : null}
           </div>
-        </div>
-        <div className="st-card-action">
           <Button
             variant="secondary"
             testId="diary-export"
