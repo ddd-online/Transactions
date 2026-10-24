@@ -51,7 +51,7 @@ test('应用：窗口 / 工作空间 / 配置闭环', async () => {
   try {
     const page = await electronApp.firstWindow()
 
-    await expect(page.getByTestId('app-info')).toContainText('1.0.0')
+    await expect(page.getByTestId('app-info')).toContainText('1.1.0')
     await expect(page.getByTestId('workspace-state')).toContainText('未打开工作空间')
 
     await page.getByTestId('open-workspace').click()
