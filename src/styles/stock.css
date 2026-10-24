@@ -3086,6 +3086,20 @@
   font-size: var(--transactions-size-text-caption);
 }
 
+.stock-chart-metrics {
+  padding: 0 var(--transactions-space-lg);
+  margin: var(--transactions-space-sm) 0 var(--transactions-space-xs);
+  overflow-x: auto;
+}
+
+.stock-chart-modal .stock-chart-metrics {
+  padding: 0;
+}
+
+.stock-statistics-table .ant-table-cell {
+  white-space: nowrap;
+}
+
 .stock-curve {
   height: 420px;
   margin: 0 var(--transactions-space-lg);

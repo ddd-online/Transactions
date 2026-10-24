@@ -200,8 +200,11 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
       })
       .toBe(6500)
     await page.getByTestId('stock-tab-statistics').click()
+    await expect(page.getByTestId('statistics-metric-total_pnl')).toBeVisible()
+    await page.getByTestId('statistics-metric-win_rate').click()
     await page.getByTestId('statistics-tab-detail').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
+    await expect(page.locator('.ant-table-thead')).toContainText('期望值')
 
     await page.getByTestId('stock-tab-settings').click()
     await page.getByTestId('stock-operations-open').click()

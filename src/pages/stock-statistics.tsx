@@ -28,22 +28,117 @@ export interface StockStatisticsPanelProps {
 
 type RangeMode = 'all' | 'time' | 'recent'
 
+type MetricKey =
+  | 'total_pnl'
+  | 'win_rate'
+  | 'avg_win'
+  | 'avg_loss'
+  | 'pnl_ratio'
+  | 'expectancy'
+  | 'max_drawdown'
+
+type MetricKind = 'money' | 'percent' | 'ratio'
+
+const METRICS: Array<{ key: MetricKey; label: string; kind: MetricKind }> = [
+  { key: 'total_pnl', label: '累计盈亏', kind: 'money' },
+  { key: 'win_rate', label: '胜率', kind: 'percent' },
+  { key: 'avg_win', label: '平均盈利', kind: 'money' },
+  { key: 'avg_loss', label: '平均亏损', kind: 'money' },
+  { key: 'pnl_ratio', label: '盈亏比', kind: 'ratio' },
+  { key: 'expectancy', label: '期望值', kind: 'money' },
+  { key: 'max_drawdown', label: '最大回撤', kind: 'percent' },
+]
+
+function metricLabel(metric: MetricKey, grouped: boolean): string {
+  if (metric === 'total_pnl' && grouped) return '分组盈亏'
+  return METRICS.find((item) => item.key === metric)?.label ?? '累计盈亏'
+}
+
+/** 曲线取值：金额换到元，百分比/倍数保持原口径。 */
+function metricValue(point: StockStatisticsPointDto, metric: MetricKey): number {
+  switch (metric) {
+    case 'total_pnl':
+      return point.totalPnl / 100
+    case 'win_rate':
+      return point.winRate
+    case 'avg_win':
+      return point.avgWin / 100
+    case 'avg_loss':
+      return -point.avgLoss / 100
+    case 'pnl_ratio':
+      return point.pnlRatio ?? 0
+    case 'expectancy':
+      return point.expectancy / 100
+    case 'max_drawdown':
+      return point.maxDrawdownPct
+  }
+}
+
+function metricText(value: number, metric: MetricKey): string {
+  const kind = METRICS.find((item) => item.key === metric)?.kind
+  if (kind === 'percent') return `${value.toFixed(2)}%`
+  if (kind === 'ratio') return value.toFixed(2)
+  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
+  return `${sign}¥${Math.abs(value).toFixed(2)}`
+}
+
+function axisText(value: number, metric: MetricKey): string {
+  const kind = METRICS.find((item) => item.key === metric)?.kind
+  if (kind === 'percent') return `${value.toFixed(0)}%`
+  if (kind === 'ratio') return value.toFixed(0)
+  return `${value.toFixed(0)}`
+}
+
 function money(cents: number): string {
   return `¥${centsToYuan(cents)}`
 }
 
-function ChartBox({ points, tall = false }: { points: StockStatisticsPointDto[]; tall?: boolean }): JSX.Element {
+function ChartBox({
+  points,
+  metric,
+  label,
+  tall = false,
+}: {
+  points: StockStatisticsPointDto[]
+  metric: MetricKey
+  label: string
+  tall?: boolean
+}): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const container = ref.current
     if (!container || points.length === 0) return
-    const rows = points.map((point) => ({
-      label: `第${point.sequence}笔 ${formatTimestamp(point.openedAt, 'MM-DD')}`,
-      value: point.totalPnl / 100,
-      sign: point.totalPnl >= 0 ? '盈利' : '亏损',
-      stock: `${point.stockName} ${point.stockCode}`,
-    }))
+    const rows = points.map((point) => {
+      const value = metricValue(point, metric)
+      return {
+        label: `第${point.sequence}笔 ${formatTimestamp(point.openedAt, 'MM-DD')}`,
+        value,
+        sign: metric === 'max_drawdown' ? '亏损' : value >= 0 ? '盈利' : '亏损',
+        stock: `${point.stockName} ${point.stockCode}`,
+      }
+    })
+    // 折线/面积按正负拆段，但每段从上一段的末点起笔：颜色在拐点切换，
+    // 线本身仍然连续（之前直接按 color 分 series，导致正负切换处整段断开）。
+    const segments: Array<{ sign: string; rows: typeof rows }> = []
+    for (const row of rows) {
+      const last = segments[segments.length - 1]
+      if (!last) {
+        segments.push({ sign: row.sign, rows: [row] })
+      } else if (last.sign !== row.sign) {
+        segments.push({ sign: row.sign, rows: [last.rows[last.rows.length - 1], row] })
+      } else {
+        last.rows.push(row)
+      }
+    }
+    const seriesRows = segments.flatMap((segment, index) =>
+      segment.rows.map((row) => ({ ...row, series: `segment-${index}` })),
+    )
+    const seriesColors = segments.map((segment) =>
+      segment.sign === '盈利' ? '#e5484d' : '#16a34a',
+    )
+    const colorDomain = [...segments.map((_, index) => `segment-${index}`), '盈利', '亏损']
+    const colorRange = [...seriesColors, '#e5484d', '#16a34a']
     const chart = new Chart({
       container,
       autoFit: true,
@@ -54,8 +149,11 @@ function ChartBox({ points, tall = false }: { points: StockStatisticsPointDto[];
     })
     chart.data(rows)
     chart.scale('x', { type: 'point' })
-    chart.scale('y', { nice: true })
-    chart.scale('color', { range: ['#e5484d', '#16a34a'], domain: ['盈利', '亏损'] })
+    chart.scale(
+      'y',
+      metric === 'win_rate' ? { nice: true, domain: [0, 100] } : { nice: true },
+    )
+    chart.scale('color', { domain: colorDomain, range: colorRange })
     chart.axis('x', {
       title: false,
       labelFill: '#8c8c8c',
@@ -73,22 +171,23 @@ function ChartBox({ points, tall = false }: { points: StockStatisticsPointDto[];
       gridStroke: '#ececec',
       gridStrokeOpacity: 1,
       gridLineWidth: 1,
+      labelFormatter: (value: string | number) => axisText(Number(value), metric),
     })
     chart.legend(false)
     chart
       .area()
-      .data(rows)
+      .data(seriesRows)
       .encode('x', 'label')
       .encode('y', 'value')
-      .encode('color', 'sign')
+      .encode('color', 'series')
       .style('opacity', 0.18)
       .style('shape', 'smooth')
     chart
       .line()
-      .data(rows)
+      .data(seriesRows)
       .encode('x', 'label')
       .encode('y', 'value')
-      .encode('color', 'sign')
+      .encode('color', 'series')
       .style('lineWidth', 2)
       .style('shape', 'smooth')
     chart
@@ -100,9 +199,16 @@ function ChartBox({ points, tall = false }: { points: StockStatisticsPointDto[];
       .style('r', 3)
     chart.render()
     return () => chart.destroy()
-  }, [points])
+  }, [metric, points])
 
-  return <div className={`stock-curve${tall ? ' stock-curve--tall' : ''}`} ref={ref} />
+  return (
+    <div
+      className={`stock-curve${tall ? ' stock-curve--tall' : ''}`}
+      ref={ref}
+      role="img"
+      aria-label={`${label}统计曲线`}
+    />
+  )
 }
 
 export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): JSX.Element {
@@ -113,6 +219,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
   const [startMonth, setStartMonth] = useState('')
   const [endMonth, setEndMonth] = useState('')
   const [tabs, setTabs] = useState<'summary' | 'detail'>('summary')
+  const [metric, setMetric] = useState<MetricKey>('total_pnl')
   const [data, setData] = useState<StockStatisticsDto | null>(null)
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [expandedChart, setExpandedChart] = useState(false)
@@ -154,6 +261,8 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
 
   const points = strategy === 'grouped' ? (data?.groups ?? []) : (data?.points ?? [])
   const latest = points[points.length - 1]
+  const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
+  const latestMetricValue = latest ? metricValue(latest, metric) : 0
 
   return (
     <ScrollArea className="stock-statistics-scroll">
@@ -300,12 +409,31 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   展开
                 </Button>
               </header>
+              <div className="stock-chart-metrics">
+                <Segmented
+                  testId="statistics-metric"
+                  value={metric}
+                  onChange={(value) => setMetric(value as MetricKey)}
+                  options={METRICS.map((item) => ({
+                    value: item.key,
+                    label: metricLabel(item.key, strategy === 'grouped'),
+                  }))}
+                />
+              </div>
               <div className="stock-chart-legend">
-                <span className={stockPnlClass(latest?.totalPnl ?? 0)}>
-                  累计盈亏 {money(latest?.totalPnl ?? 0)}
+                <span
+                  className={
+                    metric === 'win_rate' || metric === 'pnl_ratio'
+                      ? undefined
+                      : metric === 'max_drawdown'
+                        ? 'is-down'
+                        : stockPnlClass(latestMetricValue)
+                  }
+                >
+                  {selectedMetricLabel} {metricText(latestMetricValue, metric)}
                 </span>
               </div>
-              <ChartBox points={points} />
+              <ChartBox points={points} metric={metric} label={selectedMetricLabel} />
             </section>
           ) : null}
         </>
@@ -324,25 +452,44 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
             />
           ) : (
             <Table
-              className="tr-table"
+              className="tr-table stock-statistics-table"
               rowKey={(row) => `${row.sequence}-${row.stockCode}`}
               pagination={false}
               size="middle"
+              scroll={{ x: 1280 }}
               dataSource={points}
               onRow={() => ({ 'data-testid': 'stock-statistics-point' }) as HTMLAttributes<HTMLElement>}
               columns={[
-                { title: '#', dataIndex: 'sequence', align: 'right', width: 56 },
+                { title: '#', dataIndex: 'sequence', align: 'right', width: 48 },
                 {
                   title: '建仓',
                   dataIndex: 'openedAt',
-                  width: 120,
+                  width: 96,
                   render: (value: number) => stockDate(value),
                 },
-                { title: '股票', render: (_, row) => `${row.stockName} ${row.stockCode}` },
+                {
+                  title: '清仓',
+                  dataIndex: 'closedAt',
+                  width: 96,
+                  render: (value: number) => stockDate(value),
+                },
+                {
+                  title: '股票',
+                  width: 150,
+                  render: (_, row) => `${row.stockName} ${row.stockCode}`,
+                },
+                {
+                  title: '标签',
+                  dataIndex: 'tag',
+                  width: 72,
+                  render: (value: string) =>
+                    value ? <span className="ui-tag">{value}</span> : '—',
+                },
                 {
                   title: '盈亏',
                   dataIndex: 'pnl',
                   align: 'right',
+                  width: 96,
                   render: (value: number) => (
                     <span className={stockPnlClass(value)}>{money(value)}</span>
                   ),
@@ -351,19 +498,63 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '累计',
                   dataIndex: 'totalPnl',
                   align: 'right',
+                  width: 96,
                   render: (value: number) => money(value),
+                },
+                {
+                  title: '胜负',
+                  width: 80,
+                  render: (_, row) => `${row.winCount} 胜 ${row.lossCount} 负`,
                 },
                 {
                   title: '胜率',
                   dataIndex: 'winRate',
                   align: 'right',
+                  width: 64,
                   render: (value: number) => stockPercent(value),
+                },
+                {
+                  title: '平均盈利',
+                  dataIndex: 'avgWin',
+                  align: 'right',
+                  width: 88,
+                  render: (value: number) =>
+                    value > 0 ? <span className="is-up">{money(value)}</span> : '—',
+                },
+                {
+                  title: '平均亏损',
+                  dataIndex: 'avgLoss',
+                  align: 'right',
+                  width: 88,
+                  render: (value: number) =>
+                    value > 0 ? <span className="is-down">-¥{(value / 100).toFixed(2)}</span> : '—',
+                },
+                {
+                  title: '盈亏比',
+                  dataIndex: 'pnlRatio',
+                  align: 'right',
+                  width: 72,
+                  render: (value: number | null) => (value === null ? '—' : value.toFixed(2)),
+                },
+                {
+                  title: '期望值',
+                  dataIndex: 'expectancy',
+                  align: 'right',
+                  width: 88,
+                  render: (value: number) => (
+                    <span className={stockPnlClass(value)}>{money(value)}</span>
+                  ),
                 },
                 {
                   title: '回撤',
                   dataIndex: 'maxDrawdownPct',
                   align: 'right',
-                  render: (value: number) => stockPercent(value),
+                  width: 100,
+                  render: (value: number, row) => (
+                    <span className="is-down">
+                      {stockPercent(value)} {money(row.maxDrawdown)}
+                    </span>
+                  ),
                 },
               ]}
             />
@@ -381,7 +572,18 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
       >
         <div className="stock-chart-modal">
           <p className="stock-muted">全部 · 共 {points.length} 笔结算</p>
-          <ChartBox points={points} tall />
+          <div className="stock-chart-metrics">
+            <Segmented
+              testId="statistics-metric-expanded"
+              value={metric}
+              onChange={(value) => setMetric(value as MetricKey)}
+              options={METRICS.map((item) => ({
+                value: item.key,
+                label: metricLabel(item.key, strategy === 'grouped'),
+              }))}
+            />
+          </div>
+          <ChartBox points={points} metric={metric} label={selectedMetricLabel} tall />
         </div>
       </Modal>
       </div>
