@@ -826,7 +826,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           <Button
             variant="secondary"
             testId="tr-filter"
-            icon={<Icon name="Search" size={14} />}
+            icon={<Icon name="Filter" size={14} />}
             onClick={openFilter}
           >
             筛选

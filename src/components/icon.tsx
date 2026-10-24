@@ -20,6 +20,7 @@ import {
   ExclamationCircleOutlined,
   ExpandAltOutlined,
   FileTextOutlined,
+  FilterOutlined,
   FullscreenOutlined,
   GithubOutlined,
   HistoryOutlined,
@@ -70,6 +71,7 @@ export type IconName =
   | 'SortAsc'
   | 'SortDesc'
   | 'Search'
+  | 'Filter'
   | 'Close'
   | 'CheckCircle'
   | 'CloseCircle'
@@ -131,6 +133,7 @@ const ICONS: Record<IconName, IconComponent> = {
   SortAsc: SortAscendingOutlined,
   SortDesc: SortDescendingOutlined,
   Search: SearchOutlined,
+  Filter: FilterOutlined,
   Close: CloseOutlined,
   CheckCircle: CheckCircleOutlined,
   CloseCircle: CloseCircleOutlined,
