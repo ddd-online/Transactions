@@ -3042,6 +3042,11 @@
   flex-wrap: wrap;
 }
 
+.stock-statistics-filters .tr-date-picker,
+.stock-statistics-filters .tr-date-picker .ant-picker {
+  width: 144px;
+}
+
 .stock-statistics-section {
   padding: 0 0 var(--transactions-space-lg);
 }

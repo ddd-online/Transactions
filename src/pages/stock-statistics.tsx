@@ -11,6 +11,7 @@ import type {
   StockStatisticsPointDto,
 } from '../../shared/types/stock-statistics'
 import { Button } from '../components/button'
+import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
@@ -268,10 +269,10 @@ function ChartBox({
 export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): JSX.Element {
   const [strategy, setStrategy] = useState<'cumulative' | 'grouped'>('cumulative')
   const [rangeMode, setRangeMode] = useState<RangeMode>('all')
-  const [recent, setRecent] = useState('')
+  const [recent, setRecent] = useState('5')
   const [tag, setTag] = useState('')
-  const [startMonth, setStartMonth] = useState('')
-  const [endMonth, setEndMonth] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [tabs, setTabs] = useState<'summary' | 'detail'>('summary')
   const [metric, setMetric] = useState<MetricKey>('total_pnl')
   const [data, setData] = useState<StockStatisticsDto | null>(null)
@@ -287,8 +288,8 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
     try {
       const result = await window.api.invoke('stock_statistics', {
         ledger_id: ledgerId,
-        start_month: rangeMode === 'time' ? startMonth : '',
-        end_month: rangeMode === 'time' ? endMonth : '',
+        start_month: rangeMode === 'time' ? startDate.slice(0, 7) : '',
+        end_month: rangeMode === 'time' ? endDate.slice(0, 7) : '',
         recent: rangeMode === 'recent' && recent !== '' ? recent : null,
         tag,
         strategy,
@@ -299,7 +300,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
     } catch (loadError) {
       setError(stockErrorMessage(loadError))
     }
-  }, [endMonth, ledgerId, rangeMode, recent, startMonth, strategy, tag])
+  }, [endDate, ledgerId, rangeMode, recent, startDate, strategy, tag])
 
   useEffect(() => {
     void load()
@@ -343,17 +344,15 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
           />
           {rangeMode === 'time' ? (
             <>
-              <Input
-                value={startMonth}
-                placeholder="YYYY-MM"
-                style={{ width: 110 }}
-                onChange={(event) => setStartMonth(event.target.value)}
+              <DatePicker
+                testId="statistics-start-date"
+                value={startDate}
+                onChange={setStartDate}
               />
-              <Input
-                value={endMonth}
-                placeholder="YYYY-MM"
-                style={{ width: 110 }}
-                onChange={(event) => setEndMonth(event.target.value)}
+              <DatePicker
+                testId="statistics-end-date"
+                value={endDate}
+                onChange={setEndDate}
               />
             </>
           ) : null}
