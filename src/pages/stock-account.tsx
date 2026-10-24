@@ -248,15 +248,19 @@ export function StockAccountPanel({
     <section className="m0-card m0-card--wide">
       <div className="m0-card-head">
         <h2>{section === 'account' ? '股票 · 账户' : section === 'positions' ? '股票 · 持仓' : '股票 · 设置'}</h2>
-        <span className="m0-muted" data-testid="stock-tags">
-          {tags ? tags.tags.join(' / ') : ''}
-        </span>
+        {section !== 'settings' ? (
+          <span className="m0-muted" data-testid="stock-tags">
+            {tags ? tags.tags.join(' / ') : ''}
+          </span>
+        ) : null}
       </div>
 
-      <div className="stock-hero">
-        <span className="m0-muted">总资产</span>
-        <strong data-testid="stock-total-assets">{money(overview?.totalAssets ?? 0)}</strong>
-      </div>
+      {section !== 'settings' ? (
+        <div className="stock-hero">
+          <span className="m0-muted">总资产</span>
+          <strong data-testid="stock-total-assets">{money(overview?.totalAssets ?? 0)}</strong>
+        </div>
+      ) : null}
 
       {section === 'account' ? (<> 
       <div className="m0-stats m0-stock-stats">
@@ -278,7 +282,7 @@ export function StockAccountPanel({
         </div>
       </div>
 
-      <div className="m0-actions m0-new-record">
+      <div className="m0-actions m0-new-record stock-cash-actions">
         <Input
           data-testid="stock-amount"
           inputMode="decimal"

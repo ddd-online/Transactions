@@ -2250,3 +2250,168 @@
   flex: 1;
   min-height: 0;
 }
+
+/* ============================================
+ * 平铺版式（参考记账 / 事件 / 待办）
+ *
+ * 股票页原来是一张大白卡里再套一排小卡：账户、持仓、记录、统计四个子功能
+ * 共用同一个 `m0-card` 壳和 `m0-stat` 小卡。这里统一去掉容器壳：
+ * 页面满宽、用 Soft Gray 段头 + 发丝线分节，指标直接铺在画布上。
+ * ============================================ */
+
+.page-content.stock-page {
+  padding: 0;
+  gap: 0;
+}
+
+.page-content.stock-page > .m0-error {
+  margin: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
+.stock-page .m0-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 段头：与待办/事件的 Soft Gray 横带同一档 */
+.stock-page .m0-card-head {
+  min-height: 40px;
+  padding: 0 var(--transactions-space-lg);
+  background: var(--transactions-color-minor-background);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-card-head h2 {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  line-height: var(--transactions-height-tight);
+}
+
+.stock-page .stock-hero {
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  gap: 2px;
+}
+
+.stock-page .stock-hero strong {
+  font-size: var(--transactions-size-text-display-sm);
+  line-height: var(--transactions-height-tight);
+}
+
+.stock-page .m0-stock-stats {
+  gap: 0;
+  margin: 0;
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-stat {
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.stock-page .m0-stat + .m0-stat {
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+/* 小节标题：整条灰带，和段头同一套 */
+.stock-page .m0-subtitle {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 var(--transactions-space-lg);
+  background: var(--transactions-color-minor-background);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-page .m0-actions.m0-new-record {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-new-record .m0-field {
+  margin-bottom: 0;
+}
+
+.stock-page .stock-cash-actions .ant-input {
+  flex: 0 0 220px;
+}
+
+.stock-page .m0-import-row {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-import-field {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.stock-page .m0-tag-list {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+.stock-page .m0-muted[data-testid='stock-operation-empty'] {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-muted[data-testid='stock-transfer-status'] {
+  margin: 0;
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-sm);
+}
+
+.stock-page .tr-table .ant-table-thead > tr > th {
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  background: var(--transactions-color-minor-background);
+}
+
+.stock-page .tr-table .ant-table-tbody > tr > td {
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+.stock-page .stock-empty {
+  min-height: 220px;
+  padding: var(--transactions-space-2xl) var(--transactions-space-lg);
+}
+
+.stock-page .stock-funds-foot {
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-stock-history-detail {
+  margin: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-rounds {
+  gap: 0;
+  margin: 0;
+}
+
+.stock-page .m0-rounds > li {
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-page .m0-stock-review {
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}

@@ -28,6 +28,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   return (
     <PageLayout
       scrollable
+      contentClassName="stock-page"
       rail={
           <div className="page-rail-nav">
             {TABS.map(([key, label, icon]) => (
