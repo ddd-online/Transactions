@@ -129,26 +129,58 @@ function ChartBox({
   useEffect(() => {
     const container = ref.current
     if (!container || points.length === 0) return
-    const rows = points.map((point) => {
+    const rows = points.map((point, index) => {
       const value = metricValue(point, metric)
       return {
+        x: index,
         label: `第${point.sequence}笔 ${formatTimestamp(point.openedAt, 'MM-DD')}`,
         value,
         sign: metric === 'max_drawdown' ? '亏损' : value >= 0 ? '盈利' : '亏损',
         stock: `${point.stockName} ${point.stockCode}`,
       }
     })
-    // 折线/面积按正负拆段，但每段从上一段的末点起笔：颜色在拐点切换，
-    // 线本身仍然连续（之前直接按 color 分 series，导致正负切换处整段断开）。
+    // 折线/面积在**零点**切开：0 轴上方红、下方绿。只在数据点的正负号之间切
+    // 会把"从盈利回落到 0"的那块面积整片染成绿色，所以先线性插出穿零点，
+    // 再把跨零段拆成红/绿两段；穿零点同时是两段的端点，线仍然连续。
     const segments: Array<{ sign: string; rows: typeof rows }> = []
-    for (const row of rows) {
-      const last = segments[segments.length - 1]
-      if (!last) {
-        segments.push({ sign: row.sign, rows: [row] })
-      } else if (last.sign !== row.sign) {
-        segments.push({ sign: row.sign, rows: [last.rows[last.rows.length - 1], row] })
-      } else {
-        last.rows.push(row)
+    if (metric === 'max_drawdown') {
+      segments.push({ sign: '亏损', rows })
+    } else {
+      let current: typeof rows = []
+      for (let index = 0; index < rows.length; index += 1) {
+        const row = rows[index]
+        if (index === 0) {
+          current.push(row)
+          continue
+        }
+        const previous = rows[index - 1]
+        if (
+          (previous.value > 0 && row.value < 0) ||
+          (previous.value < 0 && row.value > 0)
+        ) {
+          const ratio = previous.value / (previous.value - row.value)
+          const crossing = {
+            ...row,
+            x: previous.x + ratio,
+            value: 0,
+            sign: previous.value > 0 ? '盈利' : '亏损',
+          }
+          current.push(crossing)
+          const firstNonZero = current.find((item) => item.value !== 0)
+          segments.push({
+            sign: firstNonZero && firstNonZero.value < 0 ? '亏损' : '盈利',
+            rows: current,
+          })
+          current = [crossing]
+        }
+        current.push(row)
+      }
+      if (current.length > 0) {
+        const firstNonZero = current.find((item) => item.value !== 0)
+        segments.push({
+          sign: firstNonZero && firstNonZero.value < 0 ? '亏损' : '盈利',
+          rows: current,
+        })
       }
     }
     const seriesRows = segments.flatMap((segment, index) =>
@@ -159,6 +191,7 @@ function ChartBox({
     )
     const colorDomain = [...segments.map((_, index) => `segment-${index}`), '盈利', '亏损']
     const colorRange = [...seriesColors, '#e5484d', '#16a34a']
+    const xMax = Math.max(1, rows.length - 1)
     const chart = new Chart({
       container,
       autoFit: true,
@@ -168,7 +201,7 @@ function ChartBox({
       paddingBottom: 36,
     })
     chart.data(rows)
-    chart.scale('x', { type: 'point' })
+    chart.scale('x', { type: 'linear', domain: [0, xMax], nice: false })
     chart.scale(
       'y',
       metric === 'win_rate' ? { nice: true, domain: [0, 100] } : { nice: true },
@@ -180,6 +213,12 @@ function ChartBox({
       labelFontSize: 11,
       line: false,
       tick: false,
+      labelFormatter: (value: string | number) => {
+        const numeric = Number(value)
+        const index = Math.round(numeric)
+        if (Math.abs(numeric - index) > 1e-6 || !rows[index]) return ''
+        return rows[index].label
+      },
     })
     chart.axis('y', {
       title: false,
@@ -197,21 +236,21 @@ function ChartBox({
     chart
       .area()
       .data(seriesRows)
-      .encode('x', 'label')
+      .encode('x', 'x')
       .encode('y', 'value')
       .encode('color', 'series')
       .style('opacity', 0.18)
     chart
       .line()
       .data(seriesRows)
-      .encode('x', 'label')
+      .encode('x', 'x')
       .encode('y', 'value')
       .encode('color', 'series')
       .style('lineWidth', 2)
     chart
       .point()
       .data(rows)
-      .encode('x', 'label')
+      .encode('x', 'x')
       .encode('y', 'value')
       .encode('color', 'sign')
       .style('r', 3)
