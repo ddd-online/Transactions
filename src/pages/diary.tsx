@@ -4,7 +4,7 @@ import type { DiaryDateItem } from '../../shared/domain/models'
 import { todayYmd } from '../../shared/domain/time'
 import { formatYmdCn, weekdayCn } from '../../shared/domain/calendar'
 import { notify } from '../components/toast'
-import { Input, type TreeDataNode } from 'antd'
+import { Input, Popconfirm, type TreeDataNode } from 'antd'
 
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
@@ -298,14 +298,23 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                         ? '保存失败'
                         : '已保存'}
                 </span>
-                <Button
-                  variant="danger-outline"
-                  testId="diary-delete"
+                <Popconfirm
+                  title="删除这篇日记？"
+                  okText="确认删除"
+                  okType="danger"
+                  cancelText="取消"
+                  placement="bottomRight"
                   disabled={!ledgerId || busy}
-                  onClick={() => void remove()}
+                  onConfirm={() => void remove()}
                 >
-                  删除
-                </Button>
+                  <Button
+                    variant="danger-outline"
+                    testId="diary-delete"
+                    disabled={!ledgerId || busy}
+                  >
+                    删除
+                  </Button>
+                </Popconfirm>
               </div>
       </>}
     >

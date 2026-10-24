@@ -83,6 +83,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
     await expect(page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' })).toHaveCount(1)
     await page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' }).click()
     await page.getByTestId('diary-delete').click()
+    await page.getByRole('button', { name: '确认删除' }).click()
     await expect(page.getByTestId('diary-date-item').filter({ hasText: '2026-02-01' })).toHaveCount(0)
     await page.getByTestId('diary-date').fill('2026-01-15')
     await expect(page.getByTestId('diary-word-count')).toHaveText('9字')
@@ -97,6 +98,7 @@ test('日记：保存/字数/覆盖/删除', async () => {
     ])
 
     await page.getByTestId('diary-delete').click()
+    await page.getByRole('button', { name: '确认删除' }).click()
     await expect(page.getByTestId('diary-date-item')).toHaveCount(0)
 
     const after = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
