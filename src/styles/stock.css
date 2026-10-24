@@ -2676,6 +2676,15 @@
   text-align: right;
 }
 
+.stock-master__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
 .stock-master__footer {
   flex-shrink: 0;
   padding: var(--transactions-space-md) var(--transactions-space-lg);

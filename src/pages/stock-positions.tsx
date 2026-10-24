@@ -463,7 +463,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     <span className="stock-muted stock-mono">{position.stockCode}</span>
                   </div>
                   <div className="stock-master__stats">
-                    <span className="stock-label">现价 · {position.quantity} 股</span>
+                    <span className="stock-label">现价</span>
                     <span className="stock-label stock-master__stat-label--end">浮动盈亏</span>
                     <span className="stock-master__stat-value">
                       <span className="stock-mono">{stockPrice(position.latestPrice)}</span>
@@ -475,7 +475,14 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     </span>
                     <span className={`stock-master__stat-value stock-master__stat-value--end ${stockPnlClass(rowPnl)}`}>
                       <span className="stock-mono">{money(rowPnl)}</span>
-                      <span>{stockPercent((rowPnl / position.totalCost) * 100)}</span>
+                    </span>
+                  </div>
+                  <div className="stock-master__meta">
+                    <span className="stock-muted">
+                      {Number((position.quantity / 100).toFixed(2))} 手
+                    </span>
+                    <span className={stockPnlClass(rowPnl)}>
+                      {stockPercent((rowPnl / position.totalCost) * 100)}
                     </span>
                   </div>
                 </button>

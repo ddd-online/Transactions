@@ -85,7 +85,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('trade-save').click()
 
     await expect(page.getByTestId('stock-position-row')).toContainText('浦发银行')
-    await expect(page.getByTestId('stock-position-row')).toContainText('100')
+    await expect(page.getByTestId('stock-position-row')).toContainText('1 手')
     await expect(page.getByTestId('stock-position-empty')).toHaveCount(0)
     await page.getByTestId('stock-tab-account').click()
     await expect(page.getByTestId('stock-cash')).toHaveText('¥294.99')
