@@ -2483,8 +2483,26 @@
 /* ---------------- 账户 ---------------- */
 
 .stock-account-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.stock-section--fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stock-fund-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.stock-fund-scroll .tr-empty {
   min-height: 100%;
-  padding-bottom: var(--transactions-space-xl);
 }
 
 .stock-toolbar-actions {
@@ -2586,8 +2604,15 @@
   background: transparent;
 }
 
+.stock-fund-table .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .stock-table-foot {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
