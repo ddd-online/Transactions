@@ -1391,7 +1391,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
           resolve()
         })
       })
-      if (enabled) window.webContents.openDevTools()
+      if (enabled) window.webContents.openDevTools({ mode: 'detach' })
       else window.webContents.closeDevTools()
       await settled
       const opened = window.webContents.isDevToolsOpened()
