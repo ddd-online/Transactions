@@ -448,7 +448,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
           </section>
 
           {points.length > 0 ? (
-            <section className="stock-statistics-section">
+            <section className="stock-statistics-section stock-statistics-section--chart">
               <header className="stock-statistics-section__head stock-chart-head">
                 <div className="stock-chart-head__title">
                   <h3 className="stock-section__title">统计曲线</h3>

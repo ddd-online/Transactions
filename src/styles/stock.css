@@ -3020,6 +3020,8 @@
 /* ---------------- 统计 ---------------- */
 
 .stock-statistics-view {
+  display: flex;
+  flex-direction: column;
   min-height: 100%;
 }
 
@@ -3042,6 +3044,20 @@
 
 .stock-statistics-section {
   padding: 0 0 var(--transactions-space-lg);
+}
+
+/* 曲线吃掉剩余高度，而不是固定 420px 后在页面底部留一大块空白。 */
+.stock-statistics-section--chart {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stock-statistics-section--chart .stock-curve {
+  flex: 1;
+  height: auto;
+  min-height: 360px;
 }
 
 .stock-statistics-section__head {
