@@ -1,0 +1,732 @@
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+
+import { Input, Modal, Select, Table } from 'antd'
+import type { HTMLAttributes } from 'react'
+
+import { centsToYuan, milliToYuan } from '../../shared/domain/money'
+import { todayYmd } from '../../shared/domain/time'
+import type { StockDayReviewDto, StockPositionDto } from '../../shared/types/stock-position'
+import type { StockTradeDto } from '../../shared/types/stock-history'
+import { Button } from '../components/button'
+import { ConfirmDialog } from '../components/confirm-dialog'
+import { EmptyState } from '../components/empty-state'
+import { Icon } from '../components/icon'
+import { notify } from '../components/toast'
+import {
+  stockDateTime,
+  stockErrorMessage,
+  stockPercent,
+  stockPnlClass,
+  stockPrice,
+  stockRoundRate,
+  stockTradeTypeLabel,
+} from './stock-format'
+
+export interface StockPositionsPanelProps {
+  ledgerId: string
+}
+
+interface TradeForm {
+  type: string
+  code: string
+  name: string
+  price: string
+  lots: string
+  tag: string
+  remark: string
+}
+
+const EMPTY_TRADE: TradeForm = {
+  type: 'open',
+  code: '',
+  name: '',
+  price: '',
+  lots: '1',
+  tag: '分析',
+  remark: '',
+}
+
+function money(cents: number): string {
+  return `¥${centsToYuan(cents)}`
+}
+
+function signedMoney(cents: number): string {
+  return `${cents >= 0 ? '+' : '-'}¥${centsToYuan(Math.abs(cents))}`
+}
+
+function marketValueOf(position: StockPositionDto): number {
+  if (position.latestPrice === undefined) return position.totalCost
+  return Math.round((position.latestPrice * position.quantity) / 10)
+}
+
+function pnlOf(position: StockPositionDto): number {
+  return marketValueOf(position) + position.roundCashFlow
+}
+
+function feeText(
+  position: StockPositionDto,
+  fee: { commissionRate: number; minCommission: number; stampDutyRate: number; transferFeeRate: number } | null,
+): string {
+  const round = position.roundFee
+  const commission = round?.commissionRate ?? fee?.commissionRate
+  const minimum = round?.minCommission ?? fee?.minCommission
+  const stamp = round?.stampDutyRate ?? fee?.stampDutyRate
+  const transfer = round?.transferFeeRate ?? fee?.transferFeeRate
+  if (commission === undefined) return '本轮费率沿用账本默认'
+  return [
+    `佣金 万${(commission * 10000).toFixed(3)}`,
+    `最低 ${minimum === undefined ? '—' : money(minimum)}`,
+    `印花税 ${stamp === undefined ? '—' : `${(stamp * 100).toFixed(2)}%`}`,
+    `过户费 ${transfer === undefined ? '—' : `${(transfer * 100).toFixed(3)}%`}`,
+  ].join(' · ')
+}
+
+export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX.Element {
+  const [positions, setPositions] = useState<StockPositionDto[]>([])
+  const [selectedCode, setSelectedCode] = useState('')
+  const [trades, setTrades] = useState<StockTradeDto[]>([])
+  const [tags, setTags] = useState<string[]>(['分析'])
+  const [fee, setFee] = useState<{
+    commissionRate: number
+    minCommission: number
+    stampDutyRate: number
+    transferFeeRate: number
+  } | null>(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [tradeOpen, setTradeOpen] = useState(false)
+  const [tradeForm, setTradeForm] = useState<TradeForm>(EMPTY_TRADE)
+  const [reviewOpen, setReviewOpen] = useState<'daily' | 'round' | null>(null)
+  const [dailyDate, setDailyDate] = useState(todayYmd())
+  const [dailyText, setDailyText] = useState('')
+  const [roundText, setRoundText] = useState('')
+  const [editingTrade, setEditingTrade] = useState<StockTradeDto | null>(null)
+  const [editPrice, setEditPrice] = useState('')
+  const [editLots, setEditLots] = useState('1')
+  const [deleteOrder, setDeleteOrder] = useState<string | null>(null)
+
+  const selected = useMemo(
+    () => positions.find((row) => row.stockCode === selectedCode) ?? positions[0],
+    [positions, selectedCode],
+  )
+
+  const load = useCallback(async (): Promise<void> => {
+    if (!ledgerId) {
+      setPositions([])
+      return
+    }
+    try {
+      const [rows, tagSettings, feeSettings] = await Promise.all([
+        window.api.invoke('stock_positions', { ledger_id: ledgerId }),
+        window.api.invoke('stock_tag_settings_get', { ledger_id: ledgerId }),
+        window.api.invoke('stock_fee_settings_get', { ledger_id: ledgerId }),
+      ])
+      const active = rows.filter((row) => row.quantity > 0)
+      setPositions(active)
+      setTags(tagSettings.tags)
+      setFee(feeSettings)
+      setSelectedCode((current) =>
+        active.some((row) => row.stockCode === current) ? current : active[0]?.stockCode ?? '',
+      )
+      setError('')
+    } catch (loadError) {
+      setError(stockErrorMessage(loadError))
+    }
+  }, [ledgerId])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  useEffect(() => {
+    if (!selected) {
+      setTrades([])
+      setRoundText('')
+      return
+    }
+    setRoundText(selected.review)
+    setDailyText(selected.dayReviews[0]?.review ?? '')
+    setDailyDate(selected.dayReviews[0]?.date ?? todayYmd())
+    void (async () => {
+      try {
+        const rows = await window.api.invoke('stock_trades', {
+          ledger_id: ledgerId,
+          stock_code: selected.stockCode,
+        })
+        setTrades(rows)
+      } catch (tradeError) {
+        setError(stockErrorMessage(tradeError))
+      }
+    })()
+  }, [ledgerId, selected])
+
+  const openTrade = (type: string, position?: StockPositionDto): void => {
+    setTradeForm({
+      type,
+      code: position?.stockCode ?? '',
+      name: position?.stockName ?? '',
+      price:
+        type === 'open' || position?.latestPrice === undefined
+          ? ''
+          : milliToYuan(position.latestPrice),
+      lots: type === 'close' ? String(Math.max(1, Math.floor((position?.quantity ?? 100) / 100))) : '1',
+      tag: position?.tag ?? tags[0] ?? '分析',
+      remark: '',
+    })
+    setError('')
+    setTradeOpen(true)
+  }
+
+  const submitTrade = useCallback(async (): Promise<void> => {
+    setBusy(true)
+    setError('')
+    try {
+      await window.api.invoke('stock_trade_create', {
+        ledger_id: ledgerId,
+        stock_code: tradeForm.code.trim(),
+        stock_name: tradeForm.name.trim(),
+        trade_type: tradeForm.type,
+        trade_time: Math.floor(Date.now() / 1000),
+        remark: tradeForm.remark,
+        tag: tradeForm.tag,
+        fills: [{ price: Number(tradeForm.price), lots: Number(tradeForm.lots) }],
+        price: 0,
+        lots: 0,
+      })
+      setTradeOpen(false)
+      notify('成交已记录')
+      await load()
+    } catch (tradeError) {
+      setError(stockErrorMessage(tradeError))
+    } finally {
+      setBusy(false)
+    }
+  }, [ledgerId, load, tradeForm])
+
+  const saveTag = useCallback(
+    async (value: string): Promise<void> => {
+      if (!selected) return
+      try {
+        await window.api.invoke('stock_position_tag', {
+          ledger_id: ledgerId,
+          code: selected.stockCode,
+          tag: value,
+        })
+        await load()
+      } catch (tagError) {
+        notify(stockErrorMessage(tagError), 'error')
+      }
+    },
+    [ledgerId, load, selected],
+  )
+
+  const saveDaily = useCallback(async (): Promise<void> => {
+    if (!selected) return
+    try {
+      await window.api.invoke('stock_day_review', {
+        ledger_id: ledgerId,
+        code: selected.stockCode,
+        date: dailyDate,
+        review: dailyText,
+      })
+      notify('复盘已保存')
+      await load()
+    } catch (reviewError) {
+      notify(stockErrorMessage(reviewError), 'error')
+    }
+  }, [dailyDate, dailyText, ledgerId, load, selected])
+
+  const saveRound = useCallback(async (): Promise<void> => {
+    if (!selected) return
+    try {
+      await window.api.invoke('stock_position_review', {
+        ledger_id: ledgerId,
+        code: selected.stockCode,
+        review: roundText,
+      })
+      notify('复盘已保存')
+      await load()
+    } catch (reviewError) {
+      notify(stockErrorMessage(reviewError), 'error')
+    }
+  }, [ledgerId, load, roundText, selected])
+
+  const saveTradeEdit = useCallback(async (): Promise<void> => {
+    if (!editingTrade) return
+    try {
+      await window.api.invoke('stock_trade_update', {
+        ledger_id: ledgerId,
+        id: editingTrade.id,
+        price: Number(editPrice),
+        lots: Number(editLots),
+        trade_time: editingTrade.tradeTime,
+      })
+      setEditingTrade(null)
+      notify('成交已更新')
+      await load()
+      if (selected) {
+        const rows = await window.api.invoke('stock_trades', {
+          ledger_id: ledgerId,
+          stock_code: selected.stockCode,
+        })
+        setTrades(rows)
+      }
+    } catch (tradeError) {
+      notify(stockErrorMessage(tradeError), 'error')
+    }
+  }, [editLots, editPrice, editingTrade, ledgerId, load, selected])
+
+  const removeOrder = useCallback(async (): Promise<void> => {
+    if (!deleteOrder) return
+    try {
+      await window.api.invoke('stock_trade_order_delete', {
+        ledger_id: ledgerId,
+        order_id: deleteOrder,
+      })
+      setDeleteOrder(null)
+      await load()
+      if (selected) {
+        const rows = await window.api.invoke('stock_trades', {
+          ledger_id: ledgerId,
+          stock_code: selected.stockCode,
+        })
+        setTrades(rows)
+      }
+    } catch (deleteError) {
+      notify(stockErrorMessage(deleteError), 'error')
+    }
+  }, [deleteOrder, ledgerId, load, selected])
+
+  const marketValue = selected ? marketValueOf(selected) : 0
+  const pnl = selected ? pnlOf(selected) : 0
+  const pnlRate = selected && selected.totalCost > 0 ? (pnl / selected.totalCost) * 100 : 0
+  const quote = selected ? stockRoundRate(selected.latestPrice, selected.prevClose) : null
+
+  return (
+    <div className="stock-positions-view">
+      <aside className="stock-master">
+        {positions.length === 0 ? (
+          <EmptyState
+            testId="stock-position-empty"
+            title={ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
+            description={ledgerId ? '买入后，持仓会显示在这里。' : undefined}
+          />
+        ) : (
+          <div className="stock-master__list">
+            {positions.map((position) => {
+              const rowPnl = pnlOf(position)
+              return (
+                <button
+                  key={position.id}
+                  type="button"
+                  className={`stock-master__row${position.stockCode === selected?.stockCode ? ' is-active' : ''}`}
+                  data-testid="stock-position-row"
+                  onClick={() => setSelectedCode(position.stockCode)}
+                >
+                  <div className="stock-master__headline">
+                    <strong>{position.stockName}</strong>
+                    <span className="stock-muted stock-mono">{position.stockCode}</span>
+                  </div>
+                  <div className="stock-master__line">
+                    <span className="stock-muted">
+                      现价 <span className="stock-mono">{stockPrice(position.latestPrice)}</span>
+                      {position.latestPrice !== undefined && position.prevClose !== undefined ? (
+                        <span className={stockPnlClass(position.latestPrice - position.prevClose)}>
+                          {' '}
+                          {stockRoundRate(position.latestPrice, position.prevClose).percent}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className={stockPnlClass(rowPnl)}>
+                      浮动盈亏 <span className="stock-mono">{money(rowPnl)}</span>
+                    </span>
+                  </div>
+                  <div className="stock-master__line">
+                    <span className="stock-muted">
+                      {position.quantity} 股 · 1 轮
+                    </span>
+                    <span className={stockPnlClass(rowPnl)}>{stockPercent((rowPnl / position.totalCost) * 100)}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+        <div className="stock-master__footer">
+          <Button variant="primary" block testId="stock-position-create" onClick={() => openTrade('open')}>
+            建仓
+          </Button>
+        </div>
+      </aside>
+
+      <section className="stock-detail">
+        {!selected ? (
+          <div className="stock-detail__empty">
+            {error ? <p className="stock-inline-error">{error}</p> : null}
+          </div>
+        ) : (
+          <>
+            <header className="stock-detail__head">
+              <div className="stock-detail__identity">
+                <h2>{selected.stockName}</h2>
+                <span className="stock-muted stock-mono">{selected.stockCode}</span>
+                <Select
+                  className="stock-tag-select"
+                  value={selected.tag}
+                  options={tags.map((tag) => ({ value: tag, label: tag }))}
+                  onChange={(value) => void saveTag(value)}
+                  popupMatchSelectWidth={false}
+                />
+              </div>
+              <div className="stock-detail__actions">
+                <Button variant="primary" size="sm" testId="stock-position-close" onClick={() => openTrade('close', selected)}>
+                  清仓
+                </Button>
+                <Button variant="secondary" size="sm" testId="stock-position-reduce" onClick={() => openTrade('reduce', selected)}>
+                  减仓
+                </Button>
+                <Button variant="secondary" size="sm" testId="stock-position-add" onClick={() => openTrade('add', selected)}>
+                  加仓
+                </Button>
+              </div>
+            </header>
+
+            <div className="stock-detail__metrics">
+              <div>
+                <span className="stock-label">现价</span>
+                <strong className="stock-mono">{stockPrice(selected.latestPrice)}</strong>
+              </div>
+              <div>
+                <span className="stock-label">当日涨跌</span>
+                <strong className={quote?.up ? 'is-up' : 'is-down'}>
+                  {quote ? `${quote.change} ${quote.percent}` : '—'}
+                </strong>
+              </div>
+              <div>
+                <span className="stock-label">持仓市值</span>
+                <strong className="stock-mono">{money(marketValue)}</strong>
+              </div>
+              <div>
+                <span className="stock-label">浮动盈亏</span>
+                <strong className={stockPnlClass(pnl)}>
+                  {money(pnl)} {stockPercent(pnlRate)}
+                </strong>
+              </div>
+            </div>
+
+            <p className="stock-fee-line">
+              本轮费率 <span>{feeText(selected, fee)}</span>
+            </p>
+
+            <section className="stock-detail__section">
+              <button
+                type="button"
+                className="stock-section-toggle"
+                onClick={() => setReviewOpen(reviewOpen === 'daily' ? null : 'daily')}
+              >
+                <Icon name={reviewOpen === 'daily' ? 'Down' : 'CaretRight'} size={12} />
+                每日复盘
+              </button>
+              <Button variant="secondary" size="sm" testId="position-review-open" onClick={() => setReviewOpen('daily')}>
+                写今日
+              </Button>
+            </section>
+            {reviewOpen === 'daily' ? (
+              <div className="stock-review-box">
+                <div className="stock-review-box__meta">
+                  <Input
+                    data-testid="position-review-date"
+                    value={dailyDate}
+                    onChange={(event) => setDailyDate(event.target.value)}
+                    placeholder="YYYY-MM-DD"
+                    style={{ width: 130 }}
+                  />
+                  <Button variant="primary" size="sm" testId="position-review-save" onClick={() => void saveDaily()}>
+                    保存
+                  </Button>
+                </div>
+                <Input.TextArea
+                  data-testid="position-review-text"
+                  rows={3}
+                  placeholder="记录今天的盘面与判断"
+                  value={dailyText}
+                  onChange={(event) => setDailyText(event.target.value)}
+                />
+                {selected.dayReviews.length > 0 ? (
+                  <ul className="stock-review-list">
+                    {selected.dayReviews.slice(0, 5).map((review: StockDayReviewDto) => (
+                      <li key={review.date}>
+                        <span className="stock-muted">{review.date}</span>
+                        <span>{review.review}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : (
+              <div className="stock-review-preview">
+                {selected.dayReviews[0]
+                  ? `${selected.dayReviews[0].date}：${selected.dayReviews[0].review}`
+                  : '还没有写每日复盘，点「写今日」记下今天的盘面和判断。'}
+              </div>
+            )}
+
+            <section className="stock-detail__section">
+              <button
+                type="button"
+                className="stock-section-toggle"
+                onClick={() => setReviewOpen(reviewOpen === 'round' ? null : 'round')}
+              >
+                <Icon name={reviewOpen === 'round' ? 'Down' : 'CaretRight'} size={12} />
+                本轮复盘
+              </button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setReviewOpen('round')}
+              >
+                编辑
+              </Button>
+            </section>
+            {reviewOpen === 'round' ? (
+              <div className="stock-review-box">
+                <Input.TextArea
+                  rows={6}
+                  placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
+                  value={roundText}
+                  onChange={(event) => setRoundText(event.target.value)}
+                />
+                <div className="stock-review-box__footer">
+                  <Button variant="primary" size="sm" onClick={() => void saveRound()}>
+                    保存复盘
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="stock-review-preview stock-review-preview--lines">
+                {selected.review ? selected.review : '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
+              </div>
+            )}
+
+            <section className="stock-detail__section">
+              <span className="stock-section-title">成交记录</span>
+            </section>
+            <Table
+              className="tr-table stock-trade-table"
+              rowKey="id"
+              pagination={false}
+              size="small"
+              dataSource={trades}
+              onRow={() => ({ 'data-testid': 'stock-trade' }) as HTMLAttributes<HTMLElement>}
+              columns={[
+                {
+                  title: '时间',
+                  dataIndex: 'tradeTime',
+                  render: (value: number) => stockDateTime(value),
+                  width: 150,
+                },
+                {
+                  title: '类型',
+                  dataIndex: 'tradeType',
+                  width: 80,
+                  render: (value: string) => (
+                    <span className={`stock-trade-type is-${value}`}>{stockTradeTypeLabel(value)}</span>
+                  ),
+                },
+                {
+                  title: '成交价',
+                  dataIndex: 'price',
+                  align: 'right',
+                  render: (value: number) => milliToYuan(value),
+                },
+                { title: '手数', dataIndex: 'lots', align: 'right', width: 70 },
+                {
+                  title: '成交金额',
+                  dataIndex: 'amount',
+                  align: 'right',
+                  render: (value: number) => centsToYuan(value),
+                },
+                {
+                  title: '费用',
+                  dataIndex: 'fee',
+                  align: 'right',
+                  render: (value: number) => money(value),
+                },
+                {
+                  title: '资金变动',
+                  key: 'cash',
+                  align: 'right',
+                  render: (_, row) => {
+                    const cash =
+                      row.tradeType === 'reduce' || row.tradeType === 'close'
+                        ? row.amount - row.fee
+                        : -(row.amount + row.fee)
+                    return <span className={stockPnlClass(cash)}>{signedMoney(cash)}</span>
+                  },
+                },
+                {
+                  title: '操作',
+                  key: 'actions',
+                  align: 'right',
+                  width: 110,
+                  render: (_, row) => (
+                    <span className="stock-row-actions">
+                      <Button
+                        variant="text"
+                        size="sm"
+                        testId="stock-trade-edit"
+                        onClick={() => {
+                          setEditingTrade(row)
+                          setEditPrice(milliToYuan(row.price))
+                          setEditLots(String(row.lots))
+                        }}
+                      >
+                        编辑
+                      </Button>
+                      <Button
+                        variant="text-danger"
+                        size="sm"
+                        testId="stock-trade-delete"
+                        onClick={() => setDeleteOrder(row.orderId)}
+                      >
+                        删除
+                      </Button>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </>
+        )}
+      </section>
+
+      <Modal
+        open={tradeOpen}
+        title={stockTradeTypeLabel(tradeForm.type)}
+        width={520}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={() => setTradeOpen(false)}
+      >
+        <div className="stock-modal-form">
+          <div className="stock-modal-grid">
+            <label>
+              <span className="stock-label">类型</span>
+              <Select
+                data-testid="trade-type"
+                value={tradeForm.type}
+                onChange={(value) => setTradeForm((current) => ({ ...current, type: value }))}
+                options={[
+                  { value: 'open', label: '建仓' },
+                  { value: 'add', label: '加仓' },
+                  { value: 'reduce', label: '减仓' },
+                  { value: 'close', label: '清仓' },
+                ]}
+              />
+            </label>
+            <label>
+              <span className="stock-label">代码</span>
+              <Input
+                data-testid="trade-code"
+                value={tradeForm.code}
+                onChange={(event) => setTradeForm((current) => ({ ...current, code: event.target.value }))}
+              />
+            </label>
+            <label>
+              <span className="stock-label">名称</span>
+              <Input
+                data-testid="trade-name"
+                value={tradeForm.name}
+                onChange={(event) => setTradeForm((current) => ({ ...current, name: event.target.value }))}
+              />
+            </label>
+            <label>
+              <span className="stock-label">价格（元）</span>
+              <Input
+                data-testid="trade-price"
+                inputMode="decimal"
+                value={tradeForm.price}
+                onChange={(event) => setTradeForm((current) => ({ ...current, price: event.target.value }))}
+              />
+            </label>
+            <label>
+              <span className="stock-label">手数</span>
+              <Input
+                data-testid="trade-lots"
+                inputMode="numeric"
+                value={tradeForm.lots}
+                onChange={(event) => setTradeForm((current) => ({ ...current, lots: event.target.value }))}
+              />
+            </label>
+            <label>
+              <span className="stock-label">标签</span>
+              <Select
+                data-testid="trade-tag"
+                value={tradeForm.tag}
+                onChange={(value) => setTradeForm((current) => ({ ...current, tag: value }))}
+                options={tags.map((tag) => ({ value: tag, label: tag }))}
+              />
+            </label>
+          </div>
+          {error ? <p className="stock-modal-error">{error}</p> : null}
+          <div className="stock-modal-actions">
+            <Button variant="secondary" onClick={() => setTradeOpen(false)}>
+              取消
+            </Button>
+            <Button variant="primary" testId="trade-save" loading={busy} onClick={() => void submitTrade()}>
+              记一笔
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={editingTrade !== null}
+        title="编辑成交"
+        width={420}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={() => setEditingTrade(null)}
+      >
+        <div className="stock-modal-form">
+          <label>
+            <span className="stock-label">价格（元）</span>
+            <Input
+              data-testid="stock-trade-price"
+              value={editPrice}
+              onChange={(event) => setEditPrice(event.target.value)}
+            />
+          </label>
+          <label>
+            <span className="stock-label">手数</span>
+            <Input
+              data-testid="stock-trade-lots"
+              value={editLots}
+              onChange={(event) => setEditLots(event.target.value)}
+            />
+          </label>
+          <div className="stock-modal-actions">
+            <Button variant="secondary" onClick={() => setEditingTrade(null)}>
+              取消
+            </Button>
+            <Button variant="primary" testId="stock-trade-save" onClick={() => void saveTradeEdit()}>
+              保存
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={deleteOrder !== null}
+        title="删除整笔委托"
+        message="删除后持仓与资金会按重放结果回滚，确定继续？"
+        confirmText="删除"
+        danger
+        onCancel={() => setDeleteOrder(null)}
+        onConfirm={() => void removeOrder()}
+      />
+    </div>
+  )
+}

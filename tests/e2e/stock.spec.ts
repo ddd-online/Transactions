@@ -57,24 +57,27 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('stock-tab-account').click()
     await expect(page.getByTestId('fund-empty')).toContainText('还没有资金记录')
 
+    await page.getByTestId('stock-open-principal').click()
     await page.getByTestId('stock-amount').fill('1000')
-    await page.getByTestId('stock-add-principal').click()
+    await page.getByTestId('stock-amount-confirm').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
     await expect(page.getByTestId('stock-cash')).toHaveText('¥1000.00')
     await expect(page.getByTestId('fund-row')).toHaveText(/追加本金/)
     await expect(page.getByTestId('fund-row')).toHaveText(/1000\.00/)
 
+    await page.getByTestId('stock-open-withdraw').click()
     await page.getByTestId('stock-amount').fill('200')
-    await page.getByTestId('stock-withdraw').click()
+    await page.getByTestId('stock-amount-confirm').click()
     await expect(page.getByTestId('stock-cash')).toHaveText('¥800.00')
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
     await page.getByTestId('stock-tab-settings').click()
-    await page.getByTestId('fee-commission').fill('0.0001')
+    await page.getByTestId('fee-commission').fill('1')
     await page.getByTestId('fee-save').click()
     await expect(page.getByTestId('stock-error')).toHaveCount(0)
 
     await page.getByTestId('stock-tab-positions').click()
+    await page.getByTestId('stock-position-create').click()
     await page.getByTestId('trade-code').fill('600000')
     await page.getByTestId('trade-name').fill('浦发银行')
     await page.getByTestId('trade-price').fill('5')
@@ -133,9 +136,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('position-review-text')).toHaveValue('观察一天')
     await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
 
-    await page.getByTestId('trade-type').click()
-    await page.locator('.ant-select-item-option').filter({ hasText: '清仓' }).click()
-    await expect(page.getByTestId('trade-type')).toContainText('清仓')
+    await page.getByTestId('stock-position-close').click()
     await page.getByTestId('trade-price').fill('6')
     await page.getByTestId('trade-lots').fill('1')
     await page.getByTestId('trade-save').click()
@@ -144,10 +145,11 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
 
     await page.getByTestId('stock-tab-history').click()
     await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
-    await page.getByTestId('stock-history-open').click()
+    await page.getByTestId('stock-history-row').click()
     await expect(page.getByTestId('stock-history-detail')).toContainText('第 1 轮')
     await expect(page.getByTestId('stock-round')).toContainText('观察一天')
 
+    await page.getByTestId('round-review-open').click()
     await page.getByTestId('round-review').fill('复盘：趋势向上')
     await page.getByTestId('round-review-save').click()
     await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
@@ -166,13 +168,14 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     expect(round).toEqual({ review: '复盘：趋势向上', tag: '打板' })
 
     await expect(page.getByTestId('stock-trade')).toHaveCount(2)
-    const openTrade = page.getByTestId('stock-trade').filter({ hasText: 'open' })
+    const openTrade = page.getByTestId('stock-trade').filter({ hasText: '建仓' })
+    await openTrade.getByTestId('stock-trade-edit').click()
     await openTrade.getByTestId('stock-trade-price').fill('6.5')
     await expect(openTrade.getByTestId('stock-trade-price')).toHaveValue('6.5')
     await page.waitForTimeout(100)
     await openTrade.getByTestId('stock-trade-save').click()
     await expect(page.getByTestId('toast').last()).toContainText('成交已更新')
-    await expect(openTrade.getByTestId('stock-trade-price')).toHaveValue('6.50')
+    await expect(openTrade).toContainText('6.50')
     await expect
       .poll(() => {
         const db = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -184,11 +187,15 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
       })
       .toBe(6500)
     await page.getByTestId('stock-tab-statistics').click()
+    await page.getByTestId('statistics-tab-detail').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
 
     await page.getByTestId('stock-tab-settings').click()
+    await page.getByTestId('stock-operations-open').click()
     await expect(page.getByTestId('stock-operation')).toHaveCount(4)
+    await page.keyboard.press('Escape')
     await page.getByTestId('stock-operation-rollback').click()
+    await page.getByTestId('stock-operations-open').click()
     await expect(page.getByTestId('stock-operation')).toHaveCount(3)
   } finally {
     await electronApp.close()

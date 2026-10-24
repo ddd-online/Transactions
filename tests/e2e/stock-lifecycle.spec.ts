@@ -50,8 +50,9 @@ test('股票：重置与归档', async () => {
     await createLedger(page, '股票账本')
     await page.getByTestId('nav-stock').click()
 
+    await page.getByTestId('stock-open-principal').click()
     await page.getByTestId('stock-amount').fill('1000')
-    await page.getByTestId('stock-add-principal').click()
+    await page.getByTestId('stock-amount-confirm').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
     await page.getByTestId('stock-tab-settings').click()
@@ -72,14 +73,16 @@ test('股票：重置与归档', async () => {
     const originalLedgerId = ledgerRow.id
     expect(accountCount.count).toBe(0)
 
+    await page.getByTestId('stock-open-principal').click()
     await page.getByTestId('stock-amount').fill('500')
-    await page.getByTestId('stock-add-principal').click()
+    await page.getByTestId('stock-amount-confirm').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥500.00')
 
     await page.getByTestId('stock-tab-settings').click()
+    await page.getByTestId('stock-archive-open').click()
     await page.getByTestId('stock-archive-name').fill('归档账本')
     await page.getByTestId('stock-archive').click()
-    await expect(page.getByTestId('stock-transfer-status')).toContainText('已归档')
+    await expect(page.getByTestId('toast').last()).toContainText('已归档')
     await page.getByTestId('nav-accounting').click()
     await expect(page.getByTestId('ledger-select')).toContainText('归档账本')
 

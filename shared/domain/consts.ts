@@ -56,7 +56,8 @@ export const TAG_POLICY_ANY = 'any'
 export const TAG_POLICY_ALL = 'all'
 
 // ---------- 本轮复盘模板 ----------
-export const STOCK_REVIEW_TEMPLATE_DEFAULT = '买入理由：\n卖出理由：\n交易心得：\n'
+export const STOCK_REVIEW_TEMPLATE_DEFAULT =
+  '买入理由：\n卖出理由：\n买点审视：\n卖点审视：\n交易心得：\n'
 export const STOCK_REVIEW_TEMPLATE_MAX_CHARS = 200
 
 // ---------- 待办 ----------

@@ -1,49 +1,52 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+
+import { Input, Select, Table } from 'antd'
+import type { HTMLAttributes } from 'react'
 
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { formatTimestamp } from '../../shared/domain/time'
 import type {
+  StockTradeDto,
   StockTradeHistoryDetailDto,
   StockTradeHistoryDto,
   StockTradeHistorySummaryDto,
+  StockTradeRoundDto,
 } from '../../shared/types/stock-history'
 import type { StockTradeTagSettingDto } from '../../shared/types/stock'
-import { Input, Select, Table } from 'antd'
-import type { HTMLAttributes } from 'react'
-
 import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { EmptyState } from '../components/empty-state'
+import { Icon } from '../components/icon'
 import { notify } from '../components/toast'
+import {
+  stockDateTime,
+  stockErrorMessage,
+  stockPercent,
+  stockPnlClass,
+  stockPrice,
+  stockTradeTypeLabel,
+} from './stock-format'
 
-function errorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'msg' in error) {
-    return String((error as { msg: unknown }).msg)
-  }
-  if (error instanceof Error) return error.message
-  return String(error)
+export interface StockHistoryPanelProps {
+  ledgerId: string
 }
 
 function money(cents: number): string {
   return `¥${centsToYuan(cents)}`
 }
 
-export interface StockHistoryPanelProps {
-  ledgerId: string
-}
-
-/** 股票 · 交易历史：已清仓股票列表 + 汇总 + 单股轮次详情。 */
 export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Element {
   const [summary, setSummary] = useState<StockTradeHistorySummaryDto | null>(null)
   const [rows, setRows] = useState<StockTradeHistoryDto[]>([])
+  const [selectedCode, setSelectedCode] = useState('')
   const [detail, setDetail] = useState<StockTradeHistoryDetailDto | null>(null)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [reviews, setReviews] = useState<Record<string, string>>({})
   const [roundTags, setRoundTags] = useState<Record<string, string>>({})
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [edits, setEdits] = useState<Record<string, { price: string; lots: string }>>({})
   const [confirmOrder, setConfirmOrder] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
 
   const load = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -52,7 +55,6 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
       setDetail(null)
       return
     }
-    setLoading(true)
     try {
       const [list, total] = await Promise.all([
         window.api.invoke('stock_history', { ledger_id: ledgerId }),
@@ -62,9 +64,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
       setSummary(total)
       setError('')
     } catch (loadError) {
-      setError(errorMessage(loadError))
-    } finally {
-      setLoading(false)
+      setError(stockErrorMessage(loadError))
     }
   }, [ledgerId])
 
@@ -74,7 +74,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
 
   const openDetail = useCallback(
     async (code: string): Promise<void> => {
+      if (!code) return
       setError('')
+      setSelectedCode(code)
       try {
         const next = await window.api.invoke('stock_history_detail', {
           ledger_id: ledgerId,
@@ -83,6 +85,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         setDetail(next)
         setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
+        setExpanded(
+          Object.fromEntries(next.rounds.map((round, index) => [round.id, index === 0])),
+        )
         setEdits(
           Object.fromEntries(
             next.rounds
@@ -95,16 +100,21 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         })
         setTagOptions(settings.tags)
       } catch (detailError) {
-        setError(errorMessage(detailError))
+        setError(stockErrorMessage(detailError))
       }
     },
     [ledgerId],
   )
 
+  useEffect(() => {
+    if (!selectedCode && rows.length > 0) {
+      void openDetail(rows[0].stockCode)
+    }
+  }, [openDetail, rows, selectedCode])
+
   const saveRoundReview = useCallback(
     async (roundId: string): Promise<void> => {
       if (!detail) return
-      setError('')
       try {
         const next = await window.api.invoke('stock_round_review', {
           ledger_id: ledgerId,
@@ -113,8 +123,9 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         })
         setDetail(next)
         setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
+        notify('复盘已保存')
       } catch (reviewError) {
-        setError(errorMessage(reviewError))
+        notify(stockErrorMessage(reviewError), 'error')
       }
     },
     [detail, ledgerId, reviews],
@@ -123,7 +134,6 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
   const saveRoundTag = useCallback(
     async (roundId: string, tag: string): Promise<void> => {
       if (!detail) return
-      setError('')
       try {
         const next = await window.api.invoke('stock_round_tag', {
           ledger_id: ledgerId,
@@ -132,15 +142,8 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         })
         setDetail(next)
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
-        setEdits(
-          Object.fromEntries(
-            next.rounds
-              .flatMap((round) => round.trades)
-              .map((trade) => [trade.id, { price: milliToYuan(trade.price), lots: String(trade.lots) }]),
-          ),
-        )
       } catch (tagError) {
-        setError(errorMessage(tagError))
+        notify(stockErrorMessage(tagError), 'error')
       }
     },
     [detail, ledgerId],
@@ -151,10 +154,7 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
       if (!detail) return
       const edit = edits[tradeId]
       if (!edit) return
-      const trade = detail.rounds
-        .flatMap((round) => round.trades)
-        .find((item) => item.id === tradeId)
-      setError('')
+      const trade = detail.rounds.flatMap((round) => round.trades).find((item) => item.id === tradeId)
       try {
         await window.api.invoke('stock_trade_update', {
           ledger_id: ledgerId,
@@ -166,228 +166,167 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         await openDetail(detail.stockCode)
         notify('成交已更新')
       } catch (tradeError) {
-        notify(`成交更新失败：${errorMessage(tradeError)}`, 'error')
-        setError(errorMessage(tradeError))
+        notify(stockErrorMessage(tradeError), 'error')
       }
     },
     [detail, edits, ledgerId, openDetail],
   )
 
-  const deleteOrder = useCallback(
-    async (orderId: string): Promise<void> => {
-      if (!detail) return
-      setError('')
-      try {
-        await window.api.invoke('stock_trade_order_delete', {
-          ledger_id: ledgerId,
-          order_id: orderId,
-        })
-        await openDetail(detail.stockCode)
-      } catch (deleteError) {
-        setError(errorMessage(deleteError))
-      }
-    },
-    [detail, ledgerId, openDetail],
-  )
+  const deleteOrder = useCallback(async (): Promise<void> => {
+    if (!confirmOrder || !detail) return
+    try {
+      await window.api.invoke('stock_trade_order_delete', {
+        ledger_id: ledgerId,
+        order_id: confirmOrder,
+      })
+      setConfirmOrder(null)
+      await openDetail(detail.stockCode)
+    } catch (deleteError) {
+      notify(stockErrorMessage(deleteError), 'error')
+    }
+  }, [confirmOrder, detail, ledgerId, openDetail])
+
+  const totals = useMemo(() => {
+    if (!detail) return null
+    return {
+      win: detail.winCount,
+      loss: detail.lossCount,
+      rounds: detail.roundCount,
+    }
+  }, [detail])
 
   return (
-    <section className="m0-card m0-card--wide">
-      <div className="m0-card-head">
-        <h2>股票 · 交易历史</h2>
-        <span className="m0-muted">{loading ? '加载中…' : `${rows.length} 只股票`}</span>
+    <div className="stock-history-view">
+      <div className="stock-history-summary" data-testid="stock-history-summary">
+        <div>
+          <span className="stock-label">已实现盈亏</span>
+          <strong className={stockPnlClass(summary?.totalPnl ?? 0)}>
+            {money(summary?.totalPnl ?? 0)}
+          </strong>
+        </div>
+        <div>
+          <span className="stock-label">累计盈亏率</span>
+          <strong className={stockPnlClass(summary?.totalPnlRate ?? 0)}>
+            {stockPercent(summary?.totalPnlRate ?? 0)}
+          </strong>
+        </div>
+        <div>
+          <span className="stock-label">胜负轮次</span>
+          <strong>
+            {summary ? `${summary.winCount} 胜 · ${summary.lossCount} 负` : '—'}
+          </strong>
+        </div>
+        <div>
+          <span className="stock-label">总轮次</span>
+          <strong>{summary ? `${summary.roundCount} 轮` : '—'}</strong>
+        </div>
       </div>
 
-      {summary ? (
-        <div className="m0-stats m0-stock-stats" data-testid="stock-history-summary">
-          <div className="m0-stat">
-            <span className="m0-muted">已清仓股票</span>
-            <strong>{summary.stockCount}</strong>
-          </div>
-          <div className="m0-stat">
-            <span className="m0-muted">轮次（胜 / 负）</span>
-            <strong>
-              {summary.roundCount}（{summary.winCount} / {summary.lossCount}）
-            </strong>
-          </div>
-          <div className="m0-stat">
-            <span className="m0-muted">总盈亏</span>
-            <strong>{money(summary.totalPnl)}</strong>
-          </div>
-          <div className="m0-stat">
-            <span className="m0-muted">总盈亏率</span>
-            <strong>{summary.totalPnlRate.toFixed(2)}%</strong>
-          </div>
-        </div>
-      ) : null}
+      <div className="stock-history-main">
+        <aside className="stock-master stock-history-master">
+          {rows.length === 0 ? (
+            <EmptyState
+              testId="stock-history-empty"
+              title={ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
+            />
+          ) : (
+            <div className="stock-master__list">
+              {rows.map((row) => (
+                <button
+                  key={row.id}
+                  type="button"
+                  className={`stock-master__row${row.stockCode === selectedCode ? ' is-active' : ''}`}
+                  data-testid="stock-history-row"
+                  onClick={() => void openDetail(row.stockCode)}
+                >
+                  <div className="stock-master__headline">
+                    <strong>{row.stockName}</strong>
+                    <span className="stock-muted stock-mono">{row.stockCode}</span>
+                  </div>
+                  <div className="stock-master__line">
+                    <span className="stock-muted">
+                      现价 <span className="stock-mono">{stockPrice(row.latestPrice)}</span>
+                    </span>
+                    <span className={stockPnlClass(row.totalPnl)}>
+                      {row.totalPnl >= 0 ? '盈' : '亏'} {money(Math.abs(row.totalPnl))}
+                    </span>
+                  </div>
+                  <div className="stock-master__line">
+                    <span className="stock-muted">
+                      {row.roundCount} 轮 · 最近 {formatTimestamp(row.lastClosedAt, 'YYYY-MM-DD')}
+                    </span>
+                    <span className={stockPnlClass(row.totalPnlRate)}>
+                      {stockPercent(row.totalPnlRate)}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </aside>
 
-      {error ? (
-        <p className="m0-error" data-testid="stock-history-error">
-          {error}
-        </p>
-      ) : null}
-
-      {rows.length === 0 ? (
-        <EmptyState
-          testId="stock-history-empty"
-          title={ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
-        />
-      ) : (
-        <Table
-          className="tr-table"
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          dataSource={rows}
-          onRow={() => ({ 'data-testid': 'stock-history-row' }) as HTMLAttributes<HTMLElement>}
-          columns={[
-            { title: '股票', render: (_, row) => `${row.stockName} ${row.stockCode}` },
-            { title: '轮次', dataIndex: 'roundCount', align: 'right', width: 76 },
-            { title: '总盈亏', dataIndex: 'totalPnl', align: 'right', render: (value: number) => money(value) },
-            {
-              title: '盈亏率',
-              dataIndex: 'totalPnlRate',
-              align: 'right',
-              render: (value: number) => `${value.toFixed(2)}%`,
-            },
-            {
-              title: '最新价',
-              dataIndex: 'latestPrice',
-              align: 'right',
-              render: (value?: number) => (value === undefined ? '—' : milliToYuan(value)),
-            },
-            {
-              title: '最后清仓',
-              dataIndex: 'lastClosedAt',
-              render: (value: number) => formatTimestamp(value, 'YYYY-MM-DD'),
-            },
-            {
-              title: '',
-              align: 'right',
-              width: 72,
-              render: (_, row) => (
-                <Button variant="text" size="sm" testId="stock-history-open" onClick={() => void openDetail(row.stockCode)}>
-                  详情
-                </Button>
-              ),
-            },
-          ]}
-        />
-      )}
-
-      {detail ? (
-        <div className="m0-stock-history-detail" data-testid="stock-history-detail">
-          <h3 className="m0-subtitle">
-            {detail.stockName} {detail.stockCode} · {detail.roundCount} 轮
-          </h3>
-          <p className="m0-muted">
-            总盈亏 {money(detail.totalPnl)} · {detail.totalPnlRate.toFixed(2)}% · 胜{' '}
-            {detail.winCount} / 负 {detail.lossCount}
-          </p>
-          <ul className="m0-rounds">
-            {detail.rounds.map((round) => (
-              <li key={round.id} data-testid="stock-round">
-                <div className="m0-card-head">
-                  <span>
-                    第 {round.roundNo} 轮 · {formatTimestamp(round.openedAt, 'YYYY-MM-DD')} →{' '}
-                    {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
+        <section className="stock-history-detail" data-testid="stock-history-detail">
+          {!detail ? (
+            <div className="stock-detail__empty">
+              {error ? <p className="stock-inline-error">{error}</p> : null}
+            </div>
+          ) : (
+            <>
+              <header className="stock-detail__head">
+                <div className="stock-detail__identity">
+                  <h2>{detail.stockName}</h2>
+                  <span className="stock-muted stock-mono">{detail.stockCode}</span>
+                  <span className={stockPnlClass(detail.totalPnl)}>
+                    {money(detail.totalPnl)} {stockPercent(detail.totalPnlRate)}
                   </span>
-                  <span className={round.pnl >= 0 ? 'm0-amount-income' : 'm0-amount-expense'}>
-                    {money(round.pnl)} · {round.pnlRate.toFixed(2)}%
+                  <span className="stock-muted">
+                    {totals ? `${totals.win} 胜 ${totals.loss} 负 · ${totals.rounds} 轮` : ''}
                   </span>
                 </div>
-                <p className="m0-muted">
-                  {round.tag} · {round.tradeCount} 笔成交
-                  {round.review ? ` · ${round.review}` : ''}
-                </p>
-                <div className="m0-actions">
-                  <Input.TextArea
-                    className="m0-round-review"
-                    data-testid="round-review"
-                    placeholder="本轮复盘"
-                    value={reviews[round.id] ?? ''}
-                    onChange={(event) =>
-                      setReviews((current) => ({ ...current, [round.id]: event.target.value }))
+              </header>
+
+              <div className="stock-rounds">
+                {detail.rounds.map((round) => (
+                  <RoundBlock
+                    key={round.id}
+                    round={round}
+                    expanded={expanded[round.id] ?? false}
+                    review={reviews[round.id] ?? ''}
+                    tag={roundTags[round.id] ?? round.tag}
+                    options={tagOptions}
+                    edits={edits}
+                    onToggle={() =>
+                      setExpanded((current) => ({ ...current, [round.id]: !current[round.id] }))
                     }
+                    onReview={(value) =>
+                      setReviews((current) => ({ ...current, [round.id]: value }))
+                    }
+                    onSaveReview={() => void saveRoundReview(round.id)}
+                    onTag={(value) => void saveRoundTag(round.id, value)}
+                    onEdit={(trade, field, value) =>
+                      setEdits((current) => ({
+                        ...current,
+                        [trade.id]: {
+                          price:
+                            field === 'price'
+                              ? value
+                              : current[trade.id]?.price ?? milliToYuan(trade.price),
+                          lots:
+                            field === 'lots'
+                              ? value
+                              : current[trade.id]?.lots ?? String(trade.lots),
+                        },
+                      }))
+                    }
+                    onSaveTrade={(tradeId) => void saveTrade(tradeId)}
+                    onDelete={(orderId) => setConfirmOrder(orderId)}
                   />
-                  <Button variant="text" testId="round-review-save" onClick={() => void saveRoundReview(round.id)}>
-                    保存复盘
-                  </Button>
-                  <Select
-                    data-testid="round-tag"
-                    value={roundTags[round.id] ?? round.tag}
-                    style={{ width: 120 }}
-                    onChange={(value) => void saveRoundTag(round.id, value)}
-                    options={tagOptions.map((tag) => ({ value: tag, label: tag }))}
-                  />
-                </div>
-                <ul className="m0-trade-list">
-                  {round.trades
-                    .filter((trade) => trade.shares > 0)
-                    .map((trade) => (
-                      <li key={trade.id} data-testid="stock-trade">
-                        <span>{trade.tradeType}</span>
-                        {trade.tradeType === 'close' ? (
-                          <span className="m0-muted">
-                            {milliToYuan(trade.price)} 元 · {trade.lots} 手
-                          </span>
-                        ) : (
-                          <>
-                            <Input
-                              data-testid="stock-trade-price"
-                              value={edits[trade.id]?.price ?? milliToYuan(trade.price)}
-                              onChange={(event) =>
-                                setEdits((current) => ({
-                                  ...current,
-                                  [trade.id]: {
-                                    price: event.target.value,
-                                    lots: current[trade.id]?.lots ?? String(trade.lots),
-                                  },
-                                }))
-                              }
-                            />
-                            <Input
-                              data-testid="stock-trade-lots"
-                              value={edits[trade.id]?.lots ?? String(trade.lots)}
-                              onChange={(event) =>
-                                setEdits((current) => ({
-                                  ...current,
-                                  [trade.id]: {
-                                    price: current[trade.id]?.price ?? milliToYuan(trade.price),
-                                    lots: event.target.value,
-                                  },
-                                }))
-                              }
-                            />
-                            <Button variant="text" size="sm" testId="stock-trade-save" onClick={() => void saveTrade(trade.id)}>
-                              保存
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          variant="text-danger"
-                          size="sm"
-                          testId="stock-trade-delete"
-                          onClick={() => setConfirmOrder(trade.orderId)}
-                        >
-                          删除委托
-                        </Button>
-                      </li>
-                    ))}
-                </ul>
-                {round.dayReviews.length > 0 ? (
-                  <ul className="m0-muted">
-                    {round.dayReviews.map((review) => (
-                      <li key={review.date}>
-                        {review.date}：{review.review}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
 
       <ConfirmDialog
         open={confirmOrder !== null}
@@ -396,28 +335,233 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
         confirmText="删除"
         danger
         onCancel={() => setConfirmOrder(null)}
-        onConfirm={() => {
-          const orderId = confirmOrder
-          setConfirmOrder(null)
-          if (orderId) void deleteOrder(orderId)
-        }}
+        onConfirm={() => void deleteOrder()}
       />
-    </section>
+    </div>
   )
 }
 
+interface RoundBlockProps {
+  round: StockTradeRoundDto
+  expanded: boolean
+  review: string
+  tag: string
+  options: string[]
+  edits: Record<string, { price: string; lots: string }>
+  onToggle: () => void
+  onReview: (value: string) => void
+  onSaveReview: () => void
+  onTag: (value: string) => void
+  onEdit: (trade: StockTradeDto, field: 'price' | 'lots', value: string) => void
+  onSaveTrade: (id: string) => void
+  onDelete: (orderId: string) => void
+}
 
+function RoundBlock({
+  round,
+  expanded,
+  review,
+  tag,
+  options,
+  edits,
+  onToggle,
+  onReview,
+  onSaveReview,
+  onTag,
+  onEdit,
+  onSaveTrade,
+  onDelete,
+}: RoundBlockProps): JSX.Element {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingReview, setEditingReview] = useState(false)
+  return (
+    <article className="stock-round" data-testid="stock-round">
+      <button type="button" className="stock-round__head" onClick={onToggle}>
+        <Icon name={expanded ? 'Down' : 'CaretRight'} size={12} />
+        <span>
+          第 {round.roundNo} 轮 · {formatTimestamp(round.openedAt, 'YYYY-MM-DD')} →{' '}
+          {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
+        </span>
+        <span className={stockPnlClass(round.pnl)}>
+          {money(round.pnl)} · {stockPercent(round.pnlRate)}
+        </span>
+      </button>
+      {expanded ? (
+        <div className="stock-round__body">
+          <div className="stock-round__meta">
+            <Select
+              data-testid="round-tag"
+              value={tag}
+              options={options.map((item) => ({ value: item, label: item }))}
+              onChange={onTag}
+              popupMatchSelectWidth={false}
+              size="small"
+            />
+            <span className="stock-muted">{round.tradeCount} 笔成交</span>
+          </div>
 
+          <Table
+            className="tr-table stock-trade-table"
+            rowKey="id"
+            pagination={false}
+            size="small"
+            dataSource={round.trades.filter((trade) => trade.shares > 0)}
+            onRow={() => ({ 'data-testid': 'stock-trade' }) as HTMLAttributes<HTMLElement>}
+            columns={[
+              {
+                title: '时间',
+                dataIndex: 'tradeTime',
+                width: 150,
+                render: (value: number) => stockDateTime(value),
+              },
+              {
+                title: '类型',
+                dataIndex: 'tradeType',
+                width: 80,
+                render: (value: string) => stockTradeTypeLabel(value),
+              },
+              {
+                title: '成交价',
+                dataIndex: 'price',
+                align: 'right',
+                render: (value: number, trade) =>
+                  trade.tradeType === 'close' || editingId !== trade.id ? (
+                    milliToYuan(value)
+                  ) : (
+                    <Input
+                      size="small"
+                      data-testid="stock-trade-price"
+                      value={edits[trade.id]?.price ?? milliToYuan(value)}
+                      onChange={(event) => onEdit(trade, 'price', event.target.value)}
+                    />
+                  ),
+              },
+              {
+                title: '手数',
+                dataIndex: 'lots',
+                align: 'right',
+                width: 90,
+                render: (value: number, trade) =>
+                  trade.tradeType === 'close' || editingId !== trade.id ? (
+                    value
+                  ) : (
+                    <Input
+                      size="small"
+                      data-testid="stock-trade-lots"
+                      value={edits[trade.id]?.lots ?? String(value)}
+                      onChange={(event) => onEdit(trade, 'lots', event.target.value)}
+                    />
+                  ),
+              },
+              {
+                title: '成交金额',
+                dataIndex: 'amount',
+                align: 'right',
+                render: (value: number) => centsToYuan(value),
+              },
+              {
+                title: '费用',
+                dataIndex: 'fee',
+                align: 'right',
+                render: (value: number) => money(value),
+              },
+              {
+                title: '操作',
+                key: 'actions',
+                align: 'right',
+                width: 150,
+                render: (_, trade) => (
+                  <span className="stock-row-actions">
+                    {trade.tradeType !== 'close' ? (
+                      editingId === trade.id ? (
+                        <Button
+                          variant="text"
+                          size="sm"
+                          testId="stock-trade-save"
+                          onClick={() => {
+                            onSaveTrade(trade.id)
+                            setEditingId(null)
+                          }}
+                        >
+                          保存
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="text"
+                          size="sm"
+                          testId="stock-trade-edit"
+                          onClick={() => setEditingId(trade.id)}
+                        >
+                          编辑
+                        </Button>
+                      )
+                    ) : null}
+                    <Button
+                      variant="text-danger"
+                      size="sm"
+                      testId="stock-trade-delete"
+                      onClick={() => onDelete(trade.orderId)}
+                    >
+                      删除
+                    </Button>
+                  </span>
+                ),
+              },
+            ]}
+          />
 
+          <div className="stock-round__review">
+            <div className="stock-round__review-head">
+              <span className="stock-section-title">本轮复盘</span>
+              <Button
+                variant="secondary"
+                size="sm"
+                testId="round-review-open"
+                onClick={() => setEditingReview((current) => !current)}
+              >
+                {review ? '编辑' : '写复盘'}
+              </Button>
+            </div>
+            {editingReview ? (
+              <div className="stock-round__review-form">
+                <Input.TextArea
+                  data-testid="round-review"
+                  rows={3}
+                  value={review}
+                  placeholder="本轮复盘"
+                  onChange={(event) => onReview(event.target.value)}
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  testId="round-review-save"
+                  onClick={() => {
+                    onSaveReview()
+                    setEditingReview(false)
+                  }}
+                >
+                  保存复盘
+                </Button>
+              </div>
+            ) : (
+              <p className="stock-round__review-text">
+                {review || '还没有写本轮复盘，点「写复盘」记录买入与卖出的理由。'}
+              </p>
+            )}
+          </div>
 
-
-
-
-
-
-
-
-
-
-
-
+          {round.dayReviews.length > 0 ? (
+            <ul className="stock-round__days">
+              {round.dayReviews.map((day) => (
+                <li key={day.date}>
+                  <span className="stock-muted">{day.date}</span>
+                  <span>{day.review}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  )
+}
