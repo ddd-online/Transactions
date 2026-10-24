@@ -203,7 +203,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await page.getByTestId('statistics-range-recent').click()
     await expect(page.getByTestId('statistics-recent')).toHaveValue('5')
     await page.getByTestId('statistics-range-time').click()
-    await expect(page.getByTestId('statistics-start-date')).toBeVisible()
+    await expect(page.getByTestId('statistics-time-trigger')).toBeVisible()
     await page.getByTestId('statistics-metric-win_rate').click()
     await page.getByTestId('statistics-tab-detail').click()
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)

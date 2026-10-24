@@ -11,11 +11,11 @@ import type {
   StockStatisticsPointDto,
 } from '../../shared/types/stock-statistics'
 import { Button } from '../components/button'
-import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
+import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
 import {
   stockDate,
@@ -273,6 +273,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
   const [tag, setTag] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [timeMode, setTimeMode] = useState<TimeRangeMode>('date')
   const [tabs, setTabs] = useState<'summary' | 'detail'>('summary')
   const [metric, setMetric] = useState<MetricKey>('total_pnl')
   const [data, setData] = useState<StockStatisticsDto | null>(null)
@@ -343,18 +344,17 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
             ]}
           />
           {rangeMode === 'time' ? (
-            <>
-              <DatePicker
-                testId="statistics-start-date"
-                value={startDate}
-                onChange={setStartDate}
-              />
-              <DatePicker
-                testId="statistics-end-date"
-                value={endDate}
-                onChange={setEndDate}
-              />
-            </>
+            <TimeRangePicker
+              testId="statistics-time"
+              mode={timeMode}
+              start={startDate}
+              end={endDate}
+              onModeChange={setTimeMode}
+              onRangeChange={(start, end) => {
+                setStartDate(start)
+                setEndDate(end)
+              }}
+            />
           ) : null}
           {rangeMode === 'recent' ? (
             <Input
