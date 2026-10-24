@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import { Pagination, Table } from 'antd'
+import { Table } from 'antd'
 import type { HTMLAttributes } from 'react'
 
 import type { StockAccountSummary, StockFundRecordPage } from '../../shared/types/stock'
@@ -17,18 +17,21 @@ import {
 export interface StockAccountPanelProps {
   ledgerId: string
   refreshToken: number
+  page: number
+  onTotalChange?: (total: number) => void
 }
 
-const PAGE_SIZE = 10
+export const STOCK_FUND_PAGE_SIZE = 10
 
 export function StockAccountPanel({
   ledgerId,
   refreshToken,
+  page,
+  onTotalChange,
 }: StockAccountPanelProps): JSX.Element {
   const [summary, setSummary] = useState<StockAccountSummary | null>(null)
   const [overview, setOverview] = useState<StockOverviewDto | null>(null)
   const [funds, setFunds] = useState<StockFundRecordPage | null>(null)
-  const [fundPage, setFundPage] = useState(1)
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
@@ -37,29 +40,31 @@ export function StockAccountPanel({
       setSummary(null)
       setOverview(null)
       setFunds(null)
+      onTotalChange?.(0)
       setLoaded(true)
       return
     }
     try {
-      const [account, overviewData, page] = await Promise.all([
+      const [account, overviewData, recordPage] = await Promise.all([
         window.api.invoke('stock_account_summary', { ledger_id: ledgerId }),
         window.api.invoke('stock_overview', { ledger_id: ledgerId }),
         window.api.invoke('stock_fund_records', {
           ledger_id: ledgerId,
-          page: fundPage,
-          pageSize: PAGE_SIZE,
+          page,
+          pageSize: STOCK_FUND_PAGE_SIZE,
         }),
       ])
       setSummary(account)
       setOverview(overviewData)
-      setFunds(page)
+      setFunds(recordPage)
       setError('')
+      onTotalChange?.(recordPage.total)
     } catch (loadError) {
       setError(stockErrorMessage(loadError))
     } finally {
       setLoaded(true)
     }
-  }, [fundPage, ledgerId])
+  }, [ledgerId, onTotalChange, page])
 
   useEffect(() => {
     void load()
@@ -172,18 +177,6 @@ export function StockAccountPanel({
                   },
                 ]}
               />
-              <div className="stock-table-foot">
-                <span className="stock-muted">共 {funds.total} 条</span>
-                <Pagination
-                  size="small"
-                  current={fundPage}
-                  total={funds.total}
-                  pageSize={PAGE_SIZE}
-                  showSizeChanger={false}
-                  showLessItems
-                  onChange={setFundPage}
-                />
-              </div>
             </>
           ) : error ? null : (
             <EmptyState

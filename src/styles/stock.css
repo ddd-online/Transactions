@@ -2846,7 +2846,8 @@
   color: var(--transactions-color-text-major);
 }
 
-.stock-table-foot .ant-pagination-item-active a {
+.stock-table-foot .ant-pagination-item-active a,
+.page-footer-bar .ant-pagination-item-active a {
   color: var(--transactions-color-text-inverse);
 }
 

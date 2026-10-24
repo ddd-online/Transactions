@@ -1,6 +1,6 @@
 import { useState, type JSX } from 'react'
 
-import { Input, Modal } from 'antd'
+import { Input, Modal, Pagination } from 'antd'
 
 import { yuanToCents } from '../../shared/domain/money'
 import type { StockTradeHistorySummaryDto } from '../../shared/types/stock-history'
@@ -8,7 +8,7 @@ import { Button } from '../components/button'
 import { Icon, type IconName } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { notify } from '../components/toast'
-import { StockAccountPanel } from './stock-account'
+import { StockAccountPanel, STOCK_FUND_PAGE_SIZE } from './stock-account'
 import { stockMoney, stockPercent, stockPnlClass } from './stock-format'
 import { StockHistoryPanel } from './stock-history'
 import { StockPositionsPanel } from './stock-positions'
@@ -45,6 +45,8 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [accountBusy, setAccountBusy] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [accountRefresh, setAccountRefresh] = useState(0)
+  const [accountPage, setAccountPage] = useState(1)
+  const [accountFundTotal, setAccountFundTotal] = useState(0)
   const [historySummary, setHistorySummary] = useState<StockTradeHistorySummaryDto | null>(null)
 
   const closeAccountAction = (): void => {
@@ -93,9 +95,22 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   return (
     <PageLayout
       contentClassName="stock-page"
-      footerClassName="page-footer-bar--end"
+      footerClassName={tab === 'history' ? 'page-footer-bar--end' : undefined}
       footer={
-        tab === 'history' ? (
+        tab === 'account' ? (
+          <>
+            <span className="stock-muted">共 {accountFundTotal} 条</span>
+            <Pagination
+              size="small"
+              current={accountPage}
+              total={accountFundTotal}
+              pageSize={STOCK_FUND_PAGE_SIZE}
+              showSizeChanger={false}
+              showLessItems
+              onChange={setAccountPage}
+            />
+          </>
+        ) : tab === 'history' ? (
           <div className="statistics-footer stock-history-footer" data-testid="stock-history-summary">
             <div className="statistics-footer-item">
               <span className="statistics-footer-item-label">已实现盈亏</span>
@@ -181,7 +196,12 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
       }
     >
       {tab === 'account' ? (
-        <StockAccountPanel ledgerId={ledgerId} refreshToken={accountRefresh} />
+        <StockAccountPanel
+          ledgerId={ledgerId}
+          refreshToken={accountRefresh}
+          page={accountPage}
+          onTotalChange={setAccountFundTotal}
+        />
       ) : null}
       {tab === 'positions' ? <StockPositionsPanel ledgerId={ledgerId} /> : null}
       {tab === 'history' ? (
