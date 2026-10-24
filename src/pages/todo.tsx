@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import type { TodoCardDto, TodoHistoryDto } from '../../shared/types/todo'
-import { Checkbox, Input } from 'antd'
+import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
+import { Input, Popconfirm } from 'antd'
 
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
-import { Progress } from '../components/progress'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
+import { ScrollArea } from '../components/scroll-area'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -26,6 +26,16 @@ const LEVEL_LABELS: Record<number, string> = {
   5: '高',
 }
 
+/** 完成时间（历史）/ 进度时间（`short`）—— 都用本地时区、等宽数字排版。 */
+function formatMoment(seconds: number, short = false): string {
+  if (!seconds) return ''
+  const date = new Date(seconds * 1000)
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  const day = `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  return short ? `${day} ${time}` : `${date.getFullYear()}-${day} ${time}`
+}
+
 export interface TodoPageProps {
   ledgerId: string
 }
@@ -33,11 +43,15 @@ export interface TodoPageProps {
 export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [cards, setCards] = useState<TodoCardDto[]>([])
   const [dragCardId, setDragCardId] = useState<string | null>(null)
-  const [todoMode, setTodoMode] = useState<'cards' | 'quadrant' | 'history'>('cards')
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [todoMode, setTodoMode] = useState<'cards' | 'history'>('cards')
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
   const [cardTitle, setCardTitle] = useState('')
   const [itemTitles, setItemTitles] = useState<Record<string, string>>({})
   const [progressText, setProgressText] = useState<Record<string, string>>({})
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
+  const [composerCardId, setComposerCardId] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -45,6 +59,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     if (!ledgerId) {
       setCards([])
       setHistory([])
+      setLoaded(true)
       return
     }
     try {
@@ -56,10 +71,13 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       setHistory(historyRows)
     } catch (loadError) {
       setError(errorMessage(loadError))
+    } finally {
+      setLoaded(true)
     }
   }, [ledgerId])
 
   useEffect(() => {
+    setLoaded(false)
     void load()
   }, [load])
 
@@ -94,6 +112,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
           importance: -1,
         })
         setItemTitles((current) => ({ ...current, [cardId]: '' }))
+        setComposerCardId(null)
         await load()
       } catch (createError) {
         setError(errorMessage(createError))
@@ -214,262 +233,446 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     [load],
   )
 
+  const toggleItem = useCallback((id: string): void => {
+    setExpandedItems((current) => ({ ...current, [id]: !current[id] }))
+  }, [])
+
+  const activeCount = cards.reduce((total, card) => total + card.items.length, 0)
+
+  /** 首次取数期间画两段骨架，避免先闪一下「还没有待办主题」再出现真实内容。 */
+  const renderSkeleton = (): JSX.Element => (
+    <div className="todo-skeleton" aria-hidden="true">
+      {[0, 1].map((group) => (
+        <div className="todo-skeleton__group" key={group}>
+          <div className="todo-skeleton__band" />
+          <div className="todo-skeleton__row" />
+          <div className="todo-skeleton__row" />
+        </div>
+      ))}
+    </div>
+  )
+
+  const renderLevels = (item: TodoItemDto): JSX.Element | null => {
+    if (item.urgency === -1 && item.importance === -1) return null
+    return (
+      <span className="todo-item__levels">
+        <span className="todo-level">紧急 {LEVEL_LABELS[item.urgency] ?? item.urgency}</span>
+        <span className="todo-level">重要 {LEVEL_LABELS[item.importance] ?? item.importance}</span>
+      </span>
+    )
+  }
+
+  const renderItem = (item: TodoItemDto): JSX.Element => {
+    const open = Boolean(expandedItems[item.id])
+    const doneCount = item.progress.filter((progress) => progress.done).length
+    return (
+      <li key={item.id} className={`todo-item${open ? ' is-open' : ''}`} data-testid="todo-item">
+        <div className="todo-item__row">
+          <button
+            type="button"
+            className="todo-item__check"
+            data-testid="todo-item-done"
+            aria-label={`标记完成：${item.title}`}
+            title="标记完成"
+            onClick={() => void setStatus(item.id, 'done')}
+          >
+            <Icon name="Check" size={12} />
+          </button>
+
+          <button
+            type="button"
+            className="todo-item__main"
+            aria-expanded={open}
+            onClick={() => toggleItem(item.id)}
+          >
+            <span className="todo-item__title">{item.title}</span>
+            <span className="todo-item__meta">
+              {item.progress.length > 0 ? (
+                <span className="todo-item__progress">
+                  进度 {doneCount}/{item.progress.length}
+                </span>
+              ) : null}
+              {renderLevels(item)}
+              {item.dueDate ? <span className="todo-item__due">截止 {item.dueDate}</span> : null}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={`todo-item__toggle${open ? ' is-open' : ''}`}
+            data-testid="todo-item-toggle"
+            aria-label={open ? '收起进度' : '展开进度'}
+            aria-expanded={open}
+            title={open ? '收起进度' : '展开进度'}
+            onClick={() => toggleItem(item.id)}
+          >
+            <Icon name="ChevronRight" size={14} />
+          </button>
+
+          <Popconfirm
+            title={`删除事项「${item.title}」？`}
+            description="它的进度记录会一并删除。"
+            okText="删除"
+            cancelText="取消"
+            okType="danger"
+            onConfirm={() => void removeItem(item.id)}
+          >
+            <button
+              type="button"
+              className="tr-icon-btn is-danger-static todo-item__delete"
+              data-testid="todo-item-delete"
+              aria-label={`删除事项 ${item.title}`}
+              title="删除事项"
+            >
+              <Icon name="Trash" size={14} />
+            </button>
+          </Popconfirm>
+        </div>
+
+        {open ? (
+          <div className="todo-progress">
+            {item.progress.length > 0 ? (
+              <ul className="todo-progress__list">
+                {item.progress.map((progress) => (
+                  <li
+                    key={progress.id}
+                    className={`todo-progress__row${progress.done ? ' is-done' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="todo-progress__check"
+                      data-testid="todo-progress-done"
+                      aria-label={progress.done ? '取消完成这条进度' : '完成这条进度'}
+                      aria-pressed={progress.done}
+                      onClick={() => void toggleProgress(progress.id, !progress.done)}
+                    >
+                      <Icon name="Check" size={10} />
+                    </button>
+                    <span className="todo-progress__text">{progress.content}</span>
+                    <span className="todo-progress__time">{formatMoment(progress.createdAt, true)}</span>
+                    <Popconfirm
+                      title="删除这条进度？"
+                      okText="删除"
+                      cancelText="取消"
+                      okType="danger"
+                      onConfirm={() => void removeProgress(progress.id)}
+                    >
+                      <button
+                        type="button"
+                        className="tr-icon-btn is-danger-static todo-progress__delete"
+                        data-testid="todo-progress-delete"
+                        aria-label="删除进度"
+                        title="删除进度"
+                      >
+                        <Icon name="Trash" size={12} />
+                      </button>
+                    </Popconfirm>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="todo-progress__empty">还没有进度记录</p>
+            )}
+
+            <div className="todo-progress__add">
+              <Input
+                size="small"
+                data-testid="todo-progress-input"
+                placeholder="记一条进度…"
+                value={progressText[item.id] ?? ''}
+                onChange={(event) =>
+                  setProgressText((current) => ({ ...current, [item.id]: event.target.value }))
+                }
+                onPressEnter={() => void addProgress(item.id)}
+              />
+              <Button variant="secondary" size="sm" testId="todo-progress-add" onClick={() => void addProgress(item.id)}>
+                记录
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </li>
+    )
+  }
+
   return (
     <PageLayout
-      scrollable
+      contentClassName="todo-page"
       rail={
-          <div className="page-rail-nav">
-            <button
-              type="button"
-              className={`page-rail-btn${todoMode === 'cards' ? ' is-active' : ''}`}
-              data-testid="todo-tab-cards"
-              title="待办视图"
-              aria-label="待办视图"
-              onClick={() => setTodoMode('cards')}
-            >
-              <span className="page-rail-btn-icon">
-                <Icon name="FileText" size={18} />
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`page-rail-btn${todoMode === 'history' ? ' is-active' : ''}`}
-              data-testid="todo-tab-history"
-              title="历史"
-              aria-label="历史"
-              onClick={() => setTodoMode('history')}
-            >
-              <span className="page-rail-btn-icon">
-                <Icon name="History" size={18} />
-              </span>
-            </button>
-          </div>
-    }
-      toolbar={<>
-        <h2 className="todo-title">待办</h2>
-        <div className="m0-actions">
-          <Input
-            data-testid="todo-card-title"
-            placeholder="新主题"
-            value={cardTitle}
-            onChange={(event) => setCardTitle(event.target.value)}
-          />
-          <Button
-            variant="primary"
-            testId="todo-card-create"
-            disabled={!ledgerId || busy}
-            onClick={() => void createCard()}
+        <div className="page-rail-nav">
+          <button
+            type="button"
+            className={`page-rail-btn${todoMode === 'cards' ? ' is-active' : ''}`}
+            data-testid="todo-tab-cards"
+            title="待办"
+            aria-label="待办"
+            onClick={() => setTodoMode('cards')}
           >
-            新建主题
-          </Button>
+            <span className="page-rail-btn-icon">
+              <Icon name="FileText" size={18} />
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`page-rail-btn${todoMode === 'history' ? ' is-active' : ''}`}
+            data-testid="todo-tab-history"
+            title="历史"
+            aria-label="历史"
+            onClick={() => setTodoMode('history')}
+          >
+            <span className="page-rail-btn-icon">
+              <Icon name="History" size={18} />
+            </span>
+          </button>
         </div>
-      </>}
+      }
+      toolbar={
+        <div className="todo-toolbar">
+          <span className="todo-summary" data-testid="todo-summary">
+            {todoMode === 'history'
+              ? history.length > 0
+                ? `${history.length} 项已完成`
+                : ''
+              : cards.length > 0
+                ? `${cards.length} 个主题 · ${activeCount} 项待办`
+                : ''}
+          </span>
+          {todoMode === 'cards' ? (
+            <div className="todo-toolbar-actions">
+              <Input
+                className="todo-new-input"
+                data-testid="todo-card-title"
+                placeholder="新主题"
+                value={cardTitle}
+                onChange={(event) => setCardTitle(event.target.value)}
+                onPressEnter={() => void createCard()}
+              />
+              <Button
+                variant="primary"
+                testId="todo-card-create"
+                disabled={!ledgerId || busy}
+                onClick={() => void createCard()}
+              >
+                新建主题
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      }
     >
       {error ? (
-        <p className="m0-error" data-testid="todo-error">
+        <p className="m0-error todo-error" data-testid="todo-error">
           {error}
         </p>
       ) : null}
 
-      {todoMode === 'cards' ? (
-        <>
-      {cards.length === 0 ? (
-        <EmptyState
-          testId="todo-empty"
-          title={ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
-          description={ledgerId ? '新建一个主题，再往里加事项。' : undefined}
-        />
-      ) : (
-        <div className="m0-todo-cards">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className="m0-todo-card"
-              data-testid="todo-card"
-              draggable
-              onDragStart={() => setDragCardId(card.id)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => {
-                if (dragCardId) void moveCard(dragCardId, card.id)
-                setDragCardId(null)
-              }}
-            >
-              <div className="m0-card-head">
-                <span className="ui-drag-handle" title="拖动排序">
-                  <Icon name="DragHandle" size={14} />
-                </span>
-                <h3>{card.title}</h3>
-                <Button
-                  variant="text-danger"
-                  size="sm"
-                  testId="todo-card-delete"
-                  onClick={() => void removeCard(card.id)}
-                >
-                  删除主题
-                </Button>
-              </div>
-              <div className="m0-actions">
-                <Input
-                  data-testid="todo-item-title"
-                  placeholder="新事项"
-                  value={itemTitles[card.id] ?? ''}
-                  onChange={(event) =>
-                    setItemTitles((current) => ({ ...current, [card.id]: event.target.value }))
-                  }
-                />
-                <Button
-                  variant="text"
-                  testId="todo-item-create"
-                  disabled={busy}
-                  onClick={() => void createItem(card.id)}
-                >
-                  添加事项
-                </Button>
-              </div>
-
-              {card.items.length === 0 ? (
-                <p className="m0-muted">没有进行中的事项</p>
-              ) : (
-                <ul className="m0-todo-items">
-                  {card.items.map((item) => (
-                    <li key={item.id} data-testid="todo-item">
-                      <div className="m0-card-head">
-                        <span>{item.title}</span>
-                        <span className="m0-muted">
-                          {LEVEL_LABELS[item.urgency] ?? item.urgency}/
-                          {LEVEL_LABELS[item.importance] ?? item.importance}
-                        </span>
-                      </div>
-                      <Progress
-                        done={item.progress.filter((progress) => progress.done).length}
-                        total={item.progress.length}
-                      />
-                      <div className="m0-actions">
-                        <Button
-                          variant="text"
-                          size="sm"
-                          testId="todo-item-done"
-                          onClick={() => void setStatus(item.id, 'done')}
-                        >
-                          完成
-                        </Button>
-                        <Button
-                          variant="text-danger"
-                          size="sm"
-                          testId="todo-item-delete"
-                          onClick={() => void removeItem(item.id)}
-                        >
-                          删除
-                        </Button>
-                      </div>
-                      {item.progress.length > 0 ? (
-                        <ul className="m0-todo-progress">
-                          {item.progress.map((progress) => (
-                            <li key={progress.id}>
-                              <Checkbox
-                                data-testid="todo-progress-done"
-                                checked={progress.done}
-                                onChange={(event) =>
-                                  void toggleProgress(progress.id, event.target.checked)
+      <div className="todo-body">
+        <ScrollArea className="todo-scroll" axis="both" notifyResize>
+          {todoMode === 'cards' ? (
+            !loaded ? (
+              renderSkeleton()
+            ) : cards.length === 0 ? (
+              <EmptyState
+                testId="todo-empty"
+                title={ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
+                description={ledgerId ? '先建一个主题，把要做的事一条条放进去。' : undefined}
+              />
+            ) : (
+              <div className="todo-board">
+                {cards.map((card) => (
+                  <section
+                    key={card.id}
+                    className={`todo-group${dragCardId === card.id ? ' is-dragging' : ''}${
+                      dragOverId === card.id ? ' is-over' : ''
+                    }`}
+                    data-testid="todo-card"
+                    onDragOver={(event) => {
+                      event.preventDefault()
+                      if (dragCardId && dragCardId !== card.id) setDragOverId(card.id)
+                    }}
+                    onDragLeave={() =>
+                      setDragOverId((current) => (current === card.id ? null : current))
+                    }
+                    onDrop={() => {
+                      if (dragCardId) void moveCard(dragCardId, card.id)
+                      setDragCardId(null)
+                      setDragOverId(null)
+                    }}
+                  >
+                    <header className="todo-group__head">
+                      <span
+                        className="todo-group__handle"
+                        title="拖动排序"
+                        draggable
+                        onDragStart={() => setDragCardId(card.id)}
+                        onDragEnd={() => {
+                          setDragCardId(null)
+                          setDragOverId(null)
+                        }}
+                      >
+                        <Icon name="DragHandle" size={16} />
+                      </span>
+                      <h3 className="todo-group__title" title={card.title}>
+                        {card.title}
+                      </h3>
+                      <span className="todo-group__count">{card.items.length} 项</span>
+                      <div className="todo-group__actions">
+                        {composerCardId === card.id ? (
+                          <div className="todo-group__composer">
+                            <Input
+                              autoFocus
+                              size="small"
+                              data-testid="todo-item-title"
+                              placeholder="添加事项"
+                              title="回车添加，Esc 取消"
+                              maxLength={200}
+                              value={itemTitles[card.id] ?? ''}
+                              onChange={(event) =>
+                                setItemTitles((current) => ({
+                                  ...current,
+                                  [card.id]: event.target.value,
+                                }))
+                              }
+                              onPressEnter={() => void createItem(card.id)}
+                              onBlur={(event) => {
+                                const next = event.relatedTarget
+                                const actions =
+                                  event.currentTarget.closest('.todo-group__actions')
+                                if (next instanceof Node && actions?.contains(next)) return
+                                if (!(itemTitles[card.id] ?? '').trim()) {
+                                  setComposerCardId(null)
                                 }
-                              >
-                                {progress.content}
-                              </Checkbox>
+                              }}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Escape') {
+                                  setComposerCardId(null)
+                                  setItemTitles((current) => ({ ...current, [card.id]: '' }))
+                                }
+                              }}
+                            />
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              testId="todo-item-create"
+                              disabled={busy}
+                              onClick={() => void createItem(card.id)}
+                            >
+                              添加
+                            </Button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="tr-icon-btn todo-group__add"
+                            data-testid="todo-item-add"
+                            aria-label={`添加事项：${card.title}`}
+                            title="添加事项"
+                            onClick={() => setComposerCardId(card.id)}
+                          >
+                            <Icon name="Plus" size={14} />
+                          </button>
+                        )}
+                        <Popconfirm
+                          title={`删除主题「${card.title}」？`}
+                          description="主题下的事项与进度会一并删除。"
+                          okText="删除"
+                          cancelText="取消"
+                          okType="danger"
+                          onConfirm={() => void removeCard(card.id)}
+                        >
+                          <button
+                            type="button"
+                            className="tr-icon-btn is-danger-static todo-group__delete"
+                            data-testid="todo-card-delete"
+                            aria-label={`删除主题 ${card.title}`}
+                            title="删除主题"
+                          >
+                            <Icon name="Trash" size={14} />
+                          </button>
+                        </Popconfirm>
+                      </div>
+                    </header>
+
+                    {card.items.length === 0 ? (
+                      <p className="todo-group__empty">还没有事项</p>
+                    ) : (
+                      <ul className="todo-items">{card.items.map((item) => renderItem(item))}</ul>
+                    )}
+                  </section>
+                ))}
+              </div>
+            )
+          ) : !loaded ? (
+            renderSkeleton()
+          ) : history.length === 0 ? (
+            <EmptyState
+              testId="todo-history-empty"
+              title="还没有已完成事项"
+              description="完成的事项会在这里留档。"
+            />
+          ) : (
+            <div className="todo-history">
+              <table className="todo-table">
+                <thead>
+                  <tr>
+                    <th>完成时间</th>
+                    <th>主题</th>
+                    <th>事项</th>
+                    <th className="is-center">进度</th>
+                    <th className="is-end">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((item) => (
+                    <tr key={item.id} data-testid="todo-history-item">
+                      <td className="todo-table__time">{formatMoment(item.completedAt)}</td>
+                      <td className="todo-table__card" title={item.cardTitle}>
+                        {item.cardTitle}
+                      </td>
+                      <td className="todo-table__title">{item.title}</td>
+                      <td className="is-center todo-table__progress">
+                        {item.progress.length > 0
+                          ? `${item.progress.filter((progress) => progress.done).length}/${item.progress.length}`
+                          : '—'}
+                      </td>
+                      <td>
+                        <div className="todo-table__actions">
+                          <Button
+                            variant="text"
+                            size="sm"
+                            testId="todo-history-reopen"
+                            onClick={() => void setStatus(item.id, 'doing')}
+                          >
+                            回到待办
+                          </Button>
+                          <Popconfirm
+                            title={`删除事项「${item.title}」？`}
+                            okText="删除"
+                            cancelText="取消"
+                            okType="danger"
+                            onConfirm={() => void removeItem(item.id)}
+                          >
+                            <span className="todo-history__delete">
                               <Button
                                 variant="text-danger"
                                 size="sm"
-                                testId="todo-progress-delete"
-                                onClick={() => void removeProgress(progress.id)}
+                                testId="todo-history-delete"
+                                title="删除事项"
                               >
                                 删除
                               </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      <div className="m0-actions">
-                        <Input
-                          data-testid="todo-progress-input"
-                          placeholder="记进度"
-                          value={progressText[item.id] ?? ''}
-                          onChange={(event) =>
-                            setProgressText((current) => ({
-                              ...current,
-                              [item.id]: event.target.value,
-                            }))
-                          }
-                        />
-                        <Button
-                          variant="text"
-                          testId="todo-progress-add"
-                          onClick={() => void addProgress(item.id)}
-                        >
-                          添加进度
-                        </Button>
-                      </div>
-                    </li>
+                            </span>
+                          </Popconfirm>
+                        </div>
+                      </td>
+                    </tr>
                   ))}
-                </ul>
-              )}
+                </tbody>
+              </table>
             </div>
-          ))}
-        </div>
-      )}
-        </>
-      ) : null}
-
-      {todoMode === 'quadrant' ? (
-        <div className="todo-quadrants">
-          {[
-            ['紧急重要', (item: TodoCardDto['items'][number]) => item.urgency >= 0 && item.importance >= 0],
-            ['重要不紧急', (item: TodoCardDto['items'][number]) => item.urgency < 0 && item.importance >= 0],
-            ['紧急不重要', (item: TodoCardDto['items'][number]) => item.urgency >= 0 && item.importance < 0],
-            ['不紧急不重要', (item: TodoCardDto['items'][number]) => item.urgency < 0 && item.importance < 0],
-          ].map(([label, predicate]) => (
-            <section key={label as string} className="todo-quadrant">
-              <h3>{label as string}</h3>
-              <ul>
-                {cards
-                  .flatMap((card) => card.items.map((item) => ({ ...item, cardTitle: card.title })))
-                  .filter(predicate as (item: TodoCardDto['items'][number]) => boolean)
-                  .map((item) => (
-                    <li key={item.id}>
-                      <span className="m0-muted">{item.cardTitle}</span> · {item.title}
-                    </li>
-                  ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      ) : null}
-
-      {todoMode === 'history' ? (
-        <>
-      <h3 className="m0-subtitle">历史</h3>
-      {history.length === 0 ? (
-        <EmptyState testId="todo-history-empty" title="还没有已完成事项" />
-      ) : (
-        <ul className="m0-todo-history">
-          {history.map((item) => (
-            <li key={item.id} data-testid="todo-history-item">
-              {item.cardTitle} · {item.title}
-            </li>
-          ))}
-        </ul>
-      )}
-        </>
-      ) : null}
+          )}
+        </ScrollArea>
+      </div>
     </PageLayout>
   )
 }
-
-
-
-
-
-
-
-
-
-
-

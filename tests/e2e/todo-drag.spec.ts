@@ -56,7 +56,7 @@ test('待办：拖动主题后排序落库', async () => {
     await expect(page.getByTestId('todo-card')).toHaveCount(2)
 
     const cards = page.getByTestId('todo-card')
-    await cards.nth(0).dragTo(cards.nth(1))
+    await cards.nth(0).locator('.todo-group__handle').dragTo(cards.nth(1))
     await expect(cards.nth(0)).toContainText('第二个主题')
     await expect(cards.nth(1)).toContainText('第一个主题')
 

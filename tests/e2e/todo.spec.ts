@@ -53,20 +53,38 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-card-create').click()
     await expect(page.getByTestId('todo-card')).toContainText('工作')
 
+    await page.getByTestId('todo-card').hover()
+    await page.getByTestId('todo-item-add').click()
     await page.getByTestId('todo-item-title').fill('写周报')
     await page.getByTestId('todo-item-create').click()
     await expect(page.getByTestId('todo-item')).toContainText('写周报')
 
+    await page.getByTestId('todo-item-toggle').click()
     await page.getByTestId('todo-progress-input').fill('完成一半')
     await page.getByTestId('todo-progress-add').click()
     await expect(page.getByTestId('todo-item')).toContainText('完成一半')
 
     await page.getByTestId('todo-progress-done').click()
-    await expect(page.getByTestId('todo-progress-done')).toBeChecked()
+    await expect(page.getByTestId('todo-progress-done')).toHaveAttribute('aria-pressed', 'true')
     await page.getByTestId('todo-item-done').click()
     await page.getByTestId('todo-tab-history').click()
-    await expect(page.getByTestId('todo-history-item')).toContainText('工作 · 写周报')
+    await expect(page.getByTestId('todo-history-item')).toContainText('写周报')
+    await expect(page.getByTestId('todo-history-item')).toContainText('工作')
     await expect(page.getByTestId('todo-item')).toHaveCount(0)
+
+    // 历史里的删除也是文本按钮，点开二次确认
+    await page.getByTestId('todo-history-delete').click()
+    await expect(page.getByText('删除事项「写周报」？')).toBeVisible()
+    await page.locator('.ant-popconfirm-buttons button').first().click()
+
+    // 「回到待办」把事项从历史放回卡片，再完成一次
+    await page.getByTestId('todo-history-reopen').click()
+    await expect(page.getByTestId('todo-history-item')).toHaveCount(0)
+    await page.getByTestId('todo-tab-cards').click()
+    await expect(page.getByTestId('todo-item')).toContainText('写周报')
+    await page.getByTestId('todo-item-done').click()
+    await page.getByTestId('todo-tab-history').click()
+    await expect(page.getByTestId('todo-history-item')).toHaveCount(1)
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const item = database

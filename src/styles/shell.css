@@ -593,38 +593,6 @@
   background: var(--transactions-color-major-background);
 }
 
-.todo-quadrants {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.todo-quadrant {
-  min-height: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--transactions-color-divider);
-  border-radius: var(--transactions-radius-lg);
-  background: var(--transactions-color-major-background);
-  overflow: auto;
-}
-
-.todo-quadrant h3 {
-  margin: 0 0 8px;
-  font-size: var(--transactions-size-text-body);
-}
-
-.todo-quadrant ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .events-layout.is-links-collapsed {
   grid-template-columns: 300px minmax(0, 1fr) 44px;
 }
