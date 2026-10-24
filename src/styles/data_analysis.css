@@ -43,17 +43,13 @@
   min-height: 100%;
 }
 
-/* 侧栏列表：**撑满侧栏剩余高度** —— 列表为空时空态才能在剩余空间里垂直居中
- * （否则「暂无图表」紧贴在「新增图表」按钮下面，看着像没排版）。 */
+/* 侧栏列表：**撑满侧栏剩余高度** —— 列表为空时空态才能在剩余空间里垂直居中。 */
 .da-list {
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-2xs);
   flex: 1;
   min-height: 0;
-  /* 「新增图表」与列表之间留出间距：OverlayScrollbars 2.x 的 viewport 就是 contents
-   * 且为 block 布局，上面那条 contents 的 flex/gap 选择器匹配不到，列表本来会贴住按钮。 */
-  margin-top: var(--transactions-space-lg);
 }
 
 /* 空态：吃掉剩余高度并居中（与右侧 `.da-empty` 同一套做法） */
@@ -383,10 +379,10 @@
     flex-direction: column;
   }
 
-  /* 窄宽度下左栏变成**一条横向带**：主动作按内容宽度、图表项横排换行。
+  /* 窄宽度下左栏变成**一条横向带**：图表项横排换行。
    * 只把方向倒过来（原来这里只有 `flex: 0 0 auto` + 下内边距）会得到：
-   * 「新增图表」被拉成一条 1200px 的通栏蓝条、4 个图表项竖着再吃掉近 200px，
-   * 图表与「曲线配置」被顶到半屏以下。分隔线也跟着从竖改横。 */
+   * 4 个图表项竖着再吃掉近 200px，图表与「曲线配置」被顶到半屏以下。
+   * 分隔线也跟着从竖改横。 */
   .da-sidebar {
     flex: 0 0 auto;
     flex-direction: row;
@@ -405,12 +401,6 @@
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--transactions-space-xs);
-  }
-
-  /* 「新增图表」是 `block=true`（竖排时它要通栏撑满 220px 侧栏）——
-   * 换成横排后必须收回内容宽度，否则就是一条 1200px 的蓝条。 */
-  .da-sidebar > .ui-btn--block {
-    width: auto;
   }
 
   .da-chart__body {

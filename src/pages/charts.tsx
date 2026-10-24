@@ -325,17 +325,27 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     <PageLayout
       contentClassName="da-page-content"
       toolbar={
-        <TimeRangePicker
-          testId="chart-time"
-          mode={rangeMode}
-          start={rangeStart}
-          end={rangeEnd}
-          onModeChange={setRangeMode}
-          onRangeChange={(start, end) => {
-            setRangeStart(start)
-            setRangeEnd(end)
-          }}
-        />
+        <>
+          <TimeRangePicker
+            testId="chart-time"
+            mode={rangeMode}
+            start={rangeStart}
+            end={rangeEnd}
+            onModeChange={setRangeMode}
+            onRangeChange={(start, end) => {
+              setRangeStart(start)
+              setRangeEnd(end)
+            }}
+          />
+          <Button
+            variant="primary"
+            testId="chart-open-create"
+            icon={<Icon name="Plus" size={14} />}
+            onClick={openCreate}
+          >
+            新增图表
+          </Button>
+        </>
       }
     >
       {error ? (
@@ -346,16 +356,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
       <div className="da-main">
         <ScrollArea className="da-sidebar">
-          <Button
-            variant="primary"
-            block
-            testId="chart-open-create"
-            icon={<Icon name="Plus" size={14} />}
-            onClick={openCreate}
-          >
-            新增图表
-          </Button>
-
           <div className="da-list">
             {charts.length === 0 ? (
               <div className="da-list__empty" data-testid="chart-empty">
@@ -421,7 +421,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <div className="da-empty">
               <EmptyState
                 testId="chart-selection-empty"
-                title="请选择左侧图表，或点上方「新增图表」"
+                title="请选择左侧图表，或点右上角「新增图表」"
               />
             </div>
           ) : (
