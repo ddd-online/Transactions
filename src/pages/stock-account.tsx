@@ -30,12 +30,14 @@ export function StockAccountPanel({
   const [funds, setFunds] = useState<StockFundRecordPage | null>(null)
   const [fundPage, setFundPage] = useState(1)
   const [error, setError] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
       setSummary(null)
       setOverview(null)
       setFunds(null)
+      setLoaded(true)
       return
     }
     try {
@@ -54,6 +56,8 @@ export function StockAccountPanel({
       setError('')
     } catch (loadError) {
       setError(stockErrorMessage(loadError))
+    } finally {
+      setLoaded(true)
     }
   }, [fundPage, ledgerId])
 
@@ -97,7 +101,13 @@ export function StockAccountPanel({
 
         <section className="stock-hero stock-hero--flat">
           <span className="stock-label">总资产</span>
-          <strong data-testid="stock-total-assets">{stockMoney(overview?.totalAssets ?? 0)}</strong>
+          {loaded ? (
+            <strong data-testid="stock-total-assets">
+              {stockMoney(overview?.totalAssets ?? 0)}
+            </strong>
+          ) : (
+            <span className="stock-skeleton stock-skeleton--hero" aria-hidden="true" />
+          )}
         </section>
 
         <div className="stock-metrics">
@@ -108,7 +118,7 @@ export function StockAccountPanel({
                 className={pnl === undefined ? undefined : stockPnlClass(pnl)}
                 data-testid={testId}
               >
-                {value}
+                {loaded ? value : <span className="stock-skeleton stock-skeleton--metric" />}
               </strong>
             </div>
           ))}
@@ -116,7 +126,13 @@ export function StockAccountPanel({
 
         <section className="stock-section">
           <h3 className="stock-section__title">资金变化记录</h3>
-          {funds && funds.items.length > 0 ? (
+          {!loaded ? (
+            <div className="stock-table-skeleton" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+          ) : funds && funds.items.length > 0 ? (
             <>
               <Table
                 className="tr-table stock-fund-table"
@@ -163,7 +179,7 @@ export function StockAccountPanel({
                 />
               </div>
             </>
-          ) : (
+          ) : error ? null : (
             <EmptyState
               testId="fund-empty"
               title={ledgerId ? '还没有资金记录' : '请先创建/选择账本'}

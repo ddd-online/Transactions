@@ -50,8 +50,19 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
     setAccountError('')
   }
 
+  const openAccountAction = (next: AmountAction): void => {
+    setAccountAction(next)
+    setAccountAmount('')
+    setAccountError('')
+  }
+
   const submitAccountAction = async (): Promise<void> => {
     if (!accountAction) return
+    const parsedAmount = Number(accountAmount)
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setAccountError('请输入大于 0 的金额')
+      return
+    }
     setAccountBusy(true)
     setAccountError('')
     try {
@@ -85,21 +96,21 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
             <Button
               variant="secondary"
               testId="stock-open-withdraw"
-              onClick={() => setAccountAction('withdraw')}
+              onClick={() => openAccountAction('withdraw')}
             >
               支取
             </Button>
             <Button
               variant="secondary"
               testId="stock-open-interest"
-              onClick={() => setAccountAction('interest')}
+              onClick={() => openAccountAction('interest')}
             >
               利息归本
             </Button>
             <Button
               variant="primary"
               testId="stock-open-principal"
-              onClick={() => setAccountAction('principal')}
+              onClick={() => openAccountAction('principal')}
             >
               追加本金
             </Button>
@@ -154,6 +165,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
             data-testid="stock-amount"
             autoFocus
             inputMode="decimal"
+            prefix="¥"
             placeholder="0.00"
             value={accountAmount}
             onChange={(event) => setAccountAmount(event.target.value)}

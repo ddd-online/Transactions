@@ -30,7 +30,9 @@ export function stockDateTime(seconds: number): string {
 }
 
 export function stockPnlClass(value: number): string {
-  return value >= 0 ? 'is-up' : 'is-down'
+  if (value > 0) return 'is-up'
+  if (value < 0) return 'is-down'
+  return ''
 }
 
 export function stockRoundRate(
