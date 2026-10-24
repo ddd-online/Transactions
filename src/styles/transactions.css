@@ -397,66 +397,18 @@
 
 /* ============================================
  * 6. 筛选弹窗
+ *
+ * 编辑区字段排版复用「新增记录」弹窗的 `.tr-modal-*`：标签在上、控件吃满、
+ * 两列并排用 `.tr-modal-row`。点「添加条件」把编辑区收进下面的条件列表，
+ * 每条显示成一行摘要 + 删除。
  * ============================================ */
-
-.tr-filter {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-lg);
-}
-
-/* 一个条件组：字段上下排；多组之间用发丝线隔开 */
-.tr-filter__condition {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-md);
-}
-
-.tr-filter__condition + .tr-filter__condition {
-  padding-top: var(--transactions-space-lg);
-  border-top: 1px solid var(--transactions-color-divider);
-}
-
-.tr-filter__condition-remove {
-  position: absolute;
-  top: calc(-1 * var(--transactions-space-xs));
-  right: 0;
-}
-
-.tr-filter__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-xs);
-}
-
-.tr-filter__row {
-  display: flex;
-  gap: var(--transactions-space-lg);
-}
-
-.tr-filter__half {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-xs);
-  min-width: 0;
-}
-
-.tr-filter__label {
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-}
-
-.tr-filter__select {
-  width: 100%;
-}
 
 .tr-filter__add {
   border-style: dashed;
   color: var(--transactions-color-text-secondary);
 }
 
+/* 已收录的条件：一行摘要，右侧删除 */
 .tr-filter__list {
   display: flex;
   flex-direction: column;
@@ -477,38 +429,23 @@
   flex: 1;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--transactions-space-sm);
+  gap: var(--transactions-space-xs);
   min-width: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
 }
 
 .tr-filter__separator {
   color: var(--transactions-color-text-disabled);
 }
 
-.tr-filter__tags {
-  color: var(--transactions-color-text-major);
-  font-size: var(--transactions-size-text-body-sm);
-}
-
-.tr-filter__desc {
-  color: var(--transactions-color-text-secondary);
-  font-style: italic;
-  font-size: var(--transactions-size-text-body-sm);
-}
-
-.tr-filter__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--transactions-space-sm);
-  margin-top: var(--transactions-space-xs);
-  padding-top: var(--transactions-space-lg);
-  border-top: 1px solid var(--transactions-color-divider);
-}
-
-/* 条件面板里追加按钮独占一行 */
-.tr-filter > .ui-btn--block {
-  width: 100%;
+.tr-filter__flag {
+  padding: 0 var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-expense-tint);
+  color: var(--transactions-color-expense);
+  font-size: var(--transactions-size-text-caption);
+  line-height: 20px;
 }
 
 /* ============================================
@@ -574,17 +511,6 @@
   gap: var(--transactions-space-sm);
   padding-top: var(--transactions-space-lg);
   border-top: 1px solid var(--transactions-color-divider);
-}
-
-/* ============================================
- * 8. 小屏收敛
- * ============================================ */
-
-@media (max-width: 720px) {
-  .tr-filter__row {
-    flex-direction: column;
-    gap: var(--transactions-space-md);
-  }
 }
 
 /* ============================================
@@ -677,11 +603,12 @@
   min-height: 0;
 }
 
-/* OverlayScrollbars 的 content 是滚动内容的实际容器：让空态也能撑满高度，
- * 表格本身则保持正常块级流。 */
-.tr-scroll > [data-overlayscrollbars-viewport] > [data-overlayscrollbars-contents] {
-  display: flex;
-  flex-direction: column;
+/* 空态（`.tr-empty`）直接挂在滚动容器的 viewport 下。OverlayScrollbars 2.x 里
+ * viewport 同时就是 contents（同一个元素、`display: block`），所以 `.tr-empty`
+ * 上的 `flex: 1` 撑不出高度，`justify-content: center` 没有参照，整块会贴在顶部。
+ * 给它 100% 的最小高度即可占满滚动区；用 `min-height` 而不是 `height`，
+ * 窗口很矮、空态内容比区域更高时仍然按内容撑开并可以滚动。 */
+.tr-scroll .tr-empty {
   min-height: 100%;
 }
 

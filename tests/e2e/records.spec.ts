@@ -49,6 +49,25 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await createLedger(page, '测试账本')
     await page.getByTestId('nav-accounting').click()
     await page.getByTestId('acct-tab-records').click()
+
+    // 空态要占满滚动区、内容垂直居中（曾因滚动容器 viewport 是 block 而贴在顶部）
+    await expect(page.getByTestId('tr-empty')).toBeVisible()
+    const emptyLayout = await page.evaluate(() => {
+      const host = document.querySelector<HTMLElement>('.tr-scroll')
+      const empty = document.querySelector<HTMLElement>('[data-testid="tr-empty"]')
+      if (!host || !empty) return null
+      const hostRect = host.getBoundingClientRect()
+      const parts = Array.from(empty.children).map((child) => child.getBoundingClientRect())
+      const top = Math.min(...parts.map((rect) => rect.top))
+      const bottom = Math.max(...parts.map((rect) => rect.bottom))
+      return {
+        contentCenter: (top + bottom) / 2,
+        areaCenter: hostRect.top + hostRect.height / 2,
+      }
+    })
+    expect(emptyLayout).not.toBeNull()
+    expect(Math.abs(emptyLayout!.contentCenter - emptyLayout!.areaCenter)).toBeLessThanOrEqual(4)
+
     await page.getByTestId('tr-new').click()
     await expect(page.getByTestId('tr-empty')).toContainText('还没有记录')
     await page.waitForTimeout(300)
@@ -185,6 +204,20 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
 
     await page.getByTestId('acct-tab-records').click()
     await page.getByTestId('tr-filter').click()
+    // 消费类型是分段按钮而不是下拉框；「全部」= 不限类型
+    await expect(page.getByTestId('tr-filter-type-all')).toHaveAttribute('aria-pressed', 'true')
+    await page.getByTestId('tr-filter-type-income').click()
+    await expect(page.getByTestId('tr-filter-type-income')).toHaveAttribute('aria-pressed', 'true')
+    await page.getByTestId('tr-filter-type-all').click()
+    await page.getByTestId('tr-filter-description').fill('午')
+    // 「添加条件」把编辑区收进条件列表：列表出现摘要行、编辑区清空
+    await page.getByTestId('tr-filter-add').click()
+    await expect(page.getByTestId('tr-filter-item')).toHaveCount(1)
+    await expect(page.getByTestId('tr-filter-item')).toContainText('"午"')
+    await expect(page.getByTestId('tr-filter-description')).toHaveValue('')
+    await page.getByTestId('tr-filter-item-remove').click()
+    await expect(page.getByTestId('tr-filter-item')).toHaveCount(0)
+    // 编辑区没点「添加条件」时，直接确认也要生效
     await page.getByTestId('tr-filter-description').fill('午')
     await page.getByTestId('tr-filter-apply').click()
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)

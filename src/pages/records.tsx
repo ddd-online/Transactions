@@ -91,6 +91,16 @@ function filterHasContent(filter: RecordFilter): boolean {
   )
 }
 
+/** 条件列表里的一行摘要，例如：`收入 / 工资奖金 / 工资`。 */
+function filterSummary(filter: RecordFilter): string {
+  const parts: string[] = []
+  if (filter.transactionType) parts.push(typeLabel(filter.transactionType))
+  if (filter.category) parts.push(filter.category)
+  if (filter.tags.length > 0) parts.push(filter.tags.join('、'))
+  if (filter.description.trim()) parts.push(`"${filter.description.trim()}"`)
+  return parts.join(' / ')
+}
+
 function toQueryItem(filter: RecordFilter) {
   return {
     transactionType: filter.transactionType,
@@ -128,6 +138,9 @@ const COMPOSER_TYPE_OPTIONS = [
   { value: 'transfer', label: '转账' },
 ]
 
+/** 筛选里的类型多一个「全部」，对应 `transactionType: ''`（不限类型）。 */
+const FILTER_TYPE_OPTIONS = [{ value: 'all', label: '全部' }, ...TYPE_OPTIONS]
+
 function nextSortField(fields: readonly QueryConditionSortField[]): string {
   const used = new Set(fields.map((field) => field.field))
   return SORT_FIELD_OPTIONS.find((option) => !used.has(option.value))?.value ?? 'transactionAt'
@@ -158,7 +171,8 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   })
 
   const [filters, setFilters] = useState<RecordFilter[]>([])
-  const [filterDraft, setFilterDraft] = useState<RecordFilter[]>([emptyFilter()])
+  const [filterDraft, setFilterDraft] = useState<RecordFilter[]>([])
+  const [filterEditor, setFilterEditor] = useState<RecordFilter>(emptyFilter)
   const [showFilter, setShowFilter] = useState(false)
   const [sortFields, setSortFields] = useState<QueryConditionSortField[]>(DEFAULT_SORT)
   const [sortDraft, setSortDraft] = useState<QueryConditionSortField[]>(DEFAULT_SORT)
@@ -470,39 +484,39 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   }, [])
 
   const openFilter = useCallback((): void => {
-    setFilterDraft(
-      filters.length > 0
-        ? filters.map((filter) => ({ ...filter, tags: [...filter.tags] }))
-        : [emptyFilter()],
-    )
+    setFilterDraft(filters.map((filter) => ({ ...filter, tags: [...filter.tags] })))
+    setFilterEditor(emptyFilter())
     setShowFilter(true)
   }, [filters])
 
-  const updateFilter = useCallback((index: number, patch: Partial<RecordFilter>): void => {
-    setFilterDraft((current) =>
-      current.map((filter, position) => (position === index ? { ...filter, ...patch } : filter)),
-    )
+  const updateFilterEditor = useCallback((patch: Partial<RecordFilter>): void => {
+    setFilterEditor((current) => ({ ...current, ...patch }))
   }, [])
 
+  /** 把编辑区当前条件收进列表并清空编辑区；什么都没填时不收录。 */
   const addFilterCondition = useCallback((): void => {
-    setFilterDraft((current) => [...current, emptyFilter()])
-  }, [])
+    if (!filterHasContent(filterEditor)) return
+    setFilterDraft((current) => [...current, { ...filterEditor, tags: [...filterEditor.tags] }])
+    setFilterEditor(emptyFilter())
+  }, [filterEditor])
 
   const removeFilterCondition = useCallback((index: number): void => {
-    setFilterDraft((current) => {
-      const next = current.filter((_, position) => position !== index)
-      return next.length > 0 ? next : [emptyFilter()]
-    })
+    setFilterDraft((current) => current.filter((_, position) => position !== index))
   }, [])
 
   const applyFilters = useCallback((): void => {
-    setFilters(filterDraft.map((filter) => ({ ...filter, tags: [...filter.tags] })))
+    // 编辑区里还没点「添加条件」的内容也一并生效，避免填完直接确认被丢掉
+    const next = filterHasContent(filterEditor)
+      ? [...filterDraft, { ...filterEditor, tags: [...filterEditor.tags] }]
+      : filterDraft
+    setFilters(next.map((filter) => ({ ...filter, tags: [...filter.tags] })))
     setPage(1)
     setShowFilter(false)
-  }, [filterDraft])
+  }, [filterDraft, filterEditor])
 
   const clearFilters = useCallback((): void => {
-    setFilterDraft([emptyFilter()])
+    setFilterDraft([])
+    setFilterEditor(emptyFilter())
   }, [])
 
   const openSort = useCallback((): void => {
@@ -1076,106 +1090,91 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
         footer={null}
         onCancel={() => setShowFilter(false)}
       >
-        <div className="tr-filter">
-          {filterDraft.map((filter, index) => (
-            <div className="tr-filter__condition" key={index}>
-              {filterDraft.length > 1 ? (
-                <Button
-                  className="tr-filter__condition-remove"
-                  variant="text-danger"
-                  size="sm"
-                  aria-label="删除筛选条件"
-                  icon={<Icon name="Close" size={14} />}
-                  onClick={() => removeFilterCondition(index)}
-                />
-              ) : null}
+        <div className="tr-modal-form">
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">消费类型</span>
+            <Segmented
+              testId="tr-filter-type"
+              block
+              value={filterEditor.transactionType || 'all'}
+              onChange={(value: string) =>
+                updateFilterEditor({
+                  transactionType: value === 'all' ? '' : value,
+                  category: '',
+                })
+              }
+              options={FILTER_TYPE_OPTIONS}
+            />
+          </div>
 
-              <div className="tr-filter__field">
-                <span className="tr-filter__label">消费类型</span>
-                <Select
-                  className="tr-filter__select"
-                  data-testid="tr-filter-type"
-                  value={filter.transactionType || undefined}
-                  placeholder="选择消费类型"
-                  allowClear
-                  onChange={(value: string | undefined) =>
-                    updateFilter(index, { transactionType: value ?? '', category: '' })
-                  }
-                  options={TYPE_OPTIONS}
-                />
-              </div>
-
-              <div className="tr-filter__field">
-                <span className="tr-filter__label">分类</span>
-                <Select
-                  className="tr-filter__select"
-                  data-testid="tr-filter-category"
-                  value={filter.category || undefined}
-                  placeholder="选择消费分类"
-                  allowClear
-                  onChange={(value: string | undefined) =>
-                    updateFilter(index, { category: value ?? '' })
-                  }
-                  options={categoryOptionsFor(filter.transactionType)}
-                />
-              </div>
-
-              <div className="tr-filter__field">
-                <span className="tr-filter__label">标签</span>
-                <Select
-                  className="tr-filter__select"
-                  data-testid="tr-filter-tags"
-                  mode="tags"
-                  allowClear
-                  placeholder="选择标签"
-                  value={filter.tags}
-                  onChange={(value: string[]) => updateFilter(index, { tags: value })}
-                  options={tagSelectOptions}
-                />
-              </div>
-
-              <div className="tr-filter__row">
-                <div className="tr-filter__half">
-                  <span className="tr-filter__label">标签匹配</span>
-                  <Select
-                    className="tr-filter__select"
-                    data-testid="tr-filter-policy"
-                    value={filter.tagPolicy}
-                    onChange={(value: string) => updateFilter(index, { tagPolicy: value })}
-                    options={[
-                      { value: 'any', label: '任意' },
-                      { value: 'all', label: '全部' },
-                    ]}
-                  />
-                </div>
-                <div className="tr-filter__half">
-                  <span className="tr-filter__label">标签取反</span>
-                  <Select
-                    className="tr-filter__select"
-                    data-testid="tr-filter-not"
-                    value={filter.tagNot ? 'exclude' : 'include'}
-                    onChange={(value: string) =>
-                      updateFilter(index, { tagNot: value === 'exclude' })
-                    }
-                    options={[
-                      { value: 'include', label: '包含' },
-                      { value: 'exclude', label: '不包含' },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="tr-filter__field">
-                <span className="tr-filter__label">描述包含</span>
-                <Input
-                  data-testid="tr-filter-description"
-                  placeholder="输入关键词"
-                  value={filter.description}
-                  onChange={(event) => updateFilter(index, { description: event.target.value })}
-                />
-              </div>
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">分类</span>
+              <Select
+                data-testid="tr-filter-category"
+                value={filterEditor.category || undefined}
+                placeholder="选择消费分类"
+                allowClear
+                onChange={(value: string | undefined) =>
+                  updateFilterEditor({ category: value ?? '' })
+                }
+                options={categoryOptionsFor(filterEditor.transactionType)}
+              />
             </div>
-          ))}
+
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标签</span>
+              <Select
+                data-testid="tr-filter-tags"
+                mode="tags"
+                allowClear
+                placeholder="选择标签"
+                value={filterEditor.tags}
+                onChange={(value: string[]) => updateFilterEditor({ tags: value })}
+                options={tagSelectOptions}
+              />
+            </div>
+          </div>
+
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标签匹配</span>
+              <Select
+                data-testid="tr-filter-policy"
+                value={filterEditor.tagPolicy}
+                onChange={(value: string) => updateFilterEditor({ tagPolicy: value })}
+                options={[
+                  { value: 'any', label: '任意' },
+                  { value: 'all', label: '全部' },
+                ]}
+              />
+            </div>
+
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标签取反</span>
+              <Select
+                data-testid="tr-filter-not"
+                value={filterEditor.tagNot ? 'exclude' : 'include'}
+                onChange={(value: string) =>
+                  updateFilterEditor({ tagNot: value === 'exclude' })
+                }
+                options={[
+                  { value: 'include', label: '包含' },
+                  { value: 'exclude', label: '不包含' },
+                ]}
+              />
+            </div>
+          </div>
+
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">描述包含</span>
+            <Input
+              data-testid="tr-filter-description"
+              placeholder="输入关键词"
+              value={filterEditor.description}
+              onChange={(event) => updateFilterEditor({ description: event.target.value })}
+            />
+          </div>
 
           <Button
             className="tr-filter__add"
@@ -1183,12 +1182,39 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             block
             testId="tr-filter-add"
             icon={<Icon name="Plus" size={14} />}
+            disabled={!filterHasContent(filterEditor)}
             onClick={addFilterCondition}
           >
             添加条件
           </Button>
 
-          <div className="tr-filter__footer">
+          {filterDraft.length > 0 ? (
+            <div className="tr-filter__list">
+              {filterDraft.map((filter, index) => (
+                <div className="tr-filter__item" data-testid="tr-filter-item" key={index}>
+                  <div className="tr-filter__item-body">
+                    <span>{filterSummary(filter)}</span>
+                    {filter.tags.length > 0 && filter.tagNot ? (
+                      <>
+                        <span className="tr-filter__separator">/</span>
+                        <span className="tr-filter__flag">标签取反</span>
+                      </>
+                    ) : null}
+                  </div>
+                  <Button
+                    variant="text-danger"
+                    size="sm"
+                    testId="tr-filter-item-remove"
+                    onClick={() => removeFilterCondition(index)}
+                  >
+                    删除
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="tr-modal-footer">
             <Button variant="secondary" testId="tr-filter-clear" onClick={clearFilters}>
               清除条件
             </Button>
