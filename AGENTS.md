@@ -36,6 +36,13 @@ pnpm package          # NSIS 安装包，产物在 output/
   `build/release.ps1` 或 `gh release create`。
 - 日常改动最多本地 `pnpm build` / `pnpm package` 验证，不占用版本号、不更新 release。
 
+## 提交纪律
+
+- **每个完成的改动在验证通过后立即提交**，不要等用户再说“提交”。
+- 一个 commit 只装一件事：功能、修复、设计重构、文档分开提交；不把无关改动混在一起。
+- 提交前按上面的验证纪律跑受影响面；未验证或验证失败的改动不要提交。
+- 提交信息沿用现有风格：`<type>(<scope>): <summary>`，正文用短横线列出关键点。
+
 ## 本机环境的硬事实
 
 - **`ELECTRON_RUN_AS_NODE=1` 可能被全局设置**：Electron 会退化成 Node 直接退出。
