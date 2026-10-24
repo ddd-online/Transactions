@@ -7,7 +7,7 @@ import {
   type JSX,
   type KeyboardEvent,
 } from 'react'
-import { Input, Modal } from 'antd'
+import { Image as AntImage, Input, Modal, Popconfirm } from 'antd'
 
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import type { TransactionRecordDto } from '../../shared/types/transaction'
@@ -18,6 +18,7 @@ import { DatePicker } from '../components/date-picker'
 import { FileButton } from '../components/file-button'
 import { Icon } from '../components/icon'
 import { ImageCrop } from '../components/image-crop'
+import { Markdown } from '../components/markdown'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
@@ -53,7 +54,7 @@ function errorMessage(error: unknown): string {
   return String(error)
 }
 
-function thumbUrl(relativePath: string): string {
+function assetUrl(relativePath: string): string {
   return `trasset://local/${relativePath
     .split('/')
     .map((segment) => encodeURIComponent(segment))
@@ -112,6 +113,9 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [color, setColor] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [draftContent, setDraftContent] = useState('')
+  const [selectedImageId, setSelectedImageId] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [cropSrc, setCropSrc] = useState('')
@@ -129,6 +133,9 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     setTitle('')
     setContent('')
     setColor('')
+    setEditing(false)
+    setDraftContent('')
+    setSelectedImageId('')
   }, [])
 
   const loadDates = useCallback(async (): Promise<void> => {
@@ -154,6 +161,9 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
       setTitle('')
       setContent('')
       setColor('')
+      setEditing(false)
+      setDraftContent('')
+      setSelectedImageId('')
       return
     }
     try {
@@ -162,11 +172,15 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
       setTitle(row.title)
       setContent(row.content)
       setColor(row.color)
+      setDraftContent(row.content)
+      setEditing(false)
     } catch {
       setEvent(null)
       setTitle('')
       setContent('')
       setColor('')
+      setDraftContent('')
+      setEditing(false)
     }
     try {
       const rows = await window.api.invoke('key_event_images_list', {
@@ -174,6 +188,9 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         date,
       })
       setImages(rows)
+      setSelectedImageId((current) =>
+        rows.some((row) => row.id === current) ? current : (rows[0]?.id ?? ''),
+      )
     } catch (loadError) {
       setError(errorMessage(loadError))
     }
@@ -213,16 +230,24 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     }
   }, [date, ledgerId])
 
-  const save = useCallback(async (): Promise<void> => {
+  const saveContent = useCallback(async (): Promise<void> => {
     if (!ledgerId || !date) return
     setBusy(true)
     setError('')
+    const nextContent = draftContent
+    // 标题为空时退化成正文首行：与列表卡片、桌面端保持同一条规则
+    const nextTitle =
+      title.trim() ||
+      (nextContent
+        .split('\n')
+        .map((line) => line.trim())
+        .find((line) => line.length > 0) ?? '').slice(0, 200)
     try {
       await window.api.invoke('key_event_upsert', {
         ledger_id: ledgerId,
         date,
-        title,
-        content,
+        title: nextTitle,
+        content: nextContent,
         color,
       })
       await Promise.all([loadEvent(), loadDates()])
@@ -231,7 +256,42 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     } finally {
       setBusy(false)
     }
-  }, [color, content, date, ledgerId, loadDates, loadEvent, title])
+  }, [color, date, draftContent, ledgerId, loadDates, loadEvent, title])
+
+  // 颜色是即时生效的开关：点一下立刻落库，不跟描述编辑的保存绑在一起
+  const changeColor = useCallback(
+    async (value: string): Promise<void> => {
+      if (!ledgerId || !date) return
+      const previous = color
+      setColor(value)
+      setError('')
+      try {
+        await window.api.invoke('key_event_upsert', {
+          ledger_id: ledgerId,
+          date,
+          title,
+          content,
+          color: value,
+        })
+        setEvent((current) => (current ? { ...current, color: value } : current))
+        await loadDates()
+      } catch (saveError) {
+        setColor(previous)
+        setError(errorMessage(saveError))
+      }
+    },
+    [color, content, date, ledgerId, loadDates, title],
+  )
+
+  const startEdit = useCallback((): void => {
+    setDraftContent(content)
+    setEditing(true)
+  }, [content])
+
+  const cancelEdit = useCallback((): void => {
+    setDraftContent(content)
+    setEditing(false)
+  }, [content])
 
   const removeEvent = useCallback(
     async (targetDate: string): Promise<void> => {
@@ -350,12 +410,32 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [loadEvent],
   )
 
+  const saveImage = useCallback(async (): Promise<void> => {
+    const current = images.find((image) => image.id === selectedImageId) ?? images[0]
+    if (!current) return
+    setError('')
+    try {
+      const result = await window.api.invoke('file_save_image', {
+        relativePath: current.filePath,
+      })
+      if (result.canceled) return
+      if (!result.success) setError(result.error ?? '保存图片失败')
+    } catch (saveError) {
+      setError(errorMessage(saveError))
+    }
+  }, [images, selectedImageId])
+
   const onCardKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>, targetDate: string): void => {
+    // 卡片里的删除按钮也有键盘焦点：Enter/Space 只应触发按钮本身
+    if (keyboardEvent.target !== keyboardEvent.currentTarget) return
     if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
       keyboardEvent.preventDefault()
       setDate(targetDate)
     }
   }
+
+  const mainImage = images.find((image) => image.id === selectedImageId) ?? images[0]
+  const previewItems = images.map((image) => assetUrl(image.filePath))
 
   return (
     <PageLayout
@@ -411,18 +491,25 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                           <div className="key-event-card__desc">{summaryOf(item.content)}</div>
                         ) : null}
                       </div>
-                      <button
-                        type="button"
-                        className="tr-icon-btn key-event-card__delete"
-                        aria-label="删除事件"
-                        title="删除事件"
-                        onClick={(clickEvent) => {
-                          clickEvent.stopPropagation()
-                          void removeEvent(item.date)
-                        }}
+                      <Popconfirm
+                        title={`删除事件「${item.title || item.date}」？`}
+                        description="事件里的图片会一并删除。"
+                        okText="删除"
+                        cancelText="取消"
+                        okType="danger"
+                        onConfirm={() => void removeEvent(item.date)}
                       >
-                        <Icon name="Close" size={13} />
-                      </button>
+                        <button
+                          type="button"
+                          className="tr-icon-btn key-event-card__delete"
+                          aria-label="删除事件"
+                          title="删除事件"
+                          data-testid="event-delete"
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
+                        >
+                          <Icon name="Close" size={13} />
+                        </button>
+                      </Popconfirm>
                     </div>
                   )
                 })}
@@ -444,17 +531,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           >
             {event ? (
               <div className="key-event-detail__body">
-                <div className="key-event-detail__head">
-                  <Input
-                    className="key-event-title"
-                    data-testid="event-title"
-                    placeholder="事件标题"
-                    value={title}
-                    maxLength={200}
-                    onChange={(changeEvent) => setTitle(changeEvent.target.value)}
-                  />
-                </div>
-
                 <div className="key-event-colors">
                   {EVENT_COLORS.map(([value, name], index) => (
                     <button
@@ -465,7 +541,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       title={name}
                       aria-label={name}
                       data-testid={`event-color-${index}`}
-                      onClick={() => setColor(value)}
+                      onClick={() => void changeColor(value)}
                     />
                   ))}
                   <button
@@ -474,64 +550,146 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     title="使用默认颜色"
                     aria-label="使用默认颜色"
                     data-testid="event-color-none"
-                    onClick={() => setColor('')}
+                    onClick={() => void changeColor('')}
                   />
                 </div>
 
-                <div className="key-event-images">
-                  {images.map((image) => (
-                    <figure key={image.id} className="key-event-image">
-                      <img src={thumbUrl(image.thumbPath)} alt="事件图片" data-testid="event-image" />
-                      <button
-                        type="button"
-                        className="tr-icon-btn key-event-image__delete"
-                        aria-label="删除图片"
-                        title="删除图片"
-                        data-testid="event-image-delete"
-                        onClick={() => void removeImage(image.id)}
-                      >
-                        <Icon name="Close" size={12} />
-                      </button>
-                    </figure>
-                  ))}
-                  <FileButton
-                    testId="event-image-input"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    label="添加图片"
-                    inputRef={fileRef}
-                    onSelect={(file) => void addImage(file)}
-                  />
+                <div className="key-event-gallery">
+                  <div className="key-event-gallery__view">
+                    {!mainImage ? (
+                      <div className="key-event-gallery__empty" data-testid="event-gallery-empty">
+                        暂无图片
+                      </div>
+                    ) : (
+                      <>
+                        <div className="key-event-gallery__main">
+                          <AntImage.PreviewGroup items={previewItems}>
+                            <AntImage
+                              className="key-event-gallery__img"
+                              src={assetUrl(mainImage.filePath)}
+                              alt="事件图片"
+                              data-testid="event-image-main"
+                            />
+                          </AntImage.PreviewGroup>
+                          <button
+                            type="button"
+                            className="tr-icon-btn key-event-gallery__download"
+                            aria-label="保存图片"
+                            title="保存图片"
+                            data-testid="event-image-save"
+                            onClick={() => void saveImage()}
+                          >
+                            <Icon name="Download" size={14} />
+                          </button>
+                        </div>
+
+                        <div className="key-event-gallery__thumbs">
+                          {images.map((image) => (
+                            <div
+                              key={image.id}
+                              className={`key-event-thumb${image.id === mainImage.id ? ' is-selected' : ''}`}
+                            >
+                              <img
+                                className="key-event-thumb__img"
+                                src={assetUrl(image.thumbPath)}
+                                alt="事件图片"
+                                data-testid="event-image"
+                                onClick={() => setSelectedImageId(image.id)}
+                              />
+                              <Popconfirm
+                                title="删除这张图片？"
+                                okText="删除"
+                                cancelText="取消"
+                                okType="danger"
+                                onConfirm={() => void removeImage(image.id)}
+                              >
+                                <button
+                                  type="button"
+                                  className="tr-icon-btn key-event-thumb__delete"
+                                  aria-label="删除图片"
+                                  title="删除图片"
+                                  data-testid="event-image-delete"
+                                  onClick={(clickEvent) => clickEvent.stopPropagation()}
+                                >
+                                  <Icon name="Close" size={12} />
+                                </button>
+                              </Popconfirm>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="key-event-description">
-                  <Input.TextArea
-                    className="key-event-content"
-                    data-testid="event-content"
-                    placeholder="写下这件事……"
-                    value={content}
-                    maxLength={5000}
-                    autoSize={{ minRows: 6, maxRows: 14 }}
-                    onChange={(changeEvent) => setContent(changeEvent.target.value)}
-                  />
+                  {editing ? (
+                    <div className="key-event-description__edit">
+                      <Input.TextArea
+                        className="key-event-content"
+                        data-testid="event-content"
+                        placeholder="写下这件事……"
+                        value={draftContent}
+                        maxLength={5000}
+                        autoSize={{ minRows: 6, maxRows: 14 }}
+                        onChange={(changeEvent) => setDraftContent(changeEvent.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="key-event-description__content" data-testid="event-content-view">
+                      {content.trim() ? (
+                        <Markdown source={content} />
+                      ) : (
+                        <p className="key-event-description__placeholder">暂无描述</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="key-event-detail__footer">
-                  <Button
-                    variant="danger-outline"
-                    testId="event-delete"
-                    disabled={busy}
-                    onClick={() => void removeEvent(date)}
-                  >
-                    删除
-                  </Button>
-                  <Button
-                    variant="primary"
-                    testId="event-save"
-                    disabled={!ledgerId || busy}
-                    onClick={() => void save()}
-                  >
-                    保存
-                  </Button>
+                  {editing ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        testId="event-edit-cancel"
+                        disabled={busy}
+                        onClick={cancelEdit}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        testId="event-save"
+                        disabled={!ledgerId || busy}
+                        onClick={() => void saveContent()}
+                      >
+                        保存
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <FileButton
+                        testId="event-image-input"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        label="添加图片"
+                        icon={<Icon name="Download" size={14} />}
+                        size="sm"
+                        inputRef={fileRef}
+                        onSelect={(file) => void addImage(file)}
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        testId="event-edit-content"
+                        icon={<Icon name="Edit" size={14} />}
+                        onClick={startEdit}
+                      >
+                        编辑描述
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

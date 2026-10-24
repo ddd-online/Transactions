@@ -79,9 +79,11 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     await expect(page.getByTestId('event-date-item')).toContainText('年会')
     await expect(page.getByTestId('event-date-item')).toContainText('01-15')
 
-    await page.getByTestId('event-content').fill('抽奖与聚餐')
     await page.getByTestId('event-color-0').click()
+    await page.getByTestId('event-edit-content').click()
+    await page.getByTestId('event-content').fill('抽奖与聚餐')
     await page.getByTestId('event-save').click()
+    await expect(page.getByTestId('event-content-view')).toContainText('抽奖与聚餐')
     await page.waitForTimeout(400)
     await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'events.png') })
 
@@ -99,6 +101,12 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     await page.getByTestId('image-crop-confirm').click()
     await expect(page.getByTestId('event-image')).toHaveCount(1)
 
+    // 大图点开 AntD 预览（可缩放/切换），Esc 关闭
+    await page.getByTestId('event-image-main').click()
+    await expect(page.locator('.ant-image-preview')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.ant-image-preview')).toBeHidden()
+
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const event = database
       .prepare('SELECT title, content, color FROM key_event')
@@ -114,7 +122,9 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(true)
     expect(existsSync(join(workspace, 'data', 'assets', image.thumb_path))).toBe(true)
 
-    await page.getByTestId('event-delete').click()
+    await page.getByTestId('event-date-item').getByTestId('event-delete').click()
+    await expect(page.getByText('删除事件「年会」？')).toBeVisible()
+    await page.locator('.ant-popconfirm-buttons button:last-child').click()
     await expect(page.getByTestId('event-date-item')).toHaveCount(0)
     await expect(page.getByTestId('event-image')).toHaveCount(0)
 

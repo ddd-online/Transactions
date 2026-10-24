@@ -1,4 +1,4 @@
-import { useRef, type JSX, type RefObject } from 'react'
+import { useRef, type JSX, type ReactNode, type RefObject } from 'react'
 
 import { Button } from './button'
 
@@ -6,6 +6,8 @@ export interface FileButtonProps {
   testId: string
   accept: string
   label?: string
+  icon?: ReactNode
+  size?: 'sm' | 'md'
   inputRef?: RefObject<HTMLInputElement | null>
   onSelect: (file: File | undefined) => void
 }
@@ -15,6 +17,8 @@ export function FileButton({
   testId,
   accept,
   label = '选择图片',
+  icon,
+  size = 'md',
   inputRef,
   onSelect,
 }: FileButtonProps): JSX.Element {
@@ -22,7 +26,7 @@ export function FileButton({
   const ref = inputRef ?? localRef
   return (
     <span className="st-file-picker">
-      <Button variant="secondary" onClick={() => ref.current?.click()}>
+      <Button variant="secondary" size={size} icon={icon} onClick={() => ref.current?.click()}>
         {label}
       </Button>
       <input

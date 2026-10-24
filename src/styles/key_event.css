@@ -400,76 +400,12 @@
   min-height: 0;
 }
 
-/* 标题是卡片里的主标题：无边框输入，聚焦时只留光标，不再画一圈控件框。 */
-.key-event-detail__head {
-  flex-shrink: 0;
-  padding-bottom: var(--transactions-space-sm);
-}
-
-.key-event-title.ant-input {
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-display-sm);
-  font-weight: var(--transactions-weight-semibold);
-  line-height: var(--transactions-height-tight);
-  letter-spacing: var(--transactions-tracking-display);
-  color: var(--transactions-color-text-major);
-}
-
-.key-event-title.ant-input:focus,
-.key-event-title.ant-input:hover {
-  border: none;
-  box-shadow: none;
-}
-
-/* 图片区：详情里只放缩略图与添加入口，点图不做灯箱（保持这一版的轻量布局）。 */
-.key-event-images {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  flex-shrink: 0;
-  padding-bottom: var(--transactions-space-md);
-}
-
-.key-event-image {
-  position: relative;
-  width: 112px;
-  height: 74px;
-  margin: 0;
-  border: 1px solid var(--transactions-color-divider);
-  border-radius: var(--transactions-radius-sm);
-  overflow: hidden;
-  background-color: var(--transactions-color-minor-background);
-}
-
-.key-event-image img {
+/* 主图用 AntD `Image` 承载预览：它默认套一层 inline-block 的 `.ant-image`，
+ * 撑满容器后点图区域才是整张主图。 */
+.key-event-gallery__main .ant-image {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-.key-event-image__delete {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  padding: 0;
-  border: 1px solid var(--transactions-color-divider);
-  background-color: var(--transactions-color-elevated);
-  opacity: 0;
-  transition: opacity var(--transactions-transition-fast);
-}
-
-.key-event-image:hover .key-event-image__delete,
-.key-event-image__delete:focus-visible {
-  opacity: 1;
 }
 
 .key-event-content.ant-input {
@@ -601,12 +537,17 @@
   object-fit: contain;
 }
 
-/* 叠在图片上的下载：本体是 .ui-icon-btn--on-media（毛玻璃底），这里只固定位置 */
+/* 叠在图片上的下载：毛玻璃底压住照片，位置固定在右下角 */
 .key-event-gallery__download {
   position: absolute;
   bottom: 8px;
   right: 8px;
   z-index: 1;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--transactions-color-divider);
+  background-color: color-mix(in srgb, var(--transactions-color-elevated) 82%, transparent);
+  backdrop-filter: blur(2px);
   box-shadow: var(--transactions-shadow-sm);
 }
 
