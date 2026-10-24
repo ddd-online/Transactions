@@ -142,7 +142,10 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('position-round-preview')).toContainText('本轮复盘内容')
     await page.getByTestId('position-round-toggle').click()
     await expect(page.getByTestId('position-round-preview')).toHaveCount(0)
-    await page.getByTestId('position-round-toggle').click()
+    await expect(page.getByTestId('position-round-edit')).toBeVisible()
+    await page.getByTestId('position-round-edit').click()
+    await expect(page.getByTestId('position-round-review')).toBeVisible()
+    await page.getByTestId('position-round-cancel').click()
     await expect(page.getByTestId('position-round-preview')).toContainText('本轮复盘内容')
 
     await page.getByTestId('stock-position-close').click()

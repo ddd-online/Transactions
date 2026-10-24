@@ -470,16 +470,17 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 <Icon name={roundExpanded ? 'Down' : 'CaretRight'} size={12} />
                 本轮复盘
               </button>
-              {roundExpanded ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  testId="position-round-edit"
-                  onClick={() => setRoundEditing(true)}
-                >
-                  编辑
-                </Button>
-              ) : null}
+              <Button
+                variant="secondary"
+                size="sm"
+                testId="position-round-edit"
+                onClick={() => {
+                  setRoundExpanded(true)
+                  setRoundEditing(true)
+                }}
+              >
+                编辑
+              </Button>
             </section>
             {roundExpanded ? (
               roundEditing ? (
@@ -492,7 +493,12 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     onChange={(event) => setRoundText(event.target.value)}
                   />
                   <div className="stock-review-box__footer">
-                    <Button variant="secondary" size="sm" onClick={() => setRoundEditing(false)}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      testId="position-round-cancel"
+                      onClick={() => setRoundEditing(false)}
+                    >
                       取消
                     </Button>
                     <Button
