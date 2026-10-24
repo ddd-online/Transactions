@@ -6,10 +6,6 @@
   overflow: hidden;
 }
 
-.app-shell-body.is-sidebar-collapsed {
-  --transactions-size-sidebar: var(--transactions-size-sidebar-collapsed);
-}
-
 .app-content {
   position: relative;
   display: flex;

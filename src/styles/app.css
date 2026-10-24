@@ -21,17 +21,13 @@
   -webkit-user-select: none;
 }
 
-/* 骨架用**网格**而不是弹性盒：收起 / 展开要动的是"一列宽度"，
- * 而 `grid-template-columns` 是这套设计里**唯一**被允许动画的布局属性
- * （见 DESIGN.md「Motion」的 Budget；事件页右轨的收起用的就是它）。
- * 收起时只换 `--transactions-size-sidebar` 一个变量，列宽自己走过去 ——
- * 侧栏、内容区、标题栏的居中补偿因此**同一条曲线、同一拍**，不会各走各的。 */
+/* 骨架用**网格**：左侧栏固定一列，内容区吃掉剩余宽度。
+ * 侧栏不再收起，所以这里没有列宽动画。 */
 .app-shell-body {
   display: grid;
   grid-template-columns: var(--transactions-size-sidebar) minmax(0, 1fr);
   flex: 1;
   overflow: hidden;
-  transition: grid-template-columns var(--transactions-transition-settle);
 }
 
 /* 侧边栏 —— 宽度唯一来源是所在网格列（`--transactions-size-sidebar`：
@@ -45,13 +41,6 @@
   border-right: 1px solid var(--transactions-color-border-l1);
   display: flex;
   flex-direction: column;
-}
-
-/* 收起：**只换一个变量**。侧栏宽度与标题栏的居中补偿读的都是
- * `--transactions-size-sidebar`，覆盖在这里（而不是分别写两条规则）之后，
- * 两者必然同步 —— 这条是"标题在收起状态下仍然居中"的唯一保证。 */
-.app-shell.is-sidebar-collapsed {
-  --transactions-size-sidebar: var(--transactions-size-sidebar-collapsed);
 }
 
 /* 内容区 */
@@ -93,7 +82,7 @@
 /* 顶部容器（与右侧「标题 + 窗口三按钮」等高、同起点）：里面是**账本切换入口**。
  * 底边一条发丝线把它与下方内容分开，与页面顶部的分隔线**同一条水平线**。
  *
- * 左右各 12px 与导航组同档：展开态那个下拉按钮因此与下面的导航项**同宽同左缘**，
+ * 左右各 12px 与导航组同档：下拉按钮因此与下面的导航项**同宽同左缘**，
  * 里面的软件图标自然落在 24px 那条图标基准线上（12 + 按钮自己的 12）。 */
 .sidebar-ledger {
   position: relative;
@@ -118,9 +107,7 @@
  * ============================================ */
 
 /* 触发器 + 菜单的定位锚点：菜单相对**触发器**定位，菜单宽度在下面单独给。
- * 收起后侧栏只有 64px，菜单（176px）必然溢出栏外 —— 这不靠任何 `z-index` 兜底：
-   沿途的祖先都没有 `position` + `z-index`，也没有 `overflow`，所以 `.ledger-menu`
-   的 `z-index: 1050` 直接与整层界面同比；`.app-shell-body` 的 `overflow: hidden`
+ * 面板的 `z-index: 1050` 直接与整层界面同比；`.app-shell-body` 的 `overflow: hidden`
    只裁窗口边界，176px 的菜单离右边界远得很。 */
 .ledger-anchor {
   position: relative;
@@ -128,15 +115,12 @@
 }
 
 /* ============================================
- * 账本切换入口的**两副形态**（同一个按钮）
+ * 账本切换入口（软件图标 + 账本名 + ⌄）
  *
- * 展开态 `.ledger-btn`：与改动前逐字一致的下拉选择器（软件图标 + 账本名 + ⌄）——
- *   侧栏有 200px 的时候，**"我在哪个账本"必须看得见**，一个方块图标替代不了名字。
- * 收起态 `.workspace-btn`：只剩那个 32px 方块，名字与箭头收掉。
- * 两态点开的都是同一个菜单。
+ * 侧栏固定展开，**"我在哪个账本"必须看得见** —— 一个方块图标替代不了名字。
  * ============================================ */
 
-/* 展开态：无边框 + hover 填充 + 展开时主色 tint（与侧栏导航项同一套语言） */
+/* 无边框 + hover 填充 + 展开时主色 tint（与侧栏导航项同一套语言） */
 .ledger-btn {
   display: flex;
   align-items: center;
@@ -203,67 +187,6 @@
   fill: currentColor;
 }
 
-/* 收起态：方形软件 ICON = 账本切换入口。
- *
- * 为什么是"环绕高光"而不是"填一个底色"：方块本身就是一张**图片**
- * （用户自定义的图标，或内置的「Tr」标志），给它垫底色会被图的透明区漏出来；
- * 悬停时在外面套一圈光环，图的像素一个都不动。 */
-.workspace-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background-clip: content-box;
-  border: none;
-  border-radius: var(--transactions-radius-md);
-  background: none;
-  cursor: pointer;
-  /* `overflow: hidden` + 自身圆角 = 用户上传的**方形**图也被切进同一个圆角，
-     不会出现"内置标志是圆角、自定义图标是直角"这种不一致。 */
-  overflow: hidden;
-  transition: box-shadow var(--transactions-transition-fast);
-}
-
-.workspace-btn:hover {
-  background-color: var(--transactions-color-hover-bg);
-}
-
-/* 展开中 = 侧栏导航项的"选中"语言：主色 tint 底色 */
-.workspace-btn.is-open {
-  background-color: var(--transactions-color-active-bg);
-}
-
-.workspace-btn:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 3px;
-}
-
-/* 收起态把下拉选择器的另外两件东西收掉：名字与箭头在 64px 里没有位置，
- * 剩下的那个方块就是"工作空间 / 账本入口"的全部表达。 */
-.workspace-btn .ledger-btn-name,
-.workspace-btn .ledger-btn-arrow {
-  display: none;
-}
-
-/* 收起态：软件图标 40×40 —— 比功能项的 44 小一档。
- * 它是这一列的起点，尺寸跟下面的方块差一圈时（原来是 32 vs 44）整列看着就没对齐；
- * 而它填的是一张图（比线性图标"重"），跟 44 那格等大反而显胖。
- * 40 也是子功能图标条里那颗按钮的尺寸（`.page-rail-btn`）：两条窄列里的"方格图标"
- * 因此同一档。 */
-.app-left-bar.is-collapsed .workspace-btn {
-  width: 44px;
-  height: 44px;
-  padding: 2px;
-  border-radius: var(--transactions-radius-md);
-}
-
-.app-left-bar.is-collapsed .workspace-btn .workspace-mark {
-  width: 36px;
-  height: 36px;
-}
-
 /* 工作空间标志：铺满所在方块，**圆角继承宿主**（按钮 8px / 设置页预览 12px）。
  * 方形裁剪在导入时就做完了，这里只负责不拉伸。 */
 .workspace-mark {
@@ -324,9 +247,7 @@
   z-index: 1050;
   top: calc(100% + var(--transactions-space-xs));
   left: 0;
-  /* 宽度**写死**而不是 `left:0; right:0`：锚点现在只有 32px（触发方块那么宽），
-   * 跟着锚点走的话菜单会缩成一条。176px = 侧栏展开态的可用宽度
-   * （200 - 12×2），收起后它会溢到内容区上方 —— 这是刻意的，菜单该有字的宽度。 */
+  /* 176px = 侧栏内容宽（200 - 12×2），与触发器同宽。 */
   width: 176px;
   display: flex;
   flex-direction: column;
@@ -473,14 +394,6 @@
   flex: 1;
 }
 
-/* 「收起侧边栏」那一行：落在导航组的底部、页脚带之上。
- * 内边距与 `.sidebar-nav` 同一档（左右 12、底部 8），按钮因此与导航项同宽同左缘。 */
-.sidebar-toggle-row {
-  display: flex;
-  flex-direction: column;
-  padding: 0 var(--transactions-space-md) var(--transactions-space-sm);
-}
-
 .sidebar-bottom {
   display: flex;
   flex-direction: column;
@@ -556,149 +469,10 @@
   width: 18px;
   height: 18px;
   fill: currentColor;
-  /* 收起态那个 20px 是**缩放**出来的（见下），所以这里过渡的是 transform ——
-   * 改 width/height 属于布局属性，Budget 里没有它。 */
-  transition: transform var(--transactions-transition-settle);
 }
 
 .nav-btn-text {
   white-space: nowrap;
-}
-
-/* ============================================
- * 收放那一拍的"交接"（`is-sidebar-morphing` 由 `shell.rs` 在点收起 / 展开时挂上）
- *
- * 两个状态的排法不同（图标**旁** ↔ 图标**下**），而 `flex-direction` 没法过渡 ——
- * 于是让内容**先让位、再从上方 4px 落回**（与 `tr-rise-in` 同一档）：
- * 重排发生在内容不可见的那 25% 里（80ms，够遮住那一帧，又不至于让侧栏空太久），
- * 看到的就是一次交接，不是一次跳。
- *
- * 这个类由 在点击时挂上、360ms 后摘掉，所以它**只在收放那一下**跑 ——
- * 首屏挂载时不演（那是 `.page-content > *` 的 settle 负责的事），
- * 也不必担心"每次进页面都重播一次"（侧栏根本不会重挂）。
- *
- * **图标也一起交接**：展开态的行高（34px）与收起态的方块（44px）不同档 ——
- * 那一格高 10px 是"图标 + 名字"两行需要的，压不下来；于是那 10px 的重排也和文字
- * 一起发生在不可见的窗口里。留下的"结构"（方块底色、选中态）不参与，
- * 所以看到的是"内容换了一遍"，而不是整栏闪一下。
- * 图标的 18 ↔ 20px 仍按上面的 `scale` 长大 / 收小，只是在窗口结束前就位。
- * ============================================ */
-
-@keyframes tr-sidebar-hand-over {
-  0% {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-
-  25% {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.app-shell.is-sidebar-morphing .nav-btn-icon,
-.app-shell.is-sidebar-morphing .nav-btn-text,
-.app-shell.is-sidebar-morphing .ledger-btn-name,
-.app-shell.is-sidebar-morphing .ledger-btn-arrow {
-  animation: tr-sidebar-hand-over var(--transactions-transition-settle);
-}
-
-/* ============================================
- * 收起态（`.app-left-bar.is-collapsed`）
- *
- * **图标在上、名字在下**：68px 放不下一行"图标 + 名字"（那是展开态 200px 的排法），
- * 但放得下两行的"图标 / 名字" —— 功能名因此从"要悬浮才知道"变成一直看得见。
- * 图标同时从 18px 涨到 20px：收起后它是唯一的入口，看不清就只剩猜。
- *
- * 对齐：顶部方块与下面每个导航图标都落在侧栏的**中轴**上（中心 34px）——
- * 顶部容器去掉左右内边距后靠 `justify-content: center` 居中，导航项靠按钮内居中，
- * 两者算出来是同一个数。
- * ============================================ */
-.app-left-bar.is-collapsed .sidebar-ledger {
-  justify-content: center;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-/* 收起态：锚点收成方块那么宽（展开态是"铺满一行"，菜单因此与按钮同宽） */
-.app-left-bar.is-collapsed .ledger-anchor {
-  width: auto;
-}
-
-/* 收起态：每个入口是**一个 44×44 的方块**，里面装着"图标在上、名字在下"两行。
- *
- * 44 这个数不是随手取的：页脚那条带子就是 44px（两栏底边因此仍然齐平），
- * 而 68px 的侧栏减去左右各 12px 内边距**正好也是 44** —— 方块与容器同宽，
- * 一格一格排下来，行与行之间只隔 2px。
- *
- * 方块本身**不填色**：图标与文字就是全部内容。底色只在悬停 / 选中时出现，
- * 而那两处本来就是方的（按钮就是正方形），不必再往图标上叠一层底。 */
-.app-left-bar.is-collapsed .nav-btn {
-  /* 宽度**跟着列走**（`100%`）而不是写死 44：动画期间这一格就是"正在缩窄的那一列"，
-   * 收放时格子与栏同步变窄，不会先跳再等。
-   * 收起态的可用宽度 = 68 - 12×2 = 44，所以它仍然是一个 44×44 的方块。 */
-  width: 100%;
-  height: 44px;
-  padding: 0;
-  /* 内容在方块里居中。展开态不做这件事（那是"图标在左、文字跟上"的横向排法），
-   * 而收起态里没名字的那个按钮（「收起 / 展开侧边栏」）也必须居中 ——
-   * 少了这一条它就贴在方块左边，一眼就看得出来是歪的（实测左 0.7px / 右 24.7px）。 */
-  justify-content: center;
-}
-
-/* 功能项：竖排两行。`:not(.sidebar-toggle-btn)` 是因为「收起 / 展开」是**控件**
- * 不是功能页 —— 它收起后仍然只留那个折叠图标（不带名字）。 */
-.app-left-bar.is-collapsed .nav-btn:not(.sidebar-toggle-btn) {
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  justify-content: center;
-}
-
-/* 只有图标的两个入口（「收起 / 展开侧边栏」与「应用设置」）用**比功能项小一档的方块**：
- * 它们没有第二行文字，44px 的方块只是给图标留了一圈空；但 28px 又贴着图标太紧
- * （实测那样一圈只有 4px）。**36px** 是两个都不能算错的中间档：20px 图标四周各留 8px，
- * 既是稳的点击目标，也和下面 44px 的功能项拉出清楚的层次。
- * 居中是必须的：这一列的列向对齐是 `stretch`，给死宽度后它会贴到左边。 */
-.app-left-bar.is-collapsed .sidebar-toggle-btn,
-.app-left-bar.is-collapsed .sidebar-bottom .nav-btn {
-  width: 36px;
-  height: 36px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* 收起态的图标比展开态大一档（18 → 20px）：它和名字挤在同一格里，
- * 名字已经是最小一号字，图标得撑住那一格的重量。
- * **只改收起态** —— 展开态是"图标在左、文字在右"的横向排法，图标跟文字同一档更稳。
- * 用 `scale` 而不是 width/height：缩放只影响绘制，且它让"图标跟着一起长大"这件事
- * 顺着收放那一拍演完（transition 写在上面那条基础规则里）。 */
-.app-left-bar.is-collapsed .nav-btn-icon svg {
-  transform: scale(1.1111);
-}
-
-/* 名字：最小一档字号（11px）。五个功能项都是两个字（22px），52px 里绰绰有余；
- * 真遇上更长的名字就省略号收尾，不挤出去。 */
-.app-left-bar.is-collapsed .nav-btn:not(.sidebar-toggle-btn) .nav-btn-text {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: var(--transactions-size-text-small);
-  line-height: var(--transactions-height-tight);
-}
-
-/* 「应用设置」收起后**不要文字**：它是页脚那一行唯一的工具项，
- * 一颗齿轮已经说清了自己是"设置"，写不写名字都要占掉那 44px 的一半。 */
-.app-left-bar.is-collapsed .sidebar-bottom .nav-btn-text {
-  display: none;
-}
-
-.app-left-bar.is-collapsed .sidebar-toggle-btn .nav-btn-text {
-  display: none;
 }
 
 /* ============================================

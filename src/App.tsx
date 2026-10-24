@@ -100,7 +100,6 @@ export function App(): JSX.Element {
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
   const [settingsTab, setSettingsTab] = useState<'general'|'features'|'diary'|'data'|'about'>('general')
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [ledgerMenuOpen, setLedgerMenuOpen] = useState(false)
   const [accountingTab, setAccountingTab] = useState<
     'records' | 'charts' | 'tags' | 'templates'
@@ -510,14 +509,14 @@ export function App(): JSX.Element {
         </div>
       ) : null}
 
-      <div className={`app-shell-body${sidebarCollapsed ? ' is-sidebar-collapsed' : ''}`}>
+      <div className="app-shell-body">
       <aside className="app-sidebar">
-        <div className={`app-left-bar${sidebarCollapsed ? ' is-collapsed' : ''}`}>
+        <div className="app-left-bar">
           <div className="sidebar-ledger">
             <div className="ledger-anchor" ref={ledgerMenuRef}>
               <button
                 type="button"
-                className={`ledger-btn${sidebarCollapsed ? ' workspace-btn' : ''}${ledgerMenuOpen ? ' is-open' : ''}`}
+                className={`ledger-btn${ledgerMenuOpen ? ' is-open' : ''}`}
                 data-testid="ledger-trigger"
                 aria-label={`切换账本，当前 ${activeLedgerName}`}
                 onClick={() => setLedgerMenuOpen((open) => !open)}
@@ -618,19 +617,6 @@ export function App(): JSX.Element {
           </nav>
 
           <div className="sidebar-spacer" />
-          <div className="sidebar-toggle-row">
-            <button
-              type="button"
-              className="nav-btn nav-btn-secondary sidebar-toggle-btn"
-              aria-label={sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}
-              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-            >
-              <span className="nav-btn-icon">
-                <Icon name={sidebarCollapsed ? 'MenuUnfold' : 'MenuFold'} size={18} />
-              </span>
-              <span className="nav-btn-text">{sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}</span>
-            </button>
-          </div>
           <div className="sidebar-bottom">
             <button
               type="button"
