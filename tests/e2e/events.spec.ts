@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -89,8 +89,14 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
 
     await page.getByTestId('event-links-toggle').click()
     await expect(page.getByTestId('event-links-toggle')).toHaveAttribute('aria-expanded', 'false')
+    await expect
+      .poll(() => JSON.parse(readFileSync(join(home, '.tr.dev.json'), 'utf8')).keyEventLinkedOpen)
+      .toBe(false)
     await page.getByTestId('event-links-toggle').click()
     await expect(page.getByTestId('event-links-toggle')).toHaveAttribute('aria-expanded', 'true')
+    await expect
+      .poll(() => JSON.parse(readFileSync(join(home, '.tr.dev.json'), 'utf8')).keyEventLinkedOpen)
+      .toBe(true)
 
     await page.getByTestId('event-image-input').setInputFiles({
       name: 'demo.png',

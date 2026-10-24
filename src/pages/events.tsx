@@ -197,6 +197,21 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   }, [date, ledgerId])
 
   useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const config = await window.api.invoke('config_get')
+        if (alive) setLinksOpen(config.keyEventLinkedOpen)
+      } catch {
+        // 配置读不到时保持默认展开
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
     void loadDates()
   }, [loadDates])
 
@@ -424,6 +439,19 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
       setError(errorMessage(saveError))
     }
   }, [images, selectedImageId])
+
+  const toggleLinks = useCallback(async (): Promise<void> => {
+    const next = !linksOpen
+    setLinksOpen(next)
+    setError('')
+    try {
+      const persisted = await window.api.invoke('config_set_key_event_linked_open', { open: next })
+      setLinksOpen(persisted)
+    } catch (toggleError) {
+      setLinksOpen(!next)
+      setError(errorMessage(toggleError))
+    }
+  }, [linksOpen])
 
   const onCardKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>, targetDate: string): void => {
     // 卡片里的删除按钮也有键盘焦点：Enter/Space 只应触发按钮本身
@@ -757,7 +785,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           aria-label={linksOpen ? '收起关联交易' : '展开关联交易'}
           aria-expanded={linksOpen}
           title={linksOpen ? '收起关联交易' : '展开关联交易'}
-          onClick={() => setLinksOpen((open) => !open)}
+          onClick={() => void toggleLinks()}
         >
           <Icon name={linksOpen ? 'ChevronRight' : 'ChevronLeft'} size={14} />
         </button>
