@@ -422,11 +422,21 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
             <h3 className="stock-section__title">结算统计</h3>
             {latest ? (
               <div className="stock-stat-grid" data-testid="stock-statistics-summary">
-                <div className="stock-stat-cell">
+                <div className="stock-stat-cell stock-stat-cell--wide">
                   <span className="stock-label">已实现盈亏</span>
                   <strong className={stockPnlClass(latest.totalPnl)}>
                     {money(latest.totalPnl)}
                   </strong>
+                </div>
+                <div className="stock-stat-cell">
+                  <StatLabel text="平均盈利" hint="赢的时候能赢多少" />
+                  <strong className="is-up">{money(latest.avgWin)}</strong>
+                  <small>{latest.winCount} 笔盈利</small>
+                </div>
+                <div className="stock-stat-cell">
+                  <StatLabel text="平均亏损" hint="输的时候会输多少" />
+                  <strong className="is-down">{money(latest.avgLoss)}</strong>
+                  <small>{latest.lossCount} 笔亏损</small>
                 </div>
                 <div className="stock-stat-cell">
                   <StatLabel text="胜率" hint="我赢的次数够不够多" />
@@ -451,16 +461,6 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   <StatLabel text="最大回撤" hint="最坏的时候我要忍多少" />
                   <strong>{stockPercent(latest.maxDrawdownPct)}</strong>
                   <small>从高点回落 {money(latest.maxDrawdown)}</small>
-                </div>
-                <div className="stock-stat-cell">
-                  <StatLabel text="平均盈利" hint="赢的时候能赢多少" />
-                  <strong className="is-up">{money(latest.avgWin)}</strong>
-                  <small>{latest.winCount} 笔盈利</small>
-                </div>
-                <div className="stock-stat-cell">
-                  <StatLabel text="平均亏损" hint="输的时候会输多少" />
-                  <strong className="is-down">{money(latest.avgLoss)}</strong>
-                  <small>{latest.lossCount} 笔亏损</small>
                 </div>
               </div>
             ) : (

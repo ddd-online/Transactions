@@ -3092,9 +3092,13 @@
 
 .stock-stat-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--transactions-space-lg) var(--transactions-space-md);
   padding: var(--transactions-space-md) var(--transactions-space-lg);
+}
+
+.stock-stat-cell--wide {
+  grid-column: span 2;
 }
 
 .stock-stat-cell {
@@ -3113,10 +3117,6 @@
 .stock-stat-cell small {
   color: var(--transactions-color-text-tertiary);
   font-size: var(--transactions-size-text-caption);
-}
-
-.stock-stat-cell:nth-child(6) {
-  grid-column: 2;
 }
 
 .stock-chart-head {
@@ -3460,18 +3460,11 @@
   .stock-history-main {
     grid-template-columns: 240px minmax(0, 1fr);
   }
-
-  .stock-stat-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .stock-stat-cell:nth-child(6) {
-    grid-column: auto;
-  }
 }
 
 @media (max-width: 900px) {
-  .stock-metrics {
+  .stock-metrics,
+  .stock-stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
