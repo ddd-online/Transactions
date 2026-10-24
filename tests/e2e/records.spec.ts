@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -157,6 +157,30 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('chart-svg')).toBeVisible()
     await page.waitForTimeout(400)
     await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'charts.png') })
+
+    // 曲线合计可收起：状态写进配置 JSON，重新进入分析页仍保持
+    const chartSummaryCollapsed = (): boolean | undefined => {
+      const config = JSON.parse(readFileSync(join(home, '.tr.dev.json'), 'utf8')) as {
+        chartSummaryCollapsed?: boolean
+      }
+      return config.chartSummaryCollapsed
+    }
+    await expect(page.getByTestId('chart-sums')).toBeVisible()
+    await page.getByTestId('chart-sums-collapse').click()
+    await expect(page.getByTestId('chart-sums-expand')).toBeVisible()
+    await expect(page.getByTestId('chart-sums')).toHaveCount(0)
+    await page.mouse.move(700, 40)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'charts-sums-collapsed.png'),
+    })
+    await expect.poll(chartSummaryCollapsed).toBe(true)
+    await page.getByTestId('acct-tab-records').click()
+    await page.getByTestId('acct-tab-charts').click()
+    await page.getByTestId('chart-item').filter({ hasText: '年度消费趋势' }).click()
+    await expect(page.getByTestId('chart-sums-expand')).toBeVisible()
+    await page.getByTestId('chart-sums-expand').click()
+    await expect(page.getByTestId('chart-sums')).toBeVisible()
+    await expect.poll(chartSummaryCollapsed).toBe(false)
 
     await page.getByTestId('chart-open-create').click()
     await page.getByTestId('chart-title').fill('自定义图表')

@@ -27,6 +27,8 @@ export interface AppConfig {
   ledgerFeatures: LedgerFeatures
   keyEventLinkedOpen: boolean
   sidebarCollapsed: boolean
+  /** 分析页右侧「曲线合计」是否收起；true = 只留窄条。 */
+  chartSummaryCollapsed: boolean
   dataVersion: number
 }
 
@@ -41,6 +43,7 @@ export interface ConfigSnapshot {
   ledgerFeatures: LedgerFeatures
   keyEventLinkedOpen: boolean
   sidebarCollapsed: boolean
+  chartSummaryCollapsed: boolean
 }
 
 export interface DialogOpenResponse {

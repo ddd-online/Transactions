@@ -38,6 +38,7 @@ describe('config normalization', () => {
     })
     expect(config.keyEventLinkedOpen).toBe(true)
     expect(config.sidebarCollapsed).toBe(false)
+    expect(config.chartSummaryCollapsed).toBe(false)
   })
 
   it('missing keys fall back to defaults (old config files)', () => {
@@ -46,6 +47,7 @@ describe('config normalization', () => {
     expect(config.workspaceDir).toBe('D:\\ws')
     expect(config.height).toBe(1000)
     expect(config.features.accounting).toBe(true)
+    expect(config.chartSummaryCollapsed).toBe(false)
   })
 
   it('partial feature flags and ledgerFeatures are normalized', () => {
@@ -78,12 +80,14 @@ describe('config store', () => {
     store.update((config) => {
       config.closeBehavior = 'tray'
       config.sidebarCollapsed = true
+      config.chartSummaryCollapsed = true
     })
 
     const reloaded = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>
     expect(reloaded.width).toBe(800)
     expect(reloaded.closeBehavior).toBe('tray')
     expect(reloaded.sidebarCollapsed).toBe(true)
+    expect(reloaded.chartSummaryCollapsed).toBe(true)
     expect(reloaded.futureFeature).toEqual({ enabled: true })
     expect(reloaded.sourceNumber).toBe(7)
   })

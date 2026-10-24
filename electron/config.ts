@@ -75,6 +75,7 @@ export function defaultConfig(): AppConfig {
     ledgerFeatures: {},
     keyEventLinkedOpen: true,
     sidebarCollapsed: false,
+    chartSummaryCollapsed: false,
     dataVersion: 2,
   }
 }
@@ -94,6 +95,7 @@ export function normalizeConfig(raw: Record<string, unknown>): AppConfig {
     ledgerFeatures: normalizeLedgerFeatures(raw.ledgerFeatures),
     keyEventLinkedOpen: boolOr(raw.keyEventLinkedOpen, defaults.keyEventLinkedOpen),
     sidebarCollapsed: boolOr(raw.sidebarCollapsed, defaults.sidebarCollapsed),
+    chartSummaryCollapsed: boolOr(raw.chartSummaryCollapsed, defaults.chartSummaryCollapsed),
     dataVersion: numberOr(raw.dataVersion, defaults.dataVersion),
   }
 }
@@ -112,6 +114,7 @@ function serializeConfig(config: AppConfig): Record<string, unknown> {
     ledgerFeatures: config.ledgerFeatures,
     keyEventLinkedOpen: config.keyEventLinkedOpen,
     sidebarCollapsed: config.sidebarCollapsed,
+    chartSummaryCollapsed: config.chartSummaryCollapsed,
     dataVersion: config.dataVersion,
   }
 }
@@ -170,6 +173,7 @@ export class ConfigStore {
       ledgerFeatures: structuredClone(this.config.ledgerFeatures),
       keyEventLinkedOpen: this.config.keyEventLinkedOpen,
       sidebarCollapsed: this.config.sidebarCollapsed,
+      chartSummaryCollapsed: this.config.chartSummaryCollapsed,
     }
   }
 

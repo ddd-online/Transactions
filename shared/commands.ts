@@ -148,6 +148,7 @@ export const commandSchemas = {
   }),
   config_set_key_event_linked_open: z.object({ open: z.boolean() }),
   config_set_sidebar_collapsed: z.object({ collapsed: z.boolean() }),
+  config_set_chart_summary_collapsed: z.object({ collapsed: z.boolean() }),
   config_set_proxy: z.object({ mode: z.string(), url: z.string() }),
   category_list: z.object({
     type: z.string().optional(),
@@ -486,6 +487,7 @@ export interface CommandResponses {
   config_set_feature: FeatureFlags
   config_set_key_event_linked_open: boolean
   config_set_sidebar_collapsed: boolean
+  config_set_chart_summary_collapsed: boolean
   config_set_proxy: ProxySetting
   category_list: CategoryDto[]
   category_create: null

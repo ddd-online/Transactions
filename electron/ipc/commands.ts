@@ -364,6 +364,14 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       })
     },
 
+    config_set_chart_summary_collapsed(request) {
+      const collapsed = asObject(request).collapsed === true
+      return options.config.update((config) => {
+        config.chartSummaryCollapsed = collapsed
+        return config.chartSummaryCollapsed
+      })
+    },
+
     config_set_proxy(request) {
       const raw = asObject(request)
       const setting = validatedProxySetting(

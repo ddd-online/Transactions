@@ -289,10 +289,63 @@
   border-left: 1px solid var(--transactions-color-divider);
 }
 
+.da-chart__sums-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-xs);
+  min-height: 28px;
+}
+
 .da-chart__sums-title {
   margin: 0;
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
+}
+
+/* 收起态：只留 40px 窄条，图表拿回被合计列占掉的宽度。
+ * 整条窄条就是展开按钮，竖排标题让它在不占宽度的情况下仍然可读。 */
+.da-chart__sums--collapsed {
+  flex: 0 0 40px;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--transactions-space-xs) 0;
+}
+
+.da-chart__sums-rail {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  width: 100%;
+  padding: var(--transactions-space-xs) 0;
+  border: 0;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.da-chart__sums-rail:hover {
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
+}
+
+.da-chart__sums-rail:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: -2px;
+}
+
+.da-chart__sums-rail-title {
+  writing-mode: vertical-rl;
+  font-size: var(--transactions-size-text-caption);
+  letter-spacing: var(--transactions-tracking-label);
+  color: inherit;
+  user-select: none;
 }
 
 .da-chart__sum-row {
@@ -409,5 +462,30 @@
 
   .da-chart__sums {
     flex: 0 0 auto;
+  }
+
+  /* 窄窗下图表与合计上下排：收起态换成一条横向的展开条 */
+  .da-chart__sums--collapsed {
+    flex: 0 0 auto;
+    padding: 0;
+    border-left: 0;
+    border-top: 1px solid var(--transactions-color-divider);
+  }
+
+  .da-chart__sums--collapsed .da-chart__sums-rail {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--transactions-space-sm);
+    min-height: 36px;
+    padding: 0 var(--transactions-space-sm);
+  }
+
+  .da-chart__sums--collapsed .da-chart__sums-rail-title {
+    writing-mode: horizontal-tb;
+  }
+
+  /* 上下排时「收起 / 展开」的方向也换成上下：左箭头转成向下，右箭头转成向上 */
+  .da-chart__sums-chevron {
+    transform: rotate(-90deg);
   }
 }

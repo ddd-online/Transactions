@@ -45,6 +45,9 @@ describe('command catalog', () => {
     ).toBe(true)
     expect(commandSchemas.config_set_proxy.safeParse({ mode: 'auto', url: '' }).success).toBe(true)
     expect(commandSchemas.config_set_appearance.safeParse({ appearance: 'dark' }).success).toBe(true)
+    expect(
+      commandSchemas.config_set_chart_summary_collapsed.safeParse({ collapsed: true }).success,
+    ).toBe(true)
   })
 
   it('validates transaction requests', () => {

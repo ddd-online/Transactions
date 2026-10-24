@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { Input, Modal, Popconfirm, Select, Table } from 'antd'
 
 import { centsToYuan } from '../../shared/domain/money'
@@ -96,6 +96,41 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
+
+  /** 右侧「曲线合计」的收起状态：存在配置 JSON 里，重开应用/重新进入分析页都保持。 */
+  const [summaryCollapsed, setSummaryCollapsed] = useState(false)
+  const collapseToggleRef = useRef<HTMLButtonElement>(null)
+  const expandToggleRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const snapshot = await window.api.invoke('config_get')
+        if (alive) setSummaryCollapsed(snapshot.chartSummaryCollapsed)
+      } catch {
+        // 配置读取失败按展开处理，不阻塞图表
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const changeSummaryCollapsed = useCallback((collapsed: boolean): void => {
+    setSummaryCollapsed(collapsed)
+    // 收起/展开后原按钮会卸载，把焦点交给新出现的那个，键盘用户不会掉回页面开头
+    requestAnimationFrame(() => {
+      const nextToggle = collapsed ? expandToggleRef.current : collapseToggleRef.current
+      nextToggle?.focus()
+    })
+    void window.api
+      .invoke('config_set_chart_summary_collapsed', { collapsed })
+      .catch((configError: unknown) => {
+        setSummaryCollapsed(!collapsed)
+        notify(`保存收起状态失败：${errorMessage(configError)}`, 'error')
+      })
+  }, [])
 
   useEffect(() => {
     if (rangeStart && rangeEnd) {
@@ -481,22 +516,52 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                 </div>
 
                 {hasValues ? (
-                  <aside className="da-chart__sums">
-                    <h4 className="da-chart__sums-title">曲线合计</h4>
-                    {responseLines.map((line, index) => {
-                      const total = line.data.reduce((sum, point) => sum + point.amount, 0)
-                      return (
-                        <div className="da-chart__sum-row" key={line.label}>
-                          <span
-                            className="da-list__dot"
-                            style={{ background: colors[index % colors.length] }}
-                          />
-                          <span className="da-chart__sum-label">{line.label}</span>
-                          <span className="da-chart__sum-value">{centsToYuan(total)}</span>
-                        </div>
-                      )
-                    })}
-                  </aside>
+                  summaryCollapsed ? (
+                    <aside className="da-chart__sums da-chart__sums--collapsed">
+                      <button
+                        type="button"
+                        className="da-chart__sums-rail"
+                        ref={expandToggleRef}
+                        data-testid="chart-sums-expand"
+                        aria-label="展开曲线合计"
+                        title="展开曲线合计"
+                        onClick={() => changeSummaryCollapsed(false)}
+                      >
+                        <Icon name="ChevronLeft" size={14} className="da-chart__sums-chevron" />
+                        <span className="da-chart__sums-rail-title">曲线合计</span>
+                      </button>
+                    </aside>
+                  ) : (
+                    <aside className="da-chart__sums" data-testid="chart-sums">
+                      <div className="da-chart__sums-head">
+                        <h4 className="da-chart__sums-title">曲线合计</h4>
+                        <button
+                          type="button"
+                          className="tr-icon-btn"
+                          ref={collapseToggleRef}
+                          data-testid="chart-sums-collapse"
+                          aria-label="收起曲线合计"
+                          title="收起曲线合计"
+                          onClick={() => changeSummaryCollapsed(true)}
+                        >
+                          <Icon name="ChevronRight" size={14} className="da-chart__sums-chevron" />
+                        </button>
+                      </div>
+                      {responseLines.map((line, index) => {
+                        const total = line.data.reduce((sum, point) => sum + point.amount, 0)
+                        return (
+                          <div className="da-chart__sum-row" key={line.label}>
+                            <span
+                              className="da-list__dot"
+                              style={{ background: colors[index % colors.length] }}
+                            />
+                            <span className="da-chart__sum-label">{line.label}</span>
+                            <span className="da-chart__sum-value">{centsToYuan(total)}</span>
+                          </div>
+                        )
+                      })}
+                    </aside>
+                  )
                 ) : null}
               </div>
 
