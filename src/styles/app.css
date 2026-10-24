@@ -187,6 +187,54 @@
   fill: currentColor;
 }
 
+/* 固定收起态：方形软件 ICON = 账本切换入口。
+ * 方块本身就是图片（用户自定义图标或内置标志），不垫底色；悬停时套一圈光环。 */
+.workspace-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-clip: content-box;
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: box-shadow var(--transactions-transition-fast);
+}
+
+.workspace-btn:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.workspace-btn.is-open {
+  background-color: var(--transactions-color-active-bg);
+}
+
+.workspace-btn:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 3px;
+}
+
+.workspace-btn .ledger-btn-name,
+.workspace-btn .ledger-btn-arrow {
+  display: none;
+}
+
+.app-left-bar.is-collapsed .workspace-btn {
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border-radius: var(--transactions-radius-md);
+}
+
+.app-left-bar.is-collapsed .workspace-btn .workspace-mark {
+  width: 36px;
+  height: 36px;
+}
+
 /* 工作空间标志：铺满所在方块，**圆角继承宿主**（按钮 8px / 设置页预览 12px）。
  * 方形裁剪在导入时就做完了，这里只负责不拉伸。 */
 .workspace-mark {
@@ -473,6 +521,55 @@
 
 .nav-btn-text {
   white-space: nowrap;
+}
+
+/* ============================================
+ * 固定收起态（`.app-left-bar.is-collapsed`）
+ *
+ * 图标在上、名字在下：69px 的侧栏放不下一行"图标 + 名字"，
+ * 但放得下两行的"图标 / 名字"，功能名因此仍然看得见。
+ * 顶部方块与每个导航图标都落在侧栏中轴上。
+ * ============================================ */
+.app-left-bar.is-collapsed .sidebar-ledger {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app-left-bar.is-collapsed .ledger-anchor {
+  width: auto;
+}
+
+.app-left-bar.is-collapsed .nav-btn {
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  justify-content: center;
+}
+
+.app-left-bar.is-collapsed .sidebar-bottom .nav-btn {
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app-left-bar.is-collapsed .nav-btn-icon svg {
+  transform: scale(1.1111);
+}
+
+.app-left-bar.is-collapsed .nav-btn .nav-btn-text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--transactions-size-text-small);
+  line-height: var(--transactions-height-tight);
+}
+
+.app-left-bar.is-collapsed .sidebar-bottom .nav-btn-text {
+  display: none;
 }
 
 /* ============================================

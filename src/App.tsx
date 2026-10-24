@@ -535,14 +535,14 @@ export function App(): JSX.Element {
         </div>
       ) : null}
 
-      <div className="app-shell-body">
+      <div className="app-shell-body is-sidebar-collapsed">
       <aside className="app-sidebar">
-        <div className="app-left-bar">
+        <div className="app-left-bar is-collapsed">
           <div className="sidebar-ledger">
             <div className="ledger-anchor" ref={ledgerMenuRef}>
               <button
                 type="button"
-                className={`ledger-btn${ledgerMenuOpen ? ' is-open' : ''}`}
+                className={`ledger-btn workspace-btn${ledgerMenuOpen ? ' is-open' : ''}`}
                 data-testid="ledger-trigger"
                 aria-label={`切换账本，当前 ${activeLedgerName}`}
                 onClick={() => setLedgerMenuOpen((open) => !open)}

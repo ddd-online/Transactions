@@ -245,11 +245,13 @@
   --transactions-space-top-gap: 8px;
 
   /* ---------- 左侧导航栏宽度 ----------
-   * 侧栏固定宽度，不拖拽、不收起。
+   * 侧栏固定为**收起态**（69px 图标列），没有展开形态，也不拖拽。
    * ⚠ 这个值同时是**标题栏的居中补偿**：标题栏画在内容区里（侧栏右边那一列），
    * 所以"在容器里居中"会比窗口正中偏右半个侧栏宽 —— 见 base.css 的 `.page-title`。
    * 两处必须同源，别再手写 200px。 */
   --transactions-size-sidebar: 200px;
+  /* 固定收起态的侧栏宽：内侧 12px 边距 × 2 + 44px 方块 + 1px 右边框 = 69px。 */
+  --transactions-size-sidebar-collapsed: 69px;
 
   /* 动效专用缓动：落地感（exponential ease-out），用于“数据落定”类进场 */
   --transactions-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
