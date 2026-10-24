@@ -330,6 +330,12 @@
   font-weight: var(--transactions-weight-medium);
 }
 
+.ledger-menu-row > .tr-tooltip-trigger {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
 .ledger-menu-name {
   display: flex;
   align-items: center;

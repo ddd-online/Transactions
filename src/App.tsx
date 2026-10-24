@@ -28,6 +28,7 @@ import { ImportWizard } from './pages/import-wizard'
 import { DiaryTransfer } from './pages/diary-transfer'
 import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
+import { Tooltip } from './components/tooltip'
 import { notify } from './components/toast'
 import { PageHeader } from './components/page-header'
 import { Segmented } from './components/segmented'
@@ -578,18 +579,20 @@ export function App(): JSX.Element {
                           data-testid="ledger-menu-row"
                           className={`ledger-menu-row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
                         >
-                          <button
-                            type="button"
-                            className="ledger-menu-name"
-                            role="menuitem"
-                            onClick={() => {
-                              setActiveLedgerId(ledger.id)
-                              setLedgerMenuOpen(false)
-                            }}
-                          >
-                            <span className="ledger-dot" />
-                            <span className="ledger-menu-name-text">{ledger.name}</span>
-                          </button>
+                          <Tooltip text={ledger.description.trim() || '暂无描述'}>
+                            <button
+                              type="button"
+                              className="ledger-menu-name"
+                              role="menuitem"
+                              onClick={() => {
+                                setActiveLedgerId(ledger.id)
+                                setLedgerMenuOpen(false)
+                              }}
+                            >
+                              <span className="ledger-dot" />
+                              <span className="ledger-menu-name-text">{ledger.name}</span>
+                            </button>
+                          </Tooltip>
                           <Button
                             className="ledger-menu-delete"
                             variant="text-danger"
