@@ -501,7 +501,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
           ) : null}
         </>
       ) : (
-        <section className="stock-statistics-section stock-statistics-section--table">
+        <section className="stock-statistics-section">
           {points.length === 0 ? (
             <EmptyState
               testId="stock-statistics-empty"
