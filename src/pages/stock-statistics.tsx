@@ -518,32 +518,34 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
               rowKey={(row) => `${row.sequence}-${row.stockCode}`}
               pagination={false}
               size="middle"
-              scroll={{ x: 1280 }}
+              tableLayout="fixed"
               dataSource={points}
               onRow={() => ({ 'data-testid': 'stock-statistics-point' }) as HTMLAttributes<HTMLElement>}
               columns={[
-                { title: '#', dataIndex: 'sequence', align: 'right', width: 48 },
+                { title: '#', dataIndex: 'sequence', align: 'right', width: '3%' },
                 {
                   title: '建仓',
                   dataIndex: 'openedAt',
-                  width: 96,
+                  width: '7%',
+                  className: 'stock-stats-date',
                   render: (value: number) => stockDate(value),
                 },
                 {
                   title: '清仓',
                   dataIndex: 'closedAt',
-                  width: 96,
+                  width: '7%',
+                  className: 'stock-stats-date',
                   render: (value: number) => stockDate(value),
                 },
                 {
                   title: '股票',
-                  width: 150,
+                  width: '12%',
                   render: (_, row) => `${row.stockName} ${row.stockCode}`,
                 },
                 {
                   title: '标签',
                   dataIndex: 'tag',
-                  width: 72,
+                  width: '5%',
                   render: (value: string) =>
                     value ? <span className="ui-tag">{value}</span> : '—',
                 },
@@ -551,7 +553,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '盈亏',
                   dataIndex: 'pnl',
                   align: 'right',
-                  width: 96,
+                  width: '8%',
                   render: (value: number) => (
                     <span className={stockPnlClass(value)}>{money(value)}</span>
                   ),
@@ -560,26 +562,26 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '累计',
                   dataIndex: 'totalPnl',
                   align: 'right',
-                  width: 96,
+                  width: '8%',
                   render: (value: number) => money(value),
                 },
                 {
                   title: '胜负',
-                  width: 80,
+                  width: '6%',
                   render: (_, row) => `${row.winCount} 胜 ${row.lossCount} 负`,
                 },
                 {
                   title: '胜率',
                   dataIndex: 'winRate',
                   align: 'right',
-                  width: 64,
+                  width: '6%',
                   render: (value: number) => stockPercent(value),
                 },
                 {
                   title: '平均盈利',
                   dataIndex: 'avgWin',
                   align: 'right',
-                  width: 88,
+                  width: '8%',
                   render: (value: number) =>
                     value > 0 ? <span className="is-up">{money(value)}</span> : '—',
                 },
@@ -587,7 +589,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '平均亏损',
                   dataIndex: 'avgLoss',
                   align: 'right',
-                  width: 88,
+                  width: '8%',
                   render: (value: number) =>
                     value > 0 ? <span className="is-down">-¥{(value / 100).toFixed(2)}</span> : '—',
                 },
@@ -595,14 +597,14 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '盈亏比',
                   dataIndex: 'pnlRatio',
                   align: 'right',
-                  width: 72,
+                  width: '6%',
                   render: (value: number | null) => (value === null ? '—' : value.toFixed(2)),
                 },
                 {
                   title: '期望值',
                   dataIndex: 'expectancy',
                   align: 'right',
-                  width: 88,
+                  width: '8%',
                   render: (value: number) => (
                     <span className={stockPnlClass(value)}>{money(value)}</span>
                   ),
@@ -611,10 +613,11 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   title: '回撤',
                   dataIndex: 'maxDrawdownPct',
                   align: 'right',
-                  width: 100,
+                  width: '8%',
                   render: (value: number, row) => (
-                    <span className="is-down">
-                      {stockPercent(value)} {money(row.maxDrawdown)}
+                    <span className="stock-stats-drawdown is-down">
+                      <span>{stockPercent(value)}</span>
+                      <span>{money(row.maxDrawdown)}</span>
                     </span>
                   ),
                 },
