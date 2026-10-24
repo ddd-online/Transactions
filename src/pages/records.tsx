@@ -36,6 +36,16 @@ import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
 
+/**
+ * 新增记录的默认日期：列表里选中的是某一天就记那天，否则记今天。
+ *
+ * 选了单日说明用户就是在那天的账目上下文里操作，默认再落到今天会让新记录
+ * 直接从当前列表里消失；跨天范围没有唯一的目标日，仍以今天为准。
+ */
+function composerDefaultDate(start: string, end: string): string {
+  return start && start === end ? start : todayYmd()
+}
+
 /** 选中的日期 → 当天本地的 Unix 秒（记账只关心哪一天，取正午避开时区边界）。 */
 function timestampOfYmd(ymd: string): number {
   const parsed = parseYmd(ymd)
@@ -260,7 +270,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   const resetComposerFields = useCallback((): void => {
     setEditingRecord(null)
     setComposerError('')
-    setRecordDate(todayYmd())
+    setRecordDate(composerDefaultDate(committedRange.start, committedRange.end))
     setAmount('')
     setType('expense')
     setCategory('')
@@ -269,7 +279,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     setTemplateId('')
     setOutlier(false)
     setKeyEventDate('')
-  }, [])
+  }, [committedRange.end, committedRange.start])
 
   const openComposer = useCallback((): void => {
     resetComposerFields()

@@ -16,6 +16,11 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
+function localYmd(date: Date): string {
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
 test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-records-'))
@@ -68,7 +73,19 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     expect(emptyLayout).not.toBeNull()
     expect(Math.abs(emptyLayout!.contentCenter - emptyLayout!.areaCenter)).toBeLessThanOrEqual(4)
 
+    // 默认日期跟随列表里选中的那一天：选到昨天时不再是今天（今天仍按今天算）
+    const now = new Date()
+    const todayYmd = localYmd(now)
+    const yesterdayYmd = localYmd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
+    await page.getByTestId('tr-time').getByLabel('上一周期').click()
+    await expect(page.getByTestId('tr-time-trigger')).toContainText(yesterdayYmd)
     await page.getByTestId('tr-new').click()
+    await expect(page.getByTestId('tr-date')).toHaveValue(yesterdayYmd)
+    await page.getByTestId('tr-cancel').click()
+    await page.getByTestId('tr-time').getByLabel('下一周期').click()
+    await expect(page.getByTestId('tr-time-trigger')).toContainText(todayYmd)
+    await page.getByTestId('tr-new').click()
+    await expect(page.getByTestId('tr-date')).toHaveValue(todayYmd)
     await expect(page.getByTestId('tr-empty')).toContainText('还没有记录')
     await page.waitForTimeout(300)
     await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'record-modal.png') })
