@@ -138,8 +138,14 @@
   --transactions-ledger-camel: #b89a80;
 
   /* ---------- 字体族 ---------- */
-  --transactions-font-display: 'Inter', system-ui, -apple-system, sans-serif;
-  --transactions-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Inter 自带的是拉丁子集，中日韩字形一律由系统字面兜底 —— 所以那一档必须**点名**。
+   * 不点名时是 Chrome 自己挑（本机实测挑到 Microsoft YaHei UI，换台机器可能是别的），
+   * 于是中文成了"系统默认"，而不是我们定的那个字面：字面、字重档位、甚至行高观感
+   * 都跟着机器变。顺序 = 拉丁优先 Inter，其余交给系统里最新的那套黑体。 */
+  --transactions-font-cjk: 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC',
+    'Hiragino Sans GB', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
+  --transactions-font-display: 'Inter', var(--transactions-font-cjk);
+  --transactions-font-body: 'Inter', var(--transactions-font-cjk);
   --transactions-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
 
   /* ---------- Typography（$font-sizes / $font-weights / $line-heights） ---------- */
@@ -158,6 +164,13 @@
   --transactions-weight-medium: 500;
   --transactions-weight-semibold: 600;
   --transactions-weight-bold: 700;
+
+  /* ⚠ 这四档字重对**中文**只有两档真实存在：系统黑体（YaHei UI / PingFang）
+   * 只带 Regular 与 Bold，实测 400 与 500 落到同一张面、600 与 700 也落到同一张面。
+   * 由此两条约束：
+   *   1. 中文的层级**不能只靠** 500 vs 400 表达 —— 那一步在屏幕上是零差异；
+   *      标题一律用 600（真 Bold），500 只留给拉丁 / 等宽那边的强调。
+   *   2. 600 与 700 在中文里同样无差，需要更重时改字号或字色，别再往上加字重。 */
 
   --transactions-height-tight: 1.2;
   --transactions-height-snug: 1.4;

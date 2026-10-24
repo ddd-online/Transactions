@@ -465,7 +465,8 @@
 .ui-time__panel-title {
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
+  /* 面板标题（「2026年10月」）要压得住下面的日历格：600 是中文里唯一能读出来的那一档。 */
+  font-weight: var(--transactions-weight-semibold);
   color: var(--transactions-color-text-major);
 }
 

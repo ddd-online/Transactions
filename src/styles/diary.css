@@ -147,7 +147,9 @@
 
 .diary-tree__month-node {
   padding-left: calc(var(--transactions-space-lg) + var(--transactions-space-xs) + 12px);
-  font-weight: var(--transactions-weight-medium);
+  /* 年 600 / 月 600 / 日 400：月份在中文里必须靠"真 Bold"才与日期行分开 ——
+   * 500 与 400 落在同一张字面上（见 tokens.css 的字重说明），那样三级只看得见两级。 */
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .diary-tree__day-node {
@@ -371,7 +373,11 @@
 
 .diary-textarea .ui-textarea__control {
   height: 100%;
-  font-family: var(--transactions-font-mono);
+  /* 日记是**纯正文**，用正文字面，不用等宽。等宽这一档是从旧实现带过来的：
+   * 它给不了中文任何东西（JetBrains Mono 没有中日韩字形，汉字照样落到系统黑体上），
+   * 只在句中冒出一个数字或英文时突然换一张脸 —— 一行里两种字体是段落的伤。
+   * 事件描述、复盘模板、股票复盘三个正文输入框一直是正文字面，日记跟它们对齐。 */
+  font-family: var(--transactions-font-body);
   border: none;
   background: none;
   line-height: var(--transactions-height-relaxed);

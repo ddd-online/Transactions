@@ -32,6 +32,15 @@ body {
   background-color: var(--transactions-color-bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* 中英 / 中数混排的间隙交给排版引擎按 CJK 规则补（Chrome 的 `text-autospace`）。
+   * 没有它，「1手」「共 7 条」「114字」「20000.00→650000.00」这些混排只能靠文案里
+   * 手打空格，全站必然一半有一半没有 —— 一处有、一处没有，正是"没排过"的样子。
+   * 文案里已有的空格不会被叠加，直接写在一起也不会挤在一起。 */
+  text-autospace: normal;
+  /* 正文数字等宽。金额本来就是 JetBrains Mono + tabular-nums，这一条管的是
+   * 日期、条数、百分比、轮次这些走正文字体的数字：一列数字上下对不齐，
+   * 是表格里最容易被一眼看出来"没排过"的地方（也是浏览器默认值里唯一还留着的原始默认）。 */
+  font-variant-numeric: tabular-nums;
 }
 
 /* 无边框桌面窗口：整窗禁止文本选中，拖拽区由 -webkit-app-region 指定 */

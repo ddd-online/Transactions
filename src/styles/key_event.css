@@ -260,7 +260,9 @@
 
 .key-event-card__name {
   font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-medium);
+  /* 事件名是这一行的标题：与摘要同为 14px，500 在中文字面上等于 400（见 tokens.css），
+   * 只剩"选中变色"在区分状态、分不出标题与正文 —— 所以标题走 600。 */
+  font-weight: var(--transactions-weight-semibold);
   line-height: var(--transactions-height-snug);
   color: var(--transactions-color-text-major);
   white-space: nowrap;

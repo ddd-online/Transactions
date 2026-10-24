@@ -17,6 +17,7 @@ import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
+import { chartTextTokens } from '../theme/chart-text'
 import {
   stockDate,
   stockErrorMessage,
@@ -212,9 +213,11 @@ function ChartBox({
       metric === 'win_rate' ? { nice: true, domain: [0, 100] } : { nice: true },
     )
     chart.scale('color', { domain: colorDomain, range: colorRange })
+    const text = chartTextTokens()
     chart.axis('x', {
       title: false,
-      labelFill: '#8c8c8c',
+      labelFill: text.labelFill,
+      labelFontFamily: text.fontFamily,
       labelFontSize: 11,
       line: false,
       tick: false,
@@ -227,12 +230,13 @@ function ChartBox({
     })
     chart.axis('y', {
       title: false,
-      labelFill: '#8c8c8c',
+      labelFill: text.labelFill,
+      labelFontFamily: text.fontFamily,
       labelFontSize: 11,
       line: false,
       tick: false,
       grid: true,
-      gridStroke: '#ececec',
+      gridStroke: text.gridStroke,
       gridStrokeOpacity: 1,
       gridLineWidth: 1,
       labelFormatter: (value: string | number) => axisText(Number(value), metric),

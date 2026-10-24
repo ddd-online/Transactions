@@ -2,6 +2,7 @@ import { useEffect, useRef, type JSX } from 'react'
 import { Chart } from '@antv/g2'
 
 import type { ChartLineData } from '../../shared/types/transaction'
+import { chartTextTokens } from '../theme/chart-text'
 
 export interface AntvLineChartProps {
   lines: ChartLineData[]
@@ -35,21 +36,24 @@ export function AntvLineChart({ lines, colors }: AntvLineChartProps): JSX.Elemen
     chart.scale('x', { domain: times, type: 'point' })
     chart.scale('y', { domainMin: 0, nice: true })
     chart.scale('color', { range: colors.slice(0, lines.length) })
+    const text = chartTextTokens()
     chart.axis('x', {
       title: false,
-      labelFill: '#8c8c8c',
+      labelFill: text.labelFill,
+      labelFontFamily: text.fontFamily,
       labelFontSize: 12,
       line: false,
       tick: false,
     })
     chart.axis('y', {
       title: false,
-      labelFill: '#8c8c8c',
+      labelFill: text.labelFill,
+      labelFontFamily: text.fontFamily,
       labelFontSize: 12,
       line: false,
       tick: false,
       grid: true,
-      gridStroke: '#e5e6eb',
+      gridStroke: text.gridStroke,
       gridStrokeOpacity: 1,
       gridLineWidth: 1,
       gridLineDash: [0, 0],

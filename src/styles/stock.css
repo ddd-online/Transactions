@@ -532,7 +532,9 @@
 
 .stock-position-card__name {
   font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
+  /* 持仓卡的名字是这张卡的标题，13px 与卡内数据同档，只有字重能把它抬起来；
+   * 而 500 在中文字面上与 400 同面（见 tokens.css），所以走 600。 */
+  font-weight: var(--transactions-weight-semibold);
   color: var(--transactions-color-text-major);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -702,7 +704,8 @@
 
 .stock-review__title {
   font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
+  /* 「复盘」这一行的标题：与右边 12px 的条数/摘要只差一档字号，字重必须真的落下来。 */
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .stock-review__summary {
@@ -2674,7 +2677,8 @@
 
 .stock-master__headline strong {
   font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
+  /* `<strong>` 的语义就是"更重"，而 500 在中文字面上等于 400 —— 那等于把强调按回去了。 */
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .stock-master__stats {
@@ -2837,7 +2841,8 @@
 .stock-section-title {
   color: var(--transactions-color-text-major);
   font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
+  /* 区块小标题：13px 与正文同档，只有字重能分开它与下面的内容，所以走 600。 */
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .stock-review-box {

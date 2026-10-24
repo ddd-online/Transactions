@@ -216,22 +216,30 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 ## Typography
 
-**Display Font:** Inter (system-ui, -apple-system, sans-serif)
+**Display Font:** Inter (Microsoft YaHei UI / PingFang SC for Chinese, declared in `--transactions-font-cjk`)
 **Body Font:** Inter (same stack)
 **Label/Mono Font:** JetBrains Mono (SF Mono, Consolas, Courier New)
 
 **Character:** A clean geometric sans — calm, neutral, highly readable at small sizes — paired with a monospace face that makes numbers feel like data, not decoration.
 
+**Two scripts, one voice.** Inter ships a Latin subset only, so every Chinese glyph is drawn by a system face. That face is *named* (`--transactions-font-cjk`, Windows → Microsoft YaHei UI, macOS → PingFang SC) rather than left to Chromium's own fallback list: unnamed, the primary reading face of a Chinese UI would silently change per machine. Latin and digits take Inter, Chinese takes the named face, money takes JetBrains Mono.
+
 ### Hierarchy
 
 - **Display** (700, 28px, 1.2, −0.015em): page titles and key metrics; display-xl 36px for hero figures, display-sm 24px for section-level titles.
 - **Title** (600, 20px, 1.4): panel and card titles; title-sm 18px for sub-headers.
-- **Section** (500, 16px, 1.6): UI labels and section names.
-- **Body** (400, 14px, 1.6): default content and table rows; body-sm 13px for dense lists.
+- **Section** (600, 16px, 1.6): UI section names — 600, not 500: in Chinese a section has to be *bold* to sit above its body (see the Two-Real-Weights Rule).
+- **Body** (400, 14px, 1.6): default content and table rows; body-sm 13px for dense lists. Continuous prose — Markdown bodies, 日记正文, 复盘模板 — also takes the body face: mono belongs to data, never to a paragraph.
 - **Label** (500, 12px, uppercase, +0.04em): table headers, statistic labels, badges; small 11px for micro-labels.
 - **Amount** (JetBrains Mono, 500, tabular-nums): every monetary figure; larger sizes use tighter tracking (−0.02em at title, −0.03em at display).
 
 ### Named Rules
+
+**The Two-Real-Weights Rule.** For Chinese the system face ships only Regular and Bold: 400 and 500 resolve to the same face, 600 and 700 to the same face (measured through Chromium's platform fonts). So weight alone never carries a step in Chinese — a title is 600 (the real Bold), the step from body to label comes from size or colour, and 500 is kept for Latin and mono emphasis. Above 600 there is nothing to gain; widen the size or change the tone instead.
+
+**The Automatic Spacing Rule.** The gap between Chinese and Latin/digits is the layout engine's job (`text-autospace: normal` on the root), not the copy's. 「1手」「1 手」「114字」「共 7 条」 all render with the same CJK/Latin rhythm, and editing copy can neither add nor lose it. Never pad copy with a hand-typed space to fake it.
+
+**The Lined Figures Rule.** Tabular figures are the default for every numeral — `font-variant-numeric: tabular-nums` on the root, so dates, counts, percentages and round numbers line up column-to-column outside JetBrains Mono too. Amounts keep the Mono Money Rule.
 
 **The Mono Money Rule.** Every monetary amount renders in JetBrains Mono with `font-variant-numeric: tabular-nums` and slightly negative letter-spacing. Never typeset money in the body face.
 
