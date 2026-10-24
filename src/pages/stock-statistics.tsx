@@ -201,7 +201,6 @@ function ChartBox({
       .encode('y', 'value')
       .encode('color', 'series')
       .style('opacity', 0.18)
-      .style('shape', 'smooth')
     chart
       .line()
       .data(seriesRows)
@@ -209,7 +208,6 @@ function ChartBox({
       .encode('y', 'value')
       .encode('color', 'series')
       .style('lineWidth', 2)
-      .style('shape', 'smooth')
     chart
       .point()
       .data(rows)
