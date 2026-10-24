@@ -3248,6 +3248,11 @@
   gap: 6px;
 }
 
+.stock-modal-form .tr-date-picker,
+.stock-modal-form .tr-date-picker .ant-picker {
+  width: 100%;
+}
+
 .stock-modal-error {
   margin: 0;
   color: var(--transactions-color-expense);

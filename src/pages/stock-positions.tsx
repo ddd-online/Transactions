@@ -5,10 +5,11 @@ import type { HTMLAttributes } from 'react'
 
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
-import type { StockDayReviewDto, StockPositionDto } from '../../shared/types/stock-position'
+import type { StockPositionDto } from '../../shared/types/stock-position'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
+import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { notify } from '../components/toast'
@@ -96,7 +97,9 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [busy, setBusy] = useState(false)
   const [tradeOpen, setTradeOpen] = useState(false)
   const [tradeForm, setTradeForm] = useState<TradeForm>(EMPTY_TRADE)
-  const [reviewOpen, setReviewOpen] = useState<'daily' | 'round' | null>(null)
+  const [reviewOpen, setReviewOpen] = useState<'round' | null>(null)
+  const [dailyExpanded, setDailyExpanded] = useState(true)
+  const [dailyModalOpen, setDailyModalOpen] = useState(false)
   const [dailyDate, setDailyDate] = useState(todayYmd())
   const [dailyText, setDailyText] = useState('')
   const [roundText, setRoundText] = useState('')
@@ -230,11 +233,19 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
         review: dailyText,
       })
       notify('复盘已保存')
+      setDailyModalOpen(false)
       await load()
     } catch (reviewError) {
       notify(stockErrorMessage(reviewError), 'error')
     }
   }, [dailyDate, dailyText, ledgerId, load, selected])
+
+  const openDailyReview = (): void => {
+    const today = todayYmd()
+    setDailyDate(today)
+    setDailyText(selected?.dayReviews.find((review) => review.date === today)?.review ?? '')
+    setDailyModalOpen(true)
+  }
 
   const saveRound = useCallback(async (): Promise<void> => {
     if (!selected) return
@@ -422,54 +433,27 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               <button
                 type="button"
                 className="stock-section-toggle"
-                onClick={() => setReviewOpen(reviewOpen === 'daily' ? null : 'daily')}
+                onClick={() => setDailyExpanded((current) => !current)}
               >
-                <Icon name={reviewOpen === 'daily' ? 'Down' : 'CaretRight'} size={12} />
+                <Icon name={dailyExpanded ? 'Down' : 'CaretRight'} size={12} />
                 每日复盘
               </button>
-              <Button variant="secondary" size="sm" testId="position-review-open" onClick={() => setReviewOpen('daily')}>
+              <Button
+                variant="secondary"
+                size="sm"
+                testId="position-review-open"
+                onClick={openDailyReview}
+              >
                 写今日
               </Button>
             </section>
-            {reviewOpen === 'daily' ? (
-              <div className="stock-review-box">
-                <div className="stock-review-box__meta">
-                  <Input
-                    data-testid="position-review-date"
-                    value={dailyDate}
-                    onChange={(event) => setDailyDate(event.target.value)}
-                    placeholder="YYYY-MM-DD"
-                    style={{ width: 130 }}
-                  />
-                  <Button variant="primary" size="sm" testId="position-review-save" onClick={() => void saveDaily()}>
-                    保存
-                  </Button>
-                </div>
-                <Input.TextArea
-                  data-testid="position-review-text"
-                  rows={3}
-                  placeholder="记录今天的盘面与判断"
-                  value={dailyText}
-                  onChange={(event) => setDailyText(event.target.value)}
-                />
-                {selected.dayReviews.length > 0 ? (
-                  <ul className="stock-review-list">
-                    {selected.dayReviews.slice(0, 5).map((review: StockDayReviewDto) => (
-                      <li key={review.date}>
-                        <span className="stock-muted">{review.date}</span>
-                        <span>{review.review}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : (
-              <div className="stock-review-preview">
+            {dailyExpanded ? (
+              <div className="stock-review-preview" data-testid="position-daily-review">
                 {selected.dayReviews[0]
                   ? `${selected.dayReviews[0].date}：${selected.dayReviews[0].review}`
                   : '还没有写每日复盘，点「写今日」记下今天的盘面和判断。'}
               </div>
-            )}
+            ) : null}
 
             <section className="stock-detail__section">
               <button
@@ -712,6 +696,49 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               取消
             </Button>
             <Button variant="primary" testId="stock-trade-save" onClick={() => void saveTradeEdit()}>
+              保存
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={dailyModalOpen}
+        title="每日复盘"
+        width={560}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={() => setDailyModalOpen(false)}
+      >
+        <div className="stock-modal-form">
+          <label>
+            <span className="stock-label">日期</span>
+            <DatePicker
+              testId="position-review-date"
+              value={dailyDate}
+              onChange={setDailyDate}
+            />
+          </label>
+          <label>
+            <span className="stock-label">复盘</span>
+            <Input.TextArea
+              data-testid="position-review-text"
+              rows={6}
+              placeholder="记录今天的盘面与判断"
+              value={dailyText}
+              onChange={(event) => setDailyText(event.target.value)}
+            />
+          </label>
+          <div className="stock-modal-actions">
+            <Button variant="secondary" onClick={() => setDailyModalOpen(false)}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              testId="position-review-save"
+              onClick={() => void saveDaily()}
+            >
               保存
             </Button>
           </div>
