@@ -91,41 +91,41 @@ export function StockAccountPanel({
   ]
 
   return (
-    <div className="stock-account-view">
-      {error ? (
-        <p className="m0-error stock-inline-error" data-testid="stock-error">
-          {error}
-        </p>
-      ) : null}
+    <ScrollArea className="stock-account-scroll">
+      <div className="stock-account-view">
+        {error ? (
+          <p className="m0-error stock-inline-error" data-testid="stock-error">
+            {error}
+          </p>
+        ) : null}
 
-      <section className="stock-hero stock-hero--flat">
-        <span className="stock-label">总资产</span>
-        {loaded ? (
-          <strong data-testid="stock-total-assets">
-            {stockMoney(overview?.totalAssets ?? 0)}
-          </strong>
-        ) : (
-          <span className="stock-skeleton stock-skeleton--hero" aria-hidden="true" />
-        )}
-      </section>
-
-      <div className="stock-metrics">
-        {metrics.map(([label, value, testId, pnl]) => (
-          <div className="stock-metric" key={label}>
-            <span className="stock-label">{label}</span>
-            <strong
-              className={pnl === undefined ? undefined : stockPnlClass(pnl)}
-              data-testid={testId}
-            >
-              {loaded ? value : <span className="stock-skeleton stock-skeleton--metric" />}
+        <section className="stock-hero stock-hero--flat">
+          <span className="stock-label">总资产</span>
+          {loaded ? (
+            <strong data-testid="stock-total-assets">
+              {stockMoney(overview?.totalAssets ?? 0)}
             </strong>
-          </div>
-        ))}
-      </div>
+          ) : (
+            <span className="stock-skeleton stock-skeleton--hero" aria-hidden="true" />
+          )}
+        </section>
 
-      <section className="stock-section stock-section--fill">
-        <h3 className="stock-section__title">资金变化记录</h3>
-        <ScrollArea className="stock-fund-scroll">
+        <div className="stock-metrics">
+          {metrics.map(([label, value, testId, pnl]) => (
+            <div className="stock-metric" key={label}>
+              <span className="stock-label">{label}</span>
+              <strong
+                className={pnl === undefined ? undefined : stockPnlClass(pnl)}
+                data-testid={testId}
+              >
+                {loaded ? value : <span className="stock-skeleton stock-skeleton--metric" />}
+              </strong>
+            </div>
+          ))}
+        </div>
+
+        <section className="stock-section">
+          <h3 className="stock-section__title">资金变化记录</h3>
           {!loaded ? (
             <div className="stock-table-skeleton" aria-hidden="true">
               <span />
@@ -133,38 +133,52 @@ export function StockAccountPanel({
               <span />
             </div>
           ) : funds && funds.items.length > 0 ? (
-            <Table
-              className="tr-table stock-fund-table"
-              rowKey="id"
-              pagination={false}
-              size="middle"
-              dataSource={funds.items}
-              onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
-              columns={[
-                { title: '日期', dataIndex: 'recordDate', width: '12%' },
-                { title: '事件', dataIndex: 'eventText', width: '14%' },
-                {
-                  title: '金额变化',
-                  dataIndex: 'amountChange',
-                  align: 'right',
-                  width: '16%',
-                  render: (value: number) => (
-                    <span className={stockPnlClass(value)}>
-                      {value >= 0 ? '+' : '-'}
-                      {Math.abs(value / 100).toFixed(2)}
-                    </span>
-                  ),
-                },
-                {
-                  title: '现金余额',
-                  dataIndex: 'cashBalance',
-                  align: 'right',
-                  width: '16%',
-                  render: (value: number) => stockMoney(value),
-                },
-                { title: '备注', dataIndex: 'remark', ellipsis: true, width: '42%' },
-              ]}
-            />
+            <>
+              <Table
+                className="tr-table stock-fund-table"
+                rowKey="id"
+                pagination={false}
+                size="middle"
+                dataSource={funds.items}
+                onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
+                columns={[
+                  { title: '日期', dataIndex: 'recordDate', width: '12%' },
+                  { title: '事件', dataIndex: 'eventText', width: '14%' },
+                  {
+                    title: '金额变化',
+                    dataIndex: 'amountChange',
+                    align: 'right',
+                    width: '16%',
+                    render: (value: number) => (
+                      <span className={stockPnlClass(value)}>
+                        {value >= 0 ? '+' : '-'}
+                        {Math.abs(value / 100).toFixed(2)}
+                      </span>
+                    ),
+                  },
+                  {
+                    title: '现金余额',
+                    dataIndex: 'cashBalance',
+                    align: 'right',
+                    width: '16%',
+                    render: (value: number) => stockMoney(value),
+                  },
+                  { title: '备注', dataIndex: 'remark', ellipsis: true, width: '42%' },
+                ]}
+              />
+              <div className="stock-table-foot">
+                <span className="stock-muted">共 {funds.total} 条</span>
+                <Pagination
+                  size="small"
+                  current={fundPage}
+                  total={funds.total}
+                  pageSize={PAGE_SIZE}
+                  showSizeChanger={false}
+                  showLessItems
+                  onChange={setFundPage}
+                />
+              </div>
+            </>
           ) : error ? null : (
             <EmptyState
               testId="fund-empty"
@@ -172,22 +186,8 @@ export function StockAccountPanel({
               description={ledgerId ? '追加本金或交易后，资金变化会显示在这里。' : undefined}
             />
           )}
-        </ScrollArea>
-        {loaded && funds && funds.items.length > 0 ? (
-          <div className="stock-table-foot">
-            <span className="stock-muted">共 {funds.total} 条</span>
-            <Pagination
-              size="small"
-              current={fundPage}
-              total={funds.total}
-              pageSize={PAGE_SIZE}
-              showSizeChanger={false}
-              showLessItems
-              onChange={setFundPage}
-            />
-          </div>
-        ) : null}
-      </section>
-    </div>
+        </section>
+      </div>
+    </ScrollArea>
   )
 }
