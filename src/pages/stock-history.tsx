@@ -197,31 +197,6 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
 
   return (
     <div className="stock-history-view">
-      <div className="stock-history-summary" data-testid="stock-history-summary">
-        <div>
-          <span className="stock-label">已实现盈亏</span>
-          <strong className={stockPnlClass(summary?.totalPnl ?? 0)}>
-            {money(summary?.totalPnl ?? 0)}
-          </strong>
-        </div>
-        <div>
-          <span className="stock-label">累计盈亏率</span>
-          <strong className={stockPnlClass(summary?.totalPnlRate ?? 0)}>
-            {stockPercent(summary?.totalPnlRate ?? 0)}
-          </strong>
-        </div>
-        <div>
-          <span className="stock-label">胜负轮次</span>
-          <strong>
-            {summary ? `${summary.winCount} 胜 · ${summary.lossCount} 负` : '—'}
-          </strong>
-        </div>
-        <div>
-          <span className="stock-label">总轮次</span>
-          <strong>{summary ? `${summary.roundCount} 轮` : '—'}</strong>
-        </div>
-      </div>
-
       <div className="stock-history-main">
         <aside className="stock-master stock-history-master">
           {rows.length === 0 ? (
@@ -326,6 +301,31 @@ export function StockHistoryPanel({ ledgerId }: StockHistoryPanelProps): JSX.Ele
             </>
           )}
         </section>
+      </div>
+
+      <div className="stock-history-summary" data-testid="stock-history-summary">
+        <div>
+          <span className="stock-label">已实现盈亏</span>
+          <strong className={stockPnlClass(summary?.totalPnl ?? 0)}>
+            {money(summary?.totalPnl ?? 0)}
+          </strong>
+        </div>
+        <div>
+          <span className="stock-label">累计盈亏率</span>
+          <strong className={stockPnlClass(summary?.totalPnlRate ?? 0)}>
+            {stockPercent(summary?.totalPnlRate ?? 0)}
+          </strong>
+        </div>
+        <div>
+          <span className="stock-label">胜负轮次</span>
+          <strong>
+            {summary ? `${summary.winCount} 胜 · ${summary.lossCount} 负` : '—'}
+          </strong>
+        </div>
+        <div>
+          <span className="stock-label">总轮次</span>
+          <strong>{summary ? `${summary.roundCount} 轮` : '—'}</strong>
+        </div>
       </div>
 
       <ConfirmDialog

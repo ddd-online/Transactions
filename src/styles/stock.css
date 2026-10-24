@@ -2922,7 +2922,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--transactions-space-md);
   padding: var(--transactions-space-md) var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 .stock-history-summary > div {
