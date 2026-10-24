@@ -3101,6 +3101,11 @@
   grid-column: span 2;
 }
 
+.stock-stat-cell--wide strong {
+  font-size: var(--transactions-size-text-display-sm);
+  line-height: var(--transactions-height-tight);
+}
+
 .stock-stat-cell {
   display: flex;
   flex-direction: column;
