@@ -13,3 +13,4 @@ transactions.db-shm
 .DS_Store
 
 /.dsh/
+.impeccable/
