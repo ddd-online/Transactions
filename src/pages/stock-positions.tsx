@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 import { Input, Modal, Select, Table } from 'antd'
 import type { HTMLAttributes } from 'react'
 
+import { computeOrderFee, instrumentOf } from '../../shared/domain/fee'
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import type { StockPositionDto } from '../../shared/types/stock-position'
@@ -27,24 +28,43 @@ export interface StockPositionsPanelProps {
   ledgerId: string
 }
 
+interface TradeFillForm {
+  price: string
+  lots: string
+}
+
 interface TradeForm {
   type: string
   code: string
   name: string
-  price: string
-  lots: string
+  fills: TradeFillForm[]
+  date: string
   tag: string
   remark: string
+}
+
+interface TradeFeeForm {
+  commission: string
+  min: string
+  stamp: string
+  transfer: string
 }
 
 const EMPTY_TRADE: TradeForm = {
   type: 'open',
   code: '',
   name: '',
-  price: '',
-  lots: '1',
+  fills: [{ price: '', lots: '' }],
+  date: todayYmd(),
   tag: '分析',
   remark: '',
+}
+
+const EMPTY_TRADE_FEE: TradeFeeForm = {
+  commission: '',
+  min: '',
+  stamp: '',
+  transfer: '',
 }
 
 function money(cents: number): string {
@@ -82,6 +102,40 @@ function feeText(
   ].join(' · ')
 }
 
+function feeFormOf(
+  rates:
+    | {
+        commissionRate: number
+        minCommission: number
+        stampDutyRate: number
+        transferFeeRate: number
+      }
+    | null
+    | undefined,
+): TradeFeeForm {
+  if (!rates) return EMPTY_TRADE_FEE
+  return {
+    commission: String(Number((rates.commissionRate * 10000).toFixed(4))),
+    min: (rates.minCommission / 100).toFixed(2),
+    stamp: String(Number((rates.stampDutyRate * 100).toFixed(4))),
+    transfer: String(Number((rates.transferFeeRate * 100).toFixed(4))),
+  }
+}
+
+function feeRatesOf(form: TradeFeeForm): {
+  commissionRate: number
+  minCommission: number
+  stampDutyRate: number
+  transferFeeRate: number
+} {
+  return {
+    commissionRate: Number(form.commission) / 10000,
+    minCommission: Math.round(Number(form.min) * 100),
+    stampDutyRate: Number(form.stamp) / 100,
+    transferFeeRate: Number(form.transfer) / 100,
+  }
+}
+
 export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX.Element {
   const [positions, setPositions] = useState<StockPositionDto[]>([])
   const [selectedCode, setSelectedCode] = useState('')
@@ -97,6 +151,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [busy, setBusy] = useState(false)
   const [tradeOpen, setTradeOpen] = useState(false)
   const [tradeForm, setTradeForm] = useState<TradeForm>(EMPTY_TRADE)
+  const [tradeFee, setTradeFee] = useState<TradeFeeForm>(EMPTY_TRADE_FEE)
   const [roundExpanded, setRoundExpanded] = useState(true)
   const [roundEditing, setRoundEditing] = useState(false)
   const [dailyExpanded, setDailyExpanded] = useState(true)
@@ -170,14 +225,32 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       type,
       code: position?.stockCode ?? '',
       name: position?.stockName ?? '',
-      price:
-        type === 'open' || position?.latestPrice === undefined
-          ? ''
-          : milliToYuan(position.latestPrice),
-      lots: type === 'close' ? String(Math.max(1, Math.floor((position?.quantity ?? 100) / 100))) : '1',
+      fills: [
+        {
+          price: '',
+          lots:
+            type === 'close'
+              ? String(Math.max(1, Math.floor((position?.quantity ?? 100) / 100)))
+              : '',
+        },
+      ],
+      date: todayYmd(),
       tag: position?.tag ?? tags[0] ?? '分析',
       remark: '',
     })
+    setTradeFee(
+      feeFormOf(
+        type === 'open'
+          ? fee
+          : {
+              commissionRate: position?.roundFee?.commissionRate ?? fee?.commissionRate ?? 0,
+              minCommission: position?.roundFee?.minCommission ?? fee?.minCommission ?? 0,
+              stampDutyRate: position?.roundFee?.stampDutyRate ?? fee?.stampDutyRate ?? 0,
+              transferFeeRate:
+                position?.roundFee?.transferFeeRate ?? fee?.transferFeeRate ?? 0,
+            },
+      ),
+    )
     setError('')
     setTradeOpen(true)
   }
@@ -186,17 +259,30 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
     setBusy(true)
     setError('')
     try {
+      const rates = feeRatesOf(tradeFee)
       await window.api.invoke('stock_trade_create', {
         ledger_id: ledgerId,
         stock_code: tradeForm.code.trim(),
         stock_name: tradeForm.name.trim(),
         trade_type: tradeForm.type,
-        trade_time: Math.floor(Date.now() / 1000),
+        trade_time: Math.floor(new Date(`${tradeForm.date}T12:00:00`).getTime() / 1000),
         remark: tradeForm.remark,
         tag: tradeForm.tag,
-        fills: [{ price: Number(tradeForm.price), lots: Number(tradeForm.lots) }],
+        fills: tradeForm.fills.map((fill) => ({
+          price: Number(fill.price),
+          lots: Number(fill.lots),
+        })),
         price: 0,
         lots: 0,
+        round_fee:
+          tradeForm.type === 'open'
+            ? {
+                commission_rate: rates.commissionRate,
+                min_commission: rates.minCommission,
+                stamp_duty_rate: rates.stampDutyRate,
+                transfer_fee_rate: rates.transferFeeRate,
+              }
+            : undefined,
       })
       setTradeOpen(false)
       notify('成交已记录')
@@ -206,7 +292,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
     } finally {
       setBusy(false)
     }
-  }, [ledgerId, load, tradeForm])
+  }, [ledgerId, load, tradeFee, tradeForm])
 
   const saveTag = useCallback(
     async (value: string): Promise<void> => {
@@ -314,6 +400,42 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const pnl = selected ? pnlOf(selected) : 0
   const pnlRate = selected && selected.totalCost > 0 ? (pnl / selected.totalCost) * 100 : 0
   const quote = selected ? stockRoundRate(selected.latestPrice, selected.prevClose) : null
+
+  const tradeFillAmounts = tradeForm.fills
+    .map((fill) => Math.round(Number(fill.price) * 100) * Math.round(Number(fill.lots) * 100))
+    .filter((amount) => Number.isFinite(amount) && amount > 0)
+  const tradeAmount = tradeFillAmounts.reduce((sum, amount) => sum + amount, 0)
+  const tradeLots = tradeForm.fills.reduce(
+    (sum, fill) => sum + (Number(fill.price) > 0 ? Number(fill.lots) || 0 : 0),
+    0,
+  )
+  const tradeIsBuy = tradeForm.type === 'open' || tradeForm.type === 'add'
+  const tradeFeeRates = feeRatesOf(tradeFee)
+  const tradeFeeSetting = {
+    id: '',
+    ledgerId,
+    createdAt: 0,
+    updatedAt: 0,
+    ...tradeFeeRates,
+  }
+  const tradeFeeBreakdown = computeOrderFee(
+    tradeFillAmounts,
+    instrumentOf(tradeForm.code.trim()) ?? 'shenzhenStock',
+    tradeFeeSetting,
+    tradeIsBuy,
+  )
+  const tradeFeeUnknown = tradeFillAmounts.length === 0
+  const tradeFeeTotal = tradeFeeUnknown ? 0 : tradeFeeBreakdown.total
+  const tradeTotal = tradeIsBuy ? tradeAmount + tradeFeeTotal : tradeAmount - tradeFeeTotal
+
+  const updateTradeFill = (index: number, key: 'price' | 'lots', value: string): void => {
+    setTradeForm((current) => ({
+      ...current,
+      fills: current.fills.map((fill, fillIndex) =>
+        fillIndex === index ? { ...fill, [key]: value } : fill,
+      ),
+    }))
+  }
 
   return (
     <div className="stock-positions-view">
@@ -619,80 +741,226 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
 
       <Modal
         open={tradeOpen}
-        title={stockTradeTypeLabel(tradeForm.type)}
-        width={520}
+        title={`委托${stockTradeTypeLabel(tradeForm.type)}`}
+        width={640}
         centered
         destroyOnHidden
         footer={null}
         onCancel={() => setTradeOpen(false)}
       >
-        <div className="stock-modal-form">
+        <div className="stock-modal-form stock-trade-form">
           <div className="stock-modal-grid">
             <label>
-              <span className="stock-label">类型</span>
-              <Select
-                data-testid="trade-type"
-                value={tradeForm.type}
-                onChange={(value) => setTradeForm((current) => ({ ...current, type: value }))}
-                options={[
-                  { value: 'open', label: '建仓' },
-                  { value: 'add', label: '加仓' },
-                  { value: 'reduce', label: '减仓' },
-                  { value: 'close', label: '清仓' },
-                ]}
-              />
-            </label>
-            <label>
-              <span className="stock-label">代码</span>
-              <Input
-                data-testid="trade-code"
-                value={tradeForm.code}
-                onChange={(event) => setTradeForm((current) => ({ ...current, code: event.target.value }))}
-              />
-            </label>
-            <label>
-              <span className="stock-label">名称</span>
+              <span className="stock-label">股票名称</span>
               <Input
                 data-testid="trade-name"
                 value={tradeForm.name}
-                onChange={(event) => setTradeForm((current) => ({ ...current, name: event.target.value }))}
+                disabled={tradeForm.type !== 'open'}
+                onChange={(event) =>
+                  setTradeForm((current) => ({ ...current, name: event.target.value }))
+                }
               />
             </label>
             <label>
-              <span className="stock-label">价格（元）</span>
+              <span className="stock-label">股票代码</span>
               <Input
-                data-testid="trade-price"
-                inputMode="decimal"
-                value={tradeForm.price}
-                onChange={(event) => setTradeForm((current) => ({ ...current, price: event.target.value }))}
+                data-testid="trade-code"
+                value={tradeForm.code}
+                disabled={tradeForm.type !== 'open'}
+                onChange={(event) =>
+                  setTradeForm((current) => ({ ...current, code: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+
+          <section className="stock-trade-block">
+            <div className="stock-trade-block__head">
+              <span className="stock-trade-section__title">成交明细</span>
+              <Button
+                variant="text"
+                size="sm"
+                testId="trade-add-fill"
+                onClick={() =>
+                  setTradeForm((current) => ({
+                    ...current,
+                    fills: [...current.fills, { price: '', lots: '' }],
+                  }))
+                }
+              >
+                + 添加一笔成交
+              </Button>
+            </div>
+            {tradeForm.fills.map((fill, index) => (
+              <div className="stock-trade-fill" key={index}>
+                <Input
+                  data-testid={index === 0 ? 'trade-price' : `trade-price-${index + 1}`}
+                  inputMode="decimal"
+                  placeholder="成交价（元/股）"
+                  value={fill.price}
+                  onChange={(event) => updateTradeFill(index, 'price', event.target.value)}
+                />
+                <Input
+                  data-testid={index === 0 ? 'trade-lots' : `trade-lots-${index + 1}`}
+                  inputMode="numeric"
+                  placeholder={
+                    tradeForm.type === 'close'
+                      ? '手数'
+                      : tradeForm.type === 'reduce'
+                        ? '手数（可用）'
+                        : '手数'
+                  }
+                  value={fill.lots}
+                  disabled={tradeForm.type === 'close'}
+                  onChange={(event) => updateTradeFill(index, 'lots', event.target.value)}
+                />
+                {tradeForm.type === 'close' || tradeForm.fills.length === 1 ? (
+                  <span className="stock-trade-fill__dash">—</span>
+                ) : (
+                  <Button
+                    variant="text-danger"
+                    size="sm"
+                    testId={`trade-remove-fill-${index}`}
+                    onClick={() =>
+                      setTradeForm((current) => ({
+                        ...current,
+                        fills: current.fills.filter((_, fillIndex) => fillIndex !== index),
+                      }))
+                    }
+                  >
+                    −
+                  </Button>
+                )}
+              </div>
+            ))}
+          </section>
+
+          <section className="stock-trade-summary">
+            <div>
+              <span>合计</span>
+              <span>
+                {tradeFillAmounts.length} 笔 · {tradeLots} 手 · {money(tradeAmount)}
+              </span>
+            </div>
+            <div>
+              <span>预估费用</span>
+              <span>{tradeFeeUnknown ? '—' : money(tradeFeeBreakdown.total)}</span>
+            </div>
+            <div className="stock-trade-summary__total">
+              <span>{tradeIsBuy ? '预计支出' : '预计到手'}</span>
+              <strong>{money(tradeTotal)}</strong>
+            </div>
+          </section>
+
+          <div className="stock-modal-grid">
+            <label>
+              <span className="stock-label">委托时间</span>
+              <DatePicker
+                testId="trade-date"
+                value={tradeForm.date}
+                onChange={(value) =>
+                  setTradeForm((current) => ({ ...current, date: value }))
+                }
               />
             </label>
             <label>
-              <span className="stock-label">手数</span>
-              <Input
-                data-testid="trade-lots"
-                inputMode="numeric"
-                value={tradeForm.lots}
-                onChange={(event) => setTradeForm((current) => ({ ...current, lots: event.target.value }))}
-              />
-            </label>
-            <label>
-              <span className="stock-label">标签</span>
+              <span className="stock-label">交易标签</span>
               <Select
                 data-testid="trade-tag"
                 value={tradeForm.tag}
-                onChange={(value) => setTradeForm((current) => ({ ...current, tag: value }))}
+                onChange={(value) =>
+                  setTradeForm((current) => ({ ...current, tag: value }))
+                }
                 options={tags.map((tag) => ({ value: tag, label: tag }))}
               />
             </label>
           </div>
+
+          <section className="stock-trade-fees">
+            <div className="stock-trade-block__head">
+              <span className="stock-trade-section__title">本轮费用设置</span>
+              {tradeForm.type === 'open' ? (
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="trade-fee-restore"
+                  onClick={() => setTradeFee(feeFormOf(fee))}
+                >
+                  恢复系统配置
+                </Button>
+              ) : null}
+            </div>
+            {tradeForm.type === 'open' ? (
+              <div className="stock-modal-grid">
+                <label>
+                  <span className="stock-label">佣金费率（万分之）</span>
+                  <Input
+                    data-testid="trade-fee-commission"
+                    inputMode="decimal"
+                    value={tradeFee.commission}
+                    onChange={(event) =>
+                      setTradeFee((current) => ({ ...current, commission: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span className="stock-label">最低佣金（元/委托）</span>
+                  <Input
+                    data-testid="trade-fee-min"
+                    inputMode="decimal"
+                    value={tradeFee.min}
+                    onChange={(event) =>
+                      setTradeFee((current) => ({ ...current, min: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span className="stock-label">印花税（%）</span>
+                  <Input
+                    data-testid="trade-fee-stamp"
+                    inputMode="decimal"
+                    value={tradeFee.stamp}
+                    onChange={(event) =>
+                      setTradeFee((current) => ({ ...current, stamp: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span className="stock-label">过户费（%）</span>
+                  <Input
+                    data-testid="trade-fee-transfer"
+                    inputMode="decimal"
+                    value={tradeFee.transfer}
+                    onChange={(event) =>
+                      setTradeFee((current) => ({ ...current, transfer: event.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+            ) : (
+              <p className="stock-trade-fee-text">
+                {selected ? feeText(selected, fee) : '本轮费率沿用账本默认'}
+              </p>
+            )}
+            <p className="stock-trade-hint">
+              {tradeForm.type === 'open'
+                ? '默认是系统配置；填 0 表示本轮不收。建仓这一刻定下来，本轮的加仓 / 减仓 / 清仓都按它算。'
+                : '本轮建仓时确定，不可更改'}
+            </p>
+          </section>
+
           {error ? <p className="stock-modal-error">{error}</p> : null}
           <div className="stock-modal-actions">
             <Button variant="secondary" onClick={() => setTradeOpen(false)}>
               取消
             </Button>
-            <Button variant="primary" testId="trade-save" loading={busy} onClick={() => void submitTrade()}>
-              记一笔
+            <Button
+              variant="primary"
+              testId="trade-save"
+              loading={busy}
+              onClick={() => void submitTrade()}
+            >
+              {stockTradeTypeLabel(tradeForm.type)}
             </Button>
           </div>
         </div>

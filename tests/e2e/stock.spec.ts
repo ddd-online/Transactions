@@ -150,7 +150,6 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
 
     await page.getByTestId('stock-position-close').click()
     await page.getByTestId('trade-price').fill('6')
-    await page.getByTestId('trade-lots').fill('1')
     await page.getByTestId('trade-save').click()
     await expect(page.getByTestId('toast').last()).toContainText('成交已记录')
     await expect(page.getByTestId('stock-position-empty')).toContainText('当前没有持仓')

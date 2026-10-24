@@ -3314,6 +3314,92 @@
   margin-top: var(--transactions-space-sm);
 }
 
+.stock-trade-form {
+  gap: var(--transactions-space-md);
+}
+
+.stock-trade-block,
+.stock-trade-summary {
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+}
+
+.stock-trade-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-trade-block__head .tr-btn,
+.stock-trade-fees .tr-btn {
+  color: var(--transactions-color-primary);
+}
+
+.stock-trade-section__title {
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-trade-fill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 36px;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-sm);
+}
+
+.stock-trade-fill__dash {
+  color: var(--transactions-color-text-disabled);
+  text-align: center;
+}
+
+.stock-trade-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  border-color: transparent;
+  background: var(--transactions-color-minor-background);
+}
+
+.stock-trade-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-trade-summary__total strong {
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-trade-fees {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-trade-fee-text {
+  margin: 0;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-trade-hint {
+  margin: 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
 @media (max-width: 1080px) {
   .stock-positions-view,
   .stock-history-main {
