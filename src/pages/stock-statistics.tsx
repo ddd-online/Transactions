@@ -75,14 +75,6 @@ function metricValue(point: StockStatisticsPointDto, metric: MetricKey): number 
   }
 }
 
-function metricText(value: number, metric: MetricKey): string {
-  const kind = METRICS.find((item) => item.key === metric)?.kind
-  if (kind === 'percent') return `${value.toFixed(2)}%`
-  if (kind === 'ratio') return value.toFixed(2)
-  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
-  return `${sign}¥${Math.abs(value).toFixed(2)}`
-}
-
 function axisText(value: number, metric: MetricKey): string {
   const kind = METRICS.find((item) => item.key === metric)?.kind
   if (kind === 'percent') return `${value.toFixed(0)}%`
@@ -319,7 +311,6 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
   const points = strategy === 'grouped' ? (data?.groups ?? []) : (data?.points ?? [])
   const latest = points[points.length - 1]
   const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
-  const latestMetricValue = latest ? metricValue(latest, metric) : 0
 
   return (
     <ScrollArea className="stock-statistics-scroll">
@@ -407,7 +398,6 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   <strong className={stockPnlClass(latest.totalPnl)}>
                     {money(latest.totalPnl)}
                   </strong>
-                  <small>按建仓时间 · 截至 {stockDate(latest.openedAt)} · 第 {latest.sequence} 笔结算</small>
                 </div>
                 <div className="stock-stat-cell">
                   <StatLabel text="胜率" hint="我赢的次数够不够多" />
@@ -477,19 +467,6 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   }))}
                 />
               </header>
-              <div className="stock-chart-legend">
-                <span
-                  className={
-                    metric === 'win_rate' || metric === 'pnl_ratio'
-                      ? undefined
-                      : metric === 'max_drawdown'
-                        ? 'is-down'
-                        : stockPnlClass(latestMetricValue)
-                  }
-                >
-                  {selectedMetricLabel} {metricText(latestMetricValue, metric)}
-                </span>
-              </div>
               <ChartBox points={points} metric={metric} label={selectedMetricLabel} />
             </section>
           ) : null}

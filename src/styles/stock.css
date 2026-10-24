@@ -3081,11 +3081,6 @@
   grid-column: 2;
 }
 
-.stock-chart-legend {
-  padding: 0 var(--transactions-space-lg);
-  font-size: var(--transactions-size-text-caption);
-}
-
 .stock-chart-head {
   flex-wrap: wrap;
 }
@@ -3132,7 +3127,7 @@
 
 .stock-curve {
   height: 420px;
-  margin: 0 var(--transactions-space-lg);
+  margin: var(--transactions-space-sm) var(--transactions-space-lg) 0;
 }
 
 .stock-curve--tall {
