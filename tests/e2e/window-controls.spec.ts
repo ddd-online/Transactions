@@ -87,10 +87,10 @@ test('窗口：保存的尺寸和位置超出工作区时夹回屏内', async ()
   writeFileSync(
     join(home, '.tr.dev.json'),
     JSON.stringify({
-      width: 1405,
-      height: 1029,
-      x: 380,
-      y: 287,
+      width: 20000,
+      height: 16000,
+      x: 4000,
+      y: 3000,
       closeBehavior: 'quit',
       appearance: 'light',
     }),
@@ -108,12 +108,8 @@ test('窗口：保存的尺寸和位置超出工作区时夹回屏内', async ()
       const display = screen.getDisplayMatching(bounds)
       return {
         bounds,
-        workArea: {
-          x: display.workArea.x / display.scaleFactor,
-          y: display.workArea.y / display.scaleFactor,
-          width: display.workArea.width / display.scaleFactor,
-          height: display.workArea.height / display.scaleFactor,
-        },
+        // screen 模块返回的 workArea 已经是 DIP，与 BrowserWindow 的边界同口径
+        workArea: display.workArea,
       }
     })
     expect(state.bounds.width).toBeLessThanOrEqual(state.workArea.width)

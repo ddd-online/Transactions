@@ -138,15 +138,9 @@ export function createMainWindow(windowOptions: WindowOptions): BrowserWindow {
           width: config.width,
           height: config.height,
         })
-  // Electron 在 Windows 高 DPI 下返回的 workArea 是物理像素，而 BrowserWindow 用 DIP。
-  const scale = display.scaleFactor || 1
-  const workArea = {
-    x: display.workArea.x / scale,
-    y: display.workArea.y / scale,
-    width: display.workArea.width / scale,
-    height: display.workArea.height / scale,
-  }
-  const bounds = fitWindowBounds(config, workArea)
+  // workArea 与 BrowserWindow 的边界同为 DIP：再除 scaleFactor 会把可用区域按缩放比例
+  // 缩小一遍，高 DPI 屏上窗口因此被夹到左上角且尺寸变矮，看起来像"没记住上次的窗口"。
+  const bounds = fitWindowBounds(config, display.workArea)
 
   const window = new BrowserWindow({
     width: bounds.width,
