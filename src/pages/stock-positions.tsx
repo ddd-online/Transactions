@@ -682,7 +682,6 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                   <div className="stock-review-box__footer">
                     <Button
                       variant="secondary"
-                      size="sm"
                       testId="position-round-cancel"
                       onClick={() => setRoundEditing(false)}
                     >
@@ -690,7 +689,6 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     </Button>
                     <Button
                       variant="primary"
-                      size="sm"
                       testId="position-round-save"
                       onClick={() => {
                         void saveRound().then(() => setRoundEditing(false))

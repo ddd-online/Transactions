@@ -2862,6 +2862,7 @@
 .stock-review-box__footer {
   display: flex;
   justify-content: flex-end;
+  gap: var(--transactions-space-sm);
 }
 
 .stock-review-preview {
