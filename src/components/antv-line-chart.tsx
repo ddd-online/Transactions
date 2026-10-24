@@ -66,6 +66,18 @@ export const AntvLineChart = memo(function AntvLineChart({
       gridLineDash: [0, 0],
     })
     chart.legend(false)
+    /* 提示框只留一张表：标题是"哪个月"，下面一条一行（支出 / 收入 / 转账）。
+     * 不给折线配置 items 时，G2 会把同一个月上所有曲线的值按 color 分组列出来 —— 正是要的；
+     * 但折线本身点不到，跟着画的散点（`point()`）若不关掉提示，会再补一栏原始字段
+     * （`time` / `amount`），于是同一张提示框里出现两套数据：用户截图里被圈出来的那一块。 */
+    const tooltip = {
+      title: (datum: Record<string, unknown>) => String(datum.time ?? ''),
+      /* 金额一律两位小数：G2 默认按"有效数字"精简（15000 / 22798.87 / 0 混排），
+       * 与全站金额（15000.00）对不上。 */
+      items: [
+        { channel: 'y', valueFormatter: (value: number) => Number(value).toFixed(2) },
+      ],
+    }
     chart
       .line()
       .data(rows)
@@ -73,6 +85,7 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('y', 'amount')
       .encode('color', 'label')
       .style('lineWidth', 2)
+      .tooltip(tooltip)
     chart
       .point()
       .data(rows)
@@ -80,6 +93,7 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('y', 'amount')
       .encode('color', 'label')
       .style('r', 3)
+      .tooltip(false)
     chart.render()
     return () => {
       chart.destroy()
