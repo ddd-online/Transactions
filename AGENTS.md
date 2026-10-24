@@ -47,11 +47,34 @@ pnpm package          # NSIS 安装包，产物在 output/
 
 ## 验证纪律
 
-- 能机器判定的别靠人读：`typecheck` / `test:unit` / `test:e2e` / 静态护栏。
+- **默认按改动面收敛验证，不跑全量。** 顺序建议：
+  1. TS 改动：`pnpm typecheck`
+  2. 渲染层改动：先 `pnpm build`，再只跑受影响的 E2E spec（见下表；
+     Playwright 启动的是 `output/out` 里的构建产物）
+  3. `shared/domain`、`electron/`、IPC：跑对应单测
+     （`pnpm exec vitest run tests/unit/<file>`）
+  4. 版本 / 命令目录 / 构建与发布脚本 / 协议：`node scripts/static-guards.mjs`
+- **全量 `pnpm test` / `pnpm test:e2e` 只在这些时候跑**：发布前；改了跨页面共享组件
+  （`PageLayout`、`ScrollArea`、`Button`、`Modal` 等）或全局样式；路由或 IPC 契约改动；
+  一次改动覆盖多个页面；或者定位不到受影响 spec。
 - E2E 一律用一次性 `USERPROFILE`、`TRANSACTIONS_USER_DATA` 与临时工作空间；断言落在库/磁盘。
 - 测试缝（仅测试环境变量）：`TRANSACTIONS_TEST_DIALOG_DIR` 绕过原生目录框；
   `TRANSACTIONS_TEST_CLOSE` 固定关闭行为；`TRANSACTIONS_USER_DATA` 隔离单实例锁。
   生产构建不设置这些变量。
+
+| 改动面 | 主要 E2E spec |
+|---|---|
+| 记账 / 记录 | `records.spec.ts`、`record-actions.spec.ts`、`time-range.spec.ts` |
+| 分类标签 / 模板 | `tags.spec.ts`、`templates.spec.ts` |
+| 事件 | `events.spec.ts` |
+| 待办 | `todo.spec.ts`、`todo-drag.spec.ts` |
+| 股票 | `stock.spec.ts`、`stock-lifecycle.spec.ts` |
+| 设置 | `settings.spec.ts` |
+| 外壳 / 导航 / 窗口 | `shell.spec.ts`、`navigation.spec.ts`、`window*.spec.ts` |
+| 导入 / 同步 / 更新 | `import*.spec.ts`、`update*.spec.ts` |
+
+命令示例：`pnpm build && pnpm exec playwright test tests/e2e/todo.spec.ts tests/e2e/todo-drag.spec.ts`。
+样式改动也至少跑受影响页面的 spec，不要用全量截图代替针对性检查。
 
 ## 数据契约
 
