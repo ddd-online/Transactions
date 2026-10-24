@@ -84,7 +84,6 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
           <div className="stock-toolbar-actions">
             <Button
               variant="secondary"
-              size="sm"
               testId="stock-open-withdraw"
               onClick={() => setAccountAction('withdraw')}
             >
@@ -92,7 +91,6 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
             </Button>
             <Button
               variant="secondary"
-              size="sm"
               testId="stock-open-interest"
               onClick={() => setAccountAction('interest')}
             >
@@ -100,7 +98,6 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
             </Button>
             <Button
               variant="primary"
-              size="sm"
               testId="stock-open-principal"
               onClick={() => setAccountAction('principal')}
             >
