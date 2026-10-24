@@ -139,6 +139,11 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('position-daily-review')).toContainText('观察一天')
 
     await page.getByTestId('position-round-edit').click()
+    // 第一次写本轮复盘时用内置模板起头
+    await expect(page.getByTestId('position-round-review')).toHaveValue(/^买入理由：/)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-round-template.png'),
+    })
     await page.getByTestId('position-round-review').fill('本轮复盘内容')
     await page.getByTestId('position-round-save').click()
     await expect(page.getByTestId('position-round-preview')).toContainText('本轮复盘内容')

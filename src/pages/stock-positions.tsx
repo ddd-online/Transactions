@@ -160,6 +160,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [dailyDate, setDailyDate] = useState(todayYmd())
   const [dailyText, setDailyText] = useState('')
   const [dailyTemplate, setDailyTemplate] = useState('')
+  const [roundTemplate, setRoundTemplate] = useState('')
   const [roundText, setRoundText] = useState('')
   const [editingTrade, setEditingTrade] = useState<StockTradeDto | null>(null)
   const [editPrice, setEditPrice] = useState('')
@@ -186,10 +187,12 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
         window.api.invoke('stock_review_template_get', { ledger_id: ledgerId }),
       ])
       const active = rows.filter((row) => row.quantity > 0)
+      const review = reviewSettings as StockReviewSettingDto
       setPositions(active)
       setTags(tagSettings.tags)
       setFee(feeSettings)
-      setDailyTemplate((reviewSettings as StockReviewSettingDto).dailyTemplate)
+      setRoundTemplate(review.template)
+      setDailyTemplate(review.dailyTemplate)
       setSelectedCode((current) =>
         active.some((row) => row.stockCode === current) ? current : active[0]?.stockCode ?? '',
       )
@@ -658,6 +661,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 testId="position-round-edit"
                 onClick={() => {
                   setRoundExpanded(true)
+                  // 第一次写且还没动过草稿时用本轮模板起头；已写过的复盘/草稿不覆盖
+                  setRoundText((current) => (current.trim() ? current : roundTemplate))
                   setRoundEditing(true)
                 }}
               >
