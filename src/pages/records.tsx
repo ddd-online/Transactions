@@ -859,6 +859,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             />
             <Select
               data-testid="tr-page-size"
+              aria-label="每页条数"
               value={pageSize}
               style={{ width: 110 }}
               onChange={(value) => {

@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import { Pagination, Table } from 'antd'
 import type { HTMLAttributes } from 'react'
 
+import { pagerItemRender } from '../components/pagination'
+
 import type { StockAccountSummary, StockFundRecordPage } from '../../shared/types/stock'
 import type { StockOverviewDto } from '../../shared/types/stock-position'
 import { EmptyState } from '../components/empty-state'
@@ -190,6 +192,7 @@ export function StockAccountPanel({
               showSizeChanger={false}
               showLessItems
               onChange={setFundPage}
+              itemRender={pagerItemRender('stock-fund')}
             />
           </div>
         ) : null}

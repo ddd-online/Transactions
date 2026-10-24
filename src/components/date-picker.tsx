@@ -14,6 +14,8 @@ export interface DatePickerProps {
   showToggle?: boolean
   allowClear?: boolean
   className?: string
+  /** 读屏用的控件名（输入框里只有一个日期，没有可见的 label 时必填）。 */
+  ariaLabel?: string
 }
 
 /** 日期输入：对外仍是 YYYY-MM-DD 字符串，内部使用 AntD DatePicker。 */
@@ -25,6 +27,7 @@ export function DatePicker({
   showToggle = true,
   allowClear = false,
   className = '',
+  ariaLabel,
 }: DatePickerProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const current = value ? dayjs(value) : null
@@ -86,6 +89,7 @@ export function DatePicker({
             <input
               {...props}
               data-testid={testId}
+              aria-label={ariaLabel}
               onBlur={(event: FocusEvent<HTMLInputElement>) => {
                 props.onBlur?.(event)
                 commit(event.target.value)

@@ -435,6 +435,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                 <div className="da-chart__meta">
                   <Select
                     data-testid="chart-granularity"
+                    aria-label="曲线粒度"
                     size="small"
                     value={selected.granularity}
                     disabled={selected.isPreset}
@@ -565,6 +566,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <span className="tr-modal-label">时间粒度</span>
             <Select
               data-testid="chart-create-granularity"
+              aria-label="时间粒度"
               value={createGranularity}
               onChange={setCreateGranularity}
               options={GRANULARITIES}

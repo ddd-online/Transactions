@@ -232,6 +232,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         <div className="stock-setting-row__actions">
           <Input
             data-testid="stock-tag-input"
+            aria-label="新增交易标签"
             value={newTag}
             placeholder="如：低吸"
             onChange={(event) => setNewTag(event.target.value)}

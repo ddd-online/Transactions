@@ -3319,6 +3319,24 @@
   background: none;
   color: inherit;
   cursor: pointer;
+  /* 图标本身只有 10px，指针目标却要 ≥24px：用一层不吃布局的伪元素把热区撑开，
+   * 芯片的视觉高度与外框都不变（实测热区 10×10 → 24×24）。 */
+  position: relative;
+}
+
+.stock-tag-chip button::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+}
+
+.stock-tag-chip:has(button:focus-visible) {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.stock-tag-chip button:focus-visible {
+  outline: none;
 }
 
 .stock-fee-panel {

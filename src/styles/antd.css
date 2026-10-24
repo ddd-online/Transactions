@@ -8,6 +8,27 @@
   box-shadow: none;
 }
 
+/* 按钮的焦点环统一走项目那一套（2px Clarity Blue + 2px 间隙）。
+ * AntD 自带的是主色的淡色描边（实测 rgb(179,203,255) 的 2px），比导航、标签页、
+ * 图标按钮上那圈淡得多 —— 同一套界面里两档焦点环，键盘用户会以为按钮没拿到焦点。
+ *
+ * 分页按钮那条必须 `!important`：AntD 的灰色焦点环（`rgba(15,17,21,0.25)`）是运行时
+ * 注入的样式表，位置永远在我们的 bundle 之后，同 specificity 时它一定赢。 */
+.tr-btn:focus-visible,
+.tr-btn.ant-btn:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.ant-pagination .ant-pagination-prev .ant-pagination-item-link:focus-visible,
+.ant-pagination .ant-pagination-next .ant-pagination-item-link:focus-visible,
+.ant-pagination .ant-pagination-item:focus-visible {
+  outline: 2px solid var(--transactions-color-primary) !important;
+  outline-offset: 2px !important;
+  border-radius: var(--transactions-radius-sm);
+}
+
 .tr-segmented {
   display: inline-flex;
 }
@@ -459,6 +480,14 @@
 .diary-content-card .m0-diary-content.ant-input:focus {
   border: 0;
   box-shadow: none;
+}
+
+/* 日记正文是无边框输入（边框在它外层的卡片上），所以 AntD 的聚焦样式被上面这条抹掉了 ——
+ * 结果这块"写作面"聚焦时屏幕上没有任何变化，键盘用户看不出光标该落在哪。
+ * 把焦点环画在卡片上：主色边框 + 既有 focus 阴影令牌，版式不动。 */
+.diary-content-card:focus-within {
+  border-color: var(--transactions-color-primary);
+  box-shadow: var(--transactions-shadow-focus);
 }
 
 @media (max-width: 820px) {

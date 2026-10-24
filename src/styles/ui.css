@@ -331,6 +331,13 @@
   border-color: var(--transactions-color-primary);
 }
 
+/* 时间范围按钮一直靠"浏览器默认焦点环"（实测 `outline: auto` 0.67px，颜色还不是我们的主色）——
+ * 它坐在工具栏里，与旁边的按钮、分段控件是同一排，焦点状态必须是同一圈。 */
+.ui-time__trigger:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
 .ui-time__field.is-open .ui-time__trigger {
   border-color: var(--transactions-color-primary);
 }

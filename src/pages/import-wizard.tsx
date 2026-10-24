@@ -87,6 +87,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
         <Input
           className="st-import-path"
           data-testid="import-source"
+          aria-label="源目录"
           value={sourceDir}
           onChange={(event) => setSourceDir(event.target.value)}
           placeholder="包含 transactions.db 的目录"
@@ -100,6 +101,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
         <Input
           className="st-import-path"
           data-testid="import-target"
+          aria-label="新目录"
           value={targetDir}
           onChange={(event) => setTargetDir(event.target.value)}
           placeholder="空目录"

@@ -286,7 +286,12 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                 <Button variant="secondary" onClick={() => void changeDate(todayYmd())}>
                   今天
                 </Button>
-                <DatePicker testId="diary-date" value={date} onChange={(value) => void changeDate(value)} />
+                <DatePicker
+                  testId="diary-date"
+                  ariaLabel="日记日期"
+                  value={date}
+                  onChange={(value) => void changeDate(value)}
+                />
               </div>
               <div className="m0-actions">
                 <span className={`diary-save-state is-${saveState}`} data-testid="diary-save-state">
@@ -360,6 +365,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
                   <Input.TextArea
                     className="m0-diary-content"
                     data-testid="diary-content"
+                    aria-label="日记正文"
                     placeholder="写下今天的日记……"
                     value={content}
                     onChange={(changeEvent) => changeContent(changeEvent.target.value)}

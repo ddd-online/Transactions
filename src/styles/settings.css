@@ -782,6 +782,16 @@
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-primary);
   text-decoration: none;
+  /* 12px 的字只有 19px 高，小于指针目标下限：用负外边距吃掉内边距，
+   * 热区抬到 24px 而版式一动没动。 */
+  padding: 3px var(--transactions-space-xs);
+  margin: -3px calc(-1 * var(--transactions-space-xs));
+  border-radius: var(--transactions-radius-sm);
+}
+
+.st-about-link:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
 }
 
 /* 外链图标：文案是 12px 的 caption，`.icon` 默认 1em 会偏小，提一档到正文尺寸 */
