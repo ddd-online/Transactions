@@ -610,7 +610,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                           </button>
                         </div>
 
-                        <div className="key-event-gallery__thumbs">
+                        <ScrollArea className="key-event-gallery__thumbs">
                           {images.map((image) => (
                             <div
                               key={image.id}
@@ -643,7 +643,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                               </Popconfirm>
                             </div>
                           ))}
-                        </div>
+                        </ScrollArea>
                       </>
                     )}
                   </div>

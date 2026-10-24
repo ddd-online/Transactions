@@ -493,12 +493,15 @@
 .key-event-gallery__thumbs {
   width: 160px;
   flex-shrink: 0;
+  min-height: 0;
+  margin-left: var(--transactions-space-sm);
+}
+
+/* ScrollArea 的滚动内容：缩略图竖排、固定 160×90 槽位。 */
+.key-event-gallery__thumbs > [data-overlayscrollbars-viewport] {
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-xs);
-  overflow-y: auto;
-  overflow-x: hidden;
-  margin-left: var(--transactions-space-sm);
 }
 
 .key-event-thumb {
