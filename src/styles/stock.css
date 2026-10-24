@@ -2468,6 +2468,13 @@
   background: var(--transactions-color-minor-background);
 }
 
+/* 资金表与记账表同一行高：记账行 37px（4px 上下内边距 + 28px 内容），
+ * 这里给资金行 8px 上下内边距，得到同一档 37px。 */
+.stock-page .stock-fund-table.ant-table-wrapper .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 /* ---------------- 账户 ---------------- */
 
 .stock-account-view {
