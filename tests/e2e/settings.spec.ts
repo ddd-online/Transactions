@@ -120,7 +120,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
     await page.getByTestId('settings-tab-features').click()
-    await expect(page.getByTestId('feature-hint')).toContainText('设置账本')
+    await expect(page.getByTestId('feature-hint')).toHaveCount(0)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'settings-features.png'),
     })

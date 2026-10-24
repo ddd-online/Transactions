@@ -956,11 +956,11 @@ export function App(): JSX.Element {
 
                   {settingsTab === 'features' ? (
                     <div className="st-feature-pane">
-                      <div className="st-feature-hint" data-testid="feature-hint">
-                        {activeLedgerId
-                          ? `只对当前账本「${activeLedgerName}」生效，切到别的账本可单独配置。`
-                          : '当前没有账本：以下开关作为默认值，新账本沿用。'}
-                      </div>
+                      {!activeLedgerId ? (
+                        <div className="st-feature-hint" data-testid="feature-hint">
+                          当前没有账本：以下开关作为默认值，新账本沿用。
+                        </div>
+                      ) : null}
                       <div className="st-list">
                         {FEATURES.map(({ key, title, description }) => {
                           const checked = activeLedgerId
