@@ -11,7 +11,7 @@ import type { ConfigStore } from '../config'
 import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
 import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
-import { logInfo } from '../logging'
+import { logInfo, logWarn } from '../logging'
 import { importSourceWorkspace, probeSourceWorkspace } from '../source/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { setFeatureIn } from '../services/config'
@@ -86,7 +86,7 @@ import {
 import { openDirectory } from '../shell/dialogs'
 import { applyAppearance, getMainWindow, registerWindowControl } from '../shell/window'
 import { sendEvent } from './events'
-import { validatedProxySetting } from '../../shared/domain/proxy'
+import { pickEnvProxy, validatedProxySetting } from '../../shared/domain/proxy'
 
 export type Handler = (request: unknown) => unknown | Promise<unknown>
 export type HandlerMap = Record<CommandName, Handler>
@@ -1279,13 +1279,22 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const testAddress = process.env.TRANSACTIONS_TEST_PROXY_ADDRESS
       if (testAddress) return { url: testAddress }
       const saved = options.config.snapshot().proxy
-      let resolved = 'DIRECT'
+      let resolved = ''
       try {
         await applyProxy(setting)
-        resolved = await session.defaultSession.resolveProxy('https://api.github.com')
+        try {
+          resolved = await session.defaultSession.resolveProxy('https://api.github.com')
+        } catch (error) {
+          logWarn(`解析代理地址失败: ${error instanceof Error ? error.message : String(error)}`)
+        }
       } finally {
         await applyProxy(saved)
       }
+      if (!resolved) {
+        // 系统解析不可用时，至少把环境变量里的代理显示出来，别让界面停在“未探测到”
+        resolved = pickEnvProxy((key) => process.env[key] ?? null) ?? ''
+      }
+      if (!resolved) return { url: '直连' }
       const first = resolved.split(';')[0]?.trim() ?? ''
       const url = first.startsWith('PROXY ')
         ? first.slice('PROXY '.length)
