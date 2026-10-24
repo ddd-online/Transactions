@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
 
-import { Dropdown, Input, Modal, Select, Table } from 'antd'
+import { Input, Modal, Select, Table } from 'antd'
 import type { HTMLAttributes } from 'react'
 
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
@@ -383,26 +383,15 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               <div className="stock-detail__identity">
                 <h2>{selected.stockName}</h2>
                 <span className="stock-muted stock-mono">{selected.stockCode}</span>
-                <Dropdown
-                  trigger={['click']}
-                  menu={{
-                    items: tags.map((tag) => ({ key: tag, label: tag })),
-                    selectable: true,
-                    selectedKeys: [selected.tag],
-                    onClick: ({ key }) => void saveTag(key),
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="ui-tag stock-tag-chip"
-                    data-testid="position-tag-select"
-                    aria-label={`切换标签，当前 ${selected.tag}`}
-                    aria-haspopup="menu"
-                  >
-                    {selected.tag}
-                    <Icon name="Down" size={10} />
-                  </button>
-                </Dropdown>              </div>
+                <Select
+                  className="stock-tag-select"
+                  data-testid="position-tag-select"
+                  value={selected.tag}
+                  options={tags.map((tag) => ({ value: tag, label: tag }))}
+                  onChange={(value) => void saveTag(value)}
+                  popupMatchSelectWidth={false}
+                  size="small"
+                />              </div>
               <div className="stock-detail__actions">
                 <Button variant="primary" size="sm" testId="stock-position-close" onClick={() => openTrade('close', selected)}>
                   清仓

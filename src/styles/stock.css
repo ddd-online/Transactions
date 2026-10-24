@@ -2714,24 +2714,12 @@
   flex-shrink: 0;
 }
 
-/* 标签：与记录页明细里的 tag-item 同一张芯片脸（中性底、12px 字、6px 圆角），
- * 这里只补「可点开改」的指针与 caret。 */
-.stock-tag-chip {
-  align-self: center;
-  flex-shrink: 0;
-  gap: 4px;
-  border: 0;
-  cursor: pointer;
-}
-
-.stock-tag-chip:hover {
-  background: var(--transactions-color-active-bg);
-  color: var(--transactions-color-primary);
-}
-
-.stock-tag-chip:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
+/* 标签：与记录页轮次头同一枚 small Select 芯片（内容定宽 + 下拉箭头），
+ * 不再单独做一套自绘按钮。 */
+.stock-tag-select {
+  width: auto;
+  min-width: 0;
+  max-width: 140px;
 }
 
 .stock-detail__metrics {
