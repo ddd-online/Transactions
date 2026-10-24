@@ -33,8 +33,10 @@ test('窗口三键：最大化/还原、最小化', async () => {
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('window-maximize').click()
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized())).toBe(true)
+    await expect(page.getByTestId('window-maximize')).toHaveAttribute('title', '还原')
     await page.getByTestId('window-maximize').click()
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized())).toBe(false)
+    await expect(page.getByTestId('window-maximize')).toHaveAttribute('title', '最大化')
     await page.getByTestId('window-minimize').click()
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMinimized())).toBe(true)
   } finally {
@@ -62,8 +64,10 @@ test('窗口三键：工作空间选择遮罩未关闭时也可用', async () =>
     await expect(page.getByTestId('open-workspace')).toBeVisible()
     await page.getByTestId('window-maximize').click()
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized())).toBe(true)
+    await expect(page.getByTestId('window-maximize')).toHaveAttribute('title', '还原')
     await page.getByTestId('window-maximize').click()
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized())).toBe(false)
+    await expect(page.getByTestId('window-maximize')).toHaveAttribute('title', '最大化')
     await page.getByTestId('window-minimize').click()
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMinimized())).toBe(true)
   } finally {

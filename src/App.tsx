@@ -7,6 +7,7 @@ import {
   UPDATE_DOWNLOAD_COMPLETE,
   UPDATE_DOWNLOAD_ERROR,
   UPDATE_DOWNLOAD_PROGRESS,
+  WINDOW_STATE_CHANGED,
   WORKSPACE_CHANGED,
 } from '../shared/events'
 import { ERR_CODE_SOURCE_WORKSPACE } from '../shared/errors'
@@ -107,6 +108,7 @@ export function App(): JSX.Element {
   >('records')
   const [importProgress, setImportProgress] = useState<SourceImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
+  const [maximized, setMaximized] = useState(false)
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
@@ -259,12 +261,14 @@ export function App(): JSX.Element {
       if (message.event === IMPORT_PROGRESS) {
         setImportProgress(message.payload as SourceImportProgress)
       }
-      if (
-        message.event === UPDATE_DOWNLOAD_PROGRESS ||
+      if (message.event === UPDATE_DOWNLOAD_PROGRESS ||
         message.event === UPDATE_DOWNLOAD_COMPLETE ||
         message.event === UPDATE_DOWNLOAD_ERROR
       ) {
         setUpdateSnapshot(message.payload as UpdateSnapshot)
+      }
+      if (message.event === WINDOW_STATE_CHANGED) {
+        setMaximized(message.payload === true)
       }
     })
 
@@ -680,10 +684,10 @@ export function App(): JSX.Element {
               type="button"
               className="window-btn"
               data-testid="window-maximize"
-              title="最大化"
+              title={maximized ? '还原' : '最大化'}
               onClick={() => void window.api.invoke('window_control', { action: 'maximize' })}
             >
-              <Icon name="WindowMaximize" size={14} />
+              <Icon name={maximized ? 'WindowRestore' : 'WindowMaximize'} size={14} />
             </button>
             <button
               type="button"
