@@ -252,7 +252,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
           <h3>本轮复盘模板</h3>
-          <p>新建本轮复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
+          <p>本轮复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
         </div>
         <div className="stock-setting-row__actions">
           <Button
