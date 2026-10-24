@@ -3,7 +3,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
   type JSX,
   type KeyboardEvent,
 } from 'react'
@@ -454,7 +453,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   }, [linksOpen])
 
   const onCardKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>, targetDate: string): void => {
-    // 卡片里的删除按钮也有键盘焦点：Enter/Space 只应触发按钮本身
+    // 事件行里的删除按钮也有键盘焦点：Enter/Space 只应触发按钮本身
     if (keyboardEvent.target !== keyboardEvent.currentTarget) return
     if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
       keyboardEvent.preventDefault()
@@ -469,15 +468,25 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     <PageLayout
       contentClassName="key-event-page"
       toolbar={
-        <TimeRangePicker
-          testId="event-year"
-          yearOnly
-          mode="year"
-          start={`${year}-01-01`}
-          end={`${year}-12-31`}
-          onModeChange={() => undefined}
-          onRangeChange={changeYear}
-        />
+        <>
+          <TimeRangePicker
+            testId="event-year"
+            yearOnly
+            mode="year"
+            start={`${year}-01-01`}
+            end={`${year}-12-31`}
+            onModeChange={() => undefined}
+            onRangeChange={changeYear}
+          />
+          <Button
+            variant="primary"
+            testId="event-add"
+            icon={<Icon name="Plus" size={14} />}
+            onClick={openAdd}
+          >
+            新增事件
+          </Button>
+        </>
       }
     >
       {error ? (
@@ -497,6 +506,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
               <ScrollArea className="key-event-cards">
                 {events.map((item) => {
                   const active = item.date === date
+                  const summary = summaryOf(item.content)
                   return (
                     <div
                       key={item.id}
@@ -515,9 +525,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       <div className="key-event-card__body">
                         <div className="key-event-card__name">{item.title || item.date}</div>
                         <div className="key-event-card__date">{shortDate(item.date)}</div>
-                        {summaryOf(item.content) ? (
-                          <div className="key-event-card__desc">{summaryOf(item.content)}</div>
-                        ) : null}
+                        <div className="key-event-card__desc">{summary}</div>
                       </div>
                       <Popconfirm
                         title={`删除事件「${item.title || item.date}」？`}
@@ -543,20 +551,11 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                 })}
               </ScrollArea>
             )}
-
-            <div className="key-event-list__footer">
-              <Button variant="primary" block testId="event-add" onClick={openAdd}>
-                新增事件
-              </Button>
-            </div>
           </div>
         </aside>
 
         <section className="key-event-panel key-event-panel--center">
-          <div
-            className="key-event-detail"
-            style={color ? ({ '--event-accent': color } as CSSProperties) : undefined}
-          >
+          <div className="key-event-detail">
             {event ? (
               <div className="key-event-detail__body">
                 <div className="key-event-colors">

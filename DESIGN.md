@@ -307,6 +307,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Background:** Paper; borders 1px hairline (window-border).
 - **Shadow Strategy:** shadow-sm at rest, shadow-md on hover.
 - **Internal Padding:** 24px (space-xl).
+- **Flat pages:** 待办与事件 are flat: list rows, detail panes, and rails sit directly on the canvas with no card face or shadow, separated by 1px hairlines and Soft Gray bands; 16px is the row inset. Cards stay for records, settings, and popover layers.
 
 ### Inputs / Fields
 
