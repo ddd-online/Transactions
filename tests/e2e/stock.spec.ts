@@ -159,6 +159,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
     await page.getByTestId('stock-history-row').click()
     await expect(page.getByTestId('stock-history-detail')).toContainText('第 1 轮')
+    await expect(page.getByTestId('stock-round')).toContainText('每日复盘')
     await expect(page.getByTestId('stock-round')).toContainText('观察一天')
 
     await page.getByTestId('round-review-open').click()

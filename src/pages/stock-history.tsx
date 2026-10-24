@@ -550,16 +550,24 @@ function RoundBlock({
             )}
           </div>
 
-          {round.dayReviews.length > 0 ? (
-            <ul className="stock-round__days">
-              {round.dayReviews.map((day) => (
-                <li key={day.date}>
-                  <span className="stock-muted">{day.date}</span>
-                  <span>{day.review}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <section className="stock-round__daily">
+            <div className="stock-round__section-head">
+              <span className="stock-section-title">每日复盘</span>
+              <span className="stock-muted">{round.dayReviews.length} 条</span>
+            </div>
+            {round.dayReviews.length > 0 ? (
+              <ul className="stock-round__days">
+                {round.dayReviews.map((day) => (
+                  <li key={day.date}>
+                    <span className="stock-muted">{day.date}</span>
+                    <span>{day.review}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="stock-muted stock-round__daily-empty">本轮没有每日复盘</p>
+            )}
+          </section>
         </div>
       ) : null}
     </article>

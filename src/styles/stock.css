@@ -3001,6 +3001,34 @@
   white-space: pre-wrap;
 }
 
+.stock-round__daily {
+  margin-top: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-round__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-round__daily .stock-round__days {
+  margin-top: var(--transactions-space-xs);
+}
+
+.stock-round__daily .stock-round__days li {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: var(--transactions-space-md);
+}
+
+.stock-round__daily-empty {
+  margin: var(--transactions-space-xs) 0 0;
+  font-size: var(--transactions-size-text-caption);
+}
+
 /* ---------------- 统计 ---------------- */
 
 .stock-statistics-view {
