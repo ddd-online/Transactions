@@ -713,7 +713,7 @@ export function App(): JSX.Element {
                 <div className="page-rail-nav">
                   {(
                     [
-                      ['records', '记录', 'Transaction'],
+                      ['records', '记录', 'Edit'],
                       ['charts', '分析', 'LineChart'],
                       ['tags', '标签', 'Tag'],
                       ['templates', '模板', 'FileText'],
