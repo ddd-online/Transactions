@@ -1,4 +1,6 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
@@ -29,6 +31,16 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     JSON.stringify({ width: 1200, height: 900, closeBehavior: 'quit', appearance: 'light' }),
   )
 
+  const proxyTarget = createServer((_request, response) => {
+    response.writeHead(204)
+    response.end()
+  })
+  await new Promise<void>((resolveServer, rejectServer) => {
+    proxyTarget.once('error', rejectServer)
+    proxyTarget.listen(0, '127.0.0.1', resolveServer)
+  })
+  const proxyTargetUrl = `http://127.0.0.1:${(proxyTarget.address() as AddressInfo).port}/health`
+
   const electronApp = await electron.launch({
     args: ['.'],
     cwd: repositoryRoot,
@@ -38,6 +50,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       TRANSACTIONS_USER_DATA: userData,
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
       TRANSACTIONS_TEST_CLOSE: 'quit',
+      TRANSACTIONS_TEST_PROXY_TARGET: proxyTargetUrl,
     }),
   })
 
@@ -71,8 +84,19 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).proxy)
       .toEqual({ mode: 'manual', url: 'http://127.0.0.1:7890' })
+    await page.getByTestId('proxy-mode-auto').click()
+    await expect(page.getByTestId('proxy-save')).toHaveCount(0)
+    await expect(page.getByTestId('proxy-url')).toHaveCount(0)
     await page.getByTestId('proxy-detect').click()
-    await expect(page.getByTestId('proxy-detect-result')).toContainText('manual')
+    await expect(
+      page.getByTestId('toast').filter({ hasText: '代理连通正常' }),
+    ).toBeVisible()
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'settings-proxy.png') })
+
+    await page.getByTestId('proxy-mode-off').click()
+    await expect(page.getByTestId('proxy-save')).toHaveCount(0)
+    await expect(page.getByTestId('proxy-detect')).toHaveCount(0)
 
     await page.getByTestId('workspace-icon-input').setInputFiles({
       name: 'icon.png',
@@ -125,6 +149,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       .toBe(true)
   } finally {
     await electronApp.close()
+    await new Promise<void>((resolveServer) => proxyTarget.close(() => resolveServer()))
     rmSync(root, { recursive: true, force: true })
   }
 })

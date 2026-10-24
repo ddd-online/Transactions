@@ -145,7 +145,8 @@
 
 .ant-message {
   top: auto !important;
-  bottom: 24px;
+  bottom: 24px !important;
+  height: auto !important;
   z-index: 4000;
 }
 

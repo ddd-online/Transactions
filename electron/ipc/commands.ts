@@ -1270,13 +1270,49 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       return saveWorkspaceIcon(workspace.directory, data)
     },
 
-    proxy_detect() {
-      const proxy = options.config.snapshot().proxy
+    async proxy_test(request) {
+      const raw = asObject(request)
+      const setting = validatedProxySetting(
+        String(raw.mode ?? ''),
+        String(raw.url ?? ''),
+      ) as ProxySetting
+      const saved = options.config.snapshot().proxy
+      const target =
+        process.env.TRANSACTIONS_TEST_PROXY_TARGET ?? 'https://api.github.com/zen'
+      const started = Date.now()
+      let status: number | null = null
+      let ok = false
+      let message = ''
+      try {
+        await applyProxy(setting)
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 8000)
+        try {
+          const response = await appFetch(target, {
+            method: 'GET',
+            cache: 'no-store',
+            signal: controller.signal,
+            headers: { 'User-Agent': 'Transactions-proxy-test' },
+          })
+          status = response.status
+          ok = status < 500
+          message = ok
+            ? `代理连通正常（${Date.now() - started} ms）`
+            : `代理已连接，但目标返回 HTTP ${status}`
+        } finally {
+          clearTimeout(timer)
+        }
+      } catch (error) {
+        message = `代理连接失败：${error instanceof Error ? error.message : String(error)}`
+      } finally {
+        await applyProxy(saved)
+      }
       return {
-        url: proxy.mode === 'manual' ? proxy.url : '',
-        source: proxy.mode,
-        pac: false,
-        message: '',
+        ok,
+        status,
+        latencyMs: Date.now() - started,
+        url: setting.url,
+        message,
       }
     },
 

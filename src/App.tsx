@@ -109,7 +109,7 @@ export function App(): JSX.Element {
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
-  const [proxyDetect, setProxyDetect] = useState('')
+  const [proxyTesting, setProxyTesting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
   const ledgerMenuRef = useRef<HTMLDivElement>(null)
@@ -358,14 +358,19 @@ export function App(): JSX.Element {
   }, [proxyMode, proxyUrl])
 
   const detectProxy = useCallback(async (): Promise<void> => {
-    setError('')
+    setProxyTesting(true)
     try {
-      const result = await window.api.invoke('proxy_detect', {})
-      setProxyDetect(`${result.source}${result.url ? ` · ${result.url}` : ''}`)
+      const result = await window.api.invoke('proxy_test', {
+        mode: proxyMode,
+        url: proxyUrl,
+      })
+      notify(result.message, result.ok ? 'success' : 'error')
     } catch (detectError) {
-      setError(errorMessage(detectError))
+      notify(`代理连接失败：${errorMessage(detectError)}`, 'error')
+    } finally {
+      setProxyTesting(false)
     }
-  }, [])
+  }, [proxyMode, proxyUrl])
 
   const toggleFeature = useCallback(
     async (feature: string, enabled: boolean): Promise<void> => {
@@ -858,13 +863,8 @@ export function App(): JSX.Element {
                         <div className="st-card-info">
                           <span className="st-card-title">代理</span>
                           <span className="st-card-desc">
-                            网络请求（行情、更新检查）走 HTTP 代理；自动探测读取环境变量与 Windows 系统代理
+                            网络请求（行情、更新检查）走 HTTP 代理；检测会用当前设置请求 GitHub
                           </span>
-                          {proxyDetect ? (
-                            <span className="st-card-desc st-card-desc--mono" data-testid="proxy-detect-result">
-                              {proxyDetect}
-                            </span>
-                          ) : null}
                         </div>
                         <div className="st-card-action">
                           <Segmented
@@ -878,28 +878,36 @@ export function App(): JSX.Element {
                               { value: 'manual', label: '手动' },
                             ]}
                           />
-                          <Input
-                            data-testid="proxy-url"
-                            placeholder="http://127.0.0.1:7890"
-                            value={proxyUrl}
-                            disabled={!config || proxyMode !== 'manual'}
-                            onChange={(event) => setProxyUrl(event.target.value)}
-                          />
-                          <Button
-                            variant="secondary"
-                            testId="proxy-save"
-                            disabled={!config}
-                            onClick={() => void saveProxy()}
-                          >
-                            保存
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            testId="proxy-detect"
-                            onClick={() => void detectProxy()}
-                          >
-                            检测
-                          </Button>
+                          {proxyMode === 'manual' ? (
+                            <Input
+                              data-testid="proxy-url"
+                              placeholder="http://127.0.0.1:7890"
+                              value={proxyUrl}
+                              disabled={!config}
+                              onChange={(event) => setProxyUrl(event.target.value)}
+                            />
+                          ) : null}
+                          {proxyMode === 'manual' ? (
+                            <Button
+                              variant="secondary"
+                              testId="proxy-save"
+                              disabled={!config}
+                              onClick={() => void saveProxy()}
+                            >
+                              保存
+                            </Button>
+                          ) : null}
+                          {proxyMode !== 'off' ? (
+                            <Button
+                              variant="secondary"
+                              testId="proxy-detect"
+                              loading={proxyTesting}
+                              disabled={!config || proxyTesting}
+                              onClick={() => void detectProxy()}
+                            >
+                              检测
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
 

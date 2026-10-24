@@ -1,9 +1,10 @@
 /** 外壳命令的返回形状（图标 / 代理探测 / 保存文件 / DevTools）。 */
 
-export interface ProxyDetectResponse {
+export interface ProxyTestResponse {
+  ok: boolean
+  status: number | null
+  latencyMs: number
   url: string
-  source: string
-  pac: boolean
   message: string
 }
 
