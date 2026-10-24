@@ -2475,6 +2475,11 @@
   padding-bottom: 8px;
 }
 
+/* 资金表列宽按容器百分比分配：备注吃掉剩余空间，窗口变宽变窄时整表跟着伸缩。 */
+.stock-page .stock-fund-table.ant-table-wrapper .ant-table table {
+  table-layout: fixed;
+}
+
 /* ---------------- 账户 ---------------- */
 
 .stock-account-view {

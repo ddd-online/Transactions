@@ -142,13 +142,13 @@ export function StockAccountPanel({
                 dataSource={funds.items}
                 onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
                 columns={[
-                  { title: '日期', dataIndex: 'recordDate', width: 120 },
-                  { title: '事件', dataIndex: 'eventText', width: 140 },
+                  { title: '日期', dataIndex: 'recordDate', width: '12%' },
+                  { title: '事件', dataIndex: 'eventText', width: '14%' },
                   {
                     title: '金额变化',
                     dataIndex: 'amountChange',
                     align: 'right',
-                    width: 140,
+                    width: '16%',
                     render: (value: number) => (
                       <span className={stockPnlClass(value)}>
                         {value >= 0 ? '+' : '-'}
@@ -160,10 +160,10 @@ export function StockAccountPanel({
                     title: '现金余额',
                     dataIndex: 'cashBalance',
                     align: 'right',
-                    width: 140,
+                    width: '16%',
                     render: (value: number) => stockMoney(value),
                   },
-                  { title: '备注', dataIndex: 'remark', ellipsis: true },
+                  { title: '备注', dataIndex: 'remark', ellipsis: true, width: '42%' },
                 ]}
               />
               <div className="stock-table-foot">
