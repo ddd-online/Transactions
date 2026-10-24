@@ -45,8 +45,10 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('ledger-trigger').click()
     await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
-    await page.getByTestId('acct-tab-records').click()
+    // 账本菜单会盖住左侧页面导航，先点内容区空白处关闭它，再点页面导航
+    await page.getByTestId('tr-empty').click()
     await expect(page.getByTestId('ledger-menu-empty')).toHaveCount(0)
+    await page.getByTestId('acct-tab-records').click()
     await page.getByTestId('ledger-trigger').click()
     await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
     await page.getByTestId('ledger-open-create').click()
