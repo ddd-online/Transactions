@@ -742,7 +742,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                   disabled={syncing}
                 >
                   <span className={syncing ? 'tr-sync-icon is-spinning' : 'tr-sync-icon'}>
-                    <Icon name="Reload" size={15} />
+                    <Icon name="Sync" size={15} />
                   </span>
                 </button>
               </Dropdown>
