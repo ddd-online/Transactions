@@ -77,7 +77,12 @@ function metricValue(point: StockStatisticsPointDto, metric: MetricKey): number 
 
 function axisText(value: number, metric: MetricKey): string {
   const kind = METRICS.find((item) => item.key === metric)?.kind
-  if (kind === 'percent') return `${value.toFixed(0)}%`
+  if (kind === 'percent') {
+    if (metric === 'max_drawdown') {
+      return `${value.toFixed(2).replace(/\.?0+$/, '')}%`
+    }
+    return `${value.toFixed(0)}%`
+  }
   if (kind === 'ratio') return value.toFixed(0)
   return `${value.toFixed(0)}`
 }
