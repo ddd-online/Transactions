@@ -180,6 +180,7 @@ export function StockLessonsPanel({
                       <Popconfirm
                         title="删除这条心得？"
                         description="关联的交易轮次不会被删除。"
+                        placement="bottomRight"
                         okText="删除"
                         cancelText="取消"
                         okType="danger"

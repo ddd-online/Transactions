@@ -154,6 +154,10 @@ test('股票心得：新建 / 关联轮次 / 跳转 / 编辑 / 删除', async ()
     // 删除只删心得，交易轮次不受影响
     await standalone.getByTestId('stock-lesson-delete').click()
     await page.getByText('删除这条心得？').waitFor()
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-lesson-delete.png'),
+    })
     await page.locator('.ant-popover button').filter({ hasText: '删' }).last().click()
     await expect(rows).toHaveCount(1)
 
