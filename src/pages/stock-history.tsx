@@ -420,6 +420,15 @@ function RoundBlock({
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
           {money(round.pnl)} · {stockPercent(round.pnlRate)}
         </span>
+        <Select
+          className="stock-round__tag"
+          data-testid="round-tag"
+          value={tag}
+          options={options.map((item) => ({ value: item, label: item }))}
+          onChange={onTag}
+          popupMatchSelectWidth={false}
+          size="small"
+        />
         {onCreateLesson ? (
           <Button
             variant="secondary"
@@ -434,14 +443,6 @@ function RoundBlock({
       {expanded ? (
         <div className="stock-round__body">
           <div className="stock-round__meta">
-            <Select
-              data-testid="round-tag"
-              value={tag}
-              options={options.map((item) => ({ value: item, label: item }))}
-              onChange={onTag}
-              popupMatchSelectWidth={false}
-              size="small"
-            />
             <span className="stock-muted">{round.tradeCount} 笔成交</span>
           </div>
 

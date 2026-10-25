@@ -3020,6 +3020,10 @@
   margin-left: auto;
 }
 
+.stock-round__tag {
+  flex-shrink: 0;
+}
+
 .stock-round__body {
   display: flex;
   flex-direction: column;
