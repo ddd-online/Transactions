@@ -45,6 +45,7 @@ export function StockHistoryPanel({
   const [detail, setDetail] = useState<StockTradeHistoryDetailDto | null>(null)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [roundTags, setRoundTags] = useState<Record<string, string>>({})
+  const [roundTemplate, setRoundTemplate] = useState('')
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [edits, setEdits] = useState<Record<string, { price: string; lots: string }>>({})
   const [confirmOrder, setConfirmOrder] = useState<string | null>(null)
@@ -80,11 +81,15 @@ export function StockHistoryPanel({
       setError('')
       setSelectedCode(code)
       try {
-        const next = await window.api.invoke('stock_history_detail', {
-          ledger_id: ledgerId,
-          stock_code: code,
-        })
+        const [next, reviewSettings] = await Promise.all([
+          window.api.invoke('stock_history_detail', {
+            ledger_id: ledgerId,
+            stock_code: code,
+          }),
+          window.api.invoke('stock_review_template_get', { ledger_id: ledgerId }),
+        ])
         setDetail(next)
+        setRoundTemplate(reviewSettings.template)
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
         // 选中股票时展开最新一轮（轮次最大），历史从最近一笔开始读。
         const latestRoundNo = next.rounds.reduce(
@@ -274,6 +279,7 @@ export function StockHistoryPanel({
                     round={round}
                     expanded={expanded[round.id] ?? false}
                     review={round.review}
+                    template={roundTemplate}
                     tag={roundTags[round.id] ?? round.tag}
                     options={tagOptions}
                     edits={edits}
@@ -324,6 +330,7 @@ interface RoundBlockProps {
   round: StockTradeRoundDto
   expanded: boolean
   review: string
+  template: string
   tag: string
   options: string[]
   edits: Record<string, { price: string; lots: string }>
@@ -339,6 +346,7 @@ function RoundBlock({
   round,
   expanded,
   review,
+  template,
   tag,
   options,
   edits,
@@ -502,7 +510,8 @@ function RoundBlock({
                     setEditingReview(false)
                     return
                   }
-                  setReviewDraft(review)
+                  // 空复盘首次编辑用本轮模板起头；已写过的内容不被模板覆盖
+                  setReviewDraft(review.trim() ? review : template)
                   setEditingReview(true)
                 }}
               >

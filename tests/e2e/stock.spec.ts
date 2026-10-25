@@ -197,6 +197,10 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     })
     await page.getByTestId('round-review-save').click()
     await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
+    // 已写过的复盘再次编辑时保留原文，不再套模板
+    await page.getByTestId('round-review-open').click()
+    await expect(page.getByTestId('round-review')).toHaveValue('复盘：趋势向上')
+    await page.getByTestId('round-review-cancel').click()
     await page.getByTestId('round-tag').click()
     await page.locator('.ant-select-item-option').filter({ hasText: '打板' }).click()
     await expect(page.getByTestId('round-tag')).toContainText('打板')
