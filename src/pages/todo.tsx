@@ -6,13 +6,17 @@ import type {
   TodoItemDto,
   TodoProgressDto,
 } from '../../shared/types/todo'
-import { Input, Modal, Popconfirm } from 'antd'
+import { Input, Modal, Popconfirm, Select } from 'antd'
 
+import { TODO_LEVELS, TODO_LEVEL_LABELS, todoLevelLabel } from '../../shared/domain/consts'
 import { Button } from '../components/button'
+import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
+import { Segmented } from '../components/segmented'
+import { TodoQuadrant } from '../components/todo-quadrant'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -22,14 +26,10 @@ function errorMessage(error: unknown): string {
   return String(error)
 }
 
-const LEVEL_LABELS: Record<number, string> = {
-  [-5]: '低',
-  [-3]: '中低',
-  [-1]: '次低',
-  1: '次高',
-  3: '中高',
-  5: '高',
-}
+const LEVEL_OPTIONS = TODO_LEVELS.map((value, index) => ({
+  value,
+  label: TODO_LEVEL_LABELS[index],
+}))
 
 /** 完成时间（历史）/ 进度时间（`short`）—— 都用本地时区、等宽数字排版。 */
 function formatMoment(seconds: number, short = false): string {
@@ -45,6 +45,13 @@ function doneCountOf(progress: TodoProgressDto[]): number {
   return progress.filter((entry) => entry.done).length
 }
 
+function formatItemDates(startDate: string, dueDate: string): string {
+  if (!startDate && !dueDate) return ''
+  if (startDate && !dueDate) return `${startDate} 起`
+  if (!startDate && dueDate) return `${dueDate} 截止`
+  return `${startDate} → ${dueDate}`
+}
+
 export interface TodoPageProps {
   ledgerId: string
 }
@@ -54,15 +61,23 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [dragCardId, setDragCardId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [todoMode, setTodoMode] = useState<'cards' | 'history'>('cards')
+  const [todoView, setTodoView] = useState<'board' | 'quadrant'>('board')
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
   const [historyProgress, setHistoryProgress] = useState<TodoHistoryDto | null>(null)
   const [cardOpen, setCardOpen] = useState(false)
   const [cardDraft, setCardDraft] = useState('')
   const [cardError, setCardError] = useState('')
-  const [itemTitles, setItemTitles] = useState<Record<string, string>>({})
+  const [itemOpen, setItemOpen] = useState(false)
+  const [itemCardId, setItemCardId] = useState('')
+  const [itemEditingId, setItemEditingId] = useState('')
+  const [itemDraft, setItemDraft] = useState('')
+  const [itemStart, setItemStart] = useState('')
+  const [itemDue, setItemDue] = useState('')
+  const [itemUrgency, setItemUrgency] = useState<number>(TODO_LEVELS[2])
+  const [itemImportance, setItemImportance] = useState<number>(TODO_LEVELS[2])
+  const [itemError, setItemError] = useState('')
   const [progressText, setProgressText] = useState<Record<string, string>>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
-  const [composerCardId, setComposerCardId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -126,33 +141,78 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     }
   }, [cardDraft, ledgerId, load])
 
-  const createItem = useCallback(
-    async (cardId: string): Promise<void> => {
-      const title = (itemTitles[cardId] ?? '').trim()
-      if (!title) return
-      setBusy(true)
-      setError('')
-      try {
+  const openItemModal = useCallback((cardId: string, item?: TodoItemDto): void => {
+    setItemCardId(cardId)
+    setItemEditingId(item?.id ?? '')
+    setItemDraft(item?.title ?? '')
+    setItemStart(item?.startDate ?? '')
+    setItemDue(item?.dueDate ?? '')
+    setItemUrgency(item?.urgency ?? TODO_LEVELS[2])
+    setItemImportance(item?.importance ?? TODO_LEVELS[2])
+    setItemError('')
+    setItemOpen(true)
+  }, [])
+
+  const closeItemModal = useCallback((): void => {
+    setItemOpen(false)
+    setItemEditingId('')
+    setItemError('')
+  }, [])
+
+  const createItem = useCallback(async (): Promise<void> => {
+    const title = itemDraft.trim()
+    if (!title) {
+      setItemError('请输入事项')
+      return
+    }
+    if (itemStart !== '' && itemDue !== '' && itemStart > itemDue) {
+      setItemError('截止日期不能早于开始日期')
+      return
+    }
+    setBusy(true)
+    setItemError('')
+    setError('')
+    try {
+      if (itemEditingId) {
+        await window.api.invoke('todo_item_update', {
+          ledger_id: ledgerId,
+          id: itemEditingId,
+          title,
+          start_date: itemStart,
+          due_date: itemDue,
+          urgency: itemUrgency,
+          importance: itemImportance,
+        })
+      } else {
         await window.api.invoke('todo_item_create', {
           ledger_id: ledgerId,
-          card_id: cardId,
+          card_id: itemCardId,
           title,
-          start_date: '',
-          due_date: '',
-          urgency: -1,
-          importance: -1,
+          start_date: itemStart,
+          due_date: itemDue,
+          urgency: itemUrgency,
+          importance: itemImportance,
         })
-        setItemTitles((current) => ({ ...current, [cardId]: '' }))
-        setComposerCardId(null)
-        await load()
-      } catch (createError) {
-        setError(errorMessage(createError))
-      } finally {
-        setBusy(false)
       }
-    },
-    [itemTitles, ledgerId, load],
-  )
+      setItemOpen(false)
+      setItemEditingId('')
+      await load()
+    } catch (createError) {
+      setItemError(errorMessage(createError))
+    } finally {
+      setBusy(false)
+    }
+  }, [
+    itemCardId,
+    itemDraft,
+    itemDue,
+    itemEditingId,
+    itemImportance,
+    itemStart,
+    itemUrgency,
+    ledgerId,
+    load,
+  ])
 
   const setStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
@@ -284,11 +344,11 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   )
 
   const renderLevels = (item: TodoItemDto): JSX.Element | null => {
-    if (item.urgency === -1 && item.importance === -1) return null
+    if (item.urgency === TODO_LEVELS[2] && item.importance === TODO_LEVELS[2]) return null
     return (
       <span className="todo-item__levels">
-        <span className="todo-level">紧急 {LEVEL_LABELS[item.urgency] ?? item.urgency}</span>
-        <span className="todo-level">重要 {LEVEL_LABELS[item.importance] ?? item.importance}</span>
+        <span className="todo-level">紧急 {todoLevelLabel(item.urgency)}</span>
+        <span className="todo-level">重要 {todoLevelLabel(item.importance)}</span>
       </span>
     )
   }
@@ -324,7 +384,11 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                 </span>
               ) : null}
               {renderLevels(item)}
-              {item.dueDate ? <span className="todo-item__due">截止 {item.dueDate}</span> : null}
+              {formatItemDates(item.startDate, item.dueDate) ? (
+                <span className="todo-item__due">
+                  {formatItemDates(item.startDate, item.dueDate)}
+                </span>
+              ) : null}
             </span>
           </button>
 
@@ -338,6 +402,17 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             onClick={() => toggleItem(item.id)}
           >
             <Icon name="ChevronRight" size={14} />
+          </button>
+
+          <button
+            type="button"
+            className="tr-icon-btn todo-item__edit"
+            data-testid="todo-item-edit"
+            aria-label={`编辑事项 ${item.title}`}
+            title="编辑事项"
+            onClick={() => openItemModal(item.cardId, item)}
+          >
+            <Icon name="Edit" size={14} />
           </button>
 
           <Popconfirm
@@ -460,22 +535,33 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       toolbar={
         todoMode === 'cards' ? (
           <div className="todo-toolbar">
-            <div className="todo-toolbar-actions">
-              <Button
-                variant="primary"
-                testId="todo-card-open"
-                icon={<Icon name="Plus" size={14} />}
-                disabled={!ledgerId || busy}
-                onClick={openCardModal}
-              >
-                新建主题
-              </Button>
-            </div>
+            <Segmented
+              testId="todo-view"
+              value={todoView}
+              onChange={(value) => setTodoView(value as 'board' | 'quadrant')}
+              options={[
+                { value: 'board', label: '待办视图' },
+                { value: 'quadrant', label: '四象限图' },
+              ]}
+            />
+            {todoView === 'board' ? (
+              <div className="todo-toolbar-actions">
+                <Button
+                  variant="primary"
+                  testId="todo-card-open"
+                  icon={<Icon name="Plus" size={14} />}
+                  disabled={!ledgerId || busy}
+                  onClick={openCardModal}
+                >
+                  新建主题
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : undefined
       }
       footer={
-        todoMode === 'cards' && cards.length > 0 ? (
+        todoMode === 'cards' && todoView === 'board' && cards.length > 0 ? (
           <div className="todo-footer">
             <span className="todo-summary" data-testid="todo-summary">
               {cards.length} 个主题 · {activeCount} 项待办
@@ -491,223 +577,196 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       ) : null}
 
       <div className="todo-body">
-        <ScrollArea className="todo-scroll" axis="both" notifyResize>
-          {todoMode === 'cards' ? (
-            !loaded ? (
-              renderSkeleton()
-            ) : cards.length === 0 ? (
-              <EmptyState
-                testId="todo-empty"
-                title={ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
-                description={ledgerId ? '先建一个主题，把要做的事一条条放进去。' : undefined}
-              />
-            ) : (
-              <div className="todo-board">
-                {cards.map((card) => (
-                  <section
-                    key={card.id}
-                    className={`todo-group${dragCardId === card.id ? ' is-dragging' : ''}${
-                      dragOverId === card.id ? ' is-over' : ''
-                    }`}
-                    data-testid="todo-card"
-                    onDragOver={(event) => {
-                      event.preventDefault()
-                      if (dragCardId && dragCardId !== card.id) setDragOverId(card.id)
-                    }}
-                    onDragLeave={() =>
-                      setDragOverId((current) => (current === card.id ? null : current))
-                    }
-                    onDrop={() => {
-                      if (dragCardId) void moveCard(dragCardId, card.id)
-                      setDragCardId(null)
-                      setDragOverId(null)
-                    }}
-                  >
-                    <header className="todo-group__head">
-                      <span
-                        className="todo-group__handle"
-                        title="拖动排序"
-                        draggable
-                        onDragStart={() => setDragCardId(card.id)}
-                        onDragEnd={() => {
-                          setDragCardId(null)
-                          setDragOverId(null)
-                        }}
-                      >
-                        <Icon name="DragHandle" size={16} />
-                      </span>
-                      <h3 className="todo-group__title" title={card.title}>
-                        {card.title}
-                      </h3>
-                      <span className="todo-group__count">{card.items.length} 项</span>
-                      <div className="todo-group__actions">
-                        {composerCardId === card.id ? (
-                          <div className="todo-group__composer">
-                            <Input
-                              autoFocus
-                              size="small"
-                              data-testid="todo-item-title"
-                              placeholder="添加事项"
-                              title="回车添加，Esc 取消"
-                              maxLength={200}
-                              value={itemTitles[card.id] ?? ''}
-                              onChange={(event) =>
-                                setItemTitles((current) => ({
-                                  ...current,
-                                  [card.id]: event.target.value,
-                                }))
-                              }
-                              onPressEnter={() => void createItem(card.id)}
-                              onBlur={(event) => {
-                                const next = event.relatedTarget
-                                const actions =
-                                  event.currentTarget.closest('.todo-group__actions')
-                                if (next instanceof Node && actions?.contains(next)) return
-                                if (!(itemTitles[card.id] ?? '').trim()) {
-                                  setComposerCardId(null)
-                                }
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Escape') {
-                                  setComposerCardId(null)
-                                  setItemTitles((current) => ({ ...current, [card.id]: '' }))
-                                }
-                              }}
-                            />
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              testId="todo-item-create"
-                              disabled={busy}
-                              onClick={() => void createItem(card.id)}
-                            >
-                              添加
-                            </Button>
-                          </div>
-                        ) : (
+        {todoMode === 'cards' && todoView === 'quadrant' ? (
+          !loaded ? (
+            renderSkeleton()
+          ) : activeCount === 0 ? (
+            <EmptyState
+              testId="todo-quadrant-empty"
+              title={ledgerId ? '还没有进行中的事项' : '请先创建/选择账本'}
+              description={
+                ledgerId
+                  ? '把事项的紧急度与重要度填上，这里就会把它们摆进四个象限。'
+                  : undefined
+              }
+            />
+          ) : (
+            <TodoQuadrant cards={cards} />
+          )
+        ) : (
+          <ScrollArea className="todo-scroll" axis="both" notifyResize>
+            {todoMode === 'cards' ? (
+              !loaded ? (
+                renderSkeleton()
+              ) : cards.length === 0 ? (
+                <EmptyState
+                  testId="todo-empty"
+                  title={ledgerId ? '还没有待办主题' : '请先创建/选择账本'}
+                  description={ledgerId ? '先建一个主题，把要做的事一条条放进去。' : undefined}
+                />
+              ) : (
+                <div className="todo-board">
+                  {cards.map((card) => (
+                    <section
+                      key={card.id}
+                      className={`todo-group${dragCardId === card.id ? ' is-dragging' : ''}${
+                        dragOverId === card.id ? ' is-over' : ''
+                      }`}
+                      data-testid="todo-card"
+                      onDragOver={(event) => {
+                        event.preventDefault()
+                        if (dragCardId && dragCardId !== card.id) setDragOverId(card.id)
+                      }}
+                      onDragLeave={() =>
+                        setDragOverId((current) => (current === card.id ? null : current))
+                      }
+                      onDrop={() => {
+                        if (dragCardId) void moveCard(dragCardId, card.id)
+                        setDragCardId(null)
+                        setDragOverId(null)
+                      }}
+                    >
+                      <header className="todo-group__head">
+                        <span
+                          className="todo-group__handle"
+                          title="拖动排序"
+                          draggable
+                          onDragStart={() => setDragCardId(card.id)}
+                          onDragEnd={() => {
+                            setDragCardId(null)
+                            setDragOverId(null)
+                          }}
+                        >
+                          <Icon name="DragHandle" size={16} />
+                        </span>
+                        <h3 className="todo-group__title" title={card.title}>
+                          {card.title}
+                        </h3>
+                        <span className="todo-group__count">{card.items.length} 项</span>
+                        <div className="todo-group__actions">
                           <button
                             type="button"
                             className="tr-icon-btn todo-group__add"
                             data-testid="todo-item-add"
                             aria-label={`添加事项：${card.title}`}
                             title="添加事项"
-                            onClick={() => setComposerCardId(card.id)}
+                            onClick={() => openItemModal(card.id)}
                           >
                             <Icon name="Plus" size={14} />
                           </button>
-                        )}
-                        <Popconfirm
-                          title={`删除主题「${card.title}」？`}
-                          description="主题下的事项与进度会一并删除。"
-                          okText="删除"
-                          cancelText="取消"
-                          okType="danger"
-                          onConfirm={() => void removeCard(card.id)}
-                        >
-                          <button
-                            type="button"
-                            className="tr-icon-btn is-danger-static todo-group__delete"
-                            data-testid="todo-card-delete"
-                            aria-label={`删除主题 ${card.title}`}
-                            title="删除主题"
-                          >
-                            <Icon name="Trash" size={14} />
-                          </button>
-                        </Popconfirm>
-                      </div>
-                    </header>
-
-                    {card.items.length === 0 ? (
-                      <p className="todo-group__empty">还没有事项</p>
-                    ) : (
-                      <ul className="todo-items">{card.items.map((item) => renderItem(item))}</ul>
-                    )}
-                  </section>
-                ))}
-              </div>
-            )
-          ) : !loaded ? (
-            renderSkeleton()
-          ) : history.length === 0 ? (
-            <EmptyState
-              testId="todo-history-empty"
-              title="还没有已完成事项"
-              description="完成的事项会在这里留档。"
-            />
-          ) : (
-            <div className="todo-history">
-              <table className="todo-table">
-                <thead>
-                  <tr>
-                    <th className="is-center">完成时间</th>
-                    <th>主题</th>
-                    <th>事项</th>
-                    <th className="is-center">进度</th>
-                    <th className="is-center">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((item) => (
-                    <tr key={item.id} data-testid="todo-history-item">
-                      <td className="is-center todo-table__time">{formatMoment(item.completedAt)}</td>
-                      <td className="todo-table__card" title={item.cardTitle}>
-                        {item.cardTitle}
-                      </td>
-                      <td className="todo-table__title">{item.title}</td>
-                      <td className="is-center todo-table__progress">
-                        {item.progress.length > 0 ? (
-                          <Button
-                            variant="text"
-                            size="sm"
-                            className="todo-history-progress-trigger"
-                            testId="todo-history-progress"
-                            aria-label={`查看「${item.title}」的进度记录`}
-                            title="查看进度记录"
-                            onClick={() => setHistoryProgress(item)}
-                          >
-                            {`${doneCountOf(item.progress)}/${item.progress.length}`}
-                          </Button>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="is-center">
-                        <div className="todo-table__actions">
-                          <Button
-                            variant="text"
-                            size="sm"
-                            testId="todo-history-reopen"
-                            onClick={() => void setStatus(item.id, 'doing')}
-                          >
-                            回到待办
-                          </Button>
                           <Popconfirm
-                            title={`删除事项「${item.title}」？`}
+                            title={`删除主题「${card.title}」？`}
+                            description="主题下的事项与进度会一并删除。"
                             okText="删除"
                             cancelText="取消"
                             okType="danger"
-                            onConfirm={() => void removeItem(item.id)}
+                            onConfirm={() => void removeCard(card.id)}
                           >
-                            <span className="todo-history__delete">
-                              <Button
-                                variant="text-danger"
-                                size="sm"
-                                testId="todo-history-delete"
-                                title="删除事项"
-                              >
-                                删除
-                              </Button>
-                            </span>
+                            <button
+                              type="button"
+                              className="tr-icon-btn is-danger-static todo-group__delete"
+                              data-testid="todo-card-delete"
+                              aria-label={`删除主题 ${card.title}`}
+                              title="删除主题"
+                            >
+                              <Icon name="Trash" size={14} />
+                            </button>
                           </Popconfirm>
                         </div>
-                      </td>
-                    </tr>
+                      </header>
+
+                      {card.items.length === 0 ? (
+                        <p className="todo-group__empty">还没有事项</p>
+                      ) : (
+                        <ul className="todo-items">{card.items.map((item) => renderItem(item))}</ul>
+                      )}
+                    </section>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </ScrollArea>
+                </div>
+              )
+            ) : !loaded ? (
+              renderSkeleton()
+            ) : history.length === 0 ? (
+              <EmptyState
+                testId="todo-history-empty"
+                title="还没有已完成事项"
+                description="完成的事项会在这里留档。"
+              />
+            ) : (
+              <div className="todo-history">
+                <table className="todo-table">
+                  <thead>
+                    <tr>
+                      <th className="is-center">完成时间</th>
+                      <th>主题</th>
+                      <th>事项</th>
+                      <th className="is-center">进度</th>
+                      <th className="is-center">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((item) => (
+                      <tr key={item.id} data-testid="todo-history-item">
+                        <td className="is-center todo-table__time">{formatMoment(item.completedAt)}</td>
+                        <td className="todo-table__card" title={item.cardTitle}>
+                          {item.cardTitle}
+                        </td>
+                        <td className="todo-table__title">{item.title}</td>
+                        <td className="is-center todo-table__progress">
+                          {item.progress.length > 0 ? (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              className="todo-history-progress-trigger"
+                              testId="todo-history-progress"
+                              aria-label={`查看「${item.title}」的进度记录`}
+                              title="查看进度记录"
+                              onClick={() => setHistoryProgress(item)}
+                            >
+                              {`${doneCountOf(item.progress)}/${item.progress.length}`}
+                            </Button>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="is-center">
+                          <div className="todo-table__actions">
+                            <Button
+                              variant="text"
+                              size="sm"
+                              testId="todo-history-reopen"
+                              onClick={() => void setStatus(item.id, 'doing')}
+                            >
+                              回到待办
+                            </Button>
+                            <Popconfirm
+                              title={`删除事项「${item.title}」？`}
+                              okText="删除"
+                              cancelText="取消"
+                              okType="danger"
+                              onConfirm={() => void removeItem(item.id)}
+                            >
+                              <span className="todo-history__delete">
+                                <Button
+                                  variant="text-danger"
+                                  size="sm"
+                                  testId="todo-history-delete"
+                                  title="删除事项"
+                                >
+                                  删除
+                                </Button>
+                              </span>
+                            </Popconfirm>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </ScrollArea>
+        )}
       </div>
 
       <Modal
@@ -750,6 +809,109 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               onClick={() => void createCard()}
             >
               创建
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={itemOpen}
+        title={itemEditingId ? '编辑事项' : '添加事项'}
+        width={520}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={closeItemModal}
+      >
+        <div className="tr-modal-form todo-item-form">
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">事项</span>
+            <Input
+              autoFocus
+              data-testid="todo-item-title"
+              maxLength={500}
+              placeholder="例如：写周报"
+              value={itemDraft}
+              onChange={(event) => {
+                setItemDraft(event.target.value)
+                setItemError('')
+              }}
+              onPressEnter={() => void createItem()}
+            />
+          </div>
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">开始时间</span>
+              <DatePicker
+                testId="todo-item-start"
+                ariaLabel="开始时间"
+                allowClear
+                value={itemStart}
+                onChange={(value) => {
+                  setItemStart(value)
+                  setItemError('')
+                }}
+              />
+            </div>
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">截止时间</span>
+              <DatePicker
+                testId="todo-item-due"
+                ariaLabel="截止时间"
+                allowClear
+                value={itemDue}
+                onChange={(value) => {
+                  setItemDue(value)
+                  setItemError('')
+                }}
+              />
+            </div>
+          </div>
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">紧急度</span>
+              <Select
+                data-testid="todo-item-urgency"
+                aria-label="紧急度"
+                value={itemUrgency}
+                options={LEVEL_OPTIONS}
+                onChange={(value) => {
+                  setItemUrgency(value)
+                  setItemError('')
+                }}
+              />
+            </div>
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">重要度</span>
+              <Select
+                data-testid="todo-item-importance"
+                aria-label="重要度"
+                value={itemImportance}
+                options={LEVEL_OPTIONS}
+                onChange={(value) => {
+                  setItemImportance(value)
+                  setItemError('')
+                }}
+              />
+            </div>
+          </div>
+          {itemError ? (
+            <p className="todo-modal__error" data-testid="todo-item-error">
+              {itemError}
+            </p>
+          ) : null}
+          <div className="todo-modal__actions">
+            <Button variant="secondary" testId="todo-item-cancel" onClick={closeItemModal}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              testId="todo-item-create"
+              loading={busy}
+              disabled={!ledgerId}
+              onClick={() => void createItem()}
+            >
+              保存
             </Button>
           </div>
         </div>

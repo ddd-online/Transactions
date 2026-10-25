@@ -37,7 +37,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--transactions-space-lg);
 }
 
@@ -371,7 +371,8 @@
   transform: rotate(90deg);
 }
 
-/* 删除事项：行悬停才出现；隐藏时不接点击（键盘 focus 仍能看到） */
+/* 编辑 / 删除事项：行悬停才出现；隐藏时不接点击（键盘 focus 仍能看到） */
+.todo-item__edit,
 .todo-item__delete {
   flex-shrink: 0;
   width: 24px;
@@ -381,7 +382,9 @@
   transition: opacity var(--transactions-transition-fast);
 }
 
+.todo-item__row:hover .todo-item__edit,
 .todo-item__row:hover .todo-item__delete,
+.todo-item__edit:focus-visible,
 .todo-item__delete:focus-visible {
   opacity: 1;
   pointer-events: auto;
@@ -498,18 +501,6 @@
 .todo-progress__add > .ant-input {
   flex: 1;
   min-width: 0;
-}
-
-/* ---------------- 段底的新增事项行 ---------------- */
-/* 段头右侧的行内新增：按钮与输入共用同一块位置 */
-.todo-group__composer {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
-.todo-group__composer .ant-input {
-  width: 300px;
 }
 
 /* ---------------- 历史 ---------------- */
@@ -703,13 +694,182 @@
   font-size: var(--transactions-size-text-caption);
 }
 
+/* ---------------- 四象限图 ---------------- */
+/* 画布自己吃掉工具栏以下的整块高度：象限底铺满，圆角交给容器的 overflow 裁。 */
+.todo-quadrant {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.todo-quadrant__canvas {
+  flex: 1;
+  min-height: 260px;
+  overflow: hidden;
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+  background-color: var(--transactions-color-major-background);
+}
+
+.todo-quadrant__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 四格用同一支色的明度分档：最该马上做的一格是主色浅底，其余三格是 Ink 的三档浓度。 */
+.todo-quadrant__ground--now {
+  fill: var(--transactions-color-active-bg);
+}
+
+.todo-quadrant__ground--plan {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 10%, transparent);
+}
+
+.todo-quadrant__ground--delegate {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 7%, transparent);
+}
+
+.todo-quadrant__ground--less {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 4.5%, transparent);
+}
+
+.todo-quadrant__axis {
+  stroke: var(--transactions-color-text-tertiary);
+  stroke-width: 1;
+}
+
+/* 象限名是水印：低浓度的墨，悬停 / 键盘聚焦时亮到可读。名字本身也是打开该格清单的按钮。 */
+.todo-quadrant__name {
+  fill: color-mix(in srgb, var(--transactions-color-text-major) 12%, transparent);
+  font-weight: var(--transactions-weight-semibold);
+  cursor: pointer;
+  transition: fill var(--transactions-transition-fast);
+}
+
+.todo-quadrant__name--now {
+  fill: color-mix(in srgb, var(--transactions-color-primary) 24%, transparent);
+}
+
+.todo-quadrant__name:hover,
+.todo-quadrant__name:focus-visible {
+  fill: var(--transactions-color-text-secondary);
+}
+
+.todo-quadrant__name--now:hover,
+.todo-quadrant__name--now:focus-visible {
+  fill: var(--transactions-color-primary);
+}
+
+/* Chromium 在 SVG 文本上会画一圈不属于这套系统的默认焦点环；键盘焦点改由描边画。 */
+.todo-quadrant__name:focus {
+  outline: none;
+}
+
+.todo-quadrant__name:focus-visible {
+  stroke: var(--transactions-color-primary);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.todo-quadrant__name:active {
+  translate: 0 1px;
+}
+
+/* 轴端标注要比水印实，才能压在水印上照样被读到。 */
+.todo-quadrant__axis-label {
+  fill: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-section);
+}
+
+/* 事项点：主色实心 + 纸色描边（叠在一起也还能数出几颗）；悬停略膨胀。 */
+.todo-quadrant__point {
+  fill: var(--transactions-color-primary);
+  stroke: var(--transactions-color-major-background);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--transactions-transition-fast);
+}
+
+.todo-quadrant__point:hover {
+  transform: scale(1.35);
+}
+
+/* 象限弹窗：一行 = 事项 + 主题 / 两档 / 起止日期；行底用 Soft Gray 分开。 */
+.todo-quadrant-modal__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(48vh, 420px);
+  overflow-y: auto;
+}
+
+.todo-quadrant-modal__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.todo-quadrant-modal__row + .todo-quadrant-modal__row {
+  margin-top: var(--transactions-space-sm);
+}
+
+.todo-quadrant-modal__title {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  word-break: break-word;
+}
+
+.todo-quadrant-modal__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-quadrant-modal__card {
+  font-weight: var(--transactions-weight-medium);
+}
+
+.todo-quadrant-modal__row .todo-level {
+  background-color: var(--transactions-color-elevated);
+}
+
+/* 四象限的空态撑满画布区，而不是贴在顶端。 */
+.todo-body > .tr-empty {
+  flex: 1;
+}
+
 /* ---------------- 窄窗 ---------------- */
 @media (max-width: 820px) {
   .todo-board {
     padding-bottom: var(--transactions-space-xl);
   }
 
-  .todo-group__composer .ant-input {
-    width: 180px;
+  .todo-toolbar {
+    flex-wrap: wrap;
+    gap: var(--transactions-space-sm);
+  }
+
+  .todo-quadrant {
+    padding: var(--transactions-space-sm) var(--transactions-space-md) var(--transactions-space-md);
+  }
+}
+
+/* 事项表单里的两列字段在窄窗落回一列（其余弹窗的 `.tr-modal-row` 不受影响）。 */
+@media (max-width: 560px) {
+  .todo-item-form .tr-modal-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
