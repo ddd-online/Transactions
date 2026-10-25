@@ -108,6 +108,17 @@ test('股票统计明细：同日建仓的两轮按清仓先后排列', async ()
     await expect(rows.nth(1)).toContainText('2 胜 0 负')
     await expect(rows.nth(2)).toContainText('1 胜 0 负')
 
+    // 列对齐：建仓 / 清仓 / 标签居中，其余（含股票、胜负）居右。
+    const headers = page.locator('.ant-table-thead th')
+    for (const index of [0, 1, 3]) {
+      await expect(headers.nth(index)).toHaveCSS('text-align', 'center')
+      await expect(rows.nth(0).locator('td').nth(index)).toHaveCSS('text-align', 'center')
+    }
+    for (const index of [2, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+      await expect(headers.nth(index)).toHaveCSS('text-align', 'right')
+      await expect(rows.nth(0).locator('td').nth(index)).toHaveCSS('text-align', 'right')
+    }
+
     await page.waitForTimeout(300)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-statistics-order.png'),

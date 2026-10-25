@@ -532,6 +532,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                 {
                   title: '建仓',
                   dataIndex: 'openedAt',
+                  align: 'center',
                   width: '7%',
                   className: 'stock-stats-date',
                   render: (value: number) => stockDate(value),
@@ -539,18 +540,21 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                 {
                   title: '清仓',
                   dataIndex: 'closedAt',
+                  align: 'center',
                   width: '7%',
                   className: 'stock-stats-date',
                   render: (value: number) => stockDate(value),
                 },
                 {
                   title: '股票',
+                  align: 'right',
                   width: '13%',
                   render: (_, row) => `${row.stockName} ${row.stockCode}`,
                 },
                 {
                   title: '标签',
                   dataIndex: 'tag',
+                  align: 'center',
                   width: '5%',
                   render: (value: string) =>
                     value ? <span className="ui-tag">{value}</span> : '—',
@@ -573,6 +577,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                 },
                 {
                   title: '胜负',
+                  align: 'right',
                   width: '6%',
                   render: (_, row) => `${row.winCount} 胜 ${row.lossCount} 负`,
                 },
