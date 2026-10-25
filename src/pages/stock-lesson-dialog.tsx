@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useMemo, useState, type JSX } from 'react'
 
 import { Input, Modal, Select } from 'antd'
 
@@ -25,7 +25,7 @@ function stockTitle(name: string, code: string): string {
 
 function roundLabel(option: StockRoundOptionDto): string {
   const range = `${formatTimestamp(option.openedAt, 'MM-DD')} → ${formatTimestamp(option.closedAt, 'MM-DD')}`
-  return `${stockTitle(option.stockName, option.stockCode)} · 第 ${option.roundNo} 轮 · ${range} · ${stockMoney(option.pnl)} · ${stockPercent(option.pnlRate)}`
+  return `第 ${option.roundNo} 轮 · ${range} · ${stockMoney(option.pnl)} · ${stockPercent(option.pnlRate)}`
 }
 
 /** 新建 / 编辑股票心得：一句话 + 可选关联一轮已清仓交易。 */
@@ -38,7 +38,9 @@ export function StockLessonDialog({
   onSaved,
 }: StockLessonDialogProps): JSX.Element {
   const [text, setText] = useState('')
+  const [stockCode, setStockCode] = useState('')
   const [roundId, setRoundId] = useState('')
+  const [sourceLocked, setSourceLocked] = useState(false)
   const [options, setOptions] = useState<StockRoundOptionDto[]>([])
   const [optionsLoading, setOptionsLoading] = useState(false)
   const [sourceMissing, setSourceMissing] = useState(false)
@@ -49,7 +51,10 @@ export function StockLessonDialog({
     if (!open) return
     const sourceId = lesson?.roundId ?? initialRoundId ?? ''
     setText(lesson?.text ?? '')
+    setStockCode('')
     setRoundId(sourceId)
+    // 从某一轮交易里「记心得」时，来源已经由上下文确定，不允许再改。
+    setSourceLocked(!lesson && Boolean(initialRoundId))
     setOptions([])
     setOptionsLoading(false)
     setSourceMissing(false)
@@ -64,7 +69,9 @@ export function StockLessonDialog({
       .then((rows) => {
         if (!alive) return
         setOptions(rows)
-        if (sourceId && !rows.some((row) => row.roundId === sourceId)) {
+        const source = sourceId ? rows.find((row) => row.roundId === sourceId) : undefined
+        if (source) setStockCode(source.stockCode)
+        if (sourceId && !source) {
           setRoundId('')
           setSourceMissing(true)
         }
@@ -79,6 +86,21 @@ export function StockLessonDialog({
       alive = false
     }
   }, [open, ledgerId, lesson?.id, lesson?.roundId, lesson?.text, initialRoundId])
+
+  const stockOptions = useMemo(() => {
+    const seen = new Map<string, StockRoundOptionDto>()
+    for (const option of options) {
+      if (!seen.has(option.stockCode)) seen.set(option.stockCode, option)
+    }
+    return [...seen.values()].map((option) => ({
+      value: option.stockCode,
+      label: stockTitle(option.stockName, option.stockCode),
+    }))
+  }, [options])
+
+  const stockRounds = options.filter((option) => option.stockCode === stockCode)
+  const stockDisabled = sourceLocked || optionsLoading || options.length === 0
+  const roundDisabled = sourceLocked || optionsLoading || !stockCode
 
   const save = async (): Promise<void> => {
     const value = text.trim()
@@ -139,18 +161,38 @@ export function StockLessonDialog({
           />
         </label>
         <label>
-          <span className="stock-label">关联交易轮次</span>
+          <span className="stock-label">股票</span>
           <Select
-            data-testid="stock-lesson-round"
-            allowClear
+            data-testid="stock-lesson-stock"
+            allowClear={!sourceLocked}
             showSearch
             optionFilterProp="label"
+            disabled={stockDisabled}
             loading={optionsLoading}
             placeholder={
-              options.length === 0 && !optionsLoading ? '还没有已完成的交易轮次' : '不关联（可选）'
+              options.length === 0 && !optionsLoading ? '还没有已完成的交易轮次' : '先选择股票'
             }
+            value={stockCode || undefined}
+            options={stockOptions}
+            onChange={(value) => {
+              setStockCode(value ?? '')
+              setRoundId('')
+              setSourceMissing(false)
+            }}
+          />
+        </label>
+        <label>
+          <span className="stock-label">交易轮次</span>
+          <Select
+            data-testid="stock-lesson-round"
+            allowClear={!sourceLocked}
+            showSearch
+            optionFilterProp="label"
+            disabled={roundDisabled}
+            loading={optionsLoading}
+            placeholder={stockCode ? '选择轮次' : '先选择股票'}
             value={roundId || undefined}
-            options={options.map((option) => ({
+            options={stockRounds.map((option) => ({
               value: option.roundId,
               label: roundLabel(option),
             }))}

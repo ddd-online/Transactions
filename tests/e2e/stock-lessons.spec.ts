@@ -101,7 +101,10 @@ test('股票心得：新建 / 关联轮次 / 跳转 / 编辑 / 删除', async ()
     await latestRound.getByTestId('round-lesson-create').click()
     const createDialog = page.getByRole('dialog', { name: '新建心得' })
     await expect(createDialog).toBeVisible()
+    await expect(page.getByTestId('stock-lesson-stock')).toContainText('浦发银行')
+    await expect(page.getByTestId('stock-lesson-stock')).toHaveClass(/ant-select-disabled/)
     await expect(page.getByTestId('stock-lesson-round')).toContainText('第 2 轮')
+    await expect(page.getByTestId('stock-lesson-round')).toHaveClass(/ant-select-disabled/)
     await page.getByTestId('stock-lesson-text').fill('等回踩确认再买，不追第一根阳线')
     await page.waitForTimeout(200)
     await page.screenshot({
@@ -158,6 +161,31 @@ test('股票心得：新建 / 关联轮次 / 跳转 / 编辑 / 删除', async ()
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-lesson-delete.png'),
     })
+    await page.locator('.ant-popover button').filter({ hasText: '删' }).last().click()
+    await expect(rows).toHaveCount(1)
+
+    // 从心得页新建：先选股票，再选该股票的轮次
+    await page.getByTestId('stock-lesson-create').click()
+    await page.getByTestId('stock-lesson-text').fill('先选股票再选轮次')
+    await page.getByTestId('stock-lesson-stock').click()
+    await page
+      .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')
+      .filter({ hasText: '浦发银行' })
+      .first()
+      .click()
+    await page.getByTestId('stock-lesson-round').click()
+    await page
+      .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')
+      .filter({ hasText: '第 1 轮' })
+      .first()
+      .click()
+    await page.getByTestId('stock-lesson-save').click()
+    await expect(rows).toHaveCount(2)
+    const linkedByPicker = rows.filter({ hasText: '先选股票再选轮次' })
+    await expect(linkedByPicker).toContainText('第 1 轮')
+
+    await linkedByPicker.getByTestId('stock-lesson-delete').click()
+    await page.getByText('删除这条心得？').waitFor()
     await page.locator('.ant-popover button').filter({ hasText: '删' }).last().click()
     await expect(rows).toHaveCount(1)
 
