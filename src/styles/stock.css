@@ -3133,9 +3133,10 @@
   grid-column: span 2;
 }
 
-.stock-stat-cell--wide strong {
-  font-size: var(--transactions-size-text-display-sm);
+.stock-stat-cell.stock-stat-cell--wide strong {
+  font-size: var(--transactions-size-text-display-xl);
   line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-amount-xl);
 }
 
 .stock-stat-cell {

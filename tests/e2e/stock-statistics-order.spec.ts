@@ -87,6 +87,29 @@ test('股票统计明细：同日建仓的两轮按清仓先后排列', async ()
     await page.getByTestId('nav-stock').click()
     await page.getByTestId('stock-tab-statistics').click()
     await expect(page.getByTestId('statistics-strategy')).toBeVisible()
+    await expect(page.getByTestId('stock-statistics-summary')).toBeVisible()
+    // 已实现盈亏：标题与其它标题同字号，数值明显放大
+    const typeSizes = await page.evaluate(() => {
+      const summary = document.querySelector('[data-testid="stock-statistics-summary"]')!
+      const label = summary.querySelector('.stock-stat-cell--wide .stock-stat-label')!
+      const others = [...summary.querySelectorAll('.stock-stat-label')].filter(
+        (element) => element !== label,
+      )
+      const value = summary.querySelector('.stock-stat-cell--wide strong')!
+      return [
+        getComputedStyle(label).fontSize,
+        getComputedStyle(others[0]).fontSize,
+        getComputedStyle(value).fontSize,
+      ]
+    })
+    expect(typeSizes[0]).toBe(typeSizes[1])
+    expect(Number.parseFloat(typeSizes[2])).toBeGreaterThan(
+      Number.parseFloat(typeSizes[1]) * 1.5,
+    )
+    await page.waitForTimeout(400)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-statistics-summary.png'),
+    })
 
     // 先在「统计」里切到分组口径：明细是逐笔结算，仍应列出 3 行且收起口径下拉。
     await page.getByTestId('statistics-strategy').click()

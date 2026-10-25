@@ -451,7 +451,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
             {latest ? (
               <div className="stock-stat-grid" data-testid="stock-statistics-summary">
                 <div className="stock-stat-cell stock-stat-cell--wide">
-                  <span className="stock-label">已实现盈亏</span>
+                  <StatLabel text="已实现盈亏" />
                   <strong className={stockPnlClass(latest.totalPnl)}>
                     {money(latest.totalPnl)}
                   </strong>
