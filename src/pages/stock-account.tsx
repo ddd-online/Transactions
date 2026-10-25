@@ -168,7 +168,7 @@ export function StockAccountPanel({
                   {
                     title: '备注',
                     dataIndex: 'remark',
-                    align: 'right',
+                    align: 'center',
                     ellipsis: true,
                     width: '42%',
                   },
