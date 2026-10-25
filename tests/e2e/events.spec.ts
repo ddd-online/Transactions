@@ -109,6 +109,13 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     })
     // 原图直接上传：不再经过裁剪弹窗
     await expect(page.getByTestId('event-image')).toHaveCount(1)
+    // 第二张：用来验证翻页时虚化底不跟着换
+    await page.getByTestId('event-image-input').setInputFiles({
+      name: 'demo2.png',
+      mimeType: 'image/png',
+      buffer: PNG_1X1,
+    })
+    await expect(page.getByTestId('event-image')).toHaveCount(2)
 
     // 主图按 contain 完整显示，两侧留白由同一张图放大虚化作底
     const galleryBlur = page.locator('.key-event-gallery__blur')
@@ -141,6 +148,16 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     expect(bleed.top).toBeLessThanOrEqual(-100)
     expect(bleed.right).toBeLessThanOrEqual(-100)
     expect(bleed.bottom).toBeLessThanOrEqual(-100)
+
+    // 翻到下一张：前景换图，虚化底保持打开预览时那一张（不重新加载、不闪空）
+    const backdropBefore = await previewBlur.getAttribute('style')
+    const previewImg = page.locator('.ant-image-preview-img')
+    const srcBefore = await previewImg.getAttribute('src')
+    await page.locator('.ant-image-preview-switch-next').click()
+    await expect.poll(async () => previewImg.getAttribute('src')).not.toBe(srcBefore)
+    await expect(previewBlur).toBeVisible()
+    await expect(previewBlur).toHaveAttribute('style', backdropBefore ?? '')
+
     await page.waitForTimeout(200)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'events-preview.png'),
@@ -152,9 +169,9 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     const event = database
       .prepare('SELECT title, content, color FROM key_event')
       .get() as { title: string; content: string; color: string }
-    const image = database
-      .prepare('SELECT file_path, thumb_path FROM key_event_image')
-      .get() as { file_path: string; thumb_path: string }
+    const images = database
+      .prepare('SELECT file_path, thumb_path FROM key_event_image ORDER BY sort_order')
+      .all() as Array<{ file_path: string; thumb_path: string }>
     database.close()
 
     expect(event).toEqual({
@@ -162,10 +179,13 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
       content: '抽奖与聚餐\n**不是粗体**',
       color: '#D9705A',
     })
-    expect(image.file_path).toMatch(new RegExp(`^key_events/${eventDate}/.+\\.(png|jpg)$`))
-    expect(image.thumb_path).toMatch(new RegExp(`^key_events/${eventDate}/thumb_.+\\.jpg$`))
-    expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(true)
-    expect(existsSync(join(workspace, 'data', 'assets', image.thumb_path))).toBe(true)
+    expect(images).toHaveLength(2)
+    for (const image of images) {
+      expect(image.file_path).toMatch(new RegExp(`^key_events/${eventDate}/.+\\.(png|jpg)$`))
+      expect(image.thumb_path).toMatch(new RegExp(`^key_events/${eventDate}/thumb_.+\\.jpg$`))
+      expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(true)
+      expect(existsSync(join(workspace, 'data', 'assets', image.thumb_path))).toBe(true)
+    }
 
     await page.getByTestId('event-date-item').getByTestId('event-delete').click()
     await expect(page.getByText('删除事件「年会」？')).toBeVisible()
@@ -181,7 +201,10 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
       .get() as { events: number; images: number }
     after.close()
     expect(counts).toEqual({ events: 0, images: 0 })
-    expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(false)
+    for (const image of images) {
+      expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(false)
+      expect(existsSync(join(workspace, 'data', 'assets', image.thumb_path))).toBe(false)
+    }
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

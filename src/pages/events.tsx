@@ -90,20 +90,6 @@ function summaryOf(content: string): string {
   return content.replace(/\s+/g, ' ').trim().slice(0, 30)
 }
 
-/** 大图预览的底衬：把当前这张图放大铺满、虚化，照片比例和屏幕不一致时两侧不再是死黑。 */
-function previewImageRender(node: JSX.Element, info: { image: { url: string } }): JSX.Element {
-  return (
-    <>
-      <div
-        className="key-event-preview-blur"
-        aria-hidden="true"
-        style={{ backgroundImage: `url("${info.image.url}")` }}
-      />
-      {node}
-    </>
-  )
-}
-
 function signedAmount(row: TransactionRecordDto): string {
   const sign = row.transactionType === 'expense' ? '-' : row.transactionType === 'income' ? '+' : ''
   return `${sign}¥${centsToYuan(row.price)}`
@@ -127,6 +113,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draftContent, setDraftContent] = useState('')
   const [selectedImageId, setSelectedImageId] = useState('')
+  // 预览打开时锁定的底衬图：换图只换前景，虚化底不再跟着加载/闪烁。
+  const [previewBackdrop, setPreviewBackdrop] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -478,6 +466,21 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const mainImage = images.find((image) => image.id === selectedImageId) ?? images[0]
   const previewItems = images.map((image) => assetUrl(image.filePath))
 
+  // 底衬固定为"打开预览时那张图"：翻页只换前景，避免新背景图加载期间虚化层闪空。
+  const renderPreviewImage = useCallback(
+    (node: JSX.Element, info: { image: { url: string } }): JSX.Element => (
+      <>
+        <div
+          className="key-event-preview-blur"
+          aria-hidden="true"
+          style={{ backgroundImage: `url("${previewBackdrop || info.image.url}")` }}
+        />
+        {node}
+      </>
+    ),
+    [previewBackdrop],
+  )
+
   return (
     <PageLayout
       contentClassName="key-event-page"
@@ -612,7 +615,13 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                           />
                           <AntImage.PreviewGroup
                             items={previewItems}
-                            preview={{ imageRender: previewImageRender }}
+                            preview={{
+                              imageRender: renderPreviewImage,
+                              // 只在打开时锁定底衬；关闭时不改，淡出过程里背景也不会跳。
+                              onOpenChange: (open, info) => {
+                                if (open) setPreviewBackdrop(previewItems[info.current] ?? '')
+                              },
+                            }}
                           >
                             <AntImage
                               className="key-event-gallery__img"
