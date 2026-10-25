@@ -76,6 +76,22 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await expect(page.getByTestId('todo-history-item')).toContainText('工作')
     await expect(page.getByTestId('todo-item')).toHaveCount(0)
 
+    // 历史里的进度数字可点开查看记录（只读弹层，不提供勾选/删除）
+    await page.getByTestId('todo-history-progress').click()
+    const progressModal = page.getByTestId('todo-history-progress-modal')
+    await expect(progressModal).toBeVisible()
+    await expect(progressModal).toContainText('工作')
+    await expect(progressModal).toContainText('写周报')
+    await expect(page.getByTestId('todo-history-progress-row')).toHaveCount(1)
+    await expect(page.getByTestId('todo-history-progress-row')).toContainText('完成一半')
+    await expect(page.getByTestId('todo-history-progress-row')).toHaveClass(/is-done/)
+    await page.waitForTimeout(600)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-progress.png'),
+    })
+    await page.keyboard.press('Escape')
+    await expect(progressModal).toBeHidden()
+
     // 历史里的删除也是文本按钮，点开二次确认
     await page.getByTestId('todo-history-delete').click()
     await expect(page.getByText('删除事项「写周报」？')).toBeVisible()

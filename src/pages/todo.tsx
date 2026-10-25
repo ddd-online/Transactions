@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
+import type {
+  TodoCardDto,
+  TodoHistoryDto,
+  TodoItemDto,
+  TodoProgressDto,
+} from '../../shared/types/todo'
 import { Input, Modal, Popconfirm } from 'antd'
 
 import { Button } from '../components/button'
@@ -36,6 +41,10 @@ function formatMoment(seconds: number, short = false): string {
   return short ? `${day} ${time}` : `${date.getFullYear()}-${day} ${time}`
 }
 
+function doneCountOf(progress: TodoProgressDto[]): number {
+  return progress.filter((entry) => entry.done).length
+}
+
 export interface TodoPageProps {
   ledgerId: string
 }
@@ -46,6 +55,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [todoMode, setTodoMode] = useState<'cards' | 'history'>('cards')
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
+  const [historyProgress, setHistoryProgress] = useState<TodoHistoryDto | null>(null)
   const [cardOpen, setCardOpen] = useState(false)
   const [cardDraft, setCardDraft] = useState('')
   const [cardError, setCardError] = useState('')
@@ -285,7 +295,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
   const renderItem = (item: TodoItemDto): JSX.Element => {
     const open = Boolean(expandedItems[item.id])
-    const doneCount = item.progress.filter((progress) => progress.done).length
+    const doneCount = doneCountOf(item.progress)
     return (
       <li key={item.id} className={`todo-item${open ? ' is-open' : ''}`} data-testid="todo-item">
         <div className="todo-item__row">
@@ -645,9 +655,21 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                       </td>
                       <td className="todo-table__title">{item.title}</td>
                       <td className="is-center todo-table__progress">
-                        {item.progress.length > 0
-                          ? `${item.progress.filter((progress) => progress.done).length}/${item.progress.length}`
-                          : '—'}
+                        {item.progress.length > 0 ? (
+                          <Button
+                            variant="text"
+                            size="sm"
+                            className="todo-history-progress-trigger"
+                            testId="todo-history-progress"
+                            aria-label={`查看「${item.title}」的进度记录`}
+                            title="查看进度记录"
+                            onClick={() => setHistoryProgress(item)}
+                          >
+                            {`${doneCountOf(item.progress)}/${item.progress.length}`}
+                          </Button>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td className="is-center">
                         <div className="todo-table__actions">
@@ -731,6 +753,49 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={historyProgress !== null}
+        title="进度记录"
+        width={520}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={() => setHistoryProgress(null)}
+      >
+        {historyProgress ? (
+          <div className="todo-history-progress" data-testid="todo-history-progress-modal">
+            <p className="todo-history-progress__meta">
+              <span>{historyProgress.cardTitle}</span>
+              <span aria-hidden="true">·</span>
+              <span>{historyProgress.title}</span>
+              <span aria-hidden="true">·</span>
+              <span>完成于 {formatMoment(historyProgress.completedAt)}</span>
+            </p>
+            {historyProgress.progress.length > 0 ? (
+              <ul className="todo-history-progress__list">
+                {historyProgress.progress.map((progress) => (
+                  <li
+                    key={progress.id}
+                    className={`todo-history-progress__row${progress.done ? ' is-done' : ''}`}
+                    data-testid="todo-history-progress-row"
+                  >
+                    <span className="todo-history-progress__check" aria-hidden="true">
+                      {progress.done ? <Icon name="Check" size={10} /> : null}
+                    </span>
+                    <span className="todo-history-progress__text">{progress.content}</span>
+                    <span className="todo-history-progress__time">
+                      {formatMoment(progress.createdAt, true)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="todo-history-progress__empty">还没有进度记录</p>
+            )}
+          </div>
+        ) : null}
       </Modal>
     </PageLayout>
   )
