@@ -3032,6 +3032,128 @@
   gap: var(--transactions-space-sm);
 }
 
+.stock-round__review-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-2xs);
+}
+
+/* ---------------- 心得 ---------------- */
+
+.stock-lessons-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-lessons-view > .tr-empty {
+  flex: 1;
+}
+
+.stock-lessons-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 心得只有两列，不需要其它台账表的 880px 最小宽度；窄窗让正文换行、操作留在屏内。 */
+.stock-lessons-table {
+  min-width: 0;
+}
+
+.stock-lessons-skeleton {
+  padding: var(--transactions-space-lg);
+}
+
+.stock-lesson__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  min-width: 0;
+  padding: 2px 0;
+}
+
+/* 一句话最多两行：句子的分量来自留白与字号，不靠加粗或引用块。 */
+.stock-lesson__text {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-snug);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.stock-lesson__source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--transactions-space-sm);
+  margin: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.stock-lesson__stock {
+  color: var(--transactions-color-text-major);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.stock-lesson__code {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-lesson__money {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.stock-lesson__missing {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-lesson__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-2xs);
+}
+
+.stock-lesson__action {
+  width: 32px;
+  height: 32px;
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-lesson__action:hover:not(:disabled) {
+  color: var(--transactions-color-primary);
+}
+
+.stock-lesson__action:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.stock-lesson-dialog__hint {
+  margin: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+}
+
+.stock-lesson-dialog__hint.is-warning {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-modal-form .ant-select {
+  width: 100%;
+}
+
 .stock-round__review-text {
   margin: 0;
   color: var(--transactions-color-text-secondary);
@@ -3525,5 +3647,49 @@
 @media (prefers-reduced-motion: reduce) {
   .stock-table-skeleton span {
     animation: none;
+  }
+}
+
+
+/* 窄窗：行改成块，让整句读完整；操作移到正文下方，不再和正文抢宽度。 */
+@media (max-width: 820px) {
+  .stock-lesson__dates,
+  .stock-lesson__code {
+    display: none;
+  }
+
+  .stock-lessons-table .ant-table-thead {
+    display: none;
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row {
+    display: block;
+    border-bottom: 1px solid var(--transactions-color-divider);
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
+    display: block;
+    width: 100%;
+    padding: var(--transactions-space-sm) var(--transactions-space-md);
+    border-bottom: 0;
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row > td.ant-table-cell:first-child {
+    padding-bottom: var(--transactions-space-2xs);
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row > td.ant-table-cell:last-child {
+    padding-top: 0;
+    padding-bottom: var(--transactions-space-sm);
+  }
+
+  .stock-lesson__text {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+
+  .stock-lesson__actions {
+    justify-content: flex-end;
   }
 }

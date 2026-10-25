@@ -27,6 +27,7 @@ import type {
   StockTradeDto,
 } from './types/stock-history'
 import type { StockStatisticsDto } from './types/stock-statistics'
+import type { StockLessonDto, StockRoundOptionDto } from './types/stock-lesson'
 import type { TransactionTemplateDto } from './types/template'
 import type { FileSaveResponse, ProxyResolveResponse, ProxyTestResponse } from './types/shell'
 import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
@@ -348,6 +349,20 @@ export const commandSchemas = {
   stock_history: z.object({ ledger_id: z.string() }),
   stock_history_detail: z.object({ ledger_id: z.string(), stock_code: z.string() }),
   stock_history_summary: z.object({ ledger_id: z.string() }),
+  stock_lesson_list: z.object({ ledger_id: z.string() }),
+  stock_round_options: z.object({ ledger_id: z.string() }),
+  stock_lesson_create: z.object({
+    ledger_id: z.string(),
+    text: z.string().default(''),
+    round_id: z.string().nullable().optional(),
+  }),
+  stock_lesson_update: z.object({
+    ledger_id: z.string(),
+    id: z.string(),
+    text: z.string().default(''),
+    round_id: z.string().nullable().optional(),
+  }),
+  stock_lesson_delete: z.object({ ledger_id: z.string(), id: z.string() }),
   stock_statistics: z.object({
     ledger_id: z.string(),
     start_month: z.string().default(''),
@@ -557,6 +572,11 @@ export interface CommandResponses {
   stock_history: StockTradeHistoryDto[]
   stock_history_detail: StockTradeHistoryDetailDto
   stock_history_summary: StockTradeHistorySummaryDto
+  stock_lesson_list: StockLessonDto[]
+  stock_round_options: StockRoundOptionDto[]
+  stock_lesson_create: StockLessonDto
+  stock_lesson_update: StockLessonDto
+  stock_lesson_delete: null
   stock_statistics: StockStatisticsDto
   stock_trade_create: StockTradeDto[]
   stock_reset: boolean

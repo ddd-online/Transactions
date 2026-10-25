@@ -1,6 +1,7 @@
 import type { ComponentType, CSSProperties, JSX } from 'react'
 import {
   AimOutlined,
+  ArrowRightOutlined,
   ArrowUpOutlined,
   BarChartOutlined,
   BookOutlined,
@@ -82,6 +83,7 @@ export type IconName =
   | 'Loading'
   | 'Left'
   | 'Right'
+  | 'ArrowRight'
   | 'Calendar'
   | 'ClockCircle'
   | 'Check'
@@ -145,6 +147,7 @@ const ICONS: Record<IconName, IconComponent> = {
   Loading: LoadingOutlined,
   Left: LeftOutlined,
   Right: RightOutlined,
+  ArrowRight: ArrowRightOutlined,
   Calendar: CalendarOutlined,
   ClockCircle: ClockCircleOutlined,
   Check: CheckOutlined,

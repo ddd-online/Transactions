@@ -90,3 +90,6 @@ export function todoLevelLabel(value: number): string {
 export const TODO_CARD_TITLE_MAX = 200
 export const TODO_ITEM_TITLE_MAX = 500
 export const TODO_PROGRESS_MAX = 2000
+
+/** 股票心得是一句话：单行输入，最多 80 字。 */
+export const STOCK_LESSON_TEXT_MAX = 80

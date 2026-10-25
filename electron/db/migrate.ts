@@ -23,6 +23,31 @@ export const MIGRATIONS: readonly Migration[] = [
     name: 'stock_review_daily_template',
     sql: "ALTER TABLE stock_review_setting ADD COLUMN daily_template TEXT NOT NULL DEFAULT '';",
   },
+  {
+    version: 3,
+    name: 'stock_lesson',
+    sql: `
+      CREATE TABLE IF NOT EXISTS stock_lesson (
+        id TEXT PRIMARY KEY,
+        ledger_id TEXT NOT NULL DEFAULT '',
+        text TEXT NOT NULL,
+        round_id TEXT,
+        stock_code TEXT NOT NULL DEFAULT '',
+        stock_name TEXT NOT NULL DEFAULT '',
+        round_no INTEGER NOT NULL DEFAULT 0,
+        opened_at INTEGER NOT NULL DEFAULT 0,
+        closed_at INTEGER NOT NULL DEFAULT 0,
+        pnl_cents INTEGER NOT NULL DEFAULT 0,
+        pnl_rate REAL NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_stock_lesson_ledger
+        ON stock_lesson(ledger_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_stock_lesson_round
+        ON stock_lesson(round_id);
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

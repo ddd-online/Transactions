@@ -61,6 +61,7 @@ describe('schema v1', () => {
       'stock_operation',
       'stock_review_setting',
       'stock_day_review',
+      'stock_lesson',
       'todo_card',
       'todo_item',
       'todo_progress',
@@ -94,6 +95,11 @@ describe('schema v1', () => {
     expect(columns('stock_fund_record')).toEqual(
       expect.arrayContaining(['amount_change_cents', 'cash_balance_cents', 'net_pnl_cents']),
     )
+
+    const lesson = columns('stock_lesson')
+    expect(lesson).toEqual(
+      expect.arrayContaining(['round_id', 'stock_code', 'round_no', 'pnl_cents', 'created_at']),
+    )
   })
 
   it('creates the uniqueness / lookup indexes', () => {
@@ -108,6 +114,7 @@ describe('schema v1', () => {
       'idx_tr_ledger_at',
       'idx_stock_position_ledger_code',
       'idx_stock_trade_round',
+      'idx_stock_lesson_ledger',
       'idx_todo_item_card',
       'idx_todo_progress_item',
     ]) {
@@ -120,7 +127,7 @@ describe('schema v1', () => {
     const row = workspace.db
       .prepare('SELECT value FROM app_meta WHERE key = ?')
       .get('schema_version') as { value: string }
-    expect(row.value).toBe('2')
+    expect(row.value).toBe('3')
   })
 
   it('allows inserting and reading a ledger with integer cents', () => {

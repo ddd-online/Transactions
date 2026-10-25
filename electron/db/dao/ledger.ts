@@ -18,6 +18,7 @@ export const LEDGER_CASCADE = [
   'DELETE FROM stock_fee_setting WHERE ledger_id = ?',
   'DELETE FROM stock_trade_tag_setting WHERE ledger_id = ?',
   'DELETE FROM stock_review_setting WHERE ledger_id = ?',
+  'DELETE FROM stock_lesson WHERE ledger_id = ?',
   'DELETE FROM stock_trade WHERE ledger_id = ?',
   'DELETE FROM stock_trade_round WHERE ledger_id = ?',
   'DELETE FROM stock_day_review WHERE ledger_id = ?',

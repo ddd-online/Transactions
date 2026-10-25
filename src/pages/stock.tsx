@@ -1,9 +1,10 @@
-import { useState, type JSX } from 'react'
+import { useEffect, useState, type JSX } from 'react'
 
 import { Input, Modal } from 'antd'
 
 import { yuanToCents } from '../../shared/domain/money'
 import type { StockTradeHistorySummaryDto } from '../../shared/types/stock-history'
+import type { StockLessonDto } from '../../shared/types/stock-lesson'
 import { Button } from '../components/button'
 import { Icon, type IconName } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
@@ -11,6 +12,8 @@ import { notify } from '../components/toast'
 import { StockAccountPanel } from './stock-account'
 import { stockMoney, stockPercent, stockPnlClass } from './stock-format'
 import { StockHistoryPanel } from './stock-history'
+import { StockLessonDialog } from './stock-lesson-dialog'
+import { StockLessonsPanel } from './stock-lessons'
 import { StockPositionsPanel } from './stock-positions'
 import { StockSettingsPanel } from './stock-settings'
 import { StockStatisticsPanel } from './stock-statistics'
@@ -20,13 +23,14 @@ export interface StockPageProps {
   onLedgerChanged?: () => void
 }
 
-type StockTab = 'account' | 'positions' | 'history' | 'statistics' | 'settings'
+type StockTab = 'account' | 'positions' | 'history' | 'lessons' | 'statistics' | 'settings'
 type AmountAction = 'principal' | 'withdraw' | 'interest'
 
 const TABS: Array<[StockTab, string, IconName]> = [
   ['account', '账户', 'User'],
   ['positions', '持仓', 'CreditCard'],
   ['history', '记录', 'ClockCircle'],
+  ['lessons', '心得', 'Read'],
   ['statistics', '统计', 'BarChart'],
   ['settings', '设置', 'Setting'],
 ]
@@ -46,6 +50,21 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [accountError, setAccountError] = useState('')
   const [accountRefresh, setAccountRefresh] = useState(0)
   const [historySummary, setHistorySummary] = useState<StockTradeHistorySummaryDto | null>(null)
+  const [lessonDialog, setLessonDialog] = useState<{
+    lesson: StockLessonDto | null
+    roundId: string
+  } | null>(null)
+  const [lessonRefresh, setLessonRefresh] = useState(0)
+  const [historyJump, setHistoryJump] = useState<{
+    code: string
+    roundId: string
+    token: number
+  } | null>(null)
+
+  // 跳转只用一次：离开记录页后清掉，免得下次再进记录又被带回旧轮次。
+  useEffect(() => {
+    if (tab !== 'history') setHistoryJump(null)
+  }, [tab])
 
   const closeAccountAction = (): void => {
     setAccountAction(null)
@@ -158,6 +177,17 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
               追加本金
             </Button>
           </div>
+        ) : tab === 'lessons' ? (
+          <div className="stock-toolbar-actions">
+            <Button
+              variant="primary"
+              testId="stock-lesson-create"
+              icon={<Icon name="Plus" size={14} />}
+              onClick={() => setLessonDialog({ lesson: null, roundId: '' })}
+            >
+              新建心得
+            </Button>
+          </div>
         ) : undefined
       }
       rail={
@@ -185,12 +215,41 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
       ) : null}
       {tab === 'positions' ? <StockPositionsPanel ledgerId={ledgerId} /> : null}
       {tab === 'history' ? (
-        <StockHistoryPanel ledgerId={ledgerId} onSummaryChange={setHistorySummary} />
+        <StockHistoryPanel
+          ledgerId={ledgerId}
+          onSummaryChange={setHistorySummary}
+          jumpTarget={historyJump}
+          onCreateLesson={(roundId) => setLessonDialog({ lesson: null, roundId })}
+        />
+      ) : null}
+      {tab === 'lessons' ? (
+        <StockLessonsPanel
+          ledgerId={ledgerId}
+          refreshToken={lessonRefresh}
+          onEdit={(lesson) => setLessonDialog({ lesson, roundId: '' })}
+          onJump={(target) => {
+            setHistoryJump({ ...target, token: Date.now() })
+            setTab('history')
+          }}
+        />
       ) : null}
       {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
       {tab === 'settings' ? (
         <StockSettingsPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
       ) : null}
+
+      <StockLessonDialog
+        open={lessonDialog !== null}
+        ledgerId={ledgerId}
+        lesson={lessonDialog?.lesson ?? null}
+        initialRoundId={lessonDialog?.roundId ?? ''}
+        onCancel={() => setLessonDialog(null)}
+        onSaved={() => {
+          setLessonDialog(null)
+          setLessonRefresh((current) => current + 1)
+          notify('心得已保存')
+        }}
+      />
 
       <Modal
         open={accountAction !== null}

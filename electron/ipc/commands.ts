@@ -35,6 +35,13 @@ import {
   getTradeHistorySummary,
   listTradeHistories,
 } from '../services/stock-history'
+import {
+  createLesson,
+  listLessons,
+  listRoundOptions,
+  removeLesson,
+  updateLesson,
+} from '../services/stock-lessons'
 import { getStatisticsFor } from '../services/stock-statistics'
 import { createTradeOrderWithRoundFee } from '../services/stock-trade-write'
 import { archiveStockData, resetStockData } from '../services/stock-lifecycle'
@@ -1036,6 +1043,55 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return getTradeHistorySummary(workspaceDb(), ledgerId)
+    },
+
+    stock_lesson_list(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return listLessons(workspaceDb(), ledgerId)
+    },
+
+    stock_round_options(request) {
+      const ledgerId = String(asObject(request).ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return listRoundOptions(workspaceDb(), ledgerId)
+    },
+
+    stock_lesson_create(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return createLesson(
+        workspaceDb(),
+        ledgerId,
+        String(raw.text ?? ''),
+        String(raw.round_id ?? '') || null,
+      )
+    },
+
+    stock_lesson_update(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const id = String(raw.id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      if (!id) throw new AppError('id is required', { status: 400 })
+      return updateLesson(
+        workspaceDb(),
+        ledgerId,
+        id,
+        String(raw.text ?? ''),
+        String(raw.round_id ?? '') || null,
+      )
+    },
+
+    stock_lesson_delete(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      const id = String(raw.id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      if (!id) throw new AppError('id is required', { status: 400 })
+      removeLesson(workspaceDb(), ledgerId, id)
+      return null
     },
 
     stock_statistics(request) {

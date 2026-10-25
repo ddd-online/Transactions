@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 
 import { Input, Select, Table } from 'antd'
 import type { HTMLAttributes } from 'react'
@@ -30,6 +30,10 @@ import {
 export interface StockHistoryPanelProps {
   ledgerId: string
   onSummaryChange?: (summary: StockTradeHistorySummaryDto | null) => void
+  /** 从心得跳过来时，选中股票并展开指定的一轮 */
+  jumpTarget?: { code: string; roundId: string; token: number } | null
+  /** 从某一轮直接记一条心得 */
+  onCreateLesson?: (roundId: string) => void
 }
 
 function money(cents: number): string {
@@ -39,9 +43,13 @@ function money(cents: number): string {
 export function StockHistoryPanel({
   ledgerId,
   onSummaryChange,
+  jumpTarget,
+  onCreateLesson,
 }: StockHistoryPanelProps): JSX.Element {
   const [rows, setRows] = useState<StockTradeHistoryDto[]>([])
   const [selectedCode, setSelectedCode] = useState('')
+  const [arrivedRoundId, setArrivedRoundId] = useState('')
+  const consumedJump = useRef(0)
   const [detail, setDetail] = useState<StockTradeHistoryDetailDto | null>(null)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [roundTags, setRoundTags] = useState<Record<string, string>>({})
@@ -76,7 +84,7 @@ export function StockHistoryPanel({
   }, [load])
 
   const openDetail = useCallback(
-    async (code: string): Promise<void> => {
+    async (code: string, focusRoundId = ''): Promise<void> => {
       if (!code) return
       setError('')
       setSelectedCode(code)
@@ -91,16 +99,23 @@ export function StockHistoryPanel({
         setDetail(next)
         setRoundTemplate(reviewSettings.template)
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
-        // 选中股票时展开最新一轮（轮次最大），历史从最近一笔开始读。
+        // 从心得跳转时展开指定的那一轮；否则展开最新一轮（轮次最大）。
+        const focus = focusRoundId
+          ? next.rounds.find((round) => round.id === focusRoundId)
+          : undefined
         const latestRoundNo = next.rounds.reduce(
           (latest, round) => Math.max(latest, round.roundNo),
           -Infinity,
         )
         setExpanded(
           Object.fromEntries(
-            next.rounds.map((round) => [round.id, round.roundNo === latestRoundNo]),
+            next.rounds.map((round) => [
+              round.id,
+              focus ? round.id === focus.id : round.roundNo === latestRoundNo,
+            ]),
           ),
         )
+        setArrivedRoundId(focus?.id ?? '')
         setEdits(
           Object.fromEntries(
             next.rounds
@@ -120,10 +135,27 @@ export function StockHistoryPanel({
   )
 
   useEffect(() => {
-    if (!selectedCode && rows.length > 0) {
-      void openDetail(rows[0].stockCode)
+    if (rows.length === 0) return
+    if (jumpTarget && consumedJump.current !== jumpTarget.token) {
+      consumedJump.current = jumpTarget.token
+      void openDetail(jumpTarget.code, jumpTarget.roundId)
+      return
     }
-  }, [openDetail, rows, selectedCode])
+    if (!selectedCode) void openDetail(rows[0].stockCode)
+  }, [openDetail, rows, selectedCode, jumpTarget])
+
+  useEffect(() => {
+    if (!arrivedRoundId || !detail) return
+    const frame = window.requestAnimationFrame(() => {
+      const node = document.querySelector(`[data-round-id="${arrivedRoundId}"]`)
+      node?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    })
+    const timer = window.setTimeout(() => setArrivedRoundId(''), 1600)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+    }
+  }, [arrivedRoundId, detail])
 
   const saveRoundReview = useCallback(
     async (roundId: string, review: string): Promise<void> => {
@@ -278,6 +310,7 @@ export function StockHistoryPanel({
                     key={round.id}
                     round={round}
                     expanded={expanded[round.id] ?? false}
+                    arrived={arrivedRoundId === round.id}
                     review={round.review}
                     template={roundTemplate}
                     tag={roundTags[round.id] ?? round.tag}
@@ -287,6 +320,7 @@ export function StockHistoryPanel({
                       setExpanded((current) => ({ ...current, [round.id]: !current[round.id] }))
                     }
                     onSaveReview={(review) => void saveRoundReview(round.id, review)}
+                    onCreateLesson={onCreateLesson}
                     onTag={(value) => void saveRoundTag(round.id, value)}
                     onEdit={(trade, field, value) =>
                       setEdits((current) => ({
@@ -329,6 +363,7 @@ export function StockHistoryPanel({
 interface RoundBlockProps {
   round: StockTradeRoundDto
   expanded: boolean
+  arrived: boolean
   review: string
   template: string
   tag: string
@@ -336,6 +371,7 @@ interface RoundBlockProps {
   edits: Record<string, { price: string; lots: string }>
   onToggle: () => void
   onSaveReview: (review: string) => void
+  onCreateLesson?: (roundId: string) => void
   onTag: (value: string) => void
   onEdit: (trade: StockTradeDto, field: 'price' | 'lots', value: string) => void
   onSaveTrade: (id: string) => void
@@ -345,6 +381,7 @@ interface RoundBlockProps {
 function RoundBlock({
   round,
   expanded,
+  arrived,
   review,
   template,
   tag,
@@ -352,6 +389,7 @@ function RoundBlock({
   edits,
   onToggle,
   onSaveReview,
+  onCreateLesson,
   onTag,
   onEdit,
   onSaveTrade,
@@ -361,7 +399,11 @@ function RoundBlock({
   const [editingReview, setEditingReview] = useState(false)
   const [reviewDraft, setReviewDraft] = useState(review)
   return (
-    <article className="stock-round" data-testid="stock-round">
+    <article
+      className={`stock-round${arrived ? ' is-arrived' : ''}`}
+      data-testid="stock-round"
+      data-round-id={round.id}
+    >
       <button type="button" className="stock-round__head" onClick={onToggle}>
         <Icon name={expanded ? 'Down' : 'CaretRight'} size={12} />
         <span>
@@ -501,22 +543,34 @@ function RoundBlock({
           <div className="stock-round__review">
             <div className="stock-round__review-head">
               <span className="stock-section-title">本轮复盘</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                testId="round-review-open"
-                onClick={() => {
-                  if (editingReview) {
-                    setEditingReview(false)
-                    return
-                  }
-                  // 空复盘首次编辑用本轮模板起头；已写过的内容不被模板覆盖
-                  setReviewDraft(review.trim() ? review : template)
-                  setEditingReview(true)
-                }}
-              >
+              <div className="stock-round__review-actions">
+                {onCreateLesson ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    testId="round-lesson-create"
+                    onClick={() => onCreateLesson(round.id)}
+                  >
+                    记心得
+                  </Button>
+                ) : null}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  testId="round-review-open"
+                  onClick={() => {
+                    if (editingReview) {
+                      setEditingReview(false)
+                      return
+                    }
+                    // 空复盘首次编辑用本轮模板起头；已写过的内容不被模板覆盖
+                    setReviewDraft(review.trim() ? review : template)
+                    setEditingReview(true)
+                  }}
+                >
                 编辑
               </Button>
+              </div>
             </div>
             {editingReview ? (
               <div className="stock-review-box">

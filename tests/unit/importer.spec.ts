@@ -114,7 +114,7 @@ describe('source import', () => {
     const imported = workspace.db
       .prepare("SELECT value FROM app_meta WHERE key = 'schema_version'")
       .get() as { value: string }
-    expect(imported.value).toBe('2')
+    expect(imported.value).toBe('3')
   })
 
   it('refuses a non-empty target directory', async () => {

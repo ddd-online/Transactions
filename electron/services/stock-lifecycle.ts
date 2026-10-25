@@ -14,6 +14,7 @@ const STOCK_TABLES = [
   'stock_fee_setting',
   'stock_trade_tag_setting',
   'stock_review_setting',
+  'stock_lesson',
   'stock_trade',
   'stock_trade_round',
   'stock_trade_history',
@@ -26,6 +27,7 @@ const STOCK_TABLES = [
 /** 归档时改挂到新账本的数据表（配置表留在原账本）。 */
 const STOCK_DATA_TABLES = [
   'stock_fund_record',
+  'stock_lesson',
   'stock_trade',
   'stock_trade_round',
   'stock_trade_history',

@@ -65,7 +65,7 @@ test('应用：窗口 / 工作空间 / 配置闭环', async () => {
     const meta = database.prepare('SELECT value FROM app_meta WHERE key = ?').get('schema_version') as
       | { value: string }
       | undefined
-    expect(meta?.value).toBe('2')
+    expect(meta?.value).toBe('3')
     database.close()
 
     const persisted = JSON.parse(readFileSync(configPath, 'utf8')) as { workspaceDir?: string }
