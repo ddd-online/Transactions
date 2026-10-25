@@ -404,12 +404,15 @@ function RoundBlock({
       data-testid="stock-round"
       data-round-id={round.id}
     >
-      <div className="stock-round__head">
+      <div className="stock-round__head" onClick={onToggle}>
         <button
           type="button"
           className="stock-round__toggle"
           aria-expanded={expanded}
-          onClick={onToggle}
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggle()
+          }}
         >
           <Icon name={expanded ? 'Down' : 'CaretRight'} size={12} />
           <span>
@@ -421,21 +424,26 @@ function RoundBlock({
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
           {money(round.pnl)} · {stockPercent(round.pnlRate)}
         </span>
-        <Select
-          className="stock-round__tag"
-          data-testid="round-tag"
-          value={tag}
-          options={options.map((item) => ({ value: item, label: item }))}
-          onChange={onTag}
-          popupMatchSelectWidth={false}
-          size="small"
-        />
+        <span onClick={(event) => event.stopPropagation()}>
+          <Select
+            className="stock-round__tag"
+            data-testid="round-tag"
+            value={tag}
+            options={options.map((item) => ({ value: item, label: item }))}
+            onChange={onTag}
+            popupMatchSelectWidth={false}
+            size="small"
+          />
+        </span>
         {onCreateLesson ? (
           <Button
             variant="secondary"
             size="sm"
             testId="round-lesson-create"
-            onClick={() => onCreateLesson(round.id)}
+            onClick={(event) => {
+              event.stopPropagation()
+              onCreateLesson(round.id)
+            }}
           >
             记心得
           </Button>

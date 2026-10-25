@@ -2910,6 +2910,8 @@
 }
 
 .stock-round__body > .stock-trade-table {
+  width: calc(100% + var(--transactions-space-lg) + var(--transactions-space-lg));
+  max-width: none;
   margin-right: calc(-1 * var(--transactions-space-lg));
   margin-left: calc(-1 * var(--transactions-space-lg));
 }
@@ -2997,6 +2999,7 @@
   gap: var(--transactions-space-sm);
   width: 100%;
   padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  cursor: pointer;
 }
 
 .stock-round__toggle {
