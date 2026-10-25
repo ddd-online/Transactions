@@ -86,8 +86,15 @@ export function StockHistoryPanel({
         })
         setDetail(next)
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
+        // 选中股票时展开最新一轮（轮次最大），历史从最近一笔开始读。
+        const latestRoundNo = next.rounds.reduce(
+          (latest, round) => Math.max(latest, round.roundNo),
+          -Infinity,
+        )
         setExpanded(
-          Object.fromEntries(next.rounds.map((round, index) => [round.id, index === 0])),
+          Object.fromEntries(
+            next.rounds.map((round) => [round.id, round.roundNo === latestRoundNo]),
+          ),
         )
         setEdits(
           Object.fromEntries(
