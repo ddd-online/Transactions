@@ -9,6 +9,7 @@ import { type StockStatisticsPointDto } from '../../shared/domain/stock-dto'
 import {
   METRICS,
   Metric,
+  detailRowsNewestFirst,
   metricHasReference,
   metricHint,
   metricKey,
@@ -167,5 +168,32 @@ describe('point span labels', () => {
     expect(pointSpanLabel(grouped, 7, 1), '末组只剩一笔').toBe('第7笔')
     // 序号口径不符（span 比 sequence 还大）时不写出负数开头
     expect(pointSpanLabel(grouped, 1, 5)).toBe('第1笔')
+  })
+})
+
+describe('detail row order', () => {
+  // 明细表的派生列按 `sequence` 递进；行序也必须跟着序号倒序。
+  it('follows the statistics sequence, newest settlement first', () => {
+    // 同一天建仓、不同天清仓：雪人先清（sequence 2），亚邦后清（sequence 3）。
+    const rows = [
+      { sequence: 1, openedAt: 10, closedAt: 20 },
+      { sequence: 2, openedAt: 30, closedAt: 40 },
+      { sequence: 3, openedAt: 25, closedAt: 50 },
+    ]
+    const ordered = detailRowsNewestFirst(rows)
+    expect(ordered.map((row) => row.sequence)).toEqual([3, 2, 1])
+    expect(
+      rows.map((row) => row.sequence),
+      '入参不被就地排序',
+    ).toEqual([1, 2, 3])
+  })
+
+  // 后建仓先清仓时也以统计序号为准：不能退回按 openedAt 重排。
+  it('does not fall back to the open time', () => {
+    const rows = [
+      { sequence: 1, openedAt: 100, closedAt: 200 },
+      { sequence: 2, openedAt: 10, closedAt: 20 },
+    ]
+    expect(detailRowsNewestFirst(rows).map((row) => row.sequence)).toEqual([2, 1])
   })
 })

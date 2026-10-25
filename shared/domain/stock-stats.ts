@@ -189,3 +189,18 @@ export function pointSpanLabel(
   }
   return `第${sequence}笔`
 }
+
+/**
+ * 明细表的行序：按**统计序号倒序**，最近结算的一行在最上面。
+ *
+ * 表里的累计盈亏 / 胜负 / 胜率 / 平均盈亏 / 回撤都是沿 `sequence` 递进算出来的派生值，
+ * 行序必须跟着 `sequence` 走：倒序排列时"上一行的累计 − 下一行的累计 = 上一行这一笔的盈亏"，
+ * 样本数也逐行递减。按 `openedAt` 重排会打断这条链 —— 同一天建仓、不同天清仓的两轮，
+ * 后清仓的序号更大却可能因为建仓时间更早被排到下面，于是出现"上一行样本更少、
+ * 下一行样本更多"的错位。
+ */
+export function detailRowsNewestFirst<T extends { sequence: number }>(
+  points: readonly T[],
+): T[] {
+  return [...points].sort((left, right) => right.sequence - left.sequence)
+}

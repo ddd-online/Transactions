@@ -5,6 +5,7 @@ import { Input, Modal, Select, Table } from 'antd'
 import type { HTMLAttributes } from 'react'
 
 import { centsToYuan } from '../../shared/domain/money'
+import { detailRowsNewestFirst } from '../../shared/domain/stock-stats'
 import { formatTimestamp } from '../../shared/domain/time'
 import type {
   StockStatisticsDto,
@@ -345,7 +346,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
 
   const points = strategy === 'grouped' ? (data?.groups ?? []) : (data?.points ?? [])
   const latest = points[points.length - 1]
-  const detailPoints = [...points].sort((left, right) => right.openedAt - left.openedAt)
+  const detailPoints = detailRowsNewestFirst(points)
   const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
 
   return (
