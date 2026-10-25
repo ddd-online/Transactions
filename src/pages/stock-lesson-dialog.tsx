@@ -3,10 +3,9 @@ import { useEffect, useMemo, useState, type JSX } from 'react'
 import { Input, Modal, Select } from 'antd'
 
 import { STOCK_LESSON_TEXT_MAX } from '../../shared/domain/consts'
-import { formatTimestamp } from '../../shared/domain/time'
 import type { StockLessonDto, StockRoundOptionDto } from '../../shared/types/stock-lesson'
 import { Button } from '../components/button'
-import { stockErrorMessage, stockMoney, stockPercent } from './stock-format'
+import { stockErrorMessage } from './stock-format'
 
 export interface StockLessonDialogProps {
   open: boolean
@@ -24,8 +23,7 @@ function stockTitle(name: string, code: string): string {
 }
 
 function roundLabel(option: StockRoundOptionDto): string {
-  const range = `${formatTimestamp(option.openedAt, 'MM-DD')} → ${formatTimestamp(option.closedAt, 'MM-DD')}`
-  return `第 ${option.roundNo} 轮 · ${range} · ${stockMoney(option.pnl)} · ${stockPercent(option.pnlRate)}`
+  return `第 ${option.roundNo} 轮`
 }
 
 /** 新建 / 编辑股票心得：一句话 + 可选关联一轮已清仓交易。 */
@@ -160,48 +158,50 @@ export function StockLessonDialog({
             onPressEnter={() => void save()}
           />
         </label>
-        <label>
-          <span className="stock-label">股票</span>
-          <Select
-            data-testid="stock-lesson-stock"
-            allowClear={!sourceLocked}
-            showSearch
-            optionFilterProp="label"
-            disabled={stockDisabled}
-            loading={optionsLoading}
-            placeholder={
-              options.length === 0 && !optionsLoading ? '还没有已完成的交易轮次' : '先选择股票'
-            }
-            value={stockCode || undefined}
-            options={stockOptions}
-            onChange={(value) => {
-              setStockCode(value ?? '')
-              setRoundId('')
-              setSourceMissing(false)
-            }}
-          />
-        </label>
-        <label>
-          <span className="stock-label">交易轮次</span>
-          <Select
-            data-testid="stock-lesson-round"
-            allowClear={!sourceLocked}
-            showSearch
-            optionFilterProp="label"
-            disabled={roundDisabled}
-            loading={optionsLoading}
-            placeholder={stockCode ? '选择轮次' : '先选择股票'}
-            value={roundId || undefined}
-            options={stockRounds.map((option) => ({
-              value: option.roundId,
-              label: roundLabel(option),
-            }))}
-            onChange={(value) => {
-              setRoundId(value ?? '')
-              setSourceMissing(false)
-            }}
-          />
-        </label>
+        <div className="stock-modal-grid">
+          <label>
+            <span className="stock-label">股票</span>
+            <Select
+              data-testid="stock-lesson-stock"
+              allowClear={!sourceLocked}
+              showSearch
+              optionFilterProp="label"
+              disabled={stockDisabled}
+              loading={optionsLoading}
+              placeholder={
+                options.length === 0 && !optionsLoading ? '还没有已完成的交易轮次' : '先选择股票'
+              }
+              value={stockCode || undefined}
+              options={stockOptions}
+              onChange={(value) => {
+                setStockCode(value ?? '')
+                setRoundId('')
+                setSourceMissing(false)
+              }}
+            />
+          </label>
+          <label>
+            <span className="stock-label">交易轮次</span>
+            <Select
+              data-testid="stock-lesson-round"
+              allowClear={!sourceLocked}
+              showSearch
+              optionFilterProp="label"
+              disabled={roundDisabled}
+              loading={optionsLoading}
+              placeholder={stockCode ? '选择轮次' : '先选择股票'}
+              value={roundId || undefined}
+              options={stockRounds.map((option) => ({
+                value: option.roundId,
+                label: roundLabel(option),
+              }))}
+              onChange={(value) => {
+                setRoundId(value ?? '')
+                setSourceMissing(false)
+              }}
+            />
+          </label>
+        </div>
         {sourceMissing ? (
           <p className="stock-lesson-dialog__hint is-warning">
             原关联的交易轮次已被删除，保存将解除关联。

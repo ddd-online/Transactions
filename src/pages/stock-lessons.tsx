@@ -2,23 +2,18 @@ import { useCallback, useEffect, useState, type HTMLAttributes, type JSX } from 
 
 import { Popconfirm, Table } from 'antd'
 
-import { formatTimestamp } from '../../shared/domain/time'
 import type { StockLessonDto } from '../../shared/types/stock-lesson'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
-import { stockErrorMessage, stockMoney, stockPercent, stockPnlClass } from './stock-format'
+import { stockErrorMessage } from './stock-format'
 
 export interface StockLessonsPanelProps {
   ledgerId: string
   refreshToken: number
   onEdit: (lesson: StockLessonDto) => void
   onJump: (target: { code: string; roundId: string }) => void
-}
-
-function sourceDates(lesson: StockLessonDto): string {
-  return `${formatTimestamp(lesson.openedAt, 'YYYY-MM-DD')} → ${formatTimestamp(lesson.closedAt, 'YYYY-MM-DD')}`
 }
 
 function SourceLine({ lesson }: { lesson: StockLessonDto }): JSX.Element {
@@ -34,10 +29,6 @@ function SourceLine({ lesson }: { lesson: StockLessonDto }): JSX.Element {
         <span className="stock-lesson__code">{lesson.stockCode}</span>
       ) : null}
       <span>第 {lesson.roundNo} 轮</span>
-      <span className="stock-lesson__dates">{sourceDates(lesson)}</span>
-      <span className={`stock-lesson__money ${stockPnlClass(lesson.pnl)}`}>
-        {stockMoney(lesson.pnl)} · {stockPercent(lesson.pnlRate)}
-      </span>
       {lesson.sourceAvailable ? null : (
         <span className="stock-lesson__missing">来源轮次已删除</span>
       )}

@@ -121,7 +121,6 @@ test('股票心得：新建 / 关联轮次 / 跳转 / 编辑 / 删除', async ()
     await expect(rows.first()).toContainText('浦发银行')
     await expect(rows.first()).toContainText('600000')
     await expect(rows.first()).toContainText('第 2 轮')
-    await expect(rows.first()).toContainText('2026-10-10 → 2026-10-15')
 
     // 编辑
     await rows.first().getByTestId('stock-lesson-edit').click()
