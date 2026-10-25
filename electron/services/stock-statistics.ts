@@ -1,21 +1,21 @@
 /**
  * 股票统计读层：逐笔结算统计 / 分组统计 / 筛选（月区间、最近 N 笔、标签）。
  *
- * 逐条移植自既有实现。模块文档里的口径一条不改：
+ * **时间轴 = 清仓时间。** 一轮的盈亏在**清仓**时才落地，所以排序、月份区间与
+ * 「最近 N 笔」的日期都取 `round.closedAt`；`openedAt` 仍带在点上供明细展示，不再
+ * 决定顺序。后建仓先清仓时，按清仓排才是真实的兑现先后。
  *
- * **时间轴 = 建仓时间。** 一轮的锚点是它**首次建仓**的委托时间（`round.openedAt`）：排序、
- * 月份区间与「最近 N 笔」的日期、资金事件（追加本金 / 支取）的插值时点、明细表与曲线上的
- * 日期，用的都是它。清仓时间仍带在点上（`closedAt`），只是不再决定顺序 —— 后建仓的一轮可能
- * 先清仓，按清仓排会把两轮的先后关系颠倒。
+ * **回撤是现金流中性的策略回撤。** 曲线只看累计已实现盈亏（从 0 起步），追加本金 / 支取 /
+ * 利息归本都不进入曲线，也不会重置峰值。回撤金额 = 盈亏曲线峰值 − 当前值；回撤率 =
+ * 最大回撤 ÷（**本窗口第一笔结算时的本金** + 产生该回撤时的盈亏峰值）。本金按追加记录日期
+ * 推进，但一个窗口只在起点取一次，窗口内追加不会稀释已经发生的回撤；分组口径用每组第一笔
+ * 结算时的本金。带筛选时曲线改为「区间累计盈亏（从 0 起步）」，分母同样用窗口起点的本金。
  *
  * 统计口径：
- * * 胜率 = 盈利笔数 ÷ 总笔数（**平局计入总笔数**，不计胜负）；
+ * * 胜率 = 盈利笔数 ÷ 总笔数（**平局计入总笔数**，不计胜负；`tieCount` 单独带出供展示）；
  * * 平均盈利 / 平均亏损分别只按盈利笔与亏损笔求和取平均，亏损金额取正数；
- * * 盈亏比 = 平均盈利 ÷ 平均亏损（**无亏损样本时为 `null`**）；
+ * * 盈亏比 = 平均盈利 ÷ 平均亏损（直接用原始合计相除，**任一侧无样本时为 `null`**）；
  * * 期望值 = 累计盈亏 ÷ 总笔数；
- * * 最大回撤按每轮**建仓时点**的总资产曲线（当时本金 + 累计已结算盈亏 + 累计利息归本 −
- *   当时累计支取）从高点跌落的幅度计算；本金追加 / 支取按记录日期参与时序，占本金比例使用
- *   **当时的本金**；
  * * 带筛选（月份区间 / 最近 N 笔 / 标签）时**区间内从 1 起重新编号**，累计盈亏、胜率、
  *   平均盈亏、回撤全部按筛选集合独立重算；
  * * 标签先过滤轮次，使「最近 N 笔」取该标签内的最近 N 笔。
@@ -30,11 +30,7 @@
  */
 
 import { daysInMonth } from '../../shared/domain/calendar'
-import {
-  STOCK_EVENT_ADD_PRINCIPAL,
-  STOCK_EVENT_INTEREST_PRINCIPAL,
-  STOCK_EVENT_WITHDRAW,
-} from '../../shared/domain/consts'
+import { STOCK_EVENT_ADD_PRINCIPAL } from '../../shared/domain/consts'
 import {
   type StatisticsFilter,
   createStatisticsFilter,
@@ -86,26 +82,6 @@ export interface SettleEvent {
   tradeCount: number
 }
 
-/** 结算统计时序中的一步：资金事件或一笔结算。 */
-interface StatAction {
-  date: string
-  /** 0 = 资金事件，1 = 结算事件（**同日资金先于结算**） */
-  order: number
-  flowIndex: number | null
-  eventIndex: number
-}
-
-/** 一笔本金追加 / 支取 / 利息归本；`withdraw` 与 `interest` 都记为正数金额。 */
-interface CapitalFlow {
-  date: string
-  add: number
-  withdraw: number
-  /** 利息归本（只增加总资产，不改本金口径） */
-  interest: number
-  createdAt: number
-  id: string
-}
-
 /**
  * 分组口径下一组的累加器（逐笔累计口径不用它）。
  *
@@ -125,6 +101,8 @@ export class GroupAcc {
   cum = 0
   peak = 0
   drawdown = 0
+  /** 产生最大回落时的曲线峰值（回撤率的分母要配这一档峰值） */
+  drawdownPeak = 0
 
   /** 收一笔结算（调用顺序必须与结算时序一致）。 */
   push(pnl: number): void {
@@ -140,14 +118,17 @@ export class GroupAcc {
     this.cum += pnl
     if (this.cum > this.peak) this.peak = this.cum
     const drawdown = this.peak - this.cum
-    if (drawdown > this.drawdown) this.drawdown = drawdown
+    if (drawdown > this.drawdown) {
+      this.drawdown = drawdown
+      this.drawdownPeak = this.peak
+    }
   }
 
   /**
    * 收尾成一个统计点：`anchor` 是本组**最后一笔**的结算事件，`sequence` 是该笔在入选集合
-   * 里的序号，`principalAt` 是那时的本金（回撤率的分母）。
+   * 里的序号，`base` 是本组第一笔结算时的本金（回撤率分母的基数）。
    */
-  finish(anchor: SettleEvent, sequence: number, principalAt: number): StockStatisticsPointDto {
+  finish(anchor: SettleEvent, sequence: number, base: number): StockStatisticsPointDto {
     const point: StockStatisticsPointDto = {
       sequence,
       span: this.count,
@@ -163,6 +144,7 @@ export class GroupAcc {
       totalPnl: this.pnl,
       winCount: this.win,
       lossCount: this.loss,
+      tieCount: this.count - this.win - this.loss,
       winRate: 0,
       avgWin: 0,
       avgLoss: 0,
@@ -181,9 +163,13 @@ export class GroupAcc {
     }
     if (this.loss > 0) {
       point.avgLoss = roundHalfAwayFromZero(this.lossSum / this.loss)
-      point.pnlRatio = point.avgWin > 0 ? point.avgWin / point.avgLoss : 0
     }
-    if (principalAt > 0) point.maxDrawdownPct = percentOf(this.drawdown, principalAt)
+    // 任一侧没有样本时没有"平均盈利 ÷ 平均亏损"可言（不是 0）
+    if (this.win > 0 && this.loss > 0) {
+      point.pnlRatio = this.winSum / this.win / (this.lossSum / this.loss)
+    }
+    const denominator = base + this.drawdownPeak
+    if (denominator > 0) point.maxDrawdownPct = percentOf(this.drawdown, denominator)
     return point
   }
 }
@@ -250,6 +236,35 @@ export function getStatisticsRange(
 
 // ---------------------------------------------------------------- 实现
 
+/** 一笔「追加本金」；回撤率的分母基数按记录日期推进。 */
+interface PrincipalAdd {
+  date: string
+  amount: number
+  createdAt: number
+  id: string
+}
+
+/** 按日期升序返回追加本金记录（同日按创建时间、再按 ID）。 */
+function listPrincipalAdds(db: Db, ledgerId: string): PrincipalAdd[] {
+  const adds: PrincipalAdd[] = []
+  for (const record of listAllFundRecords(db, ledgerId)) {
+    if (record.eventType !== STOCK_EVENT_ADD_PRINCIPAL) continue
+    adds.push({
+      date: record.recordDate,
+      amount: record.amountChange,
+      createdAt: record.createdAt,
+      id: record.id,
+    })
+  }
+  adds.sort(
+    (left, right) =>
+      compareText(left.date, right.date) ||
+      left.createdAt - right.createdAt ||
+      compareText(left.id, right.id),
+  )
+  return adds
+}
+
 function statistics(
   db: Db,
   ledgerId: string,
@@ -287,27 +302,32 @@ function statistics(
     }
   }
 
-  // 稳定排序：**建仓时间** → 清仓时间 → createdAt → id
-  // （后两档是同值兜底；「同日建仓」时先清仓的排前面，读起来仍是那一批的先后）
+  // 结算顺序：**清仓时间** → 建仓时间 → createdAt → id（后三档只是同值兜底）。
+  // 已实现盈亏在清仓时才落地；按建仓时间排会把这笔盈亏提前到建仓那天（前视）。
   events.sort((left, right) => {
     return (
-      left.round.openedAt - right.round.openedAt ||
       left.round.closedAt - right.round.closedAt ||
+      left.round.openedAt - right.round.openedAt ||
       left.round.createdAt - right.round.createdAt ||
       compareText(left.round.id, right.round.id)
     )
   })
 
   const account = getOrCreateAccount(db, ledgerId)
-  const flows = listCapitalFlows(db, ledgerId)
-  // 初始本金 = 当前本金 − 全部「追加本金」；本金追加/支取按记录日期参与时序重放
+  // 本金只用来给回撤率定标：曲线本身是现金流中性的（追加 / 支取 / 利息都不进入）。
+  // 基数取「本窗口第一笔结算时的本金」：窗口开始后追加本金不会稀释已经发生的回撤。
+  const adds = listPrincipalAdds(db, ledgerId)
   let initialPrincipal = account.principal
-  for (const flow of flows) initialPrincipal -= flow.add
+  for (const add of adds) initialPrincipal -= add.amount
+  let addIndex = 0
+  let principalAt = initialPrincipal
+  let windowBase: number | null = null
+  let groupBase = 0
 
   const totalEvents = events.length
   let includedTotal = 0
   events.forEach((event, index) => {
-    const date = unixToDate(event.round.openedAt)
+    const date = unixToDate(event.round.closedAt)
     if (includeStatisticsEvent(date, index, totalEvents, fromDay, toDay, recent)) {
       includedTotal += 1
     }
@@ -327,39 +347,16 @@ function statistics(
   const groups: StockStatisticsPointDto[] = []
   let groupAcc = new GroupAcc()
 
-  // 资金事件与结算事件按日期合成同一条时序，保证本金追加/支取在正确时点影响总资产峰值与回撤
-  // （结算事件落在**建仓日**上）
-  const actions: StatAction[] = []
-  flows.forEach((flow, index) => {
-    actions.push({ date: flow.date, order: 0, flowIndex: index, eventIndex: 0 })
-  })
-  events.forEach((event, index) => {
-    actions.push({
-      date: unixToDate(event.round.openedAt),
-      order: 1,
-      flowIndex: null,
-      eventIndex: index,
-    })
-  })
-  // 稳定排序：date → order（同日资金先于结算）
-  actions.sort(
-    (left, right) => compareText(left.date, right.date) || left.order - right.order,
-  )
-
   let totalCount = 0
   let winCount = 0
   let lossCount = 0
   let winSum = 0
   let lossSum = 0 // 亏损金额合计（正数）
+  // 全量曲线：初始本金 + 累计已实现盈亏；峰值从 0 盈亏起步
   let cumPnl = 0
-  let principalAt = initialPrincipal
-  let withdrawnAt = 0
-  // 累计利息归本：进总资产，但不进本金口径（最大回撤率的分母保持"投入本金"）
-  let interestAt = 0
-  // 总资产曲线：从「初始本金」起步（principalAt + interestAt + cumPnl − withdrawnAt）
-  let equity = principalAt + interestAt + cumPnl - withdrawnAt
-  let peakEquity = equity
+  let peakPnl = 0
   let maxDrawdown = 0
+  let drawdownPeak = 0
 
   let windowCount = 0 // 区间内笔数（区间内从 1 重新编号）
   let windowWinCount = 0
@@ -369,25 +366,19 @@ function statistics(
   let windowCumPnl = 0
   let windowPeakPnl = 0
   let windowMaxDrawdown = 0
+  let windowDrawdownPeak = 0
 
-  for (const action of actions) {
-    if (action.flowIndex !== null) {
-      const flow = flows[action.flowIndex]
-      principalAt += flow.add
-      withdrawnAt += flow.withdraw
-      interestAt += flow.interest
-      equity = principalAt + interestAt + cumPnl - withdrawnAt
-      if (equity > peakEquity) peakEquity = equity
-      const drawdown = peakEquity - equity
-      if (drawdown > maxDrawdown) maxDrawdown = drawdown
+  for (const [index, event] of events.entries()) {
+    const date = unixToDate(event.round.closedAt)
+    // 结算按清仓日排序；本金追加按记录日期推进，只影响回撤率的分母
+    while (addIndex < adds.length && adds[addIndex].date <= date) {
+      principalAt += adds[addIndex].amount
+      addIndex += 1
+    }
+    if (!includeStatisticsEvent(date, index, totalEvents, fromDay, toDay, recent)) {
       continue
     }
-
-    const event = events[action.eventIndex]
-    const date = unixToDate(event.round.openedAt)
-    if (!includeStatisticsEvent(date, action.eventIndex, totalEvents, fromDay, toDay, recent)) {
-      continue
-    }
+    if (windowBase === null) windowBase = principalAt
 
     totalCount += 1
     windowCount += 1
@@ -404,51 +395,34 @@ function statistics(
       windowLossCount += 1
       windowLossSum += -event.pnl
     }
-    // 区间回撤曲线：从 0 起步逐笔累计区间盈亏，追踪该曲线峰值的最大回落
+    // 全量回撤：从初始本金 + 盈亏峰值回落；记录产生最大回落时的峰值，回撤率配它做分母
+    if (cumPnl > peakPnl) peakPnl = cumPnl
+    const drawdown = peakPnl - cumPnl
+    if (drawdown > maxDrawdown) {
+      maxDrawdown = drawdown
+      drawdownPeak = peakPnl
+    }
+    // 区间回撤曲线：从 0 起步逐笔累计区间盈亏，口径与上面一致
     if (windowCumPnl > windowPeakPnl) windowPeakPnl = windowCumPnl
     const windowDrawdown = windowPeakPnl - windowCumPnl
-    if (windowDrawdown > windowMaxDrawdown) windowMaxDrawdown = windowDrawdown
-    // 当时总资产 = 当时本金 + 累计利息归本 + 累计已结算盈亏 − 当时累计支取（全量口径）
-    equity = principalAt + interestAt + cumPnl - withdrawnAt
-    if (equity > peakEquity) peakEquity = equity
-    const drawdown = peakEquity - equity
-    if (drawdown > maxDrawdown) maxDrawdown = drawdown
+    if (windowDrawdown > windowMaxDrawdown) {
+      windowMaxDrawdown = windowDrawdown
+      windowDrawdownPeak = windowPeakPnl
+    }
 
-    const stats: {
-      sequence: number
-      statCount: number
-      total: number
-      wins: number
-      losses: number
-      winAmountSum: number
-      lossAmountSum: number
-      drawdown: number
-    } = useWindow
-      ? {
-          sequence: windowCount,
-          statCount: windowCount,
-          total: windowCumPnl,
-          wins: windowWinCount,
-          losses: windowLossCount,
-          winAmountSum: windowWinSum,
-          lossAmountSum: windowLossSum,
-          drawdown: windowMaxDrawdown,
-        }
-      : {
-          sequence: totalCount,
-          statCount: totalCount,
-          total: cumPnl,
-          wins: winCount,
-          losses: lossCount,
-          winAmountSum: winSum,
-          lossAmountSum: lossSum,
-          drawdown: maxDrawdown,
-        }
+    const statCount = useWindow ? windowCount : totalCount
+    const wins = useWindow ? windowWinCount : winCount
+    const losses = useWindow ? windowLossCount : lossCount
+    const winAmountSum = useWindow ? windowWinSum : winSum
+    const lossAmountSum = useWindow ? windowLossSum : lossSum
+    const total = useWindow ? windowCumPnl : cumPnl
+    const drawdownTotal = useWindow ? windowMaxDrawdown : maxDrawdown
+    const peakAtDrawdown = useWindow ? windowDrawdownPeak : drawdownPeak
 
     const point: StockStatisticsPointDto = {
-      sequence: stats.sequence,
+      sequence: statCount,
       // 累计口径下"本点覆盖 1..=sequence 笔"（区间内重新编号后同样成立）
-      span: stats.sequence,
+      span: statCount,
       openedAt: event.round.openedAt,
       closedAt: event.round.closedAt,
       stockCode: event.round.stockCode,
@@ -458,36 +432,41 @@ function statistics(
       pnl: event.pnl,
       pnlRate: event.pnlRate,
       tradeCount: event.tradeCount,
-      totalPnl: stats.total,
-      winCount: stats.wins,
-      lossCount: stats.losses,
+      totalPnl: total,
+      winCount: wins,
+      lossCount: losses,
+      tieCount: statCount - wins - losses,
       winRate: 0,
       avgWin: 0,
       avgLoss: 0,
       pnlRatio: null,
       expectancy: 0,
-      maxDrawdown: stats.drawdown,
+      maxDrawdown: drawdownTotal,
       maxDrawdownPct: 0,
     }
-    if (stats.statCount > 0) point.winRate = percentOf(stats.wins, stats.statCount)
-    if (stats.wins > 0) point.avgWin = roundHalfAwayFromZero(stats.winAmountSum / stats.wins)
-    if (stats.losses > 0) {
-      point.avgLoss = roundHalfAwayFromZero(stats.lossAmountSum / stats.losses)
-      point.pnlRatio = point.avgWin > 0 ? point.avgWin / point.avgLoss : 0
+    if (statCount > 0) point.winRate = percentOf(wins, statCount)
+    if (wins > 0) point.avgWin = roundHalfAwayFromZero(winAmountSum / wins)
+    if (losses > 0) point.avgLoss = roundHalfAwayFromZero(lossAmountSum / losses)
+    // 任一侧没有样本时没有"平均盈利 ÷ 平均亏损"可言（不是 0）
+    if (wins > 0 && losses > 0) {
+      point.pnlRatio = winAmountSum / wins / (lossAmountSum / losses)
     }
-    if (stats.statCount > 0) {
+    if (statCount > 0) {
       // 期望值 = 胜率 × 平均盈利 − 亏损率 × 平均亏损 = 累计盈亏 ÷ 总笔数
-      point.expectancy = roundHalfAwayFromZero(stats.total / stats.statCount)
+      point.expectancy = roundHalfAwayFromZero(total / statCount)
     }
-    if (principalAt > 0) point.maxDrawdownPct = percentOf(stats.drawdown, principalAt)
+    const base = windowBase ?? principalAt
+    const denominator = base + peakAtDrawdown
+    if (denominator > 0) point.maxDrawdownPct = percentOf(drawdownTotal, denominator)
     result.points.push(point)
 
     // 分组口径：每 groupSize 笔收一组，最后一组不足也收（不做补齐）。
     // 分组**不改**上面那条逐笔累计序列，只额外产出 groups。
     if (grouped) {
+      if (groupAcc.count === 0) groupBase = principalAt
       groupAcc.push(event.pnl)
       if (windowCount % groupSize === 0 || windowCount === includedTotal) {
-        groups.push(groupAcc.finish(event, windowCount, principalAt))
+        groups.push(groupAcc.finish(event, windowCount, groupBase))
         groupAcc = new GroupAcc()
       }
     }
@@ -496,63 +475,11 @@ function statistics(
   return result
 }
 
-// ---------------------------------------------------------------- 资金时序
-
-/** 返回账本全部「追加本金 / 支取 / 利息归本」记录，按日期升序（同日按创建时间、再按 ID）。 */
-function listCapitalFlows(db: Db, ledgerId: string): CapitalFlow[] {
-  const flows: CapitalFlow[] = []
-  for (const record of listAllFundRecords(db, ledgerId)) {
-    switch (record.eventType) {
-      case STOCK_EVENT_ADD_PRINCIPAL:
-        flows.push({
-          date: record.recordDate,
-          add: record.amountChange,
-          withdraw: 0,
-          interest: 0,
-          createdAt: record.createdAt,
-          id: record.id,
-        })
-        break
-      case STOCK_EVENT_WITHDRAW:
-        flows.push({
-          date: record.recordDate,
-          add: 0,
-          // amountChange 为负数，取反得到正数支取额
-          withdraw: -record.amountChange,
-          interest: 0,
-          createdAt: record.createdAt,
-          id: record.id,
-        })
-        break
-      case STOCK_EVENT_INTEREST_PRINCIPAL:
-        flows.push({
-          date: record.recordDate,
-          add: 0,
-          withdraw: 0,
-          // amountChange 为正数
-          interest: record.amountChange,
-          createdAt: record.createdAt,
-          id: record.id,
-        })
-        break
-      default:
-        break
-    }
-  }
-  flows.sort(
-    (left, right) =>
-      compareText(left.date, right.date) ||
-      left.createdAt - right.createdAt ||
-      compareText(left.id, right.id),
-  )
-  return flows
-}
-
 // ---------------------------------------------------------------- 筛选与月份
 
 /**
  * 判断某笔结算是否落入当前筛选：
- * `recent > 0` 时取排序后最近 N 笔；`fromDay` 非空时按**建仓日期**区间（含首尾日）判断。
+ * `recent > 0` 时取排序后最近 N 笔；`fromDay` 非空时按**清仓日期**区间（含首尾日）判断。
  */
 export function includeStatisticsEvent(
   date: string,

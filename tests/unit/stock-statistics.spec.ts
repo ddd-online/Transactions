@@ -371,7 +371,8 @@ describe('stock statistics read layer', () => {
     expect(p3.pnlRatio).toBeCloseTo(0.9375, 4)
     expect(p3.expectancy).toBe(23_333)
     expect(p3.maxDrawdown).toBe(80_000)
-    expect(p3.maxDrawdownPct).toBeCloseTo(0.8, 3)
+    expect(p3.maxDrawdownPct).toBeCloseTo(0.79, 3)
+    expect([p3.winCount, p3.lossCount, p3.tieCount]).toEqual([2, 1, 0])
   })
 
   it('counts a breakeven settlement in the total', () => {
@@ -387,27 +388,27 @@ describe('stock statistics read layer', () => {
     const p2 = stats.points[1]
     expect(p2.sequence).toBe(2)
     expect(p2.totalPnl).toBe(100_000)
-    expect([p2.winCount, p2.lossCount]).toEqual([1, 0])
+    expect([p2.winCount, p2.lossCount, p2.tieCount]).toEqual([1, 0, 1])
     expect(p2.winRate).toBe(50)
     expect([p2.avgWin, p2.expectancy]).toEqual([100_000, 50_000])
 
     const p3 = stats.points[2]
     expect(p3.totalPnl).toBe(40_000)
-    expect([p3.winCount, p3.lossCount]).toEqual([1, 1])
+    expect([p3.winCount, p3.lossCount, p3.tieCount]).toEqual([1, 1, 1])
     expect(p3.winRate).toBe(33.33)
     expect(p3.avgLoss).toBe(60_000)
     expect(p3.pnlRatio).toBeCloseTo(1.6667, 3)
     expect(p3.expectancy).toBe(13_333)
     expect(p3.maxDrawdown).toBe(60_000)
-    expect(p3.maxDrawdownPct).toBeCloseTo(0.6, 3)
+    expect(p3.maxDrawdownPct).toBeCloseTo(0.59, 3)
   })
 
-  it('puts interest principal into the equity curve without touching principal', () => {
+  it('keeps the drawdown cash-flow neutral (interest does not reset the peak)', () => {
     const workspace = newWorkspace()
     setPrincipalCents(workspace, 10_000_000)
-    // 第 1 轮亏 80_000：本金 10_000_000 → 9_920_000，峰值仍是 10_000_000
+    // 第 1 轮亏 80_000
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 10_000, 9_200, 10, 2023, 7, 1)
-    // 亏损之后的次日记一笔利息归本：9_950_000 没有超过峰值
+    // 利息归本只是资金事件：不进策略曲线，也不抬高回撤峰值
     addInterestAtDate(workspace.db, LEDGER, 30_000, '2023-07-02')
     // 第 2 轮再亏 100_000
     seedCleanRoundOn(workspace, CODE_B, NAME_B, 10_000, 9_000, 10, 2023, 7, 3)
@@ -415,12 +416,25 @@ describe('stock statistics read layer', () => {
     const stats = getStatistics(workspace.db, LEDGER)
     expect(stats.principal).toBe(10_000_000)
     expect([stats.points[0].pnl, stats.points[0].maxDrawdown]).toEqual([-80_000, 80_000])
+    expect(stats.points[0].maxDrawdownPct).toBeCloseTo(0.8, 3)
 
     const p2 = stats.points[1]
     expect(p2.pnl).toBe(-100_000)
-    // 9_920_000 + 30_000 = 9_950_000 未超过峰值，再亏 100_000 → 回撤 150_000
-    expect(p2.maxDrawdown).toBe(150_000)
-    expect(p2.maxDrawdownPct).toBeCloseTo(1.5, 3)
+    // 盈亏曲线的峰值仍是 0，累计亏 180_000 → 回撤 180_000 ÷ 初始本金 1000 万
+    expect(p2.maxDrawdown).toBe(180_000)
+    expect(p2.maxDrawdownPct).toBeCloseTo(1.8, 3)
+  })
+
+  it('has no ratio when either side has no sample', () => {
+    const workspace = newWorkspace()
+    setPrincipalCents(workspace, 10_000_000)
+    seedCleanRoundOn(workspace, CODE_A, NAME_A, 10_000, 9_000, 10, 2023, 7, 1)
+
+    const stats = getStatistics(workspace.db, LEDGER)
+    const point = stats.points[0]
+    expect([point.winCount, point.lossCount, point.tieCount]).toEqual([0, 1, 0])
+    expect(point.avgLoss).toBeGreaterThan(0)
+    expect(point.pnlRatio).toBeNull()
   })
 
   it('needs at least one settlement', () => {
@@ -438,35 +452,37 @@ describe('stock statistics read layer', () => {
     expect(point.avgWin).toBe(100_000)
   })
 
-  it('uses the principal at settlement as the drawdown denominator', () => {
+  it('ignores added principal and withdrawals in the drawdown curve', () => {
     const workspace = newWorkspace()
     setPrincipalCents(workspace, 10_000_000)
     // 第 1 笔盈利 +100000（2023-07-22）
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 10_000, 11_000, 10, 2023, 7, 22)
-    // 第 2 笔前追加本金 5,000,000（本金 10,000,000 → 15,000,000）
+    // 第 2 笔前追加本金 5,000,000：不进策略曲线，也不会重置峰值
     addPrincipalAtDate(workspace.db, LEDGER, 5_000_000, '2023-07-25')
     // 第 2 笔亏损 -200000（2023-07-28）
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 20_000, 18_000, 10, 2023, 7, 28)
-    // 第 3 笔前支取 1,000,000（2023-07-29，本金不变）
+    // 第 3 笔前支取 1,000,000：同样不制造回撤
     withdrawAtDate(workspace.db, LEDGER, 1_000_000, '2023-07-29')
     // 第 3 笔盈利 +300000（2023-08-01）
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 10_000, 13_000, 10, 2023, 8, 1)
 
     const stats = getStatistics(workspace.db, LEDGER)
     expect(stats.points).toHaveLength(3)
+    // 展示的仍是最新本金；回撤曲线的基数固定为初始本金 1000 万
     expect(stats.principal).toBe(15_000_000)
 
     expect([stats.points[0].maxDrawdown, stats.points[0].maxDrawdownPct]).toEqual([0, 0])
 
-    // 追加后当时本金 15,000,000；峰值总资产 15,100,000，回撤 200,000 → 1.33%
+    // 盈亏峰值 100000、谷底 -100000 → 回撤 200000 ÷（1000 万 + 100000）= 1.98%
     const p2 = stats.points[1]
     expect(p2.maxDrawdown).toBe(200_000)
-    expect(p2.maxDrawdownPct).toBeCloseTo(1.33, 2)
+    expect(p2.maxDrawdownPct).toBeCloseTo(1.98, 2)
 
-    // 支取 1,000,000 计入总资产曲线：峰值 15,100,000 → 支取后 13,900,000，回撤 1,200,000
+    // 第 3 笔创新高，资金流不参与：最大回撤仍是 200000（峰值仍是产生它时的 100000）
     const p3 = stats.points[2]
-    expect(p3.maxDrawdown).toBe(1_200_000)
-    expect(p3.maxDrawdownPct).toBeCloseTo(8, 2)
+    expect(p3.totalPnl).toBe(200_000)
+    expect(p3.maxDrawdown).toBe(200_000)
+    expect(p3.maxDrawdownPct).toBeCloseTo(1.98, 2)
   })
 
   it('recomputes the window for a month range', () => {
@@ -491,7 +507,7 @@ describe('stock statistics read layer', () => {
     expect(p2.pnlRatio).toBeCloseTo(1.25, 3)
     expect(p2.expectancy).toBe(10_000)
     expect(p2.maxDrawdown).toBe(80_000)
-    expect(p2.maxDrawdownPct).toBeCloseTo(0.8, 3)
+    expect(p2.maxDrawdownPct).toBeCloseTo(0.79, 3)
 
     const august = getStatisticsRange(workspace.db, LEDGER, '2023-08', '2023-08', 0, '')
     expect([august.roundCount, august.points.length]).toEqual([1, 1])
@@ -550,9 +566,9 @@ describe('stock statistics read layer', () => {
     expect(first.avgLoss).toBe(50_000)
     expect(first.pnlRatio).toBeCloseTo(1.2, 4)
     expect(first.expectancy).toBe(16_000)
-    // 组内曲线：峰值 100000、谷底 20000 → 回撤 80000，占本金 0.8%
+    // 组内曲线：峰值 100000、谷底 20000 → 回撤 80000 ÷（1000 万 + 100000）
     expect(first.maxDrawdown).toBe(80_000)
-    expect(first.maxDrawdownPct).toBeCloseTo(0.8, 3)
+    expect(first.maxDrawdownPct).toBeCloseTo(0.79, 3)
 
     const last = grouped.groups[1]
     expect([last.sequence, last.span]).toEqual([7, 2])
@@ -638,15 +654,15 @@ describe('stock statistics read layer', () => {
     expect(daban.points[2].totalPnl).toBe(200_000)
   })
 
-  it('uses the principal at the group end for the grouped drawdown rate', () => {
+  it('keeps the grouped drawdown rate cash-flow neutral', () => {
     const workspace = newWorkspace()
     setPrincipalCents(workspace, 10_000_000)
-    // 第 1 组（两笔都亏）：−200000、−300000 → 组内回撤 500000 ÷ 当时本金 1000 万 = 5%
+    // 第 1 组（两笔都亏）：−200000、−300000 → 组内回撤 500000 ÷ 初始本金 1000 万 = 5%
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 20_000, 18_000, 10, 2023, 1, 5)
     seedCleanRoundOn(workspace, CODE_B, NAME_B, 20_000, 17_000, 10, 2023, 1, 6)
-    // 组间追加本金 500 万
+    // 组间追加本金 500 万：不进组内曲线，但第 2 组的基数变为 1500 万
     addPrincipalAtDate(workspace.db, LEDGER, 5_000_000, '2023-01-10')
-    // 第 2 组（两笔都亏）：−100000、−200000 → 组内回撤 300000 ÷ 当时本金 1500 万 = 2%
+    // 第 2 组（两笔都亏）：−100000、−200000 → 组内回撤 300000 ÷ 第 2 组起点本金 1500 万 = 2%
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 20_000, 19_000, 10, 2023, 1, 20)
     seedCleanRoundOn(workspace, CODE_B, NAME_B, 20_000, 18_000, 10, 2023, 1, 21)
 
@@ -677,10 +693,10 @@ describe('stock statistics read layer', () => {
     ).not.toThrow()
   })
 
-  it('uses the principal at the point for the range drawdown rate', () => {
+  it('keeps the range drawdown rate cash-flow neutral', () => {
     const workspace = newWorkspace()
     setPrincipalCents(workspace, 10_000_000)
-    // 第 1 笔亏损 -200000（2023-01-05），随后追加本金 500 万，第 2 笔亏损 -300000（2023-01-20）
+    // 第 1 笔亏损 -200000（2023-01-05），随后追加本金 500 万（不进曲线），第 2 笔亏损 -300000（2023-01-20）
     seedCleanRoundOn(workspace, CODE_A, NAME_A, 20_000, 18_000, 10, 2023, 1, 5)
     addPrincipalAtDate(workspace.db, LEDGER, 5_000_000, '2023-01-10')
     seedCleanRoundOn(workspace, CODE_B, NAME_B, 20_000, 17_000, 10, 2023, 1, 20)
@@ -688,13 +704,13 @@ describe('stock statistics read layer', () => {
     const stats = getStatisticsRange(workspace.db, LEDGER, '2023-01', '2023-01', 0, '')
     expect(stats.roundCount).toBe(2)
 
-    // 区间曲线从 0 起步：第 1 笔后累计 -200000，回撤 200000 ÷ 当时本金 1000 万 = 2%
+    // 区间曲线从 0 起步：第 1 笔后累计 -200000，回撤 200000 ÷ 初始本金 1000 万 = 2%
     expect(stats.points[0].maxDrawdown).toBe(200_000)
     expect(stats.points[0].maxDrawdownPct).toBeCloseTo(2, 2)
 
-    // 区间曲线峰值仍为 0，第 2 笔后累计 -500000 → 回撤 500000；当时本金 1500 万 → 3.33%
+    // 峰值仍为 0，第 2 笔后累计 -500000 → 回撤 500000；分母同样是初始本金 1000 万 → 5%
     expect(stats.points[1].maxDrawdown).toBe(500_000)
-    expect(stats.points[1].maxDrawdownPct).toBeCloseTo(3.33, 2)
+    expect(stats.points[1].maxDrawdownPct).toBeCloseTo(5, 2)
     expect(stats.points[1].totalPnl).toBe(-500_000)
   })
 
@@ -780,7 +796,7 @@ describe('stock statistics read layer', () => {
     expect([all.roundCount, all.points.length]).toEqual([3, 3])
   })
 
-  it('follows the open time when a later round closes first', () => {
+  it('follows the close time when a later-opened round settles first', () => {
     const workspace = newWorkspace()
     setPrincipalCents(workspace, 10_000_000)
     const aOpened = localNoon(2023, 6, 20)
@@ -792,26 +808,31 @@ describe('stock statistics read layer', () => {
 
     const stats = getStatistics(workspace.db, LEDGER)
     expect(stats.points).toHaveLength(2)
-    expect(stats.points[0].stockCode).toBe(CODE_A)
-    expect(stats.points[0].openedAt).toBe(aOpened)
-    expect(stats.points[0].closedAt).toBe(aClosed)
+    // B 先清仓（7-15），A 后清仓（7-20）：B 是第 1 笔，A 是第 2 笔
+    expect(stats.points[0].stockCode).toBe(CODE_B)
+    expect(stats.points[0].openedAt).toBe(bOpened)
+    expect(stats.points[0].closedAt).toBe(bClosed)
     expect(stats.points[0].sequence).toBe(1)
-    expect(stats.points[1].stockCode).toBe(CODE_B)
+    expect(stats.points[0].totalPnl).toBe(-50_000)
+    // B 先兑现的亏损就是当时的回撤；A 的 +100000 不会被提前算进第 1 笔
+    expect(stats.points[0].maxDrawdown).toBe(50_000)
+    expect(stats.points[0].maxDrawdownPct).toBeCloseTo(0.5, 3)
+    expect(stats.points[1].stockCode).toBe(CODE_A)
     expect(stats.points[1].sequence).toBe(2)
-    expect(stats.points[0].totalPnl).toBe(100_000)
     expect(stats.points[1].totalPnl).toBe(50_000)
+    expect(stats.points[1].maxDrawdown).toBe(50_000)
 
+    // 月份筛选按清仓日期：两笔都在 7 月；6 月没有已实现结算
     const july = getStatisticsRange(workspace.db, LEDGER, '2023-07', '2023-07', 0, '')
-    expect(july.points).toHaveLength(1)
-    expect(july.points[0].stockCode).toBe(CODE_B)
-    expect(july.points[0].sequence).toBe(1)
+    expect(july.points).toHaveLength(2)
+    expect(july.points.map((point) => point.stockCode)).toEqual([CODE_B, CODE_A])
 
     const june = getStatisticsRange(workspace.db, LEDGER, '2023-06', '2023-06', 0, '')
-    expect(june.points).toHaveLength(1)
-    expect(june.points[0].stockCode).toBe(CODE_A)
+    expect(june.points).toHaveLength(0)
 
+    // 「最近 1 笔」按清仓时间取 A（7-20），不是建仓更晚的 B
     const recent = getStatisticsRange(workspace.db, LEDGER, '', '', 1, '')
     expect(recent.points).toHaveLength(1)
-    expect(recent.points[0].stockCode).toBe(CODE_B)
+    expect(recent.points[0].stockCode).toBe(CODE_A)
   })
 })

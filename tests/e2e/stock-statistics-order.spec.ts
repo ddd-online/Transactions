@@ -112,9 +112,19 @@ test('股票统计明细：同日建仓的两轮按清仓先后排列', async ()
     })
 
     // 先在「统计」里切到分组口径：明细是逐笔结算，仍应列出 3 行且收起口径下拉。
+    const summaryBefore = (await page.getByTestId('stock-statistics-summary').innerText()).replace(
+      /\s+/g,
+      '',
+    )
     await page.getByTestId('statistics-strategy').click()
     await page.locator('.ant-select-item-option').filter({ hasText: '分组统计' }).click()
     await expect(page.getByTestId('statistics-strategy')).toContainText('分组统计')
+    // 顶部合计不跟分组口径变：仍是全量逐笔的合计，不是最后一组
+    await expect
+      .poll(async () =>
+        (await page.getByTestId('stock-statistics-summary').innerText()).replace(/\s+/g, ''),
+      )
+      .toBe(summaryBefore)
     await page.getByTestId('statistics-tab-detail').click()
     await expect(page.getByTestId('statistics-strategy')).toHaveCount(0)
     await expect(page.getByTestId('statistics-range')).toBeVisible()

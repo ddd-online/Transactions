@@ -144,7 +144,7 @@ function ChartBox({
       const value = metricValue(point, metric)
       return {
         x: index,
-        label: `第${point.sequence}笔 ${formatTimestamp(point.openedAt, 'MM-DD')}`,
+        label: `第${point.sequence}笔 ${formatTimestamp(point.closedAt, 'MM-DD')}`,
         value,
         sign: metric === 'max_drawdown' ? '亏损' : value >= 0 ? '盈利' : '亏损',
         stock: `${point.stockName} ${point.stockCode}`,
@@ -357,7 +357,8 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
   // 「明细」是逐笔结算的清单：口径恒为逐笔累计（分组点是给曲线用的，一行一格不是结算）。
   const detailRows = data?.points ?? []
   const points = strategy === 'grouped' ? (data?.groups ?? []) : detailRows
-  const latest = points[points.length - 1]
+  // 顶部合计始终读全量逐笔点，不跟着分组口径变成最后一组。
+  const latest = detailRows[detailRows.length - 1]
   const detailPoints = detailRowsNewestFirst(detailRows)
   const detailPageCount = Math.max(1, Math.ceil(detailPoints.length / DETAIL_PAGE_SIZE))
   const detailPageNo = Math.min(detailPage, detailPageCount)
@@ -471,6 +472,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   <strong>{stockPercent(latest.winRate)}</strong>
                   <small>
                     {latest.winCount} 胜 · {latest.lossCount} 负
+                    {latest.tieCount > 0 ? ` · ${latest.tieCount} 平` : ''}
                   </small>
                 </div>
                 <div className="stock-stat-cell">
@@ -565,7 +567,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   {
                     title: '股票',
                     align: 'right',
-                    width: '13%',
+                    width: '12%',
                     render: (_, row) => `${row.stockName} ${row.stockCode}`,
                   },
                   {
@@ -595,8 +597,11 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                   {
                     title: '胜负',
                     align: 'right',
-                    width: '6%',
-                    render: (_, row) => `${row.winCount} 胜 ${row.lossCount} 负`,
+                    width: '8%',
+                    render: (_, row) =>
+                      `${row.winCount} 胜 ${row.lossCount} 负${
+                        row.tieCount > 0 ? ` ${row.tieCount} 平` : ''
+                      }`,
                   },
                   {
                     title: '胜率',
@@ -632,7 +637,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                     title: '期望值',
                     dataIndex: 'expectancy',
                     align: 'right',
-                    width: '8%',
+                    width: '7%',
                     render: (value: number) => (
                       <span className={stockPnlClass(value)}>{money(value)}</span>
                     ),
