@@ -480,6 +480,30 @@
   object-fit: contain;
 }
 
+/* 大图预览的底衬：同一张图放大铺满、虚化。
+ * 照片比例和屏幕不一致时（竖幅照片两侧原本是死黑），现在晕成照片自己的颜色。
+ * 铺满后不透明，再压一层 scrim 保证操作栏与翻页可读；只垫在
+ * `.ant-image-preview-body` 里，不接管指针事件 —— 点空白仍关闭预览。 */
+.ant-image-preview-body > .key-event-preview-blur {
+  /* 比视口四周各宽 160px：blur 会把元素边缘外的透明一起模糊进来，
+   * 边缘若落在视口里就会透出背后的界面（右/下/左/上各一条羽化带）。
+   * 放大元素让羽化带整个落到视口外，可见区域才是实心的。 */
+  position: absolute;
+  inset: -160px;
+  z-index: 0;
+  pointer-events: none;
+  background-position: center;
+  background-size: cover;
+  filter: blur(48px) saturate(1.15);
+}
+
+.ant-image-preview-body > .key-event-preview-blur::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--transactions-color-overlay-scrim);
+}
+
 /* 叠在图片上的下载：毛玻璃底压住照片，位置固定在右下角 */
 .key-event-gallery__download {
   position: absolute;

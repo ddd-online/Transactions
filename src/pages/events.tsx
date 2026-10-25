@@ -16,7 +16,6 @@ import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { FileButton } from '../components/file-button'
 import { Icon } from '../components/icon'
-import { ImageCrop } from '../components/image-crop'
 import { Markdown } from '../components/markdown'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
@@ -92,6 +91,20 @@ function summaryOf(content: string): string {
   return content.replace(/\s+/g, ' ').trim().slice(0, 30)
 }
 
+/** 大图预览的底衬：把当前这张图放大铺满、虚化，照片比例和屏幕不一致时两侧不再是死黑。 */
+function previewImageRender(node: JSX.Element, info: { image: { url: string } }): JSX.Element {
+  return (
+    <>
+      <div
+        className="key-event-preview-blur"
+        aria-hidden="true"
+        style={{ backgroundImage: `url("${info.image.url}")` }}
+      />
+      {node}
+    </>
+  )
+}
+
 function signedAmount(row: TransactionRecordDto): string {
   const sign = row.transactionType === 'expense' ? '-' : row.transactionType === 'income' ? '+' : ''
   return `${sign}¥${centsToYuan(row.price)}`
@@ -117,7 +130,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [selectedImageId, setSelectedImageId] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [cropSrc, setCropSrc] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [addDate, setAddDate] = useState(todayYmd())
   const [addTitle, setAddTitle] = useState('')
@@ -367,18 +379,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [clearSelection, year],
   )
 
-  const addImage = useCallback(async (file: File | undefined): Promise<void> => {
-    if (!file || !ledgerId) return
-    setError('')
-    try {
-      setCropSrc(await readDataUrl(file))
-    } catch (readError) {
-      setError(errorMessage(readError))
-    } finally {
-      if (fileRef.current) fileRef.current.value = ''
-    }
-  }, [ledgerId])
-
   const commitImage = useCallback(
     async (data: string): Promise<void> => {
       setBusy(true)
@@ -400,7 +400,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           data,
           thumb,
         })
-        setCropSrc('')
         await Promise.all([loadEvent(), loadDates()])
       } catch (imageError) {
         setError(errorMessage(imageError))
@@ -409,6 +408,22 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
       }
     },
     [color, content, date, event, ledgerId, loadDates, loadEvent, title],
+  )
+
+  // 事件图片按原图上传：不裁剪、不重编码，缩略图只为列表另存一份。
+  const addImage = useCallback(
+    async (file: File | undefined): Promise<void> => {
+      if (!file || !ledgerId) return
+      setError('')
+      try {
+        await commitImage(await readDataUrl(file))
+      } catch (readError) {
+        setError(errorMessage(readError))
+      } finally {
+        if (fileRef.current) fileRef.current.value = ''
+      }
+    },
+    [commitImage, ledgerId],
   )
 
   const removeImage = useCallback(
@@ -590,7 +605,10 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     ) : (
                       <>
                         <div className="key-event-gallery__main">
-                          <AntImage.PreviewGroup items={previewItems}>
+                          <AntImage.PreviewGroup
+                            items={previewItems}
+                            preview={{ imageRender: previewImageRender }}
+                          >
                             <AntImage
                               className="key-event-gallery__img"
                               src={assetUrl(mainImage.filePath)}
@@ -829,14 +847,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           </div>
         </div>
       </Modal>
-
-      {cropSrc ? (
-        <ImageCrop
-          src={cropSrc}
-          onCancel={() => setCropSrc('')}
-          onConfirm={(data) => void commitImage(data)}
-        />
-      ) : null}
     </PageLayout>
   )
 }

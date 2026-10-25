@@ -103,13 +103,38 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
       mimeType: 'image/png',
       buffer: PNG_1X1,
     })
-    await expect(page.getByTestId('image-crop')).toBeVisible()
-    await page.getByTestId('image-crop-confirm').click()
+    // 原图直接上传：不再经过裁剪弹窗
     await expect(page.getByTestId('event-image')).toHaveCount(1)
 
-    // 大图点开 AntD 预览（可缩放/切换），Esc 关闭
+    // 大图点开 AntD 预览（可缩放/切换），整图后面垫一层同图虚化底；Esc 关闭
     await page.getByTestId('event-image-main').click()
     await expect(page.locator('.ant-image-preview')).toBeVisible()
+    const previewBlur = page.locator('.key-event-preview-blur')
+    await expect(previewBlur).toBeVisible()
+    await expect(previewBlur).toHaveCSS('filter', /blur\(48px\)/)
+    await expect(previewBlur).toHaveAttribute('style', /trasset:\/\/local\//)
+    // 虚化底必须比视口四周各宽出一截：blur 会把边缘外的透明羽化进来，
+    // 羽化带落在视口里就会透出背后的界面。等预览的缩放入场动画跑完再量。
+    await expect
+      .poll(async () => previewBlur.evaluate((element) => element.getBoundingClientRect().width))
+      .toBeGreaterThan(1500)
+    const bleed = await previewBlur.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return {
+        left: rect.left,
+        top: rect.top,
+        right: window.innerWidth - rect.right,
+        bottom: window.innerHeight - rect.bottom,
+      }
+    })
+    expect(bleed.left).toBeLessThanOrEqual(-100)
+    expect(bleed.top).toBeLessThanOrEqual(-100)
+    expect(bleed.right).toBeLessThanOrEqual(-100)
+    expect(bleed.bottom).toBeLessThanOrEqual(-100)
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'events-preview.png'),
+    })
     await page.keyboard.press('Escape')
     await expect(page.locator('.ant-image-preview')).toBeHidden()
 
