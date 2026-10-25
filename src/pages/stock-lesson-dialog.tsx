@@ -160,9 +160,6 @@ export function StockLessonDialog({
             }}
           />
         </label>
-        <p className="stock-lesson-dialog__hint">
-          关联后，行尾的跳转可以直接回到那一轮交易；也可以先保存，之后再补关联。
-        </p>
         {sourceMissing ? (
           <p className="stock-lesson-dialog__hint is-warning">
             原关联的交易轮次已被删除，保存将解除关联。
