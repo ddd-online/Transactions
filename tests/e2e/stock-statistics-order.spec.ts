@@ -86,7 +86,16 @@ test('股票统计明细：同日建仓的两轮按清仓先后排列', async ()
 
     await page.getByTestId('nav-stock').click()
     await page.getByTestId('stock-tab-statistics').click()
+    await expect(page.getByTestId('statistics-strategy')).toBeVisible()
+
+    // 先在「统计」里切到分组口径：明细是逐笔结算，仍应列出 3 行且收起口径下拉。
+    await page.getByTestId('statistics-strategy').click()
+    await page.locator('.ant-select-item-option').filter({ hasText: '分组统计' }).click()
+    await expect(page.getByTestId('statistics-strategy')).toContainText('分组统计')
     await page.getByTestId('statistics-tab-detail').click()
+    await expect(page.getByTestId('statistics-strategy')).toHaveCount(0)
+    await expect(page.getByTestId('statistics-range')).toBeVisible()
+    await expect(page.getByTestId('statistics-tag')).toBeVisible()
 
     const rows = page.getByTestId('stock-statistics-point')
     await expect(rows).toHaveCount(3)
@@ -103,6 +112,10 @@ test('股票统计明细：同日建仓的两轮按清仓先后排列', async ()
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-statistics-order.png'),
     })
+
+    // 回到「统计」时口径下拉回来（状态仍记得分组统计）
+    await page.getByTestId('statistics-tab-summary').click()
+    await expect(page.getByTestId('statistics-strategy')).toContainText('分组统计')
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

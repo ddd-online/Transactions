@@ -344,9 +344,11 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
       .catch(() => setTagOptions([]))
   }, [ledgerId])
 
-  const points = strategy === 'grouped' ? (data?.groups ?? []) : (data?.points ?? [])
+  // 「明细」是逐笔结算的清单：口径恒为逐笔累计（分组点是给曲线用的，一行一格不是结算）。
+  const detailRows = data?.points ?? []
+  const points = strategy === 'grouped' ? (data?.groups ?? []) : detailRows
   const latest = points[points.length - 1]
-  const detailPoints = detailRowsNewestFirst(points)
+  const detailPoints = detailRowsNewestFirst(detailRows)
   const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
 
   return (
@@ -396,17 +398,22 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
               onChange={(event) => setRecent(event.target.value)}
             />
           ) : null}
+          {/* 明细恒为逐笔结算：分组口径只影响曲线，进「明细」就收起这个下拉，
+              免得看起来“选了没反应”。 */}
+          {tabs === 'summary' ? (
+            <Select
+              data-testid="statistics-strategy"
+              value={strategy}
+              style={{ width: 130 }}
+              onChange={(value) => setStrategy(value)}
+              options={[
+                { value: 'cumulative', label: '逐笔累计' },
+                { value: 'grouped', label: '分组统计' },
+              ]}
+            />
+          ) : null}
           <Select
-            data-testid="statistics-strategy"
-            value={strategy}
-            style={{ width: 130 }}
-            onChange={(value) => setStrategy(value)}
-            options={[
-              { value: 'cumulative', label: '逐笔累计' },
-              { value: 'grouped', label: '分组统计' },
-            ]}
-          />
-          <Select
+            data-testid="statistics-tag"
             value={tag}
             style={{ width: 150 }}
             onChange={(value) => setTag(value)}
@@ -507,7 +514,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
         </>
       ) : (
         <section className="stock-statistics-section">
-          {points.length === 0 ? (
+          {detailPoints.length === 0 ? (
             <EmptyState
               testId="stock-statistics-empty"
               title={ledgerId ? '还没有已结算的轮次' : '请先创建/选择账本'}
