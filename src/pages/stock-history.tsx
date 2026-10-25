@@ -44,7 +44,6 @@ export function StockHistoryPanel({
   const [selectedCode, setSelectedCode] = useState('')
   const [detail, setDetail] = useState<StockTradeHistoryDetailDto | null>(null)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [reviews, setReviews] = useState<Record<string, string>>({})
   const [roundTags, setRoundTags] = useState<Record<string, string>>({})
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [edits, setEdits] = useState<Record<string, { price: string; lots: string }>>({})
@@ -86,7 +85,6 @@ export function StockHistoryPanel({
           stock_code: code,
         })
         setDetail(next)
-        setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
         setRoundTags(Object.fromEntries(next.rounds.map((round) => [round.id, round.tag])))
         setExpanded(
           Object.fromEntries(next.rounds.map((round, index) => [round.id, index === 0])),
@@ -116,22 +114,21 @@ export function StockHistoryPanel({
   }, [openDetail, rows, selectedCode])
 
   const saveRoundReview = useCallback(
-    async (roundId: string): Promise<void> => {
+    async (roundId: string, review: string): Promise<void> => {
       if (!detail) return
       try {
         const next = await window.api.invoke('stock_round_review', {
           ledger_id: ledgerId,
           round_id: roundId,
-          review: reviews[roundId] ?? '',
+          review,
         })
         setDetail(next)
-        setReviews(Object.fromEntries(next.rounds.map((round) => [round.id, round.review])))
         notify('复盘已保存')
       } catch (reviewError) {
         notify(stockErrorMessage(reviewError), 'error')
       }
     },
-    [detail, ledgerId, reviews],
+    [detail, ledgerId],
   )
 
   const saveRoundTag = useCallback(
@@ -269,17 +266,14 @@ export function StockHistoryPanel({
                     key={round.id}
                     round={round}
                     expanded={expanded[round.id] ?? false}
-                    review={reviews[round.id] ?? ''}
+                    review={round.review}
                     tag={roundTags[round.id] ?? round.tag}
                     options={tagOptions}
                     edits={edits}
                     onToggle={() =>
                       setExpanded((current) => ({ ...current, [round.id]: !current[round.id] }))
                     }
-                    onReview={(value) =>
-                      setReviews((current) => ({ ...current, [round.id]: value }))
-                    }
-                    onSaveReview={() => void saveRoundReview(round.id)}
+                    onSaveReview={(review) => void saveRoundReview(round.id, review)}
                     onTag={(value) => void saveRoundTag(round.id, value)}
                     onEdit={(trade, field, value) =>
                       setEdits((current) => ({
@@ -327,8 +321,7 @@ interface RoundBlockProps {
   options: string[]
   edits: Record<string, { price: string; lots: string }>
   onToggle: () => void
-  onReview: (value: string) => void
-  onSaveReview: () => void
+  onSaveReview: (review: string) => void
   onTag: (value: string) => void
   onEdit: (trade: StockTradeDto, field: 'price' | 'lots', value: string) => void
   onSaveTrade: (id: string) => void
@@ -343,7 +336,6 @@ function RoundBlock({
   options,
   edits,
   onToggle,
-  onReview,
   onSaveReview,
   onTag,
   onEdit,
@@ -352,6 +344,7 @@ function RoundBlock({
 }: RoundBlockProps): JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingReview, setEditingReview] = useState(false)
+  const [reviewDraft, setReviewDraft] = useState(review)
   return (
     <article className="stock-round" data-testid="stock-round">
       <button type="button" className="stock-round__head" onClick={onToggle}>
@@ -497,35 +490,50 @@ function RoundBlock({
                 variant="secondary"
                 size="sm"
                 testId="round-review-open"
-                onClick={() => setEditingReview((current) => !current)}
+                onClick={() => {
+                  if (editingReview) {
+                    setEditingReview(false)
+                    return
+                  }
+                  setReviewDraft(review)
+                  setEditingReview(true)
+                }}
               >
-                {review ? '编辑' : '写复盘'}
+                编辑
               </Button>
             </div>
             {editingReview ? (
-              <div className="stock-round__review-form">
+              <div className="stock-review-box">
                 <Input.TextArea
                   data-testid="round-review"
-                  rows={3}
-                  value={review}
-                  placeholder="本轮复盘"
-                  onChange={(event) => onReview(event.target.value)}
+                  rows={6}
+                  placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
+                  value={reviewDraft}
+                  onChange={(event) => setReviewDraft(event.target.value)}
                 />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  testId="round-review-save"
-                  onClick={() => {
-                    onSaveReview()
-                    setEditingReview(false)
-                  }}
-                >
-                  保存复盘
-                </Button>
+                <div className="stock-review-box__footer">
+                  <Button
+                    variant="secondary"
+                    testId="round-review-cancel"
+                    onClick={() => setEditingReview(false)}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    variant="primary"
+                    testId="round-review-save"
+                    onClick={() => {
+                      onSaveReview(reviewDraft)
+                      setEditingReview(false)
+                    }}
+                  >
+                    保存复盘
+                  </Button>
+                </div>
               </div>
             ) : (
               <p className="stock-round__review-text">
-                {review || '还没有写本轮复盘，点「写复盘」记录买入与卖出的理由。'}
+                {review || '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
               </p>
             )}
           </div>

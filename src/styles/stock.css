@@ -3032,16 +3032,6 @@
   gap: var(--transactions-space-sm);
 }
 
-.stock-round__review-form {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--transactions-space-sm);
-}
-
-.stock-round__review-form .ant-input {
-  flex: 1;
-}
-
 .stock-round__review-text {
   margin: 0;
   color: var(--transactions-color-text-secondary);

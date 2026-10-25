@@ -183,7 +183,18 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-round')).toContainText('观察一天')
 
     await page.getByTestId('round-review-open').click()
+    // 与持仓页同一套本轮复盘编辑器：6 行输入 + 取消 / 保存
+    await expect(page.locator('.stock-round .stock-review-box')).toBeVisible()
+    await expect(page.getByTestId('round-review')).toHaveAttribute('rows', '6')
+    await page.getByTestId('round-review').fill('临时草稿')
+    await page.getByTestId('round-review-cancel').click()
+    await expect(page.getByTestId('stock-round')).not.toContainText('临时草稿')
+    await page.getByTestId('round-review-open').click()
     await page.getByTestId('round-review').fill('复盘：趋势向上')
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-history-round-review.png'),
+    })
     await page.getByTestId('round-review-save').click()
     await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
     await page.getByTestId('round-tag').click()
