@@ -417,6 +417,9 @@ function RoundBlock({
             {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
           </span>
         </button>
+        <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
+          {money(round.pnl)} · {stockPercent(round.pnlRate)}
+        </span>
         {onCreateLesson ? (
           <Button
             variant="secondary"
@@ -427,9 +430,6 @@ function RoundBlock({
             记心得
           </Button>
         ) : null}
-        <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
-          {money(round.pnl)} · {stockPercent(round.pnlRate)}
-        </span>
       </div>
       {expanded ? (
         <div className="stock-round__body">
