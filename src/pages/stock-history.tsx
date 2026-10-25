@@ -417,6 +417,7 @@ function RoundBlock({
             {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
           </span>
         </button>
+        <span className="stock-muted stock-round__count">{round.tradeCount} 笔成交</span>
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
           {money(round.pnl)} · {stockPercent(round.pnlRate)}
         </span>
@@ -442,10 +443,6 @@ function RoundBlock({
       </div>
       {expanded ? (
         <div className="stock-round__body">
-          <div className="stock-round__meta">
-            <span className="stock-muted">{round.tradeCount} 笔成交</span>
-          </div>
-
           <Table
             className="tr-table stock-trade-table"
             rowKey="id"

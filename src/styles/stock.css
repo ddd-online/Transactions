@@ -3031,10 +3031,10 @@
   padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
 }
 
-.stock-round__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-md);
+.stock-round__count {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
 }
 
 .stock-round__review {
