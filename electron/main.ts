@@ -25,8 +25,14 @@ import {
 registerSchemesPrivileged()
 
 // 测试隔离：让每个 E2E 实例有独立的 userData（单实例锁与 Chromium 缓存都按它隔离）。
+// 开发/打包也必须各用一份：打包版的应用名是 Transactions、开发版是 transactions，
+// Windows 路径不区分大小写，默认会落进同一个目录 —— 安装版开着时 `pnpm dev` 会因
+// 单实例锁已占、Chromium 缓存被占用（Unable to move the cache）而直接退出。
+// 业务数据不在这里（账本在工作空间、配置在 ~/.tr.json / ~/.tr.dev.json），换目录只影响缓存。
 if (process.env.TRANSACTIONS_USER_DATA) {
   app.setPath('userData', process.env.TRANSACTIONS_USER_DATA)
+} else if (!app.isPackaged) {
+  app.setPath('userData', join(app.getPath('appData'), 'Transactions Dev'))
 }
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock()
