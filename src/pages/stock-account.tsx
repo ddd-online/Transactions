@@ -135,44 +135,59 @@ export function StockAccountPanel({
               <span />
             </div>
           ) : funds && funds.items.length > 0 ? (
-            <Table
-              className="tr-table stock-fund-table"
-              rowKey="id"
-              pagination={false}
-              size="middle"
-              dataSource={funds.items}
-              onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
-              columns={[
-                { title: '日期', dataIndex: 'recordDate', align: 'center', width: '12%' },
-                { title: '事件', dataIndex: 'eventText', width: '14%' },
-                {
-                  title: '金额变化',
-                  dataIndex: 'amountChange',
-                  align: 'right',
-                  width: '16%',
-                  render: (value: number) => (
-                    <span className={stockPnlClass(value)}>
-                      {value >= 0 ? '+' : '-'}
-                      {Math.abs(value / 100).toFixed(2)}
-                    </span>
-                  ),
-                },
-                {
-                  title: '现金余额',
-                  dataIndex: 'cashBalance',
-                  align: 'right',
-                  width: '16%',
-                  render: (value: number) => stockMoney(value),
-                },
-                {
-                  title: '备注',
-                  dataIndex: 'remark',
-                  align: 'right',
-                  ellipsis: true,
-                  width: '42%',
-                },
-              ]}
-            />
+            <>
+              <Table
+                className="tr-table stock-fund-table"
+                rowKey="id"
+                pagination={false}
+                size="middle"
+                dataSource={funds.items}
+                onRow={() => ({ 'data-testid': 'fund-row' }) as HTMLAttributes<HTMLElement>}
+                columns={[
+                  { title: '日期', dataIndex: 'recordDate', align: 'center', width: '12%' },
+                  { title: '事件', dataIndex: 'eventText', width: '14%' },
+                  {
+                    title: '金额变化',
+                    dataIndex: 'amountChange',
+                    align: 'right',
+                    width: '16%',
+                    render: (value: number) => (
+                      <span className={stockPnlClass(value)}>
+                        {value >= 0 ? '+' : '-'}
+                        {Math.abs(value / 100).toFixed(2)}
+                      </span>
+                    ),
+                  },
+                  {
+                    title: '现金余额',
+                    dataIndex: 'cashBalance',
+                    align: 'right',
+                    width: '16%',
+                    render: (value: number) => stockMoney(value),
+                  },
+                  {
+                    title: '备注',
+                    dataIndex: 'remark',
+                    align: 'right',
+                    ellipsis: true,
+                    width: '42%',
+                  },
+                ]}
+              />
+              <div className="stock-table-foot" data-testid="stock-fund-foot">
+                <span className="stock-muted">共 {funds.total} 条</span>
+                <Pagination
+                  size="small"
+                  current={fundPage}
+                  total={funds.total}
+                  pageSize={PAGE_SIZE}
+                  showSizeChanger={false}
+                  showLessItems
+                  onChange={setFundPage}
+                  itemRender={pagerItemRender('stock-fund')}
+                />
+              </div>
+            </>
           ) : error ? null : (
             <EmptyState
               testId="fund-empty"
@@ -181,21 +196,6 @@ export function StockAccountPanel({
             />
           )}
         </ScrollArea>
-        {loaded && funds && funds.items.length > 0 ? (
-          <div className="stock-table-foot">
-            <span className="stock-muted">共 {funds.total} 条</span>
-            <Pagination
-              size="small"
-              current={fundPage}
-              total={funds.total}
-              pageSize={PAGE_SIZE}
-              showSizeChanger={false}
-              showLessItems
-              onChange={setFundPage}
-              itemRender={pagerItemRender('stock-fund')}
-            />
-          </div>
-        ) : null}
       </section>
     </div>
   )
