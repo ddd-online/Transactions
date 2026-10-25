@@ -340,6 +340,8 @@
 /* 主图用 AntD `Image` 承载预览：它默认套一层 inline-block 的 `.ant-image`，
  * 撑满容器后点图区域才是整张主图。 */
 .key-event-gallery__main .ant-image {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -478,6 +480,26 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/* 照片完整塞进容器（contain），两侧的留白不再是纯底色：同一张图放大铺满、虚化垫在
+ * 后面，和大图预览是同一套底衬。比容器四周各宽 48px —— blur 的羽化带落在容器外，
+ * 被 `overflow: hidden` 裁掉，可见区域才是实心的。 */
+.key-event-gallery__blur {
+  position: absolute;
+  inset: -48px;
+  z-index: 0;
+  pointer-events: none;
+  background-position: center;
+  background-size: cover;
+  filter: blur(24px) saturate(1.15);
+}
+
+.key-event-gallery__blur::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--transactions-color-overlay-scrim) 36%, transparent);
 }
 
 /* 大图预览的底衬：同一张图放大铺满、虚化。

@@ -605,6 +605,12 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     ) : (
                       <>
                         <div className="key-event-gallery__main">
+                          {/* 照片按 contain 完整显示，两侧留白由同一张图放大虚化垫底 */}
+                          <div
+                            className="key-event-gallery__blur"
+                            aria-hidden="true"
+                            style={{ backgroundImage: `url("${assetUrl(mainImage.thumbPath)}")` }}
+                          />
                           <AntImage.PreviewGroup
                             items={previewItems}
                             preview={{ imageRender: previewImageRender }}

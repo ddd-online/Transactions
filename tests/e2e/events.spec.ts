@@ -106,6 +106,12 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     // 原图直接上传：不再经过裁剪弹窗
     await expect(page.getByTestId('event-image')).toHaveCount(1)
 
+    // 主图按 contain 完整显示，两侧留白由同一张图放大虚化作底
+    const galleryBlur = page.locator('.key-event-gallery__blur')
+    await expect(galleryBlur).toBeVisible()
+    await expect(galleryBlur).toHaveCSS('filter', /blur\(24px\)/)
+    await expect(galleryBlur).toHaveAttribute('style', /trasset:\/\/local\//)
+
     // 大图点开 AntD 预览（可缩放/切换），整图后面垫一层同图虚化底；Esc 关闭
     await page.getByTestId('event-image-main').click()
     await expect(page.locator('.ant-image-preview')).toBeVisible()
