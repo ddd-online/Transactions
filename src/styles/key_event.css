@@ -659,6 +659,19 @@
   font-style: italic;
 }
 
+/* 描述是纯文本：不解析 Markdown，只保留换行与连续空格（`white-space: pre-wrap`）。
+ * 长文仍按 Panel Measure Rule 封 75ch，避免灰井里一行拉到容器边上。 */
+.key-event-description__text {
+  max-width: 75ch;
+  margin: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-relaxed);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
 .key-event-description__edit {
   display: flex;
   flex-direction: column;
@@ -1035,149 +1048,6 @@
   display: flex;
   gap: var(--transactions-space-sm);
   flex-shrink: 0;
-}
-
-/* ---------------- Markdown 渲染（共享） ---------------- */
-
-.md-body {
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-major);
-  line-height: var(--transactions-height-relaxed);
-  word-break: break-word;
-  text-wrap: pretty;
-}
-
-/* 长文的**行长**封顶 75ch（≈41 汉字）：再宽就不是"读"而是"扫"了。
- * 只封正文块，表格 / 图片 / 分隔线仍按容器宽度铺开。 */
-.md-body > p,
-.md-body > ul,
-.md-body > ol,
-.md-body > blockquote,
-.md-body > h1,
-.md-body > h2,
-.md-body > h3,
-.md-body > h4,
-.md-body > h5,
-.md-body > h6 {
-  max-width: 75ch;
-}
-
-.md-body > *:first-child {
-  margin-top: 0;
-}
-
-.md-body > *:last-child {
-  margin-bottom: 0;
-}
-
-.md-body h1 {
-  font-size: var(--transactions-size-text-title);
-  line-height: var(--transactions-height-snug);
-  letter-spacing: var(--transactions-tracking-display);
-  text-wrap: balance;
-  margin: 1em 0 0.5em;
-  font-weight: var(--transactions-weight-semibold);
-}
-
-.md-body h2 {
-  font-size: var(--transactions-size-text-title-sm);
-  line-height: var(--transactions-height-snug);
-  letter-spacing: var(--transactions-tracking-display);
-  text-wrap: balance;
-  margin: 0.9em 0 0.45em;
-  font-weight: var(--transactions-weight-semibold);
-}
-
-.md-body h3 {
-  font-size: var(--transactions-size-text-section);
-  text-wrap: balance;
-  margin: 0.8em 0 0.4em;
-  font-weight: var(--transactions-weight-semibold);
-}
-
-.md-body h4,
-.md-body h5,
-.md-body h6 {
-  font-size: 1em;
-  text-wrap: balance;
-  margin: 0.7em 0 0.35em;
-  font-weight: var(--transactions-weight-semibold);
-}
-
-.md-body p {
-  margin: 0.5em 0;
-}
-
-.md-body ul,
-.md-body ol {
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-}
-
-.md-body li {
-  margin: 0.25em 0;
-}
-
-.md-body blockquote {
-  border-left: 2px solid var(--transactions-color-primary);
-  margin: 0.6em 0;
-  padding-left: var(--transactions-space-md);
-  color: var(--transactions-color-text-secondary);
-}
-
-.md-body code {
-  font-family: var(--transactions-font-mono);
-  font-size: 0.92em;
-  background: var(--transactions-color-minor-background);
-  padding: var(--transactions-space-2xs) var(--transactions-space-xs);
-  border-radius: var(--transactions-radius-sm);
-}
-
-.md-body pre,
-.md-body .md-pre {
-  background: var(--transactions-color-markdown-code-block);
-  padding: var(--transactions-space-md);
-  border-radius: var(--transactions-radius-md);
-  overflow-x: auto;
-  margin: 0.6em 0;
-}
-
-.md-body pre code {
-  background: none;
-  padding: 0;
-}
-
-.md-body .md-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 0.6em 0;
-  font-size: var(--transactions-size-text-body-sm);
-}
-
-.md-body .md-table th,
-.md-body .md-table td {
-  border: 1px solid var(--transactions-color-divider);
-  padding: var(--transactions-space-xs) var(--transactions-space-sm);
-}
-
-.md-body .md-table th {
-  background: var(--transactions-color-minor-background);
-  font-weight: var(--transactions-weight-semibold);
-}
-
-.md-body img {
-  max-width: 100%;
-  border-radius: var(--transactions-radius-md);
-}
-
-.md-body hr {
-  border: none;
-  border-top: 1px solid var(--transactions-color-divider);
-  margin: 1em 0;
-}
-
-.md-body a {
-  color: var(--transactions-color-primary);
 }
 
 @media (prefers-reduced-motion: reduce) {

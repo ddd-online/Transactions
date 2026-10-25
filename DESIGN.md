@@ -229,7 +229,7 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 - **Display** (700, 28px, 1.2, −0.015em): page titles and key metrics; display-xl 36px for hero figures, display-sm 24px for section-level titles.
 - **Title** (600, 20px, 1.4): panel and card titles; title-sm 18px for sub-headers.
 - **Section** (600, 16px, 1.6): UI section names — 600, not 500: in Chinese a section has to be *bold* to sit above its body (see the Two-Real-Weights Rule).
-- **Body** (400, 14px, 1.6): default content and table rows; body-sm 13px for dense lists. Continuous prose — Markdown bodies, 日记正文, 复盘模板 — also takes the body face: mono belongs to data, never to a paragraph.
+- **Body** (400, 14px, 1.6): default content and table rows; body-sm 13px for dense lists. Continuous prose — event descriptions, 日记正文, 复盘模板 — also takes the body face: mono belongs to data, never to a paragraph.
 - **Label** (500, 12px, uppercase, +0.04em): table headers, statistic labels, badges; small 11px for micro-labels.
 - **Amount** (JetBrains Mono, 500, tabular-nums): every monetary figure; larger sizes use tighter tracking (−0.02em at title, −0.03em at display).
 
@@ -243,7 +243,7 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 **The Mono Money Rule.** Every monetary amount renders in JetBrains Mono with `font-variant-numeric: tabular-nums` and slightly negative letter-spacing. Never typeset money in the body face.
 
-**The Panel Measure Rule.** Body text inside a panel fills that panel: 复盘 and note fields are read as itemised lines ("买入理由：…"), so they keep the width of the table above them — no `ch` cap, which in a panel merely shortens the wrap point and reads as content that failed to fill. Only continuous long-form prose caps its measure (Markdown bodies, 75ch in `key_event.css`).
+**The Panel Measure Rule.** Body text inside a panel fills that panel: 复盘 and note fields are read as itemised lines ("买入理由：…"), so they keep the width of the table above them — no `ch` cap, which in a panel merely shortens the wrap point and reads as content that failed to fill. Only continuous long-form prose caps its measure (事件描述, 75ch in `key_event.css`).
 
 ### Tracking tokens
 

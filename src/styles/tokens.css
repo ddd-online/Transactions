@@ -113,9 +113,6 @@
   /* Chat bubble（DSH specific-bubble） */
   --transactions-color-bubble: #eef0f4;
 
-  /* Code blocks（markdown） */
-  --transactions-color-markdown-code-block: #f4f5f7;
-
   /* Shadows — lv1..lv4 */
   --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -348,8 +345,6 @@
 
   --transactions-color-bubble: #24282f;
 
-  --transactions-color-markdown-code-block: #1d2026;
-
   --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
   --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);  --transactions-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
   --transactions-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55);
@@ -449,8 +444,6 @@
     --transactions-color-screen-scrim: rgba(0, 0, 0, 0.45);
 
     --transactions-color-bubble: #24282f;
-
-    --transactions-color-markdown-code-block: #1d2026;
 
     --transactions-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
     --transactions-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);

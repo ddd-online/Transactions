@@ -418,8 +418,6 @@
   color: var(--transactions-color-text-disabled);
 }
 
-/* 预览区里的 Markdown 元素样式复用 `.md-body`（见 key_event.css） */
-
 /* 右栏（编辑器）的底部内边距去掉：编辑框的留白由 `.diary-editor__body` 的上下内边距决定
  * （上 16px / 下 12px），再叠上 `.diary-panel` 的 16px 下内边距 → 底部 28px、顶部只有 16px，
  * 看着"下边距更大"。左栏（日期树）保留原内边距。 */

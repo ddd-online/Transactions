@@ -16,7 +16,6 @@ import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { FileButton } from '../components/file-button'
 import { Icon } from '../components/icon'
-import { Markdown } from '../components/markdown'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
@@ -689,7 +688,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                   ) : (
                     <div className="key-event-description__content" data-testid="event-content-view">
                       {content.trim() ? (
-                        <Markdown source={content} />
+                        <p className="key-event-description__text">{content}</p>
                       ) : (
                         <p className="key-event-description__placeholder">暂无描述</p>
                       )}

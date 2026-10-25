@@ -81,9 +81,13 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
 
     await page.getByTestId('event-color-0').click()
     await page.getByTestId('event-edit-content').click()
-    await page.getByTestId('event-content').fill('抽奖与聚餐')
+    // 纯文本：换行保留，Markdown 标记按字面显示（不渲染 <strong> 等）
+    await page.getByTestId('event-content').fill('抽奖与聚餐\n**不是粗体**')
     await page.getByTestId('event-save').click()
     await expect(page.getByTestId('event-content-view')).toContainText('抽奖与聚餐')
+    await expect(page.getByTestId('event-content-view')).toContainText('**不是粗体**')
+    await expect(page.getByTestId('event-content-view').locator('strong')).toHaveCount(0)
+    await expect(page.locator('.key-event-description__text')).toHaveCSS('white-space', 'pre-wrap')
     await page.waitForTimeout(400)
     await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'events.png') })
 
@@ -153,7 +157,11 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
       .get() as { file_path: string; thumb_path: string }
     database.close()
 
-    expect(event).toEqual({ title: '年会', content: '抽奖与聚餐', color: '#D9705A' })
+    expect(event).toEqual({
+      title: '年会',
+      content: '抽奖与聚餐\n**不是粗体**',
+      color: '#D9705A',
+    })
     expect(image.file_path).toMatch(new RegExp(`^key_events/${eventDate}/.+\\.(png|jpg)$`))
     expect(image.thumb_path).toMatch(new RegExp(`^key_events/${eventDate}/thumb_.+\\.jpg$`))
     expect(existsSync(join(workspace, 'data', 'assets', image.file_path))).toBe(true)
