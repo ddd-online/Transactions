@@ -14,6 +14,7 @@ import type {
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
+import { Pagination } from '../components/pagination'
 import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
@@ -52,6 +53,9 @@ const METRICS: Array<{ key: MetricKey; label: string; kind: MetricKind }> = [
   { key: 'expectancy', label: '期望值', kind: 'money' },
   { key: 'max_drawdown', label: '最大回撤', kind: 'percent' },
 ]
+
+/** 明细表每页条数（与记账明细的默认 15 条保持一致）。 */
+const DETAIL_PAGE_SIZE = 15
 
 function metricLabel(metric: MetricKey, grouped: boolean): string {
   if (metric === 'total_pnl' && grouped) return '分组盈亏'
@@ -308,6 +312,7 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
   const [data, setData] = useState<StockStatisticsDto | null>(null)
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [expandedChart, setExpandedChart] = useState(false)
+  const [detailPage, setDetailPage] = useState(1)
   const [error, setError] = useState('')
 
   const load = useCallback(async (): Promise<void> => {
@@ -344,11 +349,22 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
       .catch(() => setTagOptions([]))
   }, [ledgerId])
 
+  // 筛选条件一变就回到第 1 页（避免停在一个已经不存在的页码上）。
+  useEffect(() => {
+    setDetailPage(1)
+  }, [rangeMode, recent, tag, startDate, endDate])
+
   // 「明细」是逐笔结算的清单：口径恒为逐笔累计（分组点是给曲线用的，一行一格不是结算）。
   const detailRows = data?.points ?? []
   const points = strategy === 'grouped' ? (data?.groups ?? []) : detailRows
   const latest = points[points.length - 1]
   const detailPoints = detailRowsNewestFirst(detailRows)
+  const detailPageCount = Math.max(1, Math.ceil(detailPoints.length / DETAIL_PAGE_SIZE))
+  const detailPageNo = Math.min(detailPage, detailPageCount)
+  const detailPageRows = detailPoints.slice(
+    (detailPageNo - 1) * DETAIL_PAGE_SIZE,
+    detailPageNo * DETAIL_PAGE_SIZE,
+  )
   const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
 
   return (
@@ -520,120 +536,132 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
               title={ledgerId ? '还没有已结算的轮次' : '请先创建/选择账本'}
             />
           ) : (
-            <Table
-              className="tr-table stock-statistics-table"
-              rowKey={(row) => `${row.sequence}-${row.stockCode}`}
-              pagination={false}
-              size="middle"
-              tableLayout="fixed"
-              dataSource={detailPoints}
-              onRow={() => ({ 'data-testid': 'stock-statistics-point' }) as HTMLAttributes<HTMLElement>}
-              columns={[
-                {
-                  title: '建仓',
-                  dataIndex: 'openedAt',
-                  align: 'center',
-                  width: '7%',
-                  className: 'stock-stats-date',
-                  render: (value: number) => stockDate(value),
-                },
-                {
-                  title: '清仓',
-                  dataIndex: 'closedAt',
-                  align: 'center',
-                  width: '7%',
-                  className: 'stock-stats-date',
-                  render: (value: number) => stockDate(value),
-                },
-                {
-                  title: '股票',
-                  align: 'right',
-                  width: '13%',
-                  render: (_, row) => `${row.stockName} ${row.stockCode}`,
-                },
-                {
-                  title: '标签',
-                  dataIndex: 'tag',
-                  align: 'center',
-                  width: '5%',
-                  render: (value: string) =>
-                    value ? <span className="ui-tag">{value}</span> : '—',
-                },
-                {
-                  title: '盈亏',
-                  dataIndex: 'pnl',
-                  align: 'right',
-                  width: '8%',
-                  render: (value: number) => (
-                    <span className={stockPnlClass(value)}>{money(value)}</span>
-                  ),
-                },
-                {
-                  title: '累计',
-                  dataIndex: 'totalPnl',
-                  align: 'right',
-                  width: '8%',
-                  render: (value: number) => money(value),
-                },
-                {
-                  title: '胜负',
-                  align: 'right',
-                  width: '6%',
-                  render: (_, row) => `${row.winCount} 胜 ${row.lossCount} 负`,
-                },
-                {
-                  title: '胜率',
-                  dataIndex: 'winRate',
-                  align: 'right',
-                  width: '6%',
-                  render: (value: number) => stockPercent(value),
-                },
-                {
-                  title: '平均盈利',
-                  dataIndex: 'avgWin',
-                  align: 'right',
-                  width: '8%',
-                  render: (value: number) =>
-                    value > 0 ? <span className="is-up">{money(value)}</span> : '—',
-                },
-                {
-                  title: '平均亏损',
-                  dataIndex: 'avgLoss',
-                  align: 'right',
-                  width: '8%',
-                  render: (value: number) =>
-                    value > 0 ? <span className="is-down">-¥{(value / 100).toFixed(2)}</span> : '—',
-                },
-                {
-                  title: '盈亏比',
-                  dataIndex: 'pnlRatio',
-                  align: 'right',
-                  width: '6%',
-                  render: (value: number | null) => (value === null ? '—' : value.toFixed(2)),
-                },
-                {
-                  title: '期望值',
-                  dataIndex: 'expectancy',
-                  align: 'right',
-                  width: '8%',
-                  render: (value: number) => (
-                    <span className={stockPnlClass(value)}>{money(value)}</span>
-                  ),
-                },
-                {
-                  title: '回撤',
-                  dataIndex: 'maxDrawdownPct',
-                  align: 'right',
-                  width: '10%',
-                  render: (value: number, row) => (
-                    <span className="stock-stats-drawdown is-down">
-                      <span>{stockPercent(value)}</span>
-                      <span>{money(row.maxDrawdown)}</span>
-                    </span>
-                  ),
-                },
-              ]}
-            />
+            <>
+              <Table
+                className="tr-table stock-statistics-table"
+                rowKey={(row) => `${row.sequence}-${row.stockCode}`}
+                pagination={false}
+                size="middle"
+                tableLayout="fixed"
+                dataSource={detailPageRows}
+                onRow={() => ({ 'data-testid': 'stock-statistics-point' }) as HTMLAttributes<HTMLElement>}
+                columns={[
+                  {
+                    title: '建仓',
+                    dataIndex: 'openedAt',
+                    align: 'center',
+                    width: '7%',
+                    className: 'stock-stats-date',
+                    render: (value: number) => stockDate(value),
+                  },
+                  {
+                    title: '清仓',
+                    dataIndex: 'closedAt',
+                    align: 'center',
+                    width: '7%',
+                    className: 'stock-stats-date',
+                    render: (value: number) => stockDate(value),
+                  },
+                  {
+                    title: '股票',
+                    align: 'right',
+                    width: '13%',
+                    render: (_, row) => `${row.stockName} ${row.stockCode}`,
+                  },
+                  {
+                    title: '标签',
+                    dataIndex: 'tag',
+                    align: 'center',
+                    width: '5%',
+                    render: (value: string) =>
+                      value ? <span className="ui-tag">{value}</span> : '—',
+                  },
+                  {
+                    title: '盈亏',
+                    dataIndex: 'pnl',
+                    align: 'right',
+                    width: '8%',
+                    render: (value: number) => (
+                      <span className={stockPnlClass(value)}>{money(value)}</span>
+                    ),
+                  },
+                  {
+                    title: '累计',
+                    dataIndex: 'totalPnl',
+                    align: 'right',
+                    width: '8%',
+                    render: (value: number) => money(value),
+                  },
+                  {
+                    title: '胜负',
+                    align: 'right',
+                    width: '6%',
+                    render: (_, row) => `${row.winCount} 胜 ${row.lossCount} 负`,
+                  },
+                  {
+                    title: '胜率',
+                    dataIndex: 'winRate',
+                    align: 'right',
+                    width: '6%',
+                    render: (value: number) => stockPercent(value),
+                  },
+                  {
+                    title: '平均盈利',
+                    dataIndex: 'avgWin',
+                    align: 'right',
+                    width: '8%',
+                    render: (value: number) =>
+                      value > 0 ? <span className="is-up">{money(value)}</span> : '—',
+                  },
+                  {
+                    title: '平均亏损',
+                    dataIndex: 'avgLoss',
+                    align: 'right',
+                    width: '8%',
+                    render: (value: number) =>
+                      value > 0 ? <span className="is-down">-¥{(value / 100).toFixed(2)}</span> : '—',
+                  },
+                  {
+                    title: '盈亏比',
+                    dataIndex: 'pnlRatio',
+                    align: 'right',
+                    width: '6%',
+                    render: (value: number | null) => (value === null ? '—' : value.toFixed(2)),
+                  },
+                  {
+                    title: '期望值',
+                    dataIndex: 'expectancy',
+                    align: 'right',
+                    width: '8%',
+                    render: (value: number) => (
+                      <span className={stockPnlClass(value)}>{money(value)}</span>
+                    ),
+                  },
+                  {
+                    title: '回撤',
+                    dataIndex: 'maxDrawdownPct',
+                    align: 'right',
+                    width: '10%',
+                    render: (value: number, row) => (
+                      <span className="stock-stats-drawdown is-down">
+                        <span>{stockPercent(value)}</span>
+                        <span>{money(row.maxDrawdown)}</span>
+                      </span>
+                    ),
+                  },
+                ]}
+              />
+              <div className="stock-table-foot" data-testid="stock-statistics-detail-foot">
+                <span className="stock-muted">共 {detailPoints.length} 笔</span>
+                <Pagination
+                  page={detailPageNo}
+                  totalPages={detailPageCount}
+                  showSummary={false}
+                  testId="stock-statistics-detail"
+                  onChange={setDetailPage}
+                />
+              </div>
+            </>
           )}
         </section>
       )}

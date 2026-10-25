@@ -108,6 +108,11 @@ test('股票统计明细：同日建仓的两轮按清仓先后排列', async ()
     await expect(rows.nth(1)).toContainText('2 胜 0 负')
     await expect(rows.nth(2)).toContainText('1 胜 0 负')
 
+    // 分页脚：总数 + 页码（3 笔只有 1 页）
+    const detailFoot = page.getByTestId('stock-statistics-detail-foot')
+    await expect(detailFoot).toContainText('共 3 笔')
+    await expect(detailFoot.locator('.ant-pagination-item')).toHaveCount(1)
+
     // 列对齐：建仓 / 清仓 / 标签居中，其余（含股票、胜负）居右。
     const headers = page.locator('.ant-table-thead th')
     for (const index of [0, 1, 3]) {
