@@ -2992,6 +2992,15 @@
   gap: var(--transactions-space-sm);
   width: 100%;
   padding: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+.stock-round__toggle {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
@@ -2999,11 +3008,18 @@
   cursor: pointer;
 }
 
-.stock-round__head > span:nth-child(2) {
+.stock-round__toggle > span:nth-child(2) {
   flex: 1;
   min-width: 0;
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
+}
+
+.stock-round__head-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--transactions-space-sm);
 }
 
 .stock-round__body {
@@ -3030,12 +3046,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-sm);
-}
-
-.stock-round__review-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-2xs);
 }
 
 /* ---------------- 心得 ---------------- */

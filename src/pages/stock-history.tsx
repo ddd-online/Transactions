@@ -404,16 +404,35 @@ function RoundBlock({
       data-testid="stock-round"
       data-round-id={round.id}
     >
-      <button type="button" className="stock-round__head" onClick={onToggle}>
-        <Icon name={expanded ? 'Down' : 'CaretRight'} size={12} />
-        <span>
-          第 {round.roundNo} 轮 · {formatTimestamp(round.openedAt, 'YYYY-MM-DD')} →{' '}
-          {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
-        </span>
-        <span className={stockPnlClass(round.pnl)}>
-          {money(round.pnl)} · {stockPercent(round.pnlRate)}
-        </span>
-      </button>
+      <div className="stock-round__head">
+        <button
+          type="button"
+          className="stock-round__toggle"
+          aria-expanded={expanded}
+          onClick={onToggle}
+        >
+          <Icon name={expanded ? 'Down' : 'CaretRight'} size={12} />
+          <span>
+            第 {round.roundNo} 轮 · {formatTimestamp(round.openedAt, 'YYYY-MM-DD')} →{' '}
+            {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
+          </span>
+        </button>
+        <div className="stock-round__head-actions">
+          {onCreateLesson ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              testId="round-lesson-create"
+              onClick={() => onCreateLesson(round.id)}
+            >
+              记心得
+            </Button>
+          ) : null}
+          <span className={stockPnlClass(round.pnl)}>
+            {money(round.pnl)} · {stockPercent(round.pnlRate)}
+          </span>
+        </div>
+      </div>
       {expanded ? (
         <div className="stock-round__body">
           <div className="stock-round__meta">
@@ -543,34 +562,22 @@ function RoundBlock({
           <div className="stock-round__review">
             <div className="stock-round__review-head">
               <span className="stock-section-title">本轮复盘</span>
-              <div className="stock-round__review-actions">
-                {onCreateLesson ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    testId="round-lesson-create"
-                    onClick={() => onCreateLesson(round.id)}
-                  >
-                    记心得
-                  </Button>
-                ) : null}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  testId="round-review-open"
-                  onClick={() => {
-                    if (editingReview) {
-                      setEditingReview(false)
-                      return
-                    }
-                    // 空复盘首次编辑用本轮模板起头；已写过的内容不被模板覆盖
-                    setReviewDraft(review.trim() ? review : template)
-                    setEditingReview(true)
-                  }}
-                >
+              <Button
+                variant="secondary"
+                size="sm"
+                testId="round-review-open"
+                onClick={() => {
+                  if (editingReview) {
+                    setEditingReview(false)
+                    return
+                  }
+                  // 空复盘首次编辑用本轮模板起头；已写过的内容不被模板覆盖
+                  setReviewDraft(review.trim() ? review : template)
+                  setEditingReview(true)
+                }}
+              >
                 编辑
               </Button>
-              </div>
             </div>
             {editingReview ? (
               <div className="stock-review-box">
