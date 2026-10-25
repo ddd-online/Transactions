@@ -4,6 +4,7 @@ import {
   ArrowUpOutlined,
   BarChartOutlined,
   BookOutlined,
+  BulbOutlined,
   BorderOutlined,
   CalendarOutlined,
   CaretRightOutlined,
@@ -65,6 +66,7 @@ export type IconName =
   | 'Read'
   | 'Setting'
   | 'Book'
+  | 'Bulb'
   | 'Up'
   | 'Down'
   | 'Plus'
@@ -129,6 +131,7 @@ const ICONS: Record<IconName, IconComponent> = {
   Read: ReadOutlined,
   Setting: SettingOutlined,
   Book: BookOutlined,
+  Bulb: BulbOutlined,
   Up: ArrowUpOutlined,
   Down: DownOutlined,
   Plus: PlusOutlined,

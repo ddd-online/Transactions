@@ -30,7 +30,7 @@ const TABS: Array<[StockTab, string, IconName]> = [
   ['account', '账户', 'User'],
   ['positions', '持仓', 'CreditCard'],
   ['history', '记录', 'ClockCircle'],
-  ['lessons', '心得', 'Read'],
+  ['lessons', '心得', 'Bulb'],
   ['statistics', '统计', 'BarChart'],
   ['settings', '设置', 'Setting'],
 ]
