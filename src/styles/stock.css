@@ -2748,6 +2748,7 @@
 
 .stock-detail__head {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
@@ -2967,12 +2968,18 @@
 .stock-history-detail {
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .stock-rounds {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
 }
 
 .stock-round {
