@@ -2996,7 +2996,7 @@
 
 .stock-round__toggle {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   align-items: center;
   gap: var(--transactions-space-sm);
@@ -3015,11 +3015,9 @@
   color: var(--transactions-color-text-secondary);
 }
 
-.stock-round__head-actions {
-  display: flex;
+.stock-round__pnl {
   flex-shrink: 0;
-  align-items: center;
-  gap: var(--transactions-space-sm);
+  margin-left: auto;
 }
 
 .stock-round__body {

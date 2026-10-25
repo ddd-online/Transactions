@@ -417,21 +417,19 @@ function RoundBlock({
             {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}
           </span>
         </button>
-        <div className="stock-round__head-actions">
-          {onCreateLesson ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              testId="round-lesson-create"
-              onClick={() => onCreateLesson(round.id)}
-            >
-              记心得
-            </Button>
-          ) : null}
-          <span className={stockPnlClass(round.pnl)}>
-            {money(round.pnl)} · {stockPercent(round.pnlRate)}
-          </span>
-        </div>
+        {onCreateLesson ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            testId="round-lesson-create"
+            onClick={() => onCreateLesson(round.id)}
+          >
+            记心得
+          </Button>
+        ) : null}
+        <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
+          {money(round.pnl)} · {stockPercent(round.pnlRate)}
+        </span>
       </div>
       {expanded ? (
         <div className="stock-round__body">
