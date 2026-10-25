@@ -2909,6 +2909,11 @@
   overflow-wrap: anywhere;
 }
 
+.stock-round__body > .stock-trade-table {
+  margin-right: calc(-1 * var(--transactions-space-lg));
+  margin-left: calc(-1 * var(--transactions-space-lg));
+}
+
 .stock-trade-table .ant-table-thead > tr > th {
   padding: var(--transactions-space-xs) var(--transactions-space-sm);
   background: var(--transactions-color-minor-background);
