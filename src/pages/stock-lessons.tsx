@@ -175,7 +175,7 @@ export function StockLessonsPanel({
                           onJump({ code: lesson.stockCode, roundId: lesson.roundId })
                         }}
                       >
-                        <Icon name="ArrowRight" size={16} />
+                        <Icon name="Eye" size={16} />
                       </button>
                       <Popconfirm
                         title="删除这条心得？"
