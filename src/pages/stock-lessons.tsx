@@ -36,7 +36,7 @@ function SourceLine({ lesson }: { lesson: StockLessonDto }): JSX.Element {
   )
 }
 
-/** 股票心得列表：一句心得一行，来源轮次作为副行。 */
+/** 股票心得列表：一句心得一行，关联交易独立成列。 */
 export function StockLessonsPanel({
   ledgerId,
   refreshToken,
@@ -120,13 +120,19 @@ export function StockLessonsPanel({
                 title: '心得',
                 dataIndex: 'text',
                 render: (_value: string, lesson: StockLessonDto) => (
-                  <div className="stock-lesson__body">
-                    <p className="stock-lesson__text" title={lesson.text}>
-                      {lesson.text}
-                    </p>
-                    <p className="stock-lesson__source">
-                      <SourceLine lesson={lesson} />
-                    </p>
+                  <p className="stock-lesson__text" title={lesson.text}>
+                    {lesson.text}
+                  </p>
+                ),
+              },
+              {
+                title: '关联交易',
+                key: 'source',
+                width: 260,
+                render: (_value: unknown, lesson: StockLessonDto) => (
+                  <div className="stock-lesson__source">
+                    <span className="stock-lesson__source-label">关联交易</span>
+                    <SourceLine lesson={lesson} />
                   </div>
                 ),
               },

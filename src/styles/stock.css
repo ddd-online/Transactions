@@ -3085,15 +3085,12 @@
   padding: var(--transactions-space-lg);
 }
 
-.stock-lesson__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  min-width: 0;
-  padding: 2px 0;
+/* 一句话最多两行：句子的分量来自留白与字号，不靠加粗或引用块。 */
+.stock-page .stock-lessons-table .ant-table-tbody > tr > td {
+  padding-top: var(--transactions-space-md);
+  padding-bottom: var(--transactions-space-md);
 }
 
-/* 一句话最多两行：句子的分量来自留白与字号，不靠加粗或引用块。 */
 .stock-lesson__text {
   display: -webkit-box;
   overflow: hidden;
@@ -3104,6 +3101,13 @@
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.stock-lesson__source-label {
+  display: none;
+  flex-shrink: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
 }
 
 .stock-lesson__source {
@@ -3700,6 +3704,10 @@
     display: block;
     overflow: visible;
     -webkit-line-clamp: unset;
+  }
+
+  .stock-lesson__source-label {
+    display: inline;
   }
 
   .stock-lesson__actions {
