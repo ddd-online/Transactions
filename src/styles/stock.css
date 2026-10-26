@@ -3147,8 +3147,13 @@
 .stock-round__body .stock-ledger {
   margin-top: var(--transactions-space-sm);
   padding-top: var(--transactions-space-sm);
-  border-top: 1px solid var(--transactions-color-divider);
+  border-top: 0;
   border-bottom: 0;
+}
+
+/* 台账与每日复盘之间不再加发丝线，保持一段连续的工作区。 */
+.stock-round__body .stock-ledger + .stock-round__daily {
+  border-top: 0;
 }
 
 .stock-round__body .stock-ledger__head {
