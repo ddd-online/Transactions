@@ -29,6 +29,8 @@ import {
 
 export interface StockStatisticsPanelProps {
   ledgerId: string
+  /** 明细里点股票时，跳到记录页的对应轮次 */
+  onOpenRound?: (target: { code: string; roundId: string }) => void
 }
 
 type RangeMode = 'all' | 'time' | 'recent'
@@ -299,7 +301,10 @@ function ChartBox({
   )
 }
 
-export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): JSX.Element {
+export function StockStatisticsPanel({
+  ledgerId,
+  onOpenRound,
+}: StockStatisticsPanelProps): JSX.Element {
   const [strategy, setStrategy] = useState<'cumulative' | 'grouped'>('cumulative')
   const [rangeMode, setRangeMode] = useState<RangeMode>('all')
   const [recent, setRecent] = useState('5')
@@ -568,7 +573,21 @@ export function StockStatisticsPanel({ ledgerId }: StockStatisticsPanelProps): J
                     title: '股票',
                     align: 'right',
                     width: '12%',
-                    render: (_, row) => `${row.stockName} ${row.stockCode}`,
+                    render: (_, row) => {
+                      const label = `${row.stockName} ${row.stockCode}`
+                      if (!row.roundId || !onOpenRound) return label
+                      return (
+                        <button
+                          type="button"
+                          className="stock-stats-stock"
+                          data-testid="statistics-detail-stock"
+                          title="查看这一轮交易"
+                          onClick={() => onOpenRound({ code: row.stockCode, roundId: row.roundId })}
+                        >
+                          {label}
+                        </button>
+                      )
+                    },
                   },
                   {
                     title: '标签',

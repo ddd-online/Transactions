@@ -245,6 +245,18 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-statistics-point')).toHaveCount(1)
     await expect(page.locator('.ant-table-thead')).toContainText('期望值')
 
+    // 明细里点股票：跳到记录里的对应轮次
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-statistics-detail-stock.png'),
+    })
+    await page.getByTestId('statistics-detail-stock').first().click()
+    await expect(page.getByTestId('stock-tab-history')).toHaveClass(/is-active/)
+    await expect(page.getByTestId('stock-round').first()).toHaveClass(/is-arrived/)
+    await expect(
+      page.getByTestId('stock-round').first().locator('.stock-round__body'),
+    ).toBeVisible()
+
     await page.getByTestId('stock-tab-settings').click()
     await page.getByTestId('stock-operations-open').click()
     await expect(page.getByTestId('stock-operation')).toHaveCount(4)

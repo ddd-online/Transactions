@@ -28,6 +28,8 @@ export interface StockStatisticsPointDto {
   openedAt: number
   /** 本统计点的清仓时间（Unix 秒）—— 统计的时间轴（排序 / 月份 / 最近 N 笔） */
   closedAt: number
+  /** 关联的交易轮次，明细里点股票可跳回该轮 */
+  roundId: string
   stockCode: string
   stockName: string
   /** 该股第几轮 */

@@ -66,6 +66,12 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
     if (tab !== 'history') setHistoryJump(null)
   }, [tab])
 
+  /** 从心得或统计明细跳到记录中的某一轮。 */
+  const openHistoryRound = (target: { code: string; roundId: string }): void => {
+    setHistoryJump({ ...target, token: Date.now() })
+    setTab('history')
+  }
+
   const closeAccountAction = (): void => {
     setAccountAction(null)
     setAccountAmount('')
@@ -227,13 +233,12 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
           ledgerId={ledgerId}
           refreshToken={lessonRefresh}
           onEdit={(lesson) => setLessonDialog({ lesson, roundId: '' })}
-          onJump={(target) => {
-            setHistoryJump({ ...target, token: Date.now() })
-            setTab('history')
-          }}
+          onJump={openHistoryRound}
         />
       ) : null}
-      {tab === 'statistics' ? <StockStatisticsPanel ledgerId={ledgerId} /> : null}
+      {tab === 'statistics' ? (
+        <StockStatisticsPanel ledgerId={ledgerId} onOpenRound={openHistoryRound} />
+      ) : null}
       {tab === 'settings' ? (
         <StockSettingsPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
       ) : null}

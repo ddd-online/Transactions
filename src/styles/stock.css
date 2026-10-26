@@ -3353,6 +3353,23 @@
   flex: 1;
 }
 
+.stock-stats-stock {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.stock-stats-stock:hover,
+.stock-stats-stock:focus-visible {
+  color: var(--transactions-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .stock-statistics-table .stock-stats-date {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
