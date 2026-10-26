@@ -3045,6 +3045,89 @@
   color: var(--transactions-color-text-secondary);
 }
 
+.stock-ledger {
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ledger__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ledger__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-md) var(--transactions-space-lg);
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.stock-ledger__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stock-ledger__field--wide {
+  grid-column: 1 / -1;
+}
+
+.stock-ledger__value {
+  margin: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-relaxed);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.stock-ledger__value--muted {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ledger__empty {
+  margin: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+}
+
+.stock-ledger__error {
+  padding: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
+.stock-ledger__computed.ant-input {
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-ledger__computed.ant-input.is-up {
+  color: var(--transactions-color-income);
+}
+
+.stock-ledger__computed.ant-input.is-down {
+  color: var(--transactions-color-expense);
+}
+
+@media (max-width: 1000px) {
+  .stock-ledger__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .stock-ledger__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .stock-round__review {
   display: flex;
   flex-direction: column;

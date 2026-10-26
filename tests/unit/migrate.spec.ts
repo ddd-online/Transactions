@@ -28,8 +28,8 @@ describe('migration runner', () => {
     const path = join(temporaryDirectory(), 'transactions.db')
     const db = openDatabase(path)
     migrate(db, path)
-    expect(schemaVersion(db)).toBe(3)
-    expect(MIGRATIONS).toHaveLength(3)
+    expect(schemaVersion(db)).toBe(4)
+    expect(MIGRATIONS).toHaveLength(4)
     db.close()
   })
 
@@ -38,7 +38,7 @@ describe('migration runner', () => {
     const db = openDatabase(path)
     migrate(db, path)
     migrate(db, path)
-    expect(schemaVersion(db)).toBe(3)
+    expect(schemaVersion(db)).toBe(4)
     db.close()
   })
 
@@ -48,23 +48,23 @@ describe('migration runner', () => {
     const db = openDatabase(path)
     migrate(db, path)
 
-    const version4: Migration = {
-      version: 4,
+    const version5: Migration = {
+      version: 5,
       name: 'add-note',
       sql: 'ALTER TABLE ledger ADD COLUMN note TEXT NOT NULL DEFAULT "";',
     }
 
-    migrate(db, path, [...MIGRATIONS, version4])
-    expect(schemaVersion(db)).toBe(4)
+    migrate(db, path, [...MIGRATIONS, version5])
+    expect(schemaVersion(db)).toBe(5)
     expect(existsSync(`${path}.bak`)).toBe(true)
 
-    const version5: Migration = {
-      version: 5,
+    const version6: Migration = {
+      version: 6,
       name: 'add-note-2',
       sql: 'ALTER TABLE ledger ADD COLUMN note2 TEXT NOT NULL DEFAULT "";',
     }
-    migrate(db, path, [...MIGRATIONS, version4, version5])
-    expect(schemaVersion(db)).toBe(5)
+    migrate(db, path, [...MIGRATIONS, version5, version6])
+    expect(schemaVersion(db)).toBe(6)
     expect(existsSync(`${path}.bak`)).toBe(true)
     db.close()
   })
@@ -93,14 +93,14 @@ describe('migration runner', () => {
   it('rolls back a failed migration', () => {
     const path = join(temporaryDirectory(), 'transactions.db')
     const db = openDatabase(path)
-    const bad: Migration = { version: 4, name: 'bad', sql: 'THIS IS NOT SQL' }
+    const bad: Migration = { version: 5, name: 'bad', sql: 'THIS IS NOT SQL' }
     expect(() => migrate(db, path, [...MIGRATIONS, bad])).toThrow()
-    expect(schemaVersion(db)).toBe(3)
+    expect(schemaVersion(db)).toBe(4)
     db.close()
   })
 
   it('opens a workspace through the same runner', () => {
     const workspace = openWorkspace(temporaryDirectory())
-    expect(schemaVersion(workspace.db)).toBe(3)
+    expect(schemaVersion(workspace.db)).toBe(4)
   })
 })

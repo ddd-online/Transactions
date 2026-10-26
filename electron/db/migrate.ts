@@ -48,6 +48,29 @@ export const MIGRATIONS: readonly Migration[] = [
         ON stock_lesson(round_id);
     `,
   },
+  {
+    version: 4,
+    name: 'stock_ledger',
+    sql: `
+      CREATE TABLE IF NOT EXISTS stock_ledger (
+        id TEXT PRIMARY KEY,
+        ledger_id TEXT NOT NULL DEFAULT '',
+        stock_code TEXT NOT NULL DEFAULT '',
+        round_id TEXT,
+        why_buy TEXT NOT NULL DEFAULT '',
+        stop_loss TEXT NOT NULL DEFAULT '',
+        take_profit TEXT NOT NULL DEFAULT '',
+        followed_system TEXT NOT NULL DEFAULT '',
+        summary TEXT NOT NULL DEFAULT '',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_ledger_open
+        ON stock_ledger(ledger_id, stock_code) WHERE round_id IS NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_stock_ledger_round
+        ON stock_ledger(ledger_id, round_id) WHERE round_id IS NOT NULL;
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

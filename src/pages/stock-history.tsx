@@ -18,6 +18,7 @@ import { ConfirmDialog } from '../components/confirm-dialog'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { notify } from '../components/toast'
+import { StockLedgerSection } from './stock-ledger'
 import {
   stockDateTime,
   stockErrorMessage,
@@ -308,6 +309,7 @@ export function StockHistoryPanel({
                 {detail.rounds.map((round) => (
                   <RoundBlock
                     key={round.id}
+                    ledgerId={ledgerId}
                     round={round}
                     expanded={expanded[round.id] ?? false}
                     arrived={arrivedRoundId === round.id}
@@ -361,6 +363,7 @@ export function StockHistoryPanel({
 }
 
 interface RoundBlockProps {
+  ledgerId: string
   round: StockTradeRoundDto
   expanded: boolean
   arrived: boolean
@@ -379,6 +382,7 @@ interface RoundBlockProps {
 }
 
 function RoundBlock({
+  ledgerId,
   round,
   expanded,
   arrived,
@@ -563,6 +567,27 @@ function RoundBlock({
             ]}
           />
 
+          <StockLedgerSection ledgerId={ledgerId} roundId={round.id} />
+
+          <section className="stock-round__daily">
+            <div className="stock-round__section-head">
+              <span className="stock-section-title">每日复盘</span>
+              <span className="stock-muted">{round.dayReviews.length} 条</span>
+            </div>
+            {round.dayReviews.length > 0 ? (
+              <ul className="stock-round__days">
+                {round.dayReviews.map((day) => (
+                  <li key={day.date}>
+                    <span className="stock-muted">{day.date}</span>
+                    <span>{day.review}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="stock-muted stock-round__daily-empty">本轮没有每日复盘</p>
+            )}
+          </section>
+
           <div className="stock-round__review">
             <div className="stock-round__review-head">
               <span className="stock-section-title">本轮复盘</span>
@@ -618,25 +643,6 @@ function RoundBlock({
               </p>
             )}
           </div>
-
-          <section className="stock-round__daily">
-            <div className="stock-round__section-head">
-              <span className="stock-section-title">每日复盘</span>
-              <span className="stock-muted">{round.dayReviews.length} 条</span>
-            </div>
-            {round.dayReviews.length > 0 ? (
-              <ul className="stock-round__days">
-                {round.dayReviews.map((day) => (
-                  <li key={day.date}>
-                    <span className="stock-muted">{day.date}</span>
-                    <span>{day.review}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="stock-muted stock-round__daily-empty">本轮没有每日复盘</p>
-            )}
-          </section>
         </div>
       ) : null}
     </article>

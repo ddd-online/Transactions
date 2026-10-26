@@ -97,6 +97,7 @@ import {
   updatePosition,
   updateTradeHistoryName,
 } from '../db/dao/stock-trade'
+import { attachOpenStockLedger } from '../db/dao/stock-ledger'
 import { logError } from '../logging'
 import {
   getOrCreateFeeSetting,
@@ -403,6 +404,8 @@ function closeRound(
   attachUnattachedTrades(db, ledgerId, stockCode, round.id)
   // 持仓期间写的「每日复盘」同样归档到这一轮（此后只读）
   attachUnattachedDayReviews(db, ledgerId, stockCode, round.id)
+  // 持仓期保存过的台账也归档到这一轮
+  attachOpenStockLedger(db, ledgerId, stockCode, round.id, closedAt)
   return round.id
 }
 

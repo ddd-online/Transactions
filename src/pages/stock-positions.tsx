@@ -15,6 +15,7 @@ import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { notify } from '../components/toast'
+import { StockLedgerSection } from './stock-ledger'
 import {
   stockDateTime,
   stockErrorMessage,
@@ -615,6 +616,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             <p className="stock-fee-line">
               本轮费率 <span>{feeText(selected, fee)}</span>
             </p>
+
+            <StockLedgerSection ledgerId={ledgerId} stockCode={selected.stockCode} />
 
             <section className="stock-detail__section">
               <button

@@ -42,6 +42,7 @@ import {
   removeLesson,
   updateLesson,
 } from '../services/stock-lessons'
+import { getStockLedger, saveStockLedger } from '../services/stock-ledger'
 import { getStatisticsFor } from '../services/stock-statistics'
 import { createTradeOrderWithRoundFee } from '../services/stock-trade-write'
 import { archiveStockData, resetStockData } from '../services/stock-lifecycle'
@@ -1092,6 +1093,33 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       if (!id) throw new AppError('id is required', { status: 400 })
       removeLesson(workspaceDb(), ledgerId, id)
       return null
+    },
+
+    stock_ledger_get(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return getStockLedger(workspaceDb(), ledgerId, {
+        stockCode: raw.stock_code == null ? null : String(raw.stock_code),
+        roundId: raw.round_id == null ? null : String(raw.round_id),
+      })
+    },
+
+    stock_ledger_save(request) {
+      const raw = asObject(request)
+      const ledgerId = String(raw.ledger_id ?? '')
+      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
+      return saveStockLedger(workspaceDb(), ledgerId, {
+        stockCode: raw.stock_code == null ? null : String(raw.stock_code),
+        roundId: raw.round_id == null ? null : String(raw.round_id),
+        fields: {
+          whyBuy: String(raw.why_buy ?? ''),
+          stopLoss: String(raw.stop_loss ?? ''),
+          takeProfit: String(raw.take_profit ?? ''),
+          followedSystem: String(raw.followed_system ?? ''),
+          summary: String(raw.summary ?? ''),
+        },
+      })
     },
 
     stock_statistics(request) {
