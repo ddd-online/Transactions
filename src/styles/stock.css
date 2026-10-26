@@ -3141,6 +3141,32 @@
   gap: var(--transactions-space-sm);
 }
 
+
+/* 记录页里的台账跟每日 / 本轮复盘同一套平铺段落：无外层边框，
+ * 与正文共用轮次内边距，只用一条上发丝线分节。 */
+.stock-round__body .stock-ledger {
+  margin-top: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
+  border-bottom: 0;
+}
+
+.stock-round__body .stock-ledger__head {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.stock-round__body .stock-ledger__grid {
+  padding: var(--transactions-space-sm) 0 var(--transactions-space-md);
+}
+
+.stock-round__body .stock-ledger__empty {
+  padding: var(--transactions-space-sm) 0 var(--transactions-space-md);
+}
+
+.stock-round__body .stock-ledger__error {
+  padding: var(--transactions-space-sm) 0 0;
+}
 /* ---------------- 心得 ---------------- */
 
 .stock-lessons-view {
