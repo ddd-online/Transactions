@@ -176,33 +176,50 @@ export function StockLedgerSection({
       {!loaded ? (
         <p className="stock-ledger__empty">正在读取台账…</p>
       ) : ledger?.exists ? (
-        <div className="stock-ledger__grid">
-          <Field label="为什么买" value={ledger.whyBuy} wide />
-          <Field label="买入价" value={ledger.buyPrice} mono />
-          <Field label="买入成本" value={ledger.buyCost} mono />
-          <Field label="止损" value={ledger.stopLoss} />
-          <Field label="止盈" value={ledger.takeProfit} />
-          <Field
-            label="卖出价"
-            value={closed ? ledger.sellPrice : '清仓后回填'}
-            mono={closed}
-            muted={!closed}
-          />
-          <Field
-            label="卖出净额"
-            value={closed ? ledger.sellNet : '清仓后回填'}
-            mono={closed}
-            muted={!closed}
-          />
-          <Field
-            label="净盈亏"
-            value={closed ? ledger.netPnl : '清仓后回填'}
-            mono={closed}
-            muted={!closed}
-            tone={closed ? pnlClass(ledger.netPnl) : ''}
-          />
-          <Field label="是否按系统执行" value={ledger.followedSystem} />
-          <Field label="一句话" value={ledger.summary} wide />
+        <div className="stock-ledger__sheet">
+          <div className="stock-ledger__group">
+            <span className="stock-ledger__group-label">买入计划</span>
+            <Field label="为什么买" value={ledger.whyBuy} wide />
+            <div className="stock-ledger__row">
+              <Field label="买入价" value={ledger.buyPrice} mono />
+              <Field label="买入成本" value={ledger.buyCost} mono />
+              <Field label="止损" value={ledger.stopLoss} />
+              <Field label="止盈" value={ledger.takeProfit} />
+            </div>
+          </div>
+
+          <div className="stock-ledger__group">
+            <span className="stock-ledger__group-label">清仓结果</span>
+            <div className="stock-ledger__row stock-ledger__row--sell">
+              <Field
+                label="卖出价"
+                value={closed ? ledger.sellPrice : '清仓后回填'}
+                mono={closed}
+                muted={!closed}
+              />
+              <Field
+                label="卖出净额"
+                value={closed ? ledger.sellNet : '清仓后回填'}
+                mono={closed}
+                muted={!closed}
+              />
+              <Field
+                label="净盈亏"
+                value={closed ? ledger.netPnl : '清仓后回填'}
+                mono={closed}
+                muted={!closed}
+                tone={closed ? pnlClass(ledger.netPnl) : ''}
+              />
+            </div>
+          </div>
+
+          <div className="stock-ledger__group">
+            <span className="stock-ledger__group-label">执行复盘</span>
+            <div className="stock-ledger__execution">
+              <Field label="是否按系统执行" value={ledger.followedSystem} />
+              <Field label="一句话" value={ledger.summary} />
+            </div>
+          </div>
         </div>
       ) : (
         <p className="stock-ledger__empty">
