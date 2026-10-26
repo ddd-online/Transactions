@@ -97,7 +97,7 @@ check('资产路径只接受相对路径', () => {
 })
 
 check('版本与产品名', () => {
-  assert(packageJson.version === '1.5.0', `版本应为 1.5.0，实际 ${packageJson.version}`)
+  assert(packageJson.version === '1.6.0', `版本应为 1.6.0，实际 ${packageJson.version}`)
   assert(packageJson.productName === 'Transactions', 'productName 必须是 Transactions')
   assert(packageJson.main === 'output/out/main/index.js', 'main 必须指向 output/out/main/index.js')
   return packageJson.version
