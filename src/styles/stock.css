@@ -3146,6 +3146,17 @@
   color: var(--transactions-color-expense);
 }
 
+.stock-ledger__computed.ant-input[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.stock-ledger-form__hint {
+  margin: 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+}
+
 @media (max-width: 1000px) {
   .stock-ledger__row,
   .stock-ledger__row--sell,
@@ -3158,6 +3169,10 @@
   .stock-ledger__row,
   .stock-ledger__row--sell,
   .stock-ledger__execution {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stock-ledger-form .stock-modal-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

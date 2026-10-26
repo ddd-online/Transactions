@@ -237,6 +237,9 @@ export function StockLedgerSection({
         onCancel={() => setOpen(false)}
       >
         <div className="stock-modal-form stock-ledger-form" data-testid="stock-ledger-dialog">
+          <p className="stock-ledger-form__hint">
+            带底色的数字由本轮成交自动计算；持仓期卖出字段清仓后回填。
+          </p>
           <label>
             <span className="stock-label">为什么买</span>
             <Input.TextArea
@@ -303,7 +306,7 @@ export function StockLedgerSection({
                 className="stock-ledger__computed"
                 data-testid="stock-ledger-sell-price"
                 readOnly
-                disabled={!closed}
+                aria-disabled={!closed}
                 value={closed ? ledger?.sellPrice ?? '' : ''}
                 placeholder={closed ? '按成交自动计算' : '清仓后回填'}
               />
@@ -314,7 +317,7 @@ export function StockLedgerSection({
                 className="stock-ledger__computed"
                 data-testid="stock-ledger-sell-net"
                 readOnly
-                disabled={!closed}
+                aria-disabled={!closed}
                 value={closed ? ledger?.sellNet ?? '' : ''}
                 placeholder={closed ? '按成交自动计算' : '清仓后回填'}
               />
@@ -325,11 +328,13 @@ export function StockLedgerSection({
                 className={`stock-ledger__computed ${closed ? pnlClass(ledger?.netPnl ?? '') : ''}`}
                 data-testid="stock-ledger-pnl"
                 readOnly
-                disabled={!closed}
+                aria-disabled={!closed}
                 value={closed ? ledger?.netPnl ?? '' : ''}
                 placeholder={closed ? '按成交自动计算' : '清仓后回填'}
               />
             </label>
+          </div>
+
             <label>
               <span className="stock-label">是否按系统执行</span>
               <Input
@@ -342,8 +347,6 @@ export function StockLedgerSection({
                 }
               />
             </label>
-          </div>
-
           <label>
             <span className="stock-label">一句话</span>
             <Input
