@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { migrate } from '../../electron/db/migrate'
 import { getLimitDay } from '../../electron/db/dao/stock-limit'
 import { openDatabase, type Db } from '../../electron/db/driver'
-import { buildLimitLadder } from '../../shared/domain/limit-ladder'
+import { buildLimitLadder, isOneWordBoard } from '../../shared/domain/limit-ladder'
 import type { StockLimitEntry } from '../../shared/types/stock-limit'
 import { EastmoneyLimitPoolSource, parseLimitPoolPayload } from '../../electron/services/stock-limit-pool'
 import { getLimitLadder } from '../../electron/services/stock-limit'
@@ -172,6 +172,14 @@ describe('buildLimitLadder', () => {
     expect(metrics.rate).toBeNull()
     expect(metrics.brokenCount).toBeNull()
     expect(metrics.maxLevel).toBe(3)
+  })
+})
+
+describe('isOneWordBoard', () => {
+  it('09:25 封死且没炸过板才算一字板', () => {
+    expect(isOneWordBoard(entry('Z', 1, 92500))).toBe(true)
+    expect(isOneWordBoard({ ...entry('Z', 1, 92500), brokenCount: 1 })).toBe(false)
+    expect(isOneWordBoard(entry('Z', 1, 92501))).toBe(false)
   })
 })
 

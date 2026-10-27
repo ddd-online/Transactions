@@ -29,6 +29,16 @@ function sharePercent(part: number, whole: number): number {
   return Math.round((part / whole) * 10_000) / 100
 }
 
+/**
+ * 一字板：集合竞价（09:25:00）就封死，且全天没炸过板。
+ * 只看首次封板时间不够 —— 09:25 封板、10 点开板再回封的票首次时间仍是 09:25。
+ */
+export const ONE_WORD_SEAL_TIME = 92_500
+
+export function isOneWordBoard(entry: StockLimitEntry): boolean {
+  return entry.firstSeal === ONE_WORD_SEAL_TIME && entry.brokenCount === 0
+}
+
 /** 层内排序：封板早的在前，同刻按代码稳定排序。 */
 function byFirstSeal(left: StockLimitEntry, right: StockLimitEntry): number {
   if (left.firstSeal !== right.firstSeal) return left.firstSeal - right.firstSeal

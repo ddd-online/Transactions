@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import { addDays, weekdayCn } from '../../shared/domain/calendar'
+import { isOneWordBoard } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import type { StockLimitEntry, StockLimitLadder } from '../../shared/types/stock-limit'
 import { Button } from '../components/button'
@@ -35,7 +36,14 @@ function StockChip({
   const detail = [
     `${entry.stockName} ${entry.stockCode}`,
     `首封 ${sealTimeText(entry.firstSeal)}`,
-    broken ? `昨日首封 ${sealTimeText(entry.firstSeal)}，今日断板` : entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
+    broken
+      ? `昨日首封 ${sealTimeText(entry.firstSeal)}，今日断板`
+      : [
+          isOneWordBoard(entry) ? '一字板' : '',
+          entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
+        ]
+          .filter(Boolean)
+          .join(' · '),
     entry.industry,
   ]
     .filter(Boolean)
@@ -47,7 +55,14 @@ function StockChip({
       data-testid={broken ? 'stock-ladder-broken-chip' : 'stock-ladder-chip'}
       title={detail}
     >
-      <span className="stock-ladder__chip-name">{entry.stockName}</span>
+      <span className="stock-ladder__chip-head">
+        <span className="stock-ladder__chip-name">{entry.stockName}</span>
+        {!broken && isOneWordBoard(entry) ? (
+          <span className="stock-ladder__chip-word" data-testid="stock-ladder-chip-word">
+            一字
+          </span>
+        ) : null}
+      </span>
       <span className="stock-ladder__chip-meta">
         <span className="stock-ladder__chip-code">{entry.stockCode}</span>
         <span className="stock-ladder__chip-time">

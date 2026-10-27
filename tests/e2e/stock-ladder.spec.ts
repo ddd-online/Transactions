@@ -102,7 +102,7 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     [queryDate(today)]: [
       raw('600838', '上海九百', 4, 92500, 1),
       raw('000001', '平安银行', 2, 93000),
-      raw('301502', '华阳智能', 1, 93500),
+      raw('301502', '华阳智能', 1, 92500),
     ],
     [queryDate(previous)]: [
       raw('600838', '上海九百', 3, 92500),
@@ -156,6 +156,10 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await expect(ladder.getByTestId('stock-ladder-rung').nth(0)).toHaveAttribute('data-level', '1')
     await expect(ladder.getByTestId('stock-ladder-rung').nth(2)).toHaveAttribute('data-level', '4')
     await expect(ladder.getByTestId('stock-ladder-chip').first()).toContainText('华阳智能')
+    await expect(ladder.getByTestId('stock-ladder-chip-word')).toHaveCount(1)
+    await expect(
+      ladder.getByTestId('stock-ladder-chip').first().getByTestId('stock-ladder-chip-word'),
+    ).toHaveText('一字')
     await expect(ladder.getByTestId('stock-ladder-broken-chip')).toHaveCount(2)
     await expect(
       ladder.getByTestId('stock-ladder-rung').nth(0).getByTestId('stock-ladder-broken-chip'),

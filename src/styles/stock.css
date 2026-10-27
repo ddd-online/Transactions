@@ -4144,8 +4144,29 @@
   border-top: 0;
 }
 
+.stock-ladder__chip-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 一字板：红色小标，跟在名字后面。色只借语义层（红=涨停方向），
+ * 用法与标签一致：10% 底色 + 语义文字。 */
+.stock-ladder__chip-word {
+  flex: none;
+  padding: 0 4px;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-expense-tint);
+  color: var(--transactions-color-expense);
+  font-size: var(--transactions-size-text-small);
+  font-weight: var(--transactions-weight-medium);
+  line-height: 16px;
+}
+
 .stock-ladder__chip-name {
   display: block;
+  min-width: 0;
   overflow: hidden;
   font-size: var(--transactions-size-text-body-sm);
   color: var(--transactions-color-text-major);
