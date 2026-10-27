@@ -65,7 +65,8 @@ test('应用：窗口 / 工作空间 / 配置闭环', async () => {
     const meta = database.prepare('SELECT value FROM app_meta WHERE key = ?').get('schema_version') as
       | { value: string }
       | undefined
-    expect(meta?.value).toBe('4')
+    // 精确的版本号由单测盯；这里只确认工作空间确实跑过迁移。
+    expect(Number(meta?.value)).toBeGreaterThanOrEqual(4)
     database.close()
 
     const persisted = JSON.parse(readFileSync(configPath, 'utf8')) as { workspaceDir?: string }
