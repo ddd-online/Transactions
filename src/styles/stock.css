@@ -4019,46 +4019,30 @@
   color: var(--transactions-color-text-tertiary);
 }
 
-/* ---------------- 汇总数字 ---------------- */
+/* ---------------- 汇总数字（版心底栏） ---------------- */
 
-.stock-ladder__metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-bottom: 1px solid var(--transactions-color-divider);
+/* 与「记录」页共用 .statistics-footer；这里只补两处：
+ * 把副信息（昨日家数 / 空间板个股 / 晋级分数 / 对照日）收在数值后面。 */
+.stock-ladder-footer {
+  gap: var(--transactions-space-xl);
 }
 
-.stock-ladder__metric {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  padding: var(--transactions-space-md) var(--transactions-space-lg);
-  border-left: 1px solid var(--transactions-color-divider);
+.stock-ladder-footer .statistics-footer-item-label {
+  letter-spacing: 0;
 }
 
-.stock-ladder__metric:first-child {
-  border-left: 0;
+.stock-ladder-footer .statistics-footer-item-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.stock-ladder__metric-label {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
-.stock-ladder__metric-value {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-title-sm);
-  font-variant-numeric: tabular-nums;
-  line-height: var(--transactions-height-snug);
-  letter-spacing: var(--transactions-tracking-amount-lg);
-  color: var(--transactions-color-text-major);
-}
-
-.stock-ladder__metric-sub {
-  overflow: hidden;
+.stock-ladder-footer__note {
+  font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-small);
+  font-weight: var(--transactions-weight-regular);
+  letter-spacing: 0;
   color: var(--transactions-color-text-tertiary);
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -4283,26 +4267,8 @@
 }
 
 @media (max-width: 1080px) {
-  .stock-ladder__metric {
-    padding: var(--transactions-space-md);
-  }
-
   .stock-ladder__rung {
     padding: var(--transactions-space-md) var(--transactions-space-sm) var(--transactions-space-lg);
-  }
-}
-
-@media (max-width: 900px) {
-  .stock-ladder__metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .stock-ladder__metric:nth-child(3) {
-    border-left: 0;
-  }
-
-  .stock-ladder__metric:nth-child(n + 3) {
-    border-top: 1px solid var(--transactions-color-divider);
   }
 }
 
@@ -4361,6 +4327,17 @@
     grid-column: 2;
     grid-row: 3;
     margin-top: var(--transactions-space-xs);
+  }
+}
+
+/* 窄窗底栏放不下四个副注：只留标签与数字。 */
+@media (max-width: 720px) {
+  .stock-ladder-footer {
+    gap: var(--transactions-space-md);
+  }
+
+  .stock-ladder-footer__note {
+    display: none;
   }
 }
 

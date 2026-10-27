@@ -12,7 +12,7 @@ import { notify } from '../components/toast'
 import { StockAccountPanel } from './stock-account'
 import { stockMoney, stockPercent, stockPnlClass } from './stock-format'
 import { StockHistoryPanel } from './stock-history'
-import { StockLadderPanel } from './stock-ladder'
+import { StockLadderFooter, StockLadderPanel, type StockLadderSummary } from './stock-ladder'
 import { StockLessonDialog } from './stock-lesson-dialog'
 import { StockLessonsPanel } from './stock-lessons'
 import { StockPositionsPanel } from './stock-positions'
@@ -59,6 +59,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [accountError, setAccountError] = useState('')
   const [accountRefresh, setAccountRefresh] = useState(0)
   const [historySummary, setHistorySummary] = useState<StockTradeHistorySummaryDto | null>(null)
+  const [ladderSummary, setLadderSummary] = useState<StockLadderSummary | null>(null)
   const [lessonDialog, setLessonDialog] = useState<{
     lesson: StockLessonDto | null
     roundId: string
@@ -73,6 +74,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   // 跳转只用一次：离开记录页后清掉，免得下次再进记录又被带回旧轮次。
   useEffect(() => {
     if (tab !== 'history') setHistoryJump(null)
+    if (tab !== 'ladder') setLadderSummary(null)
   }, [tab])
 
   /** 从心得或统计明细跳到记录中的某一轮。 */
@@ -127,7 +129,9 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   return (
     <PageLayout
       contentClassName="stock-page"
-      footerClassName={tab === 'history' ? 'page-footer-bar--end' : undefined}
+      footerClassName={
+        tab === 'history' || tab === 'ladder' ? 'page-footer-bar--end' : undefined
+      }
       footer={
         tab === 'history' ? (
           <div className="statistics-footer stock-history-footer" data-testid="stock-history-summary">
@@ -165,6 +169,8 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
               </span>
             </div>
           </div>
+        ) : tab === 'ladder' ? (
+          <StockLadderFooter summary={ladderSummary} />
         ) : undefined
       }
       toolbar={
@@ -248,7 +254,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
       {tab === 'statistics' ? (
         <StockStatisticsPanel ledgerId={ledgerId} onOpenRound={openHistoryRound} />
       ) : null}
-      {tab === 'ladder' ? <StockLadderPanel /> : null}
+      {tab === 'ladder' ? <StockLadderPanel onSummaryChange={setLadderSummary} /> : null}
       {tab === 'settings' ? (
         <StockSettingsPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
       ) : null}

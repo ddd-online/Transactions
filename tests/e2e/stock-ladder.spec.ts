@@ -168,7 +168,9 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       ladder.getByTestId('stock-ladder-rung').nth(1).getByTestId('stock-ladder-broken-chip'),
     ).toContainText('科瑞思')
     await expect(ladder.getByTestId('stock-ladder-status')).toContainText('已写入本地')
-    await expect(ladder.getByTestId('stock-ladder-metrics')).toContainText('50%')
+    const footer = page.getByTestId('stock-ladder-footer')
+    await expect(footer).toContainText('50%')
+    await expect(footer).toContainText('2/4')
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder.png'),
     })

@@ -3,7 +3,11 @@ import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 import { addDays, weekdayCn } from '../../shared/domain/calendar'
 import { isOneWordBoard } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
-import type { StockLimitEntry, StockLimitLadder } from '../../shared/types/stock-limit'
+import type {
+  StockLimitEntry,
+  StockLimitLadder,
+  StockLimitMetrics,
+} from '../../shared/types/stock-limit'
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
@@ -86,7 +90,29 @@ function StockChip({
  * 名字退色并带「断」标记；那一层今天没人晋级时就只剩断板。
  * 盘中（当天 15:00 前）的数据是临时快照，服务层不会入库，界面在这里明说。
  */
-export function StockLadderPanel(): JSX.Element {
+export interface StockLadderSummary {
+  metrics: StockLimitMetrics
+  previousDate: string | null
+  /** 今日空间板的股票名（没有涨停为空串） */
+  topName: string
+}
+
+/** 天梯页脚要显示的那几个数字；面板拉完数据后交给外层底栏。 */
+function summaryOf(ladder: StockLimitLadder): StockLadderSummary {
+  const maxLevel = ladder.metrics.maxLevel
+  const topName =
+    maxLevel === null
+      ? ''
+      : (ladder.rungs.find((rung) => rung.level === maxLevel)?.entries[0]?.stockName ?? '')
+  return { metrics: ladder.metrics, previousDate: ladder.previousDate, topName }
+}
+
+export interface StockLadderPanelProps {
+  /** 汇总数字变化（外层用 `PageLayout` 的底栏展示） */
+  onSummaryChange?: (summary: StockLadderSummary | null) => void
+}
+
+export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JSX.Element {
   const today = todayYmd()
   const [date, setDate] = useState(today)
   const [ladder, setLadder] = useState<StockLimitLadder | null>(null)
@@ -94,25 +120,33 @@ export function StockLadderPanel(): JSX.Element {
   const [error, setError] = useState('')
   const requestRef = useRef(0)
 
-  const load = useCallback(async (target: string, refresh: boolean): Promise<void> => {
-    const token = requestRef.current + 1
-    requestRef.current = token
-    setLoading(true)
-    setError('')
-    // 翻日时先撤掉旧图，避免新日期下短暂显示上一天的数字；刷新则保留。
-    if (!refresh) setLadder(null)
-    try {
-      const result = await window.api.invoke('stock_limit_ladder', { date: target, refresh })
-      if (token !== requestRef.current) return
-      setLadder(result)
-    } catch (loadError) {
-      if (token !== requestRef.current) return
-      setLadder(null)
-      setError(stockErrorMessage(loadError))
-    } finally {
-      if (token === requestRef.current) setLoading(false)
-    }
-  }, [])
+  const load = useCallback(
+    async (target: string, refresh: boolean): Promise<void> => {
+      const token = requestRef.current + 1
+      requestRef.current = token
+      setLoading(true)
+      setError('')
+      // 翻日时先撤掉旧图，避免新日期下短暂显示上一天的数字；刷新则保留。
+      if (!refresh) {
+        setLadder(null)
+        onSummaryChange?.(null)
+      }
+      try {
+        const result = await window.api.invoke('stock_limit_ladder', { date: target, refresh })
+        if (token !== requestRef.current) return
+        setLadder(result)
+        onSummaryChange?.(summaryOf(result))
+      } catch (loadError) {
+        if (token !== requestRef.current) return
+        setLadder(null)
+        onSummaryChange?.(null)
+        setError(stockErrorMessage(loadError))
+      } finally {
+        if (token === requestRef.current) setLoading(false)
+      }
+    },
+    [onSummaryChange],
+  )
 
   useEffect(() => {
     void load(date, false)
@@ -151,10 +185,6 @@ export function StockLadderPanel(): JSX.Element {
   const canGoNext = nextDay !== null && nextDay <= today
 
   const maxLevel = ladder?.metrics.maxLevel ?? null
-  const topName =
-    maxLevel === null
-      ? ''
-      : (ladder?.rungs.find((rung) => rung.level === maxLevel)?.entries[0]?.stockName ?? '')
 
   const statusText = ((): string => {
     if (!ladder) return ''
@@ -338,46 +368,72 @@ export function StockLadderPanel(): JSX.Element {
         </header>
       </div>
 
-      <div className="stock-ladder__metrics" data-testid="stock-ladder-metrics">
-        <div className="stock-ladder__metric">
-          <span className="stock-ladder__metric-label">涨停</span>
-          <span className="stock-ladder__metric-value">{ladder?.metrics.limitCount ?? '—'}</span>
-          <span className="stock-ladder__metric-sub">
-            {ladder?.metrics.previousCount === null || ladder?.metrics.previousCount === undefined
-              ? '昨日 —'
-              : `昨日 ${ladder.metrics.previousCount}`}
-          </span>
-        </div>
-        <div className="stock-ladder__metric">
-          <span className="stock-ladder__metric-label">空间板</span>
-          <span className="stock-ladder__metric-value">
-            {maxLevel === null ? '—' : `${maxLevel} 板`}
-          </span>
-          <span className="stock-ladder__metric-sub">{topName || '—'}</span>
-        </div>
-        <div className="stock-ladder__metric">
-          <span className="stock-ladder__metric-label">晋级率</span>
-          <span className="stock-ladder__metric-value">
-            {ladder?.metrics.rate === null || ladder?.metrics.rate === undefined
-              ? '—'
-              : stockPercent(ladder.metrics.rate, 0)}
-          </span>
-          <span className="stock-ladder__metric-sub">
-            {ladder?.metrics.promotedCount === null || ladder?.metrics.promotedCount === undefined
-              ? '—'
-              : `${ladder.metrics.promotedCount}/${ladder.metrics.previousCount ?? 0}`}
-          </span>
-        </div>
-        <div className="stock-ladder__metric">
-          <span className="stock-ladder__metric-label">断板</span>
-          <span className="stock-ladder__metric-value">{ladder?.metrics.brokenCount ?? '—'}</span>
-          <span className="stock-ladder__metric-sub">
-            {ladder?.previousDate ? `对照 ${ladder.previousDate}` : '缺少昨日数据'}
-          </span>
-        </div>
-      </div>
-
       {renderBody()}
+    </div>
+  )
+}
+
+/** 天梯的底栏：四个汇总数字，口径与记录页底栏一致。 */
+export function StockLadderFooter({
+  summary,
+}: {
+  summary: StockLadderSummary | null
+}): JSX.Element {
+  const metrics = summary?.metrics ?? null
+  const rate =
+    metrics?.rate === null || metrics?.rate === undefined ? '—' : stockPercent(metrics.rate, 0)
+  const previousCount =
+    metrics?.previousCount === null || metrics?.previousCount === undefined
+      ? null
+      : metrics.previousCount
+  const promoted =
+    metrics?.promotedCount === null || metrics?.promotedCount === undefined
+      ? null
+      : metrics.promotedCount
+
+  return (
+    <div className="statistics-footer stock-ladder-footer" data-testid="stock-ladder-footer">
+      <div className="statistics-footer-item">
+        <span className="statistics-footer-item-label">涨停</span>
+        <span className="statistics-footer-item-value">
+          {metrics ? metrics.limitCount : '—'}
+          <span className="stock-ladder-footer__note">
+            {previousCount === null ? '昨 —' : `昨 ${previousCount}`}
+          </span>
+        </span>
+      </div>
+      <div className="statistics-footer-divider" />
+      <div className="statistics-footer-item">
+        <span className="statistics-footer-item-label">空间板</span>
+        <span className="statistics-footer-item-value">
+          {metrics?.maxLevel === null || metrics?.maxLevel === undefined
+            ? '—'
+            : `${metrics.maxLevel} 板`}
+          <span className="stock-ladder-footer__note">{summary?.topName || '—'}</span>
+        </span>
+      </div>
+      <div className="statistics-footer-divider" />
+      <div className="statistics-footer-item">
+        <span className="statistics-footer-item-label">晋级率</span>
+        <span className="statistics-footer-item-value">
+          {rate}
+          <span className="stock-ladder-footer__note">
+            {promoted === null ? '—' : `${promoted}/${previousCount ?? 0}`}
+          </span>
+        </span>
+      </div>
+      <div className="statistics-footer-divider" />
+      <div className="statistics-footer-item">
+        <span className="statistics-footer-item-label">断板</span>
+        <span className="statistics-footer-item-value">
+          {metrics?.brokenCount === null || metrics?.brokenCount === undefined
+            ? '—'
+            : metrics.brokenCount}
+          <span className="stock-ladder-footer__note">
+            {summary?.previousDate ? `对照 ${summary.previousDate}` : '缺昨日'}
+          </span>
+        </span>
+      </div>
     </div>
   )
 }
