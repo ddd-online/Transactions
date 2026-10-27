@@ -76,7 +76,6 @@ function fetchedText(seconds: number): string {
  */
 export interface StockLadderSummary {
   metrics: StockLimitMetrics
-  previousDate: string | null
   /** 今日空间板的股票名（没有涨停为空串） */
   topName: string
 }
@@ -88,7 +87,7 @@ function summaryOf(ladder: StockLimitLadder): StockLadderSummary {
     maxLevel === null
       ? ''
       : (ladder.rungs.find((rung) => rung.level === maxLevel)?.entries[0]?.stockName ?? '')
-  return { metrics: ladder.metrics, previousDate: ladder.previousDate, topName }
+  return { metrics: ladder.metrics, topName }
 }
 
 export interface StockLadderPanelProps {
@@ -407,9 +406,6 @@ export function StockLadderFooter({
           {metrics?.brokenCount === null || metrics?.brokenCount === undefined
             ? '—'
             : metrics.brokenCount}
-          <span className="stock-ladder-footer__note">
-            {summary === null ? '—' : summary.previousDate ? `对照 ${summary.previousDate}` : '缺昨日'}
-          </span>
         </span>
       </div>
     </div>
