@@ -29,6 +29,7 @@ import type {
 import type { StockStatisticsDto } from './types/stock-statistics'
 import type { StockLessonDto, StockRoundOptionDto } from './types/stock-lesson'
 import type { StockLedgerDto } from './types/stock-ledger'
+import type { StockLimitLadder } from './types/stock-limit'
 import type { TransactionTemplateDto } from './types/template'
 import type { FileSaveResponse, ProxyResolveResponse, ProxyTestResponse } from './types/shell'
 import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
@@ -458,6 +459,10 @@ export const commandSchemas = {
     tag: z.string().default(''),
   }),
   stock_name: z.object({ stock_code: z.string() }),
+  stock_limit_ladder: z.object({
+    date: z.string().default(''),
+    refresh: z.boolean().default(false),
+  }),
   stock_trades: z.object({ ledger_id: z.string(), stock_code: z.string() }),
   template_create: z.object({
     template_id: z.string().default(''),
@@ -613,6 +618,7 @@ export interface CommandResponses {
   stock_round_review: StockTradeHistoryDetailDto
   stock_round_tag: StockTradeHistoryDetailDto
   stock_name: StockNameDto
+  stock_limit_ladder: StockLimitLadder
   stock_trades: StockTradeDto[]
   template_create: string
   template_list: TransactionTemplateDto[]

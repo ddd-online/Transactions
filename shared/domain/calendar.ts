@@ -115,6 +115,14 @@ export function weekdayCn(input: string): string {
   return WEEKDAY_CN[weekdayIndex(date.year, date.month, date.day)]
 }
 
+/** 是否周末（周六 / 周日；解析失败返回 `false`）。用于跳过节假日探测里必空的两天。 */
+export function isWeekend(input: string): boolean {
+  const date = parseYmd(input)
+  if (date === null) return false
+  const index = weekdayIndex(date.year, date.month, date.day)
+  return index === 0 || index === 6
+}
+
 /** 某年某月的天数（公历闰年规则：4 年一闰、100 年不闰、400 年又闰）。 */
 export function daysInMonth(year: number, month: number): number {
   switch (month) {

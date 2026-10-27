@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { closeWorkspace, currentWorkspace, hasWorkspace, openWorkspace } from '../../electron/db'
 import { openDatabase } from '../../electron/db/driver'
+import { MIGRATIONS } from '../../electron/db/migrate'
 import { AppError, ERR_CODE_SOURCE_WORKSPACE } from '../../shared/errors'
 
 const directories: string[] = []
@@ -35,7 +36,7 @@ describe('workspace database', () => {
       | { value: string }
       | undefined
     /* 新建的工作空间跑完全部迁移，落库的是**最新**版本（迁移 v2 加了每日复盘模板列）。 */
-    expect(meta?.value).toBe('4')
+    expect(meta?.value).toBe(String(MIGRATIONS[MIGRATIONS.length - 1].version))
 
     workspace.db
       .prepare('INSERT INTO ledger (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')

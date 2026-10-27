@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { closeWorkspace, openWorkspace } from '../../electron/db'
+import { MIGRATIONS } from '../../electron/db/migrate'
 
 const directories: string[] = []
 
@@ -141,7 +142,7 @@ describe('schema v1', () => {
     const row = workspace.db
       .prepare('SELECT value FROM app_meta WHERE key = ?')
       .get('schema_version') as { value: string }
-    expect(row.value).toBe('4')
+    expect(row.value).toBe(String(MIGRATIONS[MIGRATIONS.length - 1].version))
   })
 
   it('allows inserting and reading a ledger with integer cents', () => {

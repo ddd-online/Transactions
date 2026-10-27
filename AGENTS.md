@@ -68,7 +68,9 @@ pnpm package          # NSIS 安装包，产物在 output/
 - 测试缝（仅测试环境变量）：`TRANSACTIONS_TEST_DIALOG_DIR` 绕过原生目录框；
   `TRANSACTIONS_TEST_CLOSE` 固定关闭行为；`TRANSACTIONS_USER_DATA` 隔离单实例锁；
   `TRANSACTIONS_TEST_PROXY_TARGET` 把代理连通性检测指向本地测试服务；
-  `TRANSACTIONS_TEST_PROXY_ADDRESS` 固定自动探测返回的地址。
+  `TRANSACTIONS_TEST_PROXY_ADDRESS` 固定自动探测返回的地址；
+  `TRANSACTIONS_TEST_LIMIT_SOURCE` 把涨停池地址指到本地测试服务；
+  `TRANSACTIONS_TEST_LADDER_NOW` 钉住天梯服务的当前时间（验证盘中不入库）。
   生产构建不设置这些变量。
 
 | 改动面 | 主要 E2E spec |
@@ -77,7 +79,7 @@ pnpm package          # NSIS 安装包，产物在 output/
 | 分类标签 / 模板 | `tags.spec.ts`、`templates.spec.ts` |
 | 事件 | `events.spec.ts` |
 | 待办 | `todo.spec.ts`、`todo-drag.spec.ts` |
-| 股票 | `stock.spec.ts`、`stock-lifecycle.spec.ts` |
+| 股票 | `stock.spec.ts`、`stock-lifecycle.spec.ts`、`stock-ladder.spec.ts` |
 | 设置 | `settings.spec.ts` |
 | 外壳 / 导航 / 窗口 | `shell.spec.ts`、`navigation.spec.ts`、`window*.spec.ts` |
 | 导入 / 同步 / 更新 | `import*.spec.ts`、`update*.spec.ts` |

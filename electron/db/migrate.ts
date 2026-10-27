@@ -71,6 +71,39 @@ export const MIGRATIONS: readonly Migration[] = [
         ON stock_ledger(ledger_id, round_id) WHERE round_id IS NOT NULL;
     `,
   },
+  {
+    version: 5,
+    name: 'stock_limit_pool',
+    sql: `
+      CREATE TABLE IF NOT EXISTS stock_limit_day (
+        trade_date TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        count INTEGER NOT NULL DEFAULT 0,
+        fetched_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS stock_limit_pool (
+        trade_date TEXT NOT NULL,
+        stock_code TEXT NOT NULL,
+        stock_name TEXT NOT NULL DEFAULT '',
+        market INTEGER NOT NULL DEFAULT 0,
+        price_milli INTEGER NOT NULL DEFAULT 0,
+        pct REAL NOT NULL DEFAULT 0,
+        amount_cents INTEGER NOT NULL DEFAULT 0,
+        float_mv_cents INTEGER NOT NULL DEFAULT 0,
+        turnover REAL NOT NULL DEFAULT 0,
+        level INTEGER NOT NULL DEFAULT 1,
+        first_seal INTEGER NOT NULL DEFAULT 0,
+        last_seal INTEGER NOT NULL DEFAULT 0,
+        broken_count INTEGER NOT NULL DEFAULT 0,
+        seal_fund_cents INTEGER NOT NULL DEFAULT 0,
+        industry TEXT NOT NULL DEFAULT '',
+        stat_days INTEGER NOT NULL DEFAULT 0,
+        stat_count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (trade_date, stock_code)
+      );
+      CREATE INDEX IF NOT EXISTS idx_stock_limit_pool_date ON stock_limit_pool(trade_date);
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

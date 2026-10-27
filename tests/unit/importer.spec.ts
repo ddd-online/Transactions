@@ -13,6 +13,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { openDatabase } from '../../electron/db/driver'
+import { MIGRATIONS } from '../../electron/db/migrate'
 import { openWorkspace, closeWorkspace } from '../../electron/db'
 import { importSourceWorkspace, probeSourceWorkspace } from '../../electron/source/importer'
 
@@ -114,7 +115,7 @@ describe('source import', () => {
     const imported = workspace.db
       .prepare("SELECT value FROM app_meta WHERE key = 'schema_version'")
       .get() as { value: string }
-    expect(imported.value).toBe('4')
+    expect(imported.value).toBe(String(MIGRATIONS[MIGRATIONS.length - 1].version))
   })
 
   it('refuses a non-empty target directory', async () => {

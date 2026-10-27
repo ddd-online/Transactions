@@ -30,6 +30,8 @@ import {
   updatePositionTag,
 } from '../services/stock-positions'
 import { TencentStockQuoteFetcher } from '../services/stock-quote'
+import { EastmoneyLimitPoolSource } from '../services/stock-limit-pool'
+import { getLimitLadder } from '../services/stock-limit'
 import {
   getTradeHistoryDetail,
   getTradeHistorySummary,
@@ -70,6 +72,7 @@ import {
 import { UpdaterService } from '../services/updater'
 import { applyProxy, appFetch } from '../shell/net'
 import { priceYuanToMilli } from '../../shared/domain/money'
+import { nowSeconds, todayYmd } from '../../shared/domain/time'
 import {
   createStatisticsFilter,
   normalizeRecent,
@@ -114,6 +117,25 @@ function createQuoteFetcher(): TencentStockQuoteFetcher {
   return new TencentStockQuoteFetcher({
     fetchImpl: (url, signal) => appFetch(url, { signal }),
   })
+}
+
+/** 涨停池数据源：地址与代理都走注入的 fetch（测试可用环境变量指到本地服务）。 */
+function createLimitPoolSource(): EastmoneyLimitPoolSource {
+  const testBase = process.env.TRANSACTIONS_TEST_LIMIT_SOURCE
+  return new EastmoneyLimitPoolSource({
+    fetchImpl: (url, init) => appFetch(url, init),
+    ...(testBase ? { baseUrl: testBase } : {}),
+  })
+}
+
+/** 天梯的当前时间：测试环境可用 `TRANSACTIONS_TEST_LADDER_NOW` 钉住"盘中/收盘后"。 */
+function limitNowSeconds(): number {
+  const raw = process.env.TRANSACTIONS_TEST_LADDER_NOW
+  if (raw) {
+    const parsed = Number(raw)
+    if (Number.isFinite(parsed)) return Math.trunc(parsed)
+  }
+  return nowSeconds()
 }
 
 export interface HandlerOptions {
@@ -1029,6 +1051,15 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return listTradeHistories(workspaceDb(), ledgerId, createQuoteFetcher())
+    },
+
+    async stock_limit_ladder(request) {
+      const raw = asObject(request)
+      const date = String(raw.date ?? '') || todayYmd()
+      return getLimitLadder(workspaceDb(), createLimitPoolSource(), date, {
+        refresh: raw.refresh === true,
+        now: limitNowSeconds(),
+      })
     },
 
     stock_history_detail(request) {
