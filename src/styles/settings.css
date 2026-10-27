@@ -15,16 +15,11 @@
 
 /* ---------------------------------------------------------------- 分栏骨架 */
 
+/* 设置分栏在布局工具栏里（`.page-toolbar` 给内边距与发丝线）。 */
 .st-tabbar {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--transactions-space-xs);
-  padding: 0 0 var(--transactions-space-sm);
-  position: sticky;
-  top: calc(-1 * var(--transactions-space-lg));
-  z-index: 20;
-  background: var(--transactions-color-bg-base);
 }
 
 .st-tab {

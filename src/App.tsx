@@ -770,30 +770,34 @@ export function App(): JSX.Element {
         {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
 
         {view === 'settings' ? (
-          <PageLayout contentClassName="settings-page-content">
-                  <div className="st-tabbar" role="tablist" aria-label="设置分栏">
-                    {(
-                      [
-                        ['general', '通用设置'],
-                        ['features', '功能开关'],
-                        ['diary', '日记配置'],
-                        ['data', '数据导入'],
-                        ['about', '关于软件'],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        role="tab"
-                        aria-selected={settingsTab === key}
-                        data-testid={`settings-tab-${key}`}
-                        className={`st-tab${settingsTab === key ? ' is-active' : ''}`}
-                        onClick={() => setSettingsTab(key)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+          <PageLayout
+            contentClassName="settings-page-content"
+            toolbar={
+              <div className="st-tabbar" role="tablist" aria-label="设置分栏">
+                {(
+                  [
+                    ['general', '通用设置'],
+                    ['features', '功能开关'],
+                    ['diary', '日记配置'],
+                    ['data', '数据导入'],
+                    ['about', '关于软件'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={settingsTab === key}
+                    data-testid={`settings-tab-${key}`}
+                    className={`st-tab${settingsTab === key ? ' is-active' : ''}`}
+                    onClick={() => setSettingsTab(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            }
+          >
 
                   {settingsTab === 'general' ? (
                     <div className="st-list">
