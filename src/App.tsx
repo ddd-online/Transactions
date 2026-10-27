@@ -568,7 +568,6 @@ export function App(): JSX.Element {
                     <AppMark />
                   )}
                 </span>
-                {activeLedgerId ? <IdentityDot seed={activeLedgerId} size={6} /> : null}
                 <span className="ledger-btn-name">{activeLedgerName}</span>
                 <span className="ledger-btn-arrow">
                   <Icon name="Down" size={10} />

@@ -184,7 +184,7 @@ Cool neutrals carry the interface; Clarity Blue is the single accent; a small se
 
 Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c6963a, slate-blue #5c8db5, vermillion #d9705a, warm-brown #8c7b6e, ochre #9e8c7e, moss #6b9e7e, camel #b89a80. Dark theme lightens each for legibility.
 
-颜色按账本 id 做 FNV-1a 哈希取模（`shared/domain/identity-color.ts` 的 `identityTone` / `identityColor`），同一账本永远同一色，不需要数据库字段或选择器。呈现只用一个 6px 圆点：账本切换器里放在图标与名称之间，账本菜单里放在每一行名称前；名称始终在点旁边，颜色不承担唯一信息。
+颜色按账本 id 做 FNV-1a 哈希取模（`shared/domain/identity-color.ts` 的 `identityTone` / `identityColor`），同一账本永远同一色，不需要数据库字段或选择器。呈现只用一个 6px 圆点，放在账本菜单每一行的名称前；切换器里的头像不加点，保持头像本身居中。名称始终在点旁边，颜色不承担唯一信息。
 
 ### Chart categorical palette
 
