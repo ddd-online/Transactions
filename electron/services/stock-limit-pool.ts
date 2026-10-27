@@ -185,10 +185,10 @@ export class EastmoneyLimitPoolSource implements LimitPoolSource {
         headers: REQUEST_HEADERS,
       })
     } catch (error) {
-      throw new AppError(`查询涨停池失败(网络): ${String(error)}`, { status: 502 })
+      throw new AppError(`查询涨停池失败（网络）：${String(error)}`, { status: 502 })
     }
     if (!response.ok) {
-      throw new AppError(`查询涨停池失败(HTTP ${response.status ?? '?'})`, { status: 502 })
+      throw new AppError(`查询涨停池失败（HTTP ${response.status ?? '?'}）`, { status: 502 })
     }
 
     let text: string

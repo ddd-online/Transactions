@@ -156,7 +156,7 @@ export function StockLadderPanel({
 
   const statusText = ((): string => {
     if (!ladder) return ''
-    if (ladder.status === 'preopen') return '开盘前 · 9:30 后才有当天数据'
+    if (ladder.status === 'preopen') return '开盘前 · 09:30 后才有当天数据'
     if (ladder.temporary) return '盘中临时数据 · 15:00 收盘后写入本地'
     if (ladder.stale) return `刷新失败，显示 ${fetchedText(ladder.fetchedAt)} 的本地缓存`
     if (ladder.fromCache) return `${fetchedText(ladder.fetchedAt)} 抓取 · 本地缓存`
@@ -208,7 +208,7 @@ export function StockLadderPanel({
             ladder.status === 'unavailable'
               ? '数据源只保留最近一个多月；更早的日期要当时已经存到本地。'
               : ladder.status === 'preopen'
-                ? '9:30 开盘后才有当天的涨停数据；现在可以先看前一交易日。'
+                ? '09:30 开盘后才有当天的涨停数据；现在可以先看前一交易日。'
                 : ladder.temporary
                   ? '刚开盘或盘中还没有涨停股，刷新看看。'
                   : '非交易日，或当天确实没有涨停股。'
@@ -234,6 +234,7 @@ export function StockLadderPanel({
                 className={`stock-ladder__rung${rung.level === maxLevel ? ' is-top' : ''}`}
                 data-testid="stock-ladder-rung"
                 data-level={rung.level}
+                aria-label={`${rung.level} 板`}
               >
                 <div className="stock-ladder__rung-rail">
                   <header className="stock-ladder__rung-head">
@@ -269,7 +270,6 @@ export function StockLadderPanel({
                       items={rows}
                       virtual={false}
                       rowKey={(row: LadderRow) => row.key}
-                      classNames={{ root: 'stock-ladder__listy' }}
                       itemRender={(row: LadderRow) => (
                         <StockLadderItem entry={row.entry} broken={row.broken} />
                       )}
@@ -298,8 +298,10 @@ export function StockLadderPanel({
           onRangeChange={(next) => setDate(next && next <= today ? next : today)}
         />
         <span
-          className={`stock-ladder__status${ladder?.temporary ? ' is-live' : ''}`}
+          className={`stock-ladder__status${ladder?.stale ? ' is-warning' : ladder?.temporary ? ' is-live' : ''}`}
           data-testid="stock-ladder-status"
+          role="status"
+          aria-live="polite"
         >
           {statusText}
         </span>
@@ -308,7 +310,7 @@ export function StockLadderPanel({
         size="sm"
         variant="secondary"
         testId="stock-ladder-refresh"
-        disabled={loading}
+        loading={loading}
         icon={<Icon name="Reload" size={14} />}
         onClick={() => void load(date, true)}
       >

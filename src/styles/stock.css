@@ -3942,14 +3942,16 @@
   align-items: center;
   gap: 6px;
   font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.stock-ladder__status.is-live {
   color: var(--transactions-color-text-secondary);
 }
 
-.stock-ladder__status.is-live::before {
+.stock-ladder__status.is-live,
+.stock-ladder__status.is-warning {
+  color: color-mix(in srgb, var(--transactions-color-outlier) 70%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__status.is-live::before,
+.stock-ladder__status.is-warning::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -4171,18 +4173,18 @@
 /* 一字板：红色小标（红 = 涨停方向），10% 底色 + 语义文字。 */
 .stock-ladder__tag--word {
   background: var(--transactions-color-expense-tint);
-  color: var(--transactions-color-expense);
+  color: color-mix(in srgb, var(--transactions-color-expense) 72%, var(--transactions-color-text-major));
   font-weight: var(--transactions-weight-medium);
 }
 
 .stock-ladder__tag--broken {
   background: var(--transactions-color-outlier-tint);
-  color: var(--transactions-color-outlier);
+  color: color-mix(in srgb, var(--transactions-color-outlier) 70%, var(--transactions-color-text-major));
 }
 
 .stock-ladder__tag--off {
   background: var(--transactions-color-minor-background);
-  color: var(--transactions-color-text-tertiary);
+  color: color-mix(in srgb, var(--transactions-color-text-tertiary) 70%, var(--transactions-color-text-major));
 }
 
 .stock-ladder__item.is-broken .stock-ladder__item-name {
@@ -4193,15 +4195,17 @@
 
 .stock-ladder__hint {
   margin: var(--transactions-space-md) var(--transactions-space-lg) 0;
-  font-size: var(--transactions-size-text-small);
-  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
 }
 
 .stock-ladder__error {
   display: flex;
+  flex: 1;
   align-items: center;
+  justify-content: center;
   gap: var(--transactions-space-sm);
-  margin: var(--transactions-space-lg);
+  margin: 0;
   font-size: var(--transactions-size-text-body-sm);
   color: var(--transactions-color-text-major);
 }
