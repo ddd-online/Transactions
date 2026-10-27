@@ -2823,7 +2823,16 @@
   justify-content: space-between;
   gap: var(--transactions-space-sm);
   padding: var(--transactions-space-sm) var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+/* 区域内部不再画线；只有「本轮复盘」与「成交记录」之间收一条，提示内容块切换。 */
+.stock-detail__section--trades {
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* 交易台账的标题与内容是一组，不在标题下画线。 */
+.stock-detail .stock-ledger__head {
+  border-bottom: 0;
 }
 
 .stock-section-title {

@@ -687,7 +687,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               </div>
             )}
 
-            <section className="stock-detail__section">
+            <section className="stock-detail__section stock-detail__section--trades">
               <span className="stock-section-title">成交记录</span>
             </section>
             <Table
