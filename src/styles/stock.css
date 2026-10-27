@@ -2590,6 +2590,8 @@
 
 .stock-section {
   margin-top: var(--transactions-space-md);
+  /* 指标区与资金记录是两个区域：在记录标题上方收一条线。 */
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 .stock-section__title {
