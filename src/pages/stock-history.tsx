@@ -17,6 +17,7 @@ import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
+import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { StockLedgerSection } from './stock-ledger'
 import {
@@ -250,8 +251,9 @@ export function StockHistoryPanel({
               title={ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
             />
           ) : (
-            <div className="stock-master__list">
-              {rows.map((row) => (
+            <ScrollArea className="stock-master__scroll">
+              <div className="stock-master__list">
+                {rows.map((row) => (
                 <button
                   key={row.id}
                   type="button"
@@ -279,9 +281,10 @@ export function StockHistoryPanel({
                       {stockPercent(row.totalPnlRate)}
                     </span>
                   </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </aside>
 

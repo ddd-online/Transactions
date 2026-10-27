@@ -2640,10 +2640,14 @@
   border-right: 1px solid var(--transactions-color-divider);
 }
 
-.stock-master__list {
+.stock-master__scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+}
+
+.stock-master__list {
+  display: flex;
+  flex-direction: column;
 }
 
 .stock-master__row {

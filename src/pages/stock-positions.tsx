@@ -13,6 +13,7 @@ import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
+import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { StockLedgerSection } from './stock-ledger'
 import {
@@ -504,8 +505,9 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             title={ledgerId ? '当前没有持仓' : '请先创建/选择账本'}
           />
         ) : (
-          <div className="stock-master__list">
-            {positions.map((position) => {
+          <ScrollArea className="stock-master__scroll">
+            <div className="stock-master__list">
+              {positions.map((position) => {
               const rowPnl = pnlOf(position)
               return (
                 <button
@@ -542,10 +544,11 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                       {stockPercent((rowPnl / position.totalCost) * 100)}
                     </span>
                   </div>
-                </button>
-              )
-            })}
-          </div>
+                  </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
         )}
         <div className="stock-master__footer">
           <Button variant="primary" block testId="stock-position-create" onClick={() => openTrade('open')}>
