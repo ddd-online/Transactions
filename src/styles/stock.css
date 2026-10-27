@@ -2904,6 +2904,12 @@
   margin-left: calc(-1 * var(--transactions-space-lg));
 }
 
+/* 持仓详情只有一列内容、没有额外横向空间：让 8 列按容器收窄，
+ * 不再继承 .tr-table 的 880px 最小宽度把详情撑出横向滚动。 */
+.stock-detail > .stock-trade-table {
+  min-width: 0;
+}
+
 .stock-trade-table .ant-table-thead > tr > th {
   padding: var(--transactions-space-xs) var(--transactions-space-sm);
   background: var(--transactions-color-minor-background);
@@ -2913,6 +2919,14 @@
 .stock-trade-table .ant-table-tbody > tr > td {
   padding: var(--transactions-space-xs) var(--transactions-space-sm);
   font-size: var(--transactions-size-text-caption);
+}
+
+/* 时间列是一行完整日期 + 时分：11px 等宽、不换行，140px 内刚好放下。 */
+.stock-detail > .stock-trade-table .ant-table-tbody > tr > td:first-child {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .stock-round__body .stock-trade-table .ant-table-thead > tr > th:last-child,
