@@ -452,7 +452,9 @@ export function StockStatisticsPanel({
 
       {tabs === 'summary' ? (
         <>
-          <section className="stock-statistics-section">
+          <section
+            className={`stock-statistics-section${latest ? '' : ' stock-statistics-section--empty'}`}
+          >
             <h3 className="stock-section__title">结算统计</h3>
             {latest ? (
               <div className="stock-stat-grid" data-testid="stock-statistics-summary">
@@ -536,7 +538,9 @@ export function StockStatisticsPanel({
           ) : null}
         </>
       ) : (
-        <section className="stock-statistics-section">
+        <section
+          className={`stock-statistics-section${detailPoints.length === 0 ? ' stock-statistics-section--empty' : ''}`}
+        >
           {detailPoints.length === 0 ? (
             <EmptyState
               testId="stock-statistics-empty"

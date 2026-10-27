@@ -3400,6 +3400,14 @@
   padding: 0 0 var(--transactions-space-lg);
 }
 
+/* 空态撑满工具栏以下的剩余高度，让图标和文案真正居中。 */
+.stock-statistics-section--empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* 曲线吃掉剩余高度，而不是固定 420px 后在页面底部留一大块空白。 */
 .stock-statistics-section--chart {
   display: flex;
