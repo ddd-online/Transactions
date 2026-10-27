@@ -1166,8 +1166,6 @@
 .stock-rounds {
   display: flex;
   flex-direction: column;
-  max-height: 70vh;
-  overflow-y: auto;
 }
 
 .stock-round + .stock-round {
@@ -2128,12 +2126,10 @@
   overflow: hidden;
 }
 
-/* 详情末端（每轮交易）吃掉剩余高度并在内部滚动 */
-.stock-history__grid > *:last-child .stock-rounds {
+/* 详情末端（每轮交易）吃掉剩余高度，滚动交给 OverlayScrollbars。 */
+.stock-rounds-scroll {
   flex: 1;
   min-height: 0;
-  max-height: none;
-  overflow-y: auto;
 }
 
 /* ============================================
@@ -2980,10 +2976,11 @@
 .stock-rounds {
   display: flex;
   flex-direction: column;
+}
+
+.stock-rounds-scroll {
   flex: 1;
   min-height: 0;
-  max-height: none;
-  overflow-y: auto;
 }
 
 .stock-round {

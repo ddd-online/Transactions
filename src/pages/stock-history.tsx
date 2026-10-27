@@ -308,7 +308,8 @@ export function StockHistoryPanel({
                 </div>
               </header>
 
-              <div className="stock-rounds">
+              <ScrollArea className="stock-rounds-scroll">
+                <div className="stock-rounds">
                 {detail.rounds.map((round) => (
                   <RoundBlock
                     key={round.id}
@@ -345,8 +346,9 @@ export function StockHistoryPanel({
                     onSaveTrade={(tradeId) => void saveTrade(tradeId)}
                     onDelete={(orderId) => setConfirmOrder(orderId)}
                   />
-                ))}
-              </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </>
           )}
         </section>
