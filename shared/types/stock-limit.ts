@@ -45,17 +45,17 @@ export interface StockLimitEntry {
 /** 天梯的一层（一个板数）。 */
 export interface StockLimitRung {
   level: number
+  /** 今日仍在该板数上的股票 */
   entries: StockLimitEntry[]
+  /**
+   * 断板：昨日在这一层、今日未涨停的股票，排在 `entries` 后面展示。
+   * 该层可能只有断板（今日无人晋级），此时 `entries` 为空。
+   */
+  broken: StockLimitEntry[]
   /** 昨日 (level-1) 板的家数；首板没有候选，为 `null` */
   candidates: number | null
   /** 该层晋级率（百分数）；无候选或昨日缺失为 `null` */
   rate: number | null
-}
-
-/** 断板：昨日涨停、今日未涨停，按昨日的板数分组。 */
-export interface StockLimitBrokenGroup {
-  level: number
-  entries: StockLimitEntry[]
 }
 
 /** 天梯顶部的汇总数字；`null` 一律表示"前一交易日缺失，算不出"。 */
@@ -99,9 +99,10 @@ export interface StockLimitLadder {
   /** 这份数据抓取（或从库里读出）的时间，Unix 秒 */
   fetchedAt: number
   source: 'eastmoney'
-  /** 天梯各层，按板数**升序**（首板在左，最高板在右） */
+  /**
+   * 天梯各层，按板数**升序**（首板在左，最高板在右）。
+   * 层数取"今日 ∪ 昨日"：昨日的高板今天断了，那一层也要留下，断板就挂在里面。
+   */
   rungs: StockLimitRung[]
-  /** 断板分组，按昨日板数降序 */
-  broken: StockLimitBrokenGroup[]
   metrics: StockLimitMetrics
 }

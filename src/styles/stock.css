@@ -4183,70 +4183,35 @@
   line-height: 16px;
 }
 
-/* ---------------- 断板 ---------------- */
+/* ---------------- 断板（挂在列内） ---------------- */
 
-.stock-ladder__broken {
-  padding: var(--transactions-space-sm) var(--transactions-space-lg) var(--transactions-space-md);
-  border-bottom: 1px solid var(--transactions-color-divider);
+/* 断板不另起一段：跟在当日连板股后面，用一条虚线把它与上面分开，
+ * 名字退成次级色、右下角换成「断」。 */
+.stock-ladder__rung-broken {
+  margin-top: var(--transactions-space-sm);
 }
 
-.stock-ladder__broken-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-md);
-}
-
-.stock-ladder__broken-title {
+.stock-ladder__broken-note {
   margin: 0;
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-semibold);
-  color: var(--transactions-color-text-secondary);
-}
-
-.stock-ladder__broken-count {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.stock-ladder__broken-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--transactions-space-md);
-  padding: var(--transactions-space-sm) 0;
-  border-top: 1px solid var(--transactions-color-divider);
-}
-
-.stock-ladder__broken-row:first-of-type {
-  margin-top: var(--transactions-space-2xs);
-}
-
-.stock-ladder__broken-level {
-  flex: 0 0 64px;
-  padding-top: 4px;
-  font-family: var(--transactions-font-mono);
+  padding-top: 6px;
+  border-top: 1px dashed var(--transactions-color-border-l2);
   font-size: var(--transactions-size-text-small);
   color: var(--transactions-color-text-tertiary);
 }
 
-.stock-ladder__broken-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-sm);
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.stock-ladder__chip.is-broken .stock-ladder__chip-name {
+  color: var(--transactions-color-text-secondary);
 }
 
-.stock-ladder__broken-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 3px var(--transactions-space-sm);
-  border: 1px dashed var(--transactions-color-border-l3);
+.stock-ladder__chip-tag {
+  margin-left: auto;
+  padding: 0 4px;
   border-radius: var(--transactions-radius-sm);
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
+  background: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-tertiary);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-small);
+  line-height: 16px;
 }
 
 /* ---------------- 空态 / 错误 / 骨架 ---------------- */
@@ -4369,6 +4334,12 @@
 
   .stock-ladder__chip-meta {
     margin-top: 0;
+  }
+
+  .stock-ladder__rung-broken {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: var(--transactions-space-xs);
   }
 }
 

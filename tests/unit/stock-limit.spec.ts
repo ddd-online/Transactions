@@ -128,11 +128,28 @@ describe('buildLimitLadder', () => {
     expect(rungs[2].rate).toBe(50)
   })
 
-  it('断板按昨日板数降序分组', () => {
-    const { broken } = buildLimitLadder(today, previous)
-    expect(broken.map((group) => group.level)).toEqual([2, 1])
-    expect(broken[0].entries.map((row) => row.stockCode)).toEqual(['F'])
-    expect(broken[1].entries.map((row) => row.stockCode)).toEqual(['E'])
+  it('断板挂在昨日所在的那一层，排在连板股后面', () => {
+    const { rungs } = buildLimitLadder(today, previous)
+    expect(rungs[0].broken.map((row) => row.stockCode)).toEqual(['E'])
+    expect(rungs[1].broken.map((row) => row.stockCode)).toEqual(['F'])
+    expect(rungs[2].broken).toEqual([])
+  })
+
+  it('昨日那一层全部晋级时，不留下空列', () => {
+    const promoted = [...previous, entry('Y', 5, 95000)]
+    const nextDay = [...today, entry('Y', 6, 95000)]
+    const { rungs } = buildLimitLadder(nextDay, promoted)
+    expect(rungs.map((rung) => rung.level)).toEqual([1, 2, 3, 6])
+    expect(rungs.find((rung) => rung.level === 5)).toBeUndefined()
+  })
+
+  it('昨日有、今日没有的层也保留，只放断板', () => {
+    const { rungs, metrics } = buildLimitLadder(today, [...previous, entry('X', 4, 95000)])
+    const top = rungs.find((rung) => rung.level === 4)!
+    expect(top.entries).toEqual([])
+    expect(top.broken.map((row) => row.stockCode)).toEqual(['X'])
+    // 空间板仍只算今日
+    expect(metrics.maxLevel).toBe(3)
   })
 
   it('汇总指标', () => {
@@ -148,8 +165,8 @@ describe('buildLimitLadder', () => {
   })
 
   it('缺前一交易日时晋级率与断板都留空', () => {
-    const { rungs, broken, metrics } = buildLimitLadder(today, null)
-    expect(broken).toEqual([])
+    const { rungs, metrics } = buildLimitLadder(today, null)
+    expect(rungs.every((rung) => rung.broken.length === 0)).toBe(true)
     expect(rungs.every((rung) => rung.rate === null && rung.candidates === null)).toBe(true)
     expect(metrics.previousCount).toBeNull()
     expect(metrics.rate).toBeNull()

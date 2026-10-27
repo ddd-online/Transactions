@@ -77,7 +77,6 @@ function unavailable(date: string, now: number): StockLimitLadder {
     fetchedAt: now,
     source: 'eastmoney',
     rungs: [],
-    broken: [],
     metrics: {
       limitCount: 0,
       previousCount: null,

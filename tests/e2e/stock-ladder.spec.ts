@@ -156,8 +156,13 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await expect(ladder.getByTestId('stock-ladder-rung').nth(0)).toHaveAttribute('data-level', '1')
     await expect(ladder.getByTestId('stock-ladder-rung').nth(2)).toHaveAttribute('data-level', '4')
     await expect(ladder.getByTestId('stock-ladder-chip').first()).toContainText('华阳智能')
-    await expect(ladder.getByTestId('stock-ladder-broken')).toContainText('贵州茅台')
-    await expect(ladder.getByTestId('stock-ladder-broken')).toContainText('科瑞思')
+    await expect(ladder.getByTestId('stock-ladder-broken-chip')).toHaveCount(2)
+    await expect(
+      ladder.getByTestId('stock-ladder-rung').nth(0).getByTestId('stock-ladder-broken-chip'),
+    ).toContainText('贵州茅台')
+    await expect(
+      ladder.getByTestId('stock-ladder-rung').nth(1).getByTestId('stock-ladder-broken-chip'),
+    ).toContainText('科瑞思')
     await expect(ladder.getByTestId('stock-ladder-status')).toContainText('已写入本地')
     await expect(ladder.getByTestId('stock-ladder-metrics')).toContainText('50%')
     await page.screenshot({
@@ -272,7 +277,8 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
     const ladder = page.getByTestId('stock-ladder')
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(2)
     await expect(ladder.getByTestId('stock-ladder-status')).toContainText('盘中临时数据')
-    await expect(ladder.getByTestId('stock-ladder-broken')).toContainText('贵州茅台')
+    await expect(ladder.getByTestId('stock-ladder-broken-chip')).toHaveCount(1)
+    await expect(ladder.getByTestId('stock-ladder-broken-chip')).toContainText('贵州茅台')
 
     // 当天的池子与日标记都不落库；前一天是确定数据，照常缓存
     await expect

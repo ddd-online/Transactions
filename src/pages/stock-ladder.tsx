@@ -21,23 +21,41 @@ function fetchedText(seconds: number): string {
   return formatTimestamp(seconds, 'HH:mm')
 }
 
-function StockChip({ entry }: { entry: StockLimitEntry }): JSX.Element {
+/**
+ * 一只涨停股。`broken` 表示它是昨日的板、今天没接上：
+ * 名字退到次级色，右下角换成「断」标记。
+ */
+function StockChip({
+  entry,
+  broken = false,
+}: {
+  entry: StockLimitEntry
+  broken?: boolean
+}): JSX.Element {
   const detail = [
     `${entry.stockName} ${entry.stockCode}`,
     `首封 ${sealTimeText(entry.firstSeal)}`,
-    entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
+    broken ? `昨日首封 ${sealTimeText(entry.firstSeal)}，今日断板` : entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
     entry.industry,
   ]
     .filter(Boolean)
     .join(' · ')
 
   return (
-    <li className="stock-ladder__chip" data-testid="stock-ladder-chip" title={detail}>
+    <li
+      className={`stock-ladder__chip${broken ? ' is-broken' : ''}`}
+      data-testid={broken ? 'stock-ladder-broken-chip' : 'stock-ladder-chip'}
+      title={detail}
+    >
       <span className="stock-ladder__chip-name">{entry.stockName}</span>
       <span className="stock-ladder__chip-meta">
         <span className="stock-ladder__chip-code">{entry.stockCode}</span>
-        <span className="stock-ladder__chip-time">{sealTimeText(entry.firstSeal)}</span>
-        {entry.brokenCount > 0 ? (
+        <span className="stock-ladder__chip-time">
+          {broken ? `昨${sealTimeText(entry.firstSeal)}` : sealTimeText(entry.firstSeal)}
+        </span>
+        {broken ? (
+          <span className="stock-ladder__chip-tag">断</span>
+        ) : entry.brokenCount > 0 ? (
           <span className="stock-ladder__chip-broken">炸 {entry.brokenCount}</span>
         ) : null}
       </span>
@@ -45,19 +63,12 @@ function StockChip({ entry }: { entry: StockLimitEntry }): JSX.Element {
   )
 }
 
-function BrokenChip({ entry }: { entry: StockLimitEntry }): JSX.Element {
-  return (
-    <li className="stock-ladder__broken-chip" data-testid="stock-ladder-broken-chip">
-      <span>{entry.stockName}</span>
-      <span className="stock-ladder__chip-code">{entry.stockCode}</span>
-    </li>
-  )
-}
-
 /**
  * 连板天梯：按交易日看涨停股的连板层级。
  *
- * 一天一屏：日期行 → 汇总数字 → 各板数一列（首板在左、最高板在右）→ 断板。
+ * 一天一屏：日期行 → 汇总数字 → 一板一列（首板在左、最高板在右）。
+ * 断板不另起一段，直接挂在它昨日所在的那一列、排在今日连板股后面，
+ * 名字退色并带「断」标记；那一层今天没人晋级时就只剩断板。
  * 盘中（当天 15:00 前）的数据是临时快照，服务层不会入库，界面在这里明说。
  */
 export function StockLadderPanel(): JSX.Element {
@@ -145,7 +156,12 @@ export function StockLadderPanel(): JSX.Element {
         <div className="stock-ladder__error" data-testid="stock-ladder-error">
           <Icon name="WarningCircle" size={16} />
           <span>{error}</span>
-          <Button size="sm" variant="text" testId="stock-ladder-retry" onClick={() => void load(date, true)}>
+          <Button
+            size="sm"
+            variant="text"
+            testId="stock-ladder-retry"
+            onClick={() => void load(date, true)}
+          >
             重试
           </Button>
         </div>
@@ -185,26 +201,7 @@ export function StockLadderPanel(): JSX.Element {
 
     return (
       <>
-        {ladder.broken.length > 0 ? (
-          <section className="stock-ladder__broken" data-testid="stock-ladder-broken">
-            <header className="stock-ladder__broken-head">
-              <h2 className="stock-ladder__broken-title">断板</h2>
-              <span className="stock-ladder__broken-count">
-                {ladder.metrics.brokenCount ?? 0} 家 · 昨日涨停，今日未涨停
-              </span>
-            </header>
-            {ladder.broken.map((group) => (
-              <div key={group.level} className="stock-ladder__broken-row" data-level={group.level}>
-                <span className="stock-ladder__broken-level">昨 {group.level} 板</span>
-                <ul className="stock-ladder__broken-chips">
-                  {group.entries.map((entry) => (
-                    <BrokenChip key={entry.stockCode} entry={entry} />
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </section>
-        ) : ladder.previousDate === null ? (
+        {ladder.previousDate === null ? (
           <p className="stock-ladder__hint" data-testid="stock-ladder-no-previous">
             缺少前一交易日的数据，断板与晋级率暂不计入。
           </p>
@@ -223,7 +220,9 @@ export function StockLadderPanel(): JSX.Element {
                   <span className="stock-ladder__level-num">{rung.level}</span>
                   <span className="stock-ladder__level-unit">板</span>
                 </span>
-                <span className="stock-ladder__rung-count">{rung.entries.length}</span>
+                {rung.entries.length > 0 ? (
+                  <span className="stock-ladder__rung-count">{rung.entries.length}</span>
+                ) : null}
               </header>
               <p className="stock-ladder__rung-rate">
                 {rung.level === 1
@@ -232,15 +231,26 @@ export function StockLadderPanel(): JSX.Element {
                     ? '—'
                     : `晋级 ${stockPercent(rung.rate, 0)}`}
               </p>
+
               <ul className="stock-ladder__chips">
                 {rung.entries.map((entry) => (
                   <StockChip key={entry.stockCode} entry={entry} />
                 ))}
               </ul>
+
+              {rung.broken.length > 0 ? (
+                <div className="stock-ladder__rung-broken" data-testid="stock-ladder-broken">
+                  <p className="stock-ladder__broken-note">断板 {rung.broken.length}</p>
+                  <ul className="stock-ladder__chips">
+                    {rung.broken.map((entry) => (
+                      <StockChip key={entry.stockCode} entry={entry} broken />
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </section>
           ))}
         </div>
-
       </>
     )
   }
