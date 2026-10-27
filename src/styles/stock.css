@@ -4060,6 +4060,11 @@
   overflow: hidden;
 }
 
+/* 最后一行补一条底线：滚到底或列本身很短时，列有收口。 */
+.stock-ladder__list .rc-listy > .rc-listy-item:last-child .stock-ladder__item {
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
 .stock-ladder__rung:first-child {
   border-left: 0;
 }
