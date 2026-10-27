@@ -460,6 +460,7 @@ function RoundBlock({
             rowKey="id"
             pagination={false}
             size="small"
+            tableLayout="fixed"
             dataSource={round.trades.filter((trade) => trade.shares > 0)}
             onRow={() => ({ 'data-testid': 'stock-trade' }) as HTMLAttributes<HTMLElement>}
             columns={[

@@ -2912,6 +2912,7 @@
 .stock-round__body > .stock-trade-table {
   width: calc(100% + var(--transactions-space-lg) + var(--transactions-space-lg));
   max-width: none;
+  min-width: 0;
   margin-right: calc(-1 * var(--transactions-space-lg));
   margin-left: calc(-1 * var(--transactions-space-lg));
 }
@@ -2925,6 +2926,11 @@
 .stock-trade-table .ant-table-tbody > tr > td {
   padding: var(--transactions-space-xs) var(--transactions-space-sm);
   font-size: var(--transactions-size-text-caption);
+}
+
+.stock-round__body .stock-trade-table .ant-table-thead > tr > th:last-child,
+.stock-round__body .stock-trade-table .ant-table-tbody > tr > td:last-child {
+  padding-right: var(--transactions-space-md);
 }
 
 .stock-trade-type {
