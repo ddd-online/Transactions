@@ -297,6 +297,8 @@ export function StockLadderPanel({
           onModeChange={() => undefined}
           onRangeChange={(next) => setDate(next && next <= today ? next : today)}
         />
+      </div>
+      <div className="stock-ladder__actions">
         <span
           className={`stock-ladder__status${ladder?.stale ? ' is-warning' : ladder?.temporary ? ' is-live' : ''}`}
           data-testid="stock-ladder-status"
@@ -305,17 +307,17 @@ export function StockLadderPanel({
         >
           {statusText}
         </span>
+        <Button
+          size="sm"
+          variant="secondary"
+          testId="stock-ladder-refresh"
+          loading={loading}
+          icon={<Icon name="Reload" size={14} />}
+          onClick={() => void load(date, true)}
+        >
+          刷新
+        </Button>
       </div>
-      <Button
-        size="sm"
-        variant="secondary"
-        testId="stock-ladder-refresh"
-        loading={loading}
-        icon={<Icon name="Reload" size={14} />}
-        onClick={() => void load(date, true)}
-      >
-        刷新
-      </Button>
     </header>
   )
 

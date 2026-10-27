@@ -3980,6 +3980,15 @@
   flex-wrap: wrap;
 }
 
+/* 数据状态贴着刷新按钮：右侧一组，读作「现在这份数据 + 重新抓取」。 */
+.stock-ladder__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-md);
+  flex-wrap: wrap;
+}
+
 /* ---------------- 汇总数字（版心底栏） ---------------- */
 
 /* 与「记录」页共用 .statistics-footer；这里只补两处：
