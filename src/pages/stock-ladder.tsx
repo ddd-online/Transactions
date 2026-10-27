@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom'
 import Listy from '@rc-component/listy'
 
 import { addDays } from '../../shared/domain/calendar'
-import { isOneWordBoard } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import type {
   StockLimitEntry,
@@ -17,6 +16,7 @@ import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
+import { StockLadderItem } from './stock-ladder-item'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
 /** 一列里的行：今日连板 → 「断板 N」小标 → 断板个股。 */
@@ -61,72 +61,9 @@ function useMediaQuery(query: string): boolean {
   return matches
 }
 
-/** `HHMMSS` 整数 → `09:25`；缺值给破折号。 */
-function sealTimeText(value: number): string {
-  if (!Number.isInteger(value) || value <= 0) return '—'
-  const text = String(value).padStart(6, '0')
-  return `${text.slice(0, 2)}:${text.slice(2, 4)}`
-}
-
 /** 抓取时间：只显示时分，日期用选择器本身表达。 */
 function fetchedText(seconds: number): string {
   return formatTimestamp(seconds, 'HH:mm')
-}
-
-/**
- * 一只涨停股。`broken` 表示它是昨日的板、今天没接上：
- * 名字退到次级色，右下角换成「断」标记。
- */
-function StockChip({
-  entry,
-  broken = false,
-}: {
-  entry: StockLimitEntry
-  broken?: boolean
-}): JSX.Element {
-  const detail = [
-    `${entry.stockName} ${entry.stockCode}`,
-    `首封 ${sealTimeText(entry.firstSeal)}`,
-    broken
-      ? `昨日首封 ${sealTimeText(entry.firstSeal)}，今日断板`
-      : [
-          isOneWordBoard(entry) ? '一字板' : '',
-          entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
-        ]
-          .filter(Boolean)
-          .join(' · '),
-    entry.industry,
-  ]
-    .filter(Boolean)
-    .join(' · ')
-
-  return (
-    <div
-      className={`stock-ladder__chip${broken ? ' is-broken' : ''}`}
-      data-testid={broken ? 'stock-ladder-broken-chip' : 'stock-ladder-chip'}
-      title={detail}
-    >
-      <span className="stock-ladder__chip-head">
-        <span className="stock-ladder__chip-name">{entry.stockName}</span>
-        {!broken && isOneWordBoard(entry) ? (
-          <span className="stock-ladder__chip-word" data-testid="stock-ladder-chip-word">
-            一字
-          </span>
-        ) : null}
-      </span>
-      <span className="stock-ladder__chip-meta">
-        <span className="stock-ladder__chip-code">{entry.stockCode}</span>
-        <span className="stock-ladder__chip-time">
-          {broken ? `昨${sealTimeText(entry.firstSeal)}` : sealTimeText(entry.firstSeal)}
-        </span>
-        {broken ? (
-          <span className="stock-ladder__chip-tag">断</span>
-        ) : entry.brokenCount > 0 ? (
-          <span className="stock-ladder__chip-broken">炸 {entry.brokenCount}</span>
-        ) : null}
-      </span>
-    </div>
-  )
 }
 
 /**
@@ -338,13 +275,13 @@ export function StockLadderPanel({
                 {narrow ? (
                   <div className="stock-ladder__chips">
                     {rung.entries.map((entry) => (
-                      <StockChip key={entry.stockCode} entry={entry} />
+                      <StockLadderItem key={entry.stockCode} entry={entry} />
                     ))}
                     {rung.broken.length > 0 ? (
                       <BrokenNote count={rung.broken.length} />
                     ) : null}
                     {rung.broken.map((entry) => (
-                      <StockChip key={entry.stockCode} entry={entry} broken />
+                      <StockLadderItem key={entry.stockCode} entry={entry} broken />
                     ))}
                   </div>
                 ) : (
@@ -358,7 +295,7 @@ export function StockLadderPanel({
                         row.kind === 'note' ? (
                           <BrokenNote count={row.count} />
                         ) : (
-                          <StockChip entry={row.entry} broken={row.broken} />
+                          <StockLadderItem entry={row.entry} broken={row.broken} />
                         )
                       }
                     />
