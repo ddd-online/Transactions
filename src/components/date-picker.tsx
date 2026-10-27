@@ -16,6 +16,8 @@ export interface DatePickerProps {
   className?: string
   /** 读屏用的控件名（输入框里只有一个日期，没有可见的 label 时必填）。 */
   ariaLabel?: string
+  /** 不可选的日期（面板置灰 + 手输被拒）。 */
+  disabledDate?: (value: Dayjs) => boolean
 }
 
 /** 日期输入：对外仍是 YYYY-MM-DD 字符串，内部使用 AntD DatePicker。 */
@@ -28,6 +30,7 @@ export function DatePicker({
   allowClear = false,
   className = '',
   ariaLabel,
+  disabledDate,
 }: DatePickerProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const current = value ? dayjs(value) : null
@@ -41,6 +44,7 @@ export function DatePicker({
         }}
         disabled={disabled}
         allowClear={allowClear}
+        disabledDate={disabledDate}
         format="YYYY-MM-DD"
         inputReadOnly={false}
         suffixIcon={
@@ -79,7 +83,7 @@ export function DatePicker({
           const commit = (raw: string): void => {
             if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
               const parsed = dayjs(raw)
-              if (parsed.isValid()) {
+              if (parsed.isValid() && !disabledDate?.(parsed)) {
                 setOpen(false)
                 onChange(parsed.format('YYYY-MM-DD'))
               }

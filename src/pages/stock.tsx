@@ -12,6 +12,7 @@ import { notify } from '../components/toast'
 import { StockAccountPanel } from './stock-account'
 import { stockMoney, stockPercent, stockPnlClass } from './stock-format'
 import { StockHistoryPanel } from './stock-history'
+import { StockLadderPanel } from './stock-ladder'
 import { StockLessonDialog } from './stock-lesson-dialog'
 import { StockLessonsPanel } from './stock-lessons'
 import { StockPositionsPanel } from './stock-positions'
@@ -23,7 +24,14 @@ export interface StockPageProps {
   onLedgerChanged?: () => void
 }
 
-type StockTab = 'account' | 'positions' | 'history' | 'lessons' | 'statistics' | 'settings'
+type StockTab =
+  | 'account'
+  | 'positions'
+  | 'history'
+  | 'lessons'
+  | 'statistics'
+  | 'ladder'
+  | 'settings'
 type AmountAction = 'principal' | 'withdraw' | 'interest'
 
 const TABS: Array<[StockTab, string, IconName]> = [
@@ -32,6 +40,7 @@ const TABS: Array<[StockTab, string, IconName]> = [
   ['history', '记录', 'ClockCircle'],
   ['lessons', '心得', 'Bulb'],
   ['statistics', '统计', 'BarChart'],
+  ['ladder', '天梯', 'Rise'],
   ['settings', '设置', 'Setting'],
 ]
 
@@ -239,6 +248,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
       {tab === 'statistics' ? (
         <StockStatisticsPanel ledgerId={ledgerId} onOpenRound={openHistoryRound} />
       ) : null}
+      {tab === 'ladder' ? <StockLadderPanel /> : null}
       {tab === 'settings' ? (
         <StockSettingsPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
       ) : null}

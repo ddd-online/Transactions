@@ -3895,3 +3895,495 @@
     justify-content: flex-end;
   }
 }
+
+/* ============================================
+ * 连板天梯（第七个子功能）
+ *
+ * 竖向的"天梯"横过来放：一个板数一列，首板在左、最高板在右。
+ * 列高天然是"市场金字塔"——首板一列最长，越往右越短。
+ * 整页只有墨色与灰阶：琥珀只留给"炸板次数"，其余强度靠字号、对齐和发丝线。
+ * ============================================ */
+
+.stock-ladder-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-bottom: var(--transactions-space-xl);
+}
+
+/* 日期与状态吸顶：一列首板可能几十只，翻到下面就不知道在看哪天了。 */
+.stock-ladder__bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--transactions-color-bg-base);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md) var(--transactions-space-lg);
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-sm);
+}
+
+.stock-ladder__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stock-ladder__kicker {
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-medium);
+  letter-spacing: var(--transactions-tracking-label);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 盘中：一枚琥珀点 + 一句"收盘后才定稿"。数据本身不做特殊样式，
+ * 免得读起来像坏数据。 */
+.stock-ladder__status.is-live {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__status.is-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-outlier);
+}
+
+.stock-ladder__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-wrap: wrap;
+}
+
+.stock-ladder__step {
+  width: 28px;
+  height: 28px;
+}
+
+.stock-ladder__step:disabled {
+  color: var(--transactions-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.stock-ladder__date {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-ladder__date .tr-date-picker {
+  width: auto;
+}
+
+/* 日期是这一页的锚：去边框、放大到标题字号，靠悬停底色说明可点。 */
+.stock-ladder__date .tr-date-picker .ant-picker {
+  width: auto;
+  height: var(--transactions-btn-height-md);
+  padding: 0 var(--transactions-space-xs);
+  border-color: transparent;
+  background: transparent;
+}
+
+.stock-ladder__date .tr-date-picker .ant-picker:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.stock-ladder__date .tr-date-picker .ant-picker-input > input {
+  width: 134px;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title);
+  font-weight: var(--transactions-weight-medium);
+  letter-spacing: var(--transactions-tracking-amount-lg);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-ladder__weekday {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* ---------------- 汇总数字 ---------------- */
+
+.stock-ladder__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__metric:first-child {
+  border-left: 0;
+}
+
+.stock-ladder__metric-label {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__metric-value {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--transactions-height-snug);
+  letter-spacing: var(--transactions-tracking-amount-lg);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-ladder__metric-sub {
+  overflow: hidden;
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------- 天梯列 ---------------- */
+
+.stock-ladder__rungs {
+  display: flex;
+  align-items: stretch;
+  padding: 0 var(--transactions-space-md);
+}
+
+.stock-ladder__rung {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-md) var(--transactions-space-lg);
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__rung:first-child {
+  border-left: 0;
+}
+
+.stock-ladder__rung-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-ladder__level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.stock-ladder__level-num {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title);
+  font-weight: var(--transactions-weight-medium);
+  line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-amount-lg);
+  color: var(--transactions-color-text-major);
+}
+
+/* 最高板是这一天的天花板：只放大两级字号，不加颜色。 */
+.stock-ladder__rung.is-top .stock-ladder__level-num {
+  font-size: var(--transactions-size-text-display-sm);
+}
+
+.stock-ladder__level-unit {
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__rung-count {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__rung-rate {
+  margin: var(--transactions-space-2xs) 0 var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__chips {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-ladder__chip {
+  min-width: 0;
+  padding: 6px 0;
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__chip:first-child {
+  border-top: 0;
+}
+
+.stock-ladder__chip-name {
+  display: block;
+  overflow: hidden;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-ladder__chip-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__chip-code {
+  letter-spacing: 0.02em;
+}
+
+.stock-ladder__chip-time {
+  margin-left: 0;
+}
+
+.stock-ladder__chip-broken {
+  margin-left: auto;
+  padding: 0 4px;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-outlier-tint);
+  color: var(--transactions-color-outlier);
+  font-family: var(--transactions-font-body);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+/* ---------------- 断板 ---------------- */
+
+.stock-ladder__broken {
+  padding: var(--transactions-space-sm) var(--transactions-space-lg) var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__broken-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-md);
+}
+
+.stock-ladder__broken-title {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__broken-count {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__broken-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-sm) 0;
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__broken-row:first-of-type {
+  margin-top: var(--transactions-space-2xs);
+}
+
+.stock-ladder__broken-level {
+  flex: 0 0 64px;
+  padding-top: 4px;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__broken-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-ladder__broken-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px var(--transactions-space-sm);
+  border: 1px dashed var(--transactions-color-border-l3);
+  border-radius: var(--transactions-radius-sm);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* ---------------- 空态 / 错误 / 骨架 ---------------- */
+
+.stock-ladder__hint {
+  margin: var(--transactions-space-md) var(--transactions-space-lg) 0;
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__error {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin: var(--transactions-space-lg);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-ladder__error .icon {
+  color: var(--transactions-color-expense);
+}
+
+.stock-ladder__skeleton {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-lg);
+  padding: var(--transactions-space-lg);
+}
+
+.stock-ladder__skeleton span {
+  height: 220px;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
+  animation: stock-pulse 1.4s ease-in-out infinite;
+}
+
+.stock-ladder__skeleton span:nth-child(2) {
+  height: 170px;
+}
+
+.stock-ladder__skeleton span:nth-child(3) {
+  height: 120px;
+}
+
+.stock-ladder__skeleton span:nth-child(4) {
+  height: 90px;
+}
+
+@media (max-width: 1080px) {
+  .stock-ladder__metric {
+    padding: var(--transactions-space-md);
+  }
+
+  .stock-ladder__rung {
+    padding: var(--transactions-space-md) var(--transactions-space-sm) var(--transactions-space-lg);
+  }
+}
+
+@media (max-width: 900px) {
+  .stock-ladder__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stock-ladder__metric:nth-child(3) {
+    border-left: 0;
+  }
+
+  .stock-ladder__metric:nth-child(n + 3) {
+    border-top: 1px solid var(--transactions-color-divider);
+  }
+}
+
+/* 一列首板可能几十只：窄窗下不再并排成列，改成"板数在左、股票横向铺开"的按层行，
+ * 否则高板会被首板那一列的长列表挤到下一行、要滚很久才看得到。 */
+@media (max-width: 1000px) {
+  .stock-ladder__rungs {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .stock-ladder__rung {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: var(--transactions-space-md);
+    padding: var(--transactions-space-md) var(--transactions-space-lg);
+    border-top: 1px solid var(--transactions-color-divider);
+    border-left: 0;
+  }
+
+  .stock-ladder__rung:first-child {
+    border-top: 0;
+  }
+
+  .stock-ladder__rung-head {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .stock-ladder__rung-rate {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+  }
+
+  .stock-ladder__chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    column-gap: var(--transactions-space-lg);
+  }
+
+  .stock-ladder__chip {
+    flex: 0 0 132px;
+    min-width: 0;
+    padding: 2px 0;
+    border-top: 0;
+  }
+
+  .stock-ladder__chip-meta {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .stock-ladder__head {
+    align-items: flex-start;
+  }
+
+  .stock-ladder__chip {
+    flex: 1 1 132px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-ladder__skeleton span {
+    animation: none;
+  }
+}
