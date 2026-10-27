@@ -3906,9 +3906,10 @@
 
 .stock-ladder-view {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  min-height: 100%;
-  padding-bottom: var(--transactions-space-xl);
+  min-height: 0;
+  padding-bottom: var(--transactions-space-lg);
 }
 
 /* 日期行在布局组件的工具栏里（`.page-toolbar` 给内边距与发丝线），
@@ -4050,15 +4051,35 @@
 
 .stock-ladder__rungs {
   display: flex;
+  flex: 1 1 auto;
   align-items: stretch;
+  min-height: 0;
   padding: 0 var(--transactions-space-md);
 }
 
+/* 一列 = 列头 + 可滚动的股票列表（Listy 虚拟列表，高度由 flex 量出来）。 */
 .stock-ladder__rung {
+  display: flex;
   flex: 1 1 0;
+  flex-direction: column;
   min-width: 0;
-  padding: var(--transactions-space-md) var(--transactions-space-md) var(--transactions-space-lg);
+  min-height: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-md) var(--transactions-space-sm);
   border-left: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stock-ladder__listy .rc-listy-holder {
+  overscroll-behavior: contain;
+}
+
+.stock-ladder__list .rc-listy-item {
+  overflow: hidden;
 }
 
 .stock-ladder__rung:first-child {
@@ -4120,12 +4141,8 @@
 
 .stock-ladder__chip {
   min-width: 0;
-  padding: 6px 0;
+  padding: 5px 0;
   border-top: 1px solid var(--transactions-color-divider);
-}
-
-.stock-ladder__chip:first-child {
-  border-top: 0;
 }
 
 .stock-ladder__chip-head {
@@ -4153,6 +4170,7 @@
   min-width: 0;
   overflow: hidden;
   font-size: var(--transactions-size-text-body-sm);
+  line-height: 17px;
   color: var(--transactions-color-text-major);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4165,6 +4183,7 @@
   margin-top: 1px;
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-small);
+  line-height: 16px;
   font-variant-numeric: tabular-nums;
   color: var(--transactions-color-text-tertiary);
 }
@@ -4192,13 +4211,11 @@
 
 /* 断板不另起一段：跟在当日连板股后面，用一条虚线把它与上面分开，
  * 名字退成次级色、右下角换成「断」。 */
-.stock-ladder__rung-broken {
-  margin-top: var(--transactions-space-sm);
-}
-
 .stock-ladder__broken-note {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   margin: 0;
-  padding-top: 6px;
   border-top: 1px dashed var(--transactions-color-border-l2);
   font-size: var(--transactions-size-text-small);
   color: var(--transactions-color-text-tertiary);
@@ -4275,13 +4292,20 @@
 /* 一列首板可能几十只：窄窗下不再并排成列，改成"板数在左、股票横向铺开"的按层行，
  * 否则高板会被首板那一列的长列表挤到下一行、要滚很久才看得到。 */
 @media (max-width: 1000px) {
+  /* 窄窗回到「按层行」的普通文档流：不再撑满视口，整页自己滚。 */
+  .stock-ladder-view {
+    flex: 1 0 auto;
+  }
+
   .stock-ladder__rungs {
+    flex: 0 0 auto;
     flex-direction: column;
     padding: 0;
   }
 
   .stock-ladder__rung {
     display: grid;
+    flex: none;
     grid-template-columns: 76px minmax(0, 1fr);
     column-gap: var(--transactions-space-md);
     padding: var(--transactions-space-md) var(--transactions-space-lg);
@@ -4323,10 +4347,9 @@
     margin-top: 0;
   }
 
-  .stock-ladder__rung-broken {
-    grid-column: 2;
-    grid-row: 3;
-    margin-top: var(--transactions-space-xs);
+  .stock-ladder__chips > .stock-ladder__broken-note {
+    flex: 1 1 100%;
+    min-height: 28px;
   }
 }
 

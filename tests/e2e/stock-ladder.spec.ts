@@ -380,3 +380,93 @@ test('连板天梯：09:30 前不支持查看当天', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+test('连板天梯：首板很多时列内滚动，页面不跟着变长', async () => {
+  const repositoryRoot = resolve(__dirname, '../..')
+  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-stock-ladder-scroll-'))
+  const home = join(root, 'home')
+  const workspace = join(root, 'ws')
+  const userData = join(root, 'user-data')
+  mkdirSync(home, { recursive: true })
+  mkdirSync(userData, { recursive: true })
+  writeFileSync(
+    join(home, '.tr.dev.json'),
+    JSON.stringify({
+      width: 1400,
+      height: 900,
+      closeBehavior: 'quit',
+      appearance: 'light',
+      proxy: { mode: 'off', url: '' },
+    }),
+  )
+
+  const base = new Date()
+  base.setHours(0, 0, 0, 0)
+  const today = new Date(base)
+  const previous = new Date(base)
+  previous.setDate(previous.getDate() - 1)
+
+  const firstBoards = Array.from({ length: 60 }, (_, index) =>
+    raw(`6${String(10000 + index).padStart(5, '0')}`, `首板${index + 1}`, 1, 92500 + index * 10),
+  )
+  const pools: Record<string, unknown[]> = {
+    [queryDate(today)]: firstBoards,
+    [queryDate(previous)]: [raw('600000', '昨日板', 1, 92500)],
+  }
+
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    const date = url.searchParams.get('date') ?? ''
+    const pool = pools[date] ?? []
+    response.setHeader('content-type', 'application/json; charset=UTF-8')
+    response.end(JSON.stringify({ rc: 0, data: { tc: pool.length, qdate: 0, pool } }))
+  })
+  const port = await listen(server)
+
+  const app = await electron.launch({
+    args: ['.'],
+    cwd: repositoryRoot,
+    env: environment({
+      USERPROFILE: home,
+      HOME: home,
+      TRANSACTIONS_USER_DATA: userData,
+      TRANSACTIONS_TEST_DIALOG_DIR: workspace,
+      TRANSACTIONS_TEST_CLOSE: 'quit',
+      TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 16)),
+    }),
+  })
+
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
+    await createLedger(page, '滚动账本')
+    await page.getByTestId('nav-stock').click()
+    await page.getByTestId('stock-tab-ladder').click()
+
+    const ladder = page.getByTestId('stock-ladder')
+    await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(1)
+
+    // 虚拟列表只渲染可见行；列内可滚动，页面本身不出现第二条滚动条
+    const rendered = await page.locator('.rc-listy-item').count()
+    expect(rendered).toBeGreaterThan(3)
+    expect(rendered).toBeLessThan(60)
+
+    const metrics = await page.evaluate(() => {
+      const holder = document.querySelector('.rc-listy-holder') as HTMLElement | null
+      const content = document.querySelector('.page-content') as HTMLElement | null
+      return {
+        scrollable: holder ? holder.scrollHeight > holder.clientHeight + 1 : false,
+        pageOverflow: content ? content.scrollHeight - content.clientHeight : 0,
+      }
+    })
+    expect(metrics.scrollable).toBe(true)
+    expect(metrics.pageOverflow).toBeLessThanOrEqual(2)
+  } finally {
+    await app.close()
+    server.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})

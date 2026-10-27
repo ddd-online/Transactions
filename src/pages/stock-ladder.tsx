@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 import { createPortal } from 'react-dom'
 
+import Listy from '@rc-component/listy'
+
 import { addDays, weekdayCn } from '../../shared/domain/calendar'
 import { isOneWordBoard } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
@@ -8,12 +10,58 @@ import type {
   StockLimitEntry,
   StockLimitLadder,
   StockLimitMetrics,
+  StockLimitRung,
 } from '../../shared/types/stock-limit'
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { stockErrorMessage, stockPercent } from './stock-format'
+
+/** 虚拟列表的行高：一只股票两行字 + 分隔线。 */
+const LADDER_ROW_HEIGHT = 46
+
+/** 一列里的行：今日连板 → 「断板 N」小标 → 断板个股。 */
+type LadderRow =
+  | { key: string; kind: 'stock'; entry: StockLimitEntry; broken: boolean }
+  | { key: string; kind: 'note'; count: number }
+
+function rungRows(rung: StockLimitRung): LadderRow[] {
+  const rows: LadderRow[] = rung.entries.map((entry) => ({
+    key: entry.stockCode,
+    kind: 'stock',
+    entry,
+    broken: false,
+  }))
+  if (rung.broken.length > 0) {
+    rows.push({ key: '__broken', kind: 'note', count: rung.broken.length })
+    for (const entry of rung.broken) {
+      rows.push({ key: `broken:${entry.stockCode}`, kind: 'stock', entry, broken: true })
+    }
+  }
+  return rows
+}
+
+function BrokenNote({ count }: { count: number }): JSX.Element {
+  return (
+    <p className="stock-ladder__broken-note" data-testid="stock-ladder-broken">
+      断板 {count}
+    </p>
+  )
+}
+
+/** 窄窗（分层行布局）不需要虚拟列表，按 CSS 断点切换。 */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const list = window.matchMedia(query)
+    const update = (): void => setMatches(list.matches)
+    update()
+    list.addEventListener('change', update)
+    return () => list.removeEventListener('change', update)
+  }, [query])
+  return matches
+}
 
 /** `HHMMSS` 整数 → `09:25`；缺值给破折号。 */
 function sealTimeText(value: number): string {
@@ -55,7 +103,7 @@ function StockChip({
     .join(' · ')
 
   return (
-    <li
+    <div
       className={`stock-ladder__chip${broken ? ' is-broken' : ''}`}
       data-testid={broken ? 'stock-ladder-broken-chip' : 'stock-ladder-chip'}
       title={detail}
@@ -79,7 +127,7 @@ function StockChip({
           <span className="stock-ladder__chip-broken">炸 {entry.brokenCount}</span>
         ) : null}
       </span>
-    </li>
+    </div>
   )
 }
 
@@ -125,6 +173,22 @@ export function StockLadderPanel({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const requestRef = useRef(0)
+  const narrow = useMediaQuery('(max-width: 1000px)')
+  const [listHost, setListHost] = useState<HTMLDivElement | null>(null)
+  const [listHeight, setListHeight] = useState(0)
+
+  // 列内可滚动区域的高度：列由 flex 撑开，Listy 需要具体像素值。
+  useEffect(() => {
+    if (listHost === null) {
+      setListHeight(0)
+      return
+    }
+    const update = (): void => setListHeight(Math.max(0, listHost.clientHeight))
+    const observer = new ResizeObserver(update)
+    observer.observe(listHost)
+    update()
+    return () => observer.disconnect()
+  }, [listHost])
 
   const load = useCallback(
     async (target: string, refresh: boolean): Promise<void> => {
@@ -266,48 +330,67 @@ export function StockLadderPanel({
         ) : null}
 
         <div className="stock-ladder__rungs" data-testid="stock-ladder-rungs">
-          {ladder.rungs.map((rung) => (
-            <section
-              key={rung.level}
-              className={`stock-ladder__rung${rung.level === maxLevel ? ' is-top' : ''}`}
-              data-testid="stock-ladder-rung"
-              data-level={rung.level}
-            >
-              <header className="stock-ladder__rung-head">
-                <span className="stock-ladder__level">
-                  <span className="stock-ladder__level-num">{rung.level}</span>
-                  <span className="stock-ladder__level-unit">板</span>
-                </span>
-                {rung.entries.length > 0 ? (
-                  <span className="stock-ladder__rung-count">{rung.entries.length}</span>
-                ) : null}
-              </header>
-              <p className="stock-ladder__rung-rate">
-                {rung.level === 1
-                  ? '首板'
-                  : rung.rate === null
-                    ? '—'
-                    : `晋级 ${stockPercent(rung.rate, 0)}`}
-              </p>
+          {ladder.rungs.map((rung, index) => {
+            const rows = rungRows(rung)
+            return (
+              <section
+                key={rung.level}
+                className={`stock-ladder__rung${rung.level === maxLevel ? ' is-top' : ''}`}
+                data-testid="stock-ladder-rung"
+                data-level={rung.level}
+              >
+                <header className="stock-ladder__rung-head">
+                  <span className="stock-ladder__level">
+                    <span className="stock-ladder__level-num">{rung.level}</span>
+                    <span className="stock-ladder__level-unit">板</span>
+                  </span>
+                  {rung.entries.length > 0 ? (
+                    <span className="stock-ladder__rung-count">{rung.entries.length}</span>
+                  ) : null}
+                </header>
+                <p className="stock-ladder__rung-rate">
+                  {rung.level === 1
+                    ? '首板'
+                    : rung.rate === null
+                      ? '—'
+                      : `晋级 ${stockPercent(rung.rate, 0)}`}
+                </p>
 
-              <ul className="stock-ladder__chips">
-                {rung.entries.map((entry) => (
-                  <StockChip key={entry.stockCode} entry={entry} />
-                ))}
-              </ul>
-
-              {rung.broken.length > 0 ? (
-                <div className="stock-ladder__rung-broken" data-testid="stock-ladder-broken">
-                  <p className="stock-ladder__broken-note">断板 {rung.broken.length}</p>
-                  <ul className="stock-ladder__chips">
+                {narrow ? (
+                  <div className="stock-ladder__chips">
+                    {rung.entries.map((entry) => (
+                      <StockChip key={entry.stockCode} entry={entry} />
+                    ))}
+                    {rung.broken.length > 0 ? (
+                      <BrokenNote count={rung.broken.length} />
+                    ) : null}
                     {rung.broken.map((entry) => (
                       <StockChip key={entry.stockCode} entry={entry} broken />
                     ))}
-                  </ul>
-                </div>
-              ) : null}
-            </section>
-          ))}
+                  </div>
+                ) : (
+                  <div className="stock-ladder__list" ref={index === 0 ? setListHost : undefined}>
+                    {listHeight > 0 ? (
+                      <Listy
+                        items={rows}
+                        rowKey={(row: LadderRow) => row.key}
+                        itemHeight={LADDER_ROW_HEIGHT}
+                        height={listHeight}
+                        classNames={{ root: 'stock-ladder__listy' }}
+                        itemRender={(row: LadderRow) =>
+                          row.kind === 'note' ? (
+                            <BrokenNote count={row.count} />
+                          ) : (
+                            <StockChip entry={row.entry} broken={row.broken} />
+                          )
+                        }
+                      />
+                    ) : null}
+                  </div>
+                )}
+              </section>
+            )
+          })}
         </div>
       </>
     )

@@ -172,6 +172,9 @@ importers:
       '@antv/g2':
         specifier: ^5.4.8
         version: 5.4.8
+      '@rc-component/listy':
+        specifier: 1.2.3
+        version: 1.2.3(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       antd:
         specifier: 6.6.7
         version: 6.6.7(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
