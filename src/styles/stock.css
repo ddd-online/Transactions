@@ -4179,7 +4179,7 @@
   background: var(--transactions-color-outlier-tint);
   color: var(--transactions-color-outlier);
   font-family: var(--transactions-font-body);
-  font-size: 10px;
+  font-size: var(--transactions-size-text-small);
   line-height: 16px;
 }
 
