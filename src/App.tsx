@@ -25,6 +25,7 @@ import { AntdProvider } from './components/antd-provider'
 import { Input, Modal, Switch as AntSwitch } from 'antd'
 import { AppMark } from './components/app-mark'
 import { Button } from './components/button'
+import { IdentityDot } from './components/identity-dot'
 import { ImportWizard } from './pages/import-wizard'
 import { DiaryTransfer } from './pages/diary-transfer'
 import { UpdatePanel } from './pages/update-panel'
@@ -564,6 +565,7 @@ export function App(): JSX.Element {
                     <AppMark />
                   )}
                 </span>
+                {activeLedgerId ? <IdentityDot seed={activeLedgerId} size={6} /> : null}
                 <span className="ledger-btn-name">{activeLedgerName}</span>
                 <span className="ledger-btn-arrow">
                   <Icon name="Down" size={10} />
@@ -593,7 +595,7 @@ export function App(): JSX.Element {
                                 setLedgerMenuOpen(false)
                               }}
                             >
-                              <span className="ledger-dot" />
+                              <IdentityDot seed={ledger.id} size={6} />
                               <span className="ledger-menu-name-text">{ledger.name}</span>
                             </button>
                           </Tooltip>

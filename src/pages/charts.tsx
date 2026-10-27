@@ -577,7 +577,20 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   dataSource={lineRows}
                   locale={{ emptyText: '还没有曲线' }}
                   columns={[
-                    { title: '曲线名称', dataIndex: 'label' },
+                    {
+                      title: '曲线名称',
+                      dataIndex: 'label',
+                      render: (value: string, _line: ChartLine, index: number) => (
+                        <span className="da-line-name">
+                          <span
+                            className="da-line-swatch"
+                            style={{ background: COLORS[index % COLORS.length] }}
+                            aria-hidden="true"
+                          />
+                          {value}
+                        </span>
+                      ),
+                    },
                     {
                       title: '交易类型',
                       dataIndex: 'transactionType',

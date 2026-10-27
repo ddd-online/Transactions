@@ -764,6 +764,9 @@
 }
 
 .tr-cell-category {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
   font-size: var(--transactions-size-text-body);
   color: var(--transactions-color-text-major);
 }
@@ -802,17 +805,18 @@
   color: var(--transactions-color-transfer);
 }
 
-/* 行底色按交易类型（row-type-*） */
-.tr-table tbody > tr.row-type-income > td {
-  background-color: var(--transactions-color-income-tint);
+/* 类型用 3px 左缘色条标识，整行不再铺色：类型文字与金额已经带颜色，
+ * 行底色留给 hover / 选中。 */
+.tr-table tbody > tr.row-type-income > td:first-child {
+  box-shadow: inset 3px 0 0 var(--transactions-color-income);
 }
 
-.tr-table tbody > tr.row-type-expense > td {
-  background-color: var(--transactions-color-expense-tint);
+.tr-table tbody > tr.row-type-expense > td:first-child {
+  box-shadow: inset 3px 0 0 var(--transactions-color-expense);
 }
 
-.tr-table tbody > tr.row-type-transfer > td {
-  background-color: var(--transactions-color-transfer-tint);
+.tr-table tbody > tr.row-type-transfer > td:first-child {
+  box-shadow: inset 3px 0 0 var(--transactions-color-transfer);
 }
 
 .tr-table tbody > tr:hover > td {

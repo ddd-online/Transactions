@@ -4,6 +4,7 @@ import { Input, Modal } from 'antd'
 import { reorderWithChanges } from '../../shared/domain/list-order'
 import type { CategoryDto, TagDto } from '../../shared/types/category'
 import { Button } from '../components/button'
+import { IdentityDot } from '../components/identity-dot'
 import { ConfirmDialog } from '../components/confirm-dialog'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
@@ -353,6 +354,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
                               <Icon name="DragHandle" size={16} />
                             </span>
                             <div className="ct-item-main">
+                              <IdentityDot seed={`${ledgerId}:${type}:${category.name}`} size={6} />
                               <span className="ct-item-name">{category.name}</span>
                               {category.recordCount !== 0 ? (
                                 <span className="ct-item-badge">{category.recordCount}</span>

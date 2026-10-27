@@ -414,6 +414,21 @@
   color: var(--transactions-color-text-major);
 }
 
+.da-line-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+/* 与折线/图例同一个位置色：图表第 N 条 → 第 N 色。 */
+.da-line-swatch {
+  flex-shrink: 0;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
+}
+
 .da-table {
   font-size: var(--transactions-size-text-body-sm);
 }

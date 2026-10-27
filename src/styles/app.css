@@ -270,12 +270,10 @@
 
 /* 账本身份色点：8 个自然色（DESIGN.md 的 Ledger identity），由账本 id 稳定哈希选色。
  * 只做展示、不落库，浅色/深色各自有一套取值（见 tokens.css）。 */
-.ledger-dot {
+.identity-dot {
+  display: inline-block;
   flex-shrink: 0;
-  width: 8px;
-  height: 8px;
   border-radius: var(--transactions-radius-full);
-  background-color: var(--transactions-color-primary);
 }
 
 /* 定位层本身不参与定位（static），让 `.ledger-menu` 相对 `.ledger-anchor` 计算 */
