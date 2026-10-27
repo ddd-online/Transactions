@@ -7,18 +7,19 @@
  * 集中在这里，并且**解析逻辑与网络分离**（{@link parseTencentQuotePayload} 是纯函数，
  * 可以直接用固定 payload 断言）。
  *
- * 网络约束（既有逐字保留）：
+ * 网络约束（与既有实现一致）：
  * * `http://qt.gtimg.cn/q=<market><code>[,<market><code>...]`，**3 秒超时**；
- * * 响应是 GBK 编码，需要按 GBK 解码后再按 `~` 切分；
+ * * 响应固定是 GBK：服务端 `Content-Type` 自带 `charset=GBK`，不理会 `Accept-Charset`，
+ *   所以没有协商余地，只能按 GBK 解码后再按 `~` 切分；
  * * 停牌（最新价 0）或非法价格视为"该股无行情"，静默跳过；
  * * 任何网络 / 解码 / HTTP 失败都返回**空映射**而不是错误 —— 行情是临时外部数据，
  *   **不得阻塞录入**（`fetchName` 失败返回空串）。
  *
  * 与既有的差异只有两处，都是运行环境带来的：
  * 1. Node 的网络 API 只有异步的，所以端口签名是 `Promise`（既有是同步 trait）；
- * 2. 既有把 ureq 的代理设置注入 agent；本仓库目前只有 `shared/domain/proxy` 的纯逻辑，
- *    还没有 HTTP 客户端侧的代理解析器，因此这个 adapter 走直连。`fetchImpl` 可注入，
- *    以后接上代理只需替换它，不动解析与端口。
+ * 2. 既有把 ureq 的代理设置注入 agent；这里把网络细节整个交给注入的 `fetchImpl`，
+ *    生产传 `appFetch`（Electron 默认 session，跟随 `off / auto / manual` 代理设置），
+ *    解析与端口不关心代理。
  */
 
 import { isValidStockCode, marketPrefix } from '../../shared/domain/fee'
