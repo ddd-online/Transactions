@@ -564,6 +564,12 @@
   background-color: var(--transactions-color-primary-tint);
 }
 
+.ui-time__preset:focus-visible,
+.ui-time__cal-cell:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
 /* 当前区间就是这一项：实心 tint + 500 字重，一眼看出"这个区间来自哪个快捷项" */
 .ui-time__preset.is-active {
   background-color: var(--transactions-color-active-bg);

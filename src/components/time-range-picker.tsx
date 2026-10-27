@@ -127,6 +127,7 @@ export function TimeRangePicker({
   const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState<VisibleMonth>(() => fromStart(start))
   const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const activeMode: TimeRangeMode = yearOnly ? 'year' : dayOnly ? 'date' : mode
 
   useEffect(() => {
@@ -143,6 +144,18 @@ export function TimeRangePicker({
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      setOpen(false)
+      triggerRef.current?.focus()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
   }, [open])
 
   const presets = useMemo(
@@ -261,10 +274,13 @@ export function TimeRangePicker({
 
       <div className={`ui-time__field${open ? ' is-open' : ''}`}>
         <button
+          ref={triggerRef}
           type="button"
           className="ui-time__trigger"
           data-testid={`${testId}-trigger`}
           aria-label={yearOnly ? '选择年份' : '选择时间范围'}
+          aria-haspopup="dialog"
+          aria-expanded={open}
           onClick={() => setOpen((current) => !current)}
         >
           {yearOnly ? null : <Icon name="ClockCircle" size={16} />}
@@ -273,7 +289,12 @@ export function TimeRangePicker({
 
         {open ? (
           <>
-            <div className="ui-time__panel" data-testid={`${testId}-panel`}>
+            <div
+              className="ui-time__panel"
+              data-testid={`${testId}-panel`}
+              role="dialog"
+              aria-label={yearOnly ? '选择年份' : '选择日期'}
+            >
               {activeMode === 'date' ? (
                 <>
                   <div className="ui-time__panel-head">
@@ -319,6 +340,8 @@ export function TimeRangePicker({
                           data-testid={`${testId}-day-${ymd}`}
                           className={`ui-time__cal-cell${outside ? ' is-outside' : ''}${isToday ? ' is-today' : ''}${selectedStart || selectedEnd ? ' is-start' : ''}${inRange ? ' is-in-range' : ''}${disabled ? ' is-disabled' : ''}`}
                           title={ymd}
+                          aria-pressed={selectedStart || selectedEnd}
+                          aria-current={isToday ? 'date' : undefined}
                           disabled={disabled}
                           onClick={() => pickDay(ymd)}
                         >
