@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
+import { createPortal } from 'react-dom'
 
 import { addDays, weekdayCn } from '../../shared/domain/calendar'
 import { isOneWordBoard } from '../../shared/domain/limit-ladder'
@@ -110,9 +111,14 @@ function summaryOf(ladder: StockLimitLadder): StockLadderSummary {
 export interface StockLadderPanelProps {
   /** 汇总数字变化（外层用 `PageLayout` 的底栏展示） */
   onSummaryChange?: (summary: StockLadderSummary | null) => void
+  /** 外层 `PageLayout.toolbar` 里的空槽；日期行用 portal 渲染进去 */
+  toolbarHost?: HTMLElement | null
 }
 
-export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JSX.Element {
+export function StockLadderPanel({
+  onSummaryChange,
+  toolbarHost = null,
+}: StockLadderPanelProps): JSX.Element {
   const today = todayYmd()
   const [date, setDate] = useState(today)
   const [ladder, setLadder] = useState<StockLimitLadder | null>(null)
@@ -307,10 +313,8 @@ export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JS
     )
   }
 
-  return (
-    <div className="stock-ladder-view" data-testid="stock-ladder">
-      <div className="stock-ladder__bar">
-        <header className="stock-ladder__head">
+  const toolbar = (
+    <header className="stock-ladder__head">
           <div className="stock-ladder__heading">
             <span className="stock-ladder__kicker">连板天梯</span>
             <span
@@ -372,8 +376,12 @@ export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JS
               刷新
             </Button>
           </div>
-        </header>
-      </div>
+    </header>
+  )
+
+  return (
+    <div className="stock-ladder-view" data-testid="stock-ladder">
+      {toolbarHost ? createPortal(toolbar, toolbarHost) : null}
 
       {renderBody()}
     </div>

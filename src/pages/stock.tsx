@@ -60,6 +60,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [accountRefresh, setAccountRefresh] = useState(0)
   const [historySummary, setHistorySummary] = useState<StockTradeHistorySummaryDto | null>(null)
   const [ladderSummary, setLadderSummary] = useState<StockLadderSummary | null>(null)
+  const [ladderToolbar, setLadderToolbar] = useState<HTMLDivElement | null>(null)
   const [lessonDialog, setLessonDialog] = useState<{
     lesson: StockLessonDto | null
     roundId: string
@@ -209,6 +210,8 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
               新建心得
             </Button>
           </div>
+        ) : tab === 'ladder' ? (
+          <div className="stock-ladder__toolbar-host" ref={setLadderToolbar} />
         ) : undefined
       }
       rail={
@@ -254,7 +257,9 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
       {tab === 'statistics' ? (
         <StockStatisticsPanel ledgerId={ledgerId} onOpenRound={openHistoryRound} />
       ) : null}
-      {tab === 'ladder' ? <StockLadderPanel onSummaryChange={setLadderSummary} /> : null}
+      {tab === 'ladder' ? (
+        <StockLadderPanel onSummaryChange={setLadderSummary} toolbarHost={ladderToolbar} />
+      ) : null}
       {tab === 'settings' ? (
         <StockSettingsPanel ledgerId={ledgerId} onLedgerChanged={onLedgerChanged} />
       ) : null}

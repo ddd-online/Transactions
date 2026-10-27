@@ -3911,22 +3911,22 @@
   padding-bottom: var(--transactions-space-xl);
 }
 
-/* 日期与状态吸顶：一列首板可能几十只，翻到下面就不知道在看哪天了。 */
-.stock-ladder__bar {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background: var(--transactions-color-bg-base);
-  border-bottom: 1px solid var(--transactions-color-divider);
+/* 日期行在布局组件的工具栏里（`.page-toolbar` 给内边距与发丝线），
+ * 这里只负责左右分布；portal 的落点 `__toolbar-host` 填满那一行。 */
+.stock-ladder__toolbar-host {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
 }
 
 .stock-ladder__head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--transactions-space-md) var(--transactions-space-lg);
-  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-sm);
+  width: 100%;
 }
 
 .stock-ladder__heading {
