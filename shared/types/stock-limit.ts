@@ -76,9 +76,10 @@ export interface StockLimitMetrics {
 
 /**
  * `ok` 有涨停数据；`empty` 该日无涨停（非交易日，或收盘后确实一只都没有）；
+ * `preopen` 当天 09:30 之前：还没有当天数据可看，也不会抓取；
  * `unavailable` 本地没有、数据源也没收录（早于数据源的保留窗口）。
  */
-export type StockLimitStatus = 'ok' | 'empty' | 'unavailable'
+export type StockLimitStatus = 'ok' | 'empty' | 'preopen' | 'unavailable'
 
 /** 某一天的天梯（一次查询的完整结果）。 */
 export interface StockLimitLadder {

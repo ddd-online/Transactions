@@ -4,8 +4,9 @@
  * 缓存纪律（用户明确要求）：
  * * 库里已有该日数据 → 直接读库，不发请求；
  * * 库里没有 → 抓取；**收盘后**（当日 15:00 起，或过去的日子）写入本地；
- * * **当天 15:00 前**抓到的只是盘中快照：照常渲染，但**不写任何表**，
+ * * **当天 09:30–15:00** 抓到的只是盘中快照：照常渲染，但**不写任何表**，
  *   下次进入还是重新抓 —— 盘中数据每分钟都在变，存下来就是脏数据；
+ * * **当天 09:30 之前不支持查看**：返回 `preopen`，不发请求、不写库；
  * * 未来日期一律拒绝；
  * * 前一交易日也缓存（它已经是确定数据），天梯的断板与晋级率都靠它。
  *
@@ -26,6 +27,9 @@ import {
   type StockLimitDayRow,
 } from '../db/dao/stock-limit'
 import type { LimitPoolSource } from './stock-limit-pool'
+
+/** A 股开盘时刻：09:30（本地时间）。这之前没有当天数据可看。 */
+export const LIMIT_OPEN_MINUTE = 9 * 60 + 30
 
 /** A 股收盘时刻：15:00（本地时间）。盘中数据从这个点起才算定稿。 */
 export const LIMIT_CLOSE_MINUTE = 15 * 60
@@ -52,25 +56,35 @@ interface LadderContext {
   stale: boolean
 }
 
-/** 某日 15:00 的 Unix 秒。 */
-function closeSeconds(date: string): number | null {
+/** 某日某个时刻（分钟数，从 00:00 起）的 Unix 秒。 */
+function minuteSeconds(date: string, minute: number): number | null {
   const dayStart = ymdToSeconds(date)
-  return dayStart === null ? null : dayStart + LIMIT_CLOSE_MINUTE * 60
+  return dayStart === null ? null : dayStart + minute * 60
+}
+
+/** 不是（本地）今天、但又被请求查看未来时，前面的日期比较已经拦掉了。 */
+function isBeforeOpen(date: string, now: number): boolean {
+  const openAt = minuteSeconds(date, LIMIT_OPEN_MINUTE)
+  return openAt !== null && now < openAt
 }
 
 /** 该日的数据是否已经定稿（过去的日期，或当天已过 15:00）。 */
 function isClosed(date: string, today: string, now: number): boolean {
   if (date < today) return true
   if (date > today) return false
-  const closeAt = closeSeconds(date)
+  const closeAt = minuteSeconds(date, LIMIT_CLOSE_MINUTE)
   return closeAt !== null && now >= closeAt
 }
 
-function unavailable(date: string, now: number): StockLimitLadder {
+function emptyLadder(
+  date: string,
+  now: number,
+  status: 'preopen' | 'unavailable',
+): StockLimitLadder {
   return {
     date,
     previousDate: null,
-    status: 'unavailable',
+    status,
     temporary: false,
     fromCache: false,
     stale: false,
@@ -86,6 +100,10 @@ function unavailable(date: string, now: number): StockLimitLadder {
       brokenCount: null,
     },
   }
+}
+
+function unavailable(date: string, now: number): StockLimitLadder {
+  return emptyLadder(date, now, 'unavailable')
 }
 
 function readCached(db: Db, day: StockLimitDayRow, date: string): StockLimitEntry[] {
@@ -182,6 +200,11 @@ export async function getLimitLadder(
 
   const today = formatTimestamp(now, 'YYYY-MM-DD')
   if (date > today) throw new AppError('不能查看未来日期', { status: 400 })
+
+  // 当天 09:30 之前：没有临时数据可看，也不该发请求或写库。
+  if (date === today && isBeforeOpen(date, now)) {
+    return emptyLadder(date, now, 'preopen')
+  }
 
   const closed = isClosed(date, today, now)
   const cached = getLimitDay(db, date)

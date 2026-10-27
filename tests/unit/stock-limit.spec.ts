@@ -225,6 +225,23 @@ describe('getLimitLadder 缓存纪律', () => {
     expect(stub.calls).toEqual(['2026-10-23', '2026-10-22'])
   })
 
+  it('当天 09:30 前不支持查看：不发请求、不写库', async () => {
+    const db = database()
+    const stub = source(pools)
+    const early = at(2026, 10, 27, 9)
+
+    const ladder = await getLimitLadder(db, stub, '2026-10-27', { now: early })
+    expect(ladder.status).toBe('preopen')
+    expect(ladder.rungs).toEqual([])
+    expect(stub.calls).toEqual([])
+    expect(getLimitDay(db, '2026-10-27')).toBeNull()
+
+    // 09:30 一到就进入盘中快照
+    const atOpen = await getLimitLadder(db, stub, '2026-10-27', { now: at(2026, 10, 27, 9, 30) })
+    expect(atOpen.temporary).toBe(true)
+    expect(stub.calls).toContain('2026-10-27')
+  })
+
   it('15:00 前抓当天只渲染，不写库；收盘后才入库', async () => {
     const db = database()
     const stub = source(pools)

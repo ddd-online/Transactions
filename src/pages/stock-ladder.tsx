@@ -135,7 +135,9 @@ export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JS
         const result = await window.api.invoke('stock_limit_ladder', { date: target, refresh })
         if (token !== requestRef.current) return
         setLadder(result)
-        onSummaryChange?.(summaryOf(result))
+        // 开盘前 / 数据源没收录：没有可展示的汇总，底栏留占位符而不是一排 0。
+        const available = result.status === 'ok' || result.status === 'empty'
+        onSummaryChange?.(available ? summaryOf(result) : null)
       } catch (loadError) {
         if (token !== requestRef.current) return
         setLadder(null)
@@ -188,6 +190,7 @@ export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JS
 
   const statusText = ((): string => {
     if (!ladder) return ''
+    if (ladder.status === 'preopen') return '开盘前 · 9:30 后才有当天数据'
     if (ladder.temporary) return '盘中临时数据 · 15:00 收盘后写入本地'
     if (ladder.stale) return `刷新失败，显示 ${fetchedText(ladder.fetchedAt)} 的本地缓存`
     if (ladder.fromCache) return `${fetchedText(ladder.fetchedAt)} 抓取 · 本地缓存`
@@ -229,16 +232,20 @@ export function StockLadderPanel({ onSummaryChange }: StockLadderPanelProps): JS
           title={
             ladder.status === 'unavailable'
               ? '数据源没有收录这一天'
-              : ladder.temporary
-                ? '今天还没有涨停数据'
-                : '这一天没有涨停'
+              : ladder.status === 'preopen'
+                ? '还没开盘'
+                : ladder.temporary
+                  ? '今天还没有涨停数据'
+                  : '这一天没有涨停'
           }
           description={
             ladder.status === 'unavailable'
               ? '数据源只保留最近一个多月；更早的日期要当时已经存到本地。'
-              : ladder.temporary
-                ? '非交易日，或还没开盘；开盘后刷新看看。'
-                : '非交易日，或当天确实没有涨停股。'
+              : ladder.status === 'preopen'
+                ? '9:30 开盘后才有当天的涨停数据；现在可以先看前一交易日。'
+                : ladder.temporary
+                  ? '刚开盘或盘中还没有涨停股，刷新看看。'
+                  : '非交易日，或当天确实没有涨停股。'
           }
         />
       )
@@ -398,7 +405,7 @@ export function StockLadderFooter({
         <span className="statistics-footer-item-value">
           {metrics ? metrics.limitCount : '—'}
           <span className="stock-ladder-footer__note">
-            {previousCount === null ? '昨 —' : `昨 ${previousCount}`}
+            {summary === null ? '—' : previousCount === null ? '昨 —' : `昨 ${previousCount}`}
           </span>
         </span>
       </div>
@@ -418,7 +425,7 @@ export function StockLadderFooter({
         <span className="statistics-footer-item-value">
           {rate}
           <span className="stock-ladder-footer__note">
-            {promoted === null ? '—' : `${promoted}/${previousCount ?? 0}`}
+            {summary === null || promoted === null ? '—' : `${promoted}/${previousCount ?? 0}`}
           </span>
         </span>
       </div>
@@ -430,7 +437,7 @@ export function StockLadderFooter({
             ? '—'
             : metrics.brokenCount}
           <span className="stock-ladder-footer__note">
-            {summary?.previousDate ? `对照 ${summary.previousDate}` : '缺昨日'}
+            {summary === null ? '—' : summary.previousDate ? `对照 ${summary.previousDate}` : '缺昨日'}
           </span>
         </span>
       </div>

@@ -309,3 +309,74 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+test('连板天梯：09:30 前不支持查看当天', async () => {
+  const repositoryRoot = resolve(__dirname, '../..')
+  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-stock-ladder-preopen-'))
+  const home = join(root, 'home')
+  const workspace = join(root, 'ws')
+  const userData = join(root, 'user-data')
+  mkdirSync(home, { recursive: true })
+  mkdirSync(userData, { recursive: true })
+  writeFileSync(
+    join(home, '.tr.dev.json'),
+    JSON.stringify({
+      width: 1400,
+      height: 1000,
+      closeBehavior: 'quit',
+      appearance: 'light',
+      proxy: { mode: 'off', url: '' },
+    }),
+  )
+
+  const base = new Date()
+  base.setHours(0, 0, 0, 0)
+  const today = new Date(base)
+
+  const requests: string[] = []
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    requests.push(url.searchParams.get('date') ?? '')
+    response.setHeader('content-type', 'application/json; charset=UTF-8')
+    response.end(JSON.stringify({ rc: 0, data: { tc: 0, qdate: 0, pool: [] } }))
+  })
+  const port = await listen(server)
+
+  const app = await electron.launch({
+    args: ['.'],
+    cwd: repositoryRoot,
+    env: environment({
+      USERPROFILE: home,
+      HOME: home,
+      TRANSACTIONS_USER_DATA: userData,
+      TRANSACTIONS_TEST_DIALOG_DIR: workspace,
+      TRANSACTIONS_TEST_CLOSE: 'quit',
+      TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 9)),
+    }),
+  })
+
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
+    await createLedger(page, '开盘前账本')
+    await page.getByTestId('nav-stock').click()
+    await page.getByTestId('stock-tab-ladder').click()
+
+    await expect(page.getByTestId('stock-ladder-empty')).toContainText('还没开盘')
+    await expect(page.getByTestId('stock-ladder-status')).toContainText('开盘前')
+    await expect(page.getByTestId('stock-ladder-footer')).toContainText('—')
+    expect(requests).toEqual([])
+
+    const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
+    const days = database.prepare('SELECT COUNT(*) AS n FROM stock_limit_day').get() as { n: number }
+    database.close()
+    expect(days.n).toBe(0)
+  } finally {
+    await app.close()
+    server.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
