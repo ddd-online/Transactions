@@ -13,9 +13,9 @@ import type {
   StockLimitRung,
 } from '../../shared/types/stock-limit'
 import { Button } from '../components/button'
-import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
+import { TimeRangePicker } from '../components/time-range-picker'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
 /** 虚拟列表的行高：一只股票两行字 + 分隔线。 */
@@ -253,9 +253,6 @@ export function StockLadderPanel({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [shiftDay])
 
-  const nextDay = addDays(date, 1)
-  const canGoNext = nextDay !== null && nextDay <= today
-
   const maxLevel = ladder?.metrics.maxLevel ?? null
 
   const statusText = ((): string => {
@@ -408,46 +405,17 @@ export function StockLadderPanel({
             </span>
           </div>
           <div className="stock-ladder__controls">
-            <button
-              type="button"
-              className="tr-icon-btn stock-ladder__step"
-              data-testid="stock-ladder-prev"
-              aria-label="前一天"
-              title="前一天"
-              onClick={() => shiftDay(-1)}
-            >
-              <Icon name="ChevronLeft" size={16} />
-            </button>
-            <div className="stock-ladder__date">
-              <DatePicker
-                value={date}
-                onChange={(next) => setDate(next > today ? today : next)}
-                testId="stock-ladder-date"
-                ariaLabel="选择交易日"
-                disabledDate={(value) => value.format('YYYY-MM-DD') > today}
-              />
-              <span className="stock-ladder__weekday">{weekdayCn(date)}</span>
-            </div>
-            <button
-              type="button"
-              className="tr-icon-btn stock-ladder__step"
-              data-testid="stock-ladder-next"
-              aria-label="后一天"
-              title="后一天"
-              disabled={!canGoNext}
-              onClick={() => shiftDay(1)}
-            >
-              <Icon name="ChevronRight" size={16} />
-            </button>
-            <Button
-              size="sm"
-              variant="text"
-              testId="stock-ladder-today"
-              disabled={date === today}
-              onClick={() => setDate(today)}
-            >
-              今天
-            </Button>
+            <TimeRangePicker
+              testId="stock-ladder-date"
+              mode="date"
+              start={date}
+              end={date}
+              dayOnly
+              maxDate={today}
+              onModeChange={() => undefined}
+              onRangeChange={(next) => setDate(next && next <= today ? next : today)}
+            />
+            <span className="stock-ladder__weekday">{weekdayCn(date)}</span>
             <Button
               size="sm"
               variant="secondary"

@@ -174,8 +174,8 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder.png'),
     })
-    // 今天已是最后一天，"后一天"不可点
-    await expect(page.getByTestId('stock-ladder-next')).toBeDisabled()
+    // 今天已是最后一天，选日器的"后一天"不可点
+    await expect(page.getByTestId('stock-ladder-date-next')).toBeDisabled()
 
     const dayCounts = (): { total: number; today: number; previous: number } => {
       const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -202,9 +202,9 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     const todayQuery = ymd(today).replaceAll('-', '')
     const todayRequests = (): number => requests.filter((date) => date === todayQuery).length
     const beforeSwitch = todayRequests()
-    await page.getByTestId('stock-ladder-prev').click()
+    await page.getByTestId('stock-ladder-date-prev').click()
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(3)
-    await page.getByTestId('stock-ladder-today').click()
+    await page.getByTestId('stock-ladder-date-next').click()
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(3)
     expect(todayRequests()).toBe(beforeSwitch)
 

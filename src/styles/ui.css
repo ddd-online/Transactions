@@ -435,6 +435,18 @@
   color: var(--transactions-color-text-disabled);
 }
 
+/* 超出可选范围的日期（例如天梯不支持未来）：置灰且不可点。 */
+.ui-time__cal-cell.is-disabled,
+.ui-time__cal-cell:disabled {
+  color: var(--transactions-color-text-disabled);
+  background: none;
+  cursor: not-allowed;
+}
+
+.ui-time--day .ui-time__trigger {
+  min-width: 148px;
+}
+
 .ui-time__cal-cell.is-today {
   border-color: var(--transactions-color-primary);
 }

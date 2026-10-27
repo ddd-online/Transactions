@@ -26,6 +26,10 @@ export interface TimeRangePickerProps {
   end: string
   /** 只保留年份：隐藏日/月/年分段，整块只做「上一年 / 年份 / 下一年」。 */
   yearOnly?: boolean
+  /** 只选单日：隐藏日/月/年分段，点一天即确认并收起面板。 */
+  dayOnly?: boolean
+  /** 最晚可选日期（`YYYY-MM-DD`）：之后的格子置灰，向后翻页也停在它上面。 */
+  maxDate?: string
   onModeChange: (mode: TimeRangeMode) => void
   onRangeChange: (start: string, end: string) => void
 }
@@ -115,13 +119,15 @@ export function TimeRangePicker({
   start,
   end,
   yearOnly = false,
+  dayOnly = false,
+  maxDate,
   onModeChange,
   onRangeChange,
 }: TimeRangePickerProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState<VisibleMonth>(() => fromStart(start))
   const rootRef = useRef<HTMLDivElement>(null)
-  const activeMode: TimeRangeMode = yearOnly ? 'year' : mode
+  const activeMode: TimeRangeMode = yearOnly ? 'year' : dayOnly ? 'date' : mode
 
   useEffect(() => {
     if (!open) return
@@ -139,7 +145,13 @@ export function TimeRangePicker({
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open])
 
-  const presets = useMemo(() => presetRanges(activeMode), [activeMode, start, end])
+  const presets = useMemo(
+    () =>
+      dayOnly
+        ? [{ label: '今天', from: todayYmd(), to: todayYmd() }]
+        : presetRanges(activeMode),
+    [activeMode, dayOnly, start, end],
+  )
 
   const changeMode = (next: string): void => {
     const nextMode = next as TimeRangeMode
@@ -159,13 +171,14 @@ export function TimeRangePicker({
 
   const shift = (direction: number): void => {
     const [from, to] = shiftPeriod(start, end, activeMode, direction)
+    if (maxDate && (from > maxDate || to > maxDate)) return
     onRangeChange(from, to)
   }
 
   const applyPreset = (preset: Preset): void => {
     const [from, to] = normalizeRange(preset.from, preset.to, activeMode)
     onRangeChange(from, to)
-    if (yearOnly) setOpen(false)
+    if (yearOnly || dayOnly) setOpen(false)
   }
 
   const pickPeriod = (from: string, to: string): void => {
@@ -184,9 +197,15 @@ export function TimeRangePicker({
   }
 
   const pickDay = (ymd: string): void => {
+    if (maxDate && ymd > maxDate) return
     const picked = parseYmd(ymd)
     if (picked && (picked.year !== visible.year || picked.month !== visible.month)) {
       setVisible({ year: picked.year, month: picked.month })
+    }
+    if (dayOnly) {
+      onRangeChange(ymd, ymd)
+      setOpen(false)
+      return
     }
     pickPeriod(ymd, ymd)
   }
@@ -213,8 +232,12 @@ export function TimeRangePicker({
   }
 
   return (
-    <div className={`ui-time${yearOnly ? ' ui-time--year' : ''}`} data-testid={testId} ref={rootRef}>
-      {yearOnly ? null : (
+    <div
+      className={`ui-time${yearOnly ? ' ui-time--year' : ''}${dayOnly ? ' ui-time--day' : ''}`}
+      data-testid={testId}
+      ref={rootRef}
+    >
+      {yearOnly || dayOnly ? null : (
         <Segmented
           testId={`${testId}-mode`}
           value={mode}
@@ -229,6 +252,7 @@ export function TimeRangePicker({
       <button
         type="button"
         className="tr-icon-btn"
+        data-testid={`${testId}-prev`}
         aria-label={yearOnly ? '上一年' : '上一周期'}
         onClick={() => shift(-1)}
       >
@@ -287,13 +311,15 @@ export function TimeRangePicker({
                       const selectedEnd = Boolean(end) && ymd === end
                       const inRange = Boolean(start && end && ymd > start && ymd < end)
                       const isToday = ymd === todayYmd()
+                      const disabled = Boolean(maxDate && ymd > maxDate)
                       return (
                         <button
                           key={`${ymd}-${index}`}
                           type="button"
                           data-testid={`${testId}-day-${ymd}`}
-                          className={`ui-time__cal-cell${outside ? ' is-outside' : ''}${isToday ? ' is-today' : ''}${selectedStart || selectedEnd ? ' is-start' : ''}${inRange ? ' is-in-range' : ''}`}
+                          className={`ui-time__cal-cell${outside ? ' is-outside' : ''}${isToday ? ' is-today' : ''}${selectedStart || selectedEnd ? ' is-start' : ''}${inRange ? ' is-in-range' : ''}${disabled ? ' is-disabled' : ''}`}
                           title={ymd}
+                          disabled={disabled}
                           onClick={() => pickDay(ymd)}
                         >
                           {parsed?.day ?? ''}
@@ -415,7 +441,9 @@ export function TimeRangePicker({
       <button
         type="button"
         className="tr-icon-btn"
+        data-testid={`${testId}-next`}
         aria-label={yearOnly ? '下一年' : '下一周期'}
+        disabled={Boolean(maxDate && start && start >= maxDate)}
         onClick={() => shift(1)}
       >
         <Icon name="Right" size={14} />

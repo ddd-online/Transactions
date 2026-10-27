@@ -3973,48 +3973,6 @@
   flex-wrap: wrap;
 }
 
-.stock-ladder__step {
-  width: 28px;
-  height: 28px;
-}
-
-.stock-ladder__step:disabled {
-  color: var(--transactions-color-text-disabled);
-  cursor: not-allowed;
-}
-
-.stock-ladder__date {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
-.stock-ladder__date .tr-date-picker {
-  width: auto;
-}
-
-/* 日期是这一页的锚：去边框、放大到标题字号，靠悬停底色说明可点。 */
-.stock-ladder__date .tr-date-picker .ant-picker {
-  width: auto;
-  height: var(--transactions-btn-height-md);
-  padding: 0 var(--transactions-space-xs);
-  border-color: transparent;
-  background: transparent;
-}
-
-.stock-ladder__date .tr-date-picker .ant-picker:hover {
-  background: var(--transactions-color-hover-bg);
-}
-
-.stock-ladder__date .tr-date-picker .ant-picker-input > input {
-  width: 134px;
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-title);
-  font-weight: var(--transactions-weight-medium);
-  letter-spacing: var(--transactions-tracking-amount-lg);
-  color: var(--transactions-color-text-major);
-}
-
 .stock-ladder__weekday {
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
