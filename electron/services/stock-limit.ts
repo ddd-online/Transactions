@@ -37,8 +37,8 @@ export const LIMIT_CLOSE_MINUTE = 15 * 60
 /** 数据源覆盖窗口（天）。更早的日期抓不到就是"未收录"，不当成空涨停日缓存。 */
 const RETENTION_DAYS = 45
 
-/** 前一交易日最多回溯的日历天数（覆盖国庆、春节长假）。 */
-const PREVIOUS_LOOKBACK_DAYS = 10
+/** 前一交易日最多回溯的日历天数（覆盖国庆 / 春节长假，含调休后的超长休市）。 */
+const PREVIOUS_LOOKBACK_DAYS = 15
 
 export interface LimitLadderOptions {
   /** 强制重抓（仍受"盘中不写库"约束） */

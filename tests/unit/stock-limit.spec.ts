@@ -225,6 +225,40 @@ describe('getLimitLadder 缓存纪律', () => {
     expect(stub.calls).toEqual(['2026-10-23', '2026-10-22'])
   })
 
+  it('前一天是周末：跳过周末，和上周五对比', async () => {
+    const db = database()
+    const stub = source({
+      '2026-10-12': [entry('A', 2, 92500)],
+      '2026-10-09': [entry('A', 1, 92500), entry('B', 1, 93000)],
+    })
+
+    const ladder = await getLimitLadder(db, stub, '2026-10-12', { now: at(2026, 10, 12, 16) })
+    expect(ladder.previousDate).toBe('2026-10-09')
+    expect(ladder.metrics.previousCount).toBe(2)
+    expect(stub.calls).not.toContain('2026-10-10')
+    expect(stub.calls).not.toContain('2026-10-11')
+    expect(getLimitDay(db, '2026-10-10')?.status).toBe('empty')
+  })
+
+  it('前一天是节假日：回溯到上一个交易日，并缓存空日', async () => {
+    const db = database()
+    const stub = source({
+      '2026-10-09': [entry('A', 2, 92500)],
+      '2026-09-30': [entry('A', 1, 92500), entry('C', 1, 93000)],
+    })
+
+    const ladder = await getLimitLadder(db, stub, '2026-10-09', { now: at(2026, 10, 9, 16) })
+    expect(ladder.previousDate).toBe('2026-09-30')
+    expect(ladder.metrics.previousCount).toBe(2)
+    expect(ladder.metrics.promotedCount).toBe(1)
+    expect(getLimitDay(db, '2026-10-08')?.status).toBe('empty')
+
+    // 节假日探过一次就落库：再看同一天不再发请求
+    const calls = stub.calls.length
+    await getLimitLadder(db, stub, '2026-10-09', { now: at(2026, 10, 9, 16) })
+    expect(stub.calls.length).toBe(calls)
+  })
+
   it('当天 09:30 前不支持查看：不发请求、不写库', async () => {
     const db = database()
     const stub = source(pools)
