@@ -4059,6 +4059,8 @@
   display: flex;
   align-items: baseline;
   gap: var(--transactions-space-sm);
+  /* 最高板数字大一号：行盒固定 26px，所有列头等高，晋级率与列表从同一条线开始。 */
+  height: 26px;
 }
 
 .stock-ladder__level {
@@ -4071,7 +4073,7 @@
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-title);
   font-weight: var(--transactions-weight-medium);
-  line-height: var(--transactions-height-tight);
+  line-height: 26px;
   letter-spacing: var(--transactions-tracking-amount-lg);
   color: var(--transactions-color-text-major);
 }
