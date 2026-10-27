@@ -2829,8 +2829,10 @@
   border-top: 1px solid var(--transactions-color-divider);
 }
 
-/* 交易台账的标题与内容是一组，不在标题下画线。 */
-.stock-detail .stock-ledger__head {
+/* 交易台账的标题与内容是一组，不在标题下画线；
+ * 区块的收口交给下一段的顶线，避免与 .stock-ledger 的底线叠成 2px。 */
+.stock-detail .stock-ledger__head,
+.stock-detail .stock-ledger {
   border-bottom: 0;
 }
 
