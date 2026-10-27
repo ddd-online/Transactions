@@ -56,7 +56,12 @@ test('更新：检查到新版本、下载并校验 SHA256', async () => {
       response.end(
         JSON.stringify({
           tag_name: 'v9.9.9',
-          body: '测试更新说明',
+          body: `## 测试更新
+
+- 第一项
+- 第二项
+
+**重要**：测试 Markdown。`,
           assets: [
             {
               name: 'Transactions-9.9.9-setup.exe',
@@ -101,6 +106,13 @@ test('更新：检查到新版本、下载并校验 SHA256', async () => {
     await page.getByTestId('settings-tab-about').click()
     await page.getByTestId('update-check').click()
     await expect(page.getByTestId('update-status')).toContainText('9.9.9')
+    const notes = page.getByTestId('update-release-body')
+    await expect(notes.locator('h2')).toHaveText('测试更新')
+    await expect(notes.locator('li')).toHaveCount(2)
+    await expect(notes.locator('strong')).toHaveText('重要')
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'update-markdown.png'),
+    })
     await page.getByTestId('update-download').click()
     await expect(page.getByTestId('update-status')).toContainText('下载完成', { timeout: 20_000 })
     const downloaded = join(updateDir, 'Transactions-9.9.9-setup.exe')

@@ -1,4 +1,6 @@
 import { Progress, Spin } from 'antd'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import {
@@ -205,7 +207,18 @@ export function UpdatePanel({ snapshot, onSnapshot }: UpdatePanelProps): JSX.Ele
       ) : null}
 
       {snapshot && showsReleaseBody(snapshot.status) && snapshot.releaseBody ? (
-        <pre className="st-release-body">{snapshot.releaseBody}</pre>
+        <div className="st-release-body" data-testid="update-release-body">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ node: _node, ...props }) => (
+                <a {...props} target="_blank" rel="noreferrer" />
+              ),
+            }}
+          >
+            {snapshot.releaseBody}
+          </ReactMarkdown>
+        </div>
       ) : null}
 
       {showError ? (

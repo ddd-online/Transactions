@@ -750,21 +750,78 @@
   width: 200px;
 }
 
-/* 更新说明：纯文本 + 保留换行（本仓库没有 Markdown 解析器，不渲染 Markdown） */
+/* 更新说明：GitHub Release Markdown，渲染成可读的分段 / 列表 / 标题。 */
 .st-release-body {
   width: 100%;
-  max-height: 168px;
+  max-height: 240px;
   overflow-y: auto;
   padding: var(--transactions-space-md) var(--transactions-space-lg);
   background-color: var(--transactions-color-hover-bg);
   border: 1px solid var(--transactions-color-divider);
   border-radius: var(--transactions-radius-md);
+  color: var(--transactions-color-text-secondary);
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  line-height: var(--transactions-height-normal);
-  white-space: pre-wrap;
+  line-height: var(--transactions-height-relaxed);
   word-break: break-word;
+}
+
+.st-release-body > :first-child {
+  margin-top: 0;
+}
+
+.st-release-body > :last-child {
+  margin-bottom: 0;
+}
+
+.st-release-body h2,
+.st-release-body h3 {
+  margin: var(--transactions-space-md) 0 var(--transactions-space-xs);
+  color: var(--transactions-color-text-major);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-snug);
+}
+
+.st-release-body h2 {
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.st-release-body h3 {
+  font-size: var(--transactions-size-text-caption);
+}
+
+.st-release-body p {
+  margin: 0 0 var(--transactions-space-xs);
+}
+
+.st-release-body ul,
+.st-release-body ol {
+  margin: 0 0 var(--transactions-space-sm);
+  padding-left: 18px;
+}
+
+.st-release-body li {
+  margin: 2px 0;
+}
+
+.st-release-body strong {
+  color: var(--transactions-color-text-major);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.st-release-body a {
+  color: var(--transactions-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.st-release-body code {
+  padding: 1px 4px;
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-elevated);
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: 0.92em;
 }
 
 .st-about-footer {
