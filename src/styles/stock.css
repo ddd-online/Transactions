@@ -4036,13 +4036,9 @@
 .stock-ladder__list {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
 }
 
-.stock-ladder__listy .rc-listy-holder {
-  overscroll-behavior: contain;
-}
-
+/* Listy 在这里只负责按行渲染；滚动条交给外层的 OverlayScrollbars。 */
 .stock-ladder__list .rc-listy-item {
   overflow: hidden;
 }

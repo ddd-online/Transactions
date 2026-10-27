@@ -15,14 +15,9 @@ import type {
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
+import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
 import { stockErrorMessage, stockPercent } from './stock-format'
-
-/** 虚拟列表的行高：一只股票两行字 + 分隔线。 */
-const LADDER_ROW_HEIGHT = 46
-
-/** Listy 的滚动条浮在右缘：每行留出 16px 的空档，别压住「炸 N」「断」。 */
-const LADDER_ITEM_STYLE = { paddingRight: 16 }
 
 /** 一列里的行：今日连板 → 「断板 N」小标 → 断板个股。 */
 type LadderRow =
@@ -177,22 +172,6 @@ export function StockLadderPanel({
   const [error, setError] = useState('')
   const requestRef = useRef(0)
   const narrow = useMediaQuery('(max-width: 1000px)')
-  const [listHost, setListHost] = useState<HTMLDivElement | null>(null)
-  const [listHeight, setListHeight] = useState(0)
-
-  // 列内可滚动区域的高度：列由 flex 撑开，Listy 需要具体像素值。
-  useEffect(() => {
-    if (listHost === null) {
-      setListHeight(0)
-      return
-    }
-    const update = (): void => setListHeight(Math.max(0, listHost.clientHeight))
-    const observer = new ResizeObserver(update)
-    observer.observe(listHost)
-    update()
-    return () => observer.disconnect()
-  }, [listHost])
-
   const load = useCallback(
     async (target: string, refresh: boolean): Promise<void> => {
       const token = requestRef.current + 1
@@ -330,7 +309,7 @@ export function StockLadderPanel({
         ) : null}
 
         <div className="stock-ladder__rungs" data-testid="stock-ladder-rungs">
-          {ladder.rungs.map((rung, index) => {
+          {ladder.rungs.map((rung) => {
             const rows = rungRows(rung)
             return (
               <section
@@ -369,25 +348,21 @@ export function StockLadderPanel({
                     ))}
                   </div>
                 ) : (
-                  <div className="stock-ladder__list" ref={index === 0 ? setListHost : undefined}>
-                    {listHeight > 0 ? (
-                      <Listy
-                        items={rows}
-                        rowKey={(row: LadderRow) => row.key}
-                        itemHeight={LADDER_ROW_HEIGHT}
-                        height={listHeight}
-                        classNames={{ root: 'stock-ladder__listy' }}
-                        styles={{ item: LADDER_ITEM_STYLE }}
-                        itemRender={(row: LadderRow) =>
-                          row.kind === 'note' ? (
-                            <BrokenNote count={row.count} />
-                          ) : (
-                            <StockChip entry={row.entry} broken={row.broken} />
-                          )
-                        }
-                      />
-                    ) : null}
-                  </div>
+                  <ScrollArea className="stock-ladder__list">
+                    <Listy
+                      items={rows}
+                      virtual={false}
+                      rowKey={(row: LadderRow) => row.key}
+                      classNames={{ root: 'stock-ladder__listy' }}
+                      itemRender={(row: LadderRow) =>
+                        row.kind === 'note' ? (
+                          <BrokenNote count={row.count} />
+                        ) : (
+                          <StockChip entry={row.entry} broken={row.broken} />
+                        )
+                      }
+                    />
+                  </ScrollArea>
                 )}
               </section>
             )

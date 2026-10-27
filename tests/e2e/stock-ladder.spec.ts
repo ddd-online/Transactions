@@ -449,19 +449,18 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
     const ladder = page.getByTestId('stock-ladder')
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(1)
 
-    // 虚拟列表只渲染可见行；列内可滚动，页面本身不出现第二条滚动条
-    const rendered = await page.locator('.rc-listy-item').count()
-    expect(rendered).toBeGreaterThan(3)
-    expect(rendered).toBeLessThan(60)
-
+    // 列内由 OverlayScrollbars 接管滚动；页面本身不出现第二条滚动条
     const metrics = await page.evaluate(() => {
-      const holder = document.querySelector('.rc-listy-holder') as HTMLElement | null
-      const content = document.querySelector('.page-content') as HTMLElement | null
+      const host = document.querySelector('.stock-ladder__list')
+      const viewport = host?.querySelector('[data-overlayscrollbars-viewport]')
+      const content = document.querySelector('.page-content')
       return {
-        scrollable: holder ? holder.scrollHeight > holder.clientHeight + 1 : false,
+        hasViewport: Boolean(viewport),
+        scrollable: viewport ? viewport.scrollHeight > viewport.clientHeight + 1 : false,
         pageOverflow: content ? content.scrollHeight - content.clientHeight : 0,
       }
     })
+    expect(metrics.hasViewport).toBe(true)
     expect(metrics.scrollable).toBe(true)
     expect(metrics.pageOverflow).toBeLessThanOrEqual(2)
   } finally {
