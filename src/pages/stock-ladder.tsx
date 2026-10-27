@@ -104,9 +104,9 @@ export function StockLadderPanel({
         const result = await window.api.invoke('stock_limit_ladder', { date: target, refresh })
         if (token !== requestRef.current) return
         setLadder(result)
-        // 开盘前 / 数据源没收录：没有可展示的汇总，底栏留占位符而不是一排 0。
-        const available = result.status === 'ok' || result.status === 'empty'
-        onSummaryChange?.(available ? summaryOf(result) : null)
+        // 没有涨停数据的日子（休市 / 未收录 / 开盘前）底栏留占位符：
+        // 拿空池去和昨天比，会算出「断板 52」这种没有意义的数字。
+        onSummaryChange?.(result.status === 'ok' ? summaryOf(result) : null)
       } catch (loadError) {
         if (token !== requestRef.current) return
         setLadder(null)
@@ -235,22 +235,24 @@ export function StockLadderPanel({
                 data-testid="stock-ladder-rung"
                 data-level={rung.level}
               >
-                <header className="stock-ladder__rung-head">
-                  <span className="stock-ladder__level">
-                    <span className="stock-ladder__level-num">{rung.level}</span>
-                    <span className="stock-ladder__level-unit">板</span>
-                  </span>
-                  {rung.entries.length > 0 ? (
-                    <span className="stock-ladder__rung-count">{rung.entries.length}</span>
-                  ) : null}
-                </header>
-                <p className="stock-ladder__rung-rate">
-                  {rung.level === 1
-                    ? '首板'
-                    : rung.rate === null
-                      ? '—'
-                      : `晋级 ${stockPercent(rung.rate, 0)}`}
-                </p>
+                <div className="stock-ladder__rung-rail">
+                  <header className="stock-ladder__rung-head">
+                    <span className="stock-ladder__level">
+                      <span className="stock-ladder__level-num">{rung.level}</span>
+                      <span className="stock-ladder__level-unit">板</span>
+                    </span>
+                    {rung.entries.length > 0 ? (
+                      <span className="stock-ladder__rung-count">{rung.entries.length}</span>
+                    ) : null}
+                  </header>
+                  <p className="stock-ladder__rung-rate">
+                    {rung.level === 1
+                      ? '首板'
+                      : rung.rate === null
+                        ? '—'
+                        : `晋级 ${stockPercent(rung.rate, 0)}`}
+                  </p>
+                </div>
 
                 {narrow ? (
                   <div className="stock-ladder__chips">
@@ -348,9 +350,11 @@ export function StockLadderFooter({
         <span className="statistics-footer-item-label">涨停</span>
         <span className="statistics-footer-item-value">
           {metrics ? metrics.limitCount : '—'}
-          <span className="stock-ladder-footer__note">
-            {summary === null ? '—' : previousCount === null ? '昨 —' : `昨 ${previousCount}`}
-          </span>
+          {summary ? (
+            <span className="stock-ladder-footer__note">
+              {previousCount === null ? '昨 —' : `昨 ${previousCount}`}
+            </span>
+          ) : null}
         </span>
       </div>
       <div className="statistics-footer-divider" />
@@ -360,7 +364,9 @@ export function StockLadderFooter({
           {metrics?.maxLevel === null || metrics?.maxLevel === undefined
             ? '—'
             : `${metrics.maxLevel} 板`}
-          <span className="stock-ladder-footer__note">{summary?.topName || '—'}</span>
+          {summary ? (
+            <span className="stock-ladder-footer__note">{summary.topName || '—'}</span>
+          ) : null}
         </span>
       </div>
       <div className="statistics-footer-divider" />
@@ -368,9 +374,11 @@ export function StockLadderFooter({
         <span className="statistics-footer-item-label">晋级率</span>
         <span className="statistics-footer-item-value">
           {rate}
-          <span className="stock-ladder-footer__note">
-            {summary === null || promoted === null ? '—' : `${promoted}/${previousCount ?? 0}`}
-          </span>
+          {summary ? (
+            <span className="stock-ladder-footer__note">
+              {promoted === null ? '—' : `${promoted}/${previousCount ?? 0}`}
+            </span>
+          ) : null}
         </span>
       </div>
       <div className="statistics-footer-divider" />

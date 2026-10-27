@@ -3940,7 +3940,7 @@
 .stock-ladder__controls {
   display: flex;
   align-items: center;
-  gap: var(--transactions-space-sm);
+  gap: var(--transactions-space-md);
   flex-wrap: wrap;
 }
 
@@ -3979,18 +3979,35 @@
   flex: 1 1 auto;
   align-items: stretch;
   min-height: 0;
-  padding: 0 var(--transactions-space-md);
+  /* 页边距 16：工具栏、首列板数、底栏落在同一条竖线上。 */
+  padding: 0 var(--transactions-space-xs);
 }
 
 /* 一列 = 列头 + 可滚动的股票列表（Listy 虚拟列表，高度由 flex 量出来）。 */
 .stock-ladder__rung {
+  container-type: inline-size;
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: var(--transactions-space-md) var(--transactions-space-md) var(--transactions-space-sm);
+  padding: var(--transactions-space-lg) var(--transactions-space-md) var(--transactions-space-sm);
   border-left: 1px solid var(--transactions-color-divider);
+}
+
+/* 板数多（7 板）时一列只有 ~160px：名称独占一行，代码/时间落到下一行，
+ * 否则 4 个字的股票名会被截成两个字。 */
+@container (max-width: 200px) {
+  .stock-ladder__item {
+    height: 66px;
+    min-height: 66px;
+  }
+
+  .stock-ladder__item-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
 }
 
 .stock-ladder__list {
@@ -4012,10 +4029,14 @@
   border-left: 0;
 }
 
+.stock-ladder__rung-rail {
+  display: flex;
+  flex-direction: column;
+}
+
 .stock-ladder__rung-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: var(--transactions-space-sm);
 }
 
@@ -4040,7 +4061,7 @@
 }
 
 .stock-ladder__level-unit {
-  font-size: var(--transactions-size-text-small);
+  font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
 }
 
@@ -4048,12 +4069,13 @@
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
   color: var(--transactions-color-text-tertiary);
 }
 
 .stock-ladder__rung-rate {
-  margin: var(--transactions-space-2xs) 0 var(--transactions-space-sm);
-  font-size: var(--transactions-size-text-small);
+  margin: var(--transactions-space-2xs) 0 var(--transactions-space-md);
+  font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-tertiary);
 }
 
@@ -4229,22 +4251,21 @@
     border-top: 0;
   }
 
-  .stock-ladder__rung-head {
+  .stock-ladder__rung-rail {
     grid-column: 1;
     grid-row: 1;
+    align-self: start;
   }
 
   .stock-ladder__rung-rate {
-    grid-column: 1;
-    grid-row: 2;
-    margin: 0;
+    margin: var(--transactions-space-2xs) 0 0;
   }
 
   .stock-ladder__chips {
     flex-direction: row;
     flex-wrap: wrap;
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     column-gap: var(--transactions-space-lg);
   }
 
