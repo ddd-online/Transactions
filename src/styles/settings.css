@@ -197,6 +197,25 @@
   width: 200px;
 }
 
+/* 检测结果：绿=连通、红=失败；未测不画点。 */
+.st-proxy-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-text-tertiary);
+  vertical-align: middle;
+}
+
+.st-proxy-dot.is-ok {
+  background: var(--transactions-color-income);
+}
+
+.st-proxy-dot.is-fail {
+  background: var(--transactions-color-expense);
+}
+
 /* ---------------------------------------------------------------- 软件图标
  *
  * 预览方块：与侧栏左上角那个入口**同一个视觉**（同取 `workspace_mark`），
@@ -727,18 +746,36 @@
   letter-spacing: var(--transactions-tracking-amount);
 }
 
-.st-update-success .st-update-text,
 .st-update-success .st-update-icon {
-  color: var(--transactions-color-primary);
+  color: var(--transactions-color-income);
+}
+
+.st-update-success .st-update-text {
+  color: var(--transactions-color-text-major);
+}
+
+/* 有更新：琥珀点承担颜色，文字保持墨色。 */
+.st-update-available .st-update-text::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--transactions-space-xs);
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-outlier);
+  vertical-align: middle;
 }
 
 .st-update-available .st-update-text {
   color: var(--transactions-color-text-major);
 }
 
-.st-update-error .st-update-text,
 .st-update-error .st-update-icon {
   color: var(--transactions-color-expense);
+}
+
+.st-update-error .st-update-text {
+  color: var(--transactions-color-text-major);
 }
 
 .st-update-progress {

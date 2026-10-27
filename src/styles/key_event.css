@@ -271,9 +271,20 @@
 }
 
 .key-event-card__date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* 与 3px 左条同一身份色：左条给出整行色，圆点把日期也钉在同一个身份上。 */
+.key-event-card__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
 }
 
 .key-event-card__desc {

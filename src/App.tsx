@@ -115,6 +115,7 @@ export function App(): JSX.Element {
   const [proxyUrl, setProxyUrl] = useState('')
   const [proxyTesting, setProxyTesting] = useState(false)
   const [proxyResolved, setProxyResolved] = useState('')
+  const [proxyState, setProxyState] = useState<'idle' | 'ok' | 'fail'>('idle')
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
   const ledgerMenuRef = useRef<HTMLDivElement>(null)
@@ -391,8 +392,10 @@ export function App(): JSX.Element {
         mode: proxyMode,
         url: proxyUrl,
       })
+      setProxyState(result.ok ? 'ok' : 'fail')
       notify(result.message, result.ok ? 'success' : 'error')
     } catch (detectError) {
+      setProxyState('fail')
       notify(`代理连接失败：${errorMessage(detectError)}`, 'error')
     } finally {
       setProxyTesting(false)
@@ -874,7 +877,15 @@ export function App(): JSX.Element {
 
                       <div className="st-card">
                         <div className="st-card-info">
-                          <span className="st-card-title">代理</span>
+                          <span className="st-card-title">
+                            代理
+                            {proxyState !== 'idle' ? (
+                              <span
+                                className={`st-proxy-dot is-${proxyState}`}
+                                title={proxyState === 'ok' ? '上次检测：连通' : '上次检测：失败'}
+                              />
+                            ) : null}
+                          </span>
                           <span className="st-card-desc">
                             网络请求（行情、更新检查）走 HTTP 代理；检测会用当前设置请求 GitHub
                           </span>
@@ -884,7 +895,10 @@ export function App(): JSX.Element {
                             testId="proxy-mode"
                             value={proxyMode}
                             disabled={!config}
-                            onChange={(value) => setProxyMode(value)}
+                            onChange={(value) => {
+                              setProxyMode(value)
+                              setProxyState('idle')
+                            }}
                             options={[
                               { value: 'off', label: '不使用' },
                               { value: 'auto', label: '自动探测' },
@@ -907,7 +921,10 @@ export function App(): JSX.Element {
                               placeholder="http://127.0.0.1:7890"
                               value={proxyUrl}
                               disabled={!config}
-                              onChange={(event) => setProxyUrl(event.target.value)}
+                              onChange={(event) => {
+                                setProxyUrl(event.target.value)
+                                setProxyState('idle')
+                              }}
                             />
                           ) : null}
                           {proxyMode === 'manual' ? (

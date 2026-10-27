@@ -312,8 +312,27 @@
 }
 
 .todo-item__progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* 进度记录本身的完成比例：2px 蓝条，只是把「1/4」再视觉化一层。 */
+.todo-item__progress-bar {
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--transactions-color-border-l2);
+}
+
+.todo-item__progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--transactions-color-primary);
 }
 
 .todo-item__levels {
@@ -334,6 +353,26 @@
 .todo-item__due {
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+.todo-item__due.is-overdue {
+  color: var(--transactions-color-expense);
+}
+
+/* 今天用琥珀点 + 墨色文字：琥珀小字在纸白上对比不足，点承担颜色，文字承担意思。 */
+.todo-item__due.is-today {
+  color: var(--transactions-color-text-major);
+}
+
+.todo-item__due.is-today::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-outlier);
+  vertical-align: middle;
 }
 
 .todo-item__toggle {
@@ -566,6 +605,17 @@
   color: var(--transactions-color-text-secondary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.todo-table__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.todo-table__done-icon {
+  display: inline-flex;
+  color: var(--transactions-color-income);
 }
 
 .todo-table td.todo-table__card {

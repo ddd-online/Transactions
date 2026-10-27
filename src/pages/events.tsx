@@ -541,7 +541,14 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       />
                       <div className="key-event-card__body">
                         <div className="key-event-card__name">{item.title || item.date}</div>
-                        <div className="key-event-card__date">{shortDate(item.date)}</div>
+                        <div className="key-event-card__date">
+                          <span
+                            className="key-event-card__dot"
+                            style={{ background: item.color || 'var(--transactions-color-primary)' }}
+                            aria-hidden="true"
+                          />
+                          {shortDate(item.date)}
+                        </div>
                         <div className="key-event-card__desc">{summary}</div>
                       </div>
                       <Popconfirm

@@ -9,6 +9,7 @@ import type {
 import { Input, Modal, Popconfirm, Select } from 'antd'
 
 import { TODO_LEVELS, TODO_LEVEL_LABELS, todoLevelLabel } from '../../shared/domain/consts'
+import { todoDueState, type TodoDueState } from '../../shared/domain/todo-due'
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
@@ -45,11 +46,15 @@ function doneCountOf(progress: TodoProgressDto[]): number {
   return progress.filter((entry) => entry.done).length
 }
 
-function formatItemDates(startDate: string, dueDate: string): string {
+function formatItemDates(
+  startDate: string,
+  dueDate: string,
+  due: TodoDueState,
+): string {
   if (!startDate && !dueDate) return ''
   if (startDate && !dueDate) return `${startDate} 起`
-  if (!startDate && dueDate) return `${dueDate} 截止`
-  return `${startDate} → ${dueDate}`
+  if (!startDate && dueDate) return due === 'today' ? '今天截止' : `${dueDate} 截止`
+  return due === 'today' ? `${startDate} → 今天截止` : `${startDate} → ${dueDate}`
 }
 
 export interface TodoPageProps {
@@ -356,6 +361,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const renderItem = (item: TodoItemDto): JSX.Element => {
     const open = Boolean(expandedItems[item.id])
     const doneCount = doneCountOf(item.progress)
+    const due = todoDueState(item.dueDate)
+    const dueText = formatItemDates(item.startDate, item.dueDate, due)
     return (
       <li key={item.id} className={`todo-item${open ? ' is-open' : ''}`} data-testid="todo-item">
         <div className="todo-item__row">
@@ -381,12 +388,22 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               {item.progress.length > 0 ? (
                 <span className="todo-item__progress">
                   进度 {doneCount}/{item.progress.length}
+                  <span className="todo-item__progress-bar" aria-hidden="true">
+                    <span
+                      style={{
+                        width: `${Math.round((doneCount / Math.max(1, item.progress.length)) * 100)}%`,
+                      }}
+                    />
+                  </span>
                 </span>
               ) : null}
               {renderLevels(item)}
-              {formatItemDates(item.startDate, item.dueDate) ? (
-                <span className="todo-item__due">
-                  {formatItemDates(item.startDate, item.dueDate)}
+              {dueText ? (
+                <span
+                  className={`todo-item__due${due === 'overdue' ? ' is-overdue' : due === 'today' ? ' is-today' : ''}`}
+                >
+                  {due === 'overdue' ? '逾期 · ' : ''}
+                  {dueText}
                 </span>
               ) : null}
             </span>
@@ -707,7 +724,14 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                   <tbody>
                     {history.map((item) => (
                       <tr key={item.id} data-testid="todo-history-item">
-                        <td className="is-center todo-table__time">{formatMoment(item.completedAt)}</td>
+                        <td className="is-center todo-table__time">
+                          <span className="todo-table__done">
+                            <span className="todo-table__done-icon">
+                              <Icon name="Check" size={12} />
+                            </span>
+                            {formatMoment(item.completedAt)}
+                          </span>
+                        </td>
                         <td className="todo-table__card" title={item.cardTitle}>
                           {item.cardTitle}
                         </td>

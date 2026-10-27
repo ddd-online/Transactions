@@ -175,9 +175,10 @@ Cool neutrals carry the interface; Clarity Blue is the single accent; a small se
 - **Hairlines** (#e8eaed border, #eceef1 divider, #e2e4e8 l2, #d5d8dd l3): all 1px separations.
 - **Interactive fills**: hover rgba(15,17,21,0.06), active rgba(57,100,254,0.10).
 
-### Semantic (transaction data only)
+### Semantic (data and status only)
 
 - **Income** (#16a34a), **Expense** (#dc2626), **Transfer** (#3b82f6), **Outlier/Warning** (#d97706), each with a 10% tint for tags and chip backgrounds.
+- **状态**：待办逾期用 Expense，今天用 Outlier 圆点（文字保持墨色），完成用 Income 勾；设置里代理连通 Income / 失败 Expense / 有更新 Outlier。语义色只在数据与状态上出现，外壳、导航、品牌面永不上色。
 
 ### Ledger identity
 
@@ -214,7 +215,7 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 ### Named Rules
 
-**The Semantic Silo Rule.** Income/expense/transfer/outlier colors appear only on transaction or stock data — never on chrome, navigation, or brand surfaces.
+**The Semantic Silo Rule.** Income/expense/transfer/outlier colors appear only on data and state — transaction amounts, stock moves, due/complete/connectivity — never on chrome, navigation, or brand surfaces.
 
 **The Positional Colour Rule.** Multi-series charts take their colours from the chart categorical palette by the series' position in the list, not from the semantic set. The plot, the legend, and the totals column all use the same index, so a curve's colour is identical in all three.
 
