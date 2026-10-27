@@ -21,6 +21,9 @@ import { stockErrorMessage, stockPercent } from './stock-format'
 /** 虚拟列表的行高：一只股票两行字 + 分隔线。 */
 const LADDER_ROW_HEIGHT = 46
 
+/** Listy 的滚动条浮在右缘：每行留出 16px 的空档，别压住「炸 N」「断」。 */
+const LADDER_ITEM_STYLE = { paddingRight: 16 }
+
 /** 一列里的行：今日连板 → 「断板 N」小标 → 断板个股。 */
 type LadderRow =
   | { key: string; kind: 'stock'; entry: StockLimitEntry; broken: boolean }
@@ -374,6 +377,7 @@ export function StockLadderPanel({
                         itemHeight={LADDER_ROW_HEIGHT}
                         height={listHeight}
                         classNames={{ root: 'stock-ladder__listy' }}
+                        styles={{ item: LADDER_ITEM_STYLE }}
                         itemRender={(row: LadderRow) =>
                           row.kind === 'note' ? (
                             <BrokenNote count={row.count} />
