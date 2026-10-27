@@ -3937,42 +3937,6 @@
   width: 100%;
 }
 
-.stock-ladder__heading {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.stock-ladder__kicker {
-  font-size: var(--transactions-size-text-caption);
-  font-weight: var(--transactions-weight-medium);
-  letter-spacing: var(--transactions-tracking-label);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.stock-ladder__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--transactions-size-text-small);
-  color: var(--transactions-color-text-tertiary);
-}
-
-/* 盘中：一枚琥珀点 + 一句"收盘后才定稿"。数据本身不做特殊样式，
- * 免得读起来像坏数据。 */
-.stock-ladder__status.is-live {
-  color: var(--transactions-color-text-secondary);
-}
-
-.stock-ladder__status.is-live::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: var(--transactions-radius-full);
-  background: var(--transactions-color-outlier);
-}
-
 .stock-ladder__controls {
   display: flex;
   align-items: center;
@@ -3980,10 +3944,6 @@
   flex-wrap: wrap;
 }
 
-.stock-ladder__weekday {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
 
 /* ---------------- 汇总数字（版心底栏） ---------------- */
 

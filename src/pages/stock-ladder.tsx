@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 
 import Listy from '@rc-component/listy'
 
-import { addDays, weekdayCn } from '../../shared/domain/calendar'
+import { addDays } from '../../shared/domain/calendar'
 import { isOneWordBoard } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import type {
@@ -374,38 +374,34 @@ export function StockLadderPanel({
 
   const toolbar = (
     <header className="stock-ladder__head">
-          <div className="stock-ladder__heading">
-            <span className="stock-ladder__kicker">连板天梯</span>
-            <span
-              className={`stock-ladder__status${ladder?.temporary ? ' is-live' : ''}`}
-              data-testid="stock-ladder-status"
-            >
-              {statusText}
-            </span>
-          </div>
-          <div className="stock-ladder__controls">
-            <TimeRangePicker
-              testId="stock-ladder-date"
-              mode="date"
-              start={date}
-              end={date}
-              dayOnly
-              maxDate={today}
-              onModeChange={() => undefined}
-              onRangeChange={(next) => setDate(next && next <= today ? next : today)}
-            />
-            <span className="stock-ladder__weekday">{weekdayCn(date)}</span>
-            <Button
-              size="sm"
-              variant="secondary"
-              testId="stock-ladder-refresh"
-              disabled={loading}
-              icon={<Icon name="Reload" size={14} />}
-              onClick={() => void load(date, true)}
-            >
-              刷新
-            </Button>
-          </div>
+      <div className="stock-ladder__controls">
+        <TimeRangePicker
+          testId="stock-ladder-date"
+          mode="date"
+          start={date}
+          end={date}
+          dayOnly
+          maxDate={today}
+          onModeChange={() => undefined}
+          onRangeChange={(next) => setDate(next && next <= today ? next : today)}
+        />
+        <span
+          className={`stock-ladder__status${ladder?.temporary ? ' is-live' : ''}`}
+          data-testid="stock-ladder-status"
+        >
+          {statusText}
+        </span>
+      </div>
+      <Button
+        size="sm"
+        variant="secondary"
+        testId="stock-ladder-refresh"
+        disabled={loading}
+        icon={<Icon name="Reload" size={14} />}
+        onClick={() => void load(date, true)}
+      >
+        刷新
+      </Button>
     </header>
   )
 
