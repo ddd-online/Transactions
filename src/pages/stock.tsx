@@ -40,7 +40,7 @@ const TABS: Array<[StockTab, string, IconName]> = [
   ['history', '记录', 'ClockCircle'],
   ['lessons', '心得', 'Bulb'],
   ['statistics', '统计', 'BarChart'],
-  ['ladder', '天梯', 'Rise'],
+  ['ladder', '天梯', 'Signal'],
   ['settings', '设置', 'Setting'],
 ]
 

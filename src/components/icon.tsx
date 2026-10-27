@@ -42,10 +42,10 @@ import {
   RightOutlined,
   SearchOutlined,
   SettingOutlined,
+  SignalFilled,
   SlidersOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
-  RiseOutlined,
   StarOutlined,
   StockOutlined,
   SwitcherOutlined,
@@ -116,7 +116,7 @@ export type IconName =
   | 'User'
   | 'Sliders'
   | 'CreditCard'
-  | 'Rise'
+  | 'Signal'
 
 type IconComponent = ComponentType<{
   className?: string
@@ -182,7 +182,7 @@ const ICONS: Record<IconName, IconComponent> = {
   User: UserOutlined,
   Sliders: SlidersOutlined,
   CreditCard: CreditCardOutlined,
-  Rise: RiseOutlined,
+  Signal: SignalFilled,
 }
 
 export interface IconProps {
