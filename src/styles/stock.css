@@ -2826,19 +2826,6 @@
   border-bottom: 1px solid var(--transactions-color-divider);
 }
 
-.stock-section-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--transactions-color-text-major);
-  font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
-  cursor: pointer;
-}
-
 .stock-section-title {
   color: var(--transactions-color-text-major);
   font-size: var(--transactions-size-text-body-sm);
