@@ -19,33 +19,14 @@ import { TimeRangePicker } from '../components/time-range-picker'
 import { StockLadderItem } from './stock-ladder-item'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
-/** 一列里的行：今日连板 → 「断板 N」小标 → 断板个股。 */
-type LadderRow =
-  | { key: string; kind: 'stock'; entry: StockLimitEntry; broken: boolean }
-  | { key: string; kind: 'note'; count: number }
+/** 一列里的行：今日连板在前，断板个股直接跟在后。 */
+type LadderRow = { key: string; entry: StockLimitEntry; broken: boolean }
 
 function rungRows(rung: StockLimitRung): LadderRow[] {
-  const rows: LadderRow[] = rung.entries.map((entry) => ({
-    key: entry.stockCode,
-    kind: 'stock',
-    entry,
-    broken: false,
-  }))
-  if (rung.broken.length > 0) {
-    rows.push({ key: '__broken', kind: 'note', count: rung.broken.length })
-    for (const entry of rung.broken) {
-      rows.push({ key: `broken:${entry.stockCode}`, kind: 'stock', entry, broken: true })
-    }
-  }
-  return rows
-}
-
-function BrokenNote({ count }: { count: number }): JSX.Element {
-  return (
-    <p className="stock-ladder__broken-note" data-testid="stock-ladder-broken">
-      断板 {count}
-    </p>
-  )
+  return [
+    ...rung.entries.map((entry) => ({ key: entry.stockCode, entry, broken: false })),
+    ...rung.broken.map((entry) => ({ key: `broken:${entry.stockCode}`, entry, broken: true })),
+  ]
 }
 
 /** 窄窗（分层行布局）不需要虚拟列表，按 CSS 断点切换。 */
@@ -276,9 +257,6 @@ export function StockLadderPanel({
                     {rung.entries.map((entry) => (
                       <StockLadderItem key={entry.stockCode} entry={entry} />
                     ))}
-                    {rung.broken.length > 0 ? (
-                      <BrokenNote count={rung.broken.length} />
-                    ) : null}
                     {rung.broken.map((entry) => (
                       <StockLadderItem key={entry.stockCode} entry={entry} broken />
                     ))}
@@ -290,13 +268,9 @@ export function StockLadderPanel({
                       virtual={false}
                       rowKey={(row: LadderRow) => row.key}
                       classNames={{ root: 'stock-ladder__listy' }}
-                      itemRender={(row: LadderRow) =>
-                        row.kind === 'note' ? (
-                          <BrokenNote count={row.count} />
-                        ) : (
-                          <StockLadderItem entry={row.entry} broken={row.broken} />
-                        )
-                      }
+                      itemRender={(row: LadderRow) => (
+                        <StockLadderItem entry={row.entry} broken={row.broken} />
+                      )}
                     />
                   </ScrollArea>
                 )}
