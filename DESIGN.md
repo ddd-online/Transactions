@@ -186,10 +186,6 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 颜色按账本 id 做 FNV-1a 哈希取模（`shared/domain/identity-color.ts` 的 `identityTone` / `identityColor`），同一账本永远同一色，不需要数据库字段或选择器。呈现只用一个 6px 圆点：账本切换器里放在图标与名称之间，账本菜单里放在每一行名称前；名称始终在点旁边，颜色不承担唯一信息。
 
-### Category identity
-
-分类沿用同一组八色：种子是 `ledgerId:transactionType:name`，所以同一账本、同一类型下的分类有稳定身份色。分类管理页的每一行、记录表的「分类」单元格都用 6px 圆点 + 名称；改名会换色，这是可接受的代价（没有分类 id 字段）。标签不上色——分类已经是第一扫描维度，标签再上一层颜色会变成彩虹。
-
 ### Chart categorical palette
 
 折线图的候选色池。曲线上色**按它在图表里的位置**（第 N 条 → 第 N 色），与交易类型无关：
@@ -345,7 +341,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 ### Tags / Chips
 
 - **Style:** 10% semantic tint background + semantic text, 6px radius, no border, 2px 8px padding.
-- **Identity dot:** 6px 圆形、无边框、只做身份辅助；账本/分类/事件各用自己的稳定色，旁边始终有名称。
+- **Identity dot:** 6px 圆形、无边框、只做身份辅助；账本与事件各用自己的稳定色，旁边始终有名称。
 - **Editable tag (chip button):** when a tag is something the user can change, it keeps the tag face (caption, 6px radius, `minor-background`, 2px 8px) and gains an 11px caret plus a 22px minimum height so it is a fair pointer target — a bordered 36px field parked in a title row reads as an unfilled input, not as that row's tag (`ui-select--tag`). Both places a round's tag can be changed wear the same chip: the position detail header and each round's header on 记录 — in the latter the chip rides the right end of its row, so its panel opens leftward (`right: 0`) rather than past the window edge. Hover steps the fill to `active-bg` with primary text; open and keyboard focus add the focus ring. Its panel is sized to the widest option, so a long custom tag never wraps inside a narrow chip.
 
 ### Tabs

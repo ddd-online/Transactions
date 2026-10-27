@@ -27,7 +27,6 @@ import {
 } from 'antd'
 
 import { Button } from '../components/button'
-import { IdentityDot } from '../components/identity-dot'
 import { Pagination } from '../components/pagination'
 import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
@@ -653,12 +652,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
       dataIndex: 'category',
       width: 100,
       align: 'center',
-      render: (value: string, row: TransactionRecordDto) => (
-        <span className="tr-cell-category">
-          <IdentityDot seed={`${ledgerId}:${row.transactionType}:${value}`} size={6} />
-          {value}
-        </span>
-      ),
+      render: (value: string) => <span className="tr-cell-category">{value}</span>,
     },
     {
       title: '标签',

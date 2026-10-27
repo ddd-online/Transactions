@@ -16,8 +16,8 @@ describe('identity-color', () => {
     expect([...seen].sort()).toEqual([...IDENTITY_TONES].sort())
   })
 
-  it('账本 id 与分类 seed 是两个身份', () => {
-    expect(identityTone('ledger-1')).not.toBe(identityTone('ledger-1:expense:餐饮美食'))
+  it('不同 seed 可以落到不同身份', () => {
+    expect(identityTone('ledger-1')).not.toBe(identityTone('ledger-1:event'))
   })
 
   it('返回的是 token 引用，不是裸色值', () => {

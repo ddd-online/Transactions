@@ -764,9 +764,6 @@
 }
 
 .tr-cell-category {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
   font-size: var(--transactions-size-text-body);
   color: var(--transactions-color-text-major);
 }
