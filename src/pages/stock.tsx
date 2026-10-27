@@ -61,6 +61,7 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   const [historySummary, setHistorySummary] = useState<StockTradeHistorySummaryDto | null>(null)
   const [ladderSummary, setLadderSummary] = useState<StockLadderSummary | null>(null)
   const [ladderToolbar, setLadderToolbar] = useState<HTMLDivElement | null>(null)
+  const [statsToolbar, setStatsToolbar] = useState<HTMLDivElement | null>(null)
   const [lessonDialog, setLessonDialog] = useState<{
     lesson: StockLessonDto | null
     roundId: string
@@ -212,6 +213,8 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
           </div>
         ) : tab === 'ladder' ? (
           <div className="stock-ladder__toolbar-host" ref={setLadderToolbar} />
+        ) : tab === 'statistics' ? (
+          <div className="stock-statistics__toolbar-host" ref={setStatsToolbar} />
         ) : undefined
       }
       rail={
@@ -255,7 +258,11 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
         />
       ) : null}
       {tab === 'statistics' ? (
-        <StockStatisticsPanel ledgerId={ledgerId} onOpenRound={openHistoryRound} />
+        <StockStatisticsPanel
+          ledgerId={ledgerId}
+          onOpenRound={openHistoryRound}
+          toolbarHost={statsToolbar}
+        />
       ) : null}
       {tab === 'ladder' ? (
         <StockLadderPanel onSummaryChange={setLadderSummary} toolbarHost={ladderToolbar} />

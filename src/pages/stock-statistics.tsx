@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
+import { createPortal } from 'react-dom'
 
 import { Chart } from '@antv/g2'
 import { Input, Modal, Select, Table } from 'antd'
@@ -31,6 +32,8 @@ export interface StockStatisticsPanelProps {
   ledgerId: string
   /** 明细里点股票时，跳到记录页的对应轮次 */
   onOpenRound?: (target: { code: string; roundId: string }) => void
+  /** 外层 `PageLayout.toolbar` 里的空槽；筛选条用 portal 渲染进去 */
+  toolbarHost?: HTMLElement | null
 }
 
 type RangeMode = 'all' | 'time' | 'recent'
@@ -304,6 +307,7 @@ function ChartBox({
 export function StockStatisticsPanel({
   ledgerId,
   onOpenRound,
+  toolbarHost = null,
 }: StockStatisticsPanelProps): JSX.Element {
   const [strategy, setStrategy] = useState<'cumulative' | 'grouped'>('cumulative')
   const [rangeMode, setRangeMode] = useState<RangeMode>('all')
@@ -373,77 +377,80 @@ export function StockStatisticsPanel({
   )
   const selectedMetricLabel = metricLabel(metric, strategy === 'grouped')
 
+  const toolbar = (
+    <div className="stock-statistics-toolbar">
+      <Segmented
+        testId="statistics-tab"
+        value={tabs}
+        onChange={(value) => setTabs(value as 'summary' | 'detail')}
+        options={[
+          { value: 'summary', label: '统计' },
+          { value: 'detail', label: '明细' },
+        ]}
+      />
+      <div className="stock-statistics-filters">
+        <Segmented
+          testId="statistics-range"
+          value={rangeMode}
+          onChange={(value) => setRangeMode(value as RangeMode)}
+          options={[
+            { value: 'all', label: '全部' },
+            { value: 'time', label: '按时间' },
+            { value: 'recent', label: '最近 N 笔' },
+          ]}
+        />
+        {rangeMode === 'time' ? (
+          <TimeRangePicker
+            testId="statistics-time"
+            mode={timeMode}
+            start={startDate}
+            end={endDate}
+            onModeChange={setTimeMode}
+            onRangeChange={(start, end) => {
+              setStartDate(start)
+              setEndDate(end)
+            }}
+          />
+        ) : null}
+        {rangeMode === 'recent' ? (
+          <Input
+            data-testid="statistics-recent"
+            value={recent}
+            inputMode="numeric"
+            placeholder="N"
+            style={{ width: 90 }}
+            onChange={(event) => setRecent(event.target.value)}
+          />
+        ) : null}
+        {/* 明细恒为逐笔结算：分组口径只影响曲线，进「明细」就收起这个下拉，
+            免得看起来“选了没反应”。 */}
+        {tabs === 'summary' ? (
+          <Select
+            data-testid="statistics-strategy"
+            value={strategy}
+            style={{ width: 130 }}
+            onChange={(value) => setStrategy(value)}
+            options={[
+              { value: 'cumulative', label: '逐笔累计' },
+              { value: 'grouped', label: '分组统计' },
+            ]}
+          />
+        ) : null}
+        <Select
+          data-testid="statistics-tag"
+          value={tag}
+          style={{ width: 150 }}
+          onChange={(value) => setTag(value)}
+          options={[{ value: '', label: '全部标签' }, ...tagOptions.map((item) => ({ value: item, label: item }))]}
+        />
+      </div>
+    </div>
+  )
+
   return (
     <ScrollArea className="stock-statistics-scroll">
       <div className="stock-statistics-view">
-      <div className="stock-statistics-toolbar">
-        <Segmented
-          testId="statistics-tab"
-          value={tabs}
-          onChange={(value) => setTabs(value as 'summary' | 'detail')}
-          options={[
-            { value: 'summary', label: '统计' },
-            { value: 'detail', label: '明细' },
-          ]}
-        />
-        <div className="stock-statistics-filters">
-          <Segmented
-            testId="statistics-range"
-            value={rangeMode}
-            onChange={(value) => setRangeMode(value as RangeMode)}
-            options={[
-              { value: 'all', label: '全部' },
-              { value: 'time', label: '按时间' },
-              { value: 'recent', label: '最近 N 笔' },
-            ]}
-          />
-          {rangeMode === 'time' ? (
-            <TimeRangePicker
-              testId="statistics-time"
-              mode={timeMode}
-              start={startDate}
-              end={endDate}
-              onModeChange={setTimeMode}
-              onRangeChange={(start, end) => {
-                setStartDate(start)
-                setEndDate(end)
-              }}
-            />
-          ) : null}
-          {rangeMode === 'recent' ? (
-            <Input
-              data-testid="statistics-recent"
-              value={recent}
-              inputMode="numeric"
-              placeholder="N"
-              style={{ width: 90 }}
-              onChange={(event) => setRecent(event.target.value)}
-            />
-          ) : null}
-          {/* 明细恒为逐笔结算：分组口径只影响曲线，进「明细」就收起这个下拉，
-              免得看起来“选了没反应”。 */}
-          {tabs === 'summary' ? (
-            <Select
-              data-testid="statistics-strategy"
-              value={strategy}
-              style={{ width: 130 }}
-              onChange={(value) => setStrategy(value)}
-              options={[
-                { value: 'cumulative', label: '逐笔累计' },
-                { value: 'grouped', label: '分组统计' },
-              ]}
-            />
-          ) : null}
-          <Select
-            data-testid="statistics-tag"
-            value={tag}
-            style={{ width: 150 }}
-            onChange={(value) => setTag(value)}
-            options={[{ value: '', label: '全部标签' }, ...tagOptions.map((item) => ({ value: item, label: item }))]}
-          />
-        </div>
-      </div>
-
+        {toolbarHost ? createPortal(toolbar, toolbarHost) : null}
       {error ? (
         <p className="m0-error stock-inline-error" data-testid="stock-statistics-error">
           {error}

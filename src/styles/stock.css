@@ -3376,14 +3376,20 @@
   min-height: 100%;
 }
 
+/* 筛选条在布局工具栏里（`.page-toolbar` 给内边距与发丝线）。 */
+.stock-statistics__toolbar-host {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+}
+
 .stock-statistics-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
-  min-height: 56px;
-  padding: 0 var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
+  width: 100%;
 }
 
 .stock-statistics-filters {
