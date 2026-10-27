@@ -3937,13 +3937,32 @@
   width: 100%;
 }
 
+.stock-ladder__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__status.is-live {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__status.is-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-outlier);
+}
+
 .stock-ladder__controls {
   display: flex;
   align-items: center;
   gap: var(--transactions-space-md);
   flex-wrap: wrap;
 }
-
 
 /* ---------------- 汇总数字（版心底栏） ---------------- */
 
@@ -4070,13 +4089,13 @@
   font-size: var(--transactions-size-text-caption);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-tertiary);
+  color: var(--transactions-color-text-secondary);
 }
 
 .stock-ladder__rung-rate {
   margin: var(--transactions-space-2xs) 0 var(--transactions-space-md);
   font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
+  color: var(--transactions-color-text-secondary);
 }
 
 .stock-ladder__chips {
@@ -4110,8 +4129,8 @@
 .stock-ladder__item-name {
   min-width: 0;
   overflow: hidden;
-  font-size: var(--transactions-size-text-body-sm);
-  line-height: 17px;
+  font-size: var(--transactions-size-text-body);
+  line-height: 18px;
   color: var(--transactions-color-text-major);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4123,10 +4142,10 @@
   align-items: baseline;
   gap: 6px;
   font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-small);
+  font-size: var(--transactions-size-text-caption);
   font-variant-numeric: tabular-nums;
   line-height: 16px;
-  color: var(--transactions-color-text-tertiary);
+  color: var(--transactions-color-text-secondary);
   white-space: nowrap;
 }
 
