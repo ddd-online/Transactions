@@ -51,6 +51,8 @@
   --transactions-color-transfer-tint: rgba(59, 130, 246, 0.10);
   --transactions-color-outlier-tint: rgba(217, 119, 6, 0.10);
   --transactions-color-outlier-tint-strong: rgba(217, 119, 6, 0.18);
+  /* 更淡的一档：整行打底用（连板天梯的涨停行），不能压过行上的 10% 小标签。 */
+  --transactions-color-expense-tint-soft: rgba(220, 38, 38, 0.06);
 
   /* Chart categorical palette — 折线图的候选色池（与交易类型无关，见 DESIGN.md）。
    * 顺序即"第 N 条曲线"的取值顺序；两套主题色相一一对应，切换主题不改变曲线身份。
@@ -296,6 +298,7 @@
   --transactions-color-transfer-tint: rgba(96, 165, 250, 0.14);
   --transactions-color-outlier-tint: rgba(251, 191, 36, 0.14);
   --transactions-color-outlier-tint-strong: rgba(251, 191, 36, 0.22);
+  --transactions-color-expense-tint-soft: rgba(248, 113, 113, 0.10);
 
   --transactions-color-chart-blue: #60a5fa;
   --transactions-color-chart-amber: #f59e0b;
@@ -396,6 +399,7 @@
     --transactions-color-transfer-tint: rgba(96, 165, 250, 0.14);
     --transactions-color-outlier-tint: rgba(251, 191, 36, 0.14);
     --transactions-color-outlier-tint-strong: rgba(251, 191, 36, 0.22);
+    --transactions-color-expense-tint-soft: rgba(248, 113, 113, 0.10);
 
     --transactions-color-chart-blue: #60a5fa;
     --transactions-color-chart-amber: #f59e0b;

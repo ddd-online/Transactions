@@ -237,6 +237,18 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     )
     expect(sameBoardClasses[0]).toBe(sameBoardClasses[1])
 
+    // 涨停行铺微红底，断板行不铺底
+    const rowTints = await ladder.evaluate((root) => {
+      const limit = root.querySelector('[data-testid="stock-ladder-chip"]')
+      const broken = root.querySelector('[data-testid="stock-ladder-broken-chip"]')
+      return {
+        limit: limit ? getComputedStyle(limit).backgroundColor : '',
+        broken: broken ? getComputedStyle(broken).backgroundColor : '',
+      }
+    })
+    expect(rowTints.limit).not.toBe('rgba(0, 0, 0, 0)')
+    expect(rowTints.broken).toBe('rgba(0, 0, 0, 0)')
+
     // 断板带当天的涨跌幅标签：涨红跌绿（行情由本地服务供给）
     const brokenMoutai = ladder
       .getByTestId('stock-ladder-broken-chip')

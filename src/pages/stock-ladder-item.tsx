@@ -64,7 +64,7 @@ export function StockLadderItem({ entry, broken = false }: StockLadderItemProps)
 
   return (
     <div
-      className={`stock-ladder__item${broken ? ' is-broken' : ''}`}
+      className={`stock-ladder__item${broken ? ' is-broken' : ' is-limit'}`}
       data-testid={broken ? 'stock-ladder-broken-chip' : 'stock-ladder-chip'}
       title={detail}
     >

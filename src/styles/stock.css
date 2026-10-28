@@ -4160,6 +4160,12 @@
   border-top: 1px solid var(--transactions-color-divider);
 }
 
+/* 今天还在板上的行铺一层微红底；断板不铺，两种行一眼分得开。
+ * 底色要淡过行上的 10% 小标签，不能把「一字 / 炸 / 涨跌幅」压下去。 */
+.stock-ladder__item.is-limit {
+  background: var(--transactions-color-expense-tint-soft);
+}
+
 .stock-ladder__item-main {
   display: flex;
   align-items: baseline;
