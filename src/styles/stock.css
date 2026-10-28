@@ -4037,7 +4037,9 @@
   padding: 0 var(--transactions-space-xs);
 }
 
-/* 一列 = 列头 + 可滚动的股票列表（Listy 虚拟列表，高度由 flex 量出来）。 */
+/* 一列 = 列头 + 可滚动的股票列表（Listy 虚拟列表，高度由 flex 量出来）。
+ * 左右只留 4px：行的底色要铺到列的近边缘，文字的位置由行自己的内边距给（8px），
+ * 两者加起来仍是页边距 16，首列板数、工具栏、底栏还在同一条竖线上。 */
 .stock-ladder__rung {
   container-type: inline-size;
   display: flex;
@@ -4045,13 +4047,15 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: var(--transactions-space-lg) var(--transactions-space-md) var(--transactions-space-sm);
+  padding: var(--transactions-space-lg) var(--transactions-space-xs) var(--transactions-space-sm);
   border-left: 1px solid var(--transactions-color-divider);
 }
 
 /* 板数多（7 板）时一列只有 ~160px：名称独占一行，代码/时间落到下一行，
- * 否则 4 个字的股票名会被截成两个字。 */
-@container (max-width: 200px) {
+ * 否则 4 个字的股票名会被截成两个字。
+ * 阈值跟着列宽算：列内容 = 列宽 − 8（左右各 4 的列内边距），
+ * 所以 216 = 旧规则 200 + 省下来的 16，切换点与改版前一致。 */
+@container (max-width: 216px) {
   .stock-ladder__item {
     height: 66px;
     min-height: 66px;
@@ -4069,9 +4073,15 @@
   min-height: 0;
 }
 
-/* OverlayScrollbars 的滑块浮在右缘：内容让出 16px，避免盖住代码/时间。 */
+/* OverlayScrollbars 的滑块浮在右缘：让出 16px 的位置改由行自己的右内边距给，
+ * 行的底色才能铺满整列（不再在右侧留一条白边）。 */
 .stock-ladder__list .rc-listy {
-  padding-right: 16px;
+  padding-right: 0;
+}
+
+/* 行：左右各 8 的内边距（右侧再加 16 给滚动条滑块），文字不再贴着底色边缘。 */
+.stock-ladder__list .stock-ladder__item {
+  padding-right: calc(var(--transactions-space-sm) + var(--transactions-space-lg));
 }
 
 /* Listy 在这里只负责按行渲染；滚动条交给外层的 OverlayScrollbars。 */
@@ -4091,6 +4101,8 @@
 .stock-ladder__rung-rail {
   display: flex;
   flex-direction: column;
+  /* 与行内文字同一条竖线：行的内边距 8，列头也补 8。 */
+  padding-left: var(--transactions-space-sm);
 }
 
 .stock-ladder__rung-head {
@@ -4148,7 +4160,8 @@
   list-style: none;
 }
 
-/* 行高固定：有没有标签都占同一条高度，列里的分隔线才会等距。 */
+/* 行高固定：有没有标签都占同一条高度，列里的分隔线才会等距。
+ * 左右 8px 内边距：底色铺满整行时，文字不贴着色的边。 */
 .stock-ladder__item {
   display: flex;
   flex-direction: column;
@@ -4156,7 +4169,7 @@
   gap: 4px;
   height: 48px;
   min-height: 48px;
-  padding: 4px 0;
+  padding: 4px var(--transactions-space-sm);
   border-top: 1px solid var(--transactions-color-divider);
 }
 

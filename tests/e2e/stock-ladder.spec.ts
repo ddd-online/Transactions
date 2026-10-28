@@ -249,6 +249,26 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(rowTints.limit).not.toBe('rgba(0, 0, 0, 0)')
     expect(rowTints.broken).toBe('rgba(0, 0, 0, 0)')
 
+    // 行内左右留 8px：文字与列头落在同一条竖线上，不贴着底色边
+    const geometry = await ladder.evaluate((root) => {
+      const item = root.querySelector('[data-testid="stock-ladder-chip"]')
+      const name = item?.querySelector('.stock-ladder__item-name')
+      const level = root.querySelector('.stock-ladder__level-num')
+      const itemBox = item?.getBoundingClientRect()
+      const nameBox = name?.getBoundingClientRect()
+      return {
+        paddingLeft: item ? getComputedStyle(item).paddingLeft : '',
+        paddingRight: item ? getComputedStyle(item).paddingRight : '',
+        inset: itemBox && nameBox ? nameBox.left - itemBox.left : -1,
+        nameLeft: nameBox?.left ?? -1,
+        levelLeft: level?.getBoundingClientRect().left ?? -2,
+      }
+    })
+    expect(parseFloat(geometry.paddingLeft)).toBe(8)
+    expect(parseFloat(geometry.paddingRight)).toBe(24) // 8 + 16（滚动条滑块让位）
+    expect(geometry.inset).toBeCloseTo(8, 0)
+    expect(geometry.nameLeft).toBeCloseTo(geometry.levelLeft, 0)
+
     // 断板带当天的涨跌幅标签：涨红跌绿（行情由本地服务供给）
     const brokenMoutai = ladder
       .getByTestId('stock-ladder-broken-chip')
