@@ -5,8 +5,10 @@ import { getLimitDay } from '../../electron/db/dao/stock-limit'
 import { openDatabase, type Db } from '../../electron/db/driver'
 import { buildLimitLadder, isOneWordBoard } from '../../shared/domain/limit-ladder'
 import type { StockLimitEntry } from '../../shared/types/stock-limit'
+import type { StockQuoteDto } from '../../shared/types/stock-position'
 import { EastmoneyLimitPoolSource, parseLimitPoolPayload } from '../../electron/services/stock-limit-pool'
 import { getLimitLadder } from '../../electron/services/stock-limit'
+import type { StockQuoteFetcher } from '../../electron/services/stock-quote'
 
 const openDbs: Db[] = []
 
@@ -329,6 +331,99 @@ describe('getLimitLadder 缓存纪律', () => {
     const ladder = await getLimitLadder(db, failing, '2026-10-23', { now, refresh: true })
     expect(ladder.stale).toBe(true)
     expect(ladder.metrics.limitCount).toBe(2)
+  })
+})
+
+describe('getLimitLadder 断板涨跌幅', () => {
+  /** 按代码返回行情的桩；`calls` 记录每次请求的代码。 */
+  function quotes(
+    entries: Record<string, { latest: number; prevClose: number; quoteDate: string }>,
+  ): StockQuoteFetcher & { calls: string[][] } {
+    const calls: string[][] = []
+    return {
+      calls,
+      async fetchQuotes(codes: readonly string[]): Promise<Map<string, StockQuoteDto>> {
+        calls.push([...codes])
+        const result = new Map<string, StockQuoteDto>()
+        for (const code of codes) {
+          const hit = entries[code]
+          if (!hit) continue
+          result.set(code, {
+            stockCode: code,
+            latestPrice: hit.latest,
+            prevClose: hit.prevClose,
+            quoteTime: 0,
+            quoteDate: hit.quoteDate,
+          })
+        }
+        return result
+      },
+      async fetchName() {
+        return ''
+      },
+    }
+  }
+
+  const pools = {
+    '2026-10-23': [entry('A', 2, 92500), entry('B', 1, 92600)],
+    '2026-10-22': [entry('A', 1, 92500), entry('C', 1, 93000)],
+  }
+  const day = '2026-10-23'
+  const now = at(2026, 10, 23, 16)
+
+  function ladderSource(): { fetchDay: (date: string) => Promise<StockLimitEntry[]> } {
+    return {
+      async fetchDay(date: string) {
+        return pools[date as keyof typeof pools] ?? []
+      },
+    }
+  }
+
+  it('断板用当天行情补上涨跌幅', async () => {
+    const db = database()
+    const fetcher = quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: day } })
+    const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
+
+    expect(fetcher.calls).toEqual([['C']])
+    const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.broken.map((row) => [row.stockCode, row.todayPct])).toEqual([['C', -3.33]])
+    // 连板股不带这个字段的语义：它们本来就在涨停池里，pct 是昨天的涨停幅度。
+    expect(rung.entries[0]).not.toHaveProperty('todayPct')
+  })
+
+  it('行情日期对不上就不贴：那不是这一天的涨跌', async () => {
+    const db = database()
+    const fetcher = quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: '2026-10-22' } })
+    const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
+
+    const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.broken[0].todayPct).toBeNull()
+  })
+
+  it('太旧的日期不去请求行情', async () => {
+    const db = database()
+    const fetcher = quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: day } })
+    await getLimitLadder(db, ladderSource(), '2026-10-12', {
+      now: at(2026, 10, 27, 16),
+      quotes: fetcher,
+    })
+    expect(fetcher.calls).toEqual([])
+  })
+
+  it('行情失败不影响天梯本身', async () => {
+    const db = database()
+    const failing: StockQuoteFetcher = {
+      async fetchQuotes() {
+        throw new Error('行情挂了')
+      },
+      async fetchName() {
+        return ''
+      },
+    }
+    const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: failing })
+    const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.broken[0].stockCode).toBe('C')
+    expect(rung.broken[0].todayPct).toBeNull()
   })
 })
 

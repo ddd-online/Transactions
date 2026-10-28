@@ -70,6 +70,7 @@ pnpm package          # NSIS 安装包，产物在 output/
   `TRANSACTIONS_TEST_PROXY_TARGET` 把代理连通性检测指向本地测试服务；
   `TRANSACTIONS_TEST_PROXY_ADDRESS` 固定自动探测返回的地址；
   `TRANSACTIONS_TEST_LIMIT_SOURCE` 把涨停池地址指到本地测试服务；
+  `TRANSACTIONS_TEST_QUOTE_SOURCE` 把腾讯行情地址指到本地测试服务（天梯的断板涨跌幅）；
   `TRANSACTIONS_TEST_LADDER_NOW` 钉住天梯服务的当前时间（验证开盘前不可看、盘中不入库）。
   生产构建不设置这些变量。
 

@@ -114,8 +114,10 @@ const updater = new UpdaterService({
 })
 
 function createQuoteFetcher(): TencentStockQuoteFetcher {
+  const testBase = process.env.TRANSACTIONS_TEST_QUOTE_SOURCE
   return new TencentStockQuoteFetcher({
     fetchImpl: (url, signal) => appFetch(url, { signal }),
+    ...(testBase ? { baseUrl: testBase } : {}),
   })
 }
 
@@ -1059,6 +1061,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       return getLimitLadder(workspaceDb(), createLimitPoolSource(), date, {
         refresh: raw.refresh === true,
         now: limitNowSeconds(),
+        quotes: createQuoteFetcher(),
       })
     },
 

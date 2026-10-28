@@ -4227,6 +4227,30 @@
   color: color-mix(in srgb, var(--transactions-color-text-tertiary) 70%, var(--transactions-color-text-major));
 }
 
+/* 断板当天的涨跌幅：红涨绿跌（与股票页 `.is-up` / `.is-down` 同一套语义色），
+ * 等宽数字让一列里的百分号对齐。 */
+.stock-ladder__tag--up,
+.stock-ladder__tag--down,
+.stock-ladder__tag--flat {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-ladder__tag--up {
+  background: var(--transactions-color-expense-tint);
+  color: color-mix(in srgb, var(--transactions-color-expense) 72%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__tag--down {
+  background: var(--transactions-color-income-tint);
+  color: color-mix(in srgb, var(--transactions-color-income) 72%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__tag--flat {
+  background: var(--transactions-color-minor-background);
+  color: color-mix(in srgb, var(--transactions-color-text-tertiary) 70%, var(--transactions-color-text-major));
+}
+
 .stock-ladder__item.is-broken .stock-ladder__item-name {
   color: var(--transactions-color-text-secondary);
 }

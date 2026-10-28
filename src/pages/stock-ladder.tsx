@@ -6,6 +6,7 @@ import Listy from '@rc-component/listy'
 import { addDays } from '../../shared/domain/calendar'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import type {
+  StockLimitBrokenEntry,
   StockLimitEntry,
   StockLimitLadder,
   StockLimitMetrics,
@@ -20,7 +21,11 @@ import { StockLadderItem } from './stock-ladder-item'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
 /** 一列里的行：今日连板在前，断板个股直接跟在后。 */
-type LadderRow = { key: string; entry: StockLimitEntry; broken: boolean }
+type LadderRow = {
+  key: string
+  entry: StockLimitEntry | StockLimitBrokenEntry
+  broken: boolean
+}
 
 function rungRows(rung: StockLimitRung): LadderRow[] {
   return [

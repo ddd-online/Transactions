@@ -34,8 +34,9 @@ const FIELD_SEPARATOR = '~'
 /** 行情请求超时：3 秒（与既有 `QUOTE_TIMEOUT` 一致）。 */
 export const QUOTE_TIMEOUT_MS = 3_000
 
-/** 腾讯行情请求地址前缀。 */
-const QUOTE_ENDPOINT = 'http://qt.gtimg.cn/q='
+/** 腾讯行情请求地址前缀：`<base>/q=<market><code>[,<market><code>...]`。 */
+const QUOTE_BASE = 'http://qt.gtimg.cn'
+const QUOTE_PATH = '/q='
 
 /**
  * 批量行情源：按股票代码返回最新价与昨收价。
@@ -70,10 +71,12 @@ const defaultQuoteFetch: QuoteFetch = (url, signal) => fetch(url, { signal })
 export class TencentStockQuoteFetcher implements StockQuoteFetcher {
   private readonly fetchImpl: QuoteFetch
   private readonly timeoutMs: number
+  private readonly baseUrl: string
 
-  constructor(options: { fetchImpl?: QuoteFetch; timeoutMs?: number } = {}) {
+  constructor(options: { fetchImpl?: QuoteFetch; timeoutMs?: number; baseUrl?: string } = {}) {
     this.fetchImpl = options.fetchImpl ?? defaultQuoteFetch
     this.timeoutMs = options.timeoutMs ?? QUOTE_TIMEOUT_MS
+    this.baseUrl = options.baseUrl ?? QUOTE_BASE
   }
 
   async fetchQuotes(codes: readonly string[]): Promise<Map<string, StockQuoteDto>> {
@@ -92,7 +95,7 @@ export class TencentStockQuoteFetcher implements StockQuoteFetcher {
     }
     if (query.length === 0) return result
 
-    const payload = await this.fetchPayload(`${QUOTE_ENDPOINT}${query.join(',')}`)
+    const payload = await this.fetchPayload(`${this.baseUrl}${QUOTE_PATH}${query.join(',')}`)
     if (payload === null) return result
 
     const parsed = parseTencentQuotePayload(decodeGbk(payload))
@@ -106,7 +109,7 @@ export class TencentStockQuoteFetcher implements StockQuoteFetcher {
   async fetchName(code: string): Promise<string> {
     // 仅支持 A 股六位代码，避免非法入参打到外部接口。
     if (!isValidStockCode(code)) return ''
-    const payload = await this.fetchPayload(`${QUOTE_ENDPOINT}${marketPrefix(code)}${code}`)
+    const payload = await this.fetchPayload(`${this.baseUrl}${QUOTE_PATH}${marketPrefix(code)}${code}`)
     if (payload === null) return ''
     return parseTencentName(decodeGbk(payload))
   }
@@ -200,7 +203,7 @@ function parseDecimal(raw: string): number | null {
  *
  * 腾讯字段以 `~` 分隔：名称[1]、代码[2]、最新价[3]、昨收[4]、行情时间[30]（`YYYYMMDDHHMMSS`）。
  * 字段不足 5 段、代码不合法、价格 <= 0（停牌）或无法解析时跳过该股。
- * 行情时间缺失 / 非法时退化为"当前时间"（`now` 可注入，测试用）。
+ * 行情时间缺失 / 非法时退化为"当前时间"（`now` 可注入，测试用），`quoteDate` 一并省略。
  */
 export function parseTencentQuotePayload(
   payload: string,
@@ -220,9 +223,14 @@ export function parseTencentQuotePayload(
     if (latestYuan <= 0 || prevCloseYuan <= 0) continue // 停牌 / 非法值视为该股无行情
 
     let quoteTime = now
+    let quoteDate: string | undefined
     if (parts.length > 30) {
-      const parsed = parseQuoteTimestamp(parts[30].trim())
-      if (parsed !== null) quoteTime = parsed
+      const raw = parts[30].trim()
+      const parsed = parseQuoteTimestamp(raw)
+      if (parsed !== null) {
+        quoteTime = parsed
+        quoteDate = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`
+      }
     }
     result.set(code, {
       stockCode: code,
@@ -230,6 +238,7 @@ export function parseTencentQuotePayload(
       latestPrice: priceYuanToMilli(latestYuan),
       prevClose: priceYuanToMilli(prevCloseYuan),
       quoteTime,
+      ...(quoteDate === undefined ? {} : { quoteDate }),
     })
   }
   return result

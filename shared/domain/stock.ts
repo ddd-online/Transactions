@@ -195,3 +195,16 @@ export function floatingPnlRate(pnl: number, cashFlow: number): number | null {
   if (cost <= 0) return null
   return roundHalfAwayFromZero((pnl / cost) * 10_000) / 100
 }
+
+/**
+ * 行情涨跌幅（%）= (最新价 − 昨收) ÷ 昨收 × 100，两位小数。
+ *
+ * 价格是**厘**，但比率与单位无关，这里不换算。昨收非正（停牌 / 脏数据）时没有可算的
+ * 比率 ⇒ `null`。取整口径与 {@link floatingPnlRate} 一致（四舍五入、远离零），
+ * 免得同一笔涨跌在持仓页与天梯页差 0.01。
+ */
+export function quoteChangePercent(latestPrice: number, prevClose: number): number | null {
+  if (!Number.isFinite(latestPrice) || !Number.isFinite(prevClose)) return null
+  if (prevClose <= 0) return null
+  return roundHalfAwayFromZero(((latestPrice - prevClose) / prevClose) * 10_000) / 100
+}

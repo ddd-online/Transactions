@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, type Server } from 'node:http'
+import { createServer, type Server, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -44,6 +44,43 @@ function at(date: Date, hour: number): number {
   const copy = new Date(date)
   copy.setHours(hour, 0, 0, 0)
   return Math.trunc(copy.getTime() / 1000)
+}
+
+/** 腾讯行情的一段：`~` 分隔的字段，行情时间固定放第 30 位（`YYYYMMDDHHMMSS`）。 */
+function quoteLine(code: string, latest: string, prevClose: string, day: string): string {
+  const fields = Array.from({ length: 31 }, () => '')
+  fields[0] = '1'
+  fields[1] = code
+  fields[2] = code
+  fields[3] = latest
+  fields[4] = prevClose
+  fields[30] = `${day.replaceAll('-', '')}150000`
+  return `v_${code.startsWith('6') ? 'sh' : 'sz'}${code}="${fields.join('~')}";`
+}
+
+/**
+ * 应答行情请求（`/q=sh600519,sz301314`），
+ * 并告诉调用方"这条请求归我管"：天梯拿它给断板补当天涨跌幅。
+ */
+function respondQuotes(
+  pathname: string,
+  response: ServerResponse,
+  quotes: Record<string, { latest: string; prevClose: string }>,
+  day: string,
+): boolean {
+  if (!pathname.startsWith('/q=')) return false
+  const lines = pathname
+    .slice('/q='.length)
+    .split(',')
+    .map((symbol) => symbol.replace(/^[a-z]{2}/, ''))
+    .map((code) => {
+      const quote = quotes[code]
+      return quote ? quoteLine(code, quote.latest, quote.prevClose, day) : ''
+    })
+    .filter(Boolean)
+  response.setHeader('content-type', 'text/plain; charset=GBK')
+  response.end(lines.join('\n'))
+  return true
 }
 
 /** 东财池子的一条（只写解析器用得上的字段）。 */
@@ -113,8 +150,14 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
   }
 
   const requests: string[] = []
+  // 断板行情：茅台 +3.33%（红）、科瑞思 -3.92%（绿）。
+  const quotes = {
+    '600519': { latest: '1550.00', prevClose: '1500.00' },
+    '301314': { latest: '49.00', prevClose: '51.00' },
+  }
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    if (respondQuotes(url.pathname, response, quotes, ymd(today))) return
     if (url.pathname !== '/getTopicZTPool') {
       response.statusCode = 404
       response.end('{}')
@@ -138,6 +181,7 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
       TRANSACTIONS_TEST_CLOSE: 'quit',
       TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_QUOTE_SOURCE: `http://127.0.0.1:${port}`,
       TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 16)),
     }),
   })
@@ -167,6 +211,20 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await expect(
       ladder.getByTestId('stock-ladder-rung').nth(1).getByTestId('stock-ladder-broken-chip'),
     ).toContainText('科瑞思')
+
+    // 断板带当天的涨跌幅标签：涨红跌绿（行情由本地服务供给）
+    const brokenMoutai = ladder
+      .getByTestId('stock-ladder-broken-chip')
+      .filter({ hasText: '贵州茅台' })
+    const brokenKeruisi = ladder
+      .getByTestId('stock-ladder-broken-chip')
+      .filter({ hasText: '科瑞思' })
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('+3.33%')
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveClass(/stock-ladder__tag--up/)
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('-3.92%')
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveClass(
+      /stock-ladder__tag--down/,
+    )
     await expect(page.getByTestId('stock-ladder-status')).toContainText('已写入本地')
     const footer = page.getByTestId('stock-ladder-footer')
     await expect(footer).toContainText('50%')
@@ -250,6 +308,9 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
 
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    if (respondQuotes(url.pathname, response, { '600519': { latest: '1450.00', prevClose: '1500.00' } }, ymd(today))) {
+      return
+    }
     const date = url.searchParams.get('date') ?? ''
     const pool = pools[date] ?? []
     response.setHeader('content-type', 'application/json; charset=UTF-8')
@@ -267,6 +328,7 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
       TRANSACTIONS_TEST_CLOSE: 'quit',
       TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_QUOTE_SOURCE: `http://127.0.0.1:${port}`,
       TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 10)),
     }),
   })
@@ -285,6 +347,10 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
     await expect(page.getByTestId('stock-ladder-status')).toContainText('盘中临时数据')
     await expect(ladder.getByTestId('stock-ladder-broken-chip')).toHaveCount(1)
     await expect(ladder.getByTestId('stock-ladder-broken-chip')).toContainText('贵州茅台')
+    // 盘中同样带涨跌幅：这一格跟的是实时行情
+    await expect(
+      ladder.getByTestId('stock-ladder-broken-chip').getByTestId('stock-ladder-chip-pct'),
+    ).toHaveText('-3.33%')
 
     // 当天的池子与日标记都不落库；前一天是确定数据，照常缓存
     await expect
@@ -416,6 +482,9 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
 
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    if (respondQuotes(url.pathname, response, { '600000': { latest: '10.45', prevClose: '10.00' } }, ymd(today))) {
+      return
+    }
     const date = url.searchParams.get('date') ?? ''
     const pool = pools[date] ?? []
     response.setHeader('content-type', 'application/json; charset=UTF-8')
@@ -433,6 +502,7 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
       TRANSACTIONS_TEST_CLOSE: 'quit',
       TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_QUOTE_SOURCE: `http://127.0.0.1:${port}`,
       TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 16)),
     }),
   })

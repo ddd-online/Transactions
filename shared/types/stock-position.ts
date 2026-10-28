@@ -32,6 +32,14 @@ export interface StockQuoteDto {
   prevClose: number
   /** 行情时间（Unix 秒） */
   quoteTime: number
+  /**
+   * 这笔行情所属的交易日（本地 `YYYY-MM-DD`），取自行情时间里的日期。
+   *
+   * 行情接口只给"最新一笔"，没有按日查询；要把它的涨跌幅贴到某一天上，
+   * 先得确认它**就是那一天**的行情（周末看周五的天梯也能对上）。
+   * 行情时间缺失 / 非法时省略。
+   */
+  quoteDate?: string
 }
 
 /** 股票名称查询结果。 */

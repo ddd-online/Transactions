@@ -12,6 +12,7 @@
  */
 
 import type {
+  StockLimitBrokenEntry,
   StockLimitEntry,
   StockLimitMetrics,
   StockLimitRung,
@@ -71,12 +72,14 @@ export function buildLimitLadder(
 
   // 断板先按昨日板数归好组：只有真的断了，那一层才需要出现在天梯里。
   // （昨天 5 板今天全部晋级 6 板时，5 板这一层不该留一个空列。）
-  const brokenByLevel = new Map<number, StockLimitEntry[]>()
+  const brokenByLevel = new Map<number, StockLimitBrokenEntry[]>()
   if (previousByLevel) {
     for (const [level, entries] of previousByLevel) {
       const broken = entries
         .filter((entry) => !todayCodes.has(entry.stockCode))
         .sort(byFirstSeal)
+        // 涨跌幅要问行情，纯函数这里给不出来：先留 null，服务层补上。
+        .map((entry): StockLimitBrokenEntry => ({ ...entry, todayPct: null }))
       if (broken.length > 0) brokenByLevel.set(level, broken)
     }
   }

@@ -341,6 +341,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 ### Tags / Chips
 
 - **Style:** 10% semantic tint background + semantic text, 6px radius, no border, 2px 8px padding.
+- **Move tag:** 连板天梯的断板条目在「断」后面带一枚当日涨跌幅标签 —— **红涨绿跌**（与股票页 `.is-up` / `.is-down` 同一套 Income/Expense 语义），数字用等宽字体与 `tabular-nums`，一列里的百分号对齐。涨跌幅问的是当天行情，没有当天行情就不显示这一枚，绝不拿别的交易日顶上。
 - **Identity dot:** 6px 圆形、无边框、只做身份辅助；账本与事件各用自己的稳定色，旁边始终有名称。
 - **Editable tag (chip button):** when a tag is something the user can change, it keeps the tag face (caption, 6px radius, `minor-background`, 2px 8px) and gains an 11px caret plus a 22px minimum height so it is a fair pointer target — a bordered 36px field parked in a title row reads as an unfilled input, not as that row's tag (`ui-select--tag`). Both places a round's tag can be changed wear the same chip: the position detail header and each round's header on 记录 — in the latter the chip rides the right end of its row, so its panel opens leftward (`right: 0`) rather than past the window edge. Hover steps the fill to `active-bg` with primary text; open and keyboard focus add the focus ring. Its panel is sized to the widest option, so a long custom tag never wraps inside a narrow chip.
 

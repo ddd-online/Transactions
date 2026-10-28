@@ -296,6 +296,8 @@ describe('stock quote fetcher (Tencent)', () => {
     expect(quote.prevClose).toBe(10_050)
     expect(quote.quoteTime).toBe(Date.UTC(2026, 8, 4, 15, 0, 0) / 1000)
     expect(quote.stockCode).toBe('600000')
+    // 行情属于哪一天：天梯要把断板的涨跌幅贴到某一天上，先认这个日期。
+    expect(quote.quoteDate).toBe('2026-09-04')
   })
 
   it('keeps milli precision for exchange-traded funds', () => {
@@ -324,6 +326,8 @@ describe('stock quote fetcher (Tencent)', () => {
       1_700_000_000,
     )
     expect(quoteOf(quotes, '600000').quoteTime).toBe(1_700_000_000)
+    // 没有行情时间就没有行情日期：调用方据此判定"这一天没有行情"，不会乱贴。
+    expect(quoteOf(quotes, '600000')).not.toHaveProperty('quoteDate')
   })
 
   it('parses the stock name from the second field', () => {

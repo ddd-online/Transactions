@@ -10,15 +10,20 @@
  * * 未来日期一律拒绝；
  * * 前一交易日也缓存（它已经是确定数据），天梯的断板与晋级率都靠它。
  *
+ * 断板不在涨停池里，它当天的涨跌幅只能问行情：只有行情自己的交易日与天梯日期相同才采信，
+ * 行情失败一律当"没有"（断板照常显示，只是少一枚涨跌幅标签）。
+ *
  * 数据源覆盖最近约一个月：更早且本地没缓存的日期返回 `unavailable`，
  * 不写空标记（免得数据源将来补了历史也永远读不到）。
  */
 
 import { addDays, daysBetween, isWeekend, parseYmd } from '../../shared/domain/calendar'
 import { buildLimitLadder } from '../../shared/domain/limit-ladder'
+import { quoteChangePercent } from '../../shared/domain/stock'
 import { formatTimestamp, nowSeconds, ymdToSeconds } from '../../shared/domain/time'
 import { AppError } from '../../shared/errors'
 import type { StockLimitEntry, StockLimitLadder } from '../../shared/types/stock-limit'
+import type { StockQuoteDto } from '../../shared/types/stock-position'
 import type { Db } from '../db/driver'
 import {
   getLimitDay,
@@ -27,6 +32,7 @@ import {
   type StockLimitDayRow,
 } from '../db/dao/stock-limit'
 import type { LimitPoolSource } from './stock-limit-pool'
+import type { StockQuoteFetcher } from './stock-quote'
 
 /** A 股开盘时刻：09:30（本地时间）。这之前没有当天数据可看。 */
 export const LIMIT_OPEN_MINUTE = 9 * 60 + 30
@@ -40,11 +46,19 @@ const RETENTION_DAYS = 45
 /** 前一交易日最多回溯的日历天数（覆盖国庆 / 春节长假，含调休后的超长休市）。 */
 const PREVIOUS_LOOKBACK_DAYS = 15
 
+/**
+ * 断板涨跌幅要问行情，而行情只有"最新一笔"，最多代表最近几个交易日；
+ * 比这更早的日期不去请求（请求了也对不上，白等一次超时）。
+ */
+const BROKEN_QUOTE_DAYS = 4
+
 export interface LimitLadderOptions {
   /** 强制重抓（仍受"盘中不写库"约束） */
   refresh?: boolean
   /** 当前 Unix 秒（测试注入时钟用） */
   now?: number
+  /** 行情源：用来补断板当天的涨跌幅；不传就不补 */
+  quotes?: StockQuoteFetcher
 }
 
 /** 组装天梯时需要的请求上下文。 */
@@ -185,6 +199,50 @@ async function finish(
 }
 
 /**
+ * 给断板条目补上"当天涨跌幅"。
+ *
+ * 断板的票已经不在涨停池里了，它今天走得怎么样只能问行情；而行情只有最新一笔，
+ * 所以只采信**行情自己的交易日与天梯日期相同**的那一笔 —— 否则就是把别的交易日的
+ * 涨跌贴到这一天上。周末看周五的天梯时它正好对得上；更早的日期对不上，也就不去请求。
+ *
+ * 行情是外部临时数据，任何失败都当"没有"：断板条目照常显示，只是没有涨跌幅标签。
+ */
+async function attachBrokenPct(
+  ladder: StockLimitLadder,
+  quotes: StockQuoteFetcher | undefined,
+  today: string,
+): Promise<StockLimitLadder> {
+  if (!quotes) return ladder
+  const age = daysBetween(ladder.date, today)
+  if (age === null || age > BROKEN_QUOTE_DAYS) return ladder
+
+  const codes = [
+    ...new Set(ladder.rungs.flatMap((rung) => rung.broken.map((entry) => entry.stockCode))),
+  ]
+  if (codes.length === 0) return ladder
+
+  let fetched: Map<string, StockQuoteDto>
+  try {
+    fetched = await quotes.fetchQuotes(codes)
+  } catch {
+    return ladder
+  }
+
+  return {
+    ...ladder,
+    rungs: ladder.rungs.map((rung) => ({
+      ...rung,
+      broken: rung.broken.map((entry) => {
+        const quote = fetched.get(entry.stockCode)
+        if (!quote || quote.quoteDate !== ladder.date) return entry
+        const pct = quoteChangePercent(quote.latestPrice, quote.prevClose)
+        return pct === null ? entry : { ...entry, todayPct: pct }
+      }),
+    })),
+  }
+}
+
+/**
  * 取某一天的天梯。
  *
  * `date` 为 `YYYY-MM-DD`；`now` 可注入（测试用），生产由 IPC 层传当前时间。
@@ -225,13 +283,17 @@ export async function getLimitLadder(
     } catch (error) {
       // 有缓存就退回缓存（页面照常可用），没有才把错误抛给界面。
       if (cacheUsable && cached) {
-        return finish(db, source, date, readCached(db, cached, date), {
-          now,
-          fetchedAt: cached.fetchedAt,
-          temporary: false,
-          fromCache: true,
-          stale: true,
-        })
+        return attachBrokenPct(
+          await finish(db, source, date, readCached(db, cached, date), {
+            now,
+            fetchedAt: cached.fetchedAt,
+            temporary: false,
+            fromCache: true,
+            stale: true,
+          }),
+          options.quotes,
+          today,
+        )
       }
       throw error
     }
@@ -254,11 +316,15 @@ export async function getLimitLadder(
     // 盘中：只渲染，不写库（temporary 天然为 true）
   }
 
-  return finish(db, source, date, entries, {
-    now,
-    fetchedAt,
-    temporary: !closed,
-    fromCache,
-    stale,
-  })
+  return attachBrokenPct(
+    await finish(db, source, date, entries, {
+      now,
+      fetchedAt,
+      temporary: !closed,
+      fromCache,
+      stale,
+    }),
+    options.quotes,
+    today,
+  )
 }

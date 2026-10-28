@@ -18,6 +18,7 @@ import {
   isBuy,
   isSell,
   nextRoundNo,
+  quoteChangePercent,
   roundFlow,
   settledPnl,
   sharesOf,
@@ -352,5 +353,26 @@ describe('floating pnl rate', () => {
     // 卖出回款已超过买入支出（净投入 ≤ 0）时没有可算的比率：界面显示 `—`。
     expect(floatingPnlRate(10_000, 0)).toBeNull()
     expect(floatingPnlRate(10_000, 50_000)).toBeNull()
+  })
+})
+
+describe('quote change percent', () => {
+  it('换算成两位小数的涨跌幅', () => {
+    // 1500.00 → 1550.00 是 +3.33%
+    expect(quoteChangePercent(155_000, 150_000)).toBe(3.33)
+    expect(quoteChangePercent(145_000, 150_000)).toBe(-3.33)
+    expect(quoteChangePercent(150_000, 150_000)).toBe(0)
+  })
+
+  it('与浮动盈亏率同一取整口径（四舍五入、远离零）', () => {
+    // 0.05% 正好落在半值上：Math.round 会把负数拉向 +∞，这里要和正数对称。
+    expect(quoteChangePercent(100_005, 100_000)).toBe(0.01)
+    expect(quoteChangePercent(99_995, 100_000)).toBe(-0.01)
+  })
+
+  it('昨收非正或非有限值时没有可算的比率', () => {
+    expect(quoteChangePercent(100_000, 0)).toBeNull()
+    expect(quoteChangePercent(100_000, -1)).toBeNull()
+    expect(quoteChangePercent(100_000, Number.NaN)).toBeNull()
   })
 })

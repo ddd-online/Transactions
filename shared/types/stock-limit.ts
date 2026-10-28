@@ -42,6 +42,18 @@ export interface StockLimitEntry {
   statCount: number
 }
 
+/**
+ * 断板：昨日在这一层、今日没涨停的那只股票。
+ *
+ * 涨停池里没有它，所以今天走得怎么样只能看行情：{@link todayPct} 是**天梯这一天**
+ * 的涨跌幅，用当天行情补出来的；没有当天行情（历史日期、行情抓取失败）时为 `null`，
+ * 界面就不显示涨跌幅标签。其余字段仍是它**昨日**在涨停池里的样子。
+ */
+export interface StockLimitBrokenEntry extends StockLimitEntry {
+  /** 断板当天的涨跌幅（百分数，两位小数）；无当天行情为 `null` */
+  todayPct: number | null
+}
+
 /** 天梯的一层（一个板数）。 */
 export interface StockLimitRung {
   level: number
@@ -51,7 +63,7 @@ export interface StockLimitRung {
    * 断板：昨日在这一层、今日未涨停的股票，排在 `entries` 后面展示。
    * 该层可能只有断板（今日无人晋级），此时 `entries` 为空。
    */
-  broken: StockLimitEntry[]
+  broken: StockLimitBrokenEntry[]
   /** 昨日 (level-1) 板的家数；首板没有候选，为 `null` */
   candidates: number | null
   /** 该层晋级率（百分数）；无候选或昨日缺失为 `null` */
