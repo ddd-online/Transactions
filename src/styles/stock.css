@@ -4091,23 +4091,6 @@
   border-left: 1px solid var(--transactions-color-divider);
 }
 
-/* 板数多（7 板）时一列只有 ~160px：名称独占一行，代码/时间落到下一行，
- * 否则 4 个字的股票名会被截成两个字。
- * 阈值跟着列宽算：列内容 = 列宽 − 8（左右各 4 的列内边距），
- * 所以 216 = 旧规则 200 + 省下来的 16，切换点与改版前一致。 */
-@container (max-width: 216px) {
-  .stock-ladder__item {
-    height: 66px;
-    min-height: 66px;
-  }
-
-  .stock-ladder__item-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
-  }
-}
-
 .stock-ladder__list {
   flex: 1 1 auto;
   min-height: 0;
@@ -4252,6 +4235,24 @@
 
 .stock-ladder__item-time {
   letter-spacing: 0.02em;
+}
+
+/* 板数多（7 板）时一列只有 ~160px：名称独占一行，代码/时间落到下一行，
+ * 否则 4 个字的股票名会被截成两个字。
+ * 阈值跟着列宽算：列内容 = 列宽 − 8（左右各 4 的列内边距），
+ * 所以 216 = 旧规则 200 + 省下来的 16，切换点与改版前一致。
+ * 这段必须排在上面两条规则之后：同一条选择器，靠源码顺序覆盖 48px 的行高。 */
+@container (max-width: 216px) {
+  .stock-ladder__item {
+    height: 66px;
+    min-height: 66px;
+  }
+
+  .stock-ladder__item-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
 }
 
 .stock-ladder__item-tags {
@@ -4463,18 +4464,20 @@
     grid-column: 2;
     grid-row: 1;
     column-gap: var(--transactions-space-lg);
+    align-items: stretch;
   }
 
   .stock-ladder__item {
-    flex: 0 0 132px;
+    /* 164px：装得下「5 字板块 + 断 + 涨跌幅」一整行，标签不在格子里换行。 */
+    flex: 0 0 164px;
     min-width: 0;
     height: auto;
     min-height: 40px;
-    padding: 2px 0;
+    padding: 2px var(--transactions-space-sm);
     border-top: 0;
   }
 
-  /* 窄窗一格只有 132px：名称独占一行，代码/时间落到第二行，避免名字被截断。 */
+  /* 窄窗一格只有 164px：名称独占一行，代码/时间落到第二行，避免名字被截断。 */
   .stock-ladder__item-main {
     flex-direction: column;
     align-items: flex-start;

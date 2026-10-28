@@ -620,3 +620,128 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async () => {
+  const repositoryRoot = resolve(__dirname, '../..')
+  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-stock-ladder-narrow-'))
+  const home = join(root, 'home')
+  const workspace = join(root, 'ws')
+  const userData = join(root, 'user-data')
+  mkdirSync(home, { recursive: true })
+  mkdirSync(userData, { recursive: true })
+  writeFileSync(
+    join(home, '.tr.dev.json'),
+    JSON.stringify({
+      width: 1400,
+      height: 900,
+      closeBehavior: 'quit',
+      appearance: 'light',
+      proxy: { mode: 'off', url: '' },
+    }),
+  )
+
+  const base = new Date()
+  base.setHours(0, 0, 0, 0)
+  const today = new Date(base)
+  const previous = new Date(base)
+  previous.setDate(previous.getDate() - 1)
+
+  // 7 层：每列只剩 ~180px，行换 66px 的三行版式
+  const pools: Record<string, unknown[]> = {
+    [queryDate(today)]: [
+      raw('600001', '金安国纪', 7, 92500, 0, '光伏设备'),
+      raw('600002', '方正科技', 6, 94800, 1, '元件'),
+      raw('600003', '世运电路', 5, 103400, 0, '元件'),
+      raw('600004', '豪恩汽电', 4, 92500, 0, '汽车零部件'),
+      raw('600005', '联明股份', 3, 93000, 0, '汽车零部件'),
+      raw('600006', '旺成科技', 2, 94600, 0, '银行'),
+      raw('600007', '青岛食品', 1, 92500, 0, '休闲食品'),
+      raw('600008', '光洋股份', 1, 93000, 0, '汽车零部件'),
+    ],
+    [queryDate(previous)]: [
+      raw('600001', '金安国纪', 6, 92500, 0, '光伏设备'),
+      raw('600002', '方正科技', 5, 94800, 1, '元件'),
+      raw('600003', '世运电路', 4, 103400, 0, '元件'),
+      raw('600004', '豪恩汽电', 3, 92500, 0, '汽车零部件'),
+      raw('600005', '联明股份', 2, 93000, 0, '汽车零部件'),
+      raw('600006', '旺成科技', 1, 94600, 0, '银行'),
+      raw('600010', '大族数控', 3, 95000, 0, '专用设备'),
+    ],
+  }
+
+  const server = createServer((request, response) => {
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    const date = url.searchParams.get('date') ?? ''
+    const pool = pools[date] ?? []
+    response.setHeader('content-type', 'application/json; charset=UTF-8')
+    response.end(JSON.stringify({ rc: 0, data: { tc: pool.length, qdate: 0, pool } }))
+  })
+  const port = await listen(server)
+
+  const app = await electron.launch({
+    args: ['.'],
+    cwd: repositoryRoot,
+    env: environment({
+      USERPROFILE: home,
+      HOME: home,
+      TRANSACTIONS_USER_DATA: userData,
+      TRANSACTIONS_TEST_DIALOG_DIR: workspace,
+      TRANSACTIONS_TEST_CLOSE: 'quit',
+      TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 16)),
+    }),
+  })
+
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
+    await createLedger(page, '窄列账本')
+    await page.getByTestId('nav-stock').click()
+    await page.getByTestId('stock-tab-ladder').click()
+
+    const ladder = page.getByTestId('stock-ladder')
+    await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(7)
+
+    // 窄列：行换成 66px，板块与标签整行落在行内（此前被 48px 裁掉）
+    const row = ladder.getByTestId('stock-ladder-chip').first()
+    const rowBox = await row.evaluate((el) => {
+      const tags = el.querySelector('.stock-ladder__item-tags')
+      return {
+        height: Math.round(el.getBoundingClientRect().height),
+        overflow: tags
+          ? Math.round(tags.getBoundingClientRect().bottom - el.getBoundingClientRect().bottom)
+          : 999,
+      }
+    })
+    expect(rowBox.height).toBe(66)
+    expect(rowBox.overflow).toBeLessThanOrEqual(0)
+    await expect(row.getByTestId('stock-ladder-chip-board')).toBeVisible()
+
+    // 窄窗：分层行（chips）里标签不换行、格子有左右内边距
+    await app.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.setSize(960, 900)
+    })
+    await page.waitForFunction(() => window.innerWidth < 1000)
+    await expect(ladder.locator('.stock-ladder__chips').first()).toBeVisible()
+    const chips = await ladder.evaluate((root) => {
+      const items = [...root.querySelectorAll('.stock-ladder__chips .stock-ladder__item')]
+      return items.map((item) => {
+        const tags = item.querySelector('.stock-ladder__item-tags')
+        const style = getComputedStyle(item)
+        return {
+          wrapped: tags ? tags.scrollHeight > tags.clientHeight + 1 : false,
+          paddingLeft: parseFloat(style.paddingLeft),
+        }
+      })
+    })
+    expect(chips.length).toBeGreaterThan(0)
+    expect(chips.every((chip) => !chip.wrapped)).toBe(true)
+    expect(chips.every((chip) => chip.paddingLeft === 8)).toBe(true)
+  } finally {
+    await app.close()
+    server.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
