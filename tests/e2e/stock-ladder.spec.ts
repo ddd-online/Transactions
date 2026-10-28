@@ -6,6 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
+import { identityTone } from '../../shared/domain/identity-color'
 import { createLedger } from './ledger-helper'
 
 function environment(overrides: Record<string, string>): Record<string, string> {
@@ -90,6 +91,7 @@ function raw(
   level: number,
   seal: number,
   brokenCount = 0,
+  board = '一般零售',
 ): Record<string, unknown> {
   return {
     c: code,
@@ -105,7 +107,7 @@ function raw(
     lbt: seal,
     zbc: brokenCount,
     fund: 109301885,
-    hybk: '一般零售',
+    hybk: board,
     zttj: { days: level, ct: level },
   }
 }
@@ -137,15 +139,18 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
 
   const pools: Record<string, unknown[]> = {
     [queryDate(today)]: [
-      raw('600838', '上海九百', 4, 92500, 1),
-      raw('000001', '平安银行', 2, 93000),
-      raw('301502', '华阳智能', 1, 92500),
+      raw('600838', '上海九百', 4, 92500, 1, '一般零售'),
+      raw('000001', '平安银行', 2, 93000, 0, '银行'),
+      // 电网设备这一组故意被化学制药隔开：分组后要连着排在一起
+      raw('301502', '华阳智能', 1, 92500, 0, '电网设备'),
+      raw('002001', '新和成', 1, 92600, 0, '化学制药'),
+      raw('300001', '特锐德', 1, 92700, 0, '电网设备'),
     ],
     [queryDate(previous)]: [
-      raw('600838', '上海九百', 3, 92500),
-      raw('000001', '平安银行', 1, 92600),
-      raw('301314', '科瑞思', 2, 92700),
-      raw('600519', '贵州茅台', 1, 92800),
+      raw('600838', '上海九百', 3, 92500, 0, '一般零售'),
+      raw('000001', '平安银行', 1, 92600, 0, '银行'),
+      raw('301314', '科瑞思', 2, 92700, 0, '电网设备'),
+      raw('600519', '贵州茅台', 1, 92800, 0, '白酒'),
     ],
   }
 
@@ -211,6 +216,26 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await expect(
       ladder.getByTestId('stock-ladder-rung').nth(1).getByTestId('stock-ladder-broken-chip'),
     ).toContainText('科瑞思')
+
+    // 先按板块聚在一起，板块内按封板先后：电网设备（09:25 / 09:27）连着排在
+    // 化学制药（09:26）前面；只剩断板的白酒整组落在最后。
+    const firstRung = ladder.getByTestId('stock-ladder-rung').nth(0)
+    await expect(firstRung.locator('.stock-ladder__item-name')).toHaveText([
+      '华阳智能',
+      '特锐德',
+      '新和成',
+      '贵州茅台',
+    ])
+    const boardLabels = firstRung.getByTestId('stock-ladder-chip-board')
+    await expect(boardLabels).toHaveText(['电网设备', '电网设备', '化学制药', '白酒'])
+    // 同一板块同一身份色
+    await expect(boardLabels.first()).toHaveClass(
+      new RegExp(`stock-ladder__board--${identityTone('电网设备')}`),
+    )
+    const sameBoardClasses = await boardLabels.evaluateAll((nodes) =>
+      nodes.slice(0, 2).map((node) => node.className),
+    )
+    expect(sameBoardClasses[0]).toBe(sameBoardClasses[1])
 
     // 断板带当天的涨跌幅标签：涨红跌绿（行情由本地服务供给）
     const brokenMoutai = ladder

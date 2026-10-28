@@ -186,6 +186,8 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 颜色按账本 id 做 FNV-1a 哈希取模（`shared/domain/identity-color.ts` 的 `identityTone` / `identityColor`），同一账本永远同一色，不需要数据库字段或选择器。呈现只用一个 6px 圆点，放在账本菜单每一行的名称前；切换器里的头像不加点，保持头像本身居中。名称始终在点旁边，颜色不承担唯一信息。
 
+**同一组色也给连板天梯的板块名用。** 板块名（涨停池的行业字段）按名字哈希取色，做成**文字**而不是圆点：因为 6px 圆点那套对比度标准撑不住 11px 小字，文字版是「70% 身份色 + 30% 墨色」，浅色下自动压暗、深色下自动提亮，两套主题都过 4.5:1。同一个板块在任何一列、任何一天都是同一色；颜色只是辅助，名字始终在旁边。
+
 ### Chart categorical palette
 
 折线图的候选色池。曲线上色**按它在图表里的位置**（第 N 条 → 第 N 色），与交易类型无关：
@@ -342,6 +344,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **Style:** 10% semantic tint background + semantic text, 6px radius, no border, 2px 8px padding.
 - **Move tag:** 连板天梯的断板条目在「断」后面带一枚当日涨跌幅标签 —— **红涨绿跌**（与股票页 `.is-up` / `.is-down` 同一套 Income/Expense 语义），数字用等宽字体与 `tabular-nums`，一列里的百分号对齐。涨跌幅问的是当天行情，没有当天行情就不显示这一枚，绝不拿别的交易日顶上。
+- **Board label:** 天梯每一行的第二格是板块名（涨停池的行业字段），**纯文字 + 身份色**、无底色无边框，用 11px 小字压在标签行的最左边。整列先按板块聚在一起（同一板块相邻），板块名就是这一组的抬头；同一板块同色、不同板块不同色，颜色永远不单独承担信息。板块之间按该组最早封板时间排，只有断板的组整组落到最后。
 - **Identity dot:** 6px 圆形、无边框、只做身份辅助；账本与事件各用自己的稳定色，旁边始终有名称。
 - **Editable tag (chip button):** when a tag is something the user can change, it keeps the tag face (caption, 6px radius, `minor-background`, 2px 8px) and gains an 11px caret plus a 22px minimum height so it is a fair pointer target — a bordered 36px field parked in a title row reads as an unfilled input, not as that row's tag (`ui-select--tag`). Both places a round's tag can be changed wear the same chip: the position detail header and each round's header on 记录 — in the latter the chip rides the right end of its row, so its panel opens leftward (`right: 0`) rather than past the window edge. Hover steps the fill to `active-bg` with primary text; open and keyboard focus add the focus ring. Its panel is sized to the widest option, so a long custom tag never wraps inside a narrow chip.
 

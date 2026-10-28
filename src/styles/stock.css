@@ -4202,6 +4202,56 @@
   gap: 6px;
 }
 
+/* 板块名：行按板块聚在一起，这一格就是那一组的抬头。
+ * 身份色（与账本同一组 8 个自然色）按板块名哈希取一个，同一板块永远同色；
+ * 70% 身份色 + 30% 墨色：浅色下压暗到小字也够对比度，深色下自动提亮。 */
+.stock-ladder__board {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--transactions-size-text-small);
+  line-height: 16px;
+  color: color-mix(
+    in srgb,
+    var(--board-tone, var(--transactions-color-text-secondary)) 70%,
+    var(--transactions-color-text-major)
+  );
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-ladder__board--forest {
+  --board-tone: var(--transactions-ledger-forest);
+}
+
+.stock-ladder__board--amber {
+  --board-tone: var(--transactions-ledger-amber);
+}
+
+.stock-ladder__board--slate-blue {
+  --board-tone: var(--transactions-ledger-slate-blue);
+}
+
+.stock-ladder__board--vermillion {
+  --board-tone: var(--transactions-ledger-vermillion);
+}
+
+.stock-ladder__board--warm-brown {
+  --board-tone: var(--transactions-ledger-warm-brown);
+}
+
+.stock-ladder__board--ochre {
+  --board-tone: var(--transactions-ledger-ochre);
+}
+
+.stock-ladder__board--moss {
+  --board-tone: var(--transactions-ledger-moss);
+}
+
+.stock-ladder__board--camel {
+  --board-tone: var(--transactions-ledger-camel);
+}
+
 .stock-ladder__tag {
   padding: 0 4px;
   border-radius: var(--transactions-radius-sm);

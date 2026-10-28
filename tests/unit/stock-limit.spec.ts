@@ -3,8 +3,17 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { migrate } from '../../electron/db/migrate'
 import { getLimitDay } from '../../electron/db/dao/stock-limit'
 import { openDatabase, type Db } from '../../electron/db/driver'
-import { buildLimitLadder, isOneWordBoard } from '../../shared/domain/limit-ladder'
-import type { StockLimitEntry } from '../../shared/types/stock-limit'
+import {
+  buildLimitLadder,
+  isOneWordBoard,
+  ladderRows,
+  type LadderRow,
+} from '../../shared/domain/limit-ladder'
+import type {
+  StockLimitBrokenEntry,
+  StockLimitEntry,
+  StockLimitRung,
+} from '../../shared/types/stock-limit'
 import type { StockQuoteDto } from '../../shared/types/stock-position'
 import { EastmoneyLimitPoolSource, parseLimitPoolPayload } from '../../electron/services/stock-limit-pool'
 import { getLimitLadder } from '../../electron/services/stock-limit'
@@ -182,6 +191,62 @@ describe('isOneWordBoard', () => {
     expect(isOneWordBoard(entry('Z', 1, 92500))).toBe(true)
     expect(isOneWordBoard({ ...entry('Z', 1, 92500), brokenCount: 1 })).toBe(false)
     expect(isOneWordBoard(entry('Z', 1, 92501))).toBe(false)
+  })
+})
+
+describe('ladderRows', () => {
+  function board(code: string, seal: number, industry: string): StockLimitEntry {
+    return { ...entry(code, 1, seal), industry }
+  }
+
+  function brokenOf(row: StockLimitEntry): StockLimitBrokenEntry {
+    return { ...row, todayPct: null }
+  }
+
+  function rung(entries: StockLimitEntry[], broken: StockLimitBrokenEntry[]): StockLimitRung {
+    return { level: 1, entries, broken, candidates: null, rate: null }
+  }
+
+  /** `连A` / `断B`：一眼看出行序与连板/断板身份。 */
+  function rowOrder(rows: LadderRow[]): string[] {
+    return rows.map((row) => `${row.broken ? '断' : '连'}${row.entry.stockCode}`)
+  }
+
+  it('先按板块聚在一起，板块内连板在前、断板在后', () => {
+    const rows = ladderRows(
+      rung(
+        [board('A', 92500, '电网设备'), board('B', 92600, '化学制药'), board('C', 92700, '电网设备')],
+        [brokenOf(board('D', 92800, '电网设备')), brokenOf(board('E', 92900, '白酒'))],
+      ),
+    )
+    // 电网设备（最早 09:25）→ A、C、D；化学制药 → B；白酒今天没人晋级，整组在最后
+    expect(rowOrder(rows)).toEqual(['连A', '连C', '断D', '连B', '断E'])
+  })
+
+  it('按板块分组后，板块内仍按封板先后', () => {
+    const rows = ladderRows(
+      rung(
+        [
+          board('A', 93100, '光伏设备'),
+          board('B', 93000, '光伏设备'),
+          board('C', 93200, '光伏设备'),
+        ],
+        [],
+      ),
+    )
+    expect(rowOrder(rows)).toEqual(['连B', '连A', '连C'])
+  })
+
+  it('只剩断板的板块整组排在后面，昨日封板不参与今天的先后', () => {
+    const rows = ladderRows(
+      rung([board('A', 93000, '银行')], [brokenOf(board('Z', 92500, '白酒'))]),
+    )
+    expect(rowOrder(rows)).toEqual(['连A', '断Z'])
+  })
+
+  it('没有板块字段的行归到兜底组，排在最后', () => {
+    const rows = ladderRows(rung([board('A', 92500, ''), board('B', 93000, '银行')], []))
+    expect(rowOrder(rows)).toEqual(['连B', '连A'])
   })
 })
 

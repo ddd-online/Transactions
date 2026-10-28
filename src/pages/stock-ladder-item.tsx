@@ -1,6 +1,7 @@
 import type { JSX } from 'react'
 
-import { isOneWordBoard } from '../../shared/domain/limit-ladder'
+import { identityTone } from '../../shared/domain/identity-color'
+import { boardOf, isOneWordBoard } from '../../shared/domain/limit-ladder'
 import type { StockLimitBrokenEntry, StockLimitEntry } from '../../shared/types/stock-limit'
 
 /** `HHMMSS` 整数 → `09:25`；缺值给破折号。 */
@@ -30,13 +31,15 @@ export interface StockLadderItemProps {
 
 /**
  * 连板天梯的一行：名称在左、代码与封板时间在右；
- * 第二行是标签（一字 / 炸 N / 断 + 断板当天的涨跌幅），有才显示。
+ * 第二行是板块 + 标签（一字 / 炸 N / 断 + 断板当天的涨跌幅），有才显示。
+ * 板块名带身份色（同一板块同一色），行也是按板块聚在一起的。
  */
 export function StockLadderItem({ entry, broken = false }: StockLadderItemProps): JSX.Element {
   const oneWord = !broken && isOneWordBoard(entry)
   const seal = ladderSealTime(entry.firstSeal)
   // 断板的涨跌幅是服务层用当天行情补出来的；没有当天行情就是 null（不显示这一格）。
   const todayPct = broken && 'todayPct' in entry ? entry.todayPct : null
+  const board = boardOf(entry)
 
   const tags: Array<{ key: string; text: string; tone: string }> = []
   if (oneWord) tags.push({ key: 'word', text: '一字', tone: 'word' })
@@ -54,7 +57,7 @@ export function StockLadderItem({ entry, broken = false }: StockLadderItemProps)
       ? `昨日首封 ${seal}，今日断板${typeof todayPct === 'number' ? ` ${ladderPctText(todayPct)}` : ''}`
       : `首封 ${seal}`,
     !broken && entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
-    entry.industry,
+    board ? `板块 ${board}` : '',
   ]
     .filter(Boolean)
     .join(' · ')
@@ -74,8 +77,16 @@ export function StockLadderItem({ entry, broken = false }: StockLadderItemProps)
           </span>
         </span>
       </div>
-      {tags.length > 0 ? (
+      {board || tags.length > 0 ? (
         <div className="stock-ladder__item-tags">
+          {board ? (
+            <span
+              className={`stock-ladder__board stock-ladder__board--${identityTone(board)}`}
+              data-testid="stock-ladder-chip-board"
+            >
+              {board}
+            </span>
+          ) : null}
           {tags.map((tag) => (
             <span
               key={tag.key}

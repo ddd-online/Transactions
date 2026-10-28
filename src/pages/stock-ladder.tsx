@@ -4,14 +4,9 @@ import { createPortal } from 'react-dom'
 import Listy from '@rc-component/listy'
 
 import { addDays } from '../../shared/domain/calendar'
+import { ladderRows, type LadderRow } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
-import type {
-  StockLimitBrokenEntry,
-  StockLimitEntry,
-  StockLimitLadder,
-  StockLimitMetrics,
-  StockLimitRung,
-} from '../../shared/types/stock-limit'
+import type { StockLimitLadder, StockLimitMetrics } from '../../shared/types/stock-limit'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
@@ -20,18 +15,9 @@ import { TimeRangePicker } from '../components/time-range-picker'
 import { StockLadderItem } from './stock-ladder-item'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
-/** 一列里的行：今日连板在前，断板个股直接跟在后。 */
-type LadderRow = {
-  key: string
-  entry: StockLimitEntry | StockLimitBrokenEntry
-  broken: boolean
-}
-
-function rungRows(rung: StockLimitRung): LadderRow[] {
-  return [
-    ...rung.entries.map((entry) => ({ key: entry.stockCode, entry, broken: false })),
-    ...rung.broken.map((entry) => ({ key: `broken:${entry.stockCode}`, entry, broken: true })),
-  ]
+/** Listy 的 rowKey：连板与断板可能同名不同 code，用前缀分开。 */
+function rowKey(row: LadderRow): string {
+  return `${row.broken ? 'broken:' : ''}${row.entry.stockCode}`
 }
 
 /** 窄窗（分层行布局）不需要虚拟列表，按 CSS 断点切换。 */
@@ -56,8 +42,9 @@ function fetchedText(seconds: number): string {
  * 连板天梯：按交易日看涨停股的连板层级。
  *
  * 一天一屏：日期行 → 汇总数字 → 一板一列（首板在左、最高板在右）。
- * 断板不另起一段，直接挂在它昨日所在的那一列、排在今日连板股后面，
+ * 断板不另起一段，直接挂在它昨日所在的那一列、跟在同板块的今日连板股后面，
  * 名字退色并带「断」标记；那一层今天没人晋级时就只剩断板。
+ * 列里先按板块聚在一起，板块内按封板先后 —— 顺序由 `ladderRows` 给。
  * 盘中（当天 15:00 前）的数据是临时快照，服务层不会入库，界面在这里明说。
  */
 export interface StockLadderSummary {
@@ -232,7 +219,7 @@ export function StockLadderPanel({
 
         <div className="stock-ladder__rungs" data-testid="stock-ladder-rungs">
           {ladder.rungs.map((rung) => {
-            const rows = rungRows(rung)
+            const rows = ladderRows(rung)
             return (
               <section
                 key={rung.level}
@@ -262,11 +249,12 @@ export function StockLadderPanel({
 
                 {narrow ? (
                   <div className="stock-ladder__chips">
-                    {rung.entries.map((entry) => (
-                      <StockLadderItem key={entry.stockCode} entry={entry} />
-                    ))}
-                    {rung.broken.map((entry) => (
-                      <StockLadderItem key={entry.stockCode} entry={entry} broken />
+                    {rows.map((row) => (
+                      <StockLadderItem
+                        key={rowKey(row)}
+                        entry={row.entry}
+                        broken={row.broken}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -274,7 +262,7 @@ export function StockLadderPanel({
                     <Listy
                       items={rows}
                       virtual={false}
-                      rowKey={(row: LadderRow) => row.key}
+                      rowKey={rowKey}
                       itemRender={(row: LadderRow) => (
                         <StockLadderItem entry={row.entry} broken={row.broken} />
                       )}
