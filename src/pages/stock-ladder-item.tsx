@@ -1,8 +1,8 @@
 import type { JSX } from 'react'
 
-import { identityTone } from '../../shared/domain/identity-color'
 import { boardOf, isOneWordBoard } from '../../shared/domain/limit-ladder'
 import type { StockLimitBrokenEntry, StockLimitEntry } from '../../shared/types/stock-limit'
+import { BoardLabel } from './stock-board-label'
 
 /** `HHMMSS` 整数 → `09:25`；缺值给破折号。 */
 export function ladderSealTime(value: number): string {
@@ -79,14 +79,7 @@ export function StockLadderItem({ entry, broken = false }: StockLadderItemProps)
       </div>
       {board || tags.length > 0 ? (
         <div className="stock-ladder__item-tags">
-          {board ? (
-            <span
-              className={`stock-ladder__board stock-ladder__board--${identityTone(board)}`}
-              data-testid="stock-ladder-chip-board"
-            >
-              {board}
-            </span>
-          ) : null}
+          {board ? <BoardLabel board={board} testId="stock-ladder-chip-board" /> : null}
           {tags.map((tag) => (
             <span
               key={tag.key}

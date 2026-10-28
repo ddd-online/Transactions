@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import Listy from '@rc-component/listy'
 
 import { addDays } from '../../shared/domain/calendar'
-import { ladderRows, type LadderRow } from '../../shared/domain/limit-ladder'
+import { boardCounts, ladderRows, type LadderRow } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import type { StockLimitLadder, StockLimitMetrics } from '../../shared/types/stock-limit'
 import { Button } from '../components/button'
@@ -12,6 +12,7 @@ import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
+import { BoardLabel } from './stock-board-label'
 import { StockLadderItem } from './stock-ladder-item'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
@@ -145,6 +146,11 @@ export function StockLadderPanel({
   }, [shiftDay])
 
   const maxLevel = ladder?.metrics.maxLevel ?? null
+  // 工具栏下的板块汇总：只数今日涨停，家数多的板块在前。
+  const boards =
+    ladder && ladder.status === 'ok'
+      ? boardCounts(ladder.rungs.flatMap((rung) => rung.entries))
+      : []
 
   const statusText = ((): string => {
     if (!ladder) return ''
@@ -211,6 +217,26 @@ export function StockLadderPanel({
 
     return (
       <>
+        {boards.length > 0 ? (
+          <header className="stock-ladder__boards" data-testid="stock-ladder-boards">
+            <span className="stock-ladder__boards-label">板块</span>
+            <ul className="stock-ladder__boards-list">
+              {boards.map(({ board, count }) => (
+                <li
+                  className="stock-ladder__boards-item"
+                  key={board}
+                  data-testid="stock-ladder-board-count"
+                >
+                  <BoardLabel board={board} testId="stock-ladder-board-name" />
+                  <span className="stock-ladder__boards-count" data-testid="stock-ladder-board-num">
+                    {count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </header>
+        ) : null}
+
         {ladder.previousDate === null ? (
           <p className="stock-ladder__hint" data-testid="stock-ladder-no-previous">
             缺少前一交易日的数据，断板与晋级率暂不计入。

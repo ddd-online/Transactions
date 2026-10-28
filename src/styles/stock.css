@@ -4028,6 +4028,55 @@
 
 /* ---------------- 天梯列 ---------------- */
 
+/* 工具栏下的板块汇总：把当天的涨停股按板块数一遍（板块名 + 家数）。
+ * 板块名沿用行里那套身份色，同一个板块在汇总和列里同色。 */
+.stock-ladder__boards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px var(--transactions-space-md);
+  padding: 10px var(--transactions-space-lg) var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__boards-label {
+  flex: none;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-ladder__boards-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6px var(--transactions-space-lg);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-ladder__boards-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* 汇总条里的板块名是整句的主角：比行里的 11px 大一号，也不做省略。 */
+.stock-ladder__boards .stock-ladder__board {
+  flex: none;
+  overflow: visible;
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ladder__boards-count {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  color: var(--transactions-color-text-secondary);
+}
+
 .stock-ladder__rungs {
   display: flex;
   flex: 1 1 auto;

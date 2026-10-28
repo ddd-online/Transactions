@@ -201,3 +201,30 @@ export function ladderRows(rung: StockLimitRung): LadderRow[] {
       .map((entry): LadderRow => ({ entry, broken: true })),
   ])
 }
+
+/** 板块汇总里的一格：板块名 + 今天的涨停家数。 */
+export interface BoardCount {
+  board: string
+  count: number
+}
+
+/**
+ * 把一天的全部涨停股按板块数一遍：家数多的板块在前，同数按板块名稳定排。
+ *
+ * 只数**今日涨停**（不含断板，断板不在涨停池里）；没有板块字段的老数据直接跳过，
+ * 免得汇总里冒出一个没有名字的「1 家」。
+ */
+export function boardCounts(entries: readonly StockLimitEntry[]): BoardCount[] {
+  const counts = new Map<string, number>()
+  for (const entry of entries) {
+    const board = boardOf(entry)
+    if (!board) continue
+    counts.set(board, (counts.get(board) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([board, count]): BoardCount => ({ board, count }))
+    .sort((left, right) => {
+      if (left.count !== right.count) return right.count - left.count
+      return left.board < right.board ? -1 : 1
+    })
+}

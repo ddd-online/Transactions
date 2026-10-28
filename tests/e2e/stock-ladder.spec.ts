@@ -204,6 +204,30 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(3)
     await expect(ladder.getByTestId('stock-ladder-rung').nth(0)).toHaveAttribute('data-level', '1')
     await expect(ladder.getByTestId('stock-ladder-rung').nth(2)).toHaveAttribute('data-level', '4')
+
+    // 工具栏下的板块汇总：只数今日涨停（断板的白酒不计），家数多的在前
+    const boardSummary = ladder.getByTestId('stock-ladder-boards')
+    await expect(boardSummary.getByTestId('stock-ladder-board-count')).toHaveCount(4)
+    await expect(boardSummary.getByTestId('stock-ladder-board-name')).toHaveText([
+      '电网设备',
+      '一般零售',
+      '化学制药',
+      '银行',
+    ])
+    await expect(boardSummary.getByTestId('stock-ladder-board-num')).toHaveText(['2', '1', '1', '1'])
+    // 汇总里的板块名与列里的同色
+    await expect(boardSummary.getByTestId('stock-ladder-board-name').first()).toHaveClass(
+      new RegExp(`stock-ladder__board--${identityTone('电网设备')}`),
+    )
+    const summaryBox = await boardSummary.boundingBox()
+    const rungsBox = await ladder.getByTestId('stock-ladder-rungs').boundingBox()
+    expect(summaryBox).not.toBeNull()
+    expect(rungsBox).not.toBeNull()
+    // 汇总条在板块列之上
+    expect((summaryBox?.y ?? 0) + (summaryBox?.height ?? 0)).toBeLessThanOrEqual(
+      (rungsBox?.y ?? 0) + 1,
+    )
+
     await expect(ladder.getByTestId('stock-ladder-chip').first()).toContainText('华阳智能')
     await expect(ladder.getByTestId('stock-ladder-chip-word')).toHaveCount(1)
     await expect(

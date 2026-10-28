@@ -4,6 +4,7 @@ import { migrate } from '../../electron/db/migrate'
 import { getLimitDay } from '../../electron/db/dao/stock-limit'
 import { openDatabase, type Db } from '../../electron/db/driver'
 import {
+  boardCounts,
   buildLimitLadder,
   isOneWordBoard,
   ladderRows,
@@ -247,6 +248,31 @@ describe('ladderRows', () => {
   it('没有板块字段的行归到兜底组，排在最后', () => {
     const rows = ladderRows(rung([board('A', 92500, ''), board('B', 93000, '银行')], []))
     expect(rowOrder(rows)).toEqual(['连B', '连A'])
+  })
+})
+
+describe('boardCounts', () => {
+  function withBoard(code: string, industry: string): StockLimitEntry {
+    return { ...entry(code, 1, 92500), industry }
+  }
+
+  it('按板块数涨停家数，家数多的在前，同数按名字排', () => {
+    const counts = boardCounts([
+      withBoard('A', '电网设备'),
+      withBoard('B', '化学制药'),
+      withBoard('C', '电网设备'),
+      withBoard('D', '电网设备'),
+      withBoard('E', '银行'),
+    ])
+    expect(counts).toEqual([
+      { board: '电网设备', count: 3 },
+      { board: '化学制药', count: 1 },
+      { board: '银行', count: 1 },
+    ])
+  })
+
+  it('没有板块字段的老数据不占一格', () => {
+    expect(boardCounts([withBoard('A', '  ')])).toEqual([])
   })
 })
 
