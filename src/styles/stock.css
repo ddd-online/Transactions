@@ -4047,7 +4047,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: var(--transactions-space-lg) var(--transactions-space-xs) var(--transactions-space-sm);
+  padding: var(--transactions-space-md) var(--transactions-space-xs) var(--transactions-space-sm);
   border-left: 1px solid var(--transactions-color-divider);
 }
 
@@ -4147,7 +4147,7 @@
 }
 
 .stock-ladder__rung-rate {
-  margin: var(--transactions-space-2xs) 0 var(--transactions-space-md);
+  margin: var(--transactions-space-2xs) 0 var(--transactions-space-sm);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);
 }
