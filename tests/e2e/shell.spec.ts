@@ -51,7 +51,11 @@ test('应用：窗口 / 工作空间 / 配置闭环', async () => {
   try {
     const page = await electronApp.firstWindow()
 
-    await expect(page.getByTestId('app-info')).toContainText('1.8.1')
+    // 版本号只有一个来源：package.json；发版时不用再回来改测试。
+    const { version } = JSON.parse(
+      readFileSync(join(repositoryRoot, 'package.json'), 'utf8'),
+    ) as { version: string }
+    await expect(page.getByTestId('app-info')).toContainText(version)
     await expect(page.getByTestId('workspace-state')).toContainText('未打开工作空间')
 
     await page.getByTestId('open-workspace').click()

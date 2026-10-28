@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
@@ -52,7 +52,11 @@ test('打包产物：启动、打开工作空间、node:sqlite 落库', async ()
 
   try {
     const page = await electronApp.firstWindow()
-    await expect(page.getByTestId('app-info')).toContainText('1.8.1')
+    // 版本号只有一个来源：仓库里的 package.json。
+    const { version } = JSON.parse(
+      readFileSync(join(resolve(__dirname, '../..'), 'package.json'), 'utf8'),
+    ) as { version: string }
+    await expect(page.getByTestId('app-info')).toContainText(version)
 
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
