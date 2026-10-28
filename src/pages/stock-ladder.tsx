@@ -219,7 +219,6 @@ export function StockLadderPanel({
       <>
         {boards.length > 0 ? (
           <header className="stock-ladder__boards" data-testid="stock-ladder-boards">
-            <span className="stock-ladder__boards-label">板块</span>
             <ul className="stock-ladder__boards-list">
               {boards.map(({ board, count }) => (
                 <li

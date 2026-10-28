@@ -4032,17 +4032,8 @@
  * 板块名沿用行里那套身份色，同一个板块在汇总和列里同色。 */
 .stock-ladder__boards {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px var(--transactions-space-md);
   padding: 10px var(--transactions-space-lg) var(--transactions-space-md);
   border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.stock-ladder__boards-label {
-  flex: none;
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
 }
 
 .stock-ladder__boards-list {
