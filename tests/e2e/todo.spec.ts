@@ -126,6 +126,21 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-progress-add').click()
     await expect(page.getByTestId('todo-item')).toContainText('完成一半')
 
+    // 进度记录缩进到事项标题的竖线上：和事项勾选框同列时，两块读起来是兄弟而不是父子
+    const indent = await page.evaluate(() => {
+      const left = (selector: string): number => {
+        const element = document.querySelector(selector)
+        return element ? element.getBoundingClientRect().left : -1
+      }
+      return {
+        itemCheck: left('.todo-item__check'),
+        itemTitle: left('.todo-item__title'),
+        progressCheck: left('.todo-progress__check'),
+      }
+    })
+    expect(indent.progressCheck).toBeCloseTo(indent.itemTitle, 0)
+    expect(indent.progressCheck - indent.itemCheck).toBeGreaterThan(20)
+
     await page.getByTestId('todo-progress-done').click()
     await expect(page.getByTestId('todo-progress-done')).toHaveAttribute('aria-pressed', 'true')
     await page.getByTestId('todo-item-done').click()

@@ -321,6 +321,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Shadow Strategy:** shadow-sm at rest, shadow-md on hover.
 - **Internal Padding:** 24px (space-xl).
 - **Flat pages:** 待办、事件与股票 are flat: list rows, detail panes, metric strips, and rails sit directly on the canvas with no card face or shadow, separated by 1px hairlines and 40px Soft Gray bands; 16px is the inset for bands, rows, and tables. Cards stay for records, settings, and popover layers.
+- **Nested rows:** 展开在事项下的子块（待办的进度记录）缩进到父行**标题文字的竖线**：16px 行内边距 + 20px 勾选框 + 12px 行内间距 = 48px。子项自己的勾选框落在这条标题列上，而不是和父级勾选框排成一列 —— 两者同宽同列时，两块看起来是兄弟而不是父子。子块的左差写成「勾选框宽 + 行内间距」的算式，改勾选框大小时缩进跟着走；上边那条 1px 发丝线仍从父行左边缘起笔，分节关系靠它、缩进关系靠左差。
 
 ### Inputs / Fields
 

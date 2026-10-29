@@ -212,6 +212,12 @@
 }
 
 /* ---------------- 事项行 ---------------- */
+/* 事项行的「勾选框 + 间距」决定标题文字的起点；展开的进度面板要缩进到同一条竖线上，
+ * 所以两处共用这一个宽度，改勾选框大小时缩进跟着走。 */
+.todo-item {
+  --todo-item-check: 20px;
+}
+
 .todo-items {
   list-style: none;
   margin: 0;
@@ -238,8 +244,8 @@
 /* 方形勾选：静置只留描边，悬停才亮主色（不与卡片抢注意力） */
 .todo-item__check {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: var(--todo-item-check);
+  height: var(--todo-item-check);
   margin-top: 2px;
   padding: 0;
   display: inline-flex;
@@ -430,11 +436,13 @@
 }
 
 /* ---------------- 进度面板 ---------------- */
-/* 进度记录不再是灰井：它平铺在事项下方，只有一条上发丝线分节 */
+/* 进度记录不再是灰井：它平铺在事项下方，只有一条上发丝线分节。
+ * 整块缩进到标题文字的起点（勾选框宽 + 行内间距），让「记录」比「事项」明显低一层；
+ * 进度自己的勾选框因此落在标题的竖线上，而不是和事项勾选框排成一条线。 */
 .todo-progress {
   margin: 0;
-  padding: var(--transactions-space-xs) var(--transactions-space-lg)
-    var(--transactions-space-md);
+  padding: var(--transactions-space-xs) var(--transactions-space-lg) var(--transactions-space-md)
+    calc(var(--transactions-space-lg) + var(--todo-item-check) + var(--transactions-space-md));
   border-top: 1px solid var(--transactions-color-divider);
 }
 
