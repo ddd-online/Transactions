@@ -282,6 +282,8 @@
   gap: var(--transactions-space-md);
   min-height: 44px;
   padding: 6px var(--transactions-space-lg);
+  /* 整行都是展开/收起的点击面（含内边距与空白），所以整行给指针手型 */
+  cursor: pointer;
   transition: background-color var(--transactions-transition-fast);
 }
 

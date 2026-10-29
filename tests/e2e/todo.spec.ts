@@ -141,6 +141,18 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     expect(indent.progressCheck).toBeCloseTo(indent.itemTitle, 0)
     expect(indent.progressCheck - indent.itemCheck).toBeGreaterThan(20)
 
+    // 整条事项都是展开/收起的点击面：点标题、点行的内边距都能切换
+    await page.locator('.todo-item__title').click()
+    await expect(page.getByTestId('todo-progress-input')).toHaveCount(0)
+    await page.locator('.todo-item__title').click()
+    await expect(page.getByTestId('todo-progress-input')).toBeVisible()
+    const itemRow = await page.locator('.todo-item__row').boundingBox()
+    if (!itemRow) throw new Error('没有量到事项行')
+    await page.mouse.click(itemRow.x + 8, itemRow.y + itemRow.height / 2)
+    await expect(page.getByTestId('todo-progress-input')).toHaveCount(0)
+    await page.mouse.click(itemRow.x + 8, itemRow.y + itemRow.height / 2)
+    await expect(page.getByTestId('todo-progress-input')).toBeVisible()
+
     // 主题可收起：事项整块让位，段头与计数留着；再点一次铺回来
     await page.getByTestId('todo-card-toggle').click()
     await expect(page.getByTestId('todo-card-toggle')).toHaveAttribute('aria-expanded', 'false')

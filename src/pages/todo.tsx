@@ -373,7 +373,17 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     const dueText = formatItemDates(item.startDate, item.dueDate, due)
     return (
       <li key={item.id} className={`todo-item${open ? ' is-open' : ''}`} data-testid="todo-item">
-        <div className="todo-item__row">
+        <div
+          className="todo-item__row"
+          onClick={(event) => {
+            // 整条事项都是展开/收起的热区（包括行的留白）；行内按钮各有动作，点它们不再切换
+            const target = event.target
+            if (target instanceof Element && target.closest('button, a, input, textarea, [role="button"]')) {
+              return
+            }
+            toggleItem(item.id)
+          }}
+        >
           <button
             type="button"
             className="todo-item__check"
