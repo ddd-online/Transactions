@@ -343,6 +343,22 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
   const activeCount = cards.reduce((total, card) => total + card.items.length, 0)
 
+  /** 只有装着事项的主题才谈得上收起；空主题没有可收的东西。 */
+  const collapsibleCards = cards.filter((card) => card.items.length > 0)
+  const collapsedCount = collapsibleCards.filter((card) => collapsedCards[card.id]).length
+
+  const expandAllCards = useCallback((): void => {
+    setCollapsedCards({})
+  }, [])
+
+  const collapseAllCards = useCallback((): void => {
+    setCollapsedCards(
+      Object.fromEntries(
+        cards.filter((card) => card.items.length > 0).map((card) => [card.id, true]),
+      ),
+    )
+  }, [cards])
+
   /** 首次取数期间画两段骨架，避免先闪一下「还没有待办主题」再出现真实内容。 */
   const renderSkeleton = (): JSX.Element => (
     <div className="todo-skeleton" aria-hidden="true">
@@ -581,6 +597,26 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             />
             {todoView === 'board' ? (
               <div className="todo-toolbar-actions">
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="todo-expand-all"
+                  title="展开所有主题"
+                  disabled={collapsedCount === 0}
+                  onClick={expandAllCards}
+                >
+                  全部展开
+                </Button>
+                <Button
+                  variant="text"
+                  size="sm"
+                  testId="todo-collapse-all"
+                  title="收起所有主题"
+                  disabled={collapsedCount >= collapsibleCards.length}
+                  onClick={collapseAllCards}
+                >
+                  全部收起
+                </Button>
                 <Button
                   variant="primary"
                   testId="todo-card-open"

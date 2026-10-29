@@ -180,6 +180,17 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.mouse.click(head.x + head.width / 2, head.y + head.height / 2)
     await expect(page.locator('.todo-items')).toBeVisible()
 
+    // 工具栏的「全部展开 / 全部收起」是同一动作的批量版：没可做的就置灰
+    await expect(page.getByTestId('todo-expand-all')).toBeDisabled()
+    await page.getByTestId('todo-collapse-all').click()
+    await expect(page.locator('.todo-items')).toBeHidden()
+    await expect(page.getByTestId('todo-collapse-all')).toBeDisabled()
+    await expect(page.getByTestId('todo-expand-all')).toBeEnabled()
+    await page.getByTestId('todo-expand-all').click()
+    await expect(page.locator('.todo-items')).toBeVisible()
+    await expect(page.getByTestId('todo-expand-all')).toBeDisabled()
+    await expect(page.getByTestId('todo-collapse-all')).toBeEnabled()
+
     await page.getByTestId('todo-progress-done').click()
     await expect(page.getByTestId('todo-progress-done')).toHaveAttribute('aria-pressed', 'true')
     await page.getByTestId('todo-item-done').click()
