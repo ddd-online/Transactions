@@ -42,16 +42,30 @@ try {
     $notes = Join-Path $root 'build\release_notes.md'
     if (-not (Test-Path -LiteralPath $notes)) { throw "缺少发布说明: $notes" }
 
+    # 发布正文只能是本次版本这一节：应用内「关于 / 更新」显示的就是 release 正文，
+    # 历史条目留在各自版本的 release 里。文件本身原则上只留一版（静态护栏盯着），
+    # 这里再切一次 —— 万一文件攒进了历史，也不会把整份年表当正文发出去。
+    $allNotes = Get-Content -LiteralPath $notes -Raw
+    $sectionPattern = '(?ms)^##\s*\[' + [regex]::Escape($version) + '\][^\n]*\n.*?(?=^##\s*\[|\z)'
+    $section = [regex]::Match($allNotes, $sectionPattern)
+    if (-not $section.Success) {
+        throw "发布说明里没有 $version 这一节: $notes"
+    }
+    $releaseBody = Join-Path ([System.IO.Path]::GetTempPath()) "transactions-release-$version.md"
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($releaseBody, $section.Value.TrimEnd() + "`n", $utf8)
+
     Write-Host "[release] 校验产物摘要"
     $hash = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()
     Write-Host ("  {0} sha256={1}" -f (Split-Path -Leaf $setup), $hash)
+    Write-Host ("[release] 正文只含 {0} 一节（{1} 行）" -f $version, ($section.Value.TrimEnd() -split "`n").Count)
 
     $arguments = @(
         'release', 'create', $Tag,
         $setup,
         '--repo', $Repo,
         '--title', "Transactions $version",
-        '--notes-file', $notes
+        '--notes-file', $releaseBody
     )
     if ($Draft) { $arguments += '--draft' }
 

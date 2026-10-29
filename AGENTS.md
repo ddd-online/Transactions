@@ -35,6 +35,9 @@ pnpm package          # NSIS 安装包，产物在 output/
 - **只有用户明确说“发布”时才创建 GitHub Release**；开发、修复、提交、推送都不要自动跑
   `build/release.ps1` 或 `gh release create`。
 - 日常改动最多本地 `pnpm build` / `pnpm package` 验证，不占用版本号、不更新 release。
+- **`build/release_notes.md` 只留本次要发的版本那一节**：GitHub release 正文和应用内「关于 /
+  更新」的更新日志都直接读它，历史条目留在各自版本的 release 里。静态护栏会拒绝多版本的
+  文件；`build/release.ps1` 另外按 tag 再切一次，文件攒了历史也不会整份发出去。
 
 ## 提交纪律
 

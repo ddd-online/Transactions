@@ -111,9 +111,19 @@ check('发布说明版本与构建脚本', () => {
     match[1] === packageJson.version,
     `release_notes.md 版本 ${match[1]} 与 package.json ${packageJson.version} 不一致`,
   )
+  // GitHub release 正文与「关于 / 更新」的更新日志都直接读这份文件：
+  // 它只能有当前版本一节，历史条目留在各自版本的 release 里（1.9.0 曾把年表整份发出去）。
+  const sections = notes.match(/^##\s*\[/gm) ?? []
+  assert(
+    sections.length === 1,
+    `release_notes.md 只能有当前版本一节，实际 ${sections.length} 节`,
+  )
   for (const script of ['build/build.ps1', 'build/clean.ps1', 'build/release.ps1']) {
     assert(read(script).length > 0, `缺少构建脚本: ${script}`)
   }
+  // 发布脚本必须按 tag 切出这一节再交给 gh，文件攒了历史也不能整份发出去
+  const release = read('build/release.ps1')
+  assert(release.includes("'--notes-file', $releaseBody"), 'release.ps1 必须用切出的单版本正文发布')
   return `v${packageJson.version}`
 })
 
