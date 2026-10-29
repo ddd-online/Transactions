@@ -58,7 +58,8 @@
 .todo-toolbar-actions {
   display: flex;
   align-items: center;
-  gap: var(--transactions-space-sm);
+  /* 与其余页面工具栏的簇间距一致（12px）：三个动作彼此分得开，主按钮仍落在右边缘 */
+  gap: var(--transactions-space-md);
 }
 
 .todo-error {
@@ -134,9 +135,10 @@
 }
 
 /* 收起后段头就是这一段的全部：下面的段头会紧贴上来，两条 Soft Gray 横带会黏成一整块，
- * 所以收起的段用一条发丝线自己收口（展开时由末条事项行和下一段头自然分界）。 */
+ * 所以收起的段用一条发丝线自己收口（展开时由末条事项行和下一段头自然分界）。
+ * 横带上 `divider`（#eceef1）只剩 1.5% 的明度差、读不出来，这里用同一套发丝线的 l2 档。 */
 .todo-group.is-collapsed {
-  border-bottom: 1px solid var(--transactions-color-divider);
+  border-bottom: 1px solid var(--transactions-color-border-l2);
 }
 
 /* 段头是一条 Soft Gray 的横带：平铺，不包卡片，但给每段一个清楚的落点 */
@@ -147,15 +149,25 @@
   min-height: 40px;
   padding: 0 var(--transactions-space-lg);
   background-color: var(--transactions-color-minor-background);
+  transition: background-color var(--transactions-transition-fast);
 }
 
-/* 段头整条都是收起/展开的点击面（空主题没有可收的东西，就不举手型） */
+/* 段头整条都是收起/展开的点击面：空主题没有可收的东西，就不举手型、也不给悬停反馈 */
 .todo-group__head.is-collapsible {
   cursor: pointer;
 }
 
+.todo-group__head.is-collapsible:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+/* 把手占的格子和事项行的勾选框一样宽（20px）、图标在同格里居中 ——
+ * 段头标题因此和事项标题落在同一条竖线上（16 + 20 + 12 = 48px）。 */
 .todo-group__handle {
+  flex-shrink: 0;
+  width: 20px;
   display: inline-flex;
+  justify-content: center;
   color: var(--transactions-color-text-disabled);
   cursor: grab;
   transition: color var(--transactions-transition-fast);
@@ -219,10 +231,11 @@
   color: var(--transactions-color-primary);
 }
 
-/* 主题的收起 / 展开：和事项行的 chevron 同一套手势（朝右 = 收起，转 90° = 展开），
- * 常驻在段头右侧的图标列上，正好压在事项那枚 chevron 的列里。悬停才出现的「＋ / 删除」
+/* 段头与事项行共用同一枚 24px chevron：朝右 = 收起，转 90° = 展开。
+ * 段头那枚常驻在右侧图标列上，正好压在事项那枚的列里；悬停才出现的「＋ / 删除」
  * 一直占着自己的位置，所以它不会左右跳。 */
-.todo-group__toggle {
+.todo-group__toggle,
+.todo-item__toggle {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
@@ -239,21 +252,25 @@
     background-color var(--transactions-transition-fast);
 }
 
-.todo-group__toggle:hover {
+.todo-group__toggle:hover,
+.todo-item__toggle:hover {
   background-color: var(--transactions-color-hover-bg);
   color: var(--transactions-color-text-major);
 }
 
-.todo-group__toggle:focus-visible {
+.todo-group__toggle:focus-visible,
+.todo-item__toggle:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 1px;
 }
 
-.todo-group__toggle svg {
+.todo-group__toggle svg,
+.todo-item__toggle svg {
   transition: transform var(--transactions-transition-fast);
 }
 
-.todo-group__toggle.is-open svg {
+.todo-group__toggle.is-open svg,
+.todo-item__toggle.is-open svg {
   transform: rotate(90deg);
 }
 
@@ -434,41 +451,6 @@
   border-radius: var(--transactions-radius-full);
   background: var(--transactions-color-outlier);
   vertical-align: middle;
-}
-
-.todo-item__toggle {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--transactions-radius-sm);
-  background: none;
-  color: var(--transactions-color-text-tertiary);
-  cursor: pointer;
-  transition: color var(--transactions-transition-fast),
-    background-color var(--transactions-transition-fast);
-}
-
-.todo-item__toggle:hover {
-  background-color: var(--transactions-color-hover-bg);
-  color: var(--transactions-color-text-major);
-}
-
-.todo-item__toggle:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 1px;
-}
-
-.todo-item__toggle svg {
-  transition: transform var(--transactions-transition-fast);
-}
-
-.todo-item__toggle.is-open svg {
-  transform: rotate(90deg);
 }
 
 /* 编辑 / 删除事项：行悬停才出现；隐藏时不接点击（键盘 focus 仍能看到） */

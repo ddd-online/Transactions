@@ -601,7 +601,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                   variant="text"
                   size="sm"
                   testId="todo-expand-all"
-                  title="展开所有主题"
                   disabled={collapsedCount === 0}
                   onClick={expandAllCards}
                 >
@@ -611,7 +610,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                   variant="text"
                   size="sm"
                   testId="todo-collapse-all"
-                  title="收起所有主题"
                   disabled={collapsedCount >= collapsibleCards.length}
                   onClick={collapseAllCards}
                 >

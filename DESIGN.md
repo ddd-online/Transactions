@@ -311,6 +311,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Primary:** solid Clarity Blue, white text, padding 0 16px. Hover → #5b7fff; active → #2b52e6.
 - **Secondary (default):** Paper face, 1px hairline border, ink text; hover adds a soft fill (hover-bg).
 - **Text:** neutral secondary text, hover fill; text-danger turns Expense on hover with a danger-tint fill.
+- **Disabled:** 控件自身的禁用色一律用 `--transactions-color-text-disabled`（浅色 ≈2.6:1）。AntD 给文本按钮的 25% 墨色（≈1.8:1）在纸白上几乎看不见，`antd.css` 里按 text 变体把它拉回令牌 —— 只改 text 变体，主按钮的白字与危险按钮的红字不动。
 - **Primary danger:** solid Expense, white text.
 - **Focus:** 2px Clarity Blue outline, 2px offset, on `:focus-visible`.
 
@@ -322,7 +323,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Internal Padding:** 24px (space-xl).
 - **Flat pages:** 待办、事件与股票 are flat: list rows, detail panes, metric strips, and rails sit directly on the canvas with no card face or shadow, separated by 1px hairlines and 40px Soft Gray bands; 16px is the inset for bands, rows, and tables. Cards stay for records, settings, and popover layers.
 - **Nested rows:** 展开在事项下的子块（待办的进度记录）缩进到父行**标题文字的竖线**：16px 行内边距 + 20px 勾选框 + 12px 行内间距 = 48px。子项自己的勾选框落在这条标题列上，而不是和父级勾选框排成一列 —— 两者同宽同列时，两块看起来是兄弟而不是父子。子块的左差写成「勾选框宽 + 行内间距」的算式，改勾选框大小时缩进跟着走；上边那条 1px 发丝线仍从父行左边缘起笔，分节关系靠它、缩进关系靠左差。
-- **Section collapse:** 待办的主题段头带一枚常驻的 chevron（朝右 = 收起，转 90° = 展开），点它或点**段头整条**（标题、计数、留白）都能收掉整段事项，只留 40px 段头与「N 项」；段头因此给 `cursor: pointer`，拖拽把手、悬停才出现的「＋ / 删除」和 chevron 各自接住自己的点击，不触发切换。chevron 落在段头右侧的图标列里，和事项行的 chevron **同一条竖线**（24px 控件 + 12px 间距，段头的「＋ / 删除」也用 24px，否则整列会错开 8px）；那两个悬停控件始终占着自己的位置，所以 chevron 不会左右跳。收起的段自己补一条发丝线收口 —— 段与段之间本该由事项行分界，两条 Soft Gray 横带直接相邻会黏成一整块。空段不出这枚按钮、也不举手型（没有可收的东西），往收起的段里加事项时先把它展开（否则新事项落在看不见的地方）；收起状态只活在这一次会话里，不写库、不写配置。工具栏里「新建主题」左侧的**全部展开 / 全部收起**是同一动作的批量版，用 text 按钮（比主按钮低一档），没有可做的时候就置灰 —— 一排主题时它省掉逐个点的力气，一个可做的都没有时它也不假装能点。
+- **Section collapse:** 待办的主题段头带一枚常驻的 chevron（朝右 = 收起，转 90° = 展开），点它或点**段头整条**（标题、计数、留白）都能收掉整段事项，只留 40px 段头与「N 项」；段头因此给 `cursor: pointer` 与 `hover-bg` 的悬停反馈（空段两样都不给 —— 没有可收的东西，就不假装能点），拖拽把手、悬停才出现的「＋ / 删除」和 chevron 各自接住自己的点击，不触发切换。段头标题与事项标题共用**同一条竖线**（16 + 20 + 12 = 48px）：把手因此占一个 20px 的格子、图标在格里居中，和事项的 20px 勾选框同列。chevron 落在段头右侧的图标列里，和事项行的 chevron **同一条竖线**（24px 控件 + 12px 间距，段头的「＋ / 删除」也用 24px，否则整列会错开 8px）；那两个悬停控件始终占着自己的位置，所以 chevron 不会左右跳。收起的段自己补一条发丝线收口 —— 段与段之间本该由事项行分界，两条 Soft Gray 横带直接相邻会黏成一整块；这条线用 `border-l2` 而不是 `divider`，因为 `divider`（#eceef1）压在横带（#f3f4f6）上只剩 1.5% 的明度差，等于没画。空段不出这枚按钮、也不举手型，往收起的段里加事项时先把它展开（否则新事项落在看不见的地方）；收起状态只活在这一次会话里，不写库、不写配置。工具栏里「新建主题」左侧的**全部展开 / 全部收起**是同一动作的批量版，用 text 按钮（比主按钮低一档、簇间距与其余页面一致取 12px），没有可做的时候就置灰 —— 一排主题时它省掉逐个点的力气，一个可做的都没有时它也不假装能点。
 - **Row as the toggle:** 事项行**整条**都是展开/收起的热区 —— 标题、行尾留白、6 / 16px 的内边距都算，整行 `cursor: pointer` 就是这个承诺的可视化。行内的勾选框、编辑、删除、chevron 各自接住自己的点击，不再触发切换（命中行内 `button / input` 就放行）。只把标题文字做成按钮、留着内边距当死区时，用户点在行尾留白上会以为这个功能坏了。
 
 ### Inputs / Fields

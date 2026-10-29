@@ -4,6 +4,14 @@
   font-weight: 500;
 }
 
+/* 文本按钮的禁用态：AntD 给的是 25% 墨色（浅色主题下 ≈1.8:1，灰得读不出字），
+ * 项目里禁用文字一律走 text-disabled（≈2.6:1）。只收 text 变体，主按钮的
+ * 白字与危险按钮的红字不受影响。 */
+.tr-btn.ant-btn-text:disabled,
+.tr-btn.ant-btn-text.ant-btn-disabled {
+  color: var(--transactions-color-text-disabled);
+}
+
 .ant-btn {
   box-shadow: none;
 }
