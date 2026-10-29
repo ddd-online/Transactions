@@ -172,6 +172,14 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog', { name: '添加事项' })).toBeHidden()
 
+    // 段头整条也能点：点在标题右侧的空白上同样收起，再点回来
+    const head = await page.locator('.todo-group__head').boundingBox()
+    if (!head) throw new Error('没有量到段头')
+    await page.mouse.click(head.x + head.width / 2, head.y + head.height / 2)
+    await expect(page.locator('.todo-items')).toBeHidden()
+    await page.mouse.click(head.x + head.width / 2, head.y + head.height / 2)
+    await expect(page.locator('.todo-items')).toBeVisible()
+
     await page.getByTestId('todo-progress-done').click()
     await expect(page.getByTestId('todo-progress-done')).toHaveAttribute('aria-pressed', 'true')
     await page.getByTestId('todo-item-done').click()

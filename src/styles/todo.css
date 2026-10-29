@@ -149,6 +149,11 @@
   background-color: var(--transactions-color-minor-background);
 }
 
+/* 段头整条都是收起/展开的点击面（空主题没有可收的东西，就不举手型） */
+.todo-group__head.is-collapsible {
+  cursor: pointer;
+}
+
 .todo-group__handle {
   display: inline-flex;
   color: var(--transactions-color-text-disabled);

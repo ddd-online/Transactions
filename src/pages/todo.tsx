@@ -663,7 +663,24 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                           setDragOverId(null)
                         }}
                       >
-                        <header className="todo-group__head">
+                        <header
+                          className={`todo-group__head${card.items.length > 0 ? ' is-collapsible' : ''}`}
+                          onClick={(event) => {
+                            // 段头整条都能收起/展开（标题、计数、留白）；「＋ / 删除 / chevron」和
+                            // 拖拽把手各自有动作，点它们不再切换。空主题没有可收的东西。
+                            if (card.items.length === 0) return
+                            const target = event.target
+                            if (
+                              target instanceof Element &&
+                              target.closest(
+                                'button, a, input, textarea, [role="button"], [draggable="true"]',
+                              )
+                            ) {
+                              return
+                            }
+                            toggleCard(card.id)
+                          }}
+                        >
                           <span
                             className="todo-group__handle"
                             title="拖动排序"
