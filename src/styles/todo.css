@@ -133,6 +133,12 @@
   border-radius: var(--transactions-radius-md);
 }
 
+/* 收起后段头就是这一段的全部：下面的段头会紧贴上来，两条 Soft Gray 横带会黏成一整块，
+ * 所以收起的段用一条发丝线自己收口（展开时由末条事项行和下一段头自然分界）。 */
+.todo-group.is-collapsed {
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
 /* 段头是一条 Soft Gray 的横带：平铺，不包卡片，但给每段一个清楚的落点 */
 .todo-group__head {
   display: flex;
@@ -180,12 +186,16 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: var(--transactions-space-2xs);
+  /* 和事项行同一套 24px 控件 + 12px 间距：段头与事项的图标列落在同一条竖线上 */
+  gap: var(--transactions-space-md);
 }
 
-/* 段头两个动作（添加 / 删除）都只在悬停或键盘聚焦时出现；隐藏时也不接点击 */
+/* 段头两个动作（添加 / 删除）都只在悬停或键盘聚焦时出现；隐藏时也不接点击。
+ * 尺寸跟事项行的 24px 控件对齐，不让段头的图标列比事项的宽出一格。 */
 .todo-group__add,
 .todo-group__delete {
+  width: 24px;
+  height: 24px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transactions-transition-fast),
@@ -202,6 +212,44 @@
 
 .todo-group__add:hover {
   color: var(--transactions-color-primary);
+}
+
+/* 主题的收起 / 展开：和事项行的 chevron 同一套手势（朝右 = 收起，转 90° = 展开），
+ * 常驻在段头右侧的图标列上，正好压在事项那枚 chevron 的列里。悬停才出现的「＋ / 删除」
+ * 一直占着自己的位置，所以它不会左右跳。 */
+.todo-group__toggle {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-tertiary);
+  cursor: pointer;
+  transition: color var(--transactions-transition-fast),
+    background-color var(--transactions-transition-fast);
+}
+
+.todo-group__toggle:hover {
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-text-major);
+}
+
+.todo-group__toggle:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+.todo-group__toggle svg {
+  transition: transform var(--transactions-transition-fast);
+}
+
+.todo-group__toggle.is-open svg {
+  transform: rotate(90deg);
 }
 
 .todo-group__empty {

@@ -83,6 +83,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [itemError, setItemError] = useState('')
   const [progressText, setProgressText] = useState<Record<string, string>>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
+  /** 主题默认展开；收起只记在这一次会话里，切页回来重新铺开。 */
+  const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({})
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -147,6 +149,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   }, [cardDraft, ledgerId, load])
 
   const openItemModal = useCallback((cardId: string, item?: TodoItemDto): void => {
+    // 往收起的主题里加事项时先展开它，否则新事项落在看不见的地方。
+    setCollapsedCards((current) => (current[cardId] ? { ...current, [cardId]: false } : current))
     setItemCardId(cardId)
     setItemEditingId(item?.id ?? '')
     setItemDraft(item?.title ?? '')
@@ -331,6 +335,10 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
   const toggleItem = useCallback((id: string): void => {
     setExpandedItems((current) => ({ ...current, [id]: !current[id] }))
+  }, [])
+
+  const toggleCard = useCallback((id: string): void => {
+    setCollapsedCards((current) => ({ ...current, [id]: !current[id] }))
   }, [])
 
   const activeCount = cards.reduce((total, card) => total + card.items.length, 0)
@@ -623,82 +631,102 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                 />
               ) : (
                 <div className="todo-board">
-                  {cards.map((card) => (
-                    <section
-                      key={card.id}
-                      className={`todo-group${dragCardId === card.id ? ' is-dragging' : ''}${
-                        dragOverId === card.id ? ' is-over' : ''
-                      }`}
-                      data-testid="todo-card"
-                      onDragOver={(event) => {
-                        event.preventDefault()
-                        if (dragCardId && dragCardId !== card.id) setDragOverId(card.id)
-                      }}
-                      onDragLeave={() =>
-                        setDragOverId((current) => (current === card.id ? null : current))
-                      }
-                      onDrop={() => {
-                        if (dragCardId) void moveCard(dragCardId, card.id)
-                        setDragCardId(null)
-                        setDragOverId(null)
-                      }}
-                    >
-                      <header className="todo-group__head">
-                        <span
-                          className="todo-group__handle"
-                          title="拖动排序"
-                          draggable
-                          onDragStart={() => setDragCardId(card.id)}
-                          onDragEnd={() => {
-                            setDragCardId(null)
-                            setDragOverId(null)
-                          }}
-                        >
-                          <Icon name="DragHandle" size={16} />
-                        </span>
-                        <h3 className="todo-group__title" title={card.title}>
-                          {card.title}
-                        </h3>
-                        <span className="todo-group__count">{card.items.length} 项</span>
-                        <div className="todo-group__actions">
-                          <button
-                            type="button"
-                            className="tr-icon-btn todo-group__add"
-                            data-testid="todo-item-add"
-                            aria-label={`添加事项：${card.title}`}
-                            title="添加事项"
-                            onClick={() => openItemModal(card.id)}
+                  {cards.map((card) => {
+                    const collapsed = Boolean(collapsedCards[card.id])
+                    return (
+                      <section
+                        key={card.id}
+                        className={`todo-group${collapsed ? ' is-collapsed' : ''}${
+                          dragCardId === card.id ? ' is-dragging' : ''
+                        }${dragOverId === card.id ? ' is-over' : ''}`}
+                        data-testid="todo-card"
+                        onDragOver={(event) => {
+                          event.preventDefault()
+                          if (dragCardId && dragCardId !== card.id) setDragOverId(card.id)
+                        }}
+                        onDragLeave={() =>
+                          setDragOverId((current) => (current === card.id ? null : current))
+                        }
+                        onDrop={() => {
+                          if (dragCardId) void moveCard(dragCardId, card.id)
+                          setDragCardId(null)
+                          setDragOverId(null)
+                        }}
+                      >
+                        <header className="todo-group__head">
+                          <span
+                            className="todo-group__handle"
+                            title="拖动排序"
+                            draggable
+                            onDragStart={() => setDragCardId(card.id)}
+                            onDragEnd={() => {
+                              setDragCardId(null)
+                              setDragOverId(null)
+                            }}
                           >
-                            <Icon name="Plus" size={14} />
-                          </button>
-                          <Popconfirm
-                            title={`删除主题「${card.title}」？`}
-                            description="主题下的事项与进度会一并删除。"
-                            okText="删除"
-                            cancelText="取消"
-                            okType="danger"
-                            onConfirm={() => void removeCard(card.id)}
-                          >
+                            <Icon name="DragHandle" size={16} />
+                          </span>
+                          <h3 className="todo-group__title" title={card.title}>
+                            {card.title}
+                          </h3>
+                          <span className="todo-group__count">{card.items.length} 项</span>
+                          <div className="todo-group__actions">
+                            {/* 空主题没有可收的东西，干脆不出这个按钮 */}
+                            {card.items.length > 0 ? (
+                              <button
+                                type="button"
+                                className={`todo-group__toggle${collapsed ? '' : ' is-open'}`}
+                                data-testid="todo-card-toggle"
+                                aria-expanded={!collapsed}
+                                aria-controls={`todo-items-${card.id}`}
+                                aria-label={`${collapsed ? '展开' : '收起'}主题 ${card.title}`}
+                                title={collapsed ? '展开主题' : '收起主题'}
+                                onClick={() => toggleCard(card.id)}
+                              >
+                                <Icon name="ChevronRight" size={14} />
+                              </button>
+                            ) : null}
                             <button
                               type="button"
-                              className="tr-icon-btn is-danger-static todo-group__delete"
-                              data-testid="todo-card-delete"
-                              aria-label={`删除主题 ${card.title}`}
-                              title="删除主题"
+                              className="tr-icon-btn todo-group__add"
+                              data-testid="todo-item-add"
+                              aria-label={`添加事项：${card.title}`}
+                              title="添加事项"
+                              onClick={() => openItemModal(card.id)}
                             >
-                              <Icon name="Trash" size={14} />
+                              <Icon name="Plus" size={14} />
                             </button>
-                          </Popconfirm>
-                        </div>
-                      </header>
+                            <Popconfirm
+                              title={`删除主题「${card.title}」？`}
+                              description="主题下的事项与进度会一并删除。"
+                              okText="删除"
+                              cancelText="取消"
+                              okType="danger"
+                              onConfirm={() => void removeCard(card.id)}
+                            >
+                              <button
+                                type="button"
+                                className="tr-icon-btn is-danger-static todo-group__delete"
+                                data-testid="todo-card-delete"
+                                aria-label={`删除主题 ${card.title}`}
+                                title="删除主题"
+                              >
+                                <Icon name="Trash" size={14} />
+                              </button>
+                            </Popconfirm>
+                          </div>
+                        </header>
 
-                      {card.items.length === 0 ? (
-                        <p className="todo-group__empty">还没有事项</p>
-                      ) : (
-                        <ul className="todo-items">{card.items.map((item) => renderItem(item))}</ul>
-                      )}
-                    </section>
-                  ))}
+                        {card.items.length === 0 ? (
+                          <p className="todo-group__empty">还没有事项</p>
+                        ) : (
+                          <ul className="todo-items" id={`todo-items-${card.id}`} hidden={collapsed}>
+                            {card.items.map((item) => renderItem(item))}
+                          </ul>
+                        )}
+                      </section>
+                    )
+                  })}
                 </div>
               )
             ) : !loaded ? (

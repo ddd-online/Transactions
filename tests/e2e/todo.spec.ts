@@ -141,6 +141,25 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     expect(indent.progressCheck).toBeCloseTo(indent.itemTitle, 0)
     expect(indent.progressCheck - indent.itemCheck).toBeGreaterThan(20)
 
+    // 主题可收起：事项整块让位，段头与计数留着；再点一次铺回来
+    await page.getByTestId('todo-card-toggle').click()
+    await expect(page.getByTestId('todo-card-toggle')).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByTestId('todo-card')).toContainText('工作')
+    await expect(page.locator('.todo-items')).toBeHidden()
+    await expect(page.getByTestId('todo-card')).toHaveClass(/is-collapsed/)
+    await page.getByTestId('todo-card-toggle').click()
+    await expect(page.locator('.todo-items')).toBeVisible()
+    await expect(page.getByTestId('todo-card')).not.toHaveClass(/is-collapsed/)
+
+    // 往收起的主题里加事项会先把它展开，新事项不会落在看不见的地方
+    await page.getByTestId('todo-card-toggle').click()
+    await page.getByTestId('todo-card').hover()
+    await page.getByTestId('todo-item-add').click()
+    await expect(page.getByRole('dialog', { name: '添加事项' })).toBeVisible()
+    await expect(page.locator('.todo-items')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog', { name: '添加事项' })).toBeHidden()
+
     await page.getByTestId('todo-progress-done').click()
     await expect(page.getByTestId('todo-progress-done')).toHaveAttribute('aria-pressed', 'true')
     await page.getByTestId('todo-item-done').click()

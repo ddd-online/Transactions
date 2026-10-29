@@ -322,6 +322,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Internal Padding:** 24px (space-xl).
 - **Flat pages:** 待办、事件与股票 are flat: list rows, detail panes, metric strips, and rails sit directly on the canvas with no card face or shadow, separated by 1px hairlines and 40px Soft Gray bands; 16px is the inset for bands, rows, and tables. Cards stay for records, settings, and popover layers.
 - **Nested rows:** 展开在事项下的子块（待办的进度记录）缩进到父行**标题文字的竖线**：16px 行内边距 + 20px 勾选框 + 12px 行内间距 = 48px。子项自己的勾选框落在这条标题列上，而不是和父级勾选框排成一列 —— 两者同宽同列时，两块看起来是兄弟而不是父子。子块的左差写成「勾选框宽 + 行内间距」的算式，改勾选框大小时缩进跟着走；上边那条 1px 发丝线仍从父行左边缘起笔，分节关系靠它、缩进关系靠左差。
+- **Section collapse:** 待办的主题段头带一枚常驻的 chevron（朝右 = 收起，转 90° = 展开），点它收掉整段事项，只留 40px 段头与「N 项」。它落在段头右侧的图标列里，和事项行的 chevron **同一条竖线**（24px 控件 + 12px 间距，段头的「＋ / 删除」也用 24px，否则整列会错开 8px）；悬停才出现的「＋ / 删除」始终占着自己的位置，所以 chevron 不会左右跳。收起的段自己补一条发丝线收口 —— 段与段之间本该由事项行分界，两条 Soft Gray 横带直接相邻会黏成一整块。空段不出这枚按钮（没有可收的东西），往收起的段里加事项时先把它展开（否则新事项落在看不见的地方）；收起状态只活在这一次会话里，不写库、不写配置。
 
 ### Inputs / Fields
 
