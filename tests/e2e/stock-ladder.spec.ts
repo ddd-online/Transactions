@@ -261,6 +261,18 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     )
     expect(sameBoardClasses[0]).toBe(sameBoardClasses[1])
 
+    // 代码可点：点一下复制到系统剪贴板，并给一条回执
+    const firstCode = firstRung.getByTestId('stock-ladder-chip-code').first()
+    await expect(firstCode).toHaveText('301502')
+    await firstCode.hover()
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder-code-hover.png'),
+    })
+    await firstCode.click()
+    await expect(page.getByTestId('toast').last()).toContainText('已复制 301502')
+    expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe('301502')
+
     // 涨停行铺微红底，断板行不铺底
     const rowTints = await ladder.evaluate((root) => {
       const limit = root.querySelector('[data-testid="stock-ladder-chip"]')

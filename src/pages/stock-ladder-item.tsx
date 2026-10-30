@@ -3,6 +3,7 @@ import type { JSX } from 'react'
 import { boardOf, isOneWordBoard } from '../../shared/domain/limit-ladder'
 import type { StockLimitBrokenEntry, StockLimitEntry } from '../../shared/types/stock-limit'
 import { BoardLabel } from './stock-board-label'
+import { StockCode } from './stock-code'
 
 /** `HHMMSS` 整数 → `09:25`；缺值给破折号。 */
 export function ladderSealTime(value: number): string {
@@ -71,7 +72,7 @@ export function StockLadderItem({ entry, broken = false }: StockLadderItemProps)
       <div className="stock-ladder__item-main">
         <span className="stock-ladder__item-name">{entry.stockName}</span>
         <span className="stock-ladder__item-quote">
-          <span>{entry.stockCode}</span>
+          <StockCode code={entry.stockCode} testId="stock-ladder-chip-code" />
           <span className="stock-ladder__item-time">
             {broken ? `昨${seal}` : seal}
           </span>

@@ -125,6 +125,10 @@ export const commandSchemas = {
   window_control: z.object({
     action: z.enum(['minimize', 'maximize', 'close']),
   }),
+  /** 把纯文本写进系统剪贴板（股票代码这类要粘到别处的短文本）。 */
+  clipboard_write_text: z.object({
+    text: z.string().min(1),
+  }),
   /** M0 冒烟用：写一张 1×1 PNG 到工作空间资产目录，验证 trasset://。 */
   debug_write_asset: z.undefined(),
   debug_echo: z.object({ message: z.string() }),
@@ -509,6 +513,7 @@ export interface CommandResponses {
   asset_url: string
   dialog_open: DialogOpenResponse
   window_control: null
+  clipboard_write_text: null
   debug_write_asset: string
   debug_echo: string
   source_import_probe: SourceImportProbe

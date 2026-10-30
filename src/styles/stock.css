@@ -4265,6 +4265,31 @@
   white-space: nowrap;
 }
 
+/* 股票代码：点一下复制。静止和旁边的时间戳同一档字，悬停才亮主色 + 下划线，
+ * 让「这里能点」只在鼠标真的过来时才说话。 */
+.stock-code {
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: color var(--transactions-transition-fast);
+}
+
+.stock-code:hover {
+  color: var(--transactions-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.stock-code:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
 .stock-ladder__item-time {
   letter-spacing: 0.02em;
 }

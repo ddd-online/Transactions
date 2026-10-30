@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { join } from 'node:path'
 
-import { app, dialog, session } from 'electron'
+import { app, clipboard, dialog, session } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
@@ -251,6 +251,13 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         throw new AppError(`未知的窗口动作: ${action}`, { status: 400 })
       }
       registerWindowControl(action)
+      return null
+    },
+
+    clipboard_write_text(request) {
+      const text = String(asObject(request).text ?? '')
+      if (!text) throw new AppError('剪贴板内容为空', { status: 400 })
+      clipboard.writeText(text)
       return null
     },
 
