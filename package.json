@@ -1,7 +1,7 @@
 {
   "name": "transactions",
   "productName": "Transactions",
-  "version": "1.10.1",
+  "version": "1.11.0",
   "description": "Transactions —— 本地优先的桌面个人记账工作台",
   "license": "Apache-2.0",
   "author": "ddd-online",
