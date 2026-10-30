@@ -79,6 +79,13 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).closeBehavior)
       .toBe('tray')
 
+    // 「每次询问」也必须存得下来（主进程曾只认 quit / tray，选了会弹「无效的关闭行为」）
+    await page.getByTestId('close-behavior-ask').click()
+    await expect
+      .poll(() => JSON.parse(readFileSync(configPath, 'utf8')).closeBehavior)
+      .toBe('ask')
+    await expect(page.getByTestId('close-behavior-ask')).toHaveAttribute('aria-pressed', 'true')
+
     await page.getByTestId('proxy-mode-manual').click()
     await page.getByTestId('proxy-url').fill('http://127.0.0.1:7890')
     await page.getByTestId('proxy-save').click()

@@ -27,7 +27,7 @@ describe('config normalization', () => {
     expect(config.height).toBe(1000)
     expect(config.appearance).toBe('system')
     expect(config.workspaceDir).toBe('')
-    expect(config.closeBehavior).toBe('')
+    expect(config.closeBehavior).toBe('ask')
     expect(config.proxy.mode).toBe('auto')
     expect(config.features).toEqual({
       accounting: true,
@@ -48,6 +48,17 @@ describe('config normalization', () => {
     expect(config.height).toBe(1000)
     expect(config.features.accounting).toBe(true)
     expect(config.chartSummaryCollapsed).toBe(false)
+  })
+
+  // 关闭行为只认 quit / tray / ask：老配置里的空值和不认识的值都归到「每次询问」，
+  // 否则设置页那一行会一个都没选中，看起来就像设置不生效。
+  it('close behavior is normalized to one of the three options', () => {
+    expect(normalizeConfig({}).closeBehavior).toBe('ask')
+    expect(normalizeConfig({ closeBehavior: '' }).closeBehavior).toBe('ask')
+    expect(normalizeConfig({ closeBehavior: 'ask' }).closeBehavior).toBe('ask')
+    expect(normalizeConfig({ closeBehavior: 'quit' }).closeBehavior).toBe('quit')
+    expect(normalizeConfig({ closeBehavior: 'tray' }).closeBehavior).toBe('tray')
+    expect(normalizeConfig({ closeBehavior: 'minimize' }).closeBehavior).toBe('ask')
   })
 
   it('partial feature flags and ledgerFeatures are normalized', () => {

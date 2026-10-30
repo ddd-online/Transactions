@@ -6,6 +6,7 @@ import { app, dialog, session } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
+import { CLOSE_BEHAVIORS, type CloseBehavior } from '../../shared/domain/consts'
 import { DEVTOOLS_STATE_CHANGED, IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
 import type { ConfigStore } from '../config'
 import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
@@ -349,7 +350,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
 
     config_set_close_behavior(request) {
       const behavior = String(asObject(request).behavior ?? '')
-      if (behavior !== 'quit' && behavior !== 'tray' && behavior !== '') {
+      if (!CLOSE_BEHAVIORS.includes(behavior as CloseBehavior)) {
         throw new AppError('无效的关闭行为', { status: 400 })
       }
       options.config.update((config) => {

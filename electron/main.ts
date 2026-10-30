@@ -6,7 +6,7 @@ import { ConfigStore } from './config'
 import { closeWorkspace, currentWorkspace } from './db'
 import { createHandlers } from './ipc/commands'
 import { registerIpc } from './ipc/router'
-import { initLogging, logError, logStartup } from './logging'
+import { initLogging, logError, logStartup, logWarn } from './logging'
 import { createTray } from './shell/tray'
 import { applyProxy } from './shell/net'
 import {
@@ -45,7 +45,13 @@ if (!hasSingleInstanceLock) {
   })
   app.on('before-quit', () => {
     setQuitting(true)
-    closeWorkspace()
+    // 关库失败不能让退出半途而废：一旦 quit 被这里的异常打断，进程会带着 quitting=true
+    // 留在托盘里，之后的每次「关闭」都只是把窗口关掉、进程不退 —— 看起来就像关闭行为没生效。
+    try {
+      closeWorkspace()
+    } catch (error) {
+      logWarn(`退出时关闭工作空间失败: ${error instanceof Error ? error.message : String(error)}`)
+    }
   })
   app.on('web-contents-created', (_event, contents) => {
     contents.on('will-attach-webview', (event) => event.preventDefault())

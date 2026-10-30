@@ -35,7 +35,6 @@ async function launch(
       HOME: home,
       TRANSACTIONS_USER_DATA: userData,
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
-      TRANSACTIONS_TEST_CLOSE: 'quit',
     }),
   })
   return { app, root, workspace }
@@ -55,6 +54,55 @@ test('窗口：关闭行为为托盘时隐藏窗口、进程保留', async () =>
       .toBe(false)
   } finally {
     await app.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('窗口：设置里改成「直接退出」后关闭即退出（改完立即生效）', async () => {
+  const { app, root } = await launch('tray')
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-general').click()
+    await page.getByTestId('close-behavior-quit').click()
+    await expect
+      .poll(() => JSON.parse(readFileSync(join(root, 'home', '.tr.dev.json'), 'utf8')).closeBehavior)
+      .toBe('quit')
+    await page.getByTestId('window-close').click()
+    await expect.poll(() => page.isClosed(), { timeout: 5000 }).toBe(true)
+  } finally {
+    try {
+      await app.close()
+    } catch {
+      // 已退出
+    }
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('窗口：退出被取消时也要真的退出，不留没有窗口的托盘进程', async () => {
+  const { app, root } = await launch('quit')
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    // 真实事故：退出流程被打断后 quitting 已经置位，窗口关掉而进程留在托盘，
+    // 再点托盘又开回一个窗口 —— 看起来就是「关闭行为不生效、总是缩到托盘」。
+    await app.evaluate(({ app: electronApp }) => {
+      electronApp.on('before-quit', (event) => {
+        event.preventDefault()
+      })
+    })
+    await page.getByTestId('window-close').click()
+    await expect.poll(() => page.isClosed(), { timeout: 8000 }).toBe(true)
+  } finally {
+    try {
+      await app.close()
+    } catch {
+      // 已退出
+    }
     rmSync(root, { recursive: true, force: true })
   }
 })
@@ -107,7 +155,6 @@ test('窗口：重启后恢复上次的位置和尺寸', async () => {
         HOME: home,
         TRANSACTIONS_USER_DATA: userData,
         TRANSACTIONS_TEST_DIALOG_DIR: workspace,
-        TRANSACTIONS_TEST_CLOSE: 'quit',
       }),
     })
 

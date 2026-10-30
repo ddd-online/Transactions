@@ -4,6 +4,7 @@ import { join } from 'node:path'
 
 import type { AppConfig, ConfigSnapshot, FeatureFlags, ProxySetting } from '../shared/types/config'
 import { defaultFeatures, defaultProxy } from '../shared/types/config'
+import { CLOSE_BEHAVIOR_ASK, normalizeCloseBehavior } from '../shared/domain/consts'
 
 export const CONFIG_FILE = '.tr.json'
 export const CONFIG_FILE_DEV = '.tr.dev.json'
@@ -68,7 +69,7 @@ export function defaultConfig(): AppConfig {
     x: null,
     y: null,
     workspaceDir: '',
-    closeBehavior: '',
+    closeBehavior: CLOSE_BEHAVIOR_ASK,
     appearance: 'system',
     proxy: defaultProxy(),
     features: defaultFeatures(),
@@ -88,7 +89,7 @@ export function normalizeConfig(raw: Record<string, unknown>): AppConfig {
     x: optionalNumber(raw.x),
     y: optionalNumber(raw.y),
     workspaceDir: stringOr(raw.workspaceDir, defaults.workspaceDir),
-    closeBehavior: stringOr(raw.closeBehavior, defaults.closeBehavior),
+    closeBehavior: normalizeCloseBehavior(raw.closeBehavior),
     appearance: stringOr(raw.appearance, defaults.appearance),
     proxy: normalizeProxy(raw.proxy),
     features: normalizeFlags(raw.features, defaults.features),

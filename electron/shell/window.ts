@@ -3,6 +3,11 @@ import { join } from 'node:path'
 import { app, BrowserWindow, dialog, nativeTheme, screen, shell } from 'electron'
 
 import { WINDOW_STATE_CHANGED } from '../../shared/events'
+import {
+  CLOSE_BEHAVIOR_QUIT,
+  CLOSE_BEHAVIOR_TRAY,
+  normalizeCloseBehavior,
+} from '../../shared/domain/consts'
 import { logInfo, logWarn } from '../logging'
 import { sendEvent } from '../ipc/events'
 import type { ConfigStore } from '../config'
@@ -68,8 +73,20 @@ function scheduleSaveBounds(): void {
 
 export function quitApp(): void {
   quitting = true
-  saveWindowBounds()
+  // 存窗口尺寸失败不该把人卡在「点了关闭却没反应」里：记一条日志，照退。
+  try {
+    saveWindowBounds()
+  } catch (error) {
+    logWarn(`退出前保存窗口尺寸失败: ${error instanceof Error ? error.message : String(error)}`)
+  }
   app.quit()
+  // `app.quit()` 可能被 before-quit 或未捕获异常打断；一旦被打断，进程就会带着
+  // quitting=true 留在托盘里，窗口没了、点托盘又能开回来 —— 用户看到的就是「关闭不生效、
+  // 总是缩到托盘」。3 秒还没退完就强制退出：这种状态下继续活着没有意义。
+  setTimeout(() => {
+    logWarn('退出未在 3 秒内完成，强制退出')
+    app.exit(0)
+  }, 3000)
 }
 
 export function setQuitting(value: boolean): void {
@@ -98,24 +115,33 @@ function handleClose(window: BrowserWindow, event: CloseEvent): void {
   if (quitting) return
   event.preventDefault()
 
-  if (!hasWorkspace()) {
-    logInfo('工作空间尚未打开，关闭即退出')
-    quitApp()
-    return
-  }
+  try {
+    if (!hasWorkspace()) {
+      logInfo('工作空间尚未打开，关闭即退出')
+      quitApp()
+      return
+    }
 
-  saveWindowBounds()
-  const config = options?.config.get()
-  const behavior = process.env.TRANSACTIONS_TEST_CLOSE ?? config?.closeBehavior ?? ''
-  if (behavior === 'tray') {
-    window.hide()
-    return
-  }
-  if (behavior === 'quit') {
+    saveWindowBounds()
+    // 设置里选的值就是这里的分支：quit / tray / ask 三选一，没有任何一条会被忽略。
+    const raw = process.env.TRANSACTIONS_TEST_CLOSE ?? options?.config.get().closeBehavior
+    const behavior = normalizeCloseBehavior(raw)
+    logInfo(`关闭行为: ${behavior}`)
+
+    if (behavior === CLOSE_BEHAVIOR_TRAY) {
+      window.hide()
+      return
+    }
+    if (behavior === CLOSE_BEHAVIOR_QUIT) {
+      quitApp()
+      return
+    }
+    askCloseBehavior(window)
+  } catch (error) {
+    // 读配置或存尺寸失败时不能把窗口留在「点关闭没反应」的状态：记日志，照关闭处理。
+    logWarn(`关闭处理失败: ${error instanceof Error ? error.message : String(error)}`)
     quitApp()
-    return
   }
-  askCloseBehavior(window)
 }
 
 export function createMainWindow(windowOptions: WindowOptions): BrowserWindow {
@@ -175,6 +201,12 @@ export function createMainWindow(windowOptions: WindowOptions): BrowserWindow {
   window.on('unmaximize', () => sendEvent(WINDOW_STATE_CHANGED, false))
   window.on('closed', () => {
     if (mainWindow === window) mainWindow = null
+    // 窗口真的关掉了（不是 hide）就意味着这次不是「收进托盘」，进程没有理由继续留在托盘里：
+    // 一只没有窗口的托盘图标点什么都没用，那是最糟的残留状态。
+    if (!quitting) {
+      logWarn('窗口已关闭，但进程不在退出流程中，直接退出')
+      quitApp()
+    }
   })
 
   window.webContents.on('will-navigate', (event, url) => {

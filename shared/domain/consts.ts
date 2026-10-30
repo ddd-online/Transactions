@@ -8,6 +8,25 @@ export const LOG_NAME = 'transactions.log'
 export const DB_NAME = 'transactions.db'
 export const ALL = 'all'
 
+// ---------- 关闭行为 ----------
+/** 点关闭按钮时做什么：退出 / 收进托盘 / 每次问。配置里存的就是这三个值。 */
+export const CLOSE_BEHAVIOR_QUIT = 'quit'
+export const CLOSE_BEHAVIOR_TRAY = 'tray'
+export const CLOSE_BEHAVIOR_ASK = 'ask'
+export const CLOSE_BEHAVIORS = [
+  CLOSE_BEHAVIOR_QUIT,
+  CLOSE_BEHAVIOR_TRAY,
+  CLOSE_BEHAVIOR_ASK,
+] as const
+export type CloseBehavior = (typeof CLOSE_BEHAVIORS)[number]
+
+/** 空值（老配置里从没选过）与不认识的值都按「每次询问」处理。 */
+export function normalizeCloseBehavior(value: unknown): CloseBehavior {
+  return CLOSE_BEHAVIORS.includes(value as CloseBehavior)
+    ? (value as CloseBehavior)
+    : CLOSE_BEHAVIOR_ASK
+}
+
 // ---------- 交易类型 ----------
 export const TRANSACTION_TYPE_INCOME = 'income'
 export const TRANSACTION_TYPE_EXPENSE = 'expense'

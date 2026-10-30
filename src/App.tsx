@@ -11,6 +11,12 @@ import {
   WORKSPACE_CHANGED,
 } from '../shared/events'
 import { ERR_CODE_SOURCE_WORKSPACE } from '../shared/errors'
+import {
+  CLOSE_BEHAVIOR_ASK,
+  CLOSE_BEHAVIOR_QUIT,
+  CLOSE_BEHAVIOR_TRAY,
+  normalizeCloseBehavior,
+} from '../shared/domain/consts'
 import type { SourceImportProgress } from '../shared/types/import'
 import type { UpdateSnapshot } from '../shared/domain/update'
 import { RecordsPage } from './pages/records'
@@ -863,13 +869,13 @@ export function App(): JSX.Element {
                       <SettingsRow title="关闭行为" description="点击右上角关闭按钮时的行为">
                         <Segmented
                           testId="close-behavior"
-                          value={config?.closeBehavior ?? 'quit'}
+                          value={normalizeCloseBehavior(config?.closeBehavior)}
                           disabled={!config}
                           onChange={(value) => void setCloseBehavior(value)}
                           options={[
-                            { value: 'quit', label: '直接退出' },
-                            { value: 'tray', label: '最小化到托盘' },
-                            { value: 'ask', label: '每次询问' },
+                            { value: CLOSE_BEHAVIOR_QUIT, label: '直接退出' },
+                            { value: CLOSE_BEHAVIOR_TRAY, label: '最小化到托盘' },
+                            { value: CLOSE_BEHAVIOR_ASK, label: '每次询问' },
                           ]}
                         />
                       </SettingsRow>
