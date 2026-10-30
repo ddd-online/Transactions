@@ -564,219 +564,232 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
           </div>
         ) : (
           <>
-            <header className="stock-detail__head">
-              <div className="stock-detail__identity">
-                <h2>{selected.stockName}</h2>
-                <span className="stock-muted stock-mono">{selected.stockCode}</span>
-                <Select
-                  className="stock-tag-select"
-                  data-testid="position-tag-select"
-                  value={selected.tag}
-                  options={tags.map((tag) => ({ value: tag, label: tag }))}
-                  onChange={(value) => void saveTag(value)}
-                  popupMatchSelectWidth={false}
-                  size="small"
-                />              </div>
-              <div className="stock-detail__actions">
-                <Button variant="primary" size="sm" testId="stock-position-close" onClick={() => openTrade('close', selected)}>
-                  清仓
-                </Button>
-                <Button variant="secondary" size="sm" testId="stock-position-reduce" onClick={() => openTrade('reduce', selected)}>
-                  减仓
-                </Button>
-                <Button variant="secondary" size="sm" testId="stock-position-add" onClick={() => openTrade('add', selected)}>
-                  加仓
-                </Button>
-              </div>
-            </header>
-
-            <div className="stock-detail__metrics">
-              <div>
-                <span className="stock-label">现价</span>
-                <strong className="stock-mono">{stockPrice(selected.latestPrice)}</strong>
-              </div>
-              <div>
-                <span className="stock-label">当日涨跌</span>
-                <strong className={quote?.up ? 'is-up' : 'is-down'}>
-                  {quote ? `${quote.change} ${quote.percent}` : '—'}
-                </strong>
-              </div>
-              <div>
-                <span className="stock-label">持仓市值</span>
-                <strong className="stock-mono">{money(marketValue)}</strong>
-              </div>
-              <div>
-                <span className="stock-label">浮动盈亏</span>
-                <strong className={stockPnlClass(pnl)}>
-                  {money(pnl)} {stockPercent(pnlRate)}
-                </strong>
-              </div>
-            </div>
-
-            <p className="stock-fee-line">
-              本轮费率 <span>{feeText(selected, fee)}</span>
-            </p>
-
-            <StockLedgerSection ledgerId={ledgerId} stockCode={selected.stockCode} />
-
-            <section className="stock-detail__section">
-              <span className="stock-section-title">每日复盘</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                testId="position-review-open"
-                onClick={openDailyReview}
-              >
-                写今日
-              </Button>
-            </section>
-            <div className="stock-review-preview" data-testid="position-daily-review">
-              {selected.dayReviews[0]
-                ? `${selected.dayReviews[0].date}：${selected.dayReviews[0].review}`
-                : '还没有写每日复盘，点「写今日」记下今天的盘面和判断。'}
-            </div>
-
-            <section className="stock-detail__section">
-              <span className="stock-section-title">本轮复盘</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                testId="position-round-edit"
-                onClick={() => {
-                  // 第一次写且还没动过草稿时用本轮模板起头；已写过的复盘/草稿不覆盖
-                  setRoundText((current) => (current.trim() ? current : roundTemplate))
-                  setRoundEditing(true)
-                }}
-              >
-                编辑
-              </Button>
-            </section>
-            {roundEditing ? (
-              <div className="stock-review-box">
-                <Input.TextArea
-                  data-testid="position-round-review"
-                  rows={6}
-                  placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
-                  value={roundText}
-                  onChange={(event) => setRoundText(event.target.value)}
-                />
-                <div className="stock-review-box__footer">
-                  <Button
-                    variant="secondary"
-                    testId="position-round-cancel"
-                    onClick={() => setRoundEditing(false)}
-                  >
-                    取消
+            <ScrollArea className="stock-detail__info">
+              <header className="stock-detail__head">
+                <div className="stock-detail__identity">
+                  <h2>{selected.stockName}</h2>
+                  <span className="stock-muted stock-mono">{selected.stockCode}</span>
+                  <Select
+                    className="stock-tag-select"
+                    data-testid="position-tag-select"
+                    value={selected.tag}
+                    options={tags.map((tag) => ({ value: tag, label: tag }))}
+                    onChange={(value) => void saveTag(value)}
+                    popupMatchSelectWidth={false}
+                    size="small"
+                  />              </div>
+                <div className="stock-detail__actions">
+                  <Button variant="primary" size="sm" testId="stock-position-close" onClick={() => openTrade('close', selected)}>
+                    清仓
                   </Button>
-                  <Button
-                    variant="primary"
-                    testId="position-round-save"
-                    onClick={() => {
-                      void saveRound().then(() => setRoundEditing(false))
-                    }}
-                  >
-                    保存复盘
+                  <Button variant="secondary" size="sm" testId="stock-position-reduce" onClick={() => openTrade('reduce', selected)}>
+                    减仓
+                  </Button>
+                  <Button variant="secondary" size="sm" testId="stock-position-add" onClick={() => openTrade('add', selected)}>
+                    加仓
                   </Button>
                 </div>
+              </header>
+
+              <div className="stock-detail__metrics">
+                <div>
+                  <span className="stock-label">现价</span>
+                  <strong className="stock-mono">{stockPrice(selected.latestPrice)}</strong>
+                </div>
+                <div>
+                  <span className="stock-label">当日涨跌</span>
+                  <strong className={quote?.up ? 'is-up' : 'is-down'}>
+                    {quote ? `${quote.change} ${quote.percent}` : '—'}
+                  </strong>
+                </div>
+                <div>
+                  <span className="stock-label">持仓市值</span>
+                  <strong className="stock-mono">{money(marketValue)}</strong>
+                </div>
+                <div>
+                  <span className="stock-label">浮动盈亏</span>
+                  <strong className={stockPnlClass(pnl)}>
+                    {money(pnl)} {stockPercent(pnlRate)}
+                  </strong>
+                </div>
               </div>
-            ) : (
-              <div className="stock-review-preview stock-review-preview--lines" data-testid="position-round-preview">
-                {selected.review
-                  ? selected.review
-                  : '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
+
+              <p className="stock-fee-line">
+                本轮费率 <span>{feeText(selected, fee)}</span>
+              </p>
+
+              <StockLedgerSection ledgerId={ledgerId} stockCode={selected.stockCode} />
+
+              <section className="stock-detail__section">
+                <span className="stock-section-title">每日复盘</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  testId="position-review-open"
+                  onClick={openDailyReview}
+                >
+                  写今日
+                </Button>
+              </section>
+              <div className="stock-review-preview" data-testid="position-daily-review">
+                {selected.dayReviews[0]
+                  ? `${selected.dayReviews[0].date}：${selected.dayReviews[0].review}`
+                  : '还没有写每日复盘，点「写今日」记下今天的盘面和判断。'}
               </div>
-            )}
+
+              <section className="stock-detail__section">
+                <span className="stock-section-title">本轮复盘</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  testId="position-round-edit"
+                  onClick={() => {
+                    // 第一次写且还没动过草稿时用本轮模板起头；已写过的复盘/草稿不覆盖
+                    setRoundText((current) => (current.trim() ? current : roundTemplate))
+                    setRoundEditing(true)
+                  }}
+                >
+                  编辑
+                </Button>
+              </section>
+              {roundEditing ? (
+                <div className="stock-review-box">
+                  <Input.TextArea
+                    data-testid="position-round-review"
+                    rows={6}
+                    placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
+                    value={roundText}
+                    onChange={(event) => setRoundText(event.target.value)}
+                  />
+                  <div className="stock-review-box__footer">
+                    <Button
+                      variant="secondary"
+                      testId="position-round-cancel"
+                      onClick={() => setRoundEditing(false)}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      variant="primary"
+                      testId="position-round-save"
+                      onClick={() => {
+                        void saveRound().then(() => setRoundEditing(false))
+                      }}
+                    >
+                      保存复盘
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="stock-review-preview stock-review-preview--lines" data-testid="position-round-preview">
+                  {selected.review
+                    ? selected.review
+                    : '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
+                </div>
+              )}
+            </ScrollArea>
 
             <section className="stock-detail__section">
               <span className="stock-section-title">成交记录</span>
             </section>
-            <Table
-              className="tr-table stock-trade-table"
-              rowKey="id"
-              pagination={false}
-              size="small"
-              dataSource={trades}
-              onRow={() => ({ 'data-testid': 'stock-trade' }) as HTMLAttributes<HTMLElement>}
-              columns={[
-                {
-                  title: '时间',
-                  dataIndex: 'tradeTime',
-                  align: 'center',
-                  render: (value: number) => stockDateTime(value),
-                  width: 140,
-                },
-                {
-                  title: '类型',
-                  dataIndex: 'tradeType',
-                  align: 'center',
-                  width: 64,
-                  render: (value: string) => (
-                    <span className={`stock-trade-type is-${value}`}>{stockTradeTypeLabel(value)}</span>
-                  ),
-                },
-                {
-                  title: '成交价',
-                  dataIndex: 'price',
-                  align: 'right',
-                  render: (value: number) => milliToYuan(value),
-                },
-                { title: '手数', dataIndex: 'lots', align: 'center', width: 56 },
-                {
-                  title: '成交金额',
-                  dataIndex: 'amount',
-                  align: 'right',
-                  render: (value: number) => centsToYuan(value),
-                },
-                {
-                  title: '费用',
-                  dataIndex: 'fee',
-                  align: 'right',
-                  render: (value: number) => money(value),
-                },
-                {
-                  title: '资金变动',
-                  key: 'cash',
-                  align: 'right',
-                  render: (_, row) => {
-                    const cash =
-                      row.tradeType === 'reduce' || row.tradeType === 'close'
-                        ? row.amount - row.fee
-                        : -(row.amount + row.fee)
-                    return <span className={stockPnlClass(cash)}>{signedMoney(cash)}</span>
-                  },
-                },
-                {
-                  title: '操作',
-                  key: 'actions',
-                  align: 'center',
-                  width: 96,
-                  render: (_, row) => (
-                    <span className="stock-row-actions">
-                      <Button
-                        variant="text"
-                        size="sm"
-                        testId="stock-trade-edit"
-                        onClick={() => {
-                          setEditingTrade(row)
-                          setEditPrice(milliToYuan(row.price))
-                          setEditLots(String(row.lots))
-                        }}
-                      >
-                        编辑
-                      </Button>
-                      <Button
-                        variant="text-danger"
-                        size="sm"
-                        testId="stock-trade-delete"
-                        onClick={() => setDeleteOrder(row.orderId)}
-                      >
-                        删除
-                      </Button>
-                    </span>
-                  ),
-                },
-              ]}
-            />
+            <div className="stock-detail__trades">
+              <ScrollArea className="stock-detail__trades-scroll">
+                <Table
+                  className="tr-table stock-trade-table"
+                  sticky={{
+                    // 表头贴在成交记录自己的滚动区顶边；详情只有一个这样的滚动区
+                    getContainer: () =>
+                      (document.querySelector(
+                        '.stock-detail__trades-scroll [data-overlayscrollbars-viewport]',
+                      ) as HTMLElement | null) ?? window,
+                  }}
+                  rowKey="id"
+                  pagination={false}
+                  size="small"
+                  dataSource={trades}
+                  onRow={() => ({ 'data-testid': 'stock-trade' }) as HTMLAttributes<HTMLElement>}
+                  columns={[
+                    {
+                      title: '时间',
+                      dataIndex: 'tradeTime',
+                      align: 'center',
+                      render: (value: number) => stockDateTime(value),
+                      width: 140,
+                    },
+                    {
+                      title: '类型',
+                      dataIndex: 'tradeType',
+                      align: 'center',
+                      width: 64,
+                      render: (value: string) => (
+                        <span className={`stock-trade-type is-${value}`}>{stockTradeTypeLabel(value)}</span>
+                      ),
+                    },
+                    {
+                      title: '成交价',
+                      dataIndex: 'price',
+                      align: 'right',
+                      render: (value: number) => milliToYuan(value),
+                    },
+                    { title: '手数', dataIndex: 'lots', align: 'center', width: 56 },
+                    {
+                      title: '成交金额',
+                      dataIndex: 'amount',
+                      align: 'right',
+                      render: (value: number) => centsToYuan(value),
+                    },
+                    {
+                      title: '费用',
+                      dataIndex: 'fee',
+                      align: 'right',
+                      render: (value: number) => money(value),
+                    },
+                    {
+                      title: '资金变动',
+                      key: 'cash',
+                      align: 'right',
+                      render: (_, row) => {
+                        const cash =
+                          row.tradeType === 'reduce' || row.tradeType === 'close'
+                            ? row.amount - row.fee
+                            : -(row.amount + row.fee)
+                        return <span className={stockPnlClass(cash)}>{signedMoney(cash)}</span>
+                      },
+                    },
+                    {
+                      title: '操作',
+                      key: 'actions',
+                      align: 'center',
+                      width: 96,
+                      render: (_, row) => (
+                        <span className="stock-row-actions">
+                          <Button
+                            variant="text"
+                            size="sm"
+                            testId="stock-trade-edit"
+                            onClick={() => {
+                              setEditingTrade(row)
+                              setEditPrice(milliToYuan(row.price))
+                              setEditLots(String(row.lots))
+                            }}
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            variant="text-danger"
+                            size="sm"
+                            testId="stock-trade-delete"
+                            onClick={() => setDeleteOrder(row.orderId)}
+                          >
+                            删除
+                          </Button>
+                        </span>
+                      ),
+                    },
+                  ]}
+                />
+              </ScrollArea>
+            </div>
           </>
         )}
       </section>

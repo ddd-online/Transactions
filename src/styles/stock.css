@@ -2735,17 +2735,49 @@
   display: none;
 }
 
+/* 详情是一列两段：上面（行情、台账、复盘）该多高就多高，内容超高时自己滚；
+ * 成交记录吃掉剩下的高度、表格在自己的滚动区里滚。整列不再整体滚动 ——
+ * 否则一屏里只有最下面的表在动，上面那些不动的信息还占着位置。 */
 .stock-detail {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
 }
+
+/* 信息区用项目统一的悬浮滚动条：内容超高时它自己滚，不把成交记录挤没。
+ * （`overflow` 交给 ScrollArea，这里只管它在竖直方向上的伸缩。） */
+.stock-detail__info {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+.stock-detail__trades {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  /* 表头 + 三行左右：复盘写长了也不能把成交记录挤没 */
+  min-height: 180px;
+  min-width: 0;
+}
+
+.stock-detail__trades-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 表头由 AntD 的 sticky 交给滚动区（getContainer 指到 OverlayScrollbars 的视口）：
+ * 滚动的是行，列名一直看得见。CSS 的 `position: sticky` 在这里不管用 ——
+ * 表格自己的 `.ant-table-container` 就是一个不滚动的 overflow 容器。 */
 
 .stock-detail__empty {
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   height: 100%;
+  min-height: 0;
 }
 
 .stock-detail__head {
@@ -2916,7 +2948,7 @@
 
 /* 持仓详情只有一列内容、没有额外横向空间：让 8 列按容器收窄，
  * 不再继承 .tr-table 的 880px 最小宽度把详情撑出横向滚动。 */
-.stock-detail > .stock-trade-table {
+.stock-detail__trades .stock-trade-table {
   min-width: 0;
 }
 
@@ -2932,7 +2964,7 @@
 }
 
 /* 时间列是一行完整日期 + 时分：11px 等宽、不换行，140px 内刚好放下。 */
-.stock-detail > .stock-trade-table .ant-table-tbody > tr > td:first-child {
+.stock-detail__trades .stock-trade-table .ant-table-tbody > tr > td:first-child {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-small);
   font-variant-numeric: tabular-nums;
