@@ -21,7 +21,8 @@ export interface StockAccountPanelProps {
   refreshToken: number
 }
 
-const PAGE_SIZE = 10
+/** 资金变化记录每页条数：与记账页、股票统计明细一致，都是 15。 */
+const PAGE_SIZE = 15
 
 export function StockAccountPanel({
   ledgerId,
