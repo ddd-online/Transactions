@@ -1,19 +1,20 @@
 import type { JSX } from 'react'
 
 /**
- * 退出遮罩：把整个界面虚化，只留一条进度条。
+ * 退出遮罩：把整个界面虚化，中间一条**不确定进度**的斜纹横条在流动。
+ *
+ * 这里没有百分比：退出真正要干的活只有两件（补写窗口位置、关工作空间），
+ * 而且通常是毫秒级的。硬报一个数字只是在装精确。斜纹条只表达"还在忙"，
+ * 下面的步骤文字才是有效信息（正在保存窗口状态 / 正在关闭工作空间）。
  *
  * 它盖住的是**已经画好的应用**（侧栏、版心、自绘标题栏），不是一张空窗：
- * 用户点关闭后先看到「正在退出」，等主进程把窗口位置与工作空间落完盘再关窗，
- * 而不是窗口毫无交代地消失。退出流程很短，所以这一层不做动效，只做静态虚化。
+ * 用户点关闭后先看到交代，等主进程收尾完了再关窗。
  */
 export interface QuitScreenProps {
-  percent: number
   label: string
 }
 
-export function QuitScreen({ percent, label }: QuitScreenProps): JSX.Element {
-  const clamped = Math.max(0, Math.min(100, Math.round(percent)))
+export function QuitScreen({ label }: QuitScreenProps): JSX.Element {
   return (
     <div
       className="ui-quit"
@@ -25,17 +26,9 @@ export function QuitScreen({ percent, label }: QuitScreenProps): JSX.Element {
     >
       <div className="ui-quit__card">
         <p className="ui-quit__title">正在退出</p>
-        <div
-          className="ui-quit__track"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={clamped}
-          data-testid="quit-progress"
-        >
-          <div className="ui-quit__fill" style={{ width: `${clamped}%` }} />
-        </div>
-        <p className="ui-quit__label" data-testid="quit-label">
+        {/* 纯视觉的斜纹条：读屏只读下面那句步骤，别让它念一个假的百分比。 */}
+        <div className="ui-quit__bar" data-testid="quit-bar" aria-hidden="true" />
+        <p className="ui-quit__label" data-testid="quit-label" aria-live="polite">
           {label}
         </p>
       </div>

@@ -109,8 +109,8 @@ function waitForQuitReady(timeout: number): Promise<void> {
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
-function reportQuit(percent: number, label: string): void {
-  sendEvent(APP_QUIT_PROGRESS, { percent, label })
+function reportQuit(label: string): void {
+  sendEvent(APP_QUIT_PROGRESS, { label })
 }
 
 /**
@@ -139,7 +139,7 @@ async function runQuit(): Promise<void> {
   sendEvent(APP_QUIT_STARTED, { total: 3 })
   if (rendered) await rendered
 
-  reportQuit(30, '正在保存窗口状态')
+  reportQuit('正在保存窗口状态')
   try {
     saveWindowBounds()
   } catch (error) {
@@ -147,7 +147,7 @@ async function runQuit(): Promise<void> {
   }
   if (watchable) await delay(QUIT_STEP_MS)
 
-  reportQuit(65, '正在关闭工作空间')
+  reportQuit('正在关闭工作空间')
   try {
     closeWorkspace()
   } catch (error) {
@@ -155,7 +155,7 @@ async function runQuit(): Promise<void> {
   }
   if (watchable) await delay(QUIT_STEP_MS)
 
-  reportQuit(100, '正在退出')
+  reportQuit('正在退出')
   if (watchable) {
     const remaining = QUIT_MIN_VISIBLE_MS - (Date.now() - startedAt)
     if (remaining > 0) await delay(remaining)

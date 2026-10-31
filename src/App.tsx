@@ -120,7 +120,7 @@ export function App(): JSX.Element {
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [maximized, setMaximized] = useState(false)
   const [quitting, setQuitting] = useState(false)
-  const [quitStep, setQuitStep] = useState({ percent: 0, label: '正在准备退出' })
+  const [quitLabel, setQuitLabel] = useState('正在准备退出')
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
@@ -284,14 +284,12 @@ export function App(): JSX.Element {
         setMaximized(message.payload === true)
       }
       if (message.event === APP_QUIT_STARTED) {
-        setQuitStep({ percent: 4, label: '正在准备退出' })
+        setQuitLabel('正在准备退出')
         setQuitting(true)
       }
       if (message.event === APP_QUIT_PROGRESS) {
-        const step = message.payload as { percent?: unknown; label?: unknown } | null
-        if (step && typeof step.percent === 'number' && typeof step.label === 'string') {
-          setQuitStep({ percent: step.percent, label: step.label })
-        }
+        const step = message.payload as { label?: unknown } | null
+        if (step && typeof step.label === 'string') setQuitLabel(step.label)
       }
     })
 
@@ -1157,7 +1155,7 @@ export function App(): JSX.Element {
       <span className="sr-only" data-testid="app-info">
         版本 {version}
       </span>
-      {quitting ? <QuitScreen percent={quitStep.percent} label={quitStep.label} /> : null}
+      {quitting ? <QuitScreen label={quitLabel} /> : null}
       </>
     </AntdProvider>
   )

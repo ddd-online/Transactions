@@ -218,7 +218,7 @@ test('窗口：重启后恢复上次的位置和尺寸', async () => {
   }
 })
 
-test('窗口：退出时先虚化界面、亮出进度条，收尾完了才关窗', async () => {
+test('窗口：退出时先虚化界面、亮出斜纹条，收尾完了才关窗', async () => {
   const { app, root } = await launch('quit')
   try {
     const page = await app.firstWindow()
@@ -226,11 +226,20 @@ test('窗口：退出时先虚化界面、亮出进度条，收尾完了才关�
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('window-close').click()
 
-    // 关窗之前必须有交代：整屏虚化 + 一条进度条 + 当前步骤
+    // 关窗之前必须有交代：整屏虚化 + 一条在流动的斜纹条 + 当前步骤
     const screen = page.getByTestId('quit-screen')
     await expect(screen).toBeVisible()
     await expect(screen).toHaveCSS('backdrop-filter', /blur\(10px\)/)
-    await expect(page.getByTestId('quit-progress')).toHaveAttribute('aria-valuenow', /^\d+$/)
+
+    // 不是进度条：斜纹条无限循环，只表示"还在忙"
+    const bar = page.getByTestId('quit-bar')
+    await expect(bar).toBeVisible()
+    await expect(bar).toHaveCSS('animation-name', 'ui-quit-stripes')
+    await expect(bar).toHaveCSS('animation-iteration-count', 'infinite')
+    // 加宽后的横条铺满卡片（420 减去两侧 24 内边距）
+    await expect
+      .poll(async () => bar.evaluate((element) => element.getBoundingClientRect().width))
+      .toBeGreaterThan(340)
 
     // 收尾完成后窗口才消失
     await expect.poll(() => page.isClosed(), { timeout: 8000 }).toBe(true)

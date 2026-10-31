@@ -1223,7 +1223,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--transactions-space-md);
-  width: min(300px, calc(100vw - 48px));
+  width: min(420px, calc(100vw - 48px));
   padding: var(--transactions-space-xl);
   border-radius: var(--transactions-radius-xl);
   border: 1px solid var(--transactions-color-divider);
@@ -1238,22 +1238,36 @@
   font-weight: 600;
 }
 
-/* 横条是这条遮罩上唯一在动的东西：4px 细条 + 主色填充，
- * 填充宽度跟着主进程报的百分比走，过渡短于最短可见时间的一半，
- * 免得关窗时进度条还停在半路。 */
-.ui-quit__track {
+/* 横条是这条遮罩上唯一在动的东西：**不报百分比**，只表示"还在忙"。
+ * 斜纹（45° 主色 / 主色淡化）铺满整条，图案按 16px 的砖平铺、背景横向匀速
+ * 平移一格，接缝处正好对上，看起来就是无限流动的螺旋纹。
+ * 砖高 16px 而条高 10px：条纹在竖直方向被裁掉一截，仍是 45°，不会变陡。 */
+.ui-quit__bar {
   width: 100%;
-  height: 4px;
+  height: 12px;
   border-radius: var(--transactions-radius-full);
-  background-color: var(--transactions-color-minor-background);
   overflow: hidden;
+  /* 底是主色的浅一档，不透明：条纹之间的空隙也要读成"这条带子还在"，
+   * 而不是一排浮在纸面上的蓝色短杠。 */
+  background-color: color-mix(in srgb, var(--transactions-color-primary) 28%, var(--transactions-color-elevated));
+  background-image: linear-gradient(
+    45deg,
+    var(--transactions-color-primary) 25%,
+    transparent 25% 50%,
+    var(--transactions-color-primary) 50% 75%,
+    transparent 75%
+  );
+  background-size: 16px 16px;
+  animation: ui-quit-stripes 700ms linear infinite;
 }
 
-.ui-quit__fill {
-  height: 100%;
-  border-radius: inherit;
-  background-color: var(--transactions-color-primary);
-  transition: width 160ms ease-out;
+@keyframes ui-quit-stripes {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 16px 0;
+  }
 }
 
 .ui-quit__label {
