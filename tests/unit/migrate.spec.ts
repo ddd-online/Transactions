@@ -104,4 +104,28 @@ describe('migration runner', () => {
     const workspace = openWorkspace(temporaryDirectory())
     expect(schemaVersion(workspace.db)).toBe(LATEST)
   })
+
+  it('adds the live photo columns to an existing event image table', () => {
+    const path = join(temporaryDirectory(), 'transactions.db')
+    const db = openDatabase(path)
+    // 上一版（v5）的库：关键事件图片还没有原图 / 实况两列
+    migrate(db, path, MIGRATIONS.filter((migration) => migration.version <= 5))
+    db.prepare(
+      `INSERT INTO key_event_image (id, ledger_id, event_date, file_path, thumb_path, sort_order, created_at)
+       VALUES ('img-1', 'l1', '2026-01-01', 'key_events/2026-01-01/a.png', 'thumb_a.jpg', 1, 0)`,
+    ).run()
+
+    migrate(db, path)
+
+    expect(schemaVersion(db)).toBe(LATEST)
+    const row = db
+      .prepare('SELECT file_path, original_path, motion_path FROM key_event_image WHERE id = ?')
+      .get('img-1')
+    expect(row).toEqual({
+      file_path: 'key_events/2026-01-01/a.png',
+      original_path: '',
+      motion_path: '',
+    })
+    db.close()
+  })
 })
