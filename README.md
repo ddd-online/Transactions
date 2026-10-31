@@ -9,13 +9,13 @@ Windows 桌面个人记账应用：本地优先、单工作空间多账本，覆
 - Node 内置 `node:sqlite`（WAL）
 - 无原生模块、无本地监听端口
 - 渲染进程 `sandbox` + `contextIsolation`，只经 preload 暴露的 `window.api` 访问主进程
-- UI：Ant Design 6 提供通用控件，外观由 `--transactions-*` 令牌约束；图表由 AntV G2 渲染，滚动条由 OverlayScrollbars 覆盖绘制；页面骨架、图片裁剪保持自研
+- UI：Ant Design 6 提供通用控件，外观由 `--transactions-*` 令牌约束；图表由 AntV G2 渲染，滚动条由 OverlayScrollbars 覆盖绘制；页面骨架与事件图库保持自研
 
 ## 功能
 
 - 记账：记录 / 分析 / 分类标签 / 模板
 - 股票：账户 / 持仓 / 记录 / 心得 / 统计 / 天梯 / 设置
-- 事件：事件列表、正文、图片、关联交易
+- 事件：事件列表、正文、图片（含 HEIC 与实况照片）、关联交易
 - 日记：按日期保存、心情、字数、目录导入导出
 - 待办：主题、事项、进度、四象限、历史
 - 工作空间与多账本、按账本功能开关
