@@ -218,6 +218,32 @@ test('窗口：重启后恢复上次的位置和尺寸', async () => {
   }
 })
 
+test('窗口：退出时先虚化界面、亮出进度条，收尾完了才关窗', async () => {
+  const { app, root } = await launch('quit')
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('window-close').click()
+
+    // 关窗之前必须有交代：整屏虚化 + 一条进度条 + 当前步骤
+    const screen = page.getByTestId('quit-screen')
+    await expect(screen).toBeVisible()
+    await expect(screen).toHaveCSS('backdrop-filter', /blur\(10px\)/)
+    await expect(page.getByTestId('quit-progress')).toHaveAttribute('aria-valuenow', /^\d+$/)
+
+    // 收尾完成后窗口才消失
+    await expect.poll(() => page.isClosed(), { timeout: 8000 }).toBe(true)
+  } finally {
+    try {
+      await app.close()
+    } catch {
+      // 已退出
+    }
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('窗口：关闭行为为退出时进程结束', async () => {
   const { app, root } = await launch('quit')
   try {

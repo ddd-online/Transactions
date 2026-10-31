@@ -375,6 +375,12 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **The one blocking screen is the workspace picker** (no workspace open yet). It keeps the **whole app shell rendered behind it** — sidebar, page frame and empty states — so the user sees what they are configuring, and covers it with `--transactions-color-screen-scrim` (heavier than a modal mask, lighter than the lightbox scrim). That background layer is `inert`: no pointer, no keyboard focus, nothing in the accessibility tree; only the dialog is reachable. The screen has no dismiss affordance at all — no ×, no cancel, clicking the backdrop does nothing, and the shell refuses the window close request — the user must pick a directory (escape hatch: the tray menu's quit item). Everything else in the copy goes into the ⓘ tooltip: the title and one sentence are the whole text.
 
+### Quit screen
+
+- **退出是一次有交代的收尾，不是窗口突然消失。** 点关闭（关闭行为 = 直接退出）后，整屏用 `backdrop-filter: blur(10px)` 虚化已经画好的应用，中间一张纸面小卡：14px 600 的「正在退出」、一条 4px 横条（主色填充，`width` 只做 160ms 过渡）、一行 13px 的当前步骤（正在保存窗口状态 / 正在关闭工作空间）。没有按钮，也不给关闭入口 —— 这一层最多存在半秒。
+- **顺序是「先画面、再干活、后关窗」**：主进程发 `app:quit-started`，渲染层画完回执 `app_quit_ready`，主进程才开始补写窗口位置、关工作空间（WAL 合并），最后 `app.quit()`。回执等不到就 300ms 后继续，托盘退出（窗口不可见）直接跳过整段等待 —— 收尾不能因为界面没响应而卡住。
+- **横条按真实步骤走**：30% 保存窗口状态、65% 关闭工作空间、100% 正在退出；步骤之间留 90ms，收尾本身是毫秒级的，不留这口气进度条会一闪到底。总可见时间保底 520ms，关窗前进度条已经走完。
+
 ### Help tooltips
 
 - **Trigger:** a 12px `Icon::InfoCircle` placed immediately after the label it explains — `--transactions-color-text-tertiary`, `cursor: help`, the same glyph the settings panels use for their fee notes. It is focusable, so the component's own `:focus-within` rule shows the bubble to keyboard users too; give it the standard 2px focus ring.

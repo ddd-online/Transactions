@@ -500,6 +500,8 @@ export const commandSchemas = {
   proxy_test: z.object({ mode: z.string(), url: z.string().default('') }),
   proxy_resolve: z.object({ mode: z.string(), url: z.string().default('') }),
   file_save_image: z.object({ relativePath: z.string() }),
+  /** 渲染层把「正在退出」画到屏幕上之后的回执（退出流程据此继续） */
+  app_quit_ready: z.object({}),
   devtools_get_state: z.object({}),
   devtools_toggle: z.object({ enabled: z.boolean() }),
 } as const
@@ -639,6 +641,7 @@ export interface CommandResponses {
   proxy_test: ProxyTestResponse
   proxy_resolve: ProxyResolveResponse
   file_save_image: FileSaveResponse
+  app_quit_ready: null
   devtools_get_state: boolean
   devtools_toggle: boolean
 }

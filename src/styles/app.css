@@ -1200,3 +1200,64 @@
 .workspace-required .ui-modal__content {
   -webkit-app-region: no-drag;
 }
+/* 退出遮罩：整屏虚化 + 一条进度条。
+ * 它盖住的是**已经画好的应用**（侧栏、版心、自绘标题栏都在后面），所以只做
+ * `backdrop-filter` 虚化，不另画一层背景。卡片里只有一句标题、一条横条和
+ * 当前步骤：退出只有几百毫秒，不该再摆按钮或说明文字。
+ * 层级压在 AntD 弹层（~1000）之上：退出时若还开着对话框，也要被它盖住。 */
+.ui-quit {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(in srgb, var(--transactions-color-screen-scrim) 72%, transparent);
+  backdrop-filter: blur(10px) saturate(1.05);
+  -webkit-app-region: no-drag;
+  animation: tr-fade-in 120ms ease;
+}
+
+.ui-quit__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--transactions-space-md);
+  width: min(300px, calc(100vw - 48px));
+  padding: var(--transactions-space-xl);
+  border-radius: var(--transactions-radius-xl);
+  border: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-elevated);
+  box-shadow: var(--transactions-shadow-xl);
+}
+
+.ui-quit__title {
+  margin: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  font-weight: 600;
+}
+
+/* 横条是这条遮罩上唯一在动的东西：4px 细条 + 主色填充，
+ * 填充宽度跟着主进程报的百分比走，过渡短于最短可见时间的一半，
+ * 免得关窗时进度条还停在半路。 */
+.ui-quit__track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--transactions-radius-full);
+  background-color: var(--transactions-color-minor-background);
+  overflow: hidden;
+}
+
+.ui-quit__fill {
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--transactions-color-primary);
+  transition: width 160ms ease-out;
+}
+
+.ui-quit__label {
+  margin: 0;
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-body-sm);
+}

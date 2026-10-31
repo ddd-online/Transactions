@@ -98,7 +98,13 @@ import {
   queryLedgerById,
 } from '../services/ledger'
 import { openDirectory } from '../shell/dialogs'
-import { applyAppearance, getMainWindow, registerWindowControl } from '../shell/window'
+import {
+  applyAppearance,
+  getMainWindow,
+  notifyQuitReady,
+  quitApp,
+  registerWindowControl,
+} from '../shell/window'
 import { sendEvent } from './events'
 import { pickEnvProxy, validatedProxySetting } from '../../shared/domain/proxy'
 
@@ -113,7 +119,8 @@ const updater = new UpdaterService({
   releaseApi: process.env.TRANSACTIONS_TEST_RELEASE_API,
   tempDir: process.env.TRANSACTIONS_TEST_UPDATE_DIR,
   onEvent: (event, snapshot) => sendEvent(event, snapshot),
-  quit: () => app.quit(),
+  // 装完更新后同样是"退出"：走同一条收尾流程，窗口位置与工作空间都要落盘。
+  quit: () => quitApp(),
 })
 
 function createQuoteFetcher(): TencentStockQuoteFetcher {
@@ -253,6 +260,11 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         throw new AppError(`未知的窗口动作: ${action}`, { status: 400 })
       }
       registerWindowControl(action)
+      return null
+    },
+
+    app_quit_ready() {
+      notifyQuitReady()
       return null
     },
 

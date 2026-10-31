@@ -2,7 +2,7 @@ import { join } from 'node:path'
 
 import { app, BrowserWindow, dialog, nativeTheme, screen, shell } from 'electron'
 
-import { WINDOW_STATE_CHANGED } from '../../shared/events'
+import { APP_QUIT_PROGRESS, APP_QUIT_STARTED, WINDOW_STATE_CHANGED } from '../../shared/events'
 import {
   CLOSE_BEHAVIOR_QUIT,
   CLOSE_BEHAVIOR_TRAY,
@@ -11,7 +11,7 @@ import {
 import { logInfo, logWarn } from '../logging'
 import { sendEvent } from '../ipc/events'
 import type { ConfigStore } from '../config'
-import { hasWorkspace } from '../db'
+import { closeWorkspace, hasWorkspace } from '../db'
 import { fitWindowBounds } from '../../shared/domain/window-bounds'
 
 export interface WindowOptions {
@@ -28,6 +28,17 @@ let mainWindow: BrowserWindow | null = null
 let options: WindowOptions | null = null
 let quitting = false
 let boundsTimer: NodeJS.Timeout | null = null
+
+/** 退出节奏：等渲染层画完抹布、留出最短可见时间，再关窗。 */
+const QUIT_READY_TIMEOUT_MS = 300
+const QUIT_MIN_VISIBLE_MS = 520
+/** 每一步之间留一口气：收尾本身是毫秒级的，进度条得让人看见它走过。 */
+const QUIT_STEP_MS = 90
+const QUIT_STALL_MS = 5000
+
+/** 渲染层画完「正在退出」之后的回执；没有回执就按超时往下走。 */
+let quitReady: (() => void) | null = null
+let quitStarted = false
 
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null
@@ -72,17 +83,90 @@ function scheduleSaveBounds(): void {
 }
 
 export function quitApp(): void {
-  quitting = true
-  // 存窗口尺寸失败不该把人卡在「点了关闭却没反应」里：记一条日志，照退。
+  if (quitStarted) return
+  quitStarted = true
+  void runQuit()
+}
+
+/** 渲染层已经把「正在退出」画到屏幕上（或超时没回，按超时继续）。 */
+export function notifyQuitReady(): void {
+  const resolve = quitReady
+  quitReady = null
+  resolve?.()
+}
+
+function waitForQuitReady(timeout: number): Promise<void> {
+  return new Promise((resolve) => {
+    const done = (): void => {
+      clearTimeout(timer)
+      quitReady = null
+      resolve()
+    }
+    const timer = setTimeout(done, timeout)
+    quitReady = done
+  })
+}
+
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
+function reportQuit(percent: number, label: string): void {
+  sendEvent(APP_QUIT_PROGRESS, { percent, label })
+}
+
+/**
+ * 退出流程：先把界面虚化、亮出进度条，再做收尾的持久化，最后关窗。
+ *
+ * 退出时真正要落的盘只有两处：
+ *   1. 窗口位置 —— 拖动/缩放是 300ms 防抖写的，退出补最后一次；
+ *   2. 工作空间 —— 关库会把 WAL 合并回主库并删掉 `-wal`/`-shm`。
+ * 配置（`~/.tr.json`）与业务写操作本来就是即时同步落盘的，不靠退出时补。
+ *
+ * 界面是应用的一部分：用户点了关闭，窗口不该在没有任何交代的情况下突然消失。
+ */
+async function runQuit(): Promise<void> {
+  const startedAt = Date.now()
+  const window = getMainWindow()
+  // 托盘退出时窗口是隐藏的：没有可看的东西，也就不必等界面。
+  const watchable = window !== null && window.isVisible()
+
+  const stallGuard = setTimeout(() => {
+    logWarn('退出流程超时，强制退出')
+    app.exit(0)
+  }, QUIT_STALL_MS)
+
+  // 先挂好等待器再发事件：回执不能因为"还没开始等"而丢掉。
+  const rendered = watchable ? waitForQuitReady(QUIT_READY_TIMEOUT_MS) : null
+  sendEvent(APP_QUIT_STARTED, { total: 3 })
+  if (rendered) await rendered
+
+  reportQuit(30, '正在保存窗口状态')
   try {
     saveWindowBounds()
   } catch (error) {
     logWarn(`退出前保存窗口尺寸失败: ${error instanceof Error ? error.message : String(error)}`)
   }
+  if (watchable) await delay(QUIT_STEP_MS)
+
+  reportQuit(65, '正在关闭工作空间')
+  try {
+    closeWorkspace()
+  } catch (error) {
+    logWarn(`退出时关闭工作空间失败: ${error instanceof Error ? error.message : String(error)}`)
+  }
+  if (watchable) await delay(QUIT_STEP_MS)
+
+  reportQuit(100, '正在退出')
+  if (watchable) {
+    const remaining = QUIT_MIN_VISIBLE_MS - (Date.now() - startedAt)
+    if (remaining > 0) await delay(remaining)
+  }
+
+  clearTimeout(stallGuard)
+  quitting = true
   app.quit()
   // `app.quit()` 可能被 before-quit 或未捕获异常打断；一旦被打断，进程就会带着
-  // quitting=true 留在托盘里，窗口没了、点托盘又能开回来 —— 用户看到的就是「关闭不生效、
-  // 总是缩到托盘」。3 秒还没退完就强制退出：这种状态下继续活着没有意义。
+  // quitting=true 留在托盘里，窗口没了、点托盘又能开回来 —— 用户看到的就是「关闭
+  // 不生效、总是缩到托盘」。3 秒还没退完就强制退出：这种状态下继续活着没有意义。
   setTimeout(() => {
     logWarn('退出未在 3 秒内完成，强制退出')
     app.exit(0)

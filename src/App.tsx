@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
 import {
+  APP_QUIT_PROGRESS,
+  APP_QUIT_STARTED,
   IMPORT_PROGRESS,
   UPDATE_DOWNLOAD_COMPLETE,
   UPDATE_DOWNLOAD_ERROR,
@@ -43,6 +45,7 @@ import { Segmented } from './components/segmented'
 import { PageLayout, PageRailProvider } from './components/page-layout'
 import { SettingsRow } from './components/settings-row'
 import { FileButton } from './components/file-button'
+import { QuitScreen } from './components/quit-screen'
 import { Icon, type IconName } from './components/icon'
 
 function errorMessage(error: unknown): string {
@@ -116,6 +119,8 @@ export function App(): JSX.Element {
   const [importProgress, setImportProgress] = useState<SourceImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [maximized, setMaximized] = useState(false)
+  const [quitting, setQuitting] = useState(false)
+  const [quitStep, setQuitStep] = useState({ percent: 0, label: '正在准备退出' })
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
@@ -278,12 +283,41 @@ export function App(): JSX.Element {
       if (message.event === WINDOW_STATE_CHANGED) {
         setMaximized(message.payload === true)
       }
+      if (message.event === APP_QUIT_STARTED) {
+        setQuitStep({ percent: 4, label: '正在准备退出' })
+        setQuitting(true)
+      }
+      if (message.event === APP_QUIT_PROGRESS) {
+        const step = message.payload as { percent?: unknown; label?: unknown } | null
+        if (step && typeof step.percent === 'number' && typeof step.label === 'string') {
+          setQuitStep({ percent: step.percent, label: step.label })
+        }
+      }
     })
 
     return () => {
       alive = false
     }
   }, [])
+
+  // 退出遮罩画到屏幕上之后再告诉主进程「可以往下走了」：主进程据此才去关库、关窗。
+  // 隐藏窗口里 rAF 不跑，所以另有一个定时器兜底；主进程自己也有超时，不会一直等。
+  useEffect(() => {
+    if (!quitting) return undefined
+    let settled = false
+    const ready = (): void => {
+      if (settled) return
+      settled = true
+      void window.api.invoke('app_quit_ready', {}).catch(() => undefined)
+    }
+    const frame = window.requestAnimationFrame(() => window.requestAnimationFrame(ready))
+    const timer = window.setTimeout(ready, 200)
+    return () => {
+      settled = true
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+    }
+  }, [quitting])
 
   const openWorkspace = useCallback(async (): Promise<void> => {
     setBusy(true)
@@ -1123,6 +1157,7 @@ export function App(): JSX.Element {
       <span className="sr-only" data-testid="app-info">
         版本 {version}
       </span>
+      {quitting ? <QuitScreen percent={quitStep.percent} label={quitStep.label} /> : null}
       </>
     </AntdProvider>
   )
