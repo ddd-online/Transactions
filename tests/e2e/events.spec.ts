@@ -135,19 +135,21 @@ test('事件：保存正文、上传图片、删除事件清理图片', async ()
     await expect
       .poll(async () => previewBlur.evaluate((element) => element.getBoundingClientRect().width))
       .toBeGreaterThan(1500)
-    const bleed = await previewBlur.evaluate((element) => {
-      const rect = element.getBoundingClientRect()
-      return {
-        left: rect.left,
-        top: rect.top,
-        right: window.innerWidth - rect.right,
-        bottom: window.innerHeight - rect.bottom,
-      }
-    })
-    expect(bleed.left).toBeLessThanOrEqual(-100)
-    expect(bleed.top).toBeLessThanOrEqual(-100)
-    expect(bleed.right).toBeLessThanOrEqual(-100)
-    expect(bleed.bottom).toBeLessThanOrEqual(-100)
+    const bleed = (): Promise<Record<'left' | 'top' | 'right' | 'bottom', number>> =>
+      previewBlur.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return {
+          left: rect.left,
+          top: rect.top,
+          right: window.innerWidth - rect.right,
+          bottom: window.innerHeight - rect.bottom,
+        }
+      })
+    // 入场动画期间整层还在缩放，四边的留白会一度小于静止值 —— 逐条轮询，
+    // 别拿动画中间的一帧当结论（全量跑时撞上过一次）。
+    for (const side of ['left', 'top', 'right', 'bottom'] as const) {
+      await expect.poll(async () => (await bleed())[side]).toBeLessThanOrEqual(-100)
+    }
 
     // 翻到下一张：前景换图，虚化底保持打开预览时那一张（不重新加载、不闪空）
     const backdropBefore = await previewBlur.getAttribute('style')
