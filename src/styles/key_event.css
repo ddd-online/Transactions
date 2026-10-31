@@ -595,6 +595,13 @@
   visibility: visible;
 }
 
+/* 播放时静态照片让位：比例一致时视频本来就盖满照片，比例不一致时
+ * 也别让静态帧从视频边上露出来（底衬的虚化层还在，不会突然全黑）。 */
+.key-event-gallery__main:has(.key-event-live.is-playing) .key-event-gallery__img,
+.ant-image-preview-body:has(.key-event-live--preview.is-playing) .ant-image-preview-img {
+  visibility: hidden;
+}
+
 .key-event-live__badge {
   position: absolute;
   display: inline-flex;
@@ -622,6 +629,7 @@
 }
 
 .key-event-live--preview .key-event-live__badge {
+  /* 和底部那条操作带同一条基线：灯箱的控件都贴边，实况跟着站左端。 */
   left: 24px;
   bottom: 24px;
 }
