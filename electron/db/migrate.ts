@@ -104,6 +104,14 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_stock_limit_pool_date ON stock_limit_pool(trade_date);
     `,
   },
+  {
+    version: 6,
+    name: 'key_event_image_live_photo',
+    sql: `
+      ALTER TABLE key_event_image ADD COLUMN original_path TEXT NOT NULL DEFAULT '';
+      ALTER TABLE key_event_image ADD COLUMN motion_path TEXT NOT NULL DEFAULT '';
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

@@ -185,10 +185,14 @@ export interface KeyEventImage {
   id: string
   ledgerId: string
   eventDate: string
-  /** 相对 data/assets 的原图路径 */
+  /** 相对 data/assets 的展示图路径；HEIC 导入时是转码后的 JPEG（Chromium 不能直接显示 HEIC） */
   filePath: string
   /** 相对 data/assets 的缩略图路径 */
   thumbPath: string
+  /** HEIC/HEIF 原图路径；展示图是转码副本时保留原文件，其它格式为空 */
+  originalPath: string
+  /** 实况照片的动态部分（MOV/MP4/WebM）；不是实况时为空 */
+  motionPath: string
   sortOrder: number
   createdAt: number
 }

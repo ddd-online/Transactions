@@ -97,4 +97,4 @@ pnpm package          # NSIS 安装包，产物在 output/
 - 股票费用只走 `shared/domain` 的费用算法；一次委托多笔成交时佣金按委托总额收一次。
 - 时间戳在库里是 Unix 秒；日期分组按本地日期处理。
 - 配置文件是用户数据：生产 `~/.tr.json`，开发 `~/.tr.dev.json`；保留未知键。
-- 图片资产存工作空间 `data/assets`，走 `trasset://`。
+- 图片资产存工作空间 `data/assets`，走 `trasset://`（媒体要 Range）。HEIC 导入时转码成 JPEG 展示、原图另存；实况照片的动态部分单独存一份；删除图片时这几类文件一起清。

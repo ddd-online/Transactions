@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type JSX,
@@ -11,6 +12,7 @@ import { Image as AntImage, Input, Modal, Popconfirm } from 'antd'
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import type { TransactionRecordDto } from '../../shared/types/transaction'
 import { centsToYuan } from '../../shared/domain/money'
+import { isHeicSignature } from '../../shared/domain/image-signature'
 import { todayYmd } from '../../shared/domain/time'
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
@@ -19,6 +21,7 @@ import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
+import { LivePhoto } from './event-live-photo'
 
 const EVENT_COLORS: Array<[string, string]> = [
   ['#D9705A', '砖红'],
@@ -82,6 +85,76 @@ function readDataUrl(file: File): Promise<string> {
   })
 }
 
+const STILL_EXTENSIONS = new Set(['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'])
+const MOTION_EXTENSIONS = new Set(['mov', 'mp4', 'm4v', 'webm'])
+
+function extensionOf(name: string): string {
+  const dot = name.lastIndexOf('.')
+  return dot >= 0 ? name.slice(dot + 1).toLowerCase() : ''
+}
+
+function stemOf(name: string): string {
+  const dot = name.lastIndexOf('.')
+  return (dot > 0 ? name.slice(0, dot) : name).toLowerCase()
+}
+
+/** 按字节判断，不信扩展名：改过后缀的 HEIC 也能走对分支（主进程同样按字节判断）。 */
+async function isHeicFile(file: File): Promise<boolean> {
+  const head = await file.slice(0, 64).arrayBuffer()
+  return isHeicSignature(new Uint8Array(head))
+}
+
+/** 一次选中的照片（可带实况视频）。 */
+interface PickedImage {
+  still: File
+  motion?: File
+}
+
+interface PickedFiles {
+  images: PickedImage[]
+  orphanMotions: string[]
+  unsupported: string[]
+}
+
+/**
+ * iPhone 导出的实况是「同名照片 + 同名 MOV」两个文件：按文件名主干配对。
+ * 只有视频没有照片时不做猜测，直接报给用户，避免把一段孤立视频存成"实况"。
+ */
+function groupPickedFiles(files: File[]): PickedFiles {
+  const groups = new Map<string, { still?: File; motion?: File }>()
+  const order: string[] = []
+  const unsupported: string[] = []
+
+  for (const file of files) {
+    const extension = extensionOf(file.name)
+    const isStill = STILL_EXTENSIONS.has(extension) || file.type.startsWith('image/')
+    const isMotion = MOTION_EXTENSIONS.has(extension) || file.type.startsWith('video/')
+    if (!isStill && !isMotion) {
+      unsupported.push(file.name)
+      continue
+    }
+    const key = stemOf(file.name)
+    let group = groups.get(key)
+    if (!group) {
+      group = {}
+      groups.set(key, group)
+      order.push(key)
+    }
+    if (isStill && !group.still) group.still = file
+    else if (isMotion && !group.motion) group.motion = file
+  }
+
+  const images: PickedImage[] = []
+  const orphanMotions: string[] = []
+  for (const key of order) {
+    const group = groups.get(key)
+    if (!group) continue
+    if (group.still) images.push({ still: group.still, motion: group.motion })
+    else if (group.motion) orphanMotions.push(group.motion.name)
+  }
+  return { images, orphanMotions, unsupported }
+}
+
 function shortDate(date: string): string {
   return date.length >= 10 ? date.slice(5) : date
 }
@@ -115,6 +188,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [selectedImageId, setSelectedImageId] = useState('')
   // 预览打开时锁定的底衬图：换图只换前景，虚化底不再跟着加载/闪烁。
   const [previewBackdrop, setPreviewBackdrop] = useState('')
+  // 打开预览时让主图上的实况层重挂一次：视频随组件卸载停下，不在预览背后继续出声。
+  const [stageEpoch, setStageEpoch] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -366,10 +441,42 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [clearSelection, year],
   )
 
-  const commitImage = useCallback(
-    async (data: string): Promise<void> => {
-      setBusy(true)
+  const uploadImage = useCallback(
+    async (payload: { data: string; thumb?: string; motion?: string }): Promise<void> => {
+      await window.api.invoke('key_event_image_add', {
+        ledger_id: ledgerId,
+        date,
+        data: payload.data,
+        thumb: payload.thumb ?? null,
+        motion: payload.motion ?? null,
+      })
+    },
+    [date, ledgerId],
+  )
+
+  // 事件图片按原图上传：不裁剪、不重编码，缩略图只为列表另存一份。
+  // HEIC 例外：Chromium 解码不了，交给主进程转码并生成缩略图；
+  // 实况照片则会连同同名的 MOV 一起上传，动态部分单独存一份。
+  const addImages = useCallback(
+    async (files: File[]): Promise<void> => {
+      if (!ledgerId || files.length === 0) return
+      const picked = groupPickedFiles(files)
+      const problems: string[] = []
+      if (picked.orphanMotions.length > 0) {
+        problems.push(`实况视频要和同名的照片一起选：${picked.orphanMotions.join('、')}`)
+      }
+      if (picked.unsupported.length > 0) {
+        problems.push(`不支持的格式：${picked.unsupported.join('、')}`)
+      }
+
       setError('')
+      if (picked.images.length === 0) {
+        setError(problems.join('；'))
+        if (fileRef.current) fileRef.current.value = ''
+        return
+      }
+
+      setBusy(true)
       try {
         if (!event) {
           await window.api.invoke('key_event_upsert', {
@@ -380,37 +487,32 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
             color,
           })
         }
-        const thumb = await makeThumbnail(data)
-        await window.api.invoke('key_event_image_add', {
-          ledger_id: ledgerId,
-          date,
-          data,
-          thumb,
-        })
-        await Promise.all([loadEvent(), loadDates()])
-      } catch (imageError) {
-        setError(errorMessage(imageError))
+        for (const pickedImage of picked.images) {
+          try {
+            const heic = await isHeicFile(pickedImage.still)
+            const data = await readDataUrl(pickedImage.still)
+            const motion = pickedImage.motion ? await readDataUrl(pickedImage.motion) : undefined
+            if (heic) {
+              await uploadImage({ data, motion })
+            } else {
+              await uploadImage({ data, thumb: await makeThumbnail(data), motion })
+            }
+          } catch (imageError) {
+            problems.push(`${pickedImage.still.name}：${errorMessage(imageError)}`)
+          }
+          // 每加一张就刷一次：多选时用户能立刻看到进度，失败的那张也不影响后面的。
+          await loadEvent()
+        }
+        await loadDates()
+        if (problems.length > 0) setError(problems.join('；'))
+      } catch (addError) {
+        setError(errorMessage(addError))
       } finally {
         setBusy(false)
-      }
-    },
-    [color, content, date, event, ledgerId, loadDates, loadEvent, title],
-  )
-
-  // 事件图片按原图上传：不裁剪、不重编码，缩略图只为列表另存一份。
-  const addImage = useCallback(
-    async (file: File | undefined): Promise<void> => {
-      if (!file || !ledgerId) return
-      setError('')
-      try {
-        await commitImage(await readDataUrl(file))
-      } catch (readError) {
-        setError(errorMessage(readError))
-      } finally {
         if (fileRef.current) fileRef.current.value = ''
       }
     },
-    [commitImage, ledgerId],
+    [color, content, date, event, ledgerId, loadDates, loadEvent, title, uploadImage],
   )
 
   const removeImage = useCallback(
@@ -465,20 +567,41 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
 
   const mainImage = images.find((image) => image.id === selectedImageId) ?? images[0]
   const previewItems = images.map((image) => assetUrl(image.filePath))
+  // 实况照片在预览里也要能播：按预览项的 URL 反查同一条记录。
+  const motionByUrl = useMemo(
+    () =>
+      new Map(
+        images
+          .filter((image) => image.motionPath)
+          .map((image) => [assetUrl(image.filePath), image.motionPath]),
+      ),
+    [images],
+  )
 
   // 底衬固定为"打开预览时那张图"：翻页只换前景，避免新背景图加载期间虚化层闪空。
   const renderPreviewImage = useCallback(
-    (node: JSX.Element, info: { image: { url: string } }): JSX.Element => (
-      <>
-        <div
-          className="key-event-preview-blur"
-          aria-hidden="true"
-          style={{ backgroundImage: `url("${previewBackdrop || info.image.url}")` }}
-        />
-        {node}
-      </>
-    ),
-    [previewBackdrop],
+    (node: JSX.Element, info: { image: { url: string } }): JSX.Element => {
+      const motionPath = motionByUrl.get(info.image.url)
+      return (
+        <>
+          <div
+            className="key-event-preview-blur"
+            aria-hidden="true"
+            style={{ backgroundImage: `url("${previewBackdrop || info.image.url}")` }}
+          />
+          {node}
+          {motionPath ? (
+            <LivePhoto
+              key={motionPath}
+              motionUrl={assetUrl(motionPath)}
+              variant="preview"
+              testId="event-live-preview"
+            />
+          ) : null}
+        </>
+      )
+    },
+    [motionByUrl, previewBackdrop],
   )
 
   return (
@@ -626,7 +749,9 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                               imageRender: renderPreviewImage,
                               // 只在打开时锁定底衬；关闭时不改，淡出过程里背景也不会跳。
                               onOpenChange: (open, info) => {
-                                if (open) setPreviewBackdrop(previewItems[info.current] ?? '')
+                                if (!open) return
+                                setPreviewBackdrop(previewItems[info.current] ?? '')
+                                setStageEpoch((value) => value + 1)
                               },
                             }}
                           >
@@ -637,6 +762,14 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                               data-testid="event-image-main"
                             />
                           </AntImage.PreviewGroup>
+                          {mainImage.motionPath ? (
+                            <LivePhoto
+                              key={`${mainImage.id}-${stageEpoch}`}
+                              motionUrl={assetUrl(mainImage.motionPath)}
+                              variant="stage"
+                              testId="event-live"
+                            />
+                          ) : null}
                           <button
                             type="button"
                             className="tr-icon-btn key-event-gallery__download"
@@ -662,6 +795,16 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                                 data-testid="event-image"
                                 onClick={() => setSelectedImageId(image.id)}
                               />
+                              {image.motionPath ? (
+                                <span
+                                  className="key-event-thumb__live"
+                                  data-testid="event-image-live"
+                                  aria-hidden="true"
+                                >
+                                  <Icon name="CaretRight" size={9} />
+                                  实况
+                                </span>
+                              ) : null}
                               <Popconfirm
                                 title="删除这张图片？"
                                 okText="删除"
@@ -738,12 +881,15 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     <>
                       <FileButton
                         testId="event-image-input"
-                        accept="image/png,image/jpeg,image/webp,image/gif"
-                        label="添加图片"
+                        accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,video/quicktime,video/mp4,video/webm,.heic,.heif,.mov,.mp4,.m4v,.webm"
+                        label={busy ? '正在添加…' : '添加图片'}
+                        title="支持 HEIC；实况照片请同时选中照片与同名的 .MOV"
                         icon={<Icon name="Download" size={14} />}
                         size="sm"
+                        multiple
+                        disabled={busy}
                         inputRef={fileRef}
-                        onSelect={(file) => void addImage(file)}
+                        onSelectMany={(files) => void addImages(files)}
                       />
                       <Button
                         variant="secondary"

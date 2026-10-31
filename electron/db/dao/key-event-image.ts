@@ -1,7 +1,8 @@
 import type { Db } from '../driver'
 import type { KeyEventImage } from '../../../shared/domain/models'
 
-const COLUMNS = 'id, ledger_id, event_date, file_path, thumb_path, sort_order, created_at'
+const COLUMNS =
+  'id, ledger_id, event_date, file_path, thumb_path, original_path, motion_path, sort_order, created_at'
 
 interface KeyEventImageRow {
   id: string
@@ -9,6 +10,8 @@ interface KeyEventImageRow {
   event_date: string
   file_path: string
   thumb_path: string
+  original_path: string
+  motion_path: string
   sort_order: number
   created_at: number
 }
@@ -20,6 +23,8 @@ function fromRow(row: KeyEventImageRow): KeyEventImage {
     eventDate: row.event_date,
     filePath: row.file_path,
     thumbPath: row.thumb_path,
+    originalPath: row.original_path,
+    motionPath: row.motion_path,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
   }
@@ -27,14 +32,17 @@ function fromRow(row: KeyEventImageRow): KeyEventImage {
 
 export function create(db: Db, image: KeyEventImage, now = Math.floor(Date.now() / 1000)): void {
   db.prepare(
-    `INSERT INTO key_event_image (id, ledger_id, event_date, file_path, thumb_path, sort_order, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO key_event_image
+       (id, ledger_id, event_date, file_path, thumb_path, original_path, motion_path, sort_order, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     image.id,
     image.ledgerId,
     image.eventDate,
     image.filePath,
     image.thumbPath,
+    image.originalPath,
+    image.motionPath,
     image.sortOrder,
     now,
   )

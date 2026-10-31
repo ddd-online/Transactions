@@ -256,8 +256,12 @@ export const commandSchemas = {
   key_event_image_add: z.object({
     ledger_id: z.string(),
     date: z.string(),
+    /** 展示图 data URI；HEIC/HEIF 由主进程转码成 JPEG 后再落盘 */
     data: z.string().nullable().optional(),
+    /** 渲染层生成的缩略图；HEIC 由主进程生成，可以不传 */
     thumb: z.string().nullable().optional(),
+    /** 实况照片的动态部分（MOV / MP4 / M4V / WebM） */
+    motion: z.string().nullable().optional(),
   }),
   key_event_image_delete: z.object({ id: z.string() }),
   todo_cards: z.object({ ledger_id: z.string() }),

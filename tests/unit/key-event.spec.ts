@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -16,6 +16,7 @@ import {
   upsertKeyEvent,
 } from '../../electron/services/key-event'
 import { assetsRoot } from '../../electron/services/assets'
+import type { PreparedEventImage } from '../../electron/services/image-import'
 import { AppError } from '../../shared/errors'
 
 const directories: string[] = []
@@ -36,8 +37,18 @@ afterEach(() => {
 const PNG_1X1 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 const JPEG_1X1 = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x00]).toString('base64')
-const PNG_URI = `data:image/png;base64,${PNG_1X1}`
-const JPEG_URI = `data:image/jpeg;base64,${JPEG_1X1}`
+
+const PNG_BYTES = Buffer.from(PNG_1X1, 'base64')
+const JPEG_BYTES = Buffer.from(JPEG_1X1, 'base64')
+const HEIC_BYTES = readFileSync(resolve(__dirname, '../../fixtures/heic/flat-64.heic'))
+
+/** 绕过渲染层/主进程的转码：服务层只关心「已经准备好的字节」。 */
+function prepared(): PreparedEventImage {
+  return {
+    display: { ext: 'png', bytes: PNG_BYTES },
+    thumb: { ext: 'jpg', bytes: JPEG_BYTES },
+  }
+}
 
 describe('key event service', () => {
   it('upserts, truncates the title by code point, and keeps the original id', () => {
@@ -83,22 +94,33 @@ describe('key event service', () => {
     const workspace = openWorkspace(workspaceDirectory())
     upsertKeyEvent(workspace.db, 'l1', '2026-01-01', 'A', '', '')
 
-    const first = addImage(workspace.db, workspace.directory, 'l1', '2026-01-01', PNG_URI, JPEG_URI)
-    const second = addImage(workspace.db, workspace.directory, 'l1', '2026-01-01', PNG_URI, JPEG_URI)
+    const first = addImage(workspace.db, workspace.directory, 'l1', '2026-01-01', prepared())
+    const live = addImage(workspace.db, workspace.directory, 'l1', '2026-01-01', {
+      ...prepared(),
+      original: { ext: 'heic', bytes: HEIC_BYTES },
+      motion: { ext: 'mov', bytes: Buffer.from('fake-motion') },
+    })
     expect(first.sortOrder).toBe(1)
-    expect(second.sortOrder).toBe(2)
+    expect(live.sortOrder).toBe(2)
     expect(listImages(workspace.db, 'l1', '2026-01-01')).toHaveLength(2)
-    expect(existsSync(join(assetsRoot(workspace.directory), first.filePath))).toBe(true)
+    expect(live.originalPath).toMatch(/\.heic$/)
+    expect(live.motionPath).toMatch(/\.mov$/)
+    for (const path of [first.filePath, live.filePath, live.thumbPath, live.originalPath, live.motionPath]) {
+      expect(existsSync(join(assetsRoot(workspace.directory), path))).toBe(true)
+    }
 
     deleteImage(workspace.db, workspace.directory, first.id)
-    expect(listImages(workspace.db, 'l1', '2026-01-01')).toHaveLength(1)
-    expect(existsSync(join(assetsRoot(workspace.directory), first.filePath))).toBe(false)
+    deleteImage(workspace.db, workspace.directory, live.id)
+    expect(listImages(workspace.db, 'l1', '2026-01-01')).toHaveLength(0)
+    for (const path of [first.filePath, first.thumbPath, live.filePath, live.originalPath, live.motionPath]) {
+      expect(existsSync(join(assetsRoot(workspace.directory), path))).toBe(false)
+    }
   })
 
   it('deletes the event with all image records and files', () => {
     const workspace = openWorkspace(workspaceDirectory())
     upsertKeyEvent(workspace.db, 'l1', '2026-01-01', 'A', '', '')
-    const image = addImage(workspace.db, workspace.directory, 'l1', '2026-01-01', PNG_URI, JPEG_URI)
+    const image = addImage(workspace.db, workspace.directory, 'l1', '2026-01-01', prepared())
     deleteKeyEventByDate(workspace.db, workspace.directory, 'l1', '2026-01-01')
     expect(listImages(workspace.db, 'l1', '2026-01-01')).toEqual([])
     expect(existsSync(join(assetsRoot(workspace.directory), image.filePath))).toBe(false)

@@ -32,6 +32,7 @@
     "@rc-component/listy": "1.2.3",
     "antd": "6.6.7",
     "dayjs": "^1.11.23",
+    "libheif-js": "^1.23.5",
     "overlayscrollbars": "^2.17.0",
     "overlayscrollbars-react": "^0.5.7",
     "react": "19.3.1",

@@ -70,6 +70,8 @@ import {
   saveWorkspaceIcon,
   workspaceIconRelative,
 } from '../services/assets'
+import { encodeJpeg } from '../services/image-codec'
+import { prepareEventImage } from '../services/image-import'
 import { UpdaterService } from '../services/updater'
 import { applyProxy, appFetch } from '../shell/net'
 import { priceYuanToMilli } from '../../shared/domain/money'
@@ -760,26 +762,28 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       return keyEventService.listImages(workspaceDb(), ledgerId, date)
     },
 
-    key_event_image_add(request) {
+    async key_event_image_add(request) {
       const raw = asObject(request)
       const ledgerId = String(raw.ledger_id ?? '')
       const date = String(raw.date ?? '')
       const data = typeof raw.data === 'string' ? raw.data : ''
       const thumb = typeof raw.thumb === 'string' ? raw.thumb : ''
+      const motion = typeof raw.motion === 'string' ? raw.motion : ''
       if (!date) throw new AppError('missing date parameter', { status: 400 })
       if (!data) throw new AppError('invalid image data', { status: 400 })
-      if (!thumb) throw new AppError('invalid thumb data', { status: 400 })
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       const workspace = currentWorkspace()
       if (!workspace) throw workspaceNotOpened()
-      return keyEventService.addImage(
-        workspace.db,
-        workspace.directory,
-        ledgerId,
-        date,
-        data,
-        thumb,
+      // HEIC 在这里转码（Chromium 解码不了），实况视频同一笔记在同一行记录上。
+      const files = await prepareEventImage(
+        {
+          dataUri: data,
+          thumbDataUri: thumb || undefined,
+          motionDataUri: motion || undefined,
+        },
+        { encodeJpeg },
       )
+      return keyEventService.addImage(workspace.db, workspace.directory, ledgerId, date, files)
     },
 
     key_event_image_delete(request) {

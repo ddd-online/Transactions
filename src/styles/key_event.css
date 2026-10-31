@@ -542,7 +542,8 @@
   position: absolute;
   bottom: 8px;
   right: 8px;
-  z-index: 1;
+  /* 实况的动态层压在主图上（z-index 2），下载按钮要留在它上面 */
+  z-index: 3;
   width: 26px;
   height: 26px;
   border: 1px solid var(--transactions-color-divider);
@@ -553,6 +554,86 @@
 
 .key-event-gallery__download:hover:not(:disabled) {
   transform: scale(1.1);
+}
+
+/* 实况照片：动态视频与「实况」按钮盖在静态照片上。
+ * 静态照片仍是主图（AntD Image），这一层只接管按钮与视频；
+ * 空白处的指针事件要透给照片（点图开预览），所以整层 `pointer-events: none`。 */
+.key-event-live {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 预览里同样是绝对定位的一层；AntD 会给 `-body > *` 加 pointer-events: auto，
+ * 这里用更高优先级的选择器把它降回 none，否则点空白关不掉预览。 */
+.ant-image-preview-body > .key-event-live--preview {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.key-event-live__video {
+  max-width: 100%;
+  max-height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: auto;
+  transition: opacity var(--transactions-transition-fast);
+}
+
+/* 预览里静态照片最高 70%（AntD 的 .ant-image-preview-img），视频跟它对齐 */
+.key-event-live--preview .key-event-live__video {
+  max-height: 70%;
+}
+
+.key-event-live.is-playing .key-event-live__video {
+  opacity: 1;
+  visibility: visible;
+}
+
+.key-event-live__badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--transactions-color-divider);
+  background-color: color-mix(in srgb, var(--transactions-color-elevated) 82%, transparent);
+  backdrop-filter: blur(2px);
+  box-shadow: var(--transactions-shadow-sm);
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast);
+}
+
+.key-event-live--stage .key-event-live__badge {
+  left: 8px;
+  bottom: 8px;
+}
+
+.key-event-live--preview .key-event-live__badge {
+  left: 24px;
+  bottom: 24px;
+}
+
+.key-event-live__badge:hover {
+  border-color: var(--transactions-color-primary);
+  color: var(--transactions-color-primary);
+}
+
+.key-event-live__badge:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
 }
 
 .key-event-gallery__thumbs {
@@ -614,6 +695,24 @@
 
 .key-event-thumb:hover .key-event-thumb__delete {
   opacity: 1;
+}
+
+/* 缩略图上的实况角标：和删除按钮分居左下/右上，互不遮挡 */
+.key-event-thumb__live {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--transactions-color-overlay-scrim) 72%, transparent);
+  color: var(--transactions-color-text-inverse);
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* 灯箱 */

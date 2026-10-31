@@ -20,6 +20,7 @@ import {
 } from '../db/dao/key-event-image'
 import { logInfo, logWarn } from '../logging'
 import { removeImageFiles, saveImage } from './assets'
+import type { PreparedEventImage } from './image-import'
 
 /** 写入关键事件（标题按 Unicode 字符截断到 200）。 */
 export function upsertKeyEvent(
@@ -72,7 +73,7 @@ export function deleteKeyEventByDate(
     deleteEventByDate(db, ledgerId, date)
   })
   for (const image of images) {
-    removeImageFiles(workspaceDir, image.filePath, image.thumbPath)
+    removeImageFiles(workspaceDir, image)
   }
 }
 
@@ -82,17 +83,16 @@ export function addImage(
   workspaceDir: string,
   ledgerId: string,
   date: string,
-  dataUri: string,
-  thumbDataUri: string,
+  files: PreparedEventImage,
 ): KeyEventImage {
   const imageId = randomUUID()
-  const saved = saveImage(workspaceDir, date, imageId, dataUri, thumbDataUri)
+  const saved = saveImage(workspaceDir, date, imageId, files)
 
   let existing: KeyEventImage[]
   try {
     existing = queryByEventDate(db, ledgerId, date)
   } catch (error) {
-    removeImageFiles(workspaceDir, saved.filePath, saved.thumbPath)
+    removeImageFiles(workspaceDir, saved)
     throw error
   }
 
@@ -103,13 +103,15 @@ export function addImage(
     eventDate: date,
     filePath: saved.filePath,
     thumbPath: saved.thumbPath,
+    originalPath: saved.originalPath,
+    motionPath: saved.motionPath,
     sortOrder: maxSort + 1,
     createdAt: 0,
   }
   try {
     createImageRow(db, image)
   } catch (error) {
-    removeImageFiles(workspaceDir, image.filePath, image.thumbPath)
+    removeImageFiles(workspaceDir, image)
     throw error
   }
   return image
@@ -123,7 +125,7 @@ export function listImages(db: Db, ledgerId: string, date: string): KeyEventImag
 export function deleteImage(db: Db, workspaceDir: string, imageId: string): void {
   const image = queryImageById(db, imageId)
   if (image) {
-    removeImageFiles(workspaceDir, image.filePath, image.thumbPath)
+    removeImageFiles(workspaceDir, image)
   } else {
     logWarn(`删除图片时未找到记录: ${imageId}`)
   }
