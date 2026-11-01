@@ -210,14 +210,6 @@
   font-size: var(--transactions-btn-font-size-sm);
 }
 
-/* 预设图表没有「重命名」可点：原位换成一句说明，标题行的高度与对齐不变。 */
-.da-chart__preset-note {
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-caption);
-  line-height: var(--transactions-height-snug);
-  white-space: nowrap;
-}
-
 .da-chart__body {
   display: flex;
   gap: var(--transactions-space-lg);
@@ -427,13 +419,6 @@
 .da-chart__lines-actions {
   display: flex;
   gap: var(--transactions-space-sm);
-}
-
-/* 预设图表的曲线由系统给定：曲线表右上角不出现「添加曲线」，换成一句说明。 */
-.da-chart__lines-note {
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-caption);
-  line-height: var(--transactions-height-snug);
 }
 
 /* 曲线行上的编辑 / 删除：两颗 text 按钮，与表内其它行操作同一档。 */

@@ -70,13 +70,13 @@ test('分析：两张预设图表不可改名 / 改粒度 / 改曲线，自建�
 
     // 预设：没有重命名、没有添加曲线、表格没有操作列、粒度置灰，只能整张删掉
     await items.nth(0).click()
-    await expect(page.getByTestId('chart-preset-note')).toBeVisible()
+    await expect(page.getByTestId('chart-preset-note')).toHaveCount(0)
     await expect(page.getByTestId('chart-rename')).toHaveCount(0)
     await expect(page.getByTestId('chart-line-add')).toHaveCount(0)
     await expect(page.getByTestId('chart-line-edit')).toHaveCount(0)
     await expect(page.getByTestId('chart-line-delete')).toHaveCount(0)
     await expect(page.getByTestId('chart-granularity')).toHaveClass(/ant-select-disabled/)
-    await expect(page.locator('.da-chart__lines-note')).toHaveText('曲线由系统提供')
+    await expect(page.locator('.da-chart__lines-actions')).toHaveCount(0)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'charts-preset.png'),
     })

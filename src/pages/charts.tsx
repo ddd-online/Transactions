@@ -710,11 +710,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                     options={GRANULARITIES}
                     style={{ width: 72 }}
                   />
-                  {selected.isPreset ? (
-                    <span className="da-chart__preset-note" data-testid="chart-preset-note">
-                      预设图表，只能删除
-                    </span>
-                  ) : (
+                  {selected.isPreset ? null : (
                     <Button variant="secondary" size="sm" testId="chart-rename" onClick={openRename}>
                       重命名
                     </Button>
@@ -806,9 +802,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               <div className="da-chart__lines">
                 <div className="da-chart__lines-head">
                   <h4 className="da-panel__title">曲线配置</h4>
-                  {selected.isPreset ? (
-                    <span className="da-chart__lines-note">曲线由系统提供</span>
-                  ) : (
+                  {selected.isPreset ? null : (
                     <div className="da-chart__lines-actions">
                       <Button
                         variant="secondary"
