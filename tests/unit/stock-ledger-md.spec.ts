@@ -60,6 +60,12 @@ describe('交易台账 Markdown', () => {
     expect(text).toContain('- 一句话：—')
   })
 
+  it('段间空行不会把一条列表项截成两条', () => {
+    const text = ledgerMarkdown(ledger({ whyBuy: '第一段\n\n第二段\n' }))
+    expect(text).toContain('- 为什么买：第一段\n  第二段')
+    expect(text).not.toContain('第一段\n\n')
+  })
+
   it('没有台账时返回空串', () => {
     expect(ledgerMarkdown(null)).toBe('')
     expect(ledgerMarkdown(ledger({ exists: false }))).toBe('')

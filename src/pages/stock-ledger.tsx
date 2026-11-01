@@ -172,9 +172,10 @@ export function StockLedgerSection({
         <span className="stock-section-title">交易台账</span>
         <div className="stock-ledger__actions">
           <Button
-            variant="secondary"
+            variant="text"
             size="sm"
             testId="stock-ledger-copy"
+            title="复制整张台账为 Markdown"
             disabled={!ledger?.exists}
             onClick={copyMarkdown}
           >

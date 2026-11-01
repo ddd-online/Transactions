@@ -27,10 +27,12 @@ export function ledgerMarkdown(ledger: StockLedgerDto | null): string {
 }
 
 function inline(value: string): string {
-  const text = value.replace(/\r\n?/g, '\n').trim()
-  if (!text) return '—'
-  return text
+  const lines = value
+    .replace(/\r\n?/g, '\n')
     .split('\n')
     .map((line) => line.trim())
-    .join('\n  ')
+    // 段与段之间的空行会把一条列表项截成两条，这里只留实词行，续行缩进两格
+    .filter((line) => line !== '')
+  if (lines.length === 0) return '—'
+  return lines.join('\n  ')
 }

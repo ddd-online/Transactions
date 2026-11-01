@@ -3270,10 +3270,12 @@
   border-bottom: 1px solid var(--transactions-color-divider);
 }
 
+/* 台账标题行右侧的一簇：复制是 text 按钮（悬停才有底），编辑是唯一的描边按钮。
+ * 两者之间留 12px —— 8px 时悬停底与焦点环会贴到「编辑」的边框上。 */
 .stock-ledger__actions {
   display: flex;
   align-items: center;
-  gap: var(--transactions-space-sm);
+  gap: var(--transactions-space-md);
 }
 
 .stock-ledger__sheet {
