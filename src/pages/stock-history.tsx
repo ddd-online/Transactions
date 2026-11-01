@@ -19,7 +19,9 @@ import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
+import { StockCode } from './stock-code'
 import { StockLedgerSection } from './stock-ledger'
+import { StockMasterRow } from './stock-master-row'
 import {
   stockDateTime,
   stockErrorMessage,
@@ -254,34 +256,32 @@ export function StockHistoryPanel({
             <ScrollArea className="stock-master__scroll">
               <div className="stock-master__list">
                 {rows.map((row) => (
-                <button
-                  key={row.id}
-                  type="button"
-                  className={`stock-master__row${row.stockCode === selectedCode ? ' is-active' : ''}`}
-                  data-testid="stock-history-row"
-                  onClick={() => void openDetail(row.stockCode)}
-                >
-                  <div className="stock-master__headline">
-                    <strong>{row.stockName}</strong>
-                    <span className="stock-muted stock-mono">{row.stockCode}</span>
-                  </div>
-                  <div className="stock-master__line">
-                    <span className="stock-muted">
-                      现价 <span className="stock-mono">{stockPrice(row.latestPrice)}</span>
-                    </span>
-                    <span className={stockPnlClass(row.totalPnl)}>
-                      {row.totalPnl >= 0 ? '盈' : '亏'} {money(Math.abs(row.totalPnl))}
-                    </span>
-                  </div>
-                  <div className="stock-master__line">
-                    <span className="stock-muted">
-                      {row.roundCount} 轮 · 最近 {formatTimestamp(row.lastClosedAt, 'YYYY-MM-DD')}
-                    </span>
-                    <span className={stockPnlClass(row.totalPnlRate)}>
-                      {stockPercent(row.totalPnlRate)}
-                    </span>
-                  </div>
-                  </button>
+                  <StockMasterRow
+                    key={row.id}
+                    stockName={row.stockName}
+                    stockCode={row.stockCode}
+                    active={row.stockCode === selectedCode}
+                    testId="stock-history-row"
+                    codeTestId="stock-history-row-code"
+                    onSelect={() => void openDetail(row.stockCode)}
+                  >
+                    <div className="stock-master__line">
+                      <span className="stock-muted">
+                        现价 <span className="stock-mono">{stockPrice(row.latestPrice)}</span>
+                      </span>
+                      <span className={stockPnlClass(row.totalPnl)}>
+                        {row.totalPnl >= 0 ? '盈' : '亏'} {money(Math.abs(row.totalPnl))}
+                      </span>
+                    </div>
+                    <div className="stock-master__line">
+                      <span className="stock-muted">
+                        {row.roundCount} 轮 · 最近 {formatTimestamp(row.lastClosedAt, 'YYYY-MM-DD')}
+                      </span>
+                      <span className={stockPnlClass(row.totalPnlRate)}>
+                        {stockPercent(row.totalPnlRate)}
+                      </span>
+                    </div>
+                  </StockMasterRow>
                 ))}
               </div>
             </ScrollArea>
@@ -298,7 +298,11 @@ export function StockHistoryPanel({
               <header className="stock-detail__head">
                 <div className="stock-detail__identity">
                   <h2>{detail.stockName}</h2>
-                  <span className="stock-muted stock-mono">{detail.stockCode}</span>
+                  <StockCode
+                    code={detail.stockCode}
+                    className="stock-muted stock-mono"
+                    testId="stock-history-detail-code"
+                  />
                 </div>
                 <div className="stock-detail__summary">
                   <span className={stockPnlClass(detail.totalPnl)}>

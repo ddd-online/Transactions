@@ -93,6 +93,17 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-position-row')).toContainText('浦发银行')
     await expect(page.getByTestId('stock-position-row')).toContainText('1 手')
     await expect(page.getByTestId('stock-position-empty')).toHaveCount(0)
+    // 卡片右上角的代码点一下就复制（和天梯同一套按钮），不影响「选中哪一只」
+    await expect(page.getByTestId('stock-position-row-code')).toHaveText('600000')
+    await page.getByTestId('stock-position-row-code').hover()
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-master-code-hover.png'),
+    })
+    await page.getByTestId('stock-position-row-code').click()
+    await expect(page.getByTestId('toast').last()).toContainText('已复制 600000')
+    expect(await electronApp.evaluate(({ clipboard }) => clipboard.readText())).toBe('600000')
+    await expect(page.getByTestId('stock-position-row')).toHaveClass(/is-active/)
     await page.getByTestId('stock-tab-account').click()
     await expect(page.getByTestId('stock-cash')).toHaveText('¥294.99')
     await expect(page.getByTestId('fund-row').filter({ hasText: '买入' })).toHaveCount(1)
@@ -177,6 +188,14 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
     await page.getByTestId('stock-history-row').click()
     await expect(page.getByTestId('stock-history-detail')).toContainText('第 1 轮')
+    // 卡片里的代码、详情标题那一段代码都能点一下复制
+    await expect(page.getByTestId('stock-history-row-code')).toHaveText('600000')
+    await page.getByTestId('stock-history-row-code').click()
+    await expect(page.getByTestId('toast').last()).toContainText('已复制 600000')
+    expect(await electronApp.evaluate(({ clipboard }) => clipboard.readText())).toBe('600000')
+    await expect(page.getByTestId('stock-history-row')).toHaveClass(/is-active/)
+    await page.getByTestId('stock-history-detail-code').click()
+    await expect(page.getByTestId('toast').last()).toContainText('已复制 600000')
     await expect(page.getByTestId('stock-round')).toContainText('每日复盘')
     await expect(page.getByTestId('stock-round')).toContainText('观察一天')
 

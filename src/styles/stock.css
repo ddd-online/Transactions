@@ -2656,6 +2656,7 @@
 }
 
 .stock-master__row {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2669,6 +2670,29 @@
   cursor: pointer;
   /* 选中 / 悬停是"指着哪一只"，不该跳变：140ms 的底色过渡让视线跟得上 */
   transition: background-color var(--transactions-transition-fast);
+}
+
+/* 卡片里有个复制按钮，按钮不能套按钮：卡片本身仍是 `<button>`（键盘可选中），
+ * 铺一层透明的它盖住整张卡，文字留在下面，代码再浮到它上面。 */
+.stock-master__row-hit {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* 焦点环画在卡片边上（内缩 2px，别被列表的滚动容器切掉） */
+.stock-master__row-hit:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: -2px;
+}
+
+/* 压在整卡按钮上面，代码才点得到 */
+.stock-master__row .stock-code {
+  position: relative;
+  z-index: 1;
 }
 
 .stock-master__row:hover {
@@ -4447,6 +4471,18 @@
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: color var(--transactions-transition-fast);
+}
+
+/* 复制按钮只是叠了「可点」这一层：字号 / 等宽 / 次要色仍由调用方给的类说了算
+ * —— 上面那条 `font: inherit` 会把 `.stock-mono` 的等宽按回去。 */
+.stock-code.stock-muted {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-code.stock-mono {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
 }
 
 .stock-code:hover {

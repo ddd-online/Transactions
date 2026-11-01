@@ -15,7 +15,9 @@ import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
+import { StockCode } from './stock-code'
 import { StockLedgerSection } from './stock-ledger'
+import { StockMasterRow } from './stock-master-row'
 import {
   stockDateTime,
   stockErrorMessage,
@@ -518,17 +520,15 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               {positions.map((position) => {
               const rowPnl = pnlOf(position)
               return (
-                <button
+                <StockMasterRow
                   key={position.id}
-                  type="button"
-                  className={`stock-master__row${position.stockCode === selected?.stockCode ? ' is-active' : ''}`}
-                  data-testid="stock-position-row"
-                  onClick={() => setSelectedCode(position.stockCode)}
+                  stockName={position.stockName}
+                  stockCode={position.stockCode}
+                  active={position.stockCode === selected?.stockCode}
+                  testId="stock-position-row"
+                  codeTestId="stock-position-row-code"
+                  onSelect={() => setSelectedCode(position.stockCode)}
                 >
-                  <div className="stock-master__headline">
-                    <strong>{position.stockName}</strong>
-                    <span className="stock-muted stock-mono">{position.stockCode}</span>
-                  </div>
                   <div className="stock-master__stats">
                     <span className="stock-label">现价</span>
                     <span className="stock-label stock-master__stat-label--end">浮动盈亏</span>
@@ -552,7 +552,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                       {stockPercent((rowPnl / position.totalCost) * 100)}
                     </span>
                   </div>
-                  </button>
+                </StockMasterRow>
                 )
               })}
             </div>
@@ -576,7 +576,11 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               <header className="stock-detail__head">
                 <div className="stock-detail__identity">
                   <h2>{selected.stockName}</h2>
-                  <span className="stock-muted stock-mono">{selected.stockCode}</span>
+                  <StockCode
+                    code={selected.stockCode}
+                    className="stock-muted stock-mono"
+                    testId="stock-position-detail-code"
+                  />
                 </div>
                 <div className="stock-detail__actions">
                   <Select
