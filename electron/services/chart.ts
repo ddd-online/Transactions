@@ -16,6 +16,7 @@ import { AppError } from '../../shared/errors'
 import type { Chart, ChartLine, QueryConditionItem } from '../../shared/domain/models'
 import type { ChartDto, CreateChartRequest, UpdateChartRequest } from '../../shared/types/chart'
 import type { Db } from '../db/driver'
+import { readMeta, writeMeta } from '../db/app-meta'
 import {
   countChartsByLedgerId,
   createChart as createChartRow,
@@ -39,34 +40,6 @@ function line(label: string, transactionType: string, includeOutlier: boolean): 
   return { label, transactionType, includeOutlier, conditions: [] }
 }
 
-/** 一条带查询条件的曲线。 */
-function conditioned(
-  label: string,
-  transactionType: string,
-  includeOutlier: boolean,
-  conditions: QueryConditionItem[],
-): ChartLine {
-  return { label, transactionType, includeOutlier, conditions }
-}
-
-/** 单个查询条件项（`tagNot` 保持 false）。 */
-function condition(
-  transactionType: string,
-  category: string,
-  tags: readonly string[],
-  tagPolicy: string,
-  description: string,
-): QueryConditionItem {
-  return {
-    transactionType,
-    category,
-    tags: [...tags],
-    tagPolicy,
-    tagNot: false,
-    description,
-  }
-}
-
 /**
  * 预设的支出 / 收入 / 转账三条曲线；`includeOutlier` 决定是否把离群点计入
  * （月度预设为 false，年度预设为 true）。
@@ -76,22 +49,6 @@ function chartLines(includeOutlier: boolean): ChartLine[] {
     line('支出', 'expense', includeOutlier),
     line('收入', 'income', includeOutlier),
     line('转账', 'transfer', includeOutlier),
-  ]
-}
-
-/** 预设的年度收入曲线（含离群点与查询条件）。 */
-function incomeChartLines(): ChartLine[] {
-  return [
-    line('年度总收入', 'income', true),
-    conditioned('年度工资收入', 'income', true, [
-      condition('income', '工资奖金', ['工资'], 'all', ''),
-    ]),
-    conditioned('年度奖金收入', 'income', true, [
-      condition('income', '工资奖金', ['奖金'], 'all', '年奖金'),
-    ]),
-    conditioned('年度分红收入', 'income', true, [
-      condition('income', '投资理财', [], 'all', '年分红'),
-    ]),
   ]
 }
 
@@ -189,13 +146,29 @@ type PresetChart = readonly [
   sortOrder: number,
 ]
 
+/** 账本级的一次性标记：预设图表只播种一次，删掉之后不再冒出来。 */
+function chartSeedMarker(ledgerId: string): string {
+  return `chart_seeded:${ledgerId}`
+}
+
 /**
- * 为账本写入 3 个预设图表（月度消费趋势 / 年度消费趋势 / 年度收入趋势）。
+ * 为账本写入 2 个预设图表（月度消费趋势 / 年度消费趋势）。
  *
- * 已有任何图表时直接返回（幂等，且**自定义图表也算**）。失败文案为
- * `marshal {title}` / `seed {title}`；调用方（{@link listChartsByLedgerId}）只告警不中断。
+ * **一个账本只播种一次**：`app_meta` 里留一枚标记，之后无论库里有没有图表都不再写
+ * （否则用户把预设删掉、下次进页面又长回来，「可以删除」就成了空话）。
+ * 失败文案为 `marshal {title}` / `seed {title}`；调用方（{@link listChartsByLedgerId}）只告警不中断。
  */
 export function seedDefaultCharts(db: Db, ledgerId: string): void {
+  const marker = chartSeedMarker(ledgerId)
+  let seeded: string | null
+  try {
+    seeded = readMeta(db, marker)
+  } catch (error) {
+    logWarn(`读取预设图表标记失败: ${errorText(error)}`)
+    throw new AppError(errorText(error), { status: 500 })
+  }
+  if (seeded !== null) return
+
   let count: number
   try {
     count = countChartsByLedgerId(db, ledgerId)
@@ -203,13 +176,16 @@ export function seedDefaultCharts(db: Db, ledgerId: string): void {
     logWarn(`统计图表数量失败: ${errorText(error)}`)
     throw new AppError(errorText(error), { status: 500 })
   }
-  if (count > 0) return
+  if (count > 0) {
+    // 老库：预设（或自建图表）已经在里面了，只补标记，不重复插入
+    writeMeta(db, marker, '1')
+    return
+  }
   logInfo(`账本 ${ledgerId} 无图表，创建预设图表`)
 
   const presets: readonly PresetChart[] = [
     ['月度消费趋势', 'month', chartLines(false), 0],
     ['年度消费趋势', 'year', chartLines(true), 1],
-    ['年度收入趋势', 'year', incomeChartLines(), 2],
   ]
 
   for (const [title, granularity, lines, sortOrder] of presets) {
@@ -239,7 +215,14 @@ export function seedDefaultCharts(db: Db, ledgerId: string): void {
     }
   }
 
-  logInfo(`已为账本 ${ledgerId} 创建 3 个预设图表`)
+  try {
+    writeMeta(db, marker, '1')
+  } catch (error) {
+    logWarn(`写入预设图表标记失败: ${errorText(error)}`)
+    throw new AppError(errorText(error), { status: 500 })
+  }
+
+  logInfo(`已为账本 ${ledgerId} 创建 2 个预设图表`)
 }
 
 // ------------------------------------------------------------------ 增 / 删 / 改 / 查
@@ -310,9 +293,38 @@ export function listChartsByLedgerId(db: Db, ledgerId: string): ChartDto[] {
 }
 
 /**
+ * 曲线配置的规范文本：字段顺序固定、条件项同样重排。
+ *
+ * 只用来比较「两次提交是不是同一份内容」——JSON 的键序跟着构造它的代码走，
+ * 直接拿字符串比会把同一条曲线判成两个样子。
+ */
+function canonicalLines(lines: readonly ChartLine[]): string {
+  return JSON.stringify(
+    lines.map((item) => ({
+      label: item.label,
+      transactionType: item.transactionType,
+      includeOutlier: item.includeOutlier,
+      conditions: item.conditions.map((cond) => ({
+        transactionType: cond.transactionType,
+        category: cond.category,
+        tags: [...cond.tags],
+        tagPolicy: cond.tagPolicy,
+        tagNot: cond.tagNot,
+        description: cond.description,
+      })),
+    })),
+  )
+}
+
+/** 预设图表对用户的承诺：只能删，不能改名 / 改粒度 / 改曲线。 */
+const PRESET_IMMUTABLE = '预设图表不可改名、改粒度或改曲线，只能删除'
+
+/**
  * 更新图表（标题 / 粒度 / 曲线 / 类型 / 排序号）。
  *
  * 整行回写但保留 `isPreset` 与 `createdAt`（从库里读出的原值），因此预设图表改完仍是预设。
+ * 预设图表的内容由系统给定：除排序号外任何一项真的变了都拒绝（排序走
+ * {@link updateChartSortOrder}，不经过这里）。
  */
 export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
   let chart: Chart | null
@@ -325,6 +337,23 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
   // `record not found`；这里保持同一文案（服务层测试逐字断言）。
   if (chart === null) {
     throw new AppError('get chart failed: record not found', { status: 500 })
+  }
+
+  if (chart.isPreset) {
+    let sameLines: boolean
+    try {
+      sameLines = canonicalLines(decodeChartLines(chart.chartLines)) === canonicalLines(req.lines)
+    } catch (error) {
+      throw new AppError(`unmarshal chart lines failed: ${errorText(error)}`, { status: 500 })
+    }
+    if (
+      req.title !== chart.title ||
+      req.granularity !== chart.granularity ||
+      req.chartType !== chart.chartType ||
+      !sameLines
+    ) {
+      throw new AppError(PRESET_IMMUTABLE, { status: 400 })
+    }
   }
 
   let linesJson: string

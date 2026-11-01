@@ -112,6 +112,16 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE key_event_image ADD COLUMN motion_path TEXT NOT NULL DEFAULT '';
     `,
   },
+  {
+    version: 7,
+    name: 'drop_income_preset_chart',
+    // 预设图表收敛到两张（月度 / 年度消费趋势）。第三张「年度收入趋势」是当年播种进去的
+    // 系统数据 —— 预设曲线用户改不了，同名同预设标记的行只可能是它，直接清掉；
+    // 用户自己建的同名图表（is_preset = 0）不受影响。
+    sql: `
+      DELETE FROM chart WHERE is_preset = 1 AND title = '年度收入趋势';
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

@@ -132,15 +132,6 @@ const YEARLY_LINES_JSON =
   '{"label":"收入","transactionType":"income","includeOutlier":true,"conditions":[]},' +
   '{"label":"转账","transactionType":"transfer","includeOutlier":true,"conditions":[]}]'
 
-const INCOME_LINES_JSON =
-  '[{"label":"年度总收入","transactionType":"income","includeOutlier":true,"conditions":[]},' +
-  '{"label":"年度工资收入","transactionType":"income","includeOutlier":true,"conditions":[' +
-  '{"transactionType":"income","category":"工资奖金","tags":["工资"],"tagPolicy":"all","tagNot":false,"description":""}]},' +
-  '{"label":"年度奖金收入","transactionType":"income","includeOutlier":true,"conditions":[' +
-  '{"transactionType":"income","category":"工资奖金","tags":["奖金"],"tagPolicy":"all","tagNot":false,"description":"年奖金"}]},' +
-  '{"label":"年度分红收入","transactionType":"income","includeOutlier":true,"conditions":[' +
-  '{"transactionType":"income","category":"投资理财","tags":[],"tagPolicy":"all","tagNot":false,"description":"年分红"}]}]'
-
 function line(label: string, transactionType: string, includeOutlier = false): ChartLine {
   return { label, transactionType, includeOutlier, conditions: [] }
 }
@@ -150,57 +141,6 @@ function chartLines(includeOutlier: boolean): ChartLine[] {
     line('支出', 'expense', includeOutlier),
     line('收入', 'income', includeOutlier),
     line('转账', 'transfer', includeOutlier),
-  ]
-}
-
-function incomeChartLines(): ChartLine[] {
-  return [
-    line('年度总收入', 'income', true),
-    {
-      label: '年度工资收入',
-      transactionType: 'income',
-      includeOutlier: true,
-      conditions: [
-        {
-          transactionType: 'income',
-          category: '工资奖金',
-          tags: ['工资'],
-          tagPolicy: 'all',
-          tagNot: false,
-          description: '',
-        },
-      ],
-    },
-    {
-      label: '年度奖金收入',
-      transactionType: 'income',
-      includeOutlier: true,
-      conditions: [
-        {
-          transactionType: 'income',
-          category: '工资奖金',
-          tags: ['奖金'],
-          tagPolicy: 'all',
-          tagNot: false,
-          description: '年奖金',
-        },
-      ],
-    },
-    {
-      label: '年度分红收入',
-      transactionType: 'income',
-      includeOutlier: true,
-      conditions: [
-        {
-          transactionType: 'income',
-          category: '投资理财',
-          tags: [],
-          tagPolicy: 'all',
-          tagNot: false,
-          description: '年分红',
-        },
-      ],
-    },
   ]
 }
 
@@ -384,16 +324,16 @@ describe('chart dao', () => {
 // ==================================================================== 服务
 
 describe('chart service', () => {
-  it('list_seeds_three_presets_with_exact_json', () => {
+  it('list_seeds_two_presets_with_exact_json', () => {
     const workspace = openedWorkspace()
     const charts = listChartsByLedgerId(workspace.db, 'l1')
-    expect(charts, '预设图表数量').toHaveLength(3)
+    expect(charts, '预设图表数量').toHaveLength(2)
 
     // sort_order ASC, created_at DESC
-    expect(charts.map((item) => item.title)).toEqual(['月度消费趋势', '年度消费趋势', '年度收入趋势'])
+    expect(charts.map((item) => item.title)).toEqual(['月度消费趋势', '年度消费趋势'])
     expect(charts.every((item) => item.isPreset)).toBe(true)
-    expect(charts.map((item) => item.sortOrder)).toEqual([0, 1, 2])
-    expect(charts.map((item) => item.granularity)).toEqual(['month', 'year', 'year'])
+    expect(charts.map((item) => item.sortOrder)).toEqual([0, 1])
+    expect(charts.map((item) => item.granularity)).toEqual(['month', 'year'])
     expect(charts.every((item) => item.chartType === 'line')).toBe(true)
 
     // chart_lines 的落库文本必须逐字节一致
@@ -401,31 +341,28 @@ describe('chart service', () => {
     expect(stored.map((item) => item.chartLines)).toEqual([
       MONTHLY_LINES_JSON,
       YEARLY_LINES_JSON,
-      INCOME_LINES_JSON,
     ])
 
     // 解析往返：DTO 的 lines 与逐字 JSON 一一对应；再编码回去完全相同
     expect(charts[0].lines).toEqual(chartLines(false))
     expect(charts[1].lines).toEqual(chartLines(true))
-    expect(charts[2].lines).toEqual(incomeChartLines())
     for (const [index, item] of charts.entries()) {
       expect(JSON.stringify(item.lines), 'encode/decode 必须往返一致').toBe(
         stored[index].chartLines,
       )
     }
-    expect(JSON.stringify(incomeChartLines())).toBe(INCOME_LINES_JSON)
   })
 
   it('list_is_idempotent_and_skips_seeding_when_charts_exist', () => {
     const workspace = openedWorkspace()
     const first = listChartsByLedgerId(workspace.db, 'l1')
     const second = listChartsByLedgerId(workspace.db, 'l1')
-    expect(second, '第二次调用不得重复插入').toHaveLength(3)
+    expect(second, '第二次调用不得重复插入').toHaveLength(2)
     expect(first.map((item) => item.chartId)).toEqual(second.map((item) => item.chartId))
-    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(3)
+    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(2)
 
     // 不同账本各自 seed
-    expect(listChartsByLedgerId(workspace.db, 'l2')).toHaveLength(3)
+    expect(listChartsByLedgerId(workspace.db, 'l2')).toHaveLength(2)
 
     // 已有图表（哪怕是自定义的）时不再补预设
     closeWorkspace()
@@ -457,7 +394,7 @@ describe('chart service', () => {
 
     expect(created.chartId).not.toBe('')
     expect(created.isPreset).toBe(false)
-    expect(created.sortOrder, '预设占 0..2，新建取最大值 + 1').toBe(3)
+    expect(created.sortOrder, '预设占 0..1，新建取最大值 + 1').toBe(2)
     expect(created.chartType).toBe('bar')
     expect(created.lines).toEqual([line('支出', 'expense'), line('收入', 'income')])
 
@@ -468,15 +405,65 @@ describe('chart service', () => {
     )
   })
 
-  it('update_keeps_is_preset_and_reports_missing_chart', () => {
+  it('preset_chart_rejects_rename_granularity_and_lines_but_keeps_its_content', () => {
     const workspace = openedWorkspace()
     listChartsByLedgerId(workspace.db, 'l1')
-    const presetId = listChartRows(workspace.db, 'l1')[0].chartId
+    const preset = listChartRows(workspace.db, 'l1')[0]
+    const presetId = preset.chartId
+    const presetLines = listChartsByLedgerId(workspace.db, 'l1')[0].lines
+
+    const rename = captureAppError(() =>
+      updateChart(workspace.db, updateRequest(presetId, { title: '改名后的月度' })),
+    )
+    expect(rename.status).toBe(400)
+    expect(rename.message).toBe('预设图表不可改名、改粒度或改曲线，只能删除')
+
+    const granularity = captureAppError(() =>
+      updateChart(workspace.db, updateRequest(presetId, { granularity: 'year' })),
+    )
+    expect(granularity.status).toBe(400)
+
+    const lines = captureAppError(() =>
+      updateChart(workspace.db, updateRequest(presetId, { lines: [line('支出', 'expense')] })),
+    )
+    expect(lines.status).toBe(400)
+
+    // 三次拒绝之后，库里的预设逐字段没动
+    const after = requireChart(workspace.db, presetId)
+    expect(after.title).toBe('月度消费趋势')
+    expect(after.granularity).toBe('month')
+    expect(after.chartLines).toBe(preset.chartLines)
+    expect(after.chartType).toBe(preset.chartType)
+    expect(after.isPreset).toBe(true)
+
+    // 原样回写（内容没改）是允许的，预设标记照旧
+    const untouched = updateChart(
+      workspace.db,
+      updateRequest(presetId, {
+        title: preset.title,
+        granularity: preset.granularity,
+        lines: presetLines,
+        chartType: preset.chartType,
+        sortOrder: preset.sortOrder,
+      }),
+    )
+    expect(untouched.isPreset).toBe(true)
+    expect(untouched.title).toBe('月度消费趋势')
+
+    const error = captureAppError(() => updateChart(workspace.db, updateRequest('absent')))
+    expect(error.message).toBe('get chart failed: record not found')
+    expect(error.status).toBe(500)
+  })
+
+  it('custom_chart_updates_freely', () => {
+    const workspace = openedWorkspace()
+    listChartsByLedgerId(workspace.db, 'l1')
+    const custom = createChart(workspace.db, createRequest('l1', { title: '自定义图表' }))
 
     const updated = updateChart(
       workspace.db,
-      updateRequest(presetId, {
-        title: '改名后的月度',
+      updateRequest(custom.chartId, {
+        title: '改名后的自定义',
         granularity: 'year',
         lines: [line('支出', 'expense')],
         chartType: 'bar',
@@ -484,23 +471,19 @@ describe('chart service', () => {
       }),
     )
 
-    expect(updated.title).toBe('改名后的月度')
+    expect(updated.title).toBe('改名后的自定义')
     expect(updated.granularity).toBe('year')
     expect(updated.chartType).toBe('bar')
     expect(updated.sortOrder).toBe(9)
-    expect(updated.isPreset, '预设标记不变').toBe(true)
+    expect(updated.isPreset).toBe(false)
     expect(updated.lines).toEqual([line('支出', 'expense')])
-
-    const error = captureAppError(() => updateChart(workspace.db, updateRequest('absent')))
-    expect(error.message).toBe('get chart failed: record not found')
-    expect(error.status).toBe(500)
   })
 
   it('update_sort_order_writes_only_the_order', async () => {
     const workspace = openedWorkspace()
     const presets = listChartsByLedgerId(workspace.db, 'l1')
     const custom = createChart(workspace.db, createRequest('l1', { title: '自定义图表' }))
-    expect(custom.sortOrder, '预设占 0..2，新建取最大值 + 1').toBe(3)
+    expect(custom.sortOrder, '预设占 0..1，新建取最大值 + 1').toBe(2)
 
     // 只写序号：内容 / 预设标记 / created_at 都不动，updated_at 刷新
     const before = requireChart(workspace.db, custom.chartId)
@@ -526,9 +509,8 @@ describe('chart service', () => {
       '自定义图表',
       '月度消费趋势',
       '年度消费趋势',
-      '年度收入趋势',
     ])
-    expect(reordered.map((item) => item.sortOrder)).toEqual([0, 1, 2, 3])
+    expect(reordered.map((item) => item.sortOrder)).toEqual([0, 1, 2])
 
     // 不存在的图表：不报错
     expect(() => updateChartSortOrder(workspace.db, 'absent', 1)).not.toThrow()
@@ -541,12 +523,11 @@ describe('chart service', () => {
 
     deleteChartById(workspace.db, target)
     const remaining = listChartsByLedgerId(workspace.db, 'l1')
-    expect(remaining).toHaveLength(2)
+    expect(remaining).toHaveLength(1)
     expect(remaining.every((item) => item.chartId !== target)).toBe(true)
-    // 删到 0 之后，下一次查询会重新补齐预设（count > 0 则跳过）
+    // 删到 0 之后不再补齐：预设只播种一次
     deleteChartById(workspace.db, remaining[0].chartId)
-    deleteChartById(workspace.db, remaining[1].chartId)
-    expect(listChartsByLedgerId(workspace.db, 'l1')).toHaveLength(3)
+    expect(listChartsByLedgerId(workspace.db, 'l1')).toHaveLength(0)
 
     // 不存在的 ID 视为成功
     expect(() => deleteChartById(workspace.db, 'absent')).not.toThrow()
@@ -595,9 +576,9 @@ describe('chart service', () => {
     const workspace = openedWorkspace()
 
     seedDefaultCharts(workspace.db, 'l1')
-    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(3)
+    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(2)
     seedDefaultCharts(workspace.db, 'l1')
-    expect(countChartsByLedgerId(workspace.db, 'l1'), '第二次 seed 不得重复插入').toBe(3)
+    expect(countChartsByLedgerId(workspace.db, 'l1'), '第二次 seed 不得重复插入').toBe(2)
     expect(listChartRows(workspace.db, 'l1').every((item) => item.isPreset)).toBe(true)
 
     // 自定义图表也算"已有图表"：直接 seed 也跳过
@@ -605,10 +586,10 @@ describe('chart service', () => {
     seedDefaultCharts(workspace.db, 'l2')
     expect(countChartsByLedgerId(workspace.db, 'l2')).toBe(1)
 
-    // 删空之后重新补齐（预设的 chartId 是新生成的）
+    // 播种是一次性的：删空之后不会再长回来（否则「预设可以删除」就成了空话）
     workspace.db.prepare('DELETE FROM chart WHERE ledger_id = ?').run('l1')
     seedDefaultCharts(workspace.db, 'l1')
-    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(3)
+    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(0)
   })
 
   it('malformed_chart_lines_reports_unmarshal_failure', () => {

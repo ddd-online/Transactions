@@ -128,4 +128,27 @@ describe('migration runner', () => {
     })
     db.close()
   })
+
+  it('drops the retired income preset chart but keeps a same-named custom one', () => {
+    const path = join(temporaryDirectory(), 'transactions.db')
+    const db = openDatabase(path)
+    // 上一版（v6）的库：三张预设图表，其中「年度收入趋势」已不再播种
+    migrate(db, path, MIGRATIONS.filter((migration) => migration.version <= 6))
+    const insert = db.prepare(
+      `INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, is_preset, sort_order, created_at, updated_at)
+       VALUES (?, 'l1', ?, 'year', '[]', 'line', ?, ?, 0, 0)`,
+    )
+    insert.run('preset-income', '年度收入趋势', 1, 2)
+    insert.run('preset-month', '月度消费趋势', 1, 0)
+    insert.run('custom-income', '年度收入趋势', 0, 3)
+
+    migrate(db, path)
+
+    expect(schemaVersion(db)).toBe(LATEST)
+    const rows = db.prepare('SELECT chart_id FROM chart ORDER BY sort_order').all() as Array<{
+      chart_id: string
+    }>
+    expect(rows.map((row) => row.chart_id)).toEqual(['preset-month', 'custom-income'])
+    db.close()
+  })
 })
