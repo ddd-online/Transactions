@@ -3340,23 +3340,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 弹窗挂在 body 下，不在 `.stock-page` 里，红涨绿跌要在这里再声明一次 —— 与
+ * `.stock-page .is-up` / `.is-down` 同向，别写反：盈是红（expense 令牌），亏是绿。 */
 .stock-ledger__computed.ant-input.is-up {
-  color: var(--transactions-color-income);
+  color: var(--transactions-color-expense);
 }
 
 .stock-ledger__computed.ant-input.is-down {
-  color: var(--transactions-color-expense);
+  color: var(--transactions-color-income);
 }
 
 .stock-ledger__computed.ant-input[aria-disabled='true'] {
   cursor: not-allowed;
-}
-
-.stock-ledger-form__hint {
-  margin: 0;
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-caption);
-  line-height: var(--transactions-height-snug);
 }
 
 @media (max-width: 1000px) {

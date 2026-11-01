@@ -237,9 +237,6 @@ export function StockLedgerSection({
         onCancel={() => setOpen(false)}
       >
         <div className="stock-modal-form stock-ledger-form" data-testid="stock-ledger-dialog">
-          <p className="stock-ledger-form__hint">
-            带底色的数字由本轮成交自动计算；持仓期卖出字段清仓后回填。
-          </p>
           <label>
             <span className="stock-label">为什么买</span>
             <Input.TextArea

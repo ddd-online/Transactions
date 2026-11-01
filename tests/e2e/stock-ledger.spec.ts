@@ -125,6 +125,24 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     await page.getByTestId('stock-ledger-save').click()
     await expect(ledger).toContainText('清仓后回看：执行到位')
 
+    // 红涨绿跌：这轮是盈利，弹窗里的净盈亏必须是红（弹窗挂在 body 下，
+    // 不在 `.stock-page` 作用域里，颜色靠 `.stock-ledger__computed` 自己声明）。
+    const tokenColor = (token: string) =>
+      page.evaluate((name) => {
+        const probe = document.createElement('span')
+        probe.style.color = `var(${name})`
+        document.body.append(probe)
+        const value = getComputedStyle(probe).color
+        probe.remove()
+        return value
+      }, token)
+    const pnl = page.getByTestId('stock-ledger-pnl')
+    await expect(pnl).toHaveValue(/^¥-?\d/)
+    const pnlColor = await pnl.evaluate((element) => getComputedStyle(element).color)
+    expect(pnlColor).toBe(await tokenColor('--transactions-color-expense'))
+    expect(pnlColor).not.toBe(await tokenColor('--transactions-color-income'))
+    await expect(page.getByRole('dialog', { name: '编辑台账' })).not.toContainText('带底色')
+
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const row = database
       .prepare('SELECT round_id, why_buy, stop_loss, take_profit, followed_system, summary FROM stock_ledger')
