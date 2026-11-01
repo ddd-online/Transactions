@@ -2861,6 +2861,23 @@
   border-top: 1px solid var(--transactions-color-divider);
 }
 
+/* 成交记录标题行右侧的费用合计：是这一屏里"表里那些费用一共多少"的答案，
+ * 所以和表同一档字号（12px）、数字走等宽，跟费用列的数字对得上。
+ * 标签用三级灰，数字用主文字色 —— 一眼先看到数字，再看到它是什么。 */
+.stock-trade-total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+  white-space: nowrap;
+}
+
+.stock-trade-total strong {
+  color: var(--transactions-color-text-major);
+  font-weight: var(--transactions-weight-medium);
+}
+
 /* 交易台账的标题与内容是一组，不在标题下画线；
  * 区块的收口交给下一段的顶线，避免与 .stock-ledger 的底线叠成 2px。 */
 .stock-detail .stock-ledger__head,

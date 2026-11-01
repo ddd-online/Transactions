@@ -104,6 +104,20 @@ test('股票持仓详情：成交记录吃掉剩余高度，表格自己滚而�
       await expect(page.getByTestId('stock-trade')).toHaveCount(index + 2)
     }
 
+    // 成交记录标题行右侧：表内各行费用之和，数字与费用列同一条竖线之外、靠右对齐
+    const fees = await page.getByTestId('stock-trade-fee').allInnerTexts()
+    const feeSum = fees.reduce((total, text) => total + Number(text.replace(/[^\d.]/g, '')), 0)
+    await expect(page.getByTestId('stock-trade-fee-total')).toHaveText(
+      `费用合计 ¥${feeSum.toFixed(2)}`,
+    )
+    const titleBox = await page.getByText('成交记录', { exact: true }).boundingBox()
+    const totalBox = await page.getByTestId('stock-trade-fee-total').boundingBox()
+    expect(titleBox).not.toBeNull()
+    expect(totalBox).not.toBeNull()
+    expect((totalBox?.x ?? 0) + (totalBox?.width ?? 0)).toBeGreaterThan(
+      (titleBox?.x ?? 0) + (titleBox?.width ?? 0),
+    )
+
     // 本轮复盘写长一点：窗口矮下去时应该是信息区自己滚，而不是把表格挤没
     await page.getByTestId('position-round-edit').click()
     await page.getByTestId('position-round-review').fill('买入理由：冰雪经济龙头股，超过雪人集团。'.repeat(14))

@@ -343,6 +343,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **Header:** Soft Gray, uppercase caption (+0.04em, 600), hairline bottom border.
 - **Rows:** 14px body, hairline dividers; hover hover-bg; selected active-bg.
+- **Header total:** 表可以在标题行右侧带一句汇总（成交记录标题右边的「费用合计 ¥50.10」）：标签 12px 三级灰、金额等宽主文字色，右对齐到表的右边缘，和表里那列数字同一档字号。汇总跟着表里的行走 —— 同一份数据、同一套分→元格式化，不另算一遍；表里没有行时整句不出现，不留一个 ¥0.00 假装有账。
 - **Scrolling:** 面板里的表（持仓详情的成交记录）**吃掉容器剩下的高度**、自己在容器里滚，表头贴住滚动区顶边（AntD `sticky` + `getContainer` 指到 `ScrollArea` 的视口；CSS `position: sticky` 在 AntD 的 `.ant-table-container` 里不管用）。整块详情不跟着滚 —— 一屏里只有最下面的表在动、上面的行情与复盘却跟着跑，读的时候每滚一格都要重新找表头。表格区保住一个下限（表头 + 三行左右，180px），再矮就让上面的信息区自己滚，绝不把表挤没。
 
 ### Media
