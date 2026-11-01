@@ -210,6 +210,14 @@
   font-size: var(--transactions-btn-font-size-sm);
 }
 
+/* 预设图表没有「重命名」可点：原位换成一句说明，标题行的高度与对齐不变。 */
+.da-chart__preset-note {
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  white-space: nowrap;
+}
+
 .da-chart__body {
   display: flex;
   gap: var(--transactions-space-lg);
@@ -377,12 +385,26 @@
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-sm);
+  /* 表格比面板宽时由表格自己横向滚（AntD 的 `scroll.x` 容器有 `overflow`），
+   * 别让列宽把整个面板顶宽、把页面撑出横向滚动条。 */
+  min-width: 0;
   /* 表格最后一行不额外留白（单元格自带内边距）；与窗口底边之间的留白由
    * `.da-main` 的 16px 底部内边距提供。 */
   margin-bottom: 0;
   /* **不许被压扁**：图表区变高时不许把「曲线配置」（以及它的空态）挤掉——
    * 宁可让画布溢出，也不能让这块消失。 */
   flex-shrink: 0;
+}
+
+/* AntD 的横向滚动容器默认按内容撑宽，窄窗里会顶破面板；钉回父宽度，
+ * 溢出交给它自己的 `overflow-x: auto`。 */
+.da-chart__lines .ant-table-wrapper {
+  min-width: 0;
+}
+
+.da-chart__lines .ant-table-content {
+  width: 100%;
+  max-width: 100%;
 }
 
 /* 曲线配置为空时：给一个真正的空态（图标 + 标题 + 说明），不是一个灰字单元格。
@@ -405,6 +427,20 @@
 .da-chart__lines-actions {
   display: flex;
   gap: var(--transactions-space-sm);
+}
+
+/* 预设图表的曲线由系统给定：曲线表右上角不出现「添加曲线」，换成一句说明。 */
+.da-chart__lines-note {
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+}
+
+/* 曲线行上的编辑 / 删除：两颗 text 按钮，与表内其它行操作同一档。 */
+.da-line-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
 }
 
 .da-panel__title {

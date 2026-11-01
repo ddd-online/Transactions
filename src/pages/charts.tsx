@@ -3,10 +3,12 @@ import { Input, Modal, Popconfirm, Select, Table } from 'antd'
 
 import { centsToYuan } from '../../shared/domain/money'
 import { reorderWithChanges } from '../../shared/domain/list-order'
+import { tagNamesForCategory } from '../../shared/domain/tag-names'
 import { addMonths, monthSpan, parseYearMonth } from '../../shared/domain/calendar'
 import { rangeToSeconds, todayYmd } from '../../shared/domain/time'
 import type { ChartLine } from '../../shared/domain/models'
 import type { ChartDto } from '../../shared/types/chart'
+import type { CategoryDto, TagDto } from '../../shared/types/category'
 import type { ChartLineData, ChartQueryResponse } from '../../shared/types/transaction'
 import { AntvLineChart } from '../components/antv-line-chart'
 import { Button } from '../components/button'
@@ -15,6 +17,7 @@ import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { Spin } from '../components/spin'
+import { Switch } from '../components/switch'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { notify } from '../components/toast'
 
@@ -24,6 +27,76 @@ const GRANULARITIES = [
   { value: 'month', label: '月' },
   { value: 'year', label: '年' },
 ]
+
+const LINE_TYPES = [
+  { value: 'expense', label: '支出' },
+  { value: 'income', label: '收入' },
+  { value: 'transfer', label: '转账' },
+]
+
+const TAG_POLICIES = [
+  { value: 'any', label: '任意' },
+  { value: 'all', label: '全部' },
+]
+
+const EMPTY_LINE_FORM: LineForm = {
+  label: '',
+  transactionType: 'expense',
+  category: '',
+  tags: [],
+  tagPolicy: 'any',
+  description: '',
+  includeOutlier: true,
+}
+
+/** 「添加 / 编辑曲线」弹窗的表单：条件为空时存成不限条件的曲线。 */
+interface LineForm {
+  label: string
+  transactionType: string
+  category: string
+  tags: string[]
+  tagPolicy: string
+  description: string
+  includeOutlier: boolean
+}
+
+function lineFormOf(line: ChartLine): LineForm {
+  const condition = line.conditions[0]
+  return {
+    label: line.label,
+    transactionType: line.transactionType,
+    category: condition?.category ?? '',
+    tags: condition ? [...condition.tags] : [],
+    tagPolicy: condition?.tagPolicy === 'all' ? 'all' : 'any',
+    description: condition?.description ?? '',
+    includeOutlier: line.includeOutlier,
+  }
+}
+
+/** 表单 → 一条曲线：三项条件都没填就是「不限」。 */
+function chartLineOf(form: LineForm): ChartLine {
+  const category = form.category.trim()
+  const tags = form.tags.map((tag) => tag.trim()).filter((tag) => tag !== '')
+  const description = form.description.trim()
+  return {
+    label: form.label.trim(),
+    transactionType: form.transactionType,
+    includeOutlier: form.includeOutlier,
+    conditions:
+      category === '' && tags.length === 0 && description === ''
+        ? []
+        : [
+            {
+              transactionType: form.transactionType,
+              category,
+              tags,
+              tagPolicy: form.tagPolicy,
+              tagNot: false,
+              description,
+            },
+          ],
+  }
+}
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -89,6 +162,16 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [renaming, setRenaming] = useState(false)
   const [renameError, setRenameError] = useState('')
 
+  const [categories, setCategories] = useState<CategoryDto[]>([])
+  const [tags, setTags] = useState<TagDto[]>([])
+
+  const [lineOpen, setLineOpen] = useState(false)
+  /** 正在编辑的曲线下标；`null` 表示新增 */
+  const [lineIndex, setLineIndex] = useState<number | null>(null)
+  const [lineForm, setLineForm] = useState<LineForm>(EMPTY_LINE_FORM)
+  const [lineError, setLineError] = useState('')
+  const [savingLine, setSavingLine] = useState(false)
+
   const [rangeMode, setRangeMode] = useState<TimeRangeMode>('month')
   const [rangeStart, setRangeStart] = useState(() => lastYearRange().start)
   const [rangeEnd, setRangeEnd] = useState(() => lastYearRange().end)
@@ -137,6 +220,35 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       setCommittedRange({ start: rangeStart, end: rangeEnd })
     }
   }, [rangeStart, rangeEnd])
+
+  /** 分类 / 标签只是曲线条件的选择项：读取失败不阻塞图表。 */
+  useEffect(() => {
+    if (!ledgerId) {
+      setCategories([])
+      setTags([])
+      return
+    }
+    let alive = true
+    void (async () => {
+      try {
+        const [categoryRows, tagRows] = await Promise.all([
+          window.api.invoke('category_list', { ledgerId, type: '' }),
+          window.api.invoke('tag_list', { ledgerId, categoryTransactionType: '' }),
+        ])
+        if (!alive) return
+        setCategories(categoryRows)
+        setTags(tagRows)
+      } catch {
+        if (alive) {
+          setCategories([])
+          setTags([])
+        }
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [ledgerId])
 
   const load = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -353,6 +465,126 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const responseLines: ChartLineData[] = data?.lines ?? []
   const hasValues = responseLines.some((line) => line.data.some((point) => point.amount !== 0))
+
+  // ---------------------------------------------------------------- 曲线的增 / 改 / 删
+
+  /** 整行回写（只换曲线）：本地先换成服务端返回的那一份，图表随之重算。 */
+  const applyLines = useCallback(
+    async (lines: ChartLine[], message: string): Promise<boolean> => {
+      if (!selected || selected.isPreset) return false
+      setSavingLine(true)
+      setError('')
+      try {
+        const updated = await window.api.invoke('chart_update', {
+          chartId: selected.chartId,
+          title: selected.title,
+          granularity: selected.granularity,
+          lines,
+          chartType: selected.chartType,
+          sortOrder: selected.sortOrder,
+        })
+        setCharts((current) =>
+          current.map((chart) => (chart.chartId === updated.chartId ? updated : chart)),
+        )
+        notify(message)
+        return true
+      } catch (saveError) {
+        setError(errorMessage(saveError))
+        await load()
+        return false
+      } finally {
+        setSavingLine(false)
+      }
+    },
+    [load, selected],
+  )
+
+  const openAddLine = useCallback((): void => {
+    setLineIndex(null)
+    setLineForm(EMPTY_LINE_FORM)
+    setLineError('')
+    setLineOpen(true)
+  }, [])
+
+  const openEditLine = useCallback((index: number): void => {
+    const line = selected?.lines[index]
+    if (!line) return
+    setLineIndex(index)
+    setLineForm(lineFormOf(line))
+    setLineError('')
+    setLineOpen(true)
+  }, [selected])
+
+  const closeLine = useCallback((): void => {
+    setLineOpen(false)
+    setLineError('')
+  }, [])
+
+  const submitLine = useCallback(async (): Promise<void> => {
+    if (!selected || savingLine) return
+    const line = chartLineOf(lineForm)
+    if (!line.label) {
+      setLineError('请输入曲线名称')
+      return
+    }
+    const others = selected.lines.filter((_item, index) => index !== lineIndex)
+    if (others.some((item) => item.label === line.label)) {
+      setLineError(`已经有名为「${line.label}」的曲线`)
+      return
+    }
+    const next =
+      lineIndex === null
+        ? [...selected.lines, line]
+        : selected.lines.map((item, index) => (index === lineIndex ? line : item))
+    const saved = await applyLines(next, lineIndex === null ? '曲线已添加' : '曲线已保存')
+    if (saved) setLineOpen(false)
+  }, [applyLines, lineForm, lineIndex, savingLine, selected])
+
+  const removeLine = useCallback(
+    async (index: number): Promise<void> => {
+      if (!selected) return
+      await applyLines(
+        selected.lines.filter((_item, current) => current !== index),
+        '曲线已删除',
+      )
+    },
+    [applyLines, selected],
+  )
+
+  const categoryOptions = useMemo(() => {
+    const names = new Set<string>()
+    for (const category of categories) {
+      if (category.transactionType === lineForm.transactionType) names.add(category.name)
+    }
+    return Array.from(names).map((name) => ({ value: name, label: name }))
+  }, [categories, lineForm.transactionType])
+
+  const tagOptions = useMemo(
+    () =>
+      tagNamesForCategory(tags, lineForm.category, lineForm.transactionType).map((name) => ({
+        value: name,
+        label: name,
+      })),
+    [lineForm.category, lineForm.transactionType, tags],
+  )
+
+  /** 换交易类型：分类与标签都跟着失效（标签按 `分类:类型` 归档）。 */
+  const changeLineType = useCallback((transactionType: string): void => {
+    setLineForm((current) => ({ ...current, transactionType, category: '', tags: [] }))
+  }, [])
+
+  const changeLineCategory = useCallback(
+    (category: string): void => {
+      const valid = new Set(tagNamesForCategory(tags, category, lineForm.transactionType))
+      setLineForm((current) => ({
+        ...current,
+        category,
+        tags: current.tags.filter((tag) => valid.has(tag)),
+      }))
+    },
+    [lineForm.transactionType, tags],
+  )
+
   /* 颜色表按曲线条数记忆：`AntvLineChart` 的建图 effect 依赖这个数组，
    * 以前每次渲染都 `slice()` 出一个新数组 → 重命名弹窗里每敲一个字都销毁重画整张图
    * （实测 20 个字 = 20 次重建、926ms）。数组现在只在条数变化时换新。 */
@@ -478,9 +710,15 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                     options={GRANULARITIES}
                     style={{ width: 72 }}
                   />
-                  <Button variant="secondary" size="sm" testId="chart-rename" onClick={openRename}>
-                    重命名
-                  </Button>
+                  {selected.isPreset ? (
+                    <span className="da-chart__preset-note" data-testid="chart-preset-note">
+                      预设图表，只能删除
+                    </span>
+                  ) : (
+                    <Button variant="secondary" size="sm" testId="chart-rename" onClick={openRename}>
+                      重命名
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -568,6 +806,22 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               <div className="da-chart__lines">
                 <div className="da-chart__lines-head">
                   <h4 className="da-panel__title">曲线配置</h4>
+                  {selected.isPreset ? (
+                    <span className="da-chart__lines-note">曲线由系统提供</span>
+                  ) : (
+                    <div className="da-chart__lines-actions">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        testId="chart-line-add"
+                        icon={<Icon name="Plus" size={14} />}
+                        loading={savingLine}
+                        onClick={openAddLine}
+                      >
+                        添加曲线
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <Table<ChartLine>
                   className="tr-table da-table"
@@ -575,7 +829,23 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   pagination={false}
                   size="small"
                   dataSource={lineRows}
-                  locale={{ emptyText: '还没有曲线' }}
+                  // 窄窗里放不下时由表格自己横向滚，别把整页顶出可视区
+                  scroll={{ x: 'max-content' }}
+                  locale={{
+                    emptyText: (
+                      <div className="da-chart__lines-empty">
+                        <EmptyState
+                          testId="chart-lines-empty"
+                          title="还没有曲线"
+                          description={
+                            selected.isPreset
+                              ? '预设图表的曲线由系统提供'
+                              : '点右上角「添加曲线」建一条'
+                          }
+                        />
+                      </div>
+                    ),
+                  }}
                   columns={[
                     {
                       title: '曲线名称',
@@ -612,6 +882,46 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                       dataIndex: 'conditions',
                       render: (_: unknown, line: ChartLine) => conditionSummary(line),
                     },
+                    ...(selected.isPreset
+                      ? []
+                      : [
+                          {
+                            title: '操作',
+                            key: 'actions',
+                            width: 120,
+                            align: 'center' as const,
+                            render: (_: unknown, line: ChartLine, index: number) => (
+                              <span className="da-line-actions">
+                                <Button
+                                  variant="text"
+                                  size="sm"
+                                  testId="chart-line-edit"
+                                  disabled={savingLine}
+                                  onClick={() => openEditLine(index)}
+                                >
+                                  编辑
+                                </Button>
+                                <Popconfirm
+                                  title={`删除曲线「${line.label}」？`}
+                                  okText="删除"
+                                  cancelText="取消"
+                                  okType="danger"
+                                  placement="topRight"
+                                  onConfirm={() => void removeLine(index)}
+                                >
+                                  <Button
+                                    variant="text-danger"
+                                    size="sm"
+                                    testId="chart-line-delete"
+                                    disabled={savingLine}
+                                  >
+                                    删除
+                                  </Button>
+                                </Popconfirm>
+                              </span>
+                            ),
+                          },
+                        ]),
                   ]}
                 />
               </div>
@@ -709,6 +1019,124 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               onClick={() => void renameChart()}
             >
               重命名
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={lineOpen}
+        title={lineIndex === null ? '添加曲线' : '编辑曲线'}
+        width={560}
+        centered
+        destroyOnHidden
+        footer={null}
+        onCancel={closeLine}
+      >
+        <div className="tr-modal-form" data-testid="chart-line-dialog">
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">曲线名称</span>
+            <Input
+              data-testid="chart-line-label"
+              placeholder="例如：餐饮支出"
+              value={lineForm.label}
+              maxLength={40}
+              onChange={(event) =>
+                setLineForm((current) => ({ ...current, label: event.target.value }))
+              }
+              onPressEnter={() => void submitLine()}
+            />
+          </div>
+
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">交易类型</span>
+              <Select
+                data-testid="chart-line-type"
+                value={lineForm.transactionType}
+                options={LINE_TYPES}
+                onChange={(value: string) => changeLineType(value)}
+              />
+            </div>
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">分类</span>
+              <Select
+                data-testid="chart-line-category"
+                value={lineForm.category || undefined}
+                placeholder="不限分类"
+                allowClear
+                options={categoryOptions}
+                onChange={(value: string | undefined) => changeLineCategory(value ?? '')}
+              />
+            </div>
+          </div>
+
+          <div className="tr-modal-row">
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标签</span>
+              <Select
+                data-testid="chart-line-tags"
+                mode="multiple"
+                allowClear
+                placeholder="不限标签"
+                value={lineForm.tags}
+                options={tagOptions}
+                onChange={(value: string[]) =>
+                  setLineForm((current) => ({ ...current, tags: value }))
+                }
+              />
+            </div>
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">标签匹配</span>
+              <Select
+                data-testid="chart-line-policy"
+                value={lineForm.tagPolicy}
+                options={TAG_POLICIES}
+                onChange={(value: string) =>
+                  setLineForm((current) => ({ ...current, tagPolicy: value }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="tr-modal-field">
+            <span className="tr-modal-label">描述包含</span>
+            <Input
+              data-testid="chart-line-description"
+              placeholder="输入关键词"
+              value={lineForm.description}
+              onChange={(event) =>
+                setLineForm((current) => ({ ...current, description: event.target.value }))
+              }
+            />
+          </div>
+
+          <Switch
+            checked={lineForm.includeOutlier}
+            testId="chart-line-outlier"
+            label="包含离群值"
+            onChange={(checked) =>
+              setLineForm((current) => ({ ...current, includeOutlier: checked }))
+            }
+          />
+
+          {lineError ? (
+            <p className="m0-error" data-testid="chart-line-error">
+              {lineError}
+            </p>
+          ) : null}
+          <div className="tr-modal-footer">
+            <Button variant="secondary" testId="chart-line-cancel" onClick={closeLine}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              testId="chart-line-submit"
+              loading={savingLine}
+              disabled={savingLine}
+              onClick={() => void submitLine()}
+            >
+              {lineIndex === null ? '添加' : '保存'}
             </Button>
           </div>
         </div>

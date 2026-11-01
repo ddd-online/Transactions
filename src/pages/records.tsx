@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type HTMLAttributes, type JSX
 
 import { centsToYuan, yuanToCents } from '../../shared/domain/money'
 import type { Ledger } from '../../shared/domain/models'
+import { tagNamesForCategory } from '../../shared/domain/tag-names'
 import { formatTimestamp, rangeToSeconds, todayYmd } from '../../shared/domain/time'
 import { addMonths, monthSpan, parseYmd, parseYearMonth, yearSpan } from '../../shared/domain/calendar'
 import type {
@@ -44,25 +45,6 @@ import { Tooltip } from '../components/tooltip'
  */
 function composerDefaultDate(start: string, end: string): string {
   return start && start === end ? start : todayYmd()
-}
-
-/**
- * 某分类 + 交易类型下的标签名（去重）。
- *
- * 标签在库里按 `分类:交易类型` 归档，所以选项必须跟着分类走；跨分类把标签全列出来，
- * 会让人把别的分类的标签记到这条记录上。
- */
-function tagNamesForCategory(
-  tags: readonly TagDto[],
-  category: string,
-  transactionType: string,
-): string[] {
-  const key = `${category.trim()}:${transactionType}`
-  return Array.from(
-    new Set(
-      tags.filter((tag) => tag.categoryTransactionType === key).map((tag) => tag.name),
-    ),
-  )
 }
 
 /** 选中的日期 → 当天本地的 Unix 秒（记账只关心哪一天，取正午避开时区边界）。 */
