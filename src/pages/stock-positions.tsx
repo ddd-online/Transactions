@@ -728,7 +728,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               ) : null}
             </section>
             <div className="stock-detail__trades">
-              <ScrollArea className="stock-detail__trades-scroll">
+              {/* 窄窗里 8 列放不下：让成交记录自己横向滚，数字不换行 */}
+              <ScrollArea className="stock-detail__trades-scroll" axis="both">
                 <Table
                   className="tr-table stock-trade-table"
                   sticky={{

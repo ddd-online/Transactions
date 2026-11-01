@@ -1655,6 +1655,12 @@
   .stock-round__head .ui-tag {
     white-space: nowrap;
   }
+
+  /* 换行后「分析 / 记心得」另起一行：auto 外边距让它们靠右站，
+   * 不然第二行会从左边起笔，看着像另一轮的标题。 */
+  .stock-round__head .stock-round__tag-slot {
+    margin-left: auto;
+  }
 }
 
 @media (max-width: 1080px) {
@@ -2479,6 +2485,7 @@
   table-layout: fixed;
 }
 
+
 /* ---------------- 账户 ---------------- */
 
 .stock-account-view {
@@ -2868,7 +2875,8 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  color: var(--transactions-color-text-tertiary);
+  /* 与表头同一档：12px 的三级灰只有 ≈3.7:1，读不清 "这是什么数"。 */
+  color: var(--transactions-color-text-secondary);
   font-size: var(--transactions-size-text-caption);
   white-space: nowrap;
 }
@@ -2964,7 +2972,8 @@
 
 .stock-review-day__date {
   flex-shrink: 0;
-  color: var(--transactions-color-text-tertiary);
+  /* 日期是这一行的身份（点开看的是哪一天），三级灰 11px 只有 ≈3.7:1。 */
+  color: var(--transactions-color-text-secondary);
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-small);
   font-variant-numeric: tabular-nums;
@@ -2995,6 +3004,22 @@
   color: var(--transactions-color-text-inverse);
 }
 
+/* 页脚的「N 条/页」是页码旁边的同一档控件：别给它边框和纸白底 ——
+ * 一排扁平页码末尾挂一个描边输入框，会把页脚里最重的注意力吸到"改条数"上。 */
+.stock-table-foot .ant-pagination-options .ant-select {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.stock-table-foot .ant-pagination-options .ant-select:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.stock-table-foot .ant-pagination-options .ant-select-content {
+  font-size: var(--transactions-size-text-caption);
+}
+
 .stock-review-list,
 .stock-operation-list,
 .stock-round__days {
@@ -3021,6 +3046,22 @@
   overflow-wrap: anywhere;
 }
 
+/* 窄窗里 8 列放不下时，让轮次表在轮次体里横向滚：把数字压成竖排（1 / 0 / . / 0 / 0）
+ * 比截断更难读。单元格一律不换行，表格按内容排、至少占满宽度。 */
+.stock-round__body {
+  overflow-x: auto;
+}
+
+.stock-round__body > .stock-trade-table .ant-table table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.stock-round__body .stock-trade-table .ant-table-thead > tr > th,
+.stock-round__body .stock-trade-table .ant-table-tbody > tr > td {
+  white-space: nowrap;
+}
+
 .stock-round__body > .stock-trade-table {
   width: calc(100% + var(--transactions-space-lg) + var(--transactions-space-lg));
   max-width: none;
@@ -3029,10 +3070,17 @@
   margin-left: calc(-1 * var(--transactions-space-lg));
 }
 
-/* 持仓详情只有一列内容、没有额外横向空间：让 8 列按容器收窄，
- * 不再继承 .tr-table 的 880px 最小宽度把详情撑出横向滚动。 */
+/* 持仓详情只有一列内容、没有额外横向空间：不再继承 .tr-table 的 880px 最小宽度。
+ * 表格本身按内容排、至少占满容器；放不下时由成交记录自己的滚动区横向滚
+ * （`axis="both"`）—— 用 `min-width: 0` 硬压的话，数字不换行会叠到相邻格里。 */
 .stock-detail__trades .stock-trade-table {
   min-width: 0;
+}
+
+.stock-detail__trades .stock-trade-table .ant-table table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
 }
 
 .stock-trade-table .ant-table-thead > tr > th {
@@ -3044,6 +3092,13 @@
 .stock-trade-table .ant-table-tbody > tr > td {
   padding: var(--transactions-space-xs) var(--transactions-space-sm);
   font-size: var(--transactions-size-text-caption);
+}
+
+/* 窄窗里 8 列挤不下时，数字绝不换行：`1680.00` 被拆成「168 / 0.0 / 0」比截断更糟。
+ * 放不下就让成交记录自己的滚动区横向滚（`axis="both"`）。 */
+.stock-detail__trades .stock-trade-table .ant-table-thead > tr > th,
+.stock-detail__trades .stock-trade-table .ant-table-tbody > tr > td {
+  white-space: nowrap;
 }
 
 /* 时间列是一行完整日期 + 时分：11px 等宽、不换行，140px 内刚好放下。 */

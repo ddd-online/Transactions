@@ -443,7 +443,7 @@ function RoundBlock({
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
           {money(round.pnl)} · {stockPercent(round.pnlRate)}
         </span>
-        <span onClick={(event) => event.stopPropagation()}>
+        <span className="stock-round__tag-slot" onClick={(event) => event.stopPropagation()}>
           <Select
             className="stock-round__tag"
             data-testid="round-tag"
