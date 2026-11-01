@@ -92,12 +92,13 @@
   transition:
     background-color var(--transactions-transition-fast),
     color var(--transactions-transition-fast),
-    transform 90ms var(--transactions-ease-out-expo);
+    translate 90ms var(--transactions-ease-out-expo);
 }
 
-/* 与 `.nav-btn` / `.tr-btn` 同一档的按压反馈：图标键也是按钮 */
+/* 与 `.nav-btn` / `.tr-btn` 同一档的按压反馈：图标键也是按钮。
+ * 同样用独立的 `translate` —— 事件页的关联栏开关用 `transform` 定位在栏边。 */
 .tr-icon-btn:active {
-  transform: translateY(1px);
+  translate: 0 1px;
 }
 
 .tr-icon-btn:hover {

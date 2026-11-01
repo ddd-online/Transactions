@@ -88,9 +88,10 @@ test('动效：按钮按压、表内行底色、展开层，以及减少动态�
     await page.getByTestId('acct-tab-records').click()
     await expect(page.locator('tr.ant-table-row').first()).toBeVisible()
 
-    // 工具栏按钮：按下的 1px 也要有过渡（不是硬跳）
+    // 工具栏按钮：按下的 1px 也要有过渡（不是硬跳）。
+    // 用独立的 `translate` 属性，不能写成 `transform` —— 那会覆盖按钮自己的定位变换。
     const button = await timings(page, '.tr-btn')
-    expect(button.transitionProperties).toContain('transform')
+    expect(button.transitionProperties).toContain('translate')
     expect(button.transitionSeconds.some((seconds) => seconds > 0 && seconds <= 0.2)).toBe(true)
 
     // 表内行的悬停底色走过渡，指到哪一行不是"闪一下"
