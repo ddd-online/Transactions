@@ -134,8 +134,12 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
   const base = new Date()
   base.setHours(0, 0, 0, 0)
   const today = new Date(base)
+  // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
+  // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
   const previous = new Date(base)
-  previous.setDate(previous.getDate() - 1)
+  do {
+    previous.setDate(previous.getDate() - 1)
+  } while (previous.getDay() === 0 || previous.getDay() === 6)
 
   const pools: Record<string, unknown[]> = {
     [queryDate(today)]: [
@@ -391,8 +395,12 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
   const base = new Date()
   base.setHours(0, 0, 0, 0)
   const today = new Date(base)
+  // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
+  // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
   const previous = new Date(base)
-  previous.setDate(previous.getDate() - 1)
+  do {
+    previous.setDate(previous.getDate() - 1)
+  } while (previous.getDay() === 0 || previous.getDay() === 6)
 
   const pools: Record<string, unknown[]> = {
     [queryDate(today)]: [raw('600838', '上海九百', 4, 92500), raw('000001', '平安银行', 1, 93000)],
@@ -562,8 +570,12 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
   const base = new Date()
   base.setHours(0, 0, 0, 0)
   const today = new Date(base)
+  // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
+  // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
   const previous = new Date(base)
-  previous.setDate(previous.getDate() - 1)
+  do {
+    previous.setDate(previous.getDate() - 1)
+  } while (previous.getDay() === 0 || previous.getDay() === 6)
 
   const firstBoards = Array.from({ length: 60 }, (_, index) =>
     raw(`6${String(10000 + index).padStart(5, '0')}`, `首板${index + 1}`, 1, 92500 + index * 10),
@@ -655,8 +667,12 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
   const base = new Date()
   base.setHours(0, 0, 0, 0)
   const today = new Date(base)
+  // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
+  // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
   const previous = new Date(base)
-  previous.setDate(previous.getDate() - 1)
+  do {
+    previous.setDate(previous.getDate() - 1)
+  } while (previous.getDay() === 0 || previous.getDay() === 6)
 
   // 7 层：每列只剩 ~180px，行换 66px 的三行版式
   const pools: Record<string, unknown[]> = {
