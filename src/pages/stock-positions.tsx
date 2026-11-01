@@ -652,8 +652,19 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 days={selected.dayReviews}
                 testId="position-daily-review"
                 empty={
-                  <div className="stock-review-preview" data-testid="position-daily-review">
-                    还没有写每日复盘，点「写今日」记下今天的盘面和判断。
+                  // 空态也是一行、也能点：点它就是「写今日」，和上面有内容的行同一种反馈
+                  <div className="stock-review-line">
+                    <button
+                      type="button"
+                      className="stock-review-day"
+                      data-testid="position-daily-review"
+                      aria-label="写今日的每日复盘"
+                      onClick={openDailyReview}
+                    >
+                      <span className="stock-review-day__text stock-muted">
+                        还没有写每日复盘，点「写今日」记下今天的盘面和判断。
+                      </span>
+                    </button>
                   </div>
                 }
               />
@@ -1077,6 +1088,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             <span className="stock-label">复盘</span>
             <Input.TextArea
               data-testid="position-review-text"
+              aria-label="今日的每日复盘"
               rows={6}
               placeholder="记录今天的盘面与判断"
               value={dailyText}

@@ -93,6 +93,7 @@ export function StockRoundReview({
             <span className="stock-label">复盘</span>
             <Input.TextArea
               data-testid={`${testId}-review`}
+              aria-label="本轮复盘"
               rows={6}
               placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
               value={draft}

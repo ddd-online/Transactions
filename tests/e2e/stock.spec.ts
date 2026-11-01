@@ -147,6 +147,12 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     expect(trade.quantity).toBe(100)
     expect(trade.total_cost_cents).toBe(50_501)
 
+    // 还没有每日复盘时，那一行空态本身就是「写今日」
+    await page.getByTestId('position-daily-review').click()
+    await expect(page.getByTestId('position-review-text')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('position-review-text')).toBeHidden()
+
     await page.getByTestId('position-review-open').click()
     await expect(page.getByTestId('position-review-text')).toHaveValue(/今日盘面/)
     await page.getByTestId('position-review-text').fill('观察一天')

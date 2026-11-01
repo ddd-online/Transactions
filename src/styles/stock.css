@@ -2932,13 +2932,6 @@
   padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
 }
 
-.stock-review-preview {
-  padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-body-sm);
-  line-height: var(--transactions-height-relaxed);
-}
-
 /* 每日复盘：一天一条（最新在上），一行放不下就省略号。
  * 行本身是按钮 —— 整行都能点，点开是读全文的弹窗，不在原地展开。 */
 .stock-review-days {
@@ -3399,10 +3392,14 @@
   }
 }
 
+/* 记录里的「本轮复盘」和「每日复盘」是同一层段落：同样一条上发丝线、
+ * 同样的上间距 —— 两段只隔一行标题、却没有发丝线，会读成同一段。 */
 .stock-round__review {
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
 }
 
 .stock-round__review-head {
@@ -3558,8 +3555,10 @@
 }
 
 /* 记录里那一轮：这一行已经在 `.stock-round__body` 的 16px 内边距里，
- * 不再加一层缩进 —— 行自己的 8px 内边距靠负外边距吃掉，文字与小标题对齐。 */
+ * 不再加一层缩进 —— 行自己的 8px 内边距靠负外边距吃掉，文字与小标题对齐。
+ * 上间距跟每日复盘列表同一档（4px），两块读起来才是一个节奏。 */
 .stock-round__review .stock-review-line {
+  margin-top: var(--transactions-space-xs);
   padding: 0;
 }
 
