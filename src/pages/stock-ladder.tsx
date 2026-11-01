@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 
 import Listy from '@rc-component/listy'
 
-import { addDays } from '../../shared/domain/calendar'
+import { addDays, latestTradingDay } from '../../shared/domain/calendar'
 import { boardCounts, ladderRows, type LadderRow } from '../../shared/domain/limit-ladder'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import type { StockLimitLadder, StockLimitMetrics } from '../../shared/types/stock-limit'
@@ -64,6 +64,32 @@ function summaryOf(ladder: StockLimitLadder): StockLadderSummary {
   return { metrics: ladder.metrics, topName }
 }
 
+/** 没有天梯可画时的文案：每种 status 说清"为什么没有"，别让空页自己解释。 */
+function emptyCopy(ladder: StockLimitLadder): { title: string; description: string } {
+  if (ladder.status === 'offday') {
+    return {
+      title: '周末休市',
+      description: 'A 股周末不开盘，没有当天的涨停数据；左右箭头可以翻到最近的交易日。',
+    }
+  }
+  if (ladder.status === 'unavailable') {
+    return {
+      title: '数据源没有收录这一天',
+      description: '数据源只保留最近一个多月；更早的日期要当时已经存到本地。',
+    }
+  }
+  if (ladder.status === 'preopen') {
+    return {
+      title: '还没开盘',
+      description: '09:30 开盘后才有当天的涨停数据；现在可以先看前一交易日。',
+    }
+  }
+  if (ladder.temporary) {
+    return { title: '今天还没有涨停数据', description: '刚开盘或盘中还没有涨停股，刷新看看。' }
+  }
+  return { title: '这一天没有涨停', description: '非交易日，或当天确实没有涨停股。' }
+}
+
 export interface StockLadderPanelProps {
   /** 汇总数字变化（外层用 `PageLayout` 的底栏展示） */
   onSummaryChange?: (summary: StockLadderSummary | null) => void
@@ -75,7 +101,9 @@ export function StockLadderPanel({
   onSummaryChange,
   toolbarHost = null,
 }: StockLadderPanelProps): JSX.Element {
-  const today = todayYmd()
+  // 天梯只谈交易日：周末打开时默认落在最近一个交易日（周五），不拿周六 / 周日
+  // 空着开场；手选到周末会看到「周末休市」，不会显示别的交易日的池子。
+  const today = latestTradingDay(todayYmd())
   const [date, setDate] = useState(today)
   const [ladder, setLadder] = useState<StockLimitLadder | null>(null)
   const [loading, setLoading] = useState(false)
@@ -154,6 +182,7 @@ export function StockLadderPanel({
 
   const statusText = ((): string => {
     if (!ladder) return ''
+    if (ladder.status === 'offday') return '周末休市 · 没有当天的涨停数据'
     if (ladder.status === 'preopen') return '开盘前 · 09:30 后才有当天数据'
     if (ladder.temporary) return '盘中临时数据 · 15:00 收盘后写入本地'
     if (ladder.stale) return `刷新失败，显示 ${fetchedText(ladder.fetchedAt)} 的本地缓存`
@@ -190,28 +219,9 @@ export function StockLadderPanel({
       )
     }
     if (ladder.status !== 'ok') {
+      const copy = emptyCopy(ladder)
       return (
-        <EmptyState
-          testId="stock-ladder-empty"
-          title={
-            ladder.status === 'unavailable'
-              ? '数据源没有收录这一天'
-              : ladder.status === 'preopen'
-                ? '还没开盘'
-                : ladder.temporary
-                  ? '今天还没有涨停数据'
-                  : '这一天没有涨停'
-          }
-          description={
-            ladder.status === 'unavailable'
-              ? '数据源只保留最近一个多月；更早的日期要当时已经存到本地。'
-              : ladder.status === 'preopen'
-                ? '09:30 开盘后才有当天的涨停数据；现在可以先看前一交易日。'
-                : ladder.temporary
-                  ? '刚开盘或盘中还没有涨停股，刷新看看。'
-                  : '非交易日，或当天确实没有涨停股。'
-          }
-        />
+        <EmptyState testId="stock-ladder-empty" title={copy.title} description={copy.description} />
       )
     }
 

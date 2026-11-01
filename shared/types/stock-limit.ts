@@ -91,7 +91,13 @@ export interface StockLimitMetrics {
  * `preopen` 当天 09:30 之前：还没有当天数据可看，也不会抓取；
  * `unavailable` 本地没有、数据源也没收录（早于数据源的保留窗口）。
  */
-export type StockLimitStatus = 'ok' | 'empty' | 'preopen' | 'unavailable'
+export type StockLimitStatus =
+  | 'ok'
+  | 'empty'
+  | 'preopen'
+  | 'unavailable'
+  /** 周末休市：没有当天数据，也不该把数据源的"最近交易日"贴到这一天 */
+  | 'offday'
 
 /** 某一天的天梯（一次查询的完整结果）。 */
 export interface StockLimitLadder {

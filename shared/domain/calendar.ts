@@ -123,6 +123,23 @@ export function isWeekend(input: string): boolean {
   return index === 0 || index === 6
 }
 
+/**
+ * 最近一个交易日（只看周末）：当天不是周末就原样返回，周六 / 周日往回走到周五。
+ *
+ * 节假日没有离线日历可用，只能等数据源自己告诉我们"这天没有交易"（`qdate` 对不上）。
+ * 这里只解决"打开天梯默认落在周末"这一类问题。
+ */
+export function latestTradingDay(input: string): string {
+  let cursor = input
+  for (let step = 0; step < 7; step += 1) {
+    if (!isWeekend(cursor)) return cursor
+    const previous = addDays(cursor, -1)
+    if (previous === null) return input
+    cursor = previous
+  }
+  return input
+}
+
 /** 某年某月的天数（公历闰年规则：4 年一闰、100 年不闰、400 年又闰）。 */
 export function daysInMonth(year: number, month: number): number {
   switch (month) {

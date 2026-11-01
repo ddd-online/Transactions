@@ -133,6 +133,9 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
 
   const base = new Date()
   base.setHours(0, 0, 0, 0)
+  // 天梯只谈交易日：页面默认落在最近一个交易日（周末打开就是周五），
+  // 测试的"今天"也必须用同一个基准，否则周末跑时页面请求的是周五、夹具却在周日。
+  while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() - 1)
   const today = new Date(base)
   // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
   // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
@@ -394,6 +397,9 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
 
   const base = new Date()
   base.setHours(0, 0, 0, 0)
+  // 天梯只谈交易日：页面默认落在最近一个交易日（周末打开就是周五），
+  // 测试的"今天"也必须用同一个基准，否则周末跑时页面请求的是周五、夹具却在周日。
+  while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() - 1)
   const today = new Date(base)
   // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
   // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
@@ -498,6 +504,9 @@ test('连板天梯：09:30 前不支持查看当天', async () => {
 
   const base = new Date()
   base.setHours(0, 0, 0, 0)
+  // 天梯只谈交易日：页面默认落在最近一个交易日（周末打开就是周五），
+  // 测试的"今天"也必须用同一个基准，否则周末跑时页面请求的是周五、夹具却在周日。
+  while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() - 1)
   const today = new Date(base)
 
   const requests: string[] = []
@@ -569,6 +578,9 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
 
   const base = new Date()
   base.setHours(0, 0, 0, 0)
+  // 天梯只谈交易日：页面默认落在最近一个交易日（周末打开就是周五），
+  // 测试的"今天"也必须用同一个基准，否则周末跑时页面请求的是周五、夹具却在周日。
+  while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() - 1)
   const today = new Date(base)
   // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
   // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。
@@ -666,6 +678,9 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
 
   const base = new Date()
   base.setHours(0, 0, 0, 0)
+  // 天梯只谈交易日：页面默认落在最近一个交易日（周末打开就是周五），
+  // 测试的"今天"也必须用同一个基准，否则周末跑时页面请求的是周五、夹具却在周日。
+  while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() - 1)
   const today = new Date(base)
   // 天梯的「前一交易日」会跳过周末（`loadPreviousDay` 里直接记空、不发请求）：
   // 测试的"昨天"也得跟着跳，否则周日/周一时它会回溯到周五，而夹具只放在"昨天"。

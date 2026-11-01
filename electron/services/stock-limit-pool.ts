@@ -76,7 +76,28 @@ interface RawLimitEntry {
 
 interface RawLimitPayload {
   rc?: unknown
-  data?: { tc?: unknown; pool?: unknown } | null
+  data?: { tc?: unknown; qdate?: unknown; pool?: unknown } | null
+}
+
+/** 响应里的 `qdate`（`YYYYMMDD`）→ `YYYY-MM-DD`；缺失或非法返回 `null`。 */
+function poolTradeDate(value: unknown): string | null {
+  const raw = integerValue(value)
+  if (raw < 10000101 || raw > 99991231) return null
+  const text = String(raw)
+  return `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}`
+}
+
+/** 一次抓取的结果：池子条目 + 数据源实际给出的交易日。 */
+export interface LimitPoolPayload {
+  entries: StockLimitEntry[]
+  /**
+   * 数据源实际给出的交易日（响应里的 `qdate`）。
+   *
+   * 请求节假日或超出一个月的旧日期时，东财会**把最近一个交易日的池子当成这一天返回**
+   * （实测 2026-11-01 周日请求返回 `qdate: 20261030`）。用它可以认出"这天没有数据"，
+   * 而不是把周五的池子贴在周日上。拿不到就是 `null`（老接口 / 测试桩不写这个字段）。
+   */
+  tradeDate: string | null
 }
 
 /** 六位 A 股代码（含北交所 92xxxx）。 */
@@ -101,7 +122,7 @@ function roundTo2(value: number): number {
  * 逐条校验：代码必须是六位数字，连板数 < 1 按 1 处理（首板）。
  * 同一代码重复出现时保留第一条（分页拼接时可能出现）。
  */
-export function parseLimitPoolPayload(text: string): StockLimitEntry[] | null {
+export function parseLimitPoolPayload(text: string): LimitPoolPayload | null {
   let payload: RawLimitPayload
   try {
     payload = JSON.parse(text) as RawLimitPayload
@@ -112,6 +133,7 @@ export function parseLimitPoolPayload(text: string): StockLimitEntry[] | null {
   if (integerValue(payload.rc, -1) !== 0) return null
   const pool = payload.data?.pool
   if (!Array.isArray(pool)) return null
+  const tradeDate = poolTradeDate(payload.data?.qdate)
 
   const seen = new Set<string>()
   const entries: StockLimitEntry[] = []
@@ -147,7 +169,7 @@ export function parseLimitPoolPayload(text: string): StockLimitEntry[] | null {
     if (left.firstSeal !== right.firstSeal) return left.firstSeal - right.firstSeal
     return left.stockCode.localeCompare(right.stockCode)
   })
-  return entries
+  return { entries, tradeDate }
 }
 
 /** 东财涨停池实现。 */
@@ -198,10 +220,13 @@ export class EastmoneyLimitPoolSource implements LimitPoolSource {
       throw new AppError(`读取涨停池响应失败: ${String(error)}`, { status: 502 })
     }
 
-    const entries = parseLimitPoolPayload(text)
-    if (entries === null) {
+    const payload = parseLimitPoolPayload(text)
+    if (payload === null) {
       throw new AppError('涨停池接口返回异常', { status: 502 })
     }
-    return entries
+    // 数据源回的交易日跟请求的不是同一天（周末 / 节假日 / 超出覆盖窗口）：
+    // 它给的是"最近一个交易日"的池子，不能拿来当这一天的数据。
+    if (payload.tradeDate !== null && payload.tradeDate !== date) return []
+    return payload.entries
   }
 }

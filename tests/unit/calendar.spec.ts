@@ -7,6 +7,7 @@ import {
   daysInMonth,
   formatYmdCn,
   isSixDays,
+  latestTradingDay,
   mondayOffset,
   monthSpan,
   normalizeRange,
@@ -19,6 +20,16 @@ import {
   yearSpan,
   type Ymd,
 } from '../../shared/domain/calendar'
+
+/** 天梯只谈交易日：周末往回推到周五。 */
+describe('latestTradingDay', () => {
+  it('周末推回周五，工作日原样返回', () => {
+    expect(latestTradingDay('2026-10-31'), '周六').toBe('2026-10-30')
+    expect(latestTradingDay('2026-11-01'), '周日').toBe('2026-10-30')
+    expect(latestTradingDay('2026-10-30'), '周五').toBe('2026-10-30')
+    expect(latestTradingDay('2026-11-02'), '周一').toBe('2026-11-02')
+  })
+})
 
 /** 月长：闰年规则四条分支都要走到（含"百年不闰、四百年又闰"）。 */
 describe('daysInMonth', () => {

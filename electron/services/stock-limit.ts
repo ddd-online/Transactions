@@ -93,7 +93,7 @@ function isClosed(date: string, today: string, now: number): boolean {
 function emptyLadder(
   date: string,
   now: number,
-  status: 'preopen' | 'unavailable',
+  status: 'preopen' | 'unavailable' | 'offday',
 ): StockLimitLadder {
   return {
     date,
@@ -258,6 +258,11 @@ export async function getLimitLadder(
 
   const today = formatTimestamp(now, 'YYYY-MM-DD')
   if (date > today) throw new AppError('不能查看未来日期', { status: 400 })
+
+  // 周末休市：数据源会把**最近一个交易日**的池子当成这一天返回（实测 2026-11-01 周日
+  // 请求给出 `qdate: 20261030`），所以这一天没有当天数据 —— 不请求、不入库，
+  // 也不拿别的交易日顶替（否则「周日」下面挂着周五的涨停，比空着更糟）。
+  if (isWeekend(date)) return emptyLadder(date, now, 'offday')
 
   // 当天 09:30 之前：没有临时数据可看，也不该发请求或写库。
   if (date === today && isBeforeOpen(date, now)) {

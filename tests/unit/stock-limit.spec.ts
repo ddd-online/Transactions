@@ -91,11 +91,12 @@ const PAYLOAD = JSON.stringify({
 
 describe('parseLimitPoolPayload', () => {
   it('把东财字段换算成天梯条目', () => {
-    const entries = parseLimitPoolPayload(PAYLOAD)
-    expect(entries).not.toBeNull()
+    const payload = parseLimitPoolPayload(PAYLOAD)
+    expect(payload).not.toBeNull()
+    const entries = payload!.entries
     expect(entries).toHaveLength(2)
 
-    const first = entries![0]
+    const first = entries[0]
     expect(first.stockCode).toBe('600838')
     expect(first.stockName).toBe('上海九百')
     expect(first.priceMilli).toBe(11000)
@@ -111,7 +112,7 @@ describe('parseLimitPoolPayload', () => {
   })
 
   it('去掉非法代码与重复代码，缺字段按 0 / 首板兜底', () => {
-    const entries = parseLimitPoolPayload(PAYLOAD)!
+    const entries = parseLimitPoolPayload(PAYLOAD)!.entries
     const second = entries.find((row) => row.stockCode === '000001')!
     expect(second.level).toBe(1)
     expect(second.amountCents).toBe(0)
@@ -122,6 +123,17 @@ describe('parseLimitPoolPayload', () => {
   it('业务错误码与坏 JSON 都返回 null', () => {
     expect(parseLimitPoolPayload('{"rc":102,"data":null}')).toBeNull()
     expect(parseLimitPoolPayload('not json')).toBeNull()
+  })
+
+  it('读出响应里的交易日（qdate）', () => {
+    const payload = parseLimitPoolPayload(
+      '{"rc":0,"data":{"tc":0,"qdate":20261030,"pool":[]}}',
+    )!
+    expect(payload.tradeDate).toBe('2026-10-30')
+    expect(payload.entries).toEqual([])
+    expect(parseLimitPoolPayload(PAYLOAD)!.tradeDate).toBe('2026-10-27')
+    // 没有 qdate 的响应（老接口 / 测试桩）不当成"不是这一天"
+    expect(parseLimitPoolPayload('{"rc":0,"data":{"tc":0,"pool":[]}}')!.tradeDate).toBeNull()
   })
 })
 
@@ -352,6 +364,19 @@ describe('getLimitLadder 缓存纪律', () => {
     expect(stub.calls.length).toBe(calls)
   })
 
+  it('周末不请求、不入库、也不拿最近交易日顶替', async () => {
+    const db = database()
+    const stub = source(pools)
+    // 2026-11-01 是周日：东财会把这天的请求变成"最近一个交易日"的池子
+    const ladder = await getLimitLadder(db, stub, '2026-11-01', {
+      now: at(2026, 11, 1, 16),
+    })
+    expect(ladder.status).toBe('offday')
+    expect(ladder.rungs).toEqual([])
+    expect(stub.calls).toEqual([])
+    expect(getLimitDay(db, '2026-11-01')).toBeNull()
+  })
+
   it('当天 09:30 前不支持查看：不发请求、不写库', async () => {
     const db = database()
     const stub = source(pools)
@@ -519,6 +544,22 @@ describe('getLimitLadder 断板涨跌幅', () => {
 })
 
 describe('EastmoneyLimitPoolSource', () => {
+  it('数据源回的交易日不是请求的那天时，按"没有数据"处理', async () => {
+    const source = new EastmoneyLimitPoolSource({
+      baseUrl: 'http://127.0.0.1:1',
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        async arrayBuffer() {
+          return new TextEncoder().encode(PAYLOAD).buffer
+        },
+      }),
+    })
+    // 夹具里的 qdate 是 2026-10-27：请求别的日期（比如周末）就当没有数据
+    expect(await source.fetchDay('2026-11-01')).toEqual([])
+    expect(await source.fetchDay('2026-10-27')).toHaveLength(2)
+  })
+
   it('拼出带 ut / date 的请求并解析响应', async () => {
     const urls: string[] = []
     const source = new EastmoneyLimitPoolSource({
@@ -534,9 +575,9 @@ describe('EastmoneyLimitPoolSource', () => {
         }
       },
     })
-    const entries = await source.fetchDay('2026-10-23')
+    const entries = await source.fetchDay('2026-10-27')
     expect(entries).toHaveLength(2)
-    expect(urls[0]).toContain('date=20261023')
+    expect(urls[0]).toContain('date=20261027')
     expect(urls[0]).toContain('ut=')
     expect(urls[0]).toContain('pagesize=1000')
   })
