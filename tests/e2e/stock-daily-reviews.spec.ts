@@ -18,7 +18,7 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('持仓详情：每日复盘一天一条、倒序、一行省略，点开看全文', async () => {
+test('股票：每日复盘一天一条、倒序、一行省略，点开看全文（持仓 / 记录同一种）', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-day-reviews-'))
   const home = join(root, 'home')
@@ -122,6 +122,46 @@ test('持仓详情：每日复盘一天一条、倒序、一行省略，点开�
     })
     await page.keyboard.press('Escape')
     await expect(full).toBeHidden()
+
+    // 清仓后同一份每日复盘出现在记录的那一轮里：同样一天一条、一行省略、点开看全文
+    await page.getByTestId('stock-position-close').click()
+    await page.getByTestId('trade-price').fill('6')
+    await page.getByTestId('trade-save').click()
+    await expect(page.getByTestId('toast').last()).toContainText('成交已记录')
+    await page.getByTestId('stock-tab-history').click()
+    await expect(page.getByTestId('stock-history-row')).toContainText('浦发银行')
+    await page.getByTestId('stock-history-row').click()
+    const roundItems = page.getByTestId('round-daily-review-item')
+    await expect(roundItems).toHaveCount(2)
+    await expect(roundItems.nth(0)).toContainText(today)
+    await expect(roundItems.nth(0)).toContainText('缩量整理')
+    await expect(roundItems.nth(1)).toContainText(older!)
+    await expect(roundItems.nth(1)).toContainText('前一天的复盘')
+    const roundTruncated = await roundItems
+      .nth(1)
+      .locator('.stock-review-day__text')
+      .evaluate((element) => {
+        const style = getComputedStyle(element)
+        return {
+          whiteSpace: style.whiteSpace,
+          overflow: style.textOverflow,
+          clipped: element.scrollWidth > element.clientWidth + 1,
+        }
+      })
+    expect(roundTruncated).toEqual({ whiteSpace: 'nowrap', overflow: 'ellipsis', clipped: true })
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-daily-review-round.png'),
+    })
+    await roundItems.nth(1).click()
+    await expect(page.getByText(`每日复盘 · ${older}`)).toBeVisible()
+    const roundFull = page.getByTestId('round-daily-review-full')
+    await expect(roundFull).toHaveText(longReview)
+    await page.waitForTimeout(350)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-daily-review-round-read.png'),
+    })
+    await page.keyboard.press('Escape')
+    await expect(roundFull).toBeHidden()
   } finally {
     await app.close()
     rmSync(root, { recursive: true, force: true })

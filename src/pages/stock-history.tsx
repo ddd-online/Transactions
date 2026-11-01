@@ -20,6 +20,7 @@ import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { StockCode } from './stock-code'
+import { StockDailyReviews } from './stock-daily-reviews'
 import { StockLedgerSection } from './stock-ledger'
 import { StockMasterRow } from './stock-master-row'
 import {
@@ -600,18 +601,12 @@ function RoundBlock({
               <span className="stock-section-title">每日复盘</span>
               <span className="stock-muted">{round.dayReviews.length} 条</span>
             </div>
-            {round.dayReviews.length > 0 ? (
-              <ul className="stock-round__days">
-                {round.dayReviews.map((day) => (
-                  <li key={day.date}>
-                    <span className="stock-muted">{day.date}</span>
-                    <span>{day.review}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="stock-muted stock-round__daily-empty">本轮没有每日复盘</p>
-            )}
+            {/* 与持仓详情同一种读法：一天一条、一行省略，点开弹窗读全文 */}
+            <StockDailyReviews
+              days={round.dayReviews}
+              testId="round-daily-review"
+              empty={<p className="stock-muted stock-round__daily-empty">本轮没有每日复盘</p>}
+            />
           </section>
 
           <div className="stock-round__review">

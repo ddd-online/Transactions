@@ -3047,8 +3047,7 @@
 }
 
 .stock-review-list,
-.stock-operation-list,
-.stock-round__days {
+.stock-operation-list {
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-xs);
@@ -3058,7 +3057,6 @@
 }
 
 .stock-review-list li,
-.stock-round__days li,
 .stock-operation-list li {
   display: flex;
   gap: var(--transactions-space-md);
@@ -3066,7 +3064,6 @@
 }
 
 .stock-review-list li span:last-child,
-.stock-round__days li span:last-child,
 .stock-operation-list li span:last-child {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -3600,14 +3597,11 @@
   gap: var(--transactions-space-sm);
 }
 
-.stock-round__daily .stock-round__days {
+/* 记录里那一轮：列表已经在这段 16px 内边距里，别再加一层缩进 ——
+ * 行自己的 8px 内边距靠负外边距吃掉，文字仍与小标题对齐。 */
+.stock-round__daily .stock-review-days {
   margin-top: var(--transactions-space-xs);
-}
-
-.stock-round__daily .stock-round__days li {
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: var(--transactions-space-md);
+  padding: 0;
 }
 
 .stock-round__daily-empty {
