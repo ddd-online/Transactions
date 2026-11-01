@@ -162,7 +162,12 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     })
     await page.getByTestId('position-round-review').fill('本轮复盘内容')
     await page.getByTestId('position-round-save').click()
+    // 保存后是「一行只读」：点这一行弹窗看全文，再关掉
     await expect(page.getByTestId('position-round-preview')).toContainText('本轮复盘内容')
+    await page.getByTestId('position-round-preview').click()
+    await expect(page.getByTestId('position-round-review-full')).toHaveText('本轮复盘内容')
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('position-round-review-full')).toBeHidden()
     await expect(page.getByTestId('position-round-edit')).toBeVisible()
     await page.getByTestId('position-round-edit').click()
     await expect(page.getByTestId('position-round-review')).toBeVisible()
@@ -199,25 +204,34 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('stock-round')).toContainText('每日复盘')
     await expect(page.getByTestId('stock-round')).toContainText('观察一天')
 
-    await page.getByTestId('round-review-open').click()
-    // 与持仓页同一套本轮复盘编辑器：6 行输入 + 取消 / 保存
-    await expect(page.locator('.stock-round .stock-review-box')).toBeVisible()
+    await page.getByTestId('round-edit').click()
+    // 与持仓页同一套本轮复盘编辑器：6 行输入 + 取消 / 保存（在弹窗里）
+    await expect(page.getByTestId('round-review')).toBeVisible()
     await expect(page.getByTestId('round-review')).toHaveAttribute('rows', '6')
     await page.getByTestId('round-review').fill('临时草稿')
-    await page.getByTestId('round-review-cancel').click()
+    await page.getByTestId('round-cancel').click()
     await expect(page.getByTestId('stock-round')).not.toContainText('临时草稿')
-    await page.getByTestId('round-review-open').click()
+    await page.getByTestId('round-edit').click()
     await page.getByTestId('round-review').fill('复盘：趋势向上')
     await page.waitForTimeout(200)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-history-round-review.png'),
     })
-    await page.getByTestId('round-review-save').click()
+    await page.getByTestId('round-save').click()
     await expect(page.getByTestId('stock-round')).toContainText('复盘：趋势向上')
     // 已写过的复盘再次编辑时保留原文，不再套模板
-    await page.getByTestId('round-review-open').click()
+    await page.getByTestId('round-edit').click()
     await expect(page.getByTestId('round-review')).toHaveValue('复盘：趋势向上')
-    await page.getByTestId('round-review-cancel').click()
+    await page.getByTestId('round-cancel').click()
+    // 一行只读：点这一行弹窗看全文
+    await page.getByTestId('round-preview').click()
+    await expect(page.getByTestId('round-review-full')).toHaveText('复盘：趋势向上')
+    await page.waitForTimeout(250)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-history-round-read.png'),
+    })
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('round-review-full')).toBeHidden()
     await page.getByTestId('round-tag').click()
     await page.locator('.ant-select-item-option').filter({ hasText: '打板' }).click()
     await expect(page.getByTestId('round-tag')).toContainText('打板')

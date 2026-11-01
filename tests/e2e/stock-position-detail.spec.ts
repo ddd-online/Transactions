@@ -1,9 +1,12 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
+import { addDays } from '../../shared/domain/calendar'
+import { todayYmd } from '../../shared/domain/time'
 import { createLedger } from './ledger-helper'
 
 function environment(overrides: Record<string, string>): Record<string, string> {
@@ -138,11 +141,39 @@ test('股票持仓详情：成交记录吃掉剩余高度，表格自己滚而�
       (titleBox?.x ?? 0) + (titleBox?.width ?? 0),
     )
 
-    // 本轮复盘写长一点：窗口矮下去时应该是信息区自己滚，而不是把表格挤没
+    // 本轮复盘写长一点：它只占一行，长长的一段不再把下面的内容顶走
     await page.getByTestId('position-round-edit').click()
     await page.getByTestId('position-round-review').fill('买入理由：冰雪经济龙头股，超过雪人集团。'.repeat(14))
     await page.getByTestId('position-round-save').click()
     await expect(page.getByTestId('position-round-preview')).toContainText('冰雪经济龙头股')
+
+    // 一屏放不下靠的是「一天一条」的每日复盘（本轮复盘现在只占一行）：
+    // 十二个交易日的记录直接落库
+    const database = new DatabaseSync(join(workspace, 'transactions.db'))
+    const ledgerRow = database.prepare('SELECT id FROM ledger LIMIT 1').get() as { id: string }
+    const now = Math.floor(Date.now() / 1000)
+    const insertDay = database.prepare(
+      'INSERT INTO stock_day_review ' +
+        '(id, ledger_id, stock_code, round_id, review_date, review, created_at, updated_at) ' +
+        "VALUES (?, ?, ?, '', ?, ?, ?, ?)",
+    )
+    for (let index = 1; index <= 12; index += 1) {
+      insertDay.run(
+        `day-review-${index}`,
+        ledgerRow.id,
+        '600000',
+        addDays(todayYmd(), -index) ?? todayYmd(),
+        `第 ${index} 天：缩量整理，主线在电网设备与化工之间切换。`,
+        now,
+        now,
+      )
+    }
+    database.close()
+    await page.reload()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await page.getByTestId('nav-stock').click()
+    await page.getByTestId('stock-tab-positions').click()
+    await expect(page.getByTestId('position-daily-review-item')).toHaveCount(12)
 
     const wide = await readBoxes(page)
     // 整列不再滚动；成交记录区一直顶到详情底边

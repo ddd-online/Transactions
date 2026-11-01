@@ -23,6 +23,7 @@ import { StockCode } from './stock-code'
 import { StockDailyReviews } from './stock-daily-reviews'
 import { StockLedgerSection } from './stock-ledger'
 import { StockMasterRow } from './stock-master-row'
+import { StockRoundReview } from './stock-round-review'
 import {
   stockDateTime,
   stockErrorMessage,
@@ -334,7 +335,7 @@ export function StockHistoryPanel({
                     onToggle={() =>
                       setExpanded((current) => ({ ...current, [round.id]: !current[round.id] }))
                     }
-                    onSaveReview={(review) => void saveRoundReview(round.id, review)}
+                    onSaveReview={(review) => saveRoundReview(round.id, review)}
                     onCreateLesson={onCreateLesson}
                     onTag={(value) => void saveRoundTag(round.id, value)}
                     onEdit={(trade, field, value) =>
@@ -387,7 +388,7 @@ interface RoundBlockProps {
   options: string[]
   edits: Record<string, { price: string; lots: string }>
   onToggle: () => void
-  onSaveReview: (review: string) => void
+  onSaveReview: (review: string) => Promise<void>
   onCreateLesson?: (roundId: string) => void
   onTag: (value: string) => void
   onEdit: (trade: StockTradeDto, field: 'price' | 'lots', value: string) => void
@@ -415,7 +416,6 @@ function RoundBlock({
 }: RoundBlockProps): JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingReview, setEditingReview] = useState(false)
-  const [reviewDraft, setReviewDraft] = useState(review)
   // 费用只统计真正成交的行（和表里显示的同一批）：费用恒为整数分，加完再格式化。
   const visibleTrades = round.trades.filter((trade) => trade.shares > 0)
   const roundFee = visibleTrades.reduce((total, trade) => total + trade.fee, 0)
@@ -615,54 +615,22 @@ function RoundBlock({
               <Button
                 variant="secondary"
                 size="sm"
-                testId="round-review-open"
-                onClick={() => {
-                  if (editingReview) {
-                    setEditingReview(false)
-                    return
-                  }
-                  // 空复盘首次编辑用本轮模板起头；已写过的内容不被模板覆盖
-                  setReviewDraft(review.trim() ? review : template)
-                  setEditingReview(true)
-                }}
+                testId="round-edit"
+                onClick={() => setEditingReview(true)}
               >
                 编辑
               </Button>
             </div>
-            {editingReview ? (
-              <div className="stock-review-box">
-                <Input.TextArea
-                  data-testid="round-review"
-                  rows={6}
-                  placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
-                  value={reviewDraft}
-                  onChange={(event) => setReviewDraft(event.target.value)}
-                />
-                <div className="stock-review-box__footer">
-                  <Button
-                    variant="secondary"
-                    testId="round-review-cancel"
-                    onClick={() => setEditingReview(false)}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    variant="primary"
-                    testId="round-review-save"
-                    onClick={() => {
-                      onSaveReview(reviewDraft)
-                      setEditingReview(false)
-                    }}
-                  >
-                    保存复盘
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="stock-round__review-text">
-                {review || '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
-              </p>
-            )}
+            <StockRoundReview
+              key={round.id}
+              testId="round"
+              review={review}
+              template={template}
+              emptyText="还没有写本轮复盘，点「编辑」记录买入与卖出的理由。"
+              editing={editingReview}
+              onEditingChange={setEditingReview}
+              onSave={onSaveReview}
+            />
           </div>
         </div>
       ) : null}

@@ -2926,24 +2926,10 @@
   font-weight: var(--transactions-weight-semibold);
 }
 
-.stock-review-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-sm);
-  padding: var(--transactions-space-md) var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.stock-review-box__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
-.stock-review-box__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--transactions-space-sm);
+/* 本轮复盘的一行只读：和每日复盘同一种行（按钮、悬停底、一行省略），
+ * 只是没有日期那一格 —— 点开是读全文的弹窗。 */
+.stock-review-line {
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
 }
 
 .stock-review-preview {
@@ -2951,11 +2937,6 @@
   color: var(--transactions-color-text-secondary);
   font-size: var(--transactions-size-text-body-sm);
   line-height: var(--transactions-height-relaxed);
-}
-
-.stock-review-preview--lines {
-  white-space: pre-wrap;
-  color: var(--transactions-color-text-major);
 }
 
 /* 每日复盘：一天一条（最新在上），一行放不下就省略号。
@@ -3576,12 +3557,10 @@
   width: 100%;
 }
 
-.stock-round__review-text {
-  margin: 0;
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-body-sm);
-  line-height: var(--transactions-height-relaxed);
-  white-space: pre-wrap;
+/* 记录里那一轮：这一行已经在 `.stock-round__body` 的 16px 内边距里，
+ * 不再加一层缩进 —— 行自己的 8px 内边距靠负外边距吃掉，文字与小标题对齐。 */
+.stock-round__review .stock-review-line {
+  padding: 0;
 }
 
 .stock-round__daily {

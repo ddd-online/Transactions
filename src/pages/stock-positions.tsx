@@ -19,6 +19,7 @@ import { StockCode } from './stock-code'
 import { StockDailyReviews } from './stock-daily-reviews'
 import { StockLedgerSection } from './stock-ledger'
 import { StockMasterRow } from './stock-master-row'
+import { StockRoundReview } from './stock-round-review'
 import {
   stockDateTime,
   stockErrorMessage,
@@ -163,7 +164,6 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [dailyText, setDailyText] = useState('')
   const [dailyTemplate, setDailyTemplate] = useState('')
   const [roundTemplate, setRoundTemplate] = useState('')
-  const [roundText, setRoundText] = useState('')
   const [editingTrade, setEditingTrade] = useState<StockTradeDto | null>(null)
   const [editPrice, setEditPrice] = useState('')
   const [editLots, setEditLots] = useState('1')
@@ -217,10 +217,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   useEffect(() => {
     if (!selected) {
       setTrades([])
-      setRoundText('')
       return
     }
-    setRoundText(selected.review)
     setRoundEditing(false)
     setDailyText(selected.dayReviews[0]?.review ?? '')
     setDailyDate(selected.dayReviews[0]?.date ?? todayYmd())
@@ -393,20 +391,23 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
     setDailyModalOpen(true)
   }
 
-  const saveRound = useCallback(async (): Promise<void> => {
-    if (!selected) return
-    try {
-      await window.api.invoke('stock_position_review', {
-        ledger_id: ledgerId,
-        code: selected.stockCode,
-        review: roundText,
-      })
-      notify('复盘已保存')
-      await load()
-    } catch (reviewError) {
-      notify(stockErrorMessage(reviewError), 'error')
-    }
-  }, [ledgerId, load, roundText, selected])
+  const saveRound = useCallback(
+    async (review: string): Promise<void> => {
+      if (!selected) return
+      try {
+        await window.api.invoke('stock_position_review', {
+          ledger_id: ledgerId,
+          code: selected.stockCode,
+          review,
+        })
+        notify('复盘已保存')
+        await load()
+      } catch (reviewError) {
+        notify(stockErrorMessage(reviewError), 'error')
+      }
+    },
+    [ledgerId, load, selected],
+  )
 
   const saveTradeEdit = useCallback(async (): Promise<void> => {
     if (!editingTrade) return
@@ -663,50 +664,21 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                   variant="secondary"
                   size="sm"
                   testId="position-round-edit"
-                  onClick={() => {
-                    // 第一次写且还没动过草稿时用本轮模板起头；已写过的复盘/草稿不覆盖
-                    setRoundText((current) => (current.trim() ? current : roundTemplate))
-                    setRoundEditing(true)
-                  }}
+                  onClick={() => setRoundEditing(true)}
                 >
                   编辑
                 </Button>
               </section>
-              {roundEditing ? (
-                <div className="stock-review-box">
-                  <Input.TextArea
-                    data-testid="position-round-review"
-                    rows={6}
-                    placeholder="买入理由 / 卖出理由 / 买点审视 / 卖点审视 / 交易心得"
-                    value={roundText}
-                    onChange={(event) => setRoundText(event.target.value)}
-                  />
-                  <div className="stock-review-box__footer">
-                    <Button
-                      variant="secondary"
-                      testId="position-round-cancel"
-                      onClick={() => setRoundEditing(false)}
-                    >
-                      取消
-                    </Button>
-                    <Button
-                      variant="primary"
-                      testId="position-round-save"
-                      onClick={() => {
-                        void saveRound().then(() => setRoundEditing(false))
-                      }}
-                    >
-                      保存复盘
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="stock-review-preview stock-review-preview--lines" data-testid="position-round-preview">
-                  {selected.review
-                    ? selected.review
-                    : '还没有写本轮复盘，点「编辑」记录买入与卖出的理由。'}
-                </div>
-              )}
+              <StockRoundReview
+                key={selected.stockCode}
+                testId="position-round"
+                review={selected.review}
+                template={roundTemplate}
+                emptyText="还没有写本轮复盘，点「编辑」记录买入与卖出的理由。"
+                editing={roundEditing}
+                onEditingChange={setRoundEditing}
+                onSave={saveRound}
+              />
             </ScrollArea>
 
             <section className="stock-detail__section">

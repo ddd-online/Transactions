@@ -127,9 +127,9 @@ test('股票记录：选中股票默认展开最新一轮', async () => {
     })
 
     // 空复盘点「编辑」时自动带上本轮复盘模板
-    await rounds.nth(1).getByTestId('round-review-open').click()
+    await rounds.nth(1).getByTestId('round-edit').click()
     await expect(page.getByTestId('round-review')).toHaveValue(/^买入理由：/)
-    await page.getByTestId('round-review-cancel').click()
+    await page.getByTestId('round-cancel').click()
 
     await rounds.nth(0).locator('.stock-round__head').click()
     await expect(rounds.nth(0).locator('.stock-round__body')).toBeVisible()
