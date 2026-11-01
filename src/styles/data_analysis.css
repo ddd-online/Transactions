@@ -279,6 +279,21 @@
   justify-content: center;
 }
 
+/* 一条曲线都没有时的画布：一句安静的话，不摆插画 —— 下面曲线表已经有「还没有曲线」
+ * 那张空态，同一屏两张文件夹图看着像两处坏了；这里只把眼睛交给曲线配置。 */
+.da-chart__canvas-hint {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 var(--transactions-space-lg);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-snug);
+  text-align: center;
+}
+
 .da-chart__sums {
   flex: 0 0 180px;
   display: flex;

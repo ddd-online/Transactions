@@ -165,6 +165,9 @@ test('分析：两张预设图表不可改名 / 改粒度 / 改曲线，自建�
     await expect(rows).toHaveCount(0)
     await expect(page.getByTestId('chart-lines-empty')).toContainText('还没有曲线')
     await expect(page.getByTestId('chart-lines-empty')).toContainText('点右上角「添加曲线」建一条')
+    // 画布这时说的是「没东西可画」，不是「这个范围没数据」——也不再摆第二个空态插画
+    await expect(page.getByTestId('chart-canvas-hint')).toContainText('加一条曲线之后')
+    await expect(page.getByTestId('chart-data-empty')).toHaveCount(0)
     expect(chartLines()).toBe('[]')
 
     // 自建图表可以改名、改粒度

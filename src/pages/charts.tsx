@@ -591,6 +591,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const lineCount = responseLines.length
   const colors = useMemo(() => COLORS.slice(0, Math.max(1, lineCount)), [lineCount])
   const lineRows = selected?.lines ?? []
+  const hasLines = lineRows.length > 0
 
   return (
     <PageLayout
@@ -724,6 +725,12 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                     <div className="da-chart__loading">
                       <Spin />
                     </div>
+                  ) : !hasLines ? (
+                    // 一条曲线都没有时，画布不摆第二个空态插画：这里说的不是「没数据」，
+                    // 而是「没东西可画」，一句安静的话把眼睛交给下面的曲线配置。
+                    <p className="da-chart__canvas-hint" data-testid="chart-canvas-hint">
+                      加一条曲线之后，这里会画出趋势。
+                    </p>
                   ) : hasValues ? (
                     <>
                       <ul className="da-chart__legend">
