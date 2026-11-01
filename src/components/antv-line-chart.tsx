@@ -3,12 +3,7 @@ import { Chart } from '@antv/g2'
 
 import type { ChartLineData } from '../../shared/types/transaction'
 import { chartTextTokens } from '../theme/chart-text'
-
-/** 系统偏好「减少动态」时不描线：那条曲线属于状态的表达，不能让它真的晚到。 */
-function motionAllowed(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true
-  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+import { CHART_DRAW_ANIMATION, motionAllowed } from '../theme/motion'
 
 export interface AntvLineChartProps {
   lines: ChartLineData[]
@@ -95,11 +90,7 @@ export const AntvLineChart = memo(function AntvLineChart({
       .style('lineWidth', 2)
       .tooltip(tooltip)
     if (motionAllowed()) {
-      line.animate('enter', {
-        type: 'pathIn',
-        duration: 620,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-      })
+      line.animate('enter', CHART_DRAW_ANIMATION)
     } else {
       line.animate(false)
     }

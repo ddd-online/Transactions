@@ -21,6 +21,7 @@ import { Segmented } from '../components/segmented'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
 import { chartTextTokens } from '../theme/chart-text'
+import { CHART_DRAW_ANIMATION, motionAllowed } from '../theme/motion'
 import {
   stockDate,
   stockErrorMessage,
@@ -274,7 +275,9 @@ function ChartBox({
       .encode('color', 'series')
       .style('opacity', 0.18)
       .tooltip(tooltip)
-    chart
+    /* 数据落定那一拍：曲线沿路径自己画出来（与分析页同一份时长与缓动）。
+     * 面积只做淡入 —— 它是曲线脚下的阴影，不该跟着逐段描边。 */
+    const line = chart
       .line()
       .data(seriesRows)
       .encode('x', 'x')
@@ -282,6 +285,11 @@ function ChartBox({
       .encode('color', 'series')
       .style('lineWidth', 2)
       .tooltip(tooltip)
+    if (motionAllowed()) {
+      line.animate('enter', CHART_DRAW_ANIMATION)
+    } else {
+      line.animate(false)
+    }
     chart
       .point()
       .data(rows)
@@ -290,6 +298,7 @@ function ChartBox({
       .encode('color', 'sign')
       .style('r', 3)
       .tooltip(tooltip)
+      .animate(false)
     chart.render()
     return () => chart.destroy()
   }, [metric, points])
