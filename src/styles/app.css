@@ -1200,10 +1200,10 @@
 .workspace-required .ui-modal__content {
   -webkit-app-region: no-drag;
 }
-/* 退出遮罩：整屏虚化 + 一条进度条。
+/* 退出遮罩：整屏虚化 + 一条流动的斜纹条。
  * 它盖住的是**已经画好的应用**（侧栏、版心、自绘标题栏都在后面），所以只做
- * `backdrop-filter` 虚化，不另画一层背景。卡片里只有一句标题、一条横条和
- * 当前步骤：退出只有几百毫秒，不该再摆按钮或说明文字。
+ * `backdrop-filter` 虚化，不另画一层背景。卡片里只有一句标题、一条斜纹条和
+ * 当前步骤：退出只有几百毫秒，摆按钮或说明文字都是噪音。
  * 层级压在 AntD 弹层（~1000）之上：退出时若还开着对话框，也要被它盖住。 */
 .ui-quit {
   position: fixed;
@@ -1212,17 +1212,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: default;
   background-color: color-mix(in srgb, var(--transactions-color-screen-scrim) 72%, transparent);
   backdrop-filter: blur(10px) saturate(1.05);
   -webkit-app-region: no-drag;
-  animation: tr-fade-in 120ms ease;
+  /* 与遮罩同一个节拍：只淡入，不做位移。 */
+  animation: tr-fade-in var(--transactions-transition-fast);
+}
+
+/* 焦点被程序收进这一层（alertdialog 要接住焦点），但它不是控件，不画焦点环。 */
+.ui-quit:focus {
+  outline: none;
 }
 
 .ui-quit__card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--transactions-space-md);
   width: min(420px, calc(100vw - 48px));
   padding: var(--transactions-space-xl);
   border-radius: var(--transactions-radius-xl);
@@ -1231,25 +1237,42 @@
   box-shadow: var(--transactions-shadow-xl);
 }
 
+/* 卡片标题按弹层那一档给（18px），不是正文 14px：这一屏只看得到半秒，
+ * 标题得在余光里也认得出来。 */
 .ui-quit__title {
-  margin: 0;
+  margin: 0 0 var(--transactions-space-md);
   color: var(--transactions-color-text-major);
-  font-size: var(--transactions-size-text-body);
+  font-size: var(--transactions-size-text-title-sm);
   font-weight: 600;
+  line-height: var(--transactions-height-snug);
 }
 
-/* 横条是这条遮罩上唯一在动的东西：**不报百分比**，只表示"还在忙"。
- * 斜纹（45° 主色 / 主色淡化）铺满整条，图案按 16px 的砖平铺、背景横向匀速
- * 平移一格，接缝处正好对上，看起来就是无限流动的螺旋纹。
- * 砖高 16px 而条高 10px：条纹在竖直方向被裁掉一截，仍是 45°，不会变陡。 */
+/* 斜纹条：**不报百分比**，只表示"还在忙"。45° 的斜纹由主色与主色 28% 的浅底
+ * 交替铺满，图案按 16px 的砖平铺。条纹单独一层、只动 transform —— 平移一格
+ * 正好接上下一格，看起来是无限流动的螺旋纹；动 transform 走合成层，动
+ * `background-position` 每帧都要重画整条（DESIGN 的运动预算也只收
+ * transform / opacity / color / shadow）。 */
 .ui-quit__bar {
+  position: relative;
   width: 100%;
   height: 12px;
+  margin: 0 0 var(--transactions-space-sm);
   border-radius: var(--transactions-radius-full);
   overflow: hidden;
   /* 底是主色的浅一档，不透明：条纹之间的空隙也要读成"这条带子还在"，
    * 而不是一排浮在纸面上的蓝色短杠。 */
-  background-color: color-mix(in srgb, var(--transactions-color-primary) 28%, var(--transactions-color-elevated));
+  background-color: color-mix(
+    in srgb,
+    var(--transactions-color-primary) 28%,
+    var(--transactions-color-elevated)
+  );
+}
+
+.ui-quit__bar::before {
+  content: '';
+  position: absolute;
+  /* 比轨道多一格：左移一格时右端正好补上，接缝处对得上。 */
+  inset: 0 -16px 0 0;
   background-image: linear-gradient(
     45deg,
     var(--transactions-color-primary) 25%,
@@ -1263,15 +1286,20 @@
 
 @keyframes ui-quit-stripes {
   from {
-    background-position: 0 0;
+    transform: translateX(0);
   }
+
   to {
-    background-position: 16px 0;
+    transform: translateX(-16px);
   }
 }
 
+/* 步骤文字是这一屏唯一会变的信息：次要色（≈5.9:1）而不是三级灰（≈3.9:1），
+ * 半秒里也要读得清。不挂 aria-live —— 两次换字之间只隔 90ms，读屏念不完；
+ * 这一层是 alertdialog，焦点进入时已经报过「正在退出」。 */
 .ui-quit__label {
   margin: 0;
-  color: var(--transactions-color-text-tertiary);
+  color: var(--transactions-color-text-secondary);
   font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-normal);
 }

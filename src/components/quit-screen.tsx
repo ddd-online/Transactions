@@ -1,4 +1,4 @@
-import type { JSX } from 'react'
+import { useEffect, useRef, type JSX } from 'react'
 
 /**
  * 退出遮罩：把整个界面虚化，中间一条**不确定进度**的斜纹横条在流动。
@@ -15,20 +15,29 @@ export interface QuitScreenProps {
 }
 
 export function QuitScreen({ label }: QuitScreenProps): JSX.Element {
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  // 遮罩盖住了整个应用，焦点不能留在被盖住的控件上：把焦点收进这一层。
+  // 这一层里没有可操作的东西，所以它只接住焦点，不画焦点环。
+  useEffect(() => {
+    ref.current?.focus()
+  }, [])
+
   return (
     <div
+      ref={ref}
       className="ui-quit"
       data-testid="quit-screen"
       role="alertdialog"
       aria-modal="true"
       aria-label="正在退出"
-      aria-busy="true"
+      tabIndex={-1}
     >
       <div className="ui-quit__card">
         <p className="ui-quit__title">正在退出</p>
-        {/* 纯视觉的斜纹条：读屏只读下面那句步骤，别让它念一个假的百分比。 */}
+        {/* 纯视觉的斜纹条：读屏只需要那句步骤文字，别让它念一个假的百分比。 */}
         <div className="ui-quit__bar" data-testid="quit-bar" aria-hidden="true" />
-        <p className="ui-quit__label" data-testid="quit-label" aria-live="polite">
+        <p className="ui-quit__label" data-testid="quit-label">
           {label}
         </p>
       </div>

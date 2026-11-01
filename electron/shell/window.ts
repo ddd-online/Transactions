@@ -155,7 +155,6 @@ async function runQuit(): Promise<void> {
   }
   if (watchable) await delay(QUIT_STEP_MS)
 
-  reportQuit('正在退出')
   if (watchable) {
     const remaining = QUIT_MIN_VISIBLE_MS - (Date.now() - startedAt)
     if (remaining > 0) await delay(remaining)

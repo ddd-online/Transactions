@@ -120,7 +120,7 @@ export function App(): JSX.Element {
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [maximized, setMaximized] = useState(false)
   const [quitting, setQuitting] = useState(false)
-  const [quitLabel, setQuitLabel] = useState('正在准备退出')
+  const [quitLabel, setQuitLabel] = useState('正在保存窗口状态')
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
@@ -284,7 +284,9 @@ export function App(): JSX.Element {
         setMaximized(message.payload === true)
       }
       if (message.event === APP_QUIT_STARTED) {
-        setQuitLabel('正在准备退出')
+        // 与主进程第一步同名：遮罩出现到第一次报进度之间只隔几十毫秒，
+        // 换一句不同的字只会闪一下。
+        setQuitLabel('正在保存窗口状态')
         setQuitting(true)
       }
       if (message.event === APP_QUIT_PROGRESS) {

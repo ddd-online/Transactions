@@ -231,11 +231,21 @@ test('窗口：退出时先虚化界面、亮出斜纹条，收尾完了才关�
     await expect(screen).toBeVisible()
     await expect(screen).toHaveCSS('backdrop-filter', /blur\(10px\)/)
 
+    // 焦点收进了这一层：后面的应用已经被盖住，键盘不能还留在它上面
+    await expect(screen).toBeFocused()
+    await expect(page.getByTestId('quit-label')).toHaveText(/正在(保存窗口状态|关闭工作空间)/)
+
     // 不是进度条：斜纹条无限循环，只表示"还在忙"
     const bar = page.getByTestId('quit-bar')
     await expect(bar).toBeVisible()
-    await expect(bar).toHaveCSS('animation-name', 'ui-quit-stripes')
-    await expect(bar).toHaveCSS('animation-iteration-count', 'infinite')
+    // 条纹在 ::before 上（只动 transform），所以查伪元素的计算样式
+    const stripe = (property: 'animationName' | 'animationIterationCount'): Promise<string> =>
+      bar.evaluate(
+        (element, name) => getComputedStyle(element, '::before')[name as 'animationName'],
+        property,
+      )
+    await expect.poll(() => stripe('animationName')).toBe('ui-quit-stripes')
+    await expect.poll(() => stripe('animationIterationCount')).toBe('infinite')
     // 加宽后的横条铺满卡片（420 减去两侧 24 内边距）
     await expect
       .poll(async () => bar.evaluate((element) => element.getBoundingClientRect().width))
