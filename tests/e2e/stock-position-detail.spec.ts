@@ -95,6 +95,26 @@ test('股票持仓详情：成交记录吃掉剩余高度，表格自己滚而�
     await page.getByTestId('trade-save').click()
     await expect(page.getByTestId('stock-trade')).toHaveCount(1)
 
+    // 交易标签落在右上角的操作簇里、清仓左侧，和三个按钮同一行
+    const tagInActions = await page.evaluate(() => {
+      const chip = document.querySelector('[data-testid="position-tag-select"]')
+      const actions = document.querySelector('.stock-detail__actions')
+      return Boolean(chip && actions && actions.contains(chip))
+    })
+    expect(tagInActions).toBe(true)
+    const tagBox = await page.getByTestId('position-tag-select').boundingBox()
+    const closeBox = await page.getByTestId('stock-position-close').boundingBox()
+    expect(tagBox).not.toBeNull()
+    expect(closeBox).not.toBeNull()
+    expect((tagBox?.x ?? 0) + (tagBox?.width ?? 0)).toBeLessThan(closeBox?.x ?? 0)
+    expect(
+      Math.abs(
+        (tagBox?.y ?? 0) +
+          (tagBox?.height ?? 0) / 2 -
+          ((closeBox?.y ?? 0) + (closeBox?.height ?? 0) / 2),
+      ),
+    ).toBeLessThan(6)
+
     // 加到一屏放不下，成交记录区才会有得滚
     for (let index = 0; index < 9; index += 1) {
       await page.getByTestId('stock-position-add').click()

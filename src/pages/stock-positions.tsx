@@ -577,6 +577,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 <div className="stock-detail__identity">
                   <h2>{selected.stockName}</h2>
                   <span className="stock-muted stock-mono">{selected.stockCode}</span>
+                </div>
+                <div className="stock-detail__actions">
                   <Select
                     className="stock-tag-select"
                     data-testid="position-tag-select"
@@ -585,8 +587,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     onChange={(value) => void saveTag(value)}
                     popupMatchSelectWidth={false}
                     size="small"
-                  />              </div>
-                <div className="stock-detail__actions">
+                  />
                   <Button variant="primary" size="sm" testId="stock-position-close" onClick={() => openTrade('close', selected)}>
                     清仓
                   </Button>
