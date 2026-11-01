@@ -6,6 +6,7 @@ import type { StockLedgerDto } from '../../shared/types/stock-ledger'
 import { Button } from '../components/button'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
+import { ledgerMarkdown } from './stock-ledger-md'
 
 export interface StockLedgerSectionProps {
   ledgerId: string
@@ -115,6 +116,19 @@ export function StockLedgerSection({
     setOpen(true)
   }
 
+  const copyMarkdown = useCallback((): void => {
+    const text = ledgerMarkdown(ledger)
+    if (!text) return
+    void (async () => {
+      try {
+        await window.api.invoke('clipboard_write_text', { text })
+        notify('台账已复制为 Markdown')
+      } catch {
+        notify('复制失败', 'error')
+      }
+    })()
+  }, [ledger])
+
   const save = async (): Promise<void> => {
     const trimmed: LedgerForm = {
       whyBuy: form.whyBuy.trim(),
@@ -156,15 +170,26 @@ export function StockLedgerSection({
     <section className="stock-ledger" data-testid="stock-ledger">
       <header className="stock-ledger__head">
         <span className="stock-section-title">交易台账</span>
-        <Button
-          variant="secondary"
-          size="sm"
-          testId="stock-ledger-edit"
-          disabled={!loaded}
-          onClick={beginEdit}
-        >
-          {ledger?.exists ? '编辑' : '填写台账'}
-        </Button>
+        <div className="stock-ledger__actions">
+          <Button
+            variant="secondary"
+            size="sm"
+            testId="stock-ledger-copy"
+            disabled={!ledger?.exists}
+            onClick={copyMarkdown}
+          >
+            复制到剪贴板
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            testId="stock-ledger-edit"
+            disabled={!loaded}
+            onClick={beginEdit}
+          >
+            {ledger?.exists ? '编辑' : '填写台账'}
+          </Button>
+        </div>
       </header>
 
       {error ? (

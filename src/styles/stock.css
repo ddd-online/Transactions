@@ -3260,6 +3260,12 @@
   border-bottom: 1px solid var(--transactions-color-divider);
 }
 
+.stock-ledger__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
 .stock-ledger__sheet {
   display: flex;
   flex-direction: column;
