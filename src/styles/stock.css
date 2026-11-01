@@ -2924,6 +2924,72 @@
   color: var(--transactions-color-text-major);
 }
 
+/* 每日复盘：一天一条（最新在上），一行放不下就省略号。
+ * 行本身是按钮 —— 整行都能点，点开是读全文的弹窗，不在原地展开。 */
+.stock-review-days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
+  list-style: none;
+}
+
+.stock-review-day {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+  padding: 2px var(--transactions-space-sm);
+  /* 行内边距靠负外边距吃掉，文字仍与上面的小标题对齐 */
+  margin-left: calc(-1 * var(--transactions-space-sm));
+  border: 0;
+  border-radius: var(--transactions-radius-sm);
+  background: transparent;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.stock-review-day:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.stock-review-day:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+.stock-review-day__date {
+  flex-shrink: 0;
+  color: var(--transactions-color-text-tertiary);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* flex 子项要 `min-width: 0` 才肯收缩，否则省略号永远不出现 */
+.stock-review-day__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 读全文的弹窗正文：保留换行，长复盘在弹窗里自己滚，不把整页顶长 */
+.stock-review-read {
+  max-height: 60vh;
+  overflow-y: auto;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-relaxed);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .stock-table-foot .ant-pagination-item-active a,
 .page-footer-bar .ant-pagination-item-active a {
   color: var(--transactions-color-text-inverse);

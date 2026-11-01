@@ -157,6 +157,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [roundEditing, setRoundEditing] = useState(false)
   const [dailyModalOpen, setDailyModalOpen] = useState(false)
   const [dailyDate, setDailyDate] = useState(todayYmd())
+  /** 正在看全文的那条每日复盘（null = 没开弹窗） */
+  const [readingReview, setReadingReview] = useState<{ date: string; review: string } | null>(null)
   const [dailyText, setDailyText] = useState('')
   const [dailyTemplate, setDailyTemplate] = useState('')
   const [roundTemplate, setRoundTemplate] = useState('')
@@ -637,11 +639,29 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                   写今日
                 </Button>
               </section>
-              <div className="stock-review-preview" data-testid="position-daily-review">
-                {selected.dayReviews[0]
-                  ? `${selected.dayReviews[0].date}：${selected.dayReviews[0].review}`
-                  : '还没有写每日复盘，点「写今日」记下今天的盘面和判断。'}
-              </div>
+              {selected.dayReviews.length > 0 ? (
+                // 一天一条、最新在上；一行放不下就省略号，点开看全文
+                <ul className="stock-review-days" data-testid="position-daily-review">
+                  {selected.dayReviews.map((item) => (
+                    <li key={item.date}>
+                      <button
+                        type="button"
+                        className="stock-review-day"
+                        data-testid="position-daily-review-item"
+                        aria-label={`查看 ${item.date} 的每日复盘`}
+                        onClick={() => setReadingReview({ date: item.date, review: item.review })}
+                      >
+                        <span className="stock-review-day__date">{item.date}</span>
+                        <span className="stock-review-day__text">{item.review}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="stock-review-preview" data-testid="position-daily-review">
+                  还没有写每日复盘，点「写今日」记下今天的盘面和判断。
+                </div>
+              )}
 
               <section className="stock-detail__section">
                 <span className="stock-section-title">本轮复盘</span>
@@ -1108,6 +1128,19 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               保存
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={readingReview !== null}
+        title={readingReview ? `每日复盘 · ${readingReview.date}` : '每日复盘'}
+        width={560}
+        centered
+        footer={null}
+        onCancel={() => setReadingReview(null)}
+      >
+        <div className="stock-review-read" data-testid="position-daily-review-full">
+          {readingReview?.review}
         </div>
       </Modal>
 
