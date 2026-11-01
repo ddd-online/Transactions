@@ -21,8 +21,9 @@ export interface StockAccountPanelProps {
   refreshToken: number
 }
 
-/** 资金变化记录每页条数：与记账页、股票统计明细一致，都是 15。 */
-const PAGE_SIZE = 15
+/** 资金变化记录每页条数：默认 10，可在分页条上切换。 */
+const DEFAULT_PAGE_SIZE = 10
+const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
 export function StockAccountPanel({
   ledgerId,
@@ -32,6 +33,7 @@ export function StockAccountPanel({
   const [overview, setOverview] = useState<StockOverviewDto | null>(null)
   const [funds, setFunds] = useState<StockFundRecordPage | null>(null)
   const [fundPage, setFundPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
@@ -50,7 +52,7 @@ export function StockAccountPanel({
         window.api.invoke('stock_fund_records', {
           ledger_id: ledgerId,
           page: fundPage,
-          pageSize: PAGE_SIZE,
+          pageSize,
         }),
       ])
       setSummary(account)
@@ -62,7 +64,7 @@ export function StockAccountPanel({
     } finally {
       setLoaded(true)
     }
-  }, [fundPage, ledgerId])
+  }, [fundPage, ledgerId, pageSize])
 
   useEffect(() => {
     void load()
@@ -181,10 +183,19 @@ export function StockAccountPanel({
                   size="small"
                   current={fundPage}
                   total={funds.total}
-                  pageSize={PAGE_SIZE}
-                  showSizeChanger={false}
+                  pageSize={pageSize}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  showSizeChanger
                   showLessItems
-                  onChange={setFundPage}
+                  onChange={(page, size) => {
+                    // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
+                    if (size !== pageSize) {
+                      setPageSize(size)
+                      setFundPage(1)
+                      return
+                    }
+                    setFundPage(page)
+                  }}
                   itemRender={pagerItemRender('stock-fund')}
                 />
               </div>

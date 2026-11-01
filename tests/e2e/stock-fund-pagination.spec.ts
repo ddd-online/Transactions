@@ -16,7 +16,7 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('股票资金变化记录：每页 15 条', async () => {
+test('股票资金变化记录：默认每页 10 条，可切换条数', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-fund-page-'))
   const home = join(root, 'home')
@@ -53,7 +53,7 @@ test('股票资金变化记录：每页 15 条', async () => {
     await page.getByTestId('stock-amount-confirm').click()
     await expect(page.getByTestId('stock-principal')).toHaveText('¥1000.00')
 
-    // 直接补 20 条资金记录：一页 15 条时共 21 条，正好两页（第二页 6 条）。
+    // 直接补 20 条资金记录：一共 21 条，默认每页 10 条时正好三页（末页 1 条）。
     // 走界面要连开 20 次「追加本金」弹窗，慢且杂音大；这里只关心分页口径。
     const database = new DatabaseSync(join(workspace, 'transactions.db'))
     const ledgerRow = database
@@ -85,11 +85,27 @@ test('股票资金变化记录：每页 15 条', async () => {
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await page.getByTestId('nav-stock').click()
     await page.getByTestId('stock-tab-account').click()
-    await expect(page.getByTestId('fund-row')).toHaveCount(15)
+    await expect(page.getByTestId('fund-row')).toHaveCount(10)
     await expect(page.getByTestId('stock-fund-foot')).toContainText('共 21 条')
+    // 分页条默认就是每页 10 条
+    await expect(page.getByTestId('stock-fund-foot')).toContainText('10 条/页')
 
     await page.getByTestId('stock-fund-foot').locator('.ant-pagination-item-2').click()
-    await expect(page.getByTestId('fund-row')).toHaveCount(6)
+    await expect(page.getByTestId('fund-row')).toHaveCount(10)
+    await page.getByTestId('stock-fund-foot').locator('.ant-pagination-item-3').click()
+    await expect(page.getByTestId('fund-row')).toHaveCount(1)
+    await page.waitForTimeout(300)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-fund-page3.png'),
+    })
+
+    // 换成每页 20 条：回到第一页，两页装下
+    await page.getByTestId('stock-fund-foot').locator('.ant-pagination-options .ant-select').click()
+    await page.locator('.ant-select-item-option', { hasText: '20 条/页' }).click()
+    await expect(page.getByTestId('fund-row')).toHaveCount(20)
+    await expect(page.getByTestId('stock-fund-foot')).toContainText('20 条/页')
+    await page.getByTestId('stock-fund-foot').locator('.ant-pagination-item-2').click()
+    await expect(page.getByTestId('fund-row')).toHaveCount(1)
     await page.waitForTimeout(300)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-fund-page2.png'),
