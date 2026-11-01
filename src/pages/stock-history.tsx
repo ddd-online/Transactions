@@ -299,12 +299,16 @@ export function StockHistoryPanel({
                 <div className="stock-detail__identity">
                   <h2>{detail.stockName}</h2>
                   <span className="stock-muted stock-mono">{detail.stockCode}</span>
+                </div>
+                <div className="stock-detail__summary">
                   <span className={stockPnlClass(detail.totalPnl)}>
                     {money(detail.totalPnl)} {stockPercent(detail.totalPnlRate)}
                   </span>
-                  <span className="stock-muted">
-                    {totals ? `${totals.win} 胜 ${totals.loss} 负 · ${totals.rounds} 轮` : ''}
-                  </span>
+                  {totals ? (
+                    <span className="stock-muted">
+                      {totals.win} 胜 {totals.loss} 负 · {totals.rounds} 轮
+                    </span>
+                  ) : null}
                 </div>
               </header>
 

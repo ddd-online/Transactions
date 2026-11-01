@@ -93,6 +93,24 @@ test('股票记录：选中股票默认展开最新一轮', async () => {
     await expect(rounds.nth(1).locator('.stock-round__body')).toBeVisible()
     await expect(rounds.nth(0).locator('.stock-round__body')).toHaveCount(0)
 
+    // 详情头：累计盈亏与胜负轮次靠右，名字与代码留在左侧
+    const headerBox = await page
+      .locator('.stock-history-detail .stock-detail__head')
+      .boundingBox()
+    const identityBox = await page
+      .locator('.stock-history-detail .stock-detail__identity')
+      .boundingBox()
+    const summaryBox = await page
+      .locator('.stock-history-detail .stock-detail__summary')
+      .boundingBox()
+    expect(headerBox).not.toBeNull()
+    expect(identityBox).not.toBeNull()
+    expect(summaryBox).not.toBeNull()
+    expect(summaryBox!.x).toBeGreaterThan(identityBox!.x + identityBox!.width)
+    expect(
+      (headerBox?.x ?? 0) + (headerBox?.width ?? 0) - ((summaryBox?.x ?? 0) + (summaryBox?.width ?? 0)),
+    ).toBeLessThan(24)
+
     // 每轮的「费用合计」贴在轮次行上，等于这一轮表内各行费用之和
     const feeCells = await rounds.nth(1).getByTestId('stock-trade-fee').allInnerTexts()
     const feeSum = feeCells.reduce((total, text) => total + Number(text.replace(/[^\d.]/g, '')), 0)
