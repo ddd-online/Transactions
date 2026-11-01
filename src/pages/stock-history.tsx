@@ -589,7 +589,7 @@ function RoundBlock({
             ]}
           />
 
-          <StockLedgerSection ledgerId={ledgerId} roundId={round.id} />
+          <StockLedgerSection ledgerId={ledgerId} roundId={round.id} trades={round.trades} />
 
           <section className="stock-round__daily">
             <div className="stock-round__section-head">

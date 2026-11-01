@@ -1,7 +1,40 @@
 import { describe, expect, it } from 'vitest'
 
 import type { StockLedgerDto } from '../../shared/types/stock-ledger'
+import type { StockTradeDto } from '../../shared/types/stock-history'
 import { ledgerMarkdown } from '../../src/pages/stock-ledger-md'
+
+/** 一笔成交：只需要复制用得上的那几列。 */
+function trade(
+  tradeType: string,
+  day: number,
+  lots: number,
+  amount: number,
+  overrides: Partial<StockTradeDto> = {},
+): StockTradeDto {
+  return {
+    id: `${tradeType}-${day}-${lots}-${amount}`,
+    ledgerId: 'l1',
+    stockCode: '601595',
+    stockName: '上海电影',
+    tradeType,
+    roundId: 'r1',
+    orderId: '',
+    orderSeq: 0,
+    price: 0,
+    lots,
+    shares: lots * 100,
+    amount,
+    fee: 0,
+    commission: 0,
+    stampDuty: 0,
+    transferFee: 0,
+    realizedPnl: null,
+    tradeTime: Math.trunc(new Date(2026, 9, day, 12).getTime() / 1000),
+    remark: '',
+    ...overrides,
+  }
+}
 
 function ledger(overrides: Partial<StockLedgerDto> = {}): StockLedgerDto {
   return {
@@ -69,5 +102,31 @@ describe('交易台账 Markdown', () => {
   it('没有台账时返回空串', () => {
     expect(ledgerMarkdown(null)).toBe('')
     expect(ledgerMarkdown(ledger({ exists: false }))).toBe('')
+  })
+
+  it('成交记录按时间从早到晚，一笔一条：日期 / 类型 / 手数 / 成交金额', () => {
+    const text = ledgerMarkdown(ledger(), [
+      trade('reduce', 14, 1, 275_500),
+      trade('open', 13, 2, 549_800),
+      trade('close', 14, 1, 278_000),
+    ])
+    expect(text).toContain(
+      [
+        '## 成交记录',
+        '',
+        '- 2026-10-13 · 建仓 · 2 手 · ¥5498.00',
+        '- 2026-10-14 · 减仓 · 1 手 · ¥2755.00',
+        '- 2026-10-14 · 清仓 · 1 手 · ¥2780.00',
+        '',
+      ].join('\n'),
+    )
+    // 标题 + 无序列表，没有表格
+    expect(text).not.toContain('|')
+  })
+
+  it('没有成交时不写成交记录这一节', () => {
+    const text = ledgerMarkdown(ledger(), [])
+    expect(text).not.toContain('## 成交记录')
+    expect(text.endsWith('- 一句话：止损未触发\n')).toBe(true)
   })
 })

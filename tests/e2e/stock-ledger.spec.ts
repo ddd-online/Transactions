@@ -159,6 +159,11 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     expect(copied).toContain('- 是否按系统执行：是')
     expect(copied).toContain('- 一句话：清仓后回看：执行到位')
     expect(copied).toMatch(/- 净盈亏：¥\d/)
+    // 成交记录附在台账后面：一笔一条，日期（年月日）/ 类型 / 手数 / 成交金额，不画表格
+    expect(copied).toContain('## 成交记录')
+    expect(copied).toMatch(/- \d{4}-\d{2}-\d{2} · 建仓 · 1 手 · ¥500\.00/)
+    expect(copied).toMatch(/- \d{4}-\d{2}-\d{2} · 清仓 · 1 手 · ¥600\.00/)
+    expect(copied).not.toContain('|')
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
     const row = database

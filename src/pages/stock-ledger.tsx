@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import { Input, Modal } from 'antd'
 
 import type { StockLedgerDto } from '../../shared/types/stock-ledger'
+import type { StockTradeDto } from '../../shared/types/stock-history'
 import { Button } from '../components/button'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
@@ -14,6 +15,8 @@ export interface StockLedgerSectionProps {
   stockCode?: string
   /** 记录页传轮次 id */
   roundId?: string
+  /** 这一轮 / 这个持仓的成交；复制台账时一并写进「成交记录」 */
+  trades?: StockTradeDto[]
 }
 
 interface LedgerForm {
@@ -69,6 +72,7 @@ export function StockLedgerSection({
   ledgerId,
   stockCode,
   roundId,
+  trades,
 }: StockLedgerSectionProps): JSX.Element {
   const [ledger, setLedger] = useState<StockLedgerDto | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -117,7 +121,7 @@ export function StockLedgerSection({
   }
 
   const copyMarkdown = useCallback((): void => {
-    const text = ledgerMarkdown(ledger)
+    const text = ledgerMarkdown(ledger, trades ?? [])
     if (!text) return
     void (async () => {
       try {
@@ -127,7 +131,7 @@ export function StockLedgerSection({
         notify('复制失败', 'error')
       }
     })()
-  }, [ledger])
+  }, [ledger, trades])
 
   const save = async (): Promise<void> => {
     const trimmed: LedgerForm = {

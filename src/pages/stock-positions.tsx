@@ -627,7 +627,11 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 本轮费率 <span>{feeText(selected, fee)}</span>
               </p>
 
-              <StockLedgerSection ledgerId={ledgerId} stockCode={selected.stockCode} />
+              <StockLedgerSection
+                ledgerId={ledgerId}
+                stockCode={selected.stockCode}
+                trades={trades}
+              />
 
               <section className="stock-detail__section">
                 <span className="stock-section-title">每日复盘</span>
