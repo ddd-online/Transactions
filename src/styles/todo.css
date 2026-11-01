@@ -481,6 +481,8 @@
   padding: var(--transactions-space-xs) var(--transactions-space-lg) var(--transactions-space-md)
     calc(var(--transactions-space-lg) + var(--todo-item-check) + var(--transactions-space-md));
   border-top: 1px solid var(--transactions-color-divider);
+  /* 展开的进度是"刚打开的一层"：与记录页的轮次体同一个进场拍（200ms / 4px / 自上而来） */
+  animation: tr-rise-in var(--transactions-transition-enter);
 }
 
 .todo-progress__list {

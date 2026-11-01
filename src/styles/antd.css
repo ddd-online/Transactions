@@ -2,6 +2,20 @@
 
 .tr-btn {
   font-weight: 500;
+  /* 按下时下沉 1px（与 `.nav-btn` / `.page-rail-btn` 同一档，见 DESIGN.md「The Press Rule」）：
+   * 桌面端点击没有原生按压反馈，这一像素就是"按到了"。 */
+  transition: transform 90ms var(--transactions-ease-out-expo);
+}
+
+.tr-btn:active:not(:disabled),
+.tr-btn:active:not(.ant-btn-disabled) {
+  transform: translateY(1px);
+}
+
+/* 表内的行底色是"指向了哪一行"的反馈：直接跳变会让整张表在读的时候闪一下，
+ * 120ms 的过渡让它读成状态变化而不是重绘。 */
+.ant-table-tbody > tr > td {
+  transition: background-color var(--transactions-transition-fast);
 }
 
 /* 文本按钮的禁用态：AntD 给的是 25% 墨色（浅色主题下 ≈1.8:1，灰得读不出字），

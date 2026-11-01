@@ -4,6 +4,12 @@ import { Chart } from '@antv/g2'
 import type { ChartLineData } from '../../shared/types/transaction'
 import { chartTextTokens } from '../theme/chart-text'
 
+/** 系统偏好「减少动态」时不描线：那条曲线属于状态的表达，不能让它真的晚到。 */
+function motionAllowed(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true
+  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 export interface AntvLineChartProps {
   lines: ChartLineData[]
   colors: string[]
@@ -65,8 +71,7 @@ export const AntvLineChart = memo(function AntvLineChart({
       gridLineWidth: 1,
       gridLineDash: [0, 0],
     })
-    chart.legend(false)
-    /* 提示框只留一张表：标题是"哪个月"，下面一条一行（支出 / 收入 / 转账）。
+    chart.legend(false)    /* 提示框只留一张表：标题是"哪个月"，下面一条一行（支出 / 收入 / 转账）。
      * 不给折线配置 items 时，G2 会把同一个月上所有曲线的值按 color 分组列出来 —— 正是要的；
      * 但折线本身点不到，跟着画的散点（`point()`）若不关掉提示，会再补一栏原始字段
      * （`time` / `amount`），于是同一张提示框里出现两套数据：用户截图里被圈出来的那一块。 */
@@ -78,7 +83,10 @@ export const AntvLineChart = memo(function AntvLineChart({
         { channel: 'y', valueFormatter: (value: number) => Number(value).toFixed(2) },
       ],
     }
-    chart
+    /* 落点（DESIGN.md「Motion」里的「Draw the data」）：曲线按路径自己画出来，620ms，
+     * 一条曲线一次 —— 这是这一页唯一被授权的动效，其余进场都只是 4px 的落位。
+     * 减少动态偏好下整张图直接画完，不做描线。 */
+    const line = chart
       .line()
       .data(rows)
       .encode('x', 'time')
@@ -86,6 +94,15 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('color', 'label')
       .style('lineWidth', 2)
       .tooltip(tooltip)
+    if (motionAllowed()) {
+      line.animate('enter', {
+        type: 'pathIn',
+        duration: 620,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      })
+    } else {
+      line.animate(false)
+    }
     chart
       .point()
       .data(rows)
@@ -94,6 +111,7 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('color', 'label')
       .style('r', 3)
       .tooltip(false)
+      .animate(false)
     chart.render()
     return () => {
       chart.destroy()

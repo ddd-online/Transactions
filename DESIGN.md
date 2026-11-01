@@ -287,17 +287,18 @@ Motion here is structural, not decorative: it says where a surface came from, th
 
 | Beat | Applies to | Travel | Duration |
 |---|---|---|---|
-| **Enter** | panels and messages: modal, drawer, select / popconfirm / date-time panels, notices | arrives from 4px above (drawer 24px from the side) | 200ms (`--transactions-transition-enter`) |
+| **Enter** | panels and messages: modal, drawer, select / popconfirm / date-time panels, notices; **and the layers that open inside a page** — an expanded round body, an item's progress block | arrives from 4px above (drawer 24px from the side) | 200ms (`--transactions-transition-enter`) |
 | **Settle** | the whole content area when a page or sub-function lands — once per mount, never per section | arrives from 8px above | 320ms (`--transactions-transition-settle`) |
-| **Draw the data** | the self-drawn chart's line and area draw (charts-rs `AnimationConfig`, 620ms + 60ms delay) | — | the surface's one authored moment |
+| **Draw the data** | the line chart's curves (`AntvLineChart` → G2 `pathIn` on the line mark, points with it) | the stroke draws along its own path, left to right | 620ms, the surface's one authored moment |
+| **Choose a row** | every row that answers "which one am I pointing at / did I pick": nav items, stock list rows, event cards, todo rows, table cells | colour only | 150ms (`--transactions-transition-fast`) |
 
 **The Two Kinds of Arrival.** Masks and backdrops only fade (`tr-fade-in`, opacity alone) — a full-screen layer that moves reads as the window moving. Panels and messages arrive from 4px above (`tr-rise-in`); a whole content area settles from 8px above (`tr-settle`). Both keyframes end at their natural state and use no fill-mode, so content is visible even if the animation never runs. Arrival is always **from above or from outside**: entering elements are routinely exactly as tall as their container, so travelling down would add scrollable height to an `overflow: auto` parent and flash a scrollbar on the right edge.
 
-**The Press Rule.** Desktop clicks have no native press feedback, so buttons, icon buttons and both navigations sink 1px within the 150ms feedback band (`--transactions-transition-fast`). Hover, selected, and switch-handle transitions keep their existing timings. Nothing animates a layout-driving property; the documented exception is the event linked rail's own column (`grid-template-columns`) and the progress bar's width.
+**The Press Rule.** Desktop clicks have no native press feedback, so every button sinks 1px for 90ms: the primary/secondary/text variants (`.tr-btn`), icon buttons (`.tr-icon-btn`), and both navigations. Hover, selected, and switch-handle transitions keep their existing timings (the 150ms band, colour only). Nothing animates a layout-driving property; the documented exception is the event linked rail's own column (`grid-template-columns`) and the progress bar's width.
 
 **Budget.** Only transform, opacity, color and shadow animate; no scroll-driven motion, no parallax, no looping animation outside loading states, and loaders stop when their surface unmounts.
 
-**Reduced motion.** `prefers-reduced-motion: reduce` collapses every beat to an instant state change (the global cap in `base.css`), so focus, colour and state still land — and the chart's dash-offset draw is explicitly reset so a line can never stay hidden.
+**Reduced motion.** `prefers-reduced-motion: reduce` collapses every beat to an instant state change (the global cap in `base.css`), so focus, colour and state still land. The chart asks the media query itself and turns its draw off (`animate(false)`) instead of leaning on the global cap: a 620ms stroke cut to zero by an override could leave the line hidden.
 
 ## Shapes
 

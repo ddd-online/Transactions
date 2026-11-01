@@ -2667,6 +2667,8 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
+  /* 选中 / 悬停是"指着哪一只"，不该跳变：140ms 的底色过渡让视线跟得上 */
+  transition: background-color var(--transactions-transition-fast);
 }
 
 .stock-master__row:hover {
@@ -3050,6 +3052,9 @@
  * 比截断更难读。单元格一律不换行，表格按内容排、至少占满宽度。 */
 .stock-round__body {
   overflow-x: auto;
+  /* 展开的那一轮是"刚打开的一层"，用面板进场的那一拍（200ms / 4px / 自上而来）：
+   * 内容在点击之后才挂载，所以每次展开都会播一次，收起永远是瞬时的。 */
+  animation: tr-rise-in var(--transactions-transition-enter);
 }
 
 .stock-round__body > .stock-trade-table .ant-table table {

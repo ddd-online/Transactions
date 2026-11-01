@@ -91,7 +91,13 @@
   cursor: pointer;
   transition:
     background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast);
+    color var(--transactions-transition-fast),
+    transform 90ms var(--transactions-ease-out-expo);
+}
+
+/* 与 `.nav-btn` / `.tr-btn` 同一档的按压反馈：图标键也是按钮 */
+.tr-icon-btn:active {
+  transform: translateY(1px);
 }
 
 .tr-icon-btn:hover {
