@@ -407,6 +407,9 @@ function RoundBlock({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingReview, setEditingReview] = useState(false)
   const [reviewDraft, setReviewDraft] = useState(review)
+  // 费用只统计真正成交的行（和表里显示的同一批）：费用恒为整数分，加完再格式化。
+  const visibleTrades = round.trades.filter((trade) => trade.shares > 0)
+  const roundFee = visibleTrades.reduce((total, trade) => total + trade.fee, 0)
   return (
     <article
       className={`stock-round${arrived ? ' is-arrived' : ''}`}
@@ -430,6 +433,13 @@ function RoundBlock({
           </span>
         </button>
         <span className="stock-muted stock-round__count">{round.tradeCount} 笔成交</span>
+        <span
+          className="stock-muted stock-round__fee"
+          data-testid="round-fee-total"
+          title="这一轮成交的费用合计"
+        >
+          费用 <strong className="stock-mono">{money(roundFee)}</strong>
+        </span>
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
           {money(round.pnl)} · {stockPercent(round.pnlRate)}
         </span>
@@ -466,7 +476,7 @@ function RoundBlock({
             pagination={false}
             size="small"
             tableLayout="fixed"
-            dataSource={round.trades.filter((trade) => trade.shares > 0)}
+            dataSource={visibleTrades}
             onRow={() => ({ 'data-testid': 'stock-trade' }) as HTMLAttributes<HTMLElement>}
             columns={[
               {
@@ -526,7 +536,9 @@ function RoundBlock({
                 title: '费用',
                 dataIndex: 'fee',
                 align: 'right',
-                render: (value: number) => money(value),
+                render: (value: number) => (
+                  <span data-testid="stock-trade-fee">{money(value)}</span>
+                ),
               },
               {
                 title: '操作',

@@ -93,6 +93,21 @@ test('股票记录：选中股票默认展开最新一轮', async () => {
     await expect(rounds.nth(1).locator('.stock-round__body')).toBeVisible()
     await expect(rounds.nth(0).locator('.stock-round__body')).toHaveCount(0)
 
+    // 每轮的「费用合计」贴在轮次行上，等于这一轮表内各行费用之和
+    const feeCells = await rounds.nth(1).getByTestId('stock-trade-fee').allInnerTexts()
+    const feeSum = feeCells.reduce((total, text) => total + Number(text.replace(/[^\d.]/g, '')), 0)
+    await expect(rounds.nth(1).getByTestId('round-fee-total')).toHaveText(
+      `费用 ¥${feeSum.toFixed(2)}`,
+    )
+    // 收起的那一轮没有表格，费用合计照样在行上
+    await expect(rounds.nth(0).getByTestId('stock-trade-fee')).toHaveCount(0)
+    await expect(rounds.nth(0).getByTestId('round-fee-total')).toHaveText(
+      `费用 ¥${feeSum.toFixed(2)}`,
+    )
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-history-rounds.png'),
+    })
+
     // 空复盘点「编辑」时自动带上本轮复盘模板
     await rounds.nth(1).getByTestId('round-review-open').click()
     await expect(page.getByTestId('round-review')).toHaveValue(/^买入理由：/)

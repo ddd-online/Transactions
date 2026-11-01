@@ -3092,7 +3092,21 @@
 
 .stock-round__pnl {
   flex-shrink: 0;
+}
+
+/* 每轮的「费用合计」紧贴在盈亏左边：auto 外边距给到它，右侧那组数字
+ * （费用 · 盈亏 · 标签 · 记心得）才会一起靠右，而不是把费用落在"几笔成交"后面。 */
+.stock-round__fee {
+  flex-shrink: 0;
+  /* 和盈亏之间比默认的 8px 再松 4px：两个数字贴着会读成一个数。 */
+  margin-right: var(--transactions-space-xs);
   margin-left: auto;
+  font-size: var(--transactions-size-text-caption);
+  white-space: nowrap;
+}
+
+.stock-round__fee strong {
+  font-weight: var(--transactions-weight-medium);
 }
 
 .stock-round__tag {
