@@ -261,6 +261,32 @@
   border-radius: 50%;
 }
 
+/* 单片也要「画出来」：用 conic 遮罩从 12 点顺时针把圆涂满。
+ * `@property` 把 --da-pie-sweep 声明成可插值的角度 —— 自定义属性默认是字符串，动不了。
+ * 620ms 与 `CHART_PIE_ANIMATION` 同值：那边给 canvas，这边给这一颗 CSS 圆。
+ * 减少动态不在这里判断：base.css 的全局兜底把时长压到 0.01ms，终态仍是整圆。
+ * initial-value 取 360deg —— 动画万一没跑，圆是满的，不是空的。 */
+@property --da-pie-sweep {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 360deg;
+}
+
+.da-pie-single--draw {
+  mask-image: conic-gradient(#000 var(--da-pie-sweep), transparent 0);
+  animation: da-pie-sweep 620ms var(--transactions-ease-out-expo) both;
+}
+
+@keyframes da-pie-sweep {
+  from {
+    --da-pie-sweep: 0deg;
+  }
+
+  to {
+    --da-pie-sweep: 360deg;
+  }
+}
+
 /* 图例自绘：AntV 自带图例在窄容器里会被裁切，这里用 HTML 固定成一行 */
 .da-chart__legend {
   display: flex;

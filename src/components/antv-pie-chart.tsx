@@ -3,7 +3,7 @@ import { Chart } from '@antv/g2'
 
 import type { PieSlice } from '../../shared/domain/pie'
 import { chartTextTokens } from '../theme/chart-text'
-import { motionAllowed } from '../theme/motion'
+import { CHART_PIE_ANIMATION, motionAllowed } from '../theme/motion'
 
 export interface AntvPieChartProps {
   slices: PieSlice[]
@@ -35,6 +35,10 @@ export const AntvPieChart = memo(function AntvPieChart({
   label,
 }: AntvPieChartProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
+  /* 数据指纹：只有金额或分组真的变了才把圆重画一遍。
+   * 换主题会换一份 `colors`、effect 跟着重跑，但那只是重刷颜色 —— 不该再扫一次。 */
+  const drewRef = useRef<string | null>(null)
+  const signature = slices.map((slice) => `${slice.key}:${slice.amount}`).join('|')
   const ariaLabel =
     slices.length === 0
       ? `${label}：暂无数据`
@@ -81,14 +85,12 @@ export const AntvPieChart = memo(function AntvPieChart({
           `${Number(datum.share ?? 0).toFixed(2)}%`,
         items: false,
       })
-    /* 这一页的「作者时刻」是折线沿着自己的路径画出来；饼图只做一个 220ms 的淡入，
-     * 不转、不弹 —— 构图已经把话说完了。减少动态偏好下直接画完。 */
-    if (motionAllowed()) {
-      interval.animate('enter', {
-        type: 'fadeIn',
-        duration: 220,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-      })
+    /* 这一页的「作者时刻」在折线那边是沿路径描出来；饼图的那一拍是**扇区从起始角扫出来**
+     * （G2 的 `waveIn`，620ms、同一条指数 ease-out）。换主题不重扫：那只该换颜色。 */
+    const fresh = drewRef.current !== signature
+    drewRef.current = signature
+    if (motionAllowed() && fresh) {
+      interval.animate('enter', CHART_PIE_ANIMATION)
     } else {
       interval.animate(false)
     }
@@ -96,7 +98,7 @@ export const AntvPieChart = memo(function AntvPieChart({
     return () => {
       chart.destroy()
     }
-  }, [colors, single, slices, total])
+  }, [colors, signature, single, slices, total])
 
   return (
     <div
@@ -107,7 +109,13 @@ export const AntvPieChart = memo(function AntvPieChart({
       ref={containerRef}
     >
       {single ? (
-        <span className="da-pie-single" style={{ background: colors[0] ?? 'transparent' }} />
+        /* 单片交给 CSS 画实心圆，扫出也交给 CSS（conic 遮罩）：`key` 挂数据指纹，
+         * 金额一变就重挂一次，动画跟着重放；换主题不改 key，不重放。 */
+        <span
+          key={signature}
+          className="da-pie-single da-pie-single--draw"
+          style={{ background: colors[0] ?? 'transparent' }}
+        />
       ) : null}
     </div>
   )

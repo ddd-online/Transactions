@@ -322,6 +322,8 @@ test('分析：饼图按分类 / 交易类型分组，分组配置就地生效',
     await pickOption(page, 'chart-group-type', '收入')
     await expect(page.getByTestId('chart-pie-sum')).toHaveCount(1)
     await expect(page.getByTestId('chart-pie-sum').nth(0)).toContainText('工资')
+    // 单片是 CSS 画的实心圆：扫出那层类在，动效才在（减少动态由 base.css 的全局兜底压成瞬间）
+    await expect(page.getByTestId('chart-pie').locator('.da-pie-single--draw')).toHaveCount(1)
     await page.waitForTimeout(300)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'charts-pie-income.png'),
