@@ -79,6 +79,8 @@ function chart(
     granularity: 'month',
     chartLines: LINES,
     chartType: 'line',
+    groupField: '',
+    groupTransactionType: '',
     isPreset,
     sortOrder,
     createdAt: 0,
@@ -106,7 +108,7 @@ function insertChartRow(
   },
 ): void {
   db.prepare(
-    "INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, is_preset, sort_order, created_at, updated_at) VALUES (?, ?, ?, 'month', ?, 'line', ?, ?, ?, ?)",
+    "INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, group_field, group_transaction_type, is_preset, sort_order, created_at, updated_at) VALUES (?, ?, ?, 'month', ?, 'line', '', '', ?, ?, ?, ?)",
   ).run(
     values.chartId,
     values.ledgerId,
@@ -154,6 +156,8 @@ function createRequest(
     granularity: 'month',
     lines: [line('支出', 'expense')],
     chartType: 'line',
+    groupField: '',
+    groupTransactionType: '',
     ...overrides,
   }
 }
@@ -168,6 +172,8 @@ function updateRequest(
     granularity: '',
     lines: [],
     chartType: '',
+    groupField: '',
+    groupTransactionType: '',
     sortOrder: 0,
     ...overrides,
   }
@@ -371,7 +377,7 @@ describe('chart service', () => {
       otherWorkspace.db,
       createRequest('l1', {
         title: '自定义',
-        chartType: 'bar',
+        chartType: 'line',
       }),
     )
     const charts = listChartsByLedgerId(otherWorkspace.db, 'l1')
@@ -388,14 +394,14 @@ describe('chart service', () => {
       createRequest('l1', {
         title: '自定义图表',
         lines: [line('支出', 'expense'), line('收入', 'income')],
-        chartType: 'bar',
+        chartType: 'line',
       }),
     )
 
     expect(created.chartId).not.toBe('')
     expect(created.isPreset).toBe(false)
     expect(created.sortOrder, '预设占 0..1，新建取最大值 + 1').toBe(2)
-    expect(created.chartType).toBe('bar')
+    expect(created.chartType).toBe('line')
     expect(created.lines).toEqual([line('支出', 'expense'), line('收入', 'income')])
 
     const stored = requireChart(workspace.db, created.chartId)
@@ -466,14 +472,14 @@ describe('chart service', () => {
         title: '改名后的自定义',
         granularity: 'year',
         lines: [line('支出', 'expense')],
-        chartType: 'bar',
+        chartType: 'line',
         sortOrder: 9,
       }),
     )
 
     expect(updated.title).toBe('改名后的自定义')
     expect(updated.granularity).toBe('year')
-    expect(updated.chartType).toBe('bar')
+    expect(updated.chartType).toBe('line')
     expect(updated.sortOrder).toBe(9)
     expect(updated.isPreset).toBe(false)
     expect(updated.lines).toEqual([line('支出', 'expense')])
@@ -607,6 +613,134 @@ describe('chart service', () => {
     const error = captureAppError(() => listChartsByLedgerId(workspace.db, 'l1'))
     expect(error.message).toMatch(/^unmarshal chart lines failed:/)
     expect(error.status).toBe(500)
+  })
+
+  it('creates a pie chart with grouping and no curves', () => {
+    const workspace = openedWorkspace()
+    listChartsByLedgerId(workspace.db, 'l1')
+
+    const created = createChart(
+      workspace.db,
+      createRequest('l1', {
+        title: '支出构成',
+        chartType: 'pie',
+        granularity: 'month',
+        lines: [line('支出', 'expense')],
+        groupField: 'category',
+        groupTransactionType: 'expense',
+      }),
+    )
+
+    expect(created.chartType).toBe('pie')
+    // 饼图不分时间桶、也没有曲线：两处都由服务层归一
+    expect(created.granularity).toBe('')
+    expect(created.lines).toEqual([])
+    expect(created.groupField).toBe('category')
+    expect(created.groupTransactionType).toBe('expense')
+    expect(requireChart(workspace.db, created.chartId).chartLines).toBe('[]')
+  })
+
+  it('rejects a pie chart without a grouping field or a type', () => {
+    const workspace = openedWorkspace()
+
+    const missingField = captureAppError(() =>
+      createChart(workspace.db, createRequest('l1', { chartType: 'pie', groupField: '' })),
+    )
+    expect(missingField.status).toBe(400)
+    expect(missingField.message).toBe('饼图需要选择分组字段')
+
+    const missingType = captureAppError(() =>
+      createChart(
+        workspace.db,
+        createRequest('l1', { chartType: 'pie', groupField: 'category', groupTransactionType: '' }),
+      ),
+    )
+    expect(missingType.status).toBe(400)
+    expect(missingType.message).toBe('按分类分组时需要选择交易类型')
+
+    expect(countChartsByLedgerId(workspace.db, 'l1')).toBe(0)
+  })
+
+  it('normalises an unknown chart type to a line chart', () => {
+    const workspace = openedWorkspace()
+    const created = createChart(
+      workspace.db,
+      createRequest('l1', {
+        chartType: 'bar',
+        groupField: 'category',
+        groupTransactionType: 'expense',
+      }),
+    )
+    expect(created.chartType).toBe('line')
+    expect(created.groupField).toBe('')
+    expect(created.groupTransactionType).toBe('')
+    expect(created.granularity).toBe('month')
+  })
+
+  it('keeps the grouping when a pie chart is renamed or regrouped', () => {
+    const workspace = openedWorkspace()
+    listChartsByLedgerId(workspace.db, 'l1')
+    const pie = createChart(
+      workspace.db,
+      createRequest('l1', {
+        title: '支出构成',
+        chartType: 'pie',
+        groupField: 'category',
+        groupTransactionType: 'expense',
+      }),
+    )
+
+    const renamed = updateChart(
+      workspace.db,
+      updateRequest(pie.chartId, {
+        title: '支出构成（改）',
+        chartType: 'pie',
+        groupField: 'category',
+        groupTransactionType: 'expense',
+        lines: [],
+        sortOrder: pie.sortOrder,
+      }),
+    )
+    expect(renamed.title).toBe('支出构成（改）')
+    expect(renamed.groupField).toBe('category')
+    expect(renamed.groupTransactionType).toBe('expense')
+
+    // 换成按交易类型分组：类型过滤跟着清掉（按类型分组没有类型过滤这回事）
+    const regrouped = updateChart(
+      workspace.db,
+      updateRequest(pie.chartId, {
+        title: '支出构成（改）',
+        chartType: 'pie',
+        groupField: 'transactionType',
+        groupTransactionType: 'income',
+        lines: [],
+        sortOrder: pie.sortOrder,
+      }),
+    )
+    expect(regrouped.groupField).toBe('transactionType')
+    expect(regrouped.groupTransactionType).toBe('')
+  })
+
+  it('refuses to turn a preset into a pie chart', () => {
+    const workspace = openedWorkspace()
+    listChartsByLedgerId(workspace.db, 'l1')
+    const preset = listChartRows(workspace.db, 'l1')[0]
+
+    const error = captureAppError(() =>
+      updateChart(workspace.db, {
+        chartId: preset.chartId,
+        title: preset.title,
+        granularity: preset.granularity,
+        lines: [],
+        chartType: 'pie',
+        groupField: 'category',
+        groupTransactionType: 'expense',
+        sortOrder: preset.sortOrder,
+      }),
+    )
+    expect(error.status).toBe(400)
+    expect(error.message).toBe('预设图表不可改名、改粒度或改曲线，只能删除')
+    expect(requireChart(workspace.db, preset.chartId).chartType).toBe('line')
   })
 
   it('decodes_chart_lines_with_missing_fields_using_defaults', () => {

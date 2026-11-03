@@ -100,3 +100,28 @@ export interface ChartQueryResponse {
   lines: ChartLineData[]
   statistics: Record<string, number>
 }
+
+/** 饼图的查询条件：范围内按分组字段求和。 */
+export interface ChartPieQueryRequest {
+  ledgerId: string
+  tsRange: number[]
+  /** `transactionType` / `category` */
+  groupField: string
+  /** 按分类分组时只统计这一种交易类型；其余为空串 */
+  groupTransactionType: string
+}
+
+/** 饼图的一片：`key` 是原始分组值（类型码 / 分类名），`label` 是展示文案。 */
+export interface ChartPieSlice {
+  key: string
+  label: string
+  /** 该组的合计金额（分） */
+  amount: number
+}
+
+export interface ChartPieResponse {
+  /** 已按金额倒序、同额按标签升序 */
+  slices: ChartPieSlice[]
+  /** 各片金额之和（分） */
+  total: number
+}

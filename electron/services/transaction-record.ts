@@ -3,8 +3,12 @@ import { randomUUID } from 'node:crypto'
 import { AppError } from '../../shared/errors'
 import { TRANSACTION_TYPES } from '../../shared/domain/consts'
 import type { ChartLine, TransactionRecord, TrTag } from '../../shared/domain/models'
+import { transactionTypeText } from '../../shared/domain/format'
 import type {
   ChartLineData,
+  ChartPieQueryRequest,
+  ChartPieResponse,
+  ChartPieSlice,
   ChartQueryRequest,
   ChartQueryResponse,
   TransactionRecordDto,
@@ -19,6 +23,7 @@ import {
   queryByKeyEventDate,
   queryById as queryRecordById,
   queryChartLineData,
+  queryChartPieData,
   queryFiltered,
   queryStatistics,
   updateKeyEventDate,
@@ -220,6 +225,46 @@ export function queryTrsForChart(db: Db, request: ChartQueryRequest): ChartQuery
       transfer: statistics.transfer,
     },
   }
+}
+
+/**
+ * 饼图：范围内按分组字段求和，给出一片一组的结果。
+ *
+ * 口径只有「范围 + 分组字段」：不分时间桶、不看曲线的条件项、不区分离群值 ——
+ * 饼图问的是构成，不是趋势。金额非正的组不进饼图（扇区不能是负数），
+ * 类型分组的文案走 `transactionTypeText`，空分类记「未分类」。
+ */
+export function queryTrsForPieChart(db: Db, request: ChartPieQueryRequest): ChartPieResponse {
+  const rows = queryChartPieData(
+    db,
+    request.ledgerId,
+    request.tsRange,
+    request.groupField,
+    request.groupTransactionType,
+  )
+
+  const slices: ChartPieSlice[] = rows
+    .filter((row) => row.amount > 0)
+    .map((row) => ({
+      key: row.key,
+      label: pieSliceLabel(request.groupField, row.key),
+      amount: row.amount,
+    }))
+    .sort((left, right) => {
+      if (left.amount !== right.amount) return right.amount - left.amount
+      return left.label < right.label ? -1 : left.label > right.label ? 1 : 0
+    })
+
+  return {
+    slices,
+    total: slices.reduce((sum, slice) => sum + slice.amount, 0),
+  }
+}
+
+/** 一片的展示文案：类型转中文，空分类记「未分类」。 */
+function pieSliceLabel(groupField: string, key: string): string {
+  if (groupField === 'category') return key === '' ? '未分类' : key
+  return transactionTypeText(key)
 }
 
 /** 删除记录及其标签关联（同一事务）。 */

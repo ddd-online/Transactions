@@ -45,6 +45,7 @@ import type {
   TodoProgressDto,
 } from './types/todo'
 import type {
+  ChartPieResponse,
   ChartQueryResponse,
   TransactionRecordDto,
   TrQueryResult,
@@ -95,6 +96,8 @@ const createChartSchema = z.object({
   granularity: z.string().default('month'),
   lines: z.array(chartLineSchema).default([]),
   chartType: z.string().default('line'),
+  groupField: z.string().default(''),
+  groupTransactionType: z.string().default(''),
 })
 
 const updateChartSchema = z.object({
@@ -103,6 +106,8 @@ const updateChartSchema = z.object({
   granularity: z.string().default('month'),
   lines: z.array(chartLineSchema).default([]),
   chartType: z.string().default('line'),
+  groupField: z.string().default(''),
+  groupTransactionType: z.string().default(''),
   sortOrder: z.number().default(0),
 })
 
@@ -205,6 +210,12 @@ export const commandSchemas = {
     tsRange: z.array(z.number()).default([]),
     granularity: z.string().default('month'),
     lines: z.array(chartLineSchema).default([]),
+  }),
+  tr_chart_pie_data: z.object({
+    ledgerId: z.string().default(''),
+    tsRange: z.array(z.number()).default([]),
+    groupField: z.string().default(''),
+    groupTransactionType: z.string().default(''),
   }),
   tr_create: transactionRecordDtoSchema,
   tr_batch_create: z.array(transactionRecordDtoSchema),
@@ -548,6 +559,7 @@ export interface CommandResponses {
   tag_update_sort: null
   tr_query: TrQueryResult
   tr_chart_data: ChartQueryResponse
+  tr_chart_pie_data: ChartPieResponse
   tr_create: string
   tr_batch_create: number
   tr_delete: null

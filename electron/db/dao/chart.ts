@@ -2,7 +2,8 @@ import type { Db } from '../driver'
 import type { Chart } from '../../../shared/domain/models'
 
 const COLUMNS =
-  'chart_id, ledger_id, title, granularity, chart_lines, chart_type, is_preset, sort_order, created_at, updated_at'
+  'chart_id, ledger_id, title, granularity, chart_lines, chart_type, group_field, ' +
+  'group_transaction_type, is_preset, sort_order, created_at, updated_at'
 
 interface ChartRow {
   chart_id: string
@@ -11,6 +12,8 @@ interface ChartRow {
   granularity: string
   chart_lines: string
   chart_type: string
+  group_field: string
+  group_transaction_type: string
   is_preset: number
   sort_order: number
   created_at: number
@@ -25,6 +28,8 @@ function fromRow(row: ChartRow): Chart {
     granularity: row.granularity,
     chartLines: row.chart_lines,
     chartType: row.chart_type,
+    groupField: row.group_field,
+    groupTransactionType: row.group_transaction_type,
     // 基线 schema 里 `is_preset` 是 numeric：按整数 0/1 存储，读回成布尔
     isPreset: row.is_preset !== 0,
     sortOrder: row.sort_order,
@@ -52,7 +57,7 @@ function nowUnix(): number {
 /** 新建图表（时间戳由本函数填充，调用方传入的 `createdAt` / `updatedAt` 被忽略）。 */
 export function createChart(db: Db, chart: Chart, now = nowUnix()): void {
   db.prepare(
-    `INSERT INTO chart (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO chart (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     chart.chartId,
     chart.ledgerId,
@@ -60,6 +65,8 @@ export function createChart(db: Db, chart: Chart, now = nowUnix()): void {
     chart.granularity,
     chart.chartLines,
     chart.chartType,
+    chart.groupField,
+    chart.groupTransactionType,
     chart.isPreset ? 1 : 0,
     chart.sortOrder,
     now,
@@ -115,13 +122,17 @@ export function countChartsByLedgerId(db: Db, ledgerId: string): number {
  */
 export function saveChart(db: Db, chart: Chart, now = nowUnix()): void {
   db.prepare(
-    'UPDATE chart SET ledger_id = ?, title = ?, granularity = ?, chart_lines = ?, chart_type = ?, is_preset = ?, sort_order = ?, created_at = ?, updated_at = ? WHERE chart_id = ?',
+    'UPDATE chart SET ledger_id = ?, title = ?, granularity = ?, chart_lines = ?, chart_type = ?, ' +
+      'group_field = ?, group_transaction_type = ?, is_preset = ?, sort_order = ?, ' +
+      'created_at = ?, updated_at = ? WHERE chart_id = ?',
   ).run(
     chart.ledgerId,
     chart.title,
     chart.granularity,
     chart.chartLines,
     chart.chartType,
+    chart.groupField,
+    chart.groupTransactionType,
     chart.isPreset ? 1 : 0,
     chart.sortOrder,
     chart.createdAt,

@@ -3,6 +3,7 @@
  *
  * 字段名与接口契约一致（camelCase）；模型本身在 `shared/domain/models`。
  * `chartLines` 的 JSON 编解码只在服务层做，DTO 里的 `lines` 是已解析的曲线配置。
+ * 饼图没有曲线：`lines` 恒为 `[]`，构成由 `groupField` / `groupTransactionType` 描述。
  */
 
 import type { ChartLine } from '../domain/models'
@@ -12,11 +13,15 @@ export interface ChartDto {
   chartId: string
   ledgerId: string
   title: string
-  /** year / month */
+  /** year / month（饼图没有时间粒度，是空串） */
   granularity: string
   lines: ChartLine[]
-  /** line / bar */
+  /** line / pie */
   chartType: string
+  /** 饼图的分组字段：`transactionType` / `category`；折线图是空串 */
+  groupField: string
+  /** 按分类分组时只统计的交易类型；其余是空串 */
+  groupTransactionType: string
   isPreset: boolean
   sortOrder: number
 }
@@ -28,6 +33,8 @@ export interface CreateChartRequest {
   granularity: string
   lines: ChartLine[]
   chartType: string
+  groupField: string
+  groupTransactionType: string
 }
 
 /** 更新图表（既有 `UpdateChartRequest`；整行回写，`isPreset` / `createdAt` 不变）。 */
@@ -37,6 +44,8 @@ export interface UpdateChartRequest {
   granularity: string
   lines: ChartLine[]
   chartType: string
+  groupField: string
+  groupTransactionType: string
   sortOrder: number
 }
 

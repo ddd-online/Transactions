@@ -12,6 +12,7 @@ import {
   linkToKeyEvent,
   queryLinkedByDate,
   queryTrsForChart,
+  queryTrsForPieChart,
   queryTrsOnCondition,
   unlinkFromKeyEvent,
 } from '../../electron/services/transaction-record'
@@ -185,6 +186,56 @@ describe('transaction service', () => {
     ])
     expect(response.lines[0]?.data.map((point) => point.amount)).toEqual([100, 0, 300])
     expect(response.statistics.expense).toBe(400)
+  })
+
+  it('groups the pie by category with labels, sorting, and a total', () => {
+    const db = database()
+    const january = Math.floor(Date.UTC(2026, 0, 15) / 1000)
+    const february = Math.floor(Date.UTC(2026, 1, 15) / 1000)
+    createTr(db, dto(30_000, 'expense', '交通出行', january))
+    createTr(db, dto(12_000, 'expense', '', january)) // 没填分类 → 未分类
+    // 同额时按标签升序：「交通出行」<「餐饮美食」不在同一档，这里用两个同额分类验证 tie-break
+    createTr(db, dto(500, 'expense', 'B 类', february))
+    createTr(db, dto(500, 'expense', 'A 类', february))
+    createTr(db, dto(9_999, 'income', '餐饮美食', january))
+    // 金额非正（退款 / 占位）不进饼图：扇区不能是负数，零值也不画
+    createTr(db, dto(0, 'expense', '零头', february))
+
+    const result = queryTrsForPieChart(db, {
+      ledgerId: 'l1',
+      tsRange: [0, 4_000_000_000],
+      groupField: 'category',
+      groupTransactionType: 'expense',
+    })
+    expect(result.slices).toEqual([
+      { key: '交通出行', label: '交通出行', amount: 30_000 },
+      { key: '', label: '未分类', amount: 12_000 },
+      { key: 'A 类', label: 'A 类', amount: 500 },
+      { key: 'B 类', label: 'B 类', amount: 500 },
+    ])
+    expect(result.total).toBe(43_000)
+
+    // 按交易类型：三种类型各一片，label 是中文
+    const byType = queryTrsForPieChart(db, {
+      ledgerId: 'l1',
+      tsRange: [0, 4_000_000_000],
+      groupField: 'transactionType',
+      groupTransactionType: '',
+    })
+    expect(byType.slices).toEqual([
+      { key: 'expense', label: '支出', amount: 43_000 },
+      { key: 'income', label: '收入', amount: 9_999 },
+    ])
+
+    // 时间范围之外什么都不剩
+    expect(
+      queryTrsForPieChart(db, {
+        ledgerId: 'l1',
+        tsRange: [0, 1],
+        groupField: 'transactionType',
+        groupTransactionType: '',
+      }),
+    ).toEqual({ slices: [], total: 0 })
   })
 
   it('deletes the record and its tag links in one transaction', () => {

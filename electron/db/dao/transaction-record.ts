@@ -261,6 +261,50 @@ export function queryChartLineData(
   return rows.map((row) => ({ time: row.time, amount: row.amount ?? 0 }))
 }
 
+/** 饼图的一格：分组值 + 该组的合计金额（分）。 */
+export interface ChartPieRow {
+  key: string
+  amount: number
+}
+
+/**
+ * 饼图的分组求和（范围内按 `groupField` 分组）。
+ *
+ * 与 {@link queryChartLineData} 同一套范围条件，但没有时间分桶、也不看曲线的条件项 ——
+ * 饼图问的是「这段时间里各组分了多少钱」，不是「每组每个月多少」。
+ * 列名走白名单：`groupField` 只可能是 `transaction_type` 或 `category`。
+ */
+export function queryChartPieData(
+  db: Db,
+  ledgerId: string,
+  tsRange: readonly number[],
+  groupField: string,
+  groupTransactionType: string,
+): ChartPieRow[] {
+  const column = groupField === 'category' ? 'category' : 'transaction_type'
+  const clauses = ['ledger_id = ?']
+  const args: SqlValue[] = [ledgerId]
+
+  if (tsRange.length === 2) {
+    clauses.push('transaction_at >= ?', 'transaction_at <= ?')
+    args.push(tsRange[0], tsRange[1])
+  }
+  if (groupField === 'category') {
+    // 分类名跨类型重名（「餐饮」在收入与支出下各有一份），只统计指定的那一种类型。
+    clauses.push('transaction_type = ?')
+    args.push(groupTransactionType)
+  }
+
+  const rows = db
+    .prepare(
+      `SELECT ${column} AS key, SUM(amount_cents) AS amount FROM ${TABLE} ` +
+        `WHERE ${clauses.join(' AND ')} GROUP BY ${column}`,
+    )
+    .all(...args) as unknown as Array<{ key: string | null; amount: number | null }>
+
+  return rows.map((row) => ({ key: row.key ?? '', amount: row.amount ?? 0 }))
+}
+
 // ---------------------------------------------------------------- SQL 组装
 
 /** 只有一处拼统计 SQL：`queryFiltered` 与 `queryStatistics` 共用。 */

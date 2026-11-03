@@ -3,25 +3,43 @@ import { Input, Modal, Popconfirm, Select, Table } from 'antd'
 
 import { centsToYuan } from '../../shared/domain/money'
 import { reorderWithChanges } from '../../shared/domain/list-order'
+import { PIE_OTHER_KEY, foldPieSlices } from '../../shared/domain/pie'
+import { rateText } from '../../shared/domain/format'
 import { tagNamesForCategory } from '../../shared/domain/tag-names'
 import { addMonths, monthSpan, parseYearMonth } from '../../shared/domain/calendar'
 import { rangeToSeconds, todayYmd } from '../../shared/domain/time'
 import type { ChartLine } from '../../shared/domain/models'
 import type { ChartDto } from '../../shared/types/chart'
 import type { CategoryDto, TagDto } from '../../shared/types/category'
-import type { ChartLineData, ChartQueryResponse } from '../../shared/types/transaction'
+import type {
+  ChartLineData,
+  ChartPieResponse,
+  ChartQueryResponse,
+} from '../../shared/types/transaction'
 import { AntvLineChart } from '../components/antv-line-chart'
+import { AntvPieChart } from '../components/antv-pie-chart'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
+import { Segmented } from '../components/segmented'
 import { Spin } from '../components/spin'
 import { Switch } from '../components/switch'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { notify } from '../components/toast'
+import { CHART_PALETTE, pieSliceColors } from '../theme/chart-colors'
 
-const COLORS = ['#3964fe', '#f59e0b', '#12b76a', '#d92d20', '#7c3aed', '#0891b2']
+const CHART_TYPES = [
+  { value: 'line', label: '折线图' },
+  { value: 'pie', label: '饼图' },
+]
+
+/** 饼图的分组字段：分类（一次一种交易类型）或交易类型。 */
+const GROUP_FIELDS = [
+  { value: 'category', label: '分类' },
+  { value: 'transactionType', label: '交易类型' },
+]
 
 const GRANULARITIES = [
   { value: 'month', label: '月' },
@@ -149,11 +167,16 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [selectedId, setSelectedId] = useState('')
   const [data, setData] = useState<ChartQueryResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [pie, setPie] = useState<ChartPieResponse | null>(null)
+  const [pieLoading, setPieLoading] = useState(false)
   const [error, setError] = useState('')
 
   const [createOpen, setCreateOpen] = useState(false)
   const [createTitle, setCreateTitle] = useState('')
+  const [createType, setCreateType] = useState('line')
   const [createGranularity, setCreateGranularity] = useState('year')
+  const [createGroupField, setCreateGroupField] = useState('category')
+  const [createGroupType, setCreateGroupType] = useState('expense')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -277,12 +300,39 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     let alive = true
     if (!ledgerId || !selected) {
       setData(null)
+      setPie(null)
       return
     }
     const range = rangeToSeconds(committedRange.start, committedRange.end)
     if (!range) {
       setData(null)
+      setPie(null)
       return
+    }
+    // 饼图问的是构成，折线图问的是趋势：两套数据源，各自一套 loading。
+    if (selected.chartType === 'pie') {
+      setPieLoading(true)
+      void (async () => {
+        try {
+          const result = await window.api.invoke('tr_chart_pie_data', {
+            ledgerId,
+            tsRange: range,
+            groupField: selected.groupField,
+            groupTransactionType: selected.groupTransactionType,
+          })
+          if (alive) {
+            setPie(result)
+            setError('')
+          }
+        } catch (loadError) {
+          if (alive) setError(errorMessage(loadError))
+        } finally {
+          if (alive) setPieLoading(false)
+        }
+      })()
+      return () => {
+        alive = false
+      }
     }
     setLoading(true)
     void (async () => {
@@ -315,7 +365,10 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const openCreate = useCallback((): void => {
     setCreateTitle('')
+    setCreateType('line')
     setCreateGranularity('year')
+    setCreateGroupField('category')
+    setCreateGroupType('expense')
     setCreateError('')
     setCreateOpen(true)
   }, [])
@@ -334,20 +387,27 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     }
     setCreating(true)
     setCreateError('')
+    const pieChart = createType === 'pie'
     try {
       const created = await window.api.invoke('chart_create', {
         ledgerId,
         title,
-        granularity: createGranularity,
-        chartType: 'line',
-        lines: [
-          {
-            label: '支出',
-            transactionType: 'expense',
-            includeOutlier: true,
-            conditions: [],
-          },
-        ],
+        // 饼图不分时间桶：粒度留空串，构成由分组字段描述。
+        granularity: pieChart ? '' : createGranularity,
+        chartType: pieChart ? 'pie' : 'line',
+        groupField: pieChart ? createGroupField : '',
+        groupTransactionType:
+          pieChart && createGroupField === 'category' ? createGroupType : '',
+        lines: pieChart
+          ? []
+          : [
+              {
+                label: '支出',
+                transactionType: 'expense',
+                includeOutlier: true,
+                conditions: [],
+              },
+            ],
       })
       setSelectedId(created.chartId)
       setCreateOpen(false)
@@ -358,7 +418,16 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     } finally {
       setCreating(false)
     }
-  }, [createGranularity, createTitle, creating, ledgerId, load])
+  }, [
+    createGranularity,
+    createGroupField,
+    createGroupType,
+    createTitle,
+    createType,
+    creating,
+    ledgerId,
+    load,
+  ])
 
   const openRename = useCallback((): void => {
     if (!selected) return
@@ -388,6 +457,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         granularity: selected.granularity,
         lines: selected.lines,
         chartType: selected.chartType,
+        groupField: selected.groupField,
+        groupTransactionType: selected.groupTransactionType,
         sortOrder: selected.sortOrder,
       })
       setRenameOpen(false)
@@ -411,6 +482,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           granularity,
           lines: selected.lines,
           chartType: selected.chartType,
+          groupField: selected.groupField,
+          groupTransactionType: selected.groupTransactionType,
           sortOrder: selected.sortOrder,
         })
         await load()
@@ -463,8 +536,58 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     [charts, load],
   )
 
+  /**
+   * 改饼图的分组：整行回写（与改粒度同一条路径），写完重拉列表。
+   * 切回「交易类型」时把类型清空 —— 按类型分组没有类型过滤这回事。
+   */
+  const changeGrouping = useCallback(
+    async (groupField: string, groupTransactionType: string): Promise<void> => {
+      if (!selected || selected.isPreset || selected.chartType !== 'pie') return
+      setError('')
+      try {
+        await window.api.invoke('chart_update', {
+          chartId: selected.chartId,
+          title: selected.title,
+          granularity: selected.granularity,
+          lines: [],
+          chartType: 'pie',
+          groupField,
+          groupTransactionType:
+            groupField === 'category' ? groupTransactionType || 'expense' : '',
+          sortOrder: selected.sortOrder,
+        })
+        await load()
+      } catch (updateError) {
+        setError(errorMessage(updateError))
+      }
+    },
+    [load, selected],
+  )
+
   const responseLines: ChartLineData[] = data?.lines ?? []
   const hasValues = responseLines.some((line) => line.data.some((point) => point.amount !== 0))
+
+  const isPie = selected?.chartType === 'pie'
+  const pieTotal = pie?.total ?? 0
+  /** 图上与右侧合计列读同一份折叠结果：超过 10 组折成一片「其他（N 组）」。 */
+  const pieSlices = useMemo(() => {
+    const folded = foldPieSlices(pie?.slices ?? [])
+    if (folded.folded === 0) return folded.slices
+    return folded.slices.map((slice) =>
+      slice.key === PIE_OTHER_KEY ? { ...slice, label: `其他（${folded.folded} 组）` } : slice,
+    )
+  }, [pie])
+  const pieColors = useMemo(
+    () => pieSliceColors(pieSlices, selected?.groupField ?? ''),
+    [pieSlices, selected?.groupField],
+  )
+  const hasPie = pieSlices.length > 0
+  const pieLabel = useMemo(() => {
+    if (!selected || selected.chartType !== 'pie') return ''
+    return selected.groupField === 'category'
+      ? `${typeLabel(selected.groupTransactionType)}按分类`
+      : '按交易类型'
+  }, [selected])
 
   // ---------------------------------------------------------------- 曲线的增 / 改 / 删
 
@@ -481,6 +604,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           granularity: selected.granularity,
           lines,
           chartType: selected.chartType,
+          groupField: selected.groupField,
+          groupTransactionType: selected.groupTransactionType,
           sortOrder: selected.sortOrder,
         })
         setCharts((current) =>
@@ -589,7 +714,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
    * 以前每次渲染都 `slice()` 出一个新数组 → 重命名弹窗里每敲一个字都销毁重画整张图
    * （实测 20 个字 = 20 次重建、926ms）。数组现在只在条数变化时换新。 */
   const lineCount = responseLines.length
-  const colors = useMemo(() => COLORS.slice(0, Math.max(1, lineCount)), [lineCount])
+  const colors = useMemo(() => CHART_PALETTE.slice(0, Math.max(1, lineCount)), [lineCount])
   const lineRows = selected?.lines ?? []
   const hasLines = lineRows.length > 0
 
@@ -701,16 +826,19 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               <div className="da-chart__header">
                 <h2 className="da-chart__title">{selected.title}</h2>
                 <div className="da-chart__meta">
-                  <Select
-                    data-testid="chart-granularity"
-                    aria-label="曲线粒度"
-                    size="small"
-                    value={selected.granularity}
-                    disabled={selected.isPreset}
-                    onChange={(value) => void changeGranularity(value)}
-                    options={GRANULARITIES}
-                    style={{ width: 72 }}
-                  />
+                  {/* 饼图没有时间粒度：构成不按时间分桶，摆一个用不上的选择器只会让人以为它能改。 */}
+                  {isPie ? null : (
+                    <Select
+                      data-testid="chart-granularity"
+                      aria-label="曲线粒度"
+                      size="small"
+                      value={selected.granularity}
+                      disabled={selected.isPreset}
+                      onChange={(value) => void changeGranularity(value)}
+                      options={GRANULARITIES}
+                      style={{ width: 72 }}
+                    />
+                  )}
                   {selected.isPreset ? null : (
                     <Button variant="secondary" size="sm" testId="chart-rename" onClick={openRename}>
                       重命名
@@ -721,7 +849,27 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
               <div className="da-chart__body">
                 <div className="da-chart__canvas">
-                  {loading && !data ? (
+                  {isPie ? (
+                    pieLoading && !pie ? (
+                      <div className="da-chart__loading">
+                        <Spin />
+                      </div>
+                    ) : hasPie ? (
+                      <AntvPieChart
+                        slices={pieSlices}
+                        colors={pieColors}
+                        total={pieTotal}
+                        label={pieLabel}
+                      />
+                    ) : (
+                      <div className="da-chart__empty" data-testid="chart-data-empty">
+                        <EmptyState
+                          title="暂无数据"
+                          description="这个时间范围里没有可统计的记录，换一个范围试试。"
+                        />
+                      </div>
+                    )
+                  ) : loading && !data ? (
                     <div className="da-chart__loading">
                       <Spin />
                     </div>
@@ -756,7 +904,42 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   )}
                 </div>
 
-                {hasValues ? (
+                {isPie ? (
+                  hasPie ? (
+                    <aside
+                      className="da-chart__sums da-chart__sums--pie"
+                      data-testid="chart-pie-sums"
+                    >
+                      <div className="da-chart__sums-head">
+                        <h4 className="da-chart__sums-title">分组合计</h4>
+                        <span className="da-chart__sums-total">{centsToYuan(pieTotal)}</span>
+                      </div>
+                      {/* 这一列就是饼图的图例：点 + 名称 + 金额 + 占比，与扇区同一份折叠结果。
+                          没有收起态 —— 收起之后没人分得清哪一片是哪一组。 */}
+                      <div className="da-chart__pie-list">
+                        {pieSlices.map((slice, index) => (
+                          <div
+                            className="da-chart__pie-row"
+                            key={slice.key}
+                            data-testid="chart-pie-sum"
+                          >
+                            <span
+                              className="da-list__dot"
+                              style={{ background: pieColors[index] }}
+                            />
+                            <span className="da-chart__pie-name" title={slice.label}>
+                              {slice.label}
+                            </span>
+                            <span className="da-chart__pie-value">{centsToYuan(slice.amount)}</span>
+                            <span className="da-chart__pie-share">
+                              {rateText(pieTotal > 0 ? (slice.amount / pieTotal) * 100 : 0)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </aside>
+                  ) : null
+                ) : hasValues ? (
                   summaryCollapsed ? (
                     <aside className="da-chart__sums da-chart__sums--collapsed">
                       <button
@@ -806,6 +989,43 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                 ) : null}
               </div>
 
+              {isPie ? (
+                <div className="da-chart__lines" data-testid="chart-group-config">
+                  <div className="da-chart__lines-head">
+                    <h4 className="da-panel__title">分组配置</h4>
+                  </div>
+                  <div className="da-group-config">
+                    <div className="da-group-config__field">
+                      <span className="da-group-config__label">分组字段</span>
+                      <Select
+                        className="da-group-config__select"
+                        data-testid="chart-group-field"
+                        aria-label="分组字段"
+                        size="small"
+                        value={selected.groupField}
+                        options={GROUP_FIELDS}
+                        onChange={(value: string) =>
+                          void changeGrouping(value, selected.groupTransactionType)
+                        }
+                      />
+                    </div>
+                    {selected.groupField === 'category' ? (
+                      <div className="da-group-config__field">
+                        <span className="da-group-config__label">交易类型</span>
+                        <Select
+                          className="da-group-config__select"
+                          data-testid="chart-group-type"
+                          aria-label="交易类型"
+                          size="small"
+                          value={selected.groupTransactionType || 'expense'}
+                          options={LINE_TYPES}
+                          onChange={(value: string) => void changeGrouping('category', value)}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
               <div className="da-chart__lines">
                 <div className="da-chart__lines-head">
                   <h4 className="da-panel__title">曲线配置</h4>
@@ -855,7 +1075,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                         <span className="da-line-name">
                           <span
                             className="da-line-swatch"
-                            style={{ background: COLORS[index % COLORS.length] }}
+                            style={{ background: CHART_PALETTE[index % CHART_PALETTE.length] }}
                             aria-hidden="true"
                           />
                           {value}
@@ -926,6 +1146,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   ]}
                 />
               </div>
+              )}
             </div>
           )}
         </div>
@@ -952,15 +1173,52 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             />
           </div>
           <div className="tr-modal-field">
-            <span className="tr-modal-label">时间粒度</span>
-            <Select
-              data-testid="chart-create-granularity"
-              aria-label="时间粒度"
-              value={createGranularity}
-              onChange={setCreateGranularity}
-              options={GRANULARITIES}
+            <span className="tr-modal-label">图表类型</span>
+            <Segmented
+              testId="chart-create-type"
+              block
+              value={createType}
+              options={CHART_TYPES}
+              onChange={setCreateType}
             />
           </div>
+          {createType === 'pie' ? (
+            <>
+              <div className="tr-modal-field">
+                <span className="tr-modal-label">分组字段</span>
+                <Select
+                  data-testid="chart-create-group"
+                  aria-label="分组字段"
+                  value={createGroupField}
+                  onChange={setCreateGroupField}
+                  options={GROUP_FIELDS}
+                />
+              </div>
+              {createGroupField === 'category' ? (
+                <div className="tr-modal-field">
+                  <span className="tr-modal-label">交易类型</span>
+                  <Select
+                    data-testid="chart-create-group-type"
+                    aria-label="交易类型"
+                    value={createGroupType}
+                    onChange={setCreateGroupType}
+                    options={LINE_TYPES}
+                  />
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="tr-modal-field">
+              <span className="tr-modal-label">时间粒度</span>
+              <Select
+                data-testid="chart-create-granularity"
+                aria-label="时间粒度"
+                value={createGranularity}
+                onChange={setCreateGranularity}
+                options={GRANULARITIES}
+              />
+            </div>
+          )}
           {createError ? (
             <p className="m0-error" data-testid="chart-create-error">
               {createError}

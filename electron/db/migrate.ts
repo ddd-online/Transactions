@@ -122,6 +122,16 @@ export const MIGRATIONS: readonly Migration[] = [
       DELETE FROM chart WHERE is_preset = 1 AND title = '年度收入趋势';
     `,
   },
+  {
+    version: 8,
+    name: 'chart_pie_grouping',
+    // 饼图的两个分组列。老图表（以及两张预设）取空串，读回就是折线图：
+    // 「不分组」与「十年前的折线图」是同一件事，不需要回填。
+    sql: `
+      ALTER TABLE chart ADD COLUMN group_field TEXT NOT NULL DEFAULT '';
+      ALTER TABLE chart ADD COLUMN group_transaction_type TEXT NOT NULL DEFAULT '';
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

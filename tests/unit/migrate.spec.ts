@@ -151,4 +151,27 @@ describe('migration runner', () => {
     expect(rows.map((row) => row.chart_id)).toEqual(['preset-month', 'custom-income'])
     db.close()
   })
+
+  it('adds the pie grouping columns, reading old charts back as line charts', () => {
+    const path = join(temporaryDirectory(), 'transactions.db')
+    const db = openDatabase(path)
+    // 上一版（v7）的库：chart 表还没有分组两列
+    migrate(db, path, MIGRATIONS.filter((migration) => migration.version <= 7))
+    db.prepare(
+      `INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, is_preset, sort_order, created_at, updated_at)
+       VALUES ('old', 'l1', '老图表', 'month', '[]', 'bar', 0, 0, 0, 0)`,
+    ).run()
+
+    migrate(db, path)
+
+    expect(schemaVersion(db)).toBe(LATEST)
+    expect(
+      db
+        .prepare(
+          'SELECT group_field, group_transaction_type, chart_type FROM chart WHERE chart_id = ?',
+        )
+        .get('old'),
+    ).toEqual({ group_field: '', group_transaction_type: '', chart_type: 'bar' })
+    db.close()
+  })
 })

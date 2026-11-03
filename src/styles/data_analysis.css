@@ -240,6 +240,27 @@
   min-height: 280px;
 }
 
+/* 饼图钉住直径：扇区的可读性来自「一眼看出比例」，不是来自面积。
+ * 画布可以很高（它吃掉整列剩余高度），但圆不能跟着涨到 700px ——
+ * 那时候两个扇区像两面旗，比例反而读不出来。`margin: auto` 在两条轴上都居中。 */
+.antv-chart--pie {
+  flex: 0 1 520px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 520px;
+  aspect-ratio: 1 / 1;
+  margin: auto;
+  min-height: 0;
+}
+
+/* 只有一组时的实心圆（见组件注释：360° 扇区会留一道抗锯齿缝） */
+.da-pie-single {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
 /* 图例自绘：AntV 自带图例在窄容器里会被裁切，这里用 HTML 固定成一行 */
 .da-chart__legend {
   display: flex;
@@ -388,6 +409,84 @@
   color: var(--transactions-color-text-major);
 }
 
+/* ---------- 饼图：右侧「分组合计」 ----------
+ * 这一列就是饼图的图例：画布内不排文字（中文标签挤不下），名称、金额与占比全在这里。
+ * 所以它比折线的合计列宽 20px，而且**没有收起态** —— 收起之后没人分得清哪一片是哪一组。 */
+.da-chart__sums--pie {
+  flex: 0 0 200px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.da-chart__sums-total {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-major);
+}
+
+.da-chart__pie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  /* 滚动条不压住金额的数字列 */
+  padding-right: 2px;
+}
+
+/* 一行两格：上是「名称 · 金额」，右下是占比。
+ * 金额与占比落在同一列，扫一眼就能把「谁最大、占多少」连起来。 */
+.da-chart__pie-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'dot name value'
+    'dot . share';
+  column-gap: var(--transactions-space-xs);
+  row-gap: 2px;
+  align-items: center;
+}
+
+.da-chart__pie-row .da-list__dot {
+  grid-area: dot;
+  /* 与名称那一行对齐，不落在两行之间的缝里 */
+  align-self: start;
+  margin-top: 4px;
+}
+
+.da-chart__pie-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.da-chart__pie-value {
+  grid-area: value;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-major);
+  text-align: right;
+}
+
+.da-chart__pie-share {
+  grid-area: share;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--transactions-color-text-tertiary);
+  text-align: right;
+}
+
 .da-chart__lines {
   display: flex;
   flex-direction: column;
@@ -434,6 +533,32 @@
 .da-chart__lines-actions {
   display: flex;
   gap: var(--transactions-space-sm);
+}
+
+/* ---------- 饼图：分组配置 ----------
+ * 替代「曲线配置」的底部面板：饼图没有曲线，只有两个就地生效的下拉（整行回写，无保存按钮）。 */
+.da-group-config {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--transactions-space-md) var(--transactions-space-lg);
+  padding: var(--transactions-space-xs) 0 var(--transactions-space-sm);
+}
+
+.da-group-config__field {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.da-group-config__label {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+}
+
+.da-group-config__select {
+  width: 120px;
 }
 
 /* 曲线行上的编辑 / 删除：两颗 text 按钮，与表内其它行操作同一档。 */
@@ -513,6 +638,23 @@
 
   .da-chart__sums {
     flex: 0 0 auto;
+  }
+
+  /* 窄窗里分组合计到图表下面：去掉竖发丝线，改成横线收口；名字与金额排成两列网格，
+   * 一组一行在窄窗口里会把图表挤下去半屏。 */
+  .da-chart__sums--pie {
+    padding-right: 0;
+    padding-left: 0;
+    padding-top: var(--transactions-space-md);
+    border-left: 0;
+    border-top: 1px solid var(--transactions-color-divider);
+  }
+
+  .da-chart__pie-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--transactions-space-sm) var(--transactions-space-lg);
+    overflow: visible;
   }
 
   /* 窄窗下图表与合计上下排：收起态换成一条横向的展开条 */

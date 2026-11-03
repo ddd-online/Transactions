@@ -86,6 +86,7 @@ import {
 } from '../../shared/domain/statistics'
 import type { RoundFee } from '../../shared/domain/models'
 import type {
+  ChartPieQueryRequest,
   ChartQueryRequest,
   TransactionRecordDto,
   TrQueryCondition,
@@ -560,6 +561,13 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
 
     tr_chart_data(request) {
       return transactionService.queryTrsForChart(workspaceDb(), request as ChartQueryRequest)
+    },
+
+    tr_chart_pie_data(request) {
+      return transactionService.queryTrsForPieChart(
+        workspaceDb(),
+        request as ChartPieQueryRequest,
+      )
     },
 
     tr_create(request) {

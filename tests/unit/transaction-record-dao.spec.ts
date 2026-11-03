@@ -14,6 +14,7 @@ import {
   queryById,
   queryByKeyEventDate,
   queryChartLineData,
+  queryChartPieData,
   queryFiltered,
   queryStatistics,
   updateKeyEventDate,
@@ -665,6 +666,54 @@ describe('transaction record dao', () => {
     expect(
       queryChartLineData(db, 'l1', [], 'month', { ...categoryLine, includeOutlier: true }),
     ).toEqual([{ time: '2026-01', amount: 250 }])
+  })
+
+  it('sums by transaction type or by category for the pie chart', () => {
+    const workspace = openedWorkspace()
+    const db = workspace.db
+    insertLedger(db, 'l1')
+    insertLedger(db, 'l2')
+    const january = 1_768_435_200
+    const february = 1_771_113_600
+    seedRecords(db, [
+      record('t1', 100, 'expense', '餐饮美食', january),
+      record('t2', 150, 'expense', '餐饮美食', february, { outlier: true }),
+      record('t3', 300, 'expense', '交通出行', january),
+      record('t4', 999, 'income', '工资', january),
+      // 同名分类跨类型：只统计点名的类型
+      record('t5', 500, 'income', '餐饮美食', january),
+      record('t6', 7777, 'expense', '餐饮美食', january, { ledgerId: 'l2' }),
+    ])
+    // GROUP BY 不保证顺序（排序是服务层的事），断言前按 key 归一
+    const sorted = (rows: ReturnType<typeof queryChartPieData>) =>
+      [...rows].sort((left, right) => (left.key < right.key ? -1 : 1))
+
+    // 按交易类型：范围内全部记录（含离群值），按账本隔离
+    expect(sorted(queryChartPieData(db, 'l1', [], 'transactionType', ''))).toEqual([
+      { key: 'expense', amount: 550 },
+      { key: 'income', amount: 1499 },
+    ])
+
+    // 按分类：只算点名的交易类型，同名分类不会混进收入那一份
+    expect(sorted(queryChartPieData(db, 'l1', [], 'category', 'expense'))).toEqual([
+      { key: '交通出行', amount: 300 },
+      { key: '餐饮美食', amount: 250 },
+    ])
+    expect(sorted(queryChartPieData(db, 'l1', [], 'category', 'income'))).toEqual([
+      { key: '工资', amount: 999 },
+      { key: '餐饮美食', amount: 500 },
+    ])
+
+    // 时间范围只留一月
+    expect(
+      sorted(queryChartPieData(db, 'l1', [1_767_225_600, 1_769_817_600], 'transactionType', '')),
+    ).toEqual([
+      { key: 'expense', amount: 400 },
+      { key: 'income', amount: 1499 },
+    ])
+
+    // 没有记录的账本：空数组，不是 null
+    expect(queryChartPieData(db, 'l3', [], 'transactionType', '')).toEqual([])
   })
 })
 

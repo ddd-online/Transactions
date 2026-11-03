@@ -12,6 +12,7 @@
 
 import { randomUUID } from 'node:crypto'
 
+import { TRANSACTION_TYPES } from '../../shared/domain/consts'
 import { AppError } from '../../shared/errors'
 import type { Chart, ChartLine, QueryConditionItem } from '../../shared/domain/models'
 import type { ChartDto, CreateChartRequest, UpdateChartRequest } from '../../shared/types/chart'
@@ -31,6 +32,51 @@ import { logError, logInfo, logWarn } from '../logging'
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
+}
+
+// ------------------------------------------------------------------ 类型与分组
+
+/** 折线图（默认）与饼图：`chart_type` 只有这两个值。 */
+export const CHART_TYPE_LINE = 'line'
+export const CHART_TYPE_PIE = 'pie'
+
+/** 饼图的分组字段：按交易类型，或按分类（只统计一种类型）。 */
+export const GROUP_FIELD_TRANSACTION_TYPE = 'transactionType'
+export const GROUP_FIELD_CATEGORY = 'category'
+
+interface ChartGrouping {
+  groupField: string
+  groupTransactionType: string
+}
+
+/**
+ * 类型归一：只有 `pie` 是饼图，其余（`line` 与历史遗留的 `bar`）都按折线图处理 ——
+ * 界面从来没画过柱状图，把它们继续当成折线图，比让老图表改一次名就报错好。
+ */
+function chartTypeOf(value: string): string {
+  return value === CHART_TYPE_PIE ? CHART_TYPE_PIE : CHART_TYPE_LINE
+}
+
+/**
+ * 分组归一：折线图没有分组（两列落空串）；饼图必须有分组字段，
+ * 按分类分组还必须点名一种交易类型 —— 一次只画一种类型的分类构成。
+ */
+function resolveGrouping(
+  chartType: string,
+  groupField: string,
+  groupTransactionType: string,
+): ChartGrouping {
+  if (chartType !== CHART_TYPE_PIE) return { groupField: '', groupTransactionType: '' }
+  if (groupField !== GROUP_FIELD_TRANSACTION_TYPE && groupField !== GROUP_FIELD_CATEGORY) {
+    throw new AppError('饼图需要选择分组字段', { status: 400 })
+  }
+  if (groupField === GROUP_FIELD_TRANSACTION_TYPE) {
+    return { groupField, groupTransactionType: '' }
+  }
+  if (!(TRANSACTION_TYPES as readonly string[]).includes(groupTransactionType)) {
+    throw new AppError('按分类分组时需要选择交易类型', { status: 400 })
+  }
+  return { groupField, groupTransactionType }
 }
 
 // ------------------------------------------------------------------ 预设曲线
@@ -132,6 +178,8 @@ function toDto(chart: Chart): ChartDto {
     granularity: chart.granularity,
     lines,
     chartType: chart.chartType,
+    groupField: chart.groupField,
+    groupTransactionType: chart.groupTransactionType,
     isPreset: chart.isPreset,
     sortOrder: chart.sortOrder,
   }
@@ -202,7 +250,9 @@ export function seedDefaultCharts(db: Db, ledgerId: string): void {
       title,
       granularity,
       chartLines: linesJson,
-      chartType: 'line',
+      chartType: CHART_TYPE_LINE,
+      groupField: '',
+      groupTransactionType: '',
       isPreset: true,
       sortOrder,
       createdAt: 0,
@@ -236,9 +286,14 @@ export function createChart(db: Db, req: CreateChartRequest): ChartDto {
     throw new AppError(errorText(error), { status: 500 })
   }
 
+  const chartType = chartTypeOf(req.chartType)
+  const grouping = resolveGrouping(chartType, req.groupField, req.groupTransactionType)
+  // 饼图没有曲线：构成由分组字段描述，`chart_lines` 落一个空数组。
+  const lines = chartType === CHART_TYPE_PIE ? [] : req.lines
+
   let linesJson: string
   try {
-    linesJson = encodeChartLines(req.lines)
+    linesJson = encodeChartLines(lines)
   } catch (error) {
     throw new AppError(`marshal chart lines failed: ${errorText(error)}`, { status: 500 })
   }
@@ -247,9 +302,12 @@ export function createChart(db: Db, req: CreateChartRequest): ChartDto {
     chartId: randomUUID(),
     ledgerId: req.ledgerId,
     title: req.title,
-    granularity: req.granularity,
+    // 饼图不分时间桶，粒度存空串（界面上也不给这个选择器）。
+    granularity: chartType === CHART_TYPE_PIE ? '' : req.granularity,
     chartLines: linesJson,
-    chartType: req.chartType,
+    chartType,
+    groupField: grouping.groupField,
+    groupTransactionType: grouping.groupTransactionType,
     isPreset: false,
     sortOrder: maxSortOrder + 1,
     createdAt: 0,
@@ -316,11 +374,11 @@ function canonicalLines(lines: readonly ChartLine[]): string {
   )
 }
 
-/** 预设图表对用户的承诺：只能删，不能改名 / 改粒度 / 改曲线。 */
+/** 预设图表对用户的承诺：只能删，不能改名 / 改类型 / 改粒度 / 改曲线（含新增的分组）。 */
 const PRESET_IMMUTABLE = '预设图表不可改名、改粒度或改曲线，只能删除'
 
 /**
- * 更新图表（标题 / 粒度 / 曲线 / 类型 / 排序号）。
+ * 更新图表（标题 / 类型 / 粒度 / 曲线 / 分组 / 排序号）。
  *
  * 整行回写但保留 `isPreset` 与 `createdAt`（从库里读出的原值），因此预设图表改完仍是预设。
  * 预设图表的内容由系统给定：除排序号外任何一项真的变了都拒绝（排序走
@@ -339,17 +397,24 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
     throw new AppError('get chart failed: record not found', { status: 500 })
   }
 
+  const chartType = chartTypeOf(req.chartType)
+  const grouping = resolveGrouping(chartType, req.groupField, req.groupTransactionType)
+  const lines = chartType === CHART_TYPE_PIE ? [] : req.lines
+  const granularity = chartType === CHART_TYPE_PIE ? '' : req.granularity
+
   if (chart.isPreset) {
     let sameLines: boolean
     try {
-      sameLines = canonicalLines(decodeChartLines(chart.chartLines)) === canonicalLines(req.lines)
+      sameLines = canonicalLines(decodeChartLines(chart.chartLines)) === canonicalLines(lines)
     } catch (error) {
       throw new AppError(`unmarshal chart lines failed: ${errorText(error)}`, { status: 500 })
     }
     if (
       req.title !== chart.title ||
-      req.granularity !== chart.granularity ||
-      req.chartType !== chart.chartType ||
+      granularity !== chart.granularity ||
+      chartType !== chart.chartType ||
+      grouping.groupField !== chart.groupField ||
+      grouping.groupTransactionType !== chart.groupTransactionType ||
       !sameLines
     ) {
       throw new AppError(PRESET_IMMUTABLE, { status: 400 })
@@ -358,7 +423,7 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
 
   let linesJson: string
   try {
-    linesJson = encodeChartLines(req.lines)
+    linesJson = encodeChartLines(lines)
   } catch (error) {
     throw new AppError(`marshal chart lines failed: ${errorText(error)}`, { status: 500 })
   }
@@ -366,9 +431,11 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
   const edited: Chart = {
     ...chart,
     title: req.title,
-    granularity: req.granularity,
+    granularity,
     chartLines: linesJson,
-    chartType: req.chartType,
+    chartType,
+    groupField: grouping.groupField,
+    groupTransactionType: grouping.groupTransactionType,
     sortOrder: req.sortOrder,
   }
 

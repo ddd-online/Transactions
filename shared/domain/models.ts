@@ -158,12 +158,16 @@ export interface Chart {
   chartId: string
   ledgerId: string
   title: string
-  /** year / month */
+  /** year / month（饼图没有时间粒度，存空串） */
   granularity: string
-  /** 曲线配置 JSON */
+  /** 曲线配置 JSON（饼图恒为 `[]`） */
   chartLines: string
-  /** line / bar */
+  /** line / pie */
   chartType: string
+  /** 饼图的分组字段：`transactionType` / `category`；折线图为空串 */
+  groupField: string
+  /** 按分类分组时只统计的交易类型；其余为空串 */
+  groupTransactionType: string
   isPreset: boolean
   sortOrder: number
   createdAt: number

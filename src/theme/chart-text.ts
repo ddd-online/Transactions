@@ -11,6 +11,8 @@ export interface ChartTextTokens {
   gridStroke: string
   /** 字体族：与正文同栈（Inter + 中文系统字面） */
   fontFamily: string
+  /** 画布底：饼图扇区之间的 1px 缝要落在这层纸上，不是一条灰线 */
+  canvasFill: string
 }
 
 function readToken(name: string, fallback: string): string {
@@ -23,5 +25,6 @@ export function chartTextTokens(): ChartTextTokens {
     labelFill: readToken('--transactions-color-text-secondary', '#61666b'),
     gridStroke: readToken('--transactions-color-divider', '#eceef1'),
     fontFamily: readToken('--transactions-font-body', 'sans-serif'),
+    canvasFill: readToken('--transactions-color-bg-base', '#f9fafb'),
   }
 }
