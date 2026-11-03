@@ -40,13 +40,15 @@ function errorText(error: unknown): string {
 export const CHART_TYPE_LINE = 'line'
 export const CHART_TYPE_PIE = 'pie'
 
-/** 饼图的分组字段：按交易类型，或按分类（只统计一种类型）。 */
+/** 饼图的分组字段：按交易类型、按分类、或按标签（标签挂在「类型 + 分类」之下）。 */
 export const GROUP_FIELD_TRANSACTION_TYPE = 'transactionType'
 export const GROUP_FIELD_CATEGORY = 'category'
+export const GROUP_FIELD_TAG = 'tag'
 
 interface ChartGrouping {
   groupField: string
   groupTransactionType: string
+  groupCategory: string
 }
 
 /**
@@ -65,18 +67,31 @@ function resolveGrouping(
   chartType: string,
   groupField: string,
   groupTransactionType: string,
+  groupCategory: string,
 ): ChartGrouping {
-  if (chartType !== CHART_TYPE_PIE) return { groupField: '', groupTransactionType: '' }
-  if (groupField !== GROUP_FIELD_TRANSACTION_TYPE && groupField !== GROUP_FIELD_CATEGORY) {
+  if (chartType !== CHART_TYPE_PIE) {
+    return { groupField: '', groupTransactionType: '', groupCategory: '' }
+  }
+  if (
+    groupField !== GROUP_FIELD_TRANSACTION_TYPE &&
+    groupField !== GROUP_FIELD_CATEGORY &&
+    groupField !== GROUP_FIELD_TAG
+  ) {
     throw new AppError('饼图需要选择分组字段', { status: 400 })
   }
   if (groupField === GROUP_FIELD_TRANSACTION_TYPE) {
-    return { groupField, groupTransactionType: '' }
+    return { groupField, groupTransactionType: '', groupCategory: '' }
   }
   if (!(TRANSACTION_TYPES as readonly string[]).includes(groupTransactionType)) {
     throw new AppError('按分类分组时需要选择交易类型', { status: 400 })
   }
-  return { groupField, groupTransactionType }
+  // 标签同名跨分类（「外卖」在餐饮与交通下各有一份），所以按标签分组还要点名分类。
+  if (groupField === GROUP_FIELD_TAG) {
+    const category = groupCategory.trim()
+    if (category === '') throw new AppError('按标签分组时需要选择分类', { status: 400 })
+    return { groupField, groupTransactionType, groupCategory: category }
+  }
+  return { groupField, groupTransactionType, groupCategory: '' }
 }
 
 // ------------------------------------------------------------------ 预设曲线
@@ -180,6 +195,7 @@ function toDto(chart: Chart): ChartDto {
     chartType: chart.chartType,
     groupField: chart.groupField,
     groupTransactionType: chart.groupTransactionType,
+    groupCategory: chart.groupCategory,
     isPreset: chart.isPreset,
     sortOrder: chart.sortOrder,
   }
@@ -253,6 +269,7 @@ export function seedDefaultCharts(db: Db, ledgerId: string): void {
       chartType: CHART_TYPE_LINE,
       groupField: '',
       groupTransactionType: '',
+      groupCategory: '',
       isPreset: true,
       sortOrder,
       createdAt: 0,
@@ -287,7 +304,12 @@ export function createChart(db: Db, req: CreateChartRequest): ChartDto {
   }
 
   const chartType = chartTypeOf(req.chartType)
-  const grouping = resolveGrouping(chartType, req.groupField, req.groupTransactionType)
+  const grouping = resolveGrouping(
+    chartType,
+    req.groupField,
+    req.groupTransactionType,
+    req.groupCategory,
+  )
   // 饼图没有曲线：构成由分组字段描述，`chart_lines` 落一个空数组。
   const lines = chartType === CHART_TYPE_PIE ? [] : req.lines
 
@@ -308,6 +330,7 @@ export function createChart(db: Db, req: CreateChartRequest): ChartDto {
     chartType,
     groupField: grouping.groupField,
     groupTransactionType: grouping.groupTransactionType,
+    groupCategory: grouping.groupCategory,
     isPreset: false,
     sortOrder: maxSortOrder + 1,
     createdAt: 0,
@@ -398,7 +421,12 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
   }
 
   const chartType = chartTypeOf(req.chartType)
-  const grouping = resolveGrouping(chartType, req.groupField, req.groupTransactionType)
+  const grouping = resolveGrouping(
+    chartType,
+    req.groupField,
+    req.groupTransactionType,
+    req.groupCategory,
+  )
   const lines = chartType === CHART_TYPE_PIE ? [] : req.lines
   const granularity = chartType === CHART_TYPE_PIE ? '' : req.granularity
 
@@ -415,6 +443,7 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
       chartType !== chart.chartType ||
       grouping.groupField !== chart.groupField ||
       grouping.groupTransactionType !== chart.groupTransactionType ||
+      grouping.groupCategory !== chart.groupCategory ||
       !sameLines
     ) {
       throw new AppError(PRESET_IMMUTABLE, { status: 400 })
@@ -436,6 +465,7 @@ export function updateChart(db: Db, req: UpdateChartRequest): ChartDto {
     chartType,
     groupField: grouping.groupField,
     groupTransactionType: grouping.groupTransactionType,
+    groupCategory: grouping.groupCategory,
     sortOrder: req.sortOrder,
   }
 

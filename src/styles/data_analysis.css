@@ -478,6 +478,18 @@
   text-align: right;
 }
 
+/* 标签分组的脚注：一笔记录的多个标签会各进一片，合计因此可能大于实际支出。
+ * 只在真的重复计入了才出现，平时这一列不多一句话。 */
+.da-chart__pie-note {
+  flex-shrink: 0;
+  margin: 0;
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-secondary);
+}
+
 .da-chart__pie-share {
   grid-area: share;
   font-family: var(--transactions-font-mono);

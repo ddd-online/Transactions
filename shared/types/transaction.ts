@@ -105,10 +105,12 @@ export interface ChartQueryResponse {
 export interface ChartPieQueryRequest {
   ledgerId: string
   tsRange: number[]
-  /** `transactionType` / `category` */
+  /** `transactionType` / `category` / `tag` */
   groupField: string
-  /** 按分类分组时只统计这一种交易类型；其余为空串 */
+  /** 按分类 / 标签分组时只统计这一种交易类型；其余为空串 */
   groupTransactionType: string
+  /** 按标签分组时只统计这一个分类；其余为空串 */
+  groupCategory: string
 }
 
 /** 饼图的一片：`key` 是原始分组值（类型码 / 分类名），`label` 是展示文案。 */
@@ -122,13 +124,16 @@ export interface ChartPieSlice {
 export interface ChartPieResponse {
   /** 已按金额倒序、同额按标签升序 */
   slices: ChartPieSlice[]
-  /** 各片金额之和（分） */
-  total: number
   /**
-   * 这个范围里到底有没有记录（**不受分组字段与交易类型过滤影响**）。
+   * 各片金额之和（分）。
    *
-   * 两种「没有数据」要说不同的话：一条记录都没有，和「有记录、但这一种交易类型
-   * 一条都没有」是两件事，空态文案得说对是哪一件。
+   * 按标签分组时**会大于** {@link filteredTotal}：一笔记录有多个标签就进多个扇区。
    */
-  hasRecords: boolean
+  total: number
+  /** 范围内记录条数（与分组字段、交易类型、分类都无关）。 */
+  rangeRecords: number
+  /** 通过「交易类型（+ 分类）」过滤后的记录条数：按标签分组时是标签的候选集。 */
+  filteredRecords: number
+  /** 过滤后这些记录的金额之和（分）：与 {@link total} 的差就是标签重复计入的部分。 */
+  filteredTotal: number
 }

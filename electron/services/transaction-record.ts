@@ -22,9 +22,9 @@ import {
   deleteById as deleteRecord,
   queryByKeyEventDate,
   queryById as queryRecordById,
-  countRecordsInRange,
   queryChartLineData,
   queryChartPieData,
+  summarizeRecordsInRange,
   queryFiltered,
   queryStatistics,
   updateKeyEventDate,
@@ -242,6 +242,7 @@ export function queryTrsForPieChart(db: Db, request: ChartPieQueryRequest): Char
     request.tsRange,
     request.groupField,
     request.groupTransactionType,
+    request.groupCategory,
   )
 
   const slices: ChartPieSlice[] = rows
@@ -256,16 +257,29 @@ export function queryTrsForPieChart(db: Db, request: ChartPieQueryRequest): Char
       return left.label < right.label ? -1 : left.label > right.label ? 1 : 0
     })
 
+  // 空态与「标签重复计入」要分清三级：整个范围、过滤之后、真正进饼图的。
+  const range = summarizeRecordsInRange(db, request.ledgerId, request.tsRange)
+  const filtered = summarizeRecordsInRange(db, request.ledgerId, request.tsRange, {
+    transactionType:
+      request.groupField === 'category' || request.groupField === 'tag'
+        ? request.groupTransactionType
+        : '',
+    category: request.groupField === 'tag' ? request.groupCategory : '',
+  })
+
   return {
     slices,
     total: slices.reduce((sum, slice) => sum + slice.amount, 0),
-    hasRecords: countRecordsInRange(db, request.ledgerId, request.tsRange) > 0,
+    rangeRecords: range.count,
+    filteredRecords: filtered.count,
+    filteredTotal: filtered.total,
   }
 }
 
-/** 一片的展示文案：类型转中文，空分类记「未分类」。 */
+/** 一片的展示文案：类型转中文，空分类记「未分类」，空标签记「未命名标签」。 */
 function pieSliceLabel(groupField: string, key: string): string {
   if (groupField === 'category') return key === '' ? '未分类' : key
+  if (groupField === 'tag') return key === '' ? '未命名标签' : key
   return transactionTypeText(key)
 }
 

@@ -63,7 +63,10 @@ export function pieSliceColors(
 ): string[] {
   return slices.map((slice, index) => {
     if (slice.key === PIE_OTHER_KEY) return PIE_OTHER_COLOR
-    if (groupField === 'category') return CHART_PALETTE[index % CHART_PALETTE.length]
+    // 分类与标签都没有内在色：按金额名次取色板。只有交易类型有语义色。
+    if (groupField === 'category' || groupField === 'tag') {
+      return CHART_PALETTE[index % CHART_PALETTE.length]
+    }
     return typeChartColor(slice.key)
   })
 }

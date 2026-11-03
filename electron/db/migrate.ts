@@ -132,6 +132,15 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE chart ADD COLUMN group_transaction_type TEXT NOT NULL DEFAULT '';
     `,
   },
+  {
+    version: 9,
+    name: 'chart_pie_tag_grouping',
+    // 按标签分组的饼图要再点名一个分类（标签挂在「类型 + 分类」之下才读得懂）。
+    // 其余分组与所有老图表取空串。
+    sql: `
+      ALTER TABLE chart ADD COLUMN group_category TEXT NOT NULL DEFAULT '';
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {

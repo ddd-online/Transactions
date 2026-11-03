@@ -166,8 +166,10 @@ export interface Chart {
   chartType: string
   /** 饼图的分组字段：`transactionType` / `category`；折线图为空串 */
   groupField: string
-  /** 按分类分组时只统计的交易类型；其余为空串 */
+  /** 按分类 / 标签分组时只统计的交易类型；其余为空串 */
   groupTransactionType: string
+  /** 按标签分组时只统计的分类；其余为空串 */
+  groupCategory: string
   isPreset: boolean
   sortOrder: number
   createdAt: number

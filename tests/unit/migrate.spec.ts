@@ -152,6 +152,32 @@ describe('migration runner', () => {
     db.close()
   })
 
+  it('adds the tag-group category column to an existing chart table', () => {
+    const path = join(temporaryDirectory(), 'transactions.db')
+    const db = openDatabase(path)
+    // 上一版（v8）的库：饼图已有分组两列，但还没有「标签分组」的分类列
+    migrate(db, path, MIGRATIONS.filter((migration) => migration.version <= 8))
+    db.prepare(
+      `INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, is_preset, sort_order, created_at, updated_at)
+       VALUES ('old', 'l1', '老饼图', '', '[]', 'pie', 0, 0, 0, 0)`,
+    ).run()
+    db.prepare(
+      "UPDATE chart SET group_field = 'category', group_transaction_type = 'expense' WHERE chart_id = 'old'",
+    ).run()
+
+    migrate(db, path)
+
+    expect(schemaVersion(db)).toBe(LATEST)
+    expect(
+      db
+        .prepare(
+          'SELECT group_field, group_transaction_type, group_category FROM chart WHERE chart_id = ?',
+        )
+        .get('old'),
+    ).toEqual({ group_field: 'category', group_transaction_type: 'expense', group_category: '' })
+    db.close()
+  })
+
   it('adds the pie grouping columns, reading old charts back as line charts', () => {
     const path = join(temporaryDirectory(), 'transactions.db')
     const db = openDatabase(path)

@@ -217,27 +217,46 @@ export function queryStatistics(
   return queryStatisticsWhere(db, where.sql, where.args)
 }
 
+/** 一段范围的记录规模：条数与金额之和（分）。 */
+export interface RangeSummary {
+  count: number
+  total: number
+}
+
 /**
- * 范围内（账本级）的记录条数。
+ * 范围内（账本级）的记录条数与金额之和，可再按交易类型 / 分类过滤。
  *
- * 只给饼图的空态用：分组合计为空时，要靠它分清「这个范围没有记录」与
- * 「有记录、但这一种交易类型没有」—— 前者换范围，后者换交易类型。
+ * 只给饼图的空态与「标签重复计入」的判断用：
+ * * 条数分清「这个范围没有记录」「没有这种类型 / 分类」「有记录但都没有标签」；
+ * * 金额之和和饼图的合计一比，就知道标签有没有把同一笔钱算了两遍。
  */
-export function countRecordsInRange(
+export function summarizeRecordsInRange(
   db: Db,
   ledgerId: string,
   tsRange: readonly number[],
-): number {
+  filter: { transactionType?: string; category?: string } = {},
+): RangeSummary {
   const clauses = ['ledger_id = ?']
   const args: SqlValue[] = [ledgerId]
   if (tsRange.length === 2) {
     clauses.push('transaction_at >= ?', 'transaction_at <= ?')
     args.push(tsRange[0], tsRange[1])
   }
+  if (filter.transactionType) {
+    clauses.push('transaction_type = ?')
+    args.push(filter.transactionType)
+  }
+  if (filter.category) {
+    clauses.push('category = ?')
+    args.push(filter.category)
+  }
   const row = db
-    .prepare(`SELECT COUNT(*) AS count FROM ${TABLE} WHERE ${clauses.join(' AND ')}`)
-    .get(...args) as { count: number } | undefined
-  return row?.count ?? 0
+    .prepare(
+      `SELECT COUNT(*) AS count, COALESCE(SUM(amount_cents), 0) AS total FROM ${TABLE} ` +
+        `WHERE ${clauses.join(' AND ')}`,
+    )
+    .get(...args) as RangeSummary | undefined
+  return { count: row?.count ?? 0, total: row?.total ?? 0 }
 }
 
 /** 单条曲线的分桶聚合序列。 */
@@ -295,7 +314,12 @@ export interface ChartPieRow {
  *
  * 与 {@link queryChartLineData} 同一套范围条件，但没有时间分桶、也不看曲线的条件项 ——
  * 饼图问的是「这段时间里各组分了多少钱」，不是「每组每个月多少」。
- * 列名走白名单：`groupField` 只可能是 `transaction_type` 或 `category`。
+ *
+ * 三种分组：
+ * * `transactionType`：按类型分；
+ * * `category`：只统计指定的那一种类型（分类名跨类型重名）；
+ * * `tag`：只统计指定的「类型 + 分类」，按标签分 —— 标签挂在记录上，一笔记录有多个标签
+ *   就进多个组（金额重复计入，这是「标签构成」本来的算法），没有标签的记录不进任何组。
  */
 export function queryChartPieData(
   db: Db,
@@ -303,24 +327,37 @@ export function queryChartPieData(
   tsRange: readonly number[],
   groupField: string,
   groupTransactionType: string,
+  groupCategory: string,
 ): ChartPieRow[] {
-  const column = groupField === 'category' ? 'category' : 'transaction_type'
-  const clauses = ['ledger_id = ?']
+  const clauses = ['r.ledger_id = ?']
   const args: SqlValue[] = [ledgerId]
 
   if (tsRange.length === 2) {
-    clauses.push('transaction_at >= ?', 'transaction_at <= ?')
+    clauses.push('r.transaction_at >= ?', 'r.transaction_at <= ?')
     args.push(tsRange[0], tsRange[1])
   }
-  if (groupField === 'category') {
+
+  const groupByTag = groupField === 'tag'
+  const column = groupByTag ? 't.tag' : groupField === 'category' ? 'r.category' : 'r.transaction_type'
+
+  if (groupField === 'category' || groupByTag) {
     // 分类名跨类型重名（「餐饮」在收入与支出下各有一份），只统计指定的那一种类型。
-    clauses.push('transaction_type = ?')
+    clauses.push('r.transaction_type = ?')
     args.push(groupTransactionType)
   }
+  if (groupByTag) {
+    clauses.push('r.category = ?')
+    args.push(groupCategory)
+  }
+
+  const from = groupByTag
+    ? `${TABLE} r JOIN ${TAG_TABLE} t ` +
+      'ON t.ledger_id = r.ledger_id AND t.transaction_id = r.transaction_id'
+    : `${TABLE} r`
 
   const rows = db
     .prepare(
-      `SELECT ${column} AS key, SUM(amount_cents) AS amount FROM ${TABLE} ` +
+      `SELECT ${column} AS key, SUM(r.amount_cents) AS amount FROM ${from} ` +
         `WHERE ${clauses.join(' AND ')} GROUP BY ${column}`,
     )
     .all(...args) as unknown as Array<{ key: string | null; amount: number | null }>

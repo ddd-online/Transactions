@@ -13,10 +13,10 @@ import {
   deleteById,
   queryById,
   queryByKeyEventDate,
-  countRecordsInRange,
   queryChartLineData,
   queryChartPieData,
   queryFiltered,
+  summarizeRecordsInRange,
   queryStatistics,
   updateKeyEventDate,
 } from '../../electron/db/dao/transaction-record'
@@ -669,6 +669,34 @@ describe('transaction record dao', () => {
     ).toEqual([{ time: '2026-01', amount: 250 }])
   })
 
+  it('groups by tag, counting a multi-tag record in every tag', () => {
+    const workspace = openedWorkspace()
+    const db = workspace.db
+    insertLedger(db, 'l1')
+    const january = 1_768_435_200
+    seedRecords(db, [
+      record('t1', 100, 'expense', '餐饮美食', january),
+      record('t2', 200, 'expense', '餐饮美食', january),
+      // 没有标签：不进任何一组
+      record('t3', 300, 'expense', '餐饮美食', january),
+      // 别的分类：即使有同名标签也不进来
+      record('t4', 400, 'expense', '交通出行', january),
+    ])
+    seedTags(db, 't1', ['外卖', '三餐'])
+    seedTags(db, 't2', ['外卖'])
+    seedTags(db, 't3', [])
+    seedTags(db, 't4', ['外卖'])
+
+    const rows = queryChartPieData(db, 'l1', [], 'tag', 'expense', '餐饮美食')
+    expect([...rows].sort((left, right) => (left.key < right.key ? -1 : 1))).toEqual([
+      { key: '三餐', amount: 100 },
+      { key: '外卖', amount: 300 },
+    ])
+    // t1 的两个标签都算了一份：100 + 200 + 100 = 400 > 实际三餐+外卖的 300
+    expect(summarizeRecordsInRange(db, 'l1', [], { transactionType: 'expense', category: '餐饮美食' }))
+      .toEqual({ count: 3, total: 600 })
+  })
+
   it('sums by transaction type or by category for the pie chart', () => {
     const workspace = openedWorkspace()
     const db = workspace.db
@@ -690,36 +718,39 @@ describe('transaction record dao', () => {
       [...rows].sort((left, right) => (left.key < right.key ? -1 : 1))
 
     // 按交易类型：范围内全部记录（含离群值），按账本隔离
-    expect(sorted(queryChartPieData(db, 'l1', [], 'transactionType', ''))).toEqual([
+    expect(sorted(queryChartPieData(db, 'l1', [], 'transactionType', '', ''))).toEqual([
       { key: 'expense', amount: 550 },
       { key: 'income', amount: 1499 },
     ])
 
     // 按分类：只算点名的交易类型，同名分类不会混进收入那一份
-    expect(sorted(queryChartPieData(db, 'l1', [], 'category', 'expense'))).toEqual([
+    expect(sorted(queryChartPieData(db, 'l1', [], 'category', 'expense', ''))).toEqual([
       { key: '交通出行', amount: 300 },
       { key: '餐饮美食', amount: 250 },
     ])
-    expect(sorted(queryChartPieData(db, 'l1', [], 'category', 'income'))).toEqual([
+    expect(sorted(queryChartPieData(db, 'l1', [], 'category', 'income', ''))).toEqual([
       { key: '工资', amount: 999 },
       { key: '餐饮美食', amount: 500 },
     ])
 
     // 时间范围只留一月
     expect(
-      sorted(queryChartPieData(db, 'l1', [1_767_225_600, 1_769_817_600], 'transactionType', '')),
+      sorted(queryChartPieData(db, 'l1', [1_767_225_600, 1_769_817_600], 'transactionType', '', '')),
     ).toEqual([
       { key: 'expense', amount: 400 },
       { key: 'income', amount: 1499 },
     ])
 
     // 没有记录的账本：空数组，不是 null
-    expect(queryChartPieData(db, 'l3', [], 'transactionType', '')).toEqual([])
+    expect(queryChartPieData(db, 'l3', [], 'transactionType', '', '')).toEqual([])
 
-    // 饼图空态要的「范围里到底有没有记录」：与分组 / 交易类型过滤无关
-    expect(countRecordsInRange(db, 'l1', [])).toBe(5)
-    expect(countRecordsInRange(db, 'l1', [1_767_225_600, 1_769_817_600])).toBe(4)
-    expect(countRecordsInRange(db, 'l3', [])).toBe(0)
+    // 饼图空态 / 重复计入要的两种规模：范围里的，和过滤之后的
+    expect(summarizeRecordsInRange(db, 'l1', [])).toEqual({ count: 5, total: 2049 })
+    expect(summarizeRecordsInRange(db, 'l1', [], { transactionType: 'expense' })).toEqual({
+      count: 3,
+      total: 550,
+    })
+    expect(summarizeRecordsInRange(db, 'l3', [])).toEqual({ count: 0, total: 0 })
   })
 })
 

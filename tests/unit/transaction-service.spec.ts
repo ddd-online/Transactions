@@ -206,6 +206,7 @@ describe('transaction service', () => {
       tsRange: [0, 4_000_000_000],
       groupField: 'category',
       groupTransactionType: 'expense',
+      groupCategory: '',
     })
     expect(result.slices).toEqual([
       { key: '交通出行', label: '交通出行', amount: 30_000 },
@@ -214,7 +215,10 @@ describe('transaction service', () => {
       { key: 'B 类', label: 'B 类', amount: 500 },
     ])
     expect(result.total).toBe(43_000)
-    expect(result.hasRecords).toBe(true)
+    // 空态要的三级规模：范围里 6 条、支出 5 条、这 5 条一共 43_000
+    expect(result.rangeRecords).toBe(6)
+    expect(result.filteredRecords).toBe(5)
+    expect(result.filteredTotal).toBe(43_000)
 
     // 按交易类型：三种类型各一片，label 是中文
     const byType = queryTrsForPieChart(db, {
@@ -222,6 +226,7 @@ describe('transaction service', () => {
       tsRange: [0, 4_000_000_000],
       groupField: 'transactionType',
       groupTransactionType: '',
+      groupCategory: '',
     })
     expect(byType.slices).toEqual([
       { key: 'expense', label: '支出', amount: 43_000 },
@@ -235,8 +240,50 @@ describe('transaction service', () => {
         tsRange: [0, 1],
         groupField: 'transactionType',
         groupTransactionType: '',
+        groupCategory: '',
       }),
-    ).toEqual({ slices: [], total: 0, hasRecords: false })
+    ).toEqual({ slices: [], total: 0, rangeRecords: 0, filteredRecords: 0, filteredTotal: 0 })
+  })
+
+  it('groups the pie by tag and reports the double-counted total', () => {
+    const db = database()
+    const january = Math.floor(Date.UTC(2026, 0, 15) / 1000)
+    createTr(db, dto(10_000, 'expense', '餐饮美食', january, ['外卖', '加班']))
+    createTr(db, dto(4_000, 'expense', '餐饮美食', january)) // 没有标签：不进任何一组
+    createTr(db, dto(6_000, 'expense', '餐饮美食', january, ['外卖']))
+    createTr(db, dto(9_000, 'expense', '交通出行', january, ['外卖'])) // 别的分类
+    createTr(db, dto(8_000, 'income', '餐饮美食', january, ['外卖'])) // 别的类型
+
+    const result = queryTrsForPieChart(db, {
+      ledgerId: 'l1',
+      tsRange: [0, 4_000_000_000],
+      groupField: 'tag',
+      groupTransactionType: 'expense',
+      groupCategory: '餐饮美食',
+    })
+    expect(result.slices).toEqual([
+      { key: '外卖', label: '外卖', amount: 16_000 },
+      { key: '加班', label: '加班', amount: 10_000 },
+    ])
+    // 10_000 那条带两个标签，两片各算一次：合计比实际金额多 10_000
+    expect(result.total).toBe(26_000)
+    expect(result.rangeRecords).toBe(5)
+    expect(result.filteredRecords).toBe(3)
+    expect(result.filteredTotal).toBe(20_000)
+    expect(result.total).toBeGreaterThan(result.filteredTotal)
+
+    // 这个分类下的记录都没有标签：饼图空，但不是「没有记录」
+    createTr(db, dto(1_000, 'expense', '电费', january))
+    const untagged = queryTrsForPieChart(db, {
+      ledgerId: 'l1',
+      tsRange: [0, 4_000_000_000],
+      groupField: 'tag',
+      groupTransactionType: 'expense',
+      groupCategory: '电费',
+    })
+    expect(untagged.slices).toEqual([])
+    expect(untagged.filteredRecords).toBe(1)
+    expect(untagged.rangeRecords).toBe(6)
   })
 
   it('deletes the record and its tag links in one transaction', () => {

@@ -32,13 +32,15 @@ function chartRow(
   try {
     return database
       .prepare(
-        'SELECT chart_type, group_field, group_transaction_type, chart_lines, granularity FROM chart WHERE title = ?',
+        'SELECT chart_type, group_field, group_transaction_type, group_category, chart_lines, ' +
+          'granularity FROM chart WHERE title = ?',
       )
       .get(title) as
       | {
           chart_type: string
           group_field: string
           group_transaction_type: string
+          group_category: string
           chart_lines: string
           granularity: string
         }
@@ -47,6 +49,118 @@ function chartRow(
     database.close()
   }
 }
+
+test('分析：饼图按标签分组，重复计入与无标签的记录分开说', async () => {
+  const repositoryRoot = resolve(__dirname, '../..')
+  const root = mkdtempSync(join(tmpdir(), 'tr-e2e-charts-pie-tag-'))
+  const home = join(root, 'home')
+  const workspace = join(root, 'ws')
+  const userData = join(root, 'user-data')
+  mkdirSync(home, { recursive: true })
+  mkdirSync(userData, { recursive: true })
+  writeFileSync(
+    join(home, '.tr.dev.json'),
+    JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
+  )
+
+  const app = await electron.launch({
+    args: ['.'],
+    cwd: repositoryRoot,
+    env: environment({
+      USERPROFILE: home,
+      HOME: home,
+      TRANSACTIONS_USER_DATA: userData,
+      TRANSACTIONS_TEST_DIALOG_DIR: workspace,
+      TRANSACTIONS_TEST_CLOSE: 'quit',
+    }),
+  })
+
+  try {
+    const page = await app.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText('已打开')
+    await createLedger(page, '标签账本')
+    const ledgerId = await page.evaluate(async () => {
+      const rows = await window.api.invoke('ledger_list', { id: 'all' })
+      return rows.find((row) => row.name === '标签账本')?.id ?? ''
+    })
+
+    // 分类用账本自带的默认分类（新账本已初始化）：餐饮美食 / 交通出行 / 生活缴费 / 工资奖金
+    await page.evaluate(async (id) => {
+      const at = (day: number): number => Math.trunc(new Date(2026, 9, day, 12, 0, 0).getTime() / 1000)
+      await window.api.invoke('tr_batch_create', [
+        // 一笔带两个标签：两片各算一次
+        { ledgerId: id, transactionId: '', price: 12_000, transactionType: 'expense', category: '餐饮美食', description: '', tags: ['外卖', '加班'], transactionAt: at(3), outlier: false, keyEventDate: '' },
+        // 没有标签：不进任何一组
+        { ledgerId: id, transactionId: '', price: 3_000, transactionType: 'expense', category: '餐饮美食', description: '', tags: [], transactionAt: at(4), outlier: false, keyEventDate: '' },
+        { ledgerId: id, transactionId: '', price: 4_000, transactionType: 'expense', category: '餐饮美食', description: '', tags: ['外卖'], transactionAt: at(5), outlier: false, keyEventDate: '' },
+        // 别的分类 / 别的类型：都不该进来
+        { ledgerId: id, transactionId: '', price: 5_000, transactionType: 'expense', category: '交通出行', description: '', tags: ['外卖'], transactionAt: at(6), outlier: false, keyEventDate: '' },
+        { ledgerId: id, transactionId: '', price: 50_000, transactionType: 'income', category: '工资奖金', description: '', tags: ['上班'], transactionAt: at(7), outlier: false, keyEventDate: '' },
+        // 有记录、没有标签：这一组要说的不是「没有记录」
+        { ledgerId: id, transactionId: '', price: 2_000, transactionType: 'expense', category: '生活缴费', description: '', tags: [], transactionAt: at(8), outlier: false, keyEventDate: '' },
+      ])
+    }, ledgerId)
+
+    await page.getByTestId('nav-accounting').click()
+    await page.getByTestId('acct-tab-charts').click()
+
+    await page.getByTestId('chart-open-create').click()
+    await page.getByTestId('chart-title').fill('外卖账')
+    await page.getByTestId('chart-create-type-pie').click()
+    await pickOption(page, 'chart-create-group', '标签')
+    await expect(page.getByTestId('chart-create-group-type')).toBeVisible()
+    await expect(page.getByTestId('chart-create-group-category')).toBeVisible()
+    await pickOption(page, 'chart-create-group-category', '餐饮美食')
+    await page.getByTestId('chart-create').click()
+    await expect(page.getByTestId('chart-pie')).toBeVisible()
+
+    // 标签是标签，不是分类也不是类型
+    expect(chartRow(workspace, '外卖账')).toMatchObject({
+      chart_type: 'pie',
+      group_field: 'tag',
+      group_transaction_type: 'expense',
+      group_category: '餐饮美食',
+      chart_lines: '[]',
+    })
+
+    // 一片一个标签：外卖 120+40、加班 120（带两个标签的那笔两片各算一次）
+    const rows = page.getByTestId('chart-pie-sum')
+    await expect(rows).toHaveCount(2)
+    await expect(rows.nth(0)).toContainText('外卖')
+    await expect(rows.nth(0)).toContainText('160.00')
+    await expect(rows.nth(1)).toContainText('加班')
+    await expect(rows.nth(1)).toContainText('120.00')
+    await expect(page.getByTestId('chart-pie-sums')).toContainText('280.00')
+    // 重复计入要说出来：合计 280 > 这 3 条记录的 190
+    await expect(page.getByTestId('chart-pie-sums')).toContainText('多标签的记录会重复计入')
+
+    // 分组配置里三个下拉都在，分类是当前这一个
+    await expect(page.getByTestId('chart-group-category')).toBeVisible()
+    await expect(page.getByTestId('chart-group-type')).toBeVisible()
+    await expect(page.getByTestId('toast')).toHaveCount(0, { timeout: 6000 })
+    await page.waitForTimeout(300)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'charts-pie-tag.png'),
+    })
+
+    // 这个分类下有记录、但都没有标签：空态说的是「没有标签」，不是「没有记录」
+    await pickOption(page, 'chart-group-category', '生活缴费')
+    await expect(page.getByTestId('chart-data-empty')).toContainText('都没有标签')
+
+    // 换回分类分组：分类下拉消失，按分类出图
+    await pickOption(page, 'chart-group-field', '分类')
+    await expect(page.getByTestId('chart-group-category')).toHaveCount(0)
+    await expect(page.getByTestId('chart-pie-sum').nth(0)).toContainText('餐饮美食')
+    expect(chartRow(workspace, '外卖账')).toMatchObject({
+      group_field: 'category',
+      group_category: '',
+    })
+  } finally {
+    await app.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
 
 test('分析：饼图按分类 / 交易类型分组，分组配置就地生效', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
@@ -137,6 +251,7 @@ test('分析：饼图按分类 / 交易类型分组，分组配置就地生效',
       chart_type: 'pie',
       group_field: 'category',
       group_transaction_type: 'expense',
+      group_category: '',
       chart_lines: '[]',
       granularity: '',
     })

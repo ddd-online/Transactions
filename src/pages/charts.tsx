@@ -38,6 +38,7 @@ const CHART_TYPES = [
 /** 饼图的分组字段：分类（一次一种交易类型）或交易类型。 */
 const GROUP_FIELDS = [
   { value: 'category', label: '分类' },
+  { value: 'tag', label: '标签' },
   { value: 'transactionType', label: '交易类型' },
 ]
 
@@ -132,14 +133,28 @@ function typeLabel(transactionType: string): string {
 }
 
 /**
- * 饼图的空态把「为什么空」说清楚：
- * 一个记录都没有 → 换范围；有记录但这一种交易类型没有 → 换交易类型。
+ * 饼图的空态把「为什么空」说清楚，三级各有各的说法：
+ * 整个范围没有记录 → 换范围；没有这一种类型 / 分类 → 换类型或分类；
+ * 有记录但都没有标签 → 去给记录打标签。
  */
 function pieEmptyDescription(pie: ChartPieResponse | null, chart: ChartDto): string {
-  if (pie && pie.hasRecords && chart.groupField === 'category') {
-    return `这个范围里没有「${typeLabel(chart.groupTransactionType)}」记录，换一种交易类型看看。`
+  if (!pie || pie.rangeRecords === 0) {
+    return '这个时间范围里没有记录，换一个范围试试。'
   }
-  return '这个时间范围里没有记录，换一个范围试试。'
+  const scope = typeLabel(chart.groupTransactionType)
+  if (pie.filteredRecords === 0) {
+    if (chart.groupField === 'tag') {
+      return `这个范围里没有「${scope} · ${chart.groupCategory}」记录，换一种交易类型或分类看看。`
+    }
+    if (chart.groupField === 'category') {
+      return `这个范围里没有「${scope}」记录，换一种交易类型看看。`
+    }
+    return '这个范围里没有可统计的记录，换一个范围试试。'
+  }
+  if (chart.groupField === 'tag') {
+    return `这个范围里「${scope} · ${chart.groupCategory}」的记录都没有标签，先给记录加上标签。`
+  }
+  return '这个范围里没有可统计的记录，换一个范围试试。'
 }
 
 function conditionSummary(line: ChartLine): string {
@@ -188,6 +203,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [createGranularity, setCreateGranularity] = useState('year')
   const [createGroupField, setCreateGroupField] = useState('category')
   const [createGroupType, setCreateGroupType] = useState('expense')
+  const [createGroupCategory, setCreateGroupCategory] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -198,6 +214,25 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const [categories, setCategories] = useState<CategoryDto[]>([])
   const [tags, setTags] = useState<TagDto[]>([])
+
+  /** 某一种交易类型下的分类名（新建弹窗与「分组配置」共用）。 */
+  const categoryNamesFor = useCallback(
+    (transactionType: string): string[] => {
+      const names = new Set<string>()
+      for (const category of categories) {
+        if (category.transactionType === transactionType) names.add(category.name)
+      }
+      return Array.from(names)
+    },
+    [categories],
+  )
+
+  const categoryOptionsFor = useCallback(
+    (transactionType: string): { value: string; label: string }[] =>
+      categoryNamesFor(transactionType).map((name) => ({ value: name, label: name })),
+    [categoryNamesFor],
+  )
+
 
   const [lineOpen, setLineOpen] = useState(false)
   /** 正在编辑的曲线下标；`null` 表示新增 */
@@ -330,6 +365,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             tsRange: range,
             groupField: selected.groupField,
             groupTransactionType: selected.groupTransactionType,
+            groupCategory: selected.groupCategory,
           })
           if (alive) {
             setPie(result)
@@ -380,6 +416,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     setCreateGranularity('year')
     setCreateGroupField('category')
     setCreateGroupType('expense')
+    setCreateGroupCategory('')
     setCreateError('')
     setCreateOpen(true)
   }, [])
@@ -396,9 +433,17 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       setCreateError('请输入图表名称')
       return
     }
+    const pieChart = createType === 'pie'
+    if (pieChart && createGroupField !== 'transactionType' && !createGroupType) {
+      setCreateError('请选择交易类型')
+      return
+    }
+    if (pieChart && createGroupField === 'tag' && !createGroupCategory) {
+      setCreateError('按标签分组时请选择分类')
+      return
+    }
     setCreating(true)
     setCreateError('')
-    const pieChart = createType === 'pie'
     try {
       const created = await window.api.invoke('chart_create', {
         ledgerId,
@@ -408,7 +453,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         chartType: pieChart ? 'pie' : 'line',
         groupField: pieChart ? createGroupField : '',
         groupTransactionType:
-          pieChart && createGroupField === 'category' ? createGroupType : '',
+          pieChart && createGroupField !== 'transactionType' ? createGroupType : '',
+        groupCategory: pieChart && createGroupField === 'tag' ? createGroupCategory : '',
         lines: pieChart
           ? []
           : [
@@ -431,6 +477,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     }
   }, [
     createGranularity,
+    createGroupCategory,
     createGroupField,
     createGroupType,
     createTitle,
@@ -470,6 +517,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         chartType: selected.chartType,
         groupField: selected.groupField,
         groupTransactionType: selected.groupTransactionType,
+        groupCategory: selected.groupCategory,
         sortOrder: selected.sortOrder,
       })
       setRenameOpen(false)
@@ -495,6 +543,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           chartType: selected.chartType,
           groupField: selected.groupField,
           groupTransactionType: selected.groupTransactionType,
+          groupCategory: selected.groupCategory,
           sortOrder: selected.sortOrder,
         })
         await load()
@@ -549,11 +598,24 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   /**
    * 改饼图的分组：整行回写（与改粒度同一条路径），写完重拉列表。
-   * 切回「交易类型」时把类型清空 —— 按类型分组没有类型过滤这回事。
+   *
+   * 三个字段互相牵连：按交易类型分组没有类型过滤；按分类要一种类型；按标签还要一个分类，
+   * 而且分类必须属于那种类型（换类型时分类跟着落到该类型的第一个）。
    */
   const changeGrouping = useCallback(
-    async (groupField: string, groupTransactionType: string): Promise<void> => {
+    async (next: { field?: string; type?: string; category?: string }): Promise<void> => {
       if (!selected || selected.isPreset || selected.chartType !== 'pie') return
+      const groupField = next.field ?? selected.groupField
+      const groupTransactionType =
+        groupField === 'transactionType'
+          ? ''
+          : next.type ?? (selected.groupTransactionType || 'expense')
+      let groupCategory = ''
+      if (groupField === 'tag') {
+        const names = categoryNamesFor(groupTransactionType)
+        const wanted = next.category ?? selected.groupCategory
+        groupCategory = names.includes(wanted) ? wanted : (names[0] ?? '')
+      }
       setError('')
       try {
         await window.api.invoke('chart_update', {
@@ -563,8 +625,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           lines: [],
           chartType: 'pie',
           groupField,
-          groupTransactionType:
-            groupField === 'category' ? groupTransactionType || 'expense' : '',
+          groupTransactionType,
+          groupCategory,
           sortOrder: selected.sortOrder,
         })
         await load()
@@ -572,7 +634,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         setError(errorMessage(updateError))
       }
     },
-    [load, selected],
+    [categoryNamesFor, load, selected],
   )
 
   const responseLines: ChartLineData[] = data?.lines ?? []
@@ -595,9 +657,11 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const hasPie = pieSlices.length > 0
   const pieLabel = useMemo(() => {
     if (!selected || selected.chartType !== 'pie') return ''
-    return selected.groupField === 'category'
-      ? `${typeLabel(selected.groupTransactionType)}按分类`
-      : '按交易类型'
+    if (selected.groupField === 'category') return `${typeLabel(selected.groupTransactionType)}按分类`
+    if (selected.groupField === 'tag') {
+      return `${typeLabel(selected.groupTransactionType)} · ${selected.groupCategory} 按标签`
+    }
+    return '按交易类型'
   }, [selected])
 
   // ---------------------------------------------------------------- 曲线的增 / 改 / 删
@@ -617,6 +681,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           chartType: selected.chartType,
           groupField: selected.groupField,
           groupTransactionType: selected.groupTransactionType,
+          groupCategory: selected.groupCategory,
           sortOrder: selected.sortOrder,
         })
         setCharts((current) =>
@@ -948,6 +1013,9 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                           </div>
                         ))}
                       </div>
+                      {pie && pie.total > pie.filteredTotal ? (
+                        <p className="da-chart__pie-note">多标签的记录会重复计入</p>
+                      ) : null}
                     </aside>
                   ) : null
                 ) : hasValues ? (
@@ -1015,12 +1083,10 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                         size="small"
                         value={selected.groupField}
                         options={GROUP_FIELDS}
-                        onChange={(value: string) =>
-                          void changeGrouping(value, selected.groupTransactionType)
-                        }
+                        onChange={(value: string) => void changeGrouping({ field: value })}
                       />
                     </div>
-                    {selected.groupField === 'category' ? (
+                    {selected.groupField === 'category' || selected.groupField === 'tag' ? (
                       <div className="da-group-config__field">
                         <span className="da-group-config__label">交易类型</span>
                         <Select
@@ -1030,7 +1096,22 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                           size="small"
                           value={selected.groupTransactionType || 'expense'}
                           options={LINE_TYPES}
-                          onChange={(value: string) => void changeGrouping('category', value)}
+                          onChange={(value: string) => void changeGrouping({ type: value })}
+                        />
+                      </div>
+                    ) : null}
+                    {selected.groupField === 'tag' ? (
+                      <div className="da-group-config__field">
+                        <span className="da-group-config__label">分类</span>
+                        <Select
+                          className="da-group-config__select"
+                          data-testid="chart-group-category"
+                          aria-label="分类"
+                          size="small"
+                          placeholder="选择分类"
+                          value={selected.groupCategory || undefined}
+                          options={categoryOptionsFor(selected.groupTransactionType || 'expense')}
+                          onChange={(value: string) => void changeGrouping({ category: value })}
                         />
                       </div>
                     ) : null}
@@ -1201,19 +1282,41 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   data-testid="chart-create-group"
                   aria-label="分组字段"
                   value={createGroupField}
-                  onChange={setCreateGroupField}
+                  onChange={(value: string) => {
+                    setCreateGroupField(value)
+                    if (value === 'tag' && !createGroupCategory) {
+                      setCreateGroupCategory(categoryNamesFor(createGroupType)[0] ?? '')
+                    }
+                  }}
                   options={GROUP_FIELDS}
                 />
               </div>
-              {createGroupField === 'category' ? (
+              {createGroupField !== 'transactionType' ? (
                 <div className="tr-modal-field">
                   <span className="tr-modal-label">交易类型</span>
                   <Select
                     data-testid="chart-create-group-type"
                     aria-label="交易类型"
                     value={createGroupType}
-                    onChange={setCreateGroupType}
+                    onChange={(value: string) => {
+                      setCreateGroupType(value)
+                      // 分类挂在类型下：换类型就把分类落到新类型的第一个
+                      setCreateGroupCategory(categoryNamesFor(value)[0] ?? '')
+                    }}
                     options={LINE_TYPES}
+                  />
+                </div>
+              ) : null}
+              {createGroupField === 'tag' ? (
+                <div className="tr-modal-field">
+                  <span className="tr-modal-label">分类</span>
+                  <Select
+                    data-testid="chart-create-group-category"
+                    aria-label="分类"
+                    placeholder="选择分类"
+                    value={createGroupCategory || undefined}
+                    onChange={setCreateGroupCategory}
+                    options={categoryOptionsFor(createGroupType)}
                   />
                 </div>
               ) : null}

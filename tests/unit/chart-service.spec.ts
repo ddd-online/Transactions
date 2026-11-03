@@ -81,6 +81,7 @@ function chart(
     chartType: 'line',
     groupField: '',
     groupTransactionType: '',
+    groupCategory: '',
     isPreset,
     sortOrder,
     createdAt: 0,
@@ -108,7 +109,7 @@ function insertChartRow(
   },
 ): void {
   db.prepare(
-    "INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, group_field, group_transaction_type, is_preset, sort_order, created_at, updated_at) VALUES (?, ?, ?, 'month', ?, 'line', '', '', ?, ?, ?, ?)",
+    "INSERT INTO chart (chart_id, ledger_id, title, granularity, chart_lines, chart_type, group_field, group_transaction_type, group_category, is_preset, sort_order, created_at, updated_at) VALUES (?, ?, ?, 'month', ?, 'line', '', '', '', ?, ?, ?, ?)",
   ).run(
     values.chartId,
     values.ledgerId,
@@ -158,6 +159,7 @@ function createRequest(
     chartType: 'line',
     groupField: '',
     groupTransactionType: '',
+    groupCategory: '',
     ...overrides,
   }
 }
@@ -174,6 +176,7 @@ function updateRequest(
     chartType: '',
     groupField: '',
     groupTransactionType: '',
+    groupCategory: '',
     sortOrder: 0,
     ...overrides,
   }
@@ -721,6 +724,53 @@ describe('chart service', () => {
     expect(regrouped.groupTransactionType).toBe('')
   })
 
+  it('requires a category for a pie grouped by tag', () => {
+    const workspace = openedWorkspace()
+
+    const error = captureAppError(() =>
+      createChart(
+        workspace.db,
+        createRequest('l1', {
+          chartType: 'pie',
+          groupField: 'tag',
+          groupTransactionType: 'expense',
+          groupCategory: '',
+        }),
+      ),
+    )
+    expect(error.status).toBe(400)
+    expect(error.message).toBe('按标签分组时需要选择分类')
+
+    const created = createChart(
+      workspace.db,
+      createRequest('l1', {
+        title: '外卖账',
+        chartType: 'pie',
+        groupField: 'tag',
+        groupTransactionType: 'expense',
+        groupCategory: '餐饮美食',
+      }),
+    )
+    expect(created.groupField).toBe('tag')
+    expect(created.groupTransactionType).toBe('expense')
+    expect(created.groupCategory).toBe('餐饮美食')
+
+    // 换回分类分组：分类跟着清空（分类分组只认类型）
+    const regrouped = updateChart(
+      workspace.db,
+      updateRequest(created.chartId, {
+        title: '外卖账',
+        chartType: 'pie',
+        groupField: 'category',
+        groupTransactionType: 'expense',
+        groupCategory: '餐饮美食',
+        lines: [],
+        sortOrder: created.sortOrder,
+      }),
+    )
+    expect(regrouped.groupCategory).toBe('')
+  })
+
   it('refuses to turn a preset into a pie chart', () => {
     const workspace = openedWorkspace()
     listChartsByLedgerId(workspace.db, 'l1')
@@ -735,6 +785,7 @@ describe('chart service', () => {
         chartType: 'pie',
         groupField: 'category',
         groupTransactionType: 'expense',
+        groupCategory: '',
         sortOrder: preset.sortOrder,
       }),
     )

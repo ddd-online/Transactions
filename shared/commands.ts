@@ -98,6 +98,7 @@ const createChartSchema = z.object({
   chartType: z.string().default('line'),
   groupField: z.string().default(''),
   groupTransactionType: z.string().default(''),
+  groupCategory: z.string().default(''),
 })
 
 const updateChartSchema = z.object({
@@ -108,6 +109,7 @@ const updateChartSchema = z.object({
   chartType: z.string().default('line'),
   groupField: z.string().default(''),
   groupTransactionType: z.string().default(''),
+  groupCategory: z.string().default(''),
   sortOrder: z.number().default(0),
 })
 
@@ -216,6 +218,7 @@ export const commandSchemas = {
     tsRange: z.array(z.number()).default([]),
     groupField: z.string().default(''),
     groupTransactionType: z.string().default(''),
+    groupCategory: z.string().default(''),
   }),
   tr_create: transactionRecordDtoSchema,
   tr_batch_create: z.array(transactionRecordDtoSchema),
