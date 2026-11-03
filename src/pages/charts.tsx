@@ -29,6 +29,7 @@ import { Switch } from '../components/switch'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { notify } from '../components/toast'
 import { CHART_PALETTE, pieSliceColors } from '../theme/chart-colors'
+import { useThemeMode } from '../theme/theme-mode'
 
 const CHART_TYPES = [
   { value: 'line', label: '折线图' },
@@ -650,9 +651,11 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       slice.key === PIE_OTHER_KEY ? { ...slice, label: `其他（${folded.folded} 组）` } : slice,
     )
   }, [pie])
+  /** 用画布画的图读不到 CSS 变量：主题一变就得重算颜色（`mode` 只用来触发重新解析令牌）。 */
+  const mode = useThemeMode()
   const pieColors = useMemo(
     () => pieSliceColors(pieSlices, selected?.groupField ?? ''),
-    [pieSlices, selected?.groupField],
+    [pieSlices, selected?.groupField, mode],
   )
   const hasPie = pieSlices.length > 0
   const pieLabel = useMemo(() => {

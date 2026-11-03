@@ -66,6 +66,28 @@
   --transactions-color-chart-violet: #7e22ce;
   --transactions-color-chart-neutral: #61666b;
 
+  /* Pie fills — 面积档（见 DESIGN.md「Pie palette」）。同一批色相，色度砍到曲线色板的一半，
+   * 明度收进 0.55–0.66 一条窄带里，两档交替：第 N 名取第 N 色，10 色正好等于折叠上限。
+   * 顺序 = 色相轮盘上跳着走（蓝 / 陶土 / 青绿 / 玫瑰 / 钢青 / 赭 / 绿 / 紫 / 砖红 / 蓝紫），
+   * 跳过 80°–140° 那段 —— 低色度下黄绿必然发灰成橄榄。
+   * 每色对画布 ≥3:1（8px 图例点要看得见）、相邻两片 ΔE76 ≥15，由 tests/unit/pie-colors.spec.ts 盯着。 */
+  --transactions-color-pie-1: #6d8acf;
+  --transactions-color-pie-2: #a7593d;
+  --transactions-color-pie-3: #04a19b;
+  --transactions-color-pie-4: #a0557b;
+  --transactions-color-pie-5: #139cb6;
+  --transactions-color-pie-6: #9d621e;
+  --transactions-color-pie-7: #5f9e61;
+  --transactions-color-pie-8: #8e5b99;
+  --transactions-color-pie-9: #c66f76;
+  --transactions-color-pie-10: #7165ad;
+  --transactions-color-pie-other: #8b919a;
+  /* 语义色的面积档：色相还是支出红 / 收入绿 / 转账蓝，分量轻一档。
+   * 记录页的金额文字与类型芯片仍用原语义值 —— 文字要响，面积要退。 */
+  --transactions-color-pie-expense: #bb756a;
+  --transactions-color-pie-income: #5c9b72;
+  --transactions-color-pie-transfer: #698cc1;
+
   /* UI state */
   --transactions-color-success: #16a34a;
   --transactions-color-warning: #d97706;
@@ -309,6 +331,22 @@
   --transactions-color-chart-violet: #a855f7;
   --transactions-color-chart-neutral: #b6bcc6;
 
+  /* Pie fills — 面积档：色相与浅色一一对应，整体提亮到 0.695–0.78 那一档（见 DESIGN.md）。 */
+  --transactions-color-pie-1: #99b6f8;
+  --transactions-color-pie-2: #d2876d;
+  --transactions-color-pie-3: #60ccc5;
+  --transactions-color-pie-4: #cc83a6;
+  --transactions-color-pie-5: #62c8df;
+  --transactions-color-pie-6: #c89057;
+  --transactions-color-pie-7: #8fc990;
+  --transactions-color-pie-8: #b988c4;
+  --transactions-color-pie-9: #f09da3;
+  --transactions-color-pie-10: #9c92d7;
+  --transactions-color-pie-other: #767d88;
+  --transactions-color-pie-expense: #da8e82;
+  --transactions-color-pie-income: #72b68a;
+  --transactions-color-pie-transfer: #80a6e0;
+
   --transactions-color-success: #4ade80;
   --transactions-color-warning: #fbbf24;
   --transactions-color-positive: #4ade80;
@@ -409,6 +447,22 @@
     --transactions-color-chart-red: #ef4444;
     --transactions-color-chart-violet: #a855f7;
     --transactions-color-chart-neutral: #b6bcc6;
+
+    /* Pie fills — 面积档（与上面两段同值，系统跟随兜底用） */
+    --transactions-color-pie-1: #99b6f8;
+    --transactions-color-pie-2: #d2876d;
+    --transactions-color-pie-3: #60ccc5;
+    --transactions-color-pie-4: #cc83a6;
+    --transactions-color-pie-5: #62c8df;
+    --transactions-color-pie-6: #c89057;
+    --transactions-color-pie-7: #8fc990;
+    --transactions-color-pie-8: #b988c4;
+    --transactions-color-pie-9: #f09da3;
+    --transactions-color-pie-10: #9c92d7;
+    --transactions-color-pie-other: #767d88;
+    --transactions-color-pie-expense: #da8e82;
+    --transactions-color-pie-income: #72b68a;
+    --transactions-color-pie-transfer: #80a6e0;
 
     --transactions-color-success: #4ade80;
     --transactions-color-warning: #fbbf24;

@@ -1,34 +1,10 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-
 import { describe, expect, it } from 'vitest'
 
 import { ANT_PALETTES } from '../../src/theme/antd-theme'
+import { block, token, tokensCss } from './css-tokens'
 
-function block(source: string, selector: string): string {
-  const start = source.indexOf(selector)
-  if (start < 0) throw new Error(`missing ${selector}`)
-  const open = source.indexOf('{', start)
-  let depth = 0
-  for (let index = open; index < source.length; index += 1) {
-    if (source[index] === '{') depth += 1
-    if (source[index] === '}') {
-      depth -= 1
-      if (depth === 0) return source.slice(open + 1, index)
-    }
-  }
-  throw new Error(`unclosed ${selector}`)
-}
-
-function token(css: string, name: string): string {
-  const match = css.match(new RegExp(`--transactions-${name}:\\s*([^;]+);`))
-  if (!match) throw new Error(`missing token ${name}`)
-  return match[1].trim()
-}
-
-const source = readFileSync(resolve(__dirname, '../../src/styles/tokens.css'), 'utf8')
-const light = block(source, ':root')
-const dark = block(source, "[data-theme='dark']")
+const light = block(tokensCss, ':root')
+const dark = block(tokensCss, "[data-theme='dark']")
 
 describe('AntD theme bridge', () => {
   it('keeps light surface colors in sync with design tokens', () => {

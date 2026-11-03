@@ -69,6 +69,10 @@ export const AntvPieChart = memo(function AntvPieChart({
       // 只有一片时不要缝：1px 的底色描边会在整圆上留出一道「裂口」
       .style('stroke', slices.length > 1 ? text.canvasFill : 'transparent')
       .style('lineWidth', 1)
+      /* 扇区必须与图例点同色。G2 默认给 interval 打 95% 的填充不透明度，
+       * 5% 的底色混进来之后扇区比它的图例点浅一档，对画布的对比度也一起掉到 3:1 以下
+       * （实测 #6d8acf → #7590d2）。面积档是按令牌算的，画出来就得是令牌那个值。 */
+      .style('fillOpacity', 1)
       // 提示框只有一句：谁 + 多少钱 + 占比。不给 items 就不会排出 amount / share
       // 这种字段名和两枚同色圆点 —— 图例已经把这些都写在右边那一列了。
       .tooltip({

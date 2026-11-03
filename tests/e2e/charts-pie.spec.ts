@@ -246,6 +246,34 @@ test('分析：饼图按分类 / 交易类型分组，分组配置就地生效',
     await expect(rows.nth(1)).toContainText('40.00')
     await expect(rows.nth(1)).toContainText('21.05%')
 
+    // ---- 颜色跟主题走：画布读不到 CSS 变量，深色令牌要能落到已画好的扇区与图例点上
+    const pieDot = page.getByTestId('chart-pie-sum').first().locator('.da-list__dot')
+    const dotColor = (): Promise<string> =>
+      pieDot.evaluate((element) => getComputedStyle(element).backgroundColor)
+    const firstSlot = (): Promise<string> =>
+      page.evaluate(() => {
+        const probe = document.createElement('span')
+        probe.style.color = 'var(--transactions-color-pie-1)'
+        document.body.append(probe)
+        const value = getComputedStyle(probe).color
+        probe.remove()
+        return value
+      })
+
+    await expect.poll(dotColor).toBe(await firstSlot())
+    const lightSlot = await firstSlot()
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = 'dark'
+    })
+    const darkSlot = await firstSlot()
+    // 深色真的换了值，否则下面那条「点等于令牌」永远成立
+    expect(darkSlot).not.toBe(lightSlot)
+    await expect.poll(dotColor).toBe(darkSlot)
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = 'light'
+    })
+    await expect.poll(dotColor).toBe(lightSlot)
+
     // 落库：饼图没有曲线、没有粒度，分组两列写对
     expect(chartRow(workspace, '支出构成')).toEqual({
       chart_type: 'pie',
