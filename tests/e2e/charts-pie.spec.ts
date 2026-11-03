@@ -253,7 +253,7 @@ test('分析：饼图按分类 / 交易类型分组，分组配置就地生效',
     const firstSlot = (): Promise<string> =>
       page.evaluate(() => {
         const probe = document.createElement('span')
-        probe.style.color = 'var(--transactions-color-pie-1)'
+        probe.style.color = 'var(--transactions-color-series-1)'
         document.body.append(probe)
         const value = getComputedStyle(probe).color
         probe.remove()

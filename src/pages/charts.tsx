@@ -28,7 +28,7 @@ import { Spin } from '../components/spin'
 import { Switch } from '../components/switch'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { notify } from '../components/toast'
-import { CHART_PALETTE, pieSliceColors } from '../theme/chart-colors'
+import { pieSliceColors, seriesPalette } from '../theme/chart-colors'
 import { useThemeMode } from '../theme/theme-mode'
 
 const CHART_TYPES = [
@@ -653,6 +653,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   }, [pie])
   /** 用画布画的图读不到 CSS 变量：主题一变就得重算颜色（`mode` 只用来触发重新解析令牌）。 */
   const mode = useThemeMode()
+  /** 折线图与饼图共用这一份色板 —— 第 N 条曲线和第 N 名是同一个颜色。 */
+  const seriesColors = useMemo(() => seriesPalette(), [mode])
   const pieColors = useMemo(
     () => pieSliceColors(pieSlices, selected?.groupField ?? ''),
     [pieSlices, selected?.groupField, mode],
@@ -793,7 +795,10 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
    * 以前每次渲染都 `slice()` 出一个新数组 → 重命名弹窗里每敲一个字都销毁重画整张图
    * （实测 20 个字 = 20 次重建、926ms）。数组现在只在条数变化时换新。 */
   const lineCount = responseLines.length
-  const colors = useMemo(() => CHART_PALETTE.slice(0, Math.max(1, lineCount)), [lineCount])
+  const colors = useMemo(
+    () => seriesColors.slice(0, Math.max(1, lineCount)),
+    [lineCount, seriesColors],
+  )
   const lineRows = selected?.lines ?? []
   const hasLines = lineRows.length > 0
 
@@ -1170,7 +1175,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                         <span className="da-line-name">
                           <span
                             className="da-line-swatch"
-                            style={{ background: CHART_PALETTE[index % CHART_PALETTE.length] }}
+                            style={{ background: seriesColors[index % seriesColors.length] }}
                             aria-hidden="true"
                           />
                           {value}

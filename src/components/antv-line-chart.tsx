@@ -20,6 +20,11 @@ export const AntvLineChart = memo(function AntvLineChart({
   colors,
 }: AntvLineChartProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
+  /* 数据指纹：换主题会换一份 `colors`、建图 effect 跟着重跑，但那只是重刷颜色 —— 不该再描一遍。 */
+  const drewRef = useRef<string | null>(null)
+  const signature = lines
+    .map((line) => `${line.label}:${line.data.map((point) => point.amount).join(',')}`)
+    .join('|')
 
   useEffect(() => {
     const container = containerRef.current
@@ -89,11 +94,12 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('color', 'label')
       .style('lineWidth', 2)
       .tooltip(tooltip)
-    if (motionAllowed()) {
+    if (motionAllowed() && drewRef.current !== signature) {
       line.animate('enter', CHART_DRAW_ANIMATION)
     } else {
       line.animate(false)
     }
+    drewRef.current = signature
     chart
       .point()
       .data(rows)
@@ -107,7 +113,7 @@ export const AntvLineChart = memo(function AntvLineChart({
     return () => {
       chart.destroy()
     }
-  }, [colors, lines])
+  }, [colors, lines, signature])
 
   return <div className="antv-chart" data-testid="chart-svg" ref={containerRef} />
 })

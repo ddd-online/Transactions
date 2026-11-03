@@ -13,8 +13,8 @@ export interface PieSlice {
   amount: number
 }
 
-/** 图上最多画几片（不含「其他」）。再多就是一圈细得看不见的缝。 */
-export const PIE_MAX_SLICES = 10
+/** 图上最多画几片（不含「其他」）。再多就是一圈细得看不见的缝 —— 也正好是色板的槽位数。 */
+export const PIE_MAX_SLICES = 9
 
 /** 折叠出来的那一片的 key（颜色由调用方给中性色，标签由调用方补上组数）。 */
 export const PIE_OTHER_KEY = '__other__'

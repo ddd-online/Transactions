@@ -1,65 +1,38 @@
 /**
- * 图表的颜色。
+ * 图表的颜色：**一套色板，两个图表共用**。
  *
- * 图表画在 Canvas 上，读不到 CSS 变量的继承 —— 所以每一项颜色都在建图前从根元素解析一次
- * （`readToken`），深色主题换一套值；取不到时落回浅色那组的字面量（单元测试里没有 DOM）。
+ * 折线图按「第 N 条曲线 = 第 N 色」，饼图按「第 N 名 = 第 N 色」，取的是同一份色板 ——
+ * 画布、图例、右侧合计列读同一个索引，所以一条曲线或一片扇区的颜色在哪儿都一样。
  *
- * 两条规矩：
- * 1. `CHART_PALETTE` 的**前 6 色不可动、不可换序**：折线图按「第 N 条曲线 = 第 N 色」上色，
- *    换一下顺序，用户积攒下来的直觉就白费了。
- * 2. 饼图**不取这个色板**。曲线是 2px 的线，靠色度站住；饼图是几百像素的实心面积，
- *    同一分量铺满半张纸就是「刺眼」。面积另有一套 `--transactions-color-pie-*`（面积档）：
- *    色度砍到一半、明度收进一条窄带、两档交替，见 DESIGN.md「Pie palette」。
+ * 色板只有三个色相家族（见 DESIGN.md「Series palette」）：支出红、收入绿、转账蓝，
+ * 每族三档轻重（中 / 浅 / 深）。家族之外只有一个中性灰，给饼图折出来的「其他」。
  *
- * 所以这里有两个分量，别混：
- * - 线档 `CHART_PALETTE`：折线图与曲线配置表里的色块，位置即颜色。
- * - 面积档 `piePaletteColor` / `pieTypeColor`：饼图，第 N 名取第 N 色；按交易类型分组时取
- *   语义色的面积档（支出红 / 收入绿 / 转账蓝的柔和版），记录页的金额文字仍然是原语义值。
+ * 画布读不到 CSS 变量，所以每个值都在建图前从根元素解析一次（`readToken`），深色主题换一套；
+ * 取不到时落回浅色那组的字面量（单元测试里没有 DOM）。
  */
 
 import { PIE_OTHER_KEY } from '../../shared/domain/pie'
 
-/** 曲线色板（12 色）：折线图的唯一取值来源 —— 画布读的是这张表，不是 `--transactions-color-chart-*`。 */
-export const CHART_PALETTE = [
-  '#3964fe',
-  '#f59e0b',
-  '#12b76a',
-  '#d92d20',
-  '#7c3aed',
-  '#0891b2',
-  '#ec4899',
-  '#84cc16',
-  '#f97316',
-  '#0ea5e9',
-  '#14b8a6',
-  '#a16207',
+/** 色板槽位：三个家族 × 三档 —— 正好是饼图的折叠上限（`PIE_MAX_SLICES`）。 */
+const SERIES_SLOT_COUNT = 9
+
+/** 浅色取值，同时是取不到令牌时的兜底。 */
+const SERIES_FALLBACKS = [
+  '#c36d64',
+  '#509c67',
+  '#5b8bcb',
+  '#cf9077',
+  '#6ab396',
+  '#8e9fd7',
+  '#ad5561',
+  '#51843e',
+  '#277bb2',
 ]
 
-/** 饼图正好这么多槽位：`PIE_MAX_SLICES` 是 10，第 11 组起折成「其他」。 */
-const PIE_SLOT_COUNT = 10
+const SERIES_OTHER_FALLBACK = '#8b919a'
 
-/** 面积档的浅色取值，同时是取不到令牌时的兜底。 */
-const PIE_FALLBACKS = [
-  '#6d8acf',
-  '#a7593d',
-  '#04a19b',
-  '#a0557b',
-  '#139cb6',
-  '#9d621e',
-  '#5f9e61',
-  '#8e5b99',
-  '#c66f76',
-  '#7165ad',
-]
-
-const PIE_OTHER_FALLBACK = '#8b919a'
-
-/** 交易类型的语义色在面积档里的取值（同色相，轻一档）。 */
-const PIE_TYPE_FALLBACKS: Record<string, string> = {
-  expense: '#bb756a',
-  income: '#5c9b72',
-  transfer: '#698cc1',
-}
+/** 三个家族的中档：支出红 / 收入绿 / 转账蓝 —— 就是色板的第 1–3 位。 */
+const PIE_TYPE_SLOTS: Record<string, number> = { expense: 0, income: 1, transfer: 2 }
 
 function readToken(name: string, fallback: string): string {
   if (typeof window === 'undefined') return fallback
@@ -67,28 +40,35 @@ function readToken(name: string, fallback: string): string {
   return value || fallback
 }
 
-/** 第 N 名的扇区颜色；超出槽位的取模（正常到不了：超过 10 组就折成「其他」）。 */
-export function piePaletteColor(index: number): string {
-  const slot = index % PIE_SLOT_COUNT
-  return readToken(`--transactions-color-pie-${slot + 1}`, PIE_FALLBACKS[slot])
+/** 整套色板（9 色，顺序即位置）。每次现取，换取主题切换后能重新解析。 */
+export function seriesPalette(): string[] {
+  return SERIES_FALLBACKS.map((fallback, index) =>
+    readToken(`--transactions-color-series-${index + 1}`, fallback),
+  )
 }
 
-/** 「其他」那一片：中性灰，明确不是某一个分类。 */
-function pieOtherColor(): string {
-  return readToken('--transactions-color-pie-other', PIE_OTHER_FALLBACK)
+/** 第 N 个位置的颜色；超出槽位取模（多于 9 条曲线时从头再来）。 */
+export function seriesColor(index: number): string {
+  const slot = index % SERIES_SLOT_COUNT
+  return readToken(`--transactions-color-series-${slot + 1}`, SERIES_FALLBACKS[slot])
 }
 
-/** 交易类型的面积色（柔和档）；认不出的类型落到正文次要色。 */
+/** 「其他」那一片：中性灰，明确不属于任何一个家族。 */
+function seriesOtherColor(): string {
+  return readToken('--transactions-color-series-other', SERIES_OTHER_FALLBACK)
+}
+
+/** 交易类型对应的家族中档；认不出的类型落到正文次要色。 */
 export function pieTypeColor(transactionType: string): string {
-  const fallback = PIE_TYPE_FALLBACKS[transactionType]
-  if (!fallback) return readToken('--transactions-color-text-secondary', '#61666b')
-  return readToken(`--transactions-color-pie-${transactionType}`, fallback)
+  const slot = PIE_TYPE_SLOTS[transactionType]
+  if (slot === undefined) return readToken('--transactions-color-text-secondary', '#61666b')
+  return seriesColor(slot)
 }
 
 /**
- * 饼图每一片的颜色：按分类 / 标签分组走面积色板（按金额名次），按交易类型分组走语义色的面积档。
+ * 饼图每一片的颜色：按分类 / 标签分组按金额名次取色板，按交易类型分组取三个家族的中档。
  *
- * 颜色只跟这一片属于谁有关；「其他」永远是中性灰。返回数组与 `slices` 一一对应 ——
+ * 颜色只跟这一片排第几有关；「其他」永远是中性灰。返回数组与 `slices` 一一对应 ——
  * 图上的扇区与右侧合计列的点读同一份，不会错位。
  */
 export function pieSliceColors(
@@ -96,9 +76,9 @@ export function pieSliceColors(
   groupField: string,
 ): string[] {
   return slices.map((slice, index) => {
-    if (slice.key === PIE_OTHER_KEY) return pieOtherColor()
-    // 分类与标签都没有内在色：按金额名次取色板。只有交易类型有语义色。
-    if (groupField === 'category' || groupField === 'tag') return piePaletteColor(index)
+    if (slice.key === PIE_OTHER_KEY) return seriesOtherColor()
+    // 分类与标签都没有内在色：按金额名次取色板。只有交易类型分到固定的家族。
+    if (groupField === 'category' || groupField === 'tag') return seriesColor(index)
     return pieTypeColor(slice.key)
   })
 }
