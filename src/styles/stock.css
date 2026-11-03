@@ -4766,8 +4766,7 @@
     align-items: flex-start;
     gap: 0;
   }
-
-  .stock-ladder__chips > }
+}
 
 /* 窄窗底栏放不下四个副注：只留标签与数字。 */
 @media (max-width: 720px) {
