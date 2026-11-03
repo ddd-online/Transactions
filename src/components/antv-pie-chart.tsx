@@ -69,12 +69,13 @@ export const AntvPieChart = memo(function AntvPieChart({
       // 只有一片时不要缝：1px 的底色描边会在整圆上留出一道「裂口」
       .style('stroke', slices.length > 1 ? text.canvasFill : 'transparent')
       .style('lineWidth', 1)
+      // 提示框只有一句：谁 + 多少钱 + 占比。不给 items 就不会排出 amount / share
+      // 这种字段名和两枚同色圆点 —— 图例已经把这些都写在右边那一列了。
       .tooltip({
-        title: (datum: Record<string, unknown>) => String(datum.label ?? ''),
-        items: [
-          { field: 'amount', valueFormatter: (value: number) => `¥${Number(value).toFixed(2)}` },
-          { field: 'share', valueFormatter: (value: number) => `${Number(value).toFixed(2)}%` },
-        ],
+        title: (datum: Record<string, unknown>) =>
+          `${String(datum.label ?? '')}　¥${Number(datum.amount ?? 0).toFixed(2)} · ` +
+          `${Number(datum.share ?? 0).toFixed(2)}%`,
+        items: false,
       })
     /* 这一页的「作者时刻」是折线沿着自己的路径画出来；饼图只做一个 220ms 的淡入，
      * 不转、不弹 —— 构图已经把话说完了。减少动态偏好下直接画完。 */

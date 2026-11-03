@@ -205,8 +205,13 @@ test('分析：饼图按分类 / 交易类型分组，分组配置就地生效',
     await expect(page.getByTestId('chart-group-config')).toHaveCount(0)
     await expect(page.getByTestId('chart-pie')).toHaveCount(0)
 
-    // ---- 空数据：范围内一笔记录都没有
+    // ---- 有记录、但这一种交易类型一条都没有：空态要说对这一件
     await page.getByTestId('chart-item').filter({ hasText: '支出构成（改）' }).click()
+    await pickOption(page, 'chart-group-type', '转账')
+    await expect(page.getByTestId('chart-data-empty')).toContainText('没有「转账」记录')
+    await pickOption(page, 'chart-group-type', '支出')
+
+    // ---- 空数据：范围内一笔记录都没有
     // 删光记录：先查一遍 id 再一条条删（没有「清空账本」这种命令）
     const ids = await page.evaluate(async (id) => {
       const result = await window.api.invoke('tr_query', {
@@ -228,6 +233,7 @@ test('分析：饼图按分类 / 交易类型分组，分组配置就地生效',
     await page.getByTestId('acct-tab-charts').click()
     await page.getByTestId('chart-item').filter({ hasText: '支出构成（改）' }).click()
     await expect(page.getByTestId('chart-data-empty')).toBeVisible()
+    await expect(page.getByTestId('chart-data-empty')).toContainText('这个时间范围里没有记录')
     await expect(page.getByTestId('chart-pie')).toHaveCount(0)
   } finally {
     await app.close()

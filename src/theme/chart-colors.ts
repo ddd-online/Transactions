@@ -30,7 +30,7 @@ export const CHART_PALETTE = [
 ]
 
 /** 「其他」那一片：中性灰，明确不是某一个分类。 */
-export const PIE_OTHER_COLOR = '#9aa0a8'
+const PIE_OTHER_COLOR = '#9aa0a8'
 
 function readToken(name: string, fallback: string): string {
   if (typeof window === 'undefined') return fallback

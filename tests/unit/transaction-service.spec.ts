@@ -214,6 +214,7 @@ describe('transaction service', () => {
       { key: 'B 类', label: 'B 类', amount: 500 },
     ])
     expect(result.total).toBe(43_000)
+    expect(result.hasRecords).toBe(true)
 
     // 按交易类型：三种类型各一片，label 是中文
     const byType = queryTrsForPieChart(db, {
@@ -235,7 +236,7 @@ describe('transaction service', () => {
         groupField: 'transactionType',
         groupTransactionType: '',
       }),
-    ).toEqual({ slices: [], total: 0 })
+    ).toEqual({ slices: [], total: 0, hasRecords: false })
   })
 
   it('deletes the record and its tag links in one transaction', () => {

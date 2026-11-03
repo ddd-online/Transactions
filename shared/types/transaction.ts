@@ -124,4 +124,11 @@ export interface ChartPieResponse {
   slices: ChartPieSlice[]
   /** 各片金额之和（分） */
   total: number
+  /**
+   * 这个范围里到底有没有记录（**不受分组字段与交易类型过滤影响**）。
+   *
+   * 两种「没有数据」要说不同的话：一条记录都没有，和「有记录、但这一种交易类型
+   * 一条都没有」是两件事，空态文案得说对是哪一件。
+   */
+  hasRecords: boolean
 }

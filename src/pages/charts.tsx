@@ -131,6 +131,17 @@ function typeLabel(transactionType: string): string {
   return transactionType
 }
 
+/**
+ * 饼图的空态把「为什么空」说清楚：
+ * 一个记录都没有 → 换范围；有记录但这一种交易类型没有 → 换交易类型。
+ */
+function pieEmptyDescription(pie: ChartPieResponse | null, chart: ChartDto): string {
+  if (pie && pie.hasRecords && chart.groupField === 'category') {
+    return `这个范围里没有「${typeLabel(chart.groupTransactionType)}」记录，换一种交易类型看看。`
+  }
+  return '这个时间范围里没有记录，换一个范围试试。'
+}
+
 function conditionSummary(line: ChartLine): string {
   if (line.conditions.length === 0) return '不限'
   return line.conditions
@@ -865,7 +876,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                       <div className="da-chart__empty" data-testid="chart-data-empty">
                         <EmptyState
                           title="暂无数据"
-                          description="这个时间范围里没有可统计的记录，换一个范围试试。"
+                          description={pieEmptyDescription(pie, selected)}
                         />
                       </div>
                     )

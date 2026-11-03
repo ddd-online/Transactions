@@ -217,6 +217,29 @@ export function queryStatistics(
   return queryStatisticsWhere(db, where.sql, where.args)
 }
 
+/**
+ * 范围内（账本级）的记录条数。
+ *
+ * 只给饼图的空态用：分组合计为空时，要靠它分清「这个范围没有记录」与
+ * 「有记录、但这一种交易类型没有」—— 前者换范围，后者换交易类型。
+ */
+export function countRecordsInRange(
+  db: Db,
+  ledgerId: string,
+  tsRange: readonly number[],
+): number {
+  const clauses = ['ledger_id = ?']
+  const args: SqlValue[] = [ledgerId]
+  if (tsRange.length === 2) {
+    clauses.push('transaction_at >= ?', 'transaction_at <= ?')
+    args.push(tsRange[0], tsRange[1])
+  }
+  const row = db
+    .prepare(`SELECT COUNT(*) AS count FROM ${TABLE} WHERE ${clauses.join(' AND ')}`)
+    .get(...args) as { count: number } | undefined
+  return row?.count ?? 0
+}
+
 /** 单条曲线的分桶聚合序列。 */
 export function queryChartLineData(
   db: Db,

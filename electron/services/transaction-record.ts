@@ -22,6 +22,7 @@ import {
   deleteById as deleteRecord,
   queryByKeyEventDate,
   queryById as queryRecordById,
+  countRecordsInRange,
   queryChartLineData,
   queryChartPieData,
   queryFiltered,
@@ -258,6 +259,7 @@ export function queryTrsForPieChart(db: Db, request: ChartPieQueryRequest): Char
   return {
     slices,
     total: slices.reduce((sum, slice) => sum + slice.amount, 0),
+    hasRecords: countRecordsInRange(db, request.ledgerId, request.tsRange) > 0,
   }
 }
 

@@ -13,6 +13,7 @@ import {
   deleteById,
   queryById,
   queryByKeyEventDate,
+  countRecordsInRange,
   queryChartLineData,
   queryChartPieData,
   queryFiltered,
@@ -714,6 +715,11 @@ describe('transaction record dao', () => {
 
     // 没有记录的账本：空数组，不是 null
     expect(queryChartPieData(db, 'l3', [], 'transactionType', '')).toEqual([])
+
+    // 饼图空态要的「范围里到底有没有记录」：与分组 / 交易类型过滤无关
+    expect(countRecordsInRange(db, 'l1', [])).toBe(5)
+    expect(countRecordsInRange(db, 'l1', [1_767_225_600, 1_769_817_600])).toBe(4)
+    expect(countRecordsInRange(db, 'l3', [])).toBe(0)
   })
 })
 

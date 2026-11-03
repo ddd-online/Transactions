@@ -483,7 +483,8 @@
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   font-variant-numeric: tabular-nums;
-  color: var(--transactions-color-text-tertiary);
+  /* 占比是数据不是提示：三级灰在 12px 上只有 3.6:1，够不上正文那一档 */
+  color: var(--transactions-color-text-secondary);
   text-align: right;
 }
 
