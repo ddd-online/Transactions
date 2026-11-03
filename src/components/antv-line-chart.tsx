@@ -106,7 +106,12 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('x', 'time')
       .encode('y', 'amount')
       .encode('color', 'label')
-      .style('r', 3)
+      /* 未悬浮时是**小实心点**：G2 的 point 标记默认形状是 `hollow` —— 空心圈在 3px 半径下
+       * 只剩一道白环，看着像还没加载完的占位。换成实心的 `circle`、半径收到 2.5，
+       * 并且 `fillOpacity: 1`：点必须与它那条线同色（G2 默认 95%，混进底色就浅一档）。 */
+      .style('shape', 'circle')
+      .style('r', 2.5)
+      .style('fillOpacity', 1)
       .tooltip(false)
       .animate(false)
     chart.render()
