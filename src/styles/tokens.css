@@ -56,21 +56,22 @@
 
   /* Series palette — 折线图的一条曲线、饼图的一片，都按**位置**取这里的颜色
    * （第 N 条曲线 / 第 N 名 = 第 N 色；画布、图例、右侧合计列读同一个索引）。
-   * 色板只有三个色相家族：支出红 27°、收入绿 152°、转账蓝 256° —— 与
-   * --transactions-color-expense/income/transfer 同一批色相，只是分成三档轻重。
-   * 顺序是家族轮转：1–3 中档、4–6 浅档、7–9 深档。最深那一档也只到 OKLCH L 0.56
-   * （对画布 4.2–4.7:1），一张图里不会再出现"第二个深色"混在里面。
-   * 判据（三族色相、每族可辨、相邻可分、色度上限）由 tests/unit/series-colors.spec.ts 盯着。 */
-  --transactions-color-series-1: #c36d64;
-  --transactions-color-series-2: #509c67;
-  --transactions-color-series-3: #5b8bcb;
-  --transactions-color-series-4: #cf9077;
-  --transactions-color-series-5: #6ab396;
-  --transactions-color-series-6: #8e9fd7;
-  --transactions-color-series-7: #ad5561;
-  --transactions-color-series-8: #51843e;
-  --transactions-color-series-9: #277bb2;
-  /* 「其他」那一片：中性灰，明确不属于任何一个家族。 */
+   * 九条色相，每条只出现一次：前三条锚在支出红 27° / 收入绿 150° / 转账蓝 255°，
+   * 与 --transactions-color-expense/income/transfer 同一批色相；其余六条是它们之间的过渡
+   * （橙 / 黄 / 青 / 天蓝 / 洋红 / 紫）—— 同一色相出现两次时，低色度下就是"两个绿"。
+   * 明度按色相链交替（红 .66 / 橙 .58 / 黄 .74）：色相挨得近的两条，明暗必须拉开。
+   * 最深的一条只到 OKLCH L 0.58（对画布 4.3:1），没有藏青、酒红、墨绿那一档。
+   * 判据（色相不重复、相邻可分、明度带、色度上限）由 tests/unit/series-colors.spec.ts 盯着。 */
+  --transactions-color-series-1: #d27369;
+  --transactions-color-series-2: #469b5d;
+  --transactions-color-series-3: #6095d7;
+  --transactions-color-series-4: #b85e1a;
+  --transactions-color-series-5: #d2a40f;
+  --transactions-color-series-6: #27b5a8;
+  --transactions-color-series-7: #d490cd;
+  --transactions-color-series-8: #0389a0;
+  --transactions-color-series-9: #806bb7;
+  /* 「其他」那一片：中性灰，明确不属于任何一条色相。 */
   --transactions-color-series-other: #8b919a;
 
   /* UI state */
@@ -307,16 +308,16 @@
   --transactions-color-outlier-tint-strong: rgba(251, 191, 36, 0.22);
   --transactions-color-expense-tint-soft: rgba(248, 113, 113, 0.10);
 
-  /* Series palette — 深色主题整体提亮一档（L 0.66–0.79），色相与浅色一一对应。 */
-  --transactions-color-series-1: #dd9087;
-  --transactions-color-series-2: #79b98a;
-  --transactions-color-series-3: #80aae3;
-  --transactions-color-series-4: #e5ab95;
-  --transactions-color-series-5: #8bcab0;
-  --transactions-color-series-6: #a8b9ec;
-  --transactions-color-series-7: #c77881;
-  --transactions-color-series-8: #73a164;
-  --transactions-color-series-9: #5699ca;
+  /* Series palette — 深色主题整体提亮一档（L 0.68–0.82），色相与浅色一一对应。 */
+  --transactions-color-series-1: #ed978d;
+  --transactions-color-series-2: #70b880;
+  --transactions-color-series-3: #85b4f0;
+  --transactions-color-series-4: #d2814e;
+  --transactions-color-series-5: #ebbe43;
+  --transactions-color-series-6: #69d3c6;
+  --transactions-color-series-7: #f0b3ea;
+  --transactions-color-series-8: #3fa8bf;
+  --transactions-color-series-9: #9d8cd0;
   --transactions-color-series-other: #767d88;
 
   --transactions-color-success: #4ade80;
@@ -412,15 +413,15 @@
     --transactions-color-expense-tint-soft: rgba(248, 113, 113, 0.10);
 
     /* Series palette（与上面两段同值，系统跟随兜底用） */
-    --transactions-color-series-1: #dd9087;
-    --transactions-color-series-2: #79b98a;
-    --transactions-color-series-3: #80aae3;
-    --transactions-color-series-4: #e5ab95;
-    --transactions-color-series-5: #8bcab0;
-    --transactions-color-series-6: #a8b9ec;
-    --transactions-color-series-7: #c77881;
-    --transactions-color-series-8: #73a164;
-    --transactions-color-series-9: #5699ca;
+    --transactions-color-series-1: #ed978d;
+    --transactions-color-series-2: #70b880;
+    --transactions-color-series-3: #85b4f0;
+    --transactions-color-series-4: #d2814e;
+    --transactions-color-series-5: #ebbe43;
+    --transactions-color-series-6: #69d3c6;
+    --transactions-color-series-7: #f0b3ea;
+    --transactions-color-series-8: #3fa8bf;
+    --transactions-color-series-9: #9d8cd0;
     --transactions-color-series-other: #767d88;
 
     --transactions-color-success: #4ade80;

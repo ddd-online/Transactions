@@ -1,10 +1,10 @@
 /**
  * 一套色板，两个图表：折线图的「第 N 条曲线」和饼图的「第 N 名」取的是同一个位置。
  *
- * 色板只有三个色相家族（支出红 27° / 收入绿 152° / 转账蓝 256°）× 三档轻重，
- * 所以这里锁的是「家族账」：每个槽位属于哪个族、三档之间谁轻谁重、每族内部要分得开、
- * 相邻两位要分得开、最深一档不许再深（一张图里出现两个深色就难辨），
- * 以及浅深两套主题的色相一一对应。
+ * 色板是**九条色相，每条只出现一次**（见 DESIGN.md「Series palette」）：前三条锚在支出红 /
+ * 收入绿 / 转账蓝，其余六条是它们之间的过渡。所以这里锁的是三件事：
+ * 锚有没有对准语义色、色相有没有重复（重复就是"两个绿"，低色度下认不出）、
+ * 相邻与任意两位在明暗上够不够分得开，以及明度带不许下探到深色。
  *
  * 判据与取舍写在 DESIGN.md「Series palette」；取值本身在 src/styles/tokens.css。
  */
@@ -26,8 +26,6 @@ const SYSTEM = block(tokensCss, 'html:not([data-theme])')
 
 const SLOTS = Array.from({ length: 9 }, (_, index) => `color-series-${index + 1}`)
 const FILLS = [...SLOTS, 'color-series-other']
-/** 三个家族在色板里的槽位：中档 1–3、浅档 4–6、深档 7–9。 */
-const TONES = { mid: [0, 1, 2], light: [3, 4, 5], deep: [6, 7, 8] }
 
 // ---------------------------------------------------------------- 颜色计算（只够这几条判据用）
 
@@ -68,7 +66,7 @@ function deltaE76(a: string, b: string): number {
   return Math.hypot(l1 - l2, a1 - a2, b1 - b2)
 }
 
-/** OKLCH：明度判「深不深」、色度判「柔不柔」、色相判属于哪个家族。 */
+/** OKLCH：明度判「深不深」、色度判「柔不柔」、色相判是不是重复了。 */
 function oklch(hex: string): { l: number; chroma: number; hue: number } {
   const [r, g, b] = channels(hex).map(linear)
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
@@ -100,7 +98,7 @@ describe('一套色板两个图表', () => {
     const palette = seriesPalette()
     expect(palette).toHaveLength(PIE_MAX_SLICES)
     palette.forEach((color, index) => expect(seriesColor(index)).toBe(color))
-    // 多于槽位时从头再来（折线多于 9 条、或分组恰好超出折叠上限都不会没有颜色）
+    // 多于槽位时从头再来（折线多于 9 条也不会没有颜色）
     expect(seriesColor(PIE_MAX_SLICES)).toBe(seriesColor(0))
   })
 
@@ -115,7 +113,7 @@ describe('一套色板两个图表', () => {
     expect(pieSliceColors(slices, 'tag')).toEqual(category)
   })
 
-  it('按交易类型取三个家族的中档：支出红 / 收入绿 / 转账蓝', () => {
+  it('按交易类型取色板前三位：支出红 / 收入绿 / 转账蓝', () => {
     const colors = pieSliceColors(
       [{ key: 'expense' }, { key: 'income' }, { key: 'transfer' }],
       'transactionType',
@@ -142,62 +140,62 @@ describe('色板的取值', () => {
     SLOTS.forEach((name, index) => expect(seriesColor(index)).toBe(token(LIGHT, name)))
   })
 
-  it('三个色相家族：每个槽位的色相落在支出 / 收入 / 转账那一族里', () => {
+  it('前三条对准支出红 / 收入绿 / 转账蓝', () => {
     for (const css of [LIGHT, DARK]) {
+      const palette = paletteOf(css)
       const anchors = ['color-expense', 'color-income', 'color-transfer'].map((name) =>
         token(css, name),
       )
-      paletteOf(css).forEach((color, index) => {
-        expect(hueGap(color, anchors[index % 3])).toBeLessThanOrEqual(25)
+      anchors.forEach((anchor, index) => {
+        expect(hueGap(palette[index], anchor)).toBeLessThanOrEqual(20)
       })
     }
   })
 
-  it('三档轻重：中档夹在中间，浅档更亮、深档更暗', () => {
-    const palette = paletteOf(LIGHT).map((color) => oklch(color).l)
-    for (let family = 0; family < 3; family += 1) {
-      const mid = palette[TONES.mid[family]]
-      const light = palette[TONES.light[family]]
-      const deep = palette[TONES.deep[family]]
-      expect(light - mid).toBeGreaterThanOrEqual(0.05)
-      expect(mid - deep).toBeGreaterThanOrEqual(0.05)
-    }
-  })
-
-  it('不再有第二个深色：最暗的一档也只到 L 0.54 以上', () => {
-    for (const css of [LIGHT, DARK]) {
-      for (const color of paletteOf(css)) {
-        expect(oklch(color).l).toBeGreaterThanOrEqual(0.54)
-      }
-    }
-  })
-
-  it('每族内部与相邻两位都分得开，色度仍在柔和档', () => {
+  it('九条色相每条只出现一次：任意两条至少差 24°，没有"两个绿"', () => {
     for (const css of [LIGHT, DARK]) {
       const palette = paletteOf(css)
-      for (let family = 0; family < 3; family += 1) {
-        const tones = [TONES.mid[family], TONES.light[family], TONES.deep[family]].map(
-          (slot) => palette[slot],
-        )
-        for (let i = 0; i < tones.length; i += 1) {
-          for (let j = i + 1; j < tones.length; j += 1) {
-            expect(deltaE76(tones[i], tones[j])).toBeGreaterThanOrEqual(10)
-          }
+      for (let i = 0; i < palette.length; i += 1) {
+        for (let j = i + 1; j < palette.length; j += 1) {
+          expect(hueGap(palette[i], palette[j])).toBeGreaterThanOrEqual(24)
         }
       }
-      for (let index = 0; index < palette.length - 1; index += 1) {
-        expect(deltaE76(palette[index], palette[index + 1])).toBeGreaterThanOrEqual(25)
-      }
-      for (const color of palette) expect(oklch(color).chroma).toBeLessThanOrEqual(0.13)
     }
   })
 
-  it('对画布：中档与深档 ≥3:1，浅档也留得住 2.3:1', () => {
+  it('明度带：不再有第二个深色，也没有浅到看不见的', () => {
+    for (const css of [LIGHT, DARK]) {
+      for (const color of paletteOf(css)) {
+        const lightness = oklch(color).l
+        expect(lightness).toBeGreaterThanOrEqual(0.55)
+        expect(lightness).toBeLessThanOrEqual(0.85)
+      }
+    }
+  })
+
+  it('相邻两位 ≥30，任意两位 ≥23，色度仍在柔和档', () => {
+    for (const css of [LIGHT, DARK]) {
+      const palette = paletteOf(css)
+      for (let index = 0; index < palette.length; index += 1) {
+        expect(
+          deltaE76(palette[index], palette[(index + 1) % palette.length]),
+        ).toBeGreaterThanOrEqual(30)
+      }
+      for (let i = 0; i < palette.length; i += 1) {
+        for (let j = i + 1; j < palette.length; j += 1) {
+          expect(deltaE76(palette[i], palette[j])).toBeGreaterThanOrEqual(23)
+        }
+      }
+      for (const color of palette) expect(oklch(color).chroma).toBeLessThanOrEqual(0.17)
+    }
+  })
+
+  it('对画布：每一片 ≥2.1:1，其中至少五条 ≥3:1', () => {
     const canvas = token(LIGHT, 'color-bg-base')
-    paletteOf(LIGHT).forEach((color, index) => {
-      const floor = index >= 3 && index <= 5 ? 2.3 : 3
-      expect(contrast(color, canvas)).toBeGreaterThanOrEqual(floor)
-    })
+    const ratios = paletteOf(LIGHT).map((color) => contrast(color, canvas))
+    expect(Math.min(...ratios)).toBeGreaterThanOrEqual(2.1)
+    expect(ratios.filter((ratio) => ratio >= 3).length).toBeGreaterThanOrEqual(5)
+
     const darkCanvas = token(DARK, 'color-bg-base')
     for (const color of paletteOf(DARK)) {
       expect(contrast(color, darkCanvas)).toBeGreaterThanOrEqual(3)

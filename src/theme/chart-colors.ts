@@ -4,8 +4,9 @@
  * 折线图按「第 N 条曲线 = 第 N 色」，饼图按「第 N 名 = 第 N 色」，取的是同一份色板 ——
  * 画布、图例、右侧合计列读同一个索引，所以一条曲线或一片扇区的颜色在哪儿都一样。
  *
- * 色板只有三个色相家族（见 DESIGN.md「Series palette」）：支出红、收入绿、转账蓝，
- * 每族三档轻重（中 / 浅 / 深）。家族之外只有一个中性灰，给饼图折出来的「其他」。
+ * 九条色相，每条只出现一次（见 DESIGN.md「Series palette」）：前三条锚在支出红 / 收入绿 /
+ * 转账蓝，其余六条是它们之间的过渡（橙 / 黄 / 青 / 天蓝 / 洋红 / 紫），再加一枚给「其他」的中性灰。
+ * 同一色相出现两次时，低色度下就是"两个绿" —— 认不出，所以每条只给一个位置。
  *
  * 画布读不到 CSS 变量，所以每个值都在建图前从根元素解析一次（`readToken`），深色主题换一套；
  * 取不到时落回浅色那组的字面量（单元测试里没有 DOM）。
@@ -13,25 +14,25 @@
 
 import { PIE_OTHER_KEY } from '../../shared/domain/pie'
 
-/** 色板槽位：三个家族 × 三档 —— 正好是饼图的折叠上限（`PIE_MAX_SLICES`）。 */
+/** 色板槽位：九条色相 —— 正好是饼图的折叠上限（`PIE_MAX_SLICES`）。 */
 const SERIES_SLOT_COUNT = 9
 
 /** 浅色取值，同时是取不到令牌时的兜底。 */
 const SERIES_FALLBACKS = [
-  '#c36d64',
-  '#509c67',
-  '#5b8bcb',
-  '#cf9077',
-  '#6ab396',
-  '#8e9fd7',
-  '#ad5561',
-  '#51843e',
-  '#277bb2',
+  '#d27369',
+  '#469b5d',
+  '#6095d7',
+  '#b85e1a',
+  '#d2a40f',
+  '#27b5a8',
+  '#d490cd',
+  '#0389a0',
+  '#806bb7',
 ]
 
 const SERIES_OTHER_FALLBACK = '#8b919a'
 
-/** 三个家族的中档：支出红 / 收入绿 / 转账蓝 —— 就是色板的第 1–3 位。 */
+/** 支出红 / 收入绿 / 转账蓝 —— 就是色板的前三位，按交易类型分组时固定取它们。 */
 const PIE_TYPE_SLOTS: Record<string, number> = { expense: 0, income: 1, transfer: 2 }
 
 function readToken(name: string, fallback: string): string {
