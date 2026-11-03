@@ -456,7 +456,7 @@ function RoundBlock({
             onToggle()
           }}
         >
-          <Icon name={expanded ? 'Down' : 'CaretRight'} size={12} />
+          <Icon name="CaretRight" size={12} />
           <span>
             第 {round.roundNo} 轮 · {formatTimestamp(round.openedAt, 'YYYY-MM-DD')} →{' '}
             {formatTimestamp(round.closedAt, 'YYYY-MM-DD')}

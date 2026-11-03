@@ -126,6 +126,22 @@ test('股票记录：选中股票默认展开最新一轮', async () => {
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-history-rounds.png'),
     })
 
+    // 展开 / 收起是同一枚实心三角：字形只有一个，展开只是转 90°
+    const toggleGlyphs = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.stock-round__toggle svg path')).map((node) =>
+        node.getAttribute('d'),
+      ),
+    )
+    expect(toggleGlyphs).toHaveLength(2)
+    expect(new Set(toggleGlyphs).size).toBe(1)
+    const toggleTurns = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.stock-round__toggle .icon')).map(
+        (node) => getComputedStyle(node).transform,
+      ),
+    )
+    expect(toggleTurns[0]).toBe('none')
+    expect(toggleTurns[1]).toBe('matrix(0, 1, -1, 0, 0, 0)')
+
     // 空复盘点「编辑」时自动带上本轮复盘模板
     await rounds.nth(1).getByTestId('round-edit').click()
     await expect(page.getByTestId('round-review')).toHaveValue(/^买入理由：/)

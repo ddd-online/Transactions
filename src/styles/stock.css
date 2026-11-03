@@ -3221,6 +3221,24 @@
   color: var(--transactions-color-text-secondary);
 }
 
+/* 展开 / 收起是**同一枚实心三角**：收起朝右、展开朝下（同一枚转 90°）。
+ * 不换字形 —— 细箭头和实心三角一个轻一个重，切一次状态就换一次分量。 */
+.stock-round__toggle .icon {
+  flex: none;
+  color: var(--transactions-color-text-tertiary);
+  transition: transform var(--transactions-transition-fast);
+}
+
+.stock-round__toggle[aria-expanded='true'] .icon {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-round__toggle .icon {
+    transition: none;
+  }
+}
+
 .stock-round__pnl {
   flex-shrink: 0;
 }
