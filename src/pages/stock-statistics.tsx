@@ -290,13 +290,17 @@ function ChartBox({
     } else {
       line.animate(false)
     }
+    /* 与分析页同一套采样点：小的实心圆、与它那条线同色。
+     * G2 的 point 标记默认形状是 `hollow` —— 3px 半径下只剩一道白环，看着像还没加载完的占位。 */
     chart
       .point()
       .data(rows)
       .encode('x', 'x')
       .encode('y', 'value')
       .encode('color', 'sign')
-      .style('r', 3)
+      .style('shape', 'circle')
+      .style('r', 2.5)
+      .style('fillOpacity', 1)
       .tooltip(tooltip)
       .animate(false)
     chart.render()
