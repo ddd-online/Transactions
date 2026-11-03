@@ -4468,6 +4468,54 @@
   outline-offset: 1px;
 }
 
+/* 名称刷新：代码后面一枚 20px 的静默按钮 —— 名称会随除权除息、摘帽、更名变，
+ * 代码不变，所以「按代码重取名称」贴着代码放。
+ * 静止是三级灰（比次要的代码还轻一档，它是一年用不上几次的动作），悬停才亮主色；
+ * 请求中图标自转，转的是 transform（合成层），减少动态偏好下直接不转。 */
+.stock-name-refresh {
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-tertiary);
+  font-size: 0;
+  cursor: pointer;
+  transition:
+    color var(--transactions-transition-fast),
+    background-color var(--transactions-transition-fast);
+}
+
+.stock-name-refresh:hover {
+  color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.stock-name-refresh:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+.stock-name-refresh.is-spinning {
+  cursor: progress;
+}
+
+.stock-name-refresh.is-spinning .icon {
+  animation: tr-spin 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-name-refresh.is-spinning .icon {
+    animation: none;
+  }
+}
+
 .stock-ladder__item-time {
   letter-spacing: 0.02em;
 }

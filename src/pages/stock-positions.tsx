@@ -19,6 +19,7 @@ import { StockCode } from './stock-code'
 import { StockDailyReviews } from './stock-daily-reviews'
 import { StockLedgerSection } from './stock-ledger'
 import { StockMasterRow } from './stock-master-row'
+import { StockNameRefresh } from './stock-name-refresh'
 import { StockRoundReview } from './stock-round-review'
 import {
   stockDateTime,
@@ -174,6 +175,18 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const selected = useMemo(
     () => positions.find((row) => row.stockCode === selectedCode) ?? positions[0],
     [positions, selectedCode],
+  )
+
+  const activeCode = selected?.stockCode ?? ''
+
+  /** 名称刷新回来：只改这一只的名字。重拉整页会把弹窗、复盘草稿与滚动位置一起洗掉。 */
+  const renameSelected = useCallback(
+    (stockName: string): void => {
+      setPositions((rows) =>
+        rows.map((row) => (row.stockCode === activeCode ? { ...row, stockName } : row)),
+      )
+    },
+    [activeCode],
   )
 
   /** 表格里这些成交的费用合计（费用恒为整数分，加完再格式化，不丢精度）。 */
@@ -580,6 +593,13 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                     code={selected.stockCode}
                     className="stock-muted stock-mono"
                     testId="stock-position-detail-code"
+                  />
+                  <StockNameRefresh
+                    ledgerId={ledgerId}
+                    stockCode={selected.stockCode}
+                    stockName={selected.stockName}
+                    testId="stock-position-name-refresh"
+                    onRenamed={renameSelected}
                   />
                 </div>
                 <div className="stock-detail__actions">

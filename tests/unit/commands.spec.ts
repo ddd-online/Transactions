@@ -229,6 +229,13 @@ describe('command catalog', () => {
       }).success,
     ).toBe(true)
     expect(commandSchemas.stock_name.safeParse({ stock_code: '600000' }).success).toBe(true)
+    expect(
+      commandSchemas.stock_name_refresh.safeParse({ ledger_id: 'l1', stock_code: '600000' })
+        .success,
+    ).toBe(true)
+    expect(commandSchemas.stock_name_refresh.safeParse({ stock_code: '600000' }).success).toBe(
+      false,
+    )
   })
 
   it('validates update requests', () => {

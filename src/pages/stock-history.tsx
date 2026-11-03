@@ -23,6 +23,7 @@ import { StockCode } from './stock-code'
 import { StockDailyReviews } from './stock-daily-reviews'
 import { StockLedgerSection } from './stock-ledger'
 import { StockMasterRow } from './stock-master-row'
+import { StockNameRefresh } from './stock-name-refresh'
 import { StockRoundReview } from './stock-round-review'
 import {
   stockDateTime,
@@ -138,6 +139,19 @@ export function StockHistoryPanel({
       }
     },
     [ledgerId],
+  )
+
+  /** 名称刷新回来：左栏与详情头就地改名，不重拉（重拉会把展开的轮次与滚动位置一起洗掉）。 */
+  const renameStock = useCallback(
+    (stockName: string): void => {
+      setRows((list) =>
+        list.map((row) => (row.stockCode === selectedCode ? { ...row, stockName } : row)),
+      )
+      setDetail((current) =>
+        current && current.stockCode === selectedCode ? { ...current, stockName } : current,
+      )
+    },
+    [selectedCode],
   )
 
   useEffect(() => {
@@ -304,6 +318,13 @@ export function StockHistoryPanel({
                     code={detail.stockCode}
                     className="stock-muted stock-mono"
                     testId="stock-history-detail-code"
+                  />
+                  <StockNameRefresh
+                    ledgerId={ledgerId}
+                    stockCode={detail.stockCode}
+                    stockName={detail.stockName}
+                    testId="stock-history-name-refresh"
+                    onRenamed={renameStock}
                   />
                 </div>
                 <div className="stock-detail__summary">

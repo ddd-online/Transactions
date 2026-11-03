@@ -56,7 +56,8 @@ import {
   rollbackLatest,
   updateTradeFill,
 } from '../services/stock-trade-edit'
-import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../services/stock-review'
+import { updateDayReview, updateRoundReview, updateRoundTag } from '../services/stock-review'
+import { lookupStockName, refreshStockName } from '../services/stock-name'
 import {
   createTemplateDto,
   deleteTemplate,
@@ -128,6 +129,10 @@ function createQuoteFetcher(): TencentStockQuoteFetcher {
   return new TencentStockQuoteFetcher({
     fetchImpl: (url, signal) => appFetch(url, { signal }),
     ...(testBase ? { baseUrl: testBase } : {}),
+    // 夹具服务器没有 GBK 编码器：要测中文名称时由测试指定 UTF-8 回包。
+    ...(process.env.TRANSACTIONS_TEST_QUOTE_CHARSET === 'utf-8'
+      ? { charset: 'utf-8' as const }
+      : {}),
   })
 }
 
@@ -1353,6 +1358,16 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       const stockCode = String(asObject(request).stock_code ?? '')
       if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
       return lookupStockName(workspaceDb(), createQuoteFetcher(), stockCode)
+    },
+
+    async stock_name_refresh(request) {
+      const raw = asObject(request)
+      return refreshStockName(
+        workspaceDb(),
+        createQuoteFetcher(),
+        String(raw.ledger_id ?? ''),
+        String(raw.stock_code ?? ''),
+      )
     },
 
     template_create(request) {

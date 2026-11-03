@@ -520,6 +520,48 @@ export function updateTradeHistoryName(
   ).run(stockName, now, ledgerId, stockCode)
 }
 
+/**
+ * 按代码改名字：持仓行与全部成交行。
+ *
+ * 名称是行情源的**显示名**，代码才是身份 —— 除权除息（`XD` / `DR` 前缀）、ST 摘帽、
+ * 公司更名都会让同一个代码换名字，所以按股票冗余了名称的表要一起改。
+ * 已经记下的账本文字（事件正文 / 备注）不在同步范围：那是当时的快照。
+ */
+export function updateStockName(
+  db: Db,
+  ledgerId: string,
+  stockCode: string,
+  stockName: string,
+  now = nowUnix(),
+): void {
+  db.prepare(
+    'UPDATE stock_position SET stock_name = ?, updated_at = ? ' +
+      'WHERE ledger_id = ? AND stock_code = ?',
+  ).run(stockName, now, ledgerId, stockCode)
+  db.prepare('UPDATE stock_trade SET stock_name = ? WHERE ledger_id = ? AND stock_code = ?').run(
+    stockName,
+    ledgerId,
+    stockCode,
+  )
+}
+
+/**
+ * 历史集合里的名字（只改名称，**不动 `updated_at`**）。
+ *
+ * 记录页左栏按 `updated_at DESC` 排 —— 刷新一次名字不是"这只股票又有动静了"，
+ * 不该把它弹到列表最上面。
+ */
+export function updateHistoryStockName(
+  db: Db,
+  ledgerId: string,
+  stockCode: string,
+  stockName: string,
+): void {
+  db.prepare(
+    'UPDATE stock_trade_history SET stock_name = ? WHERE ledger_id = ? AND stock_code = ?',
+  ).run(stockName, ledgerId, stockCode)
+}
+
 /** 存在交易记录的股票代码列表（不做排序，历史回填使用；SQL 是去重的 `stock_code` 列表）。 */
 export function listTradeStocks(db: Db, ledgerId: string): string[] {
   const rows = db

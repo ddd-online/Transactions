@@ -467,6 +467,7 @@ export const commandSchemas = {
     tag: z.string().default(''),
   }),
   stock_name: z.object({ stock_code: z.string() }),
+  stock_name_refresh: z.object({ ledger_id: z.string(), stock_code: z.string() }),
   stock_limit_ladder: z.object({
     date: z.string().default(''),
     refresh: z.boolean().default(false),
@@ -629,6 +630,7 @@ export interface CommandResponses {
   stock_round_review: StockTradeHistoryDetailDto
   stock_round_tag: StockTradeHistoryDetailDto
   stock_name: StockNameDto
+  stock_name_refresh: StockNameDto
   stock_limit_ladder: StockLimitLadder
   stock_trades: StockTradeDto[]
   template_create: string

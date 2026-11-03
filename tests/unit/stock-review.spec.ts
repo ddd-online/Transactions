@@ -5,12 +5,10 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { closeWorkspace, openWorkspace } from '../../electron/db'
-import { AppError } from '../../shared/errors'
 import { addPrincipalAtDate } from '../../electron/services/stock-account'
 import { createTradeOrderWithRoundFee } from '../../electron/services/stock-trade-write'
-import { lookupStockName, updateDayReview, updateRoundReview, updateRoundTag } from '../../electron/services/stock-review'
+import { updateDayReview, updateRoundReview, updateRoundTag } from '../../electron/services/stock-review'
 import { getTradeHistoryDetail } from '../../electron/services/stock-history'
-import type { StockQuoteFetcher } from '../../electron/services/stock-quote'
 import type { CreateTradeOrderWithRoundFeeRequest } from '../../shared/types/stock-trade'
 
 const directories: string[] = []
@@ -99,26 +97,6 @@ describe('stock review', () => {
     expect(() => updateRoundReview(db, 'l1', 'missing', 'x')).toThrow('轮次不存在')
     expect(updateRoundTag(db, 'l1', roundId, '打板').rounds[0].tag).toBe('打板')
     expect(() => updateRoundTag(db, 'l1', roundId, '不存在')).toThrow('无效的交易标签')
-  })
-
-  it('looks up a stock name locally first, then from the quote fetcher', async () => {
-    const db = openWorkspace(workspaceDirectory()).db
-    addPrincipalAtDate(db, 'l1', 100_000, '2026-01-01')
-    createTradeOrderWithRoundFee(db, order('open', 5_000, at(2026, 1, 5)))
-
-    const fetcher: StockQuoteFetcher = {
-      fetchQuotes: async () => new Map(),
-      fetchName: async (code) => (code === '000001' ? '平安银行' : ''),
-    }
-    expect(await lookupStockName(db, fetcher, '600000')).toEqual({
-      stockCode: '600000',
-      stockName: '浦发银行',
-    })
-    expect(await lookupStockName(db, fetcher, '000001')).toEqual({
-      stockCode: '000001',
-      stockName: '平安银行',
-    })
-    await expect(lookupStockName(db, fetcher, '999999')).rejects.toBeInstanceOf(AppError)
   })
 })
 

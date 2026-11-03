@@ -2,11 +2,10 @@ import { AppError } from '../../shared/errors'
 import { currentRoundTrades } from '../../shared/domain/stock'
 import type { Db } from '../db/driver'
 import { getTradeRound, listTradesAsc, updateTradeRoundReview, updateTradeRoundTag } from '../db/dao/stock-trade'
-import type { StockDayReviewDto, StockNameDto } from '../../shared/types/stock-position'
+import type { StockDayReviewDto } from '../../shared/types/stock-position'
 import type { StockTradeHistoryDetailDto } from '../../shared/types/stock-history'
 import { getTradeHistoryDetail } from './stock-history'
 import { getTradeTags, unixToDate } from './stock-account'
-import type { StockQuoteFetcher } from './stock-quote'
 import { isValidDiaryDate } from './diary'
 import { todayYmd } from '../../shared/domain/time'
 
@@ -123,26 +122,3 @@ export function updateRoundTag(
   updateTradeRoundTag(db, roundId, normalized)
   return getTradeHistoryDetail(db, ledgerId, round.stockCode)
 }
-
-/** 股票名称：先查本地成交，未命中走行情；都没有时报 404。 */
-export async function lookupStockName(
-  db: Db,
-  fetcher: StockQuoteFetcher,
-  stockCode: string,
-): Promise<StockNameDto> {
-  if (!stockCode) throw new AppError('stock_code is required', { status: 400 })
-  try {
-    const row = db
-      .prepare(
-        "SELECT stock_name FROM stock_trade WHERE stock_code = ? AND stock_name != '' LIMIT 1",
-      )
-      .get(stockCode) as { stock_name: string } | undefined
-    if (row && row.stock_name) return { stockCode, stockName: row.stock_name }
-  } catch {
-    // 本地查询失败继续走外部行情
-  }
-  const name = await fetcher.fetchName(stockCode)
-  if (!name) throw new AppError(`未找到股票: ${stockCode}`, { status: 404 })
-  return { stockCode, stockName: name }
-}
-

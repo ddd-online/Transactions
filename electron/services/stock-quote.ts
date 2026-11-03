@@ -72,11 +72,25 @@ export class TencentStockQuoteFetcher implements StockQuoteFetcher {
   private readonly fetchImpl: QuoteFetch
   private readonly timeoutMs: number
   private readonly baseUrl: string
+  private readonly charset: 'gbk' | 'utf-8'
 
-  constructor(options: { fetchImpl?: QuoteFetch; timeoutMs?: number; baseUrl?: string } = {}) {
+  constructor(
+    options: {
+      fetchImpl?: QuoteFetch
+      timeoutMs?: number
+      baseUrl?: string
+      /**
+       * 响应编码，默认 GBK —— 腾讯固定如此，没有协商余地。
+       * 夹具服务器没有 GBK 编码器，测试用 `TRANSACTIONS_TEST_QUOTE_CHARSET=utf-8`
+       * 让它按 UTF-8 读回包；生产构建不设置这个变量。
+       */
+      charset?: 'gbk' | 'utf-8'
+    } = {},
+  ) {
     this.fetchImpl = options.fetchImpl ?? defaultQuoteFetch
     this.timeoutMs = options.timeoutMs ?? QUOTE_TIMEOUT_MS
     this.baseUrl = options.baseUrl ?? QUOTE_BASE
+    this.charset = options.charset ?? 'gbk'
   }
 
   async fetchQuotes(codes: readonly string[]): Promise<Map<string, StockQuoteDto>> {
@@ -98,7 +112,7 @@ export class TencentStockQuoteFetcher implements StockQuoteFetcher {
     const payload = await this.fetchPayload(`${this.baseUrl}${QUOTE_PATH}${query.join(',')}`)
     if (payload === null) return result
 
-    const parsed = parseTencentQuotePayload(decodeGbk(payload))
+    const parsed = parseTencentQuotePayload(this.decode(payload))
     for (const code of requested) {
       const quote = parsed.get(code)
       if (quote) result.set(code, quote)
@@ -111,7 +125,12 @@ export class TencentStockQuoteFetcher implements StockQuoteFetcher {
     if (!isValidStockCode(code)) return ''
     const payload = await this.fetchPayload(`${this.baseUrl}${QUOTE_PATH}${marketPrefix(code)}${code}`)
     if (payload === null) return ''
-    return parseTencentName(decodeGbk(payload))
+    return parseTencentName(this.decode(payload))
+  }
+
+  /** 按配置的编码解码回包（价格字段是 ASCII，两种编码解出来一样；名称不同）。 */
+  private decode(payload: Uint8Array): string {
+    return this.charset === 'utf-8' ? new TextDecoder('utf-8').decode(payload) : decodeGbk(payload)
   }
 
   /** 发起一次行情请求；任何失败都返回 `null`（调用方据此给出空结果）。 */

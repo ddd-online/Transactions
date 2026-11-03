@@ -1,5 +1,10 @@
 import type { Db } from '../driver'
 
+/** 当前 Unix 秒（与 `stock-trade` DAO 同一个口径）。 */
+function nowUnix(): number {
+  return Math.floor(Date.now() / 1000)
+}
+
 /** `stock_lesson` 的原始行；来源字段是创建/更新时写下的快照。 */
 export interface StockLessonRow {
   id: string
@@ -149,6 +154,20 @@ export function updateStockLesson(db: Db, row: StockLessonRow): void {
 
 export function deleteStockLesson(db: Db, ledgerId: string, id: string): void {
   db.prepare('DELETE FROM stock_lesson WHERE ledger_id = ? AND id = ?').run(ledgerId, id)
+}
+
+/** 心得里的股票名是身份、不是内容：代码没变、行情换了名字时一起改。 */
+export function updateLessonStockName(
+  db: Db,
+  ledgerId: string,
+  stockCode: string,
+  stockName: string,
+  now = nowUnix(),
+): void {
+  db.prepare(
+    'UPDATE stock_lesson SET stock_name = ?, updated_at = ? ' +
+      'WHERE ledger_id = ? AND stock_code = ?',
+  ).run(stockName, now, ledgerId, stockCode)
 }
 
 /** 所有可关联轮次（已归档、带股票名），按清仓时间倒序。 */
