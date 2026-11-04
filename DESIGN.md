@@ -168,7 +168,9 @@ Cool neutrals carry the interface; Clarity Blue is the single accent; a small se
 
 - **Clarity Blue** (#3964fe): primary buttons, active navigation, links, tab ink, focus rings, selected states. **Hover 加深到 #2b52e6（白字 6.1:1）、按下再深到 #1e40c8（8.0:1）**，tint rgba(57,100,254,0.08) 用于选中底与行高亮。
 
-  **悬停往深走，不往亮走。** 实色按钮上压的是白字，而 AntD 默认把悬停往亮里推（#3964fe → #6188ff）：白 + 亮蓝只有 **3.24:1**，指针停在按钮上的那一刻恰好掉出 AA。危险按钮同理（#dc2626 → #e8524d，白字 **3.66:1**）。所以 `colorPrimaryHover/Active` 与 `colorErrorHover/Active` 都按令牌显式给出，不交给算法推。唯一的例外是深色下的危险按钮：它压的是墨字，底越深字越糊，所以那两态往亮走（#e07a7a / #ea9492，墨字 6.5 / 8.2:1）。
+  **悬停默认往深走，不往亮走。** 实色按钮上压的是白字，而 AntD 默认把悬停往亮里推（#3964fe → #6188ff）：白 + 亮蓝只有 **3.24:1**，指针停在按钮上的那一刻恰好掉出 AA。危险按钮同理（#dc2626 → #e8524d，白字 **3.66:1**）。所以 `colorPrimaryHover/Active` 与 `colorErrorHover/Active` 都按令牌显式给出，不交给算法推。
+
+  **但深色下这一条要反着来。** 深色页面已经近黑，实色按钮面本来就只有 3.0:1；再往深走，悬停时按钮会**沉进背景**（上一版 #2a4ecf 只有 2.68:1）。所以深色主按钮的悬停在白字 AA 带内轻微**提亮**到 #3f63e6（白字 5.1、对页面 3.7、比静止亮 23%），按下才加深。#e07a7a / #ea9492 那对危险色同理 —— 深色危险按钮压的是墨字，底越深字越糊。规则本身不变（「状态变化不能牺牲可读性」），只是深色下「更可读」的方向是往亮。
 
 ### Neutral
 
@@ -362,7 +364,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 ### Buttons
 
 - **Shape:** 8px radius; heights 28 / 36 / 44px (small / default / large); default min-width 72px.
-- **Primary:** solid Clarity Blue, white text, padding 0 16px. **Hover 加深到 #2b52e6（6.1:1）、按下到 #1e40c8（8.0:1）** —— 白字压在按钮上，往亮走就掉出 AA。
+- **Primary:** solid Clarity Blue, white text, padding 0 16px. **Hover 加深到 #2b52e6（6.1:1）、按下到 #1e40c8（8.0:1）** —— 白字压在按钮上，往亮走就掉出 AA。深色例外：悬停提亮到 #3f63e6（白字 5.1、对页面 3.7），因为那里的页面已经近黑，再深按钮就沉进背景了。
 - **Secondary (default):** Paper face, 1px hairline border, ink text; hover adds a soft fill (hover-bg).
 - **Text:** neutral secondary text, hover fill; text-danger turns Expense on hover with a danger-tint fill.
 - **Disabled:** 控件自身的禁用色一律用 `--transactions-color-text-disabled`（浅色 ≈2.6:1）。AntD 给文本按钮的 25% 墨色（≈1.8:1）在纸白上几乎看不见，`antd.css` 里按 text 变体把它拉回令牌 —— 只改 text 变体，主按钮的白字与危险按钮的红字不动。

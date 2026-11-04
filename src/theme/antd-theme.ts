@@ -79,8 +79,10 @@ export const ANT_PALETTES: Record<AntdMode, Palette> = {
     shadow: '0 1px 2px rgba(0, 0, 0, 0.30)',
     shadowSecondary: '0 8px 24px rgba(0, 0, 0, 0.45)',
     dangerInk: '#0f1115',
-    primaryHover: '#2a4ecf',
-    primaryActive: '#1f3aa8',
+    /* 深色页面已经近黑：悬停再往深走，按钮面就沉进背景（上一版 #2a4ecf 只有 2.68:1）。
+     * 所以在白字 AA 带内轻微提亮，按下才加深 —— 那 90ms 里文字仍有 6.8:1。 */
+    primaryHover: '#3f63e6',
+    primaryActive: '#2a4ecf',
     /* 深色危险按钮压的是墨字：底越深字越糊，所以它这两态往**亮**走 —— 与主按钮相反。 */
     errorHover: '#e07a7a',
     errorActive: '#ea9492',

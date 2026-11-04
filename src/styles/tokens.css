@@ -284,8 +284,8 @@
   color-scheme: dark;
 
   --transactions-color-primary: #3964fe;
-  --transactions-color-primary-hover: #2a4ecf;
-  --transactions-color-primary-active: #1f3aa8;
+  --transactions-color-primary-hover: #3f63e6;
+  --transactions-color-primary-active: #2a4ecf;
   --transactions-color-primary-200: #a9bdff;
   --transactions-color-primary-tint: rgba(57, 100, 254, 0.16);
 
@@ -387,8 +387,8 @@
     color-scheme: dark;
 
     --transactions-color-primary: #3964fe;
-    --transactions-color-primary-hover: #2a4ecf;
-    --transactions-color-primary-active: #1f3aa8;
+    --transactions-color-primary-hover: #3f63e6;
+    --transactions-color-primary-active: #2a4ecf;
     --transactions-color-primary-200: #a9bdff;
     --transactions-color-primary-tint: rgba(57, 100, 254, 0.16);
 

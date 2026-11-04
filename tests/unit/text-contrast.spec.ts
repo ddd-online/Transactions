@@ -108,6 +108,30 @@ describe('text contrast', () => {
     'dark danger': '#d66363',
   }
 
+  /* 按钮面本身也要和页面分得开：交互时不能往背景里退。
+   * 深色页面已经近黑，所以那里的悬停是「在白字 AA 带内轻微**提亮**」而不是加深 ——
+   * 上一版往深走（#2a4ecf）只有 2.68:1，按钮面沉进页面了。
+   * 按下是 90ms 的瞬态，豁免这条：那 90ms 里文字仍然 ≥6.8:1。 */
+  it('静止与悬停时按钮面与页面至少 3:1', () => {
+    const surface: Record<'light' | 'dark', string> = {
+      light: token(LIGHT, 'color-bg-base'),
+      dark: token(DARK, 'color-major-background'),
+    }
+    for (const mode of ['light', 'dark'] as const) {
+      const palette = ANT_PALETTES[mode]
+      const faces: Array<[string, string]> = [
+        ['primary rest', RENDERED_REST[`${mode} primary`] ?? palette.primary],
+        ['primary hover', palette.primaryHover],
+        ['danger rest', RENDERED_REST[`${mode} danger`] ?? palette.error],
+        ['danger hover', palette.errorHover],
+      ]
+      for (const [name, face] of faces) {
+        const ratio = contrast(face, surface[mode])
+        expect(ratio, `${mode}: ${name} 对页面 = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3)
+      }
+    }
+  })
+
   it('悬停与按下各自都是看得见的一档', () => {
     for (const mode of ['light', 'dark'] as const) {
       const palette = ANT_PALETTES[mode]
