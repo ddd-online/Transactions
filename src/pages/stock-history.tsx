@@ -463,11 +463,7 @@ function RoundBlock({
           </span>
         </button>
         <span className="stock-muted stock-round__count">{round.tradeCount} 笔成交</span>
-        <span
-          className="stock-muted stock-round__fee"
-          data-testid="round-fee-total"
-          title="这一轮成交的费用合计"
-        >
+        <span className="stock-muted stock-round__fee" data-testid="round-fee-total">
           费用 <strong className="stock-mono">{money(roundFee)}</strong>
         </span>
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>

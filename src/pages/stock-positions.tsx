@@ -715,11 +715,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             <section className="stock-detail__section">
               <span className="stock-section-title">成交记录</span>
               {trades.length > 0 ? (
-                <span
-                  className="stock-trade-total"
-                  data-testid="stock-trade-fee-total"
-                  title="表内成交记录的费用合计"
-                >
+                <span className="stock-trade-total" data-testid="stock-trade-fee-total">
                   费用合计 <strong className="stock-mono">{money(tradesFeeTotal)}</strong>
                 </span>
               ) : null}

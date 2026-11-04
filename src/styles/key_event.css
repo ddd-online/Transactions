@@ -705,8 +705,21 @@
 }
 
 .key-event-thumb__select:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: -2px;
+  outline: none;
+}
+
+/* 焦点环压在**照片**上：只画一圈主色，遇到蓝调照片整圈会消失（WCAG 1.4.11 要 3:1）。
+ * 所以画双环：外圈用这一主题的**墨色**（浅色下近黑、深色下近白，正好是照片的反面），
+ * 内圈主色。两圈必有一圈与底片分得开。都内缩，不会被槽位的 `overflow: hidden` 裁掉。 */
+.key-event-thumb:has(.key-event-thumb__select:focus-visible)::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: calc(var(--transactions-radius-sm) - 2px);
+  box-shadow:
+    inset 0 0 0 2px var(--transactions-color-text-major),
+    inset 0 0 0 4px var(--transactions-color-primary);
+  pointer-events: none;
 }
 
 .key-event-thumb.is-selected {
