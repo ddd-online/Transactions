@@ -3,8 +3,8 @@ name: Transactions
 description: A clean, airy, trustworthy desktop personal finance workspace
 colors:
   primary: "#3964fe"
-  primary-light: "#5b7fff"
-  primary-active: "#2b52e6"
+  primary-hover: "#2b52e6"
+  primary-active: "#1e40c8"
   primary-tint: "rgba(57, 100, 254, 0.08)"
   canvas: "#f9fafb"
   surface: "#ffffff"
@@ -166,7 +166,9 @@ Cool neutrals carry the interface; Clarity Blue is the single accent; a small se
 
 ### Primary
 
-- **Clarity Blue** (#3964fe): primary buttons, active navigation, links, tab ink, focus rings, selected states. Hover #5b7fff, active #2b52e6, tint rgba(57,100,254,0.08) for active fills and selected rows.
+- **Clarity Blue** (#3964fe): primary buttons, active navigation, links, tab ink, focus rings, selected states. **Hover 加深到 #2b52e6（白字 6.1:1）、按下再深到 #1e40c8（8.0:1）**，tint rgba(57,100,254,0.08) 用于选中底与行高亮。
+
+  **悬停往深走，不往亮走。** 实色按钮上压的是白字，而 AntD 默认把悬停往亮里推（#3964fe → #6188ff）：白 + 亮蓝只有 **3.24:1**，指针停在按钮上的那一刻恰好掉出 AA。危险按钮同理（#dc2626 → #e8524d，白字 **3.66:1**）。所以 `colorPrimaryHover/Active` 与 `colorErrorHover/Active` 都按令牌显式给出，不交给算法推。唯一的例外是深色下的危险按钮：它压的是墨字，底越深字越糊，所以那两态往亮走（#e07a7a / #ea9492，墨字 6.5 / 8.2:1）。
 
 ### Neutral
 
@@ -358,11 +360,11 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 ### Buttons
 
 - **Shape:** 8px radius; heights 28 / 36 / 44px (small / default / large); default min-width 72px.
-- **Primary:** solid Clarity Blue, white text, padding 0 16px. Hover → #5b7fff; active → #2b52e6.
+- **Primary:** solid Clarity Blue, white text, padding 0 16px. **Hover 加深到 #2b52e6（6.1:1）、按下到 #1e40c8（8.0:1）** —— 白字压在按钮上，往亮走就掉出 AA。
 - **Secondary (default):** Paper face, 1px hairline border, ink text; hover adds a soft fill (hover-bg).
 - **Text:** neutral secondary text, hover fill; text-danger turns Expense on hover with a danger-tint fill.
 - **Disabled:** 控件自身的禁用色一律用 `--transactions-color-text-disabled`（浅色 ≈2.6:1）。AntD 给文本按钮的 25% 墨色（≈1.8:1）在纸白上几乎看不见，`antd.css` 里按 text 变体把它拉回令牌 —— 只改 text 变体，主按钮的白字与危险按钮的红字不动。
-- **Primary danger:** solid Expense, white text. **深色下例外**：深色的 Expense 是亮红 `#f87171`（它主要给数字和状态当文字色），白字压上去只有 **2.8:1**。所以实色危险按钮在那里的字色换成墨色 `#0f1115`（**7.8:1**）—— 这也是 AntD 自己对「亮底实心按钮」的处理（`isBright` 时转黑字）。一个红色没法同时当「深底上的文字」和「压白字的实心底」，两个角色就分两个值：`--transactions-color-expense` 管前者，`ANT_PALETTES.dark.dangerInk` 管后者。
+- **Primary danger:** solid Expense, white text; hover 加深到 #c81e1e、按下到 #b01818（白字 5.7 / 7.0:1）。**深色下例外**：深色的 Expense 是亮红 `#f87171`（它主要给数字和状态当文字色），白字压上去只有 **2.8:1**。所以实色危险按钮在那里的字色换成墨色 `#0f1115`（**7.8:1**）—— 这也是 AntD 自己对「亮底实心按钮」的处理（`isBright` 时转黑字）。一个红色没法同时当「深底上的文字」和「压白字的实心底」，两个角色就分两个值：`--transactions-color-expense` 管前者，`ANT_PALETTES.dark.dangerInk` 管后者。字换了墨色之后，悬停 / 按下也只能往亮走（6.5 / 8.2:1）：底一深，墨字就掉出去。
 - **Focus:** 2px Clarity Blue outline, 2px offset, on `:focus-visible`.
 
 ### Cards / Containers

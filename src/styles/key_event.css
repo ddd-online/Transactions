@@ -379,7 +379,7 @@
 
 .key-event-content.ant-input:focus {
   border-color: var(--transactions-color-primary);
-  box-shadow: 0 0 0 2px var(--transactions-color-primary-light);
+  box-shadow: 0 0 0 2px var(--transactions-color-primary-hover);
 }
 
 .key-event-colors {
@@ -715,7 +715,7 @@
 }
 
 .key-event-thumb:hover {
-  border-color: var(--transactions-color-primary-light);
+  border-color: var(--transactions-color-primary-hover);
   transform: scale(1.03);
 }
 

@@ -41,4 +41,16 @@ describe('AntD theme bridge', () => {
     expect(token(dark, 'color-expense')).toBe(ANT_PALETTES.dark.error)
     expect(token(dark, 'color-income')).toBe(ANT_PALETTES.dark.success)
   })
+
+  /* 悬停 / 按下的实色底必须是令牌里写的那一个，不能让 AntD 算法自己推 ——
+   * 默认算法往亮里推，白字就掉出 AA（浅色悬停 3.24:1、危险悬停 3.66:1）。 */
+  it('keeps hover and active faces in sync in both themes', () => {
+    for (const [css, palette] of [
+      [light, ANT_PALETTES.light],
+      [dark, ANT_PALETTES.dark],
+    ] as const) {
+      expect(token(css, 'color-primary-hover')).toBe(palette.primaryHover)
+      expect(token(css, 'color-primary-active')).toBe(palette.primaryActive)
+    }
+  })
 })

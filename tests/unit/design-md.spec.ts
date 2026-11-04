@@ -21,7 +21,7 @@ const design = readFileSync(resolve(__dirname, '../../DESIGN.md'), 'utf8')
 /** frontmatter → `--transactions-<token>`。账本那八个没有 `color-` 前缀，名字直接对上。 */
 const TOKENS: Record<string, string> = {
   primary: 'color-primary',
-  'primary-light': 'color-primary-light',
+  'primary-hover': 'color-primary-hover',
   'primary-active': 'color-primary-active',
   'primary-tint': 'color-primary-tint',
   canvas: 'color-bg-base',

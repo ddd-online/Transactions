@@ -76,17 +76,56 @@ describe('text contrast', () => {
     }
   })
 
-  it('实色按钮面上的字过 AA', () => {
+  /* 实色按钮的三种状态都要过 —— 只测静止会漏掉正好在指针底下那一刻：
+   * AntD 的默认算法把悬停往亮里推（#3964fe → #6188ff），白字当场掉到 3.24:1。 */
+  it('实色按钮的静止 / 悬停 / 按下三态都过 AA', () => {
     for (const mode of ['light', 'dark'] as const) {
       const palette = ANT_PALETTES[mode]
-      // 主按钮压白字；危险按钮的字色是 `dangerInk`（深色下危险底是亮红，白字只有 2.8:1）。
       const faces: Array<[string, string, string]> = [
-        ['primary', palette.primary, '#ffffff'],
-        ['danger', palette.error, palette.dangerInk],
+        ['primary rest', palette.primary, '#ffffff'],
+        ['primary hover', palette.primaryHover, '#ffffff'],
+        ['primary active', palette.primaryActive, '#ffffff'],
+        // 危险按钮的字色是 `dangerInk`（深色下危险底是亮红，白字只有 2.8:1）。
+        ['danger rest', palette.error, palette.dangerInk],
+        ['danger hover', palette.errorHover, palette.dangerInk],
+        ['danger active', palette.errorActive, palette.dangerInk],
       ]
       for (const [name, background, ink] of faces) {
         const ratio = contrast(ink, background)
-        expect(ratio, `${mode}: ${name} 面 = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA)
+        expect(ratio, `${mode}: ${name} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA)
+      }
+    }
+  })
+
+  /* 悬停必须在视觉上也**看得出**是一档：只挪 4% 明度等于没做（深色主按钮第一版就是这样，
+   * 对比度过了、状态却没变化）。这里要求每一档相对上一档至少 10% 明度差。
+   *
+   * 深色下实色按钮不是拿种子值直接画的 —— AntD 的 darkAlgorithm 会先推一档（CDP 实测：
+   * 主按钮 #3358db、危险按钮 #d66363）。这两行按**渲染出来的**那个值起算，否则判据会被
+   * 一个并不上屏的种子值带走。 */
+  const RENDERED_REST: Record<string, string> = {
+    'dark primary': '#3358db',
+    'dark danger': '#d66363',
+  }
+
+  it('悬停与按下各自都是看得见的一档', () => {
+    for (const mode of ['light', 'dark'] as const) {
+      const palette = ANT_PALETTES[mode]
+      const ladder: Array<[string, string[]]> = [
+        ['primary', [palette.primary, palette.primaryHover, palette.primaryActive]],
+        ['danger', [palette.error, palette.errorHover, palette.errorActive]],
+      ]
+      for (const [name, steps] of ladder) {
+        const rendered = [RENDERED_REST[`${mode} ${name}`] ?? steps[0], steps[1], steps[2]]
+        for (let index = 1; index < rendered.length; index += 1) {
+          const from = luminance(rendered[index - 1])
+          const to = luminance(rendered[index])
+          const shift = Math.abs(to - from) / from
+          expect(
+            shift,
+            `${mode}: ${name} 第 ${index} 档只挪了 ${(shift * 100).toFixed(0)}%`,
+          ).toBeGreaterThan(0.1)
+        }
       }
     }
   })

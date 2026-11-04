@@ -25,11 +25,10 @@
      颜色只能靠 `color-scheme` 交给 Blink 自己挑。 */
   color-scheme: light;
 
-  /* Brand — DeepSeek blue */
+  /* Brand — DeepSeek blue。悬停与按下都**加深**：白字压在按钮上，往亮走就掉出 4.5:1。 */
   --transactions-color-primary: #3964fe;
-  --transactions-color-primary-light: #5b7fff;
-  --transactions-color-primary-hover: #5b7fff;
-  --transactions-color-primary-active: #2b52e6;
+  --transactions-color-primary-hover: #2b52e6;
+  --transactions-color-primary-active: #1e40c8;
   --transactions-color-primary-200: #a9bdff;
   --transactions-color-primary-tint: rgba(57, 100, 254, 0.08);
 
@@ -285,9 +284,8 @@
   color-scheme: dark;
 
   --transactions-color-primary: #3964fe;
-  --transactions-color-primary-light: #6b8aff;
-  --transactions-color-primary-hover: #6b8aff;
-  --transactions-color-primary-active: #2b52e6;
+  --transactions-color-primary-hover: #2a4ecf;
+  --transactions-color-primary-active: #1f3aa8;
   --transactions-color-primary-200: #a9bdff;
   --transactions-color-primary-tint: rgba(57, 100, 254, 0.16);
 
@@ -389,9 +387,8 @@
     color-scheme: dark;
 
     --transactions-color-primary: #3964fe;
-    --transactions-color-primary-light: #6b8aff;
-    --transactions-color-primary-hover: #6b8aff;
-    --transactions-color-primary-active: #2b52e6;
+    --transactions-color-primary-hover: #2a4ecf;
+    --transactions-color-primary-active: #1f3aa8;
     --transactions-color-primary-200: #a9bdff;
     --transactions-color-primary-tint: rgba(57, 100, 254, 0.16);
 

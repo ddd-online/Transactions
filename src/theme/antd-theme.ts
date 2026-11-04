@@ -23,6 +23,13 @@ interface Palette {
   shadowSecondary: string
   /** 实色危险按钮上的字色。深色下 AntD 的危险底是亮红（#f87171），白字只有 2.8:1 —— 换墨色。 */
   dangerInk: string
+  /* 悬停 / 按下的实色底必须自己给，不能让算法推。
+   * AntD 的默认算法把悬停往**亮**里推（浅色 #dc2626 → #e8524d），而按钮上压的是白字：
+   * 白 + 亮红 = 3.66:1、白 + 亮蓝 = 3.24:1，两个都掉出 4.5:1。见 DESIGN.md「The Press Rule」。 */
+  primaryHover: string
+  primaryActive: string
+  errorHover: string
+  errorActive: string
 }
 
 /** AntD 只读取这组核心颜色；其余视觉仍由 `--transactions-*` 控制。 */
@@ -47,6 +54,10 @@ export const ANT_PALETTES: Record<AntdMode, Palette> = {
     shadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
     shadowSecondary: '0 8px 24px rgba(0, 0, 0, 0.10)',
     dangerInk: '#ffffff',
+    primaryHover: '#2b52e6',
+    primaryActive: '#1e40c8',
+    errorHover: '#c81e1e',
+    errorActive: '#b01818',
   },
   dark: {
     primary: '#3964fe',
@@ -68,6 +79,11 @@ export const ANT_PALETTES: Record<AntdMode, Palette> = {
     shadow: '0 1px 2px rgba(0, 0, 0, 0.30)',
     shadowSecondary: '0 8px 24px rgba(0, 0, 0, 0.45)',
     dangerInk: '#0f1115',
+    primaryHover: '#2a4ecf',
+    primaryActive: '#1f3aa8',
+    /* 深色危险按钮压的是墨字：底越深字越糊，所以它这两态往**亮**走 —— 与主按钮相反。 */
+    errorHover: '#e07a7a',
+    errorActive: '#ea9492',
   },
 }
 
@@ -77,6 +93,10 @@ export function buildAntdTheme(mode: AntdMode): ThemeConfig {
     algorithm: mode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
       colorPrimary: p.primary,
+      colorPrimaryHover: p.primaryHover,
+      colorPrimaryActive: p.primaryActive,
+      colorErrorHover: p.errorHover,
+      colorErrorActive: p.errorActive,
       colorInfo: p.primary,
       colorLink: p.primary,
       colorLinkHover: p.primary,
