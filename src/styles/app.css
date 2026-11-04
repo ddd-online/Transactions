@@ -938,6 +938,34 @@
   animation: tr-settle var(--transactions-transition-settle);
 }
 
+/* 分页级的失败态：坏掉的只有这一页，外壳与导航都还在。
+ * 居中一列，不摆插画 —— 这一屏要说的是"哪一步没成 + 下一步点哪儿"。 */
+.page-boundary {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-2xl);
+  text-align: center;
+}
+
+.page-boundary__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.page-boundary__text {
+  margin: 0;
+  max-width: 42ch;
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-normal);
+  color: var(--transactions-color-text-secondary);
+}
+
 /* 页面容器。**顶部不留内边距**：页头（顶部容器）必须从窗口顶端开始，
  * 才能与侧栏的账本容器**同一起点、同一高度**（两者高度用同一个令牌），
  * 于是两侧下方的「版心 / 导航组」落在同一条水平线上 —— 这是左右顶对齐的关键一环。

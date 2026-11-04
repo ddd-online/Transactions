@@ -47,6 +47,7 @@ import { Tooltip } from './components/tooltip'
 import { notify } from './components/toast'
 import { PageHeader } from './components/page-header'
 import { Segmented } from './components/segmented'
+import { PageBoundary } from './components/page-boundary'
 import { PageLayout, PageRailProvider } from './components/page-layout'
 import { SettingsRow } from './components/settings-row'
 import { FileButton } from './components/file-button'
@@ -801,29 +802,34 @@ export function App(): JSX.Element {
 
             {/* 兜底是 null：按需加载的等待只有几毫秒（本机 app:// 读盘），中间插一块
                 骨架反而会闪一下。Suspense 放在 PageRailProvider **里面** —— 在外面的话
-                每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。 */}
-            <Suspense fallback={null}>
-              {accountingTab === 'records' ? (
-                <RecordsPage ledgerId={activeLedgerId} ledgers={ledgers} />
-              ) : null}
-              {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
-              {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
-              {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
-            </Suspense>
+                每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。
+                `key` 跟着子功能走：某一页挂了之后切走再回来，边界自己重置一次。 */}
+            <PageBoundary key={`accounting-${accountingTab}`}>
+              <Suspense fallback={null}>
+                {accountingTab === 'records' ? (
+                  <RecordsPage ledgerId={activeLedgerId} ledgers={ledgers} />
+                ) : null}
+                {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
+                {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
+                {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
+              </Suspense>
+            </PageBoundary>
           </PageRailProvider>
         ) : null}
 
-        <Suspense fallback={null}>
-          {view === 'stock' ? (
-            <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
-          ) : null}
+        <PageBoundary key={`view-${view}`}>
+          <Suspense fallback={null}>
+            {view === 'stock' ? (
+              <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
+            ) : null}
 
-          {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
+            {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
 
-          {view === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
+            {view === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
 
-          {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
-        </Suspense>
+            {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
+          </Suspense>
+        </PageBoundary>
 
         {view === 'settings' ? (
           <PageLayout
