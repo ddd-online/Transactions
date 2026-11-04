@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
@@ -21,14 +21,19 @@ import {
 } from '../shared/domain/consts'
 import type { SourceImportProgress } from '../shared/types/import'
 import type { UpdateSnapshot } from '../shared/domain/update'
-import { RecordsPage } from './pages/records'
-import { ChartsPage } from './pages/charts'
-import { CategoryTagPage } from './pages/category-tag'
-import { TemplatePage } from './pages/templates'
-import { StockPage } from './pages/stock'
-import { EventsPage } from './pages/events'
-import { DiaryPage } from './pages/diary'
-import { TodoPage } from './pages/todo'
+/* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
+ * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
+ * antd，图表页与日记页各自带着自己的那份（详见 DESIGN.md「Performance」）。 */
+const RecordsPage = lazy(async () => ({ default: (await import('./pages/records')).RecordsPage }))
+const ChartsPage = lazy(async () => ({ default: (await import('./pages/charts')).ChartsPage }))
+const CategoryTagPage = lazy(async () => ({
+  default: (await import('./pages/category-tag')).CategoryTagPage,
+}))
+const TemplatePage = lazy(async () => ({ default: (await import('./pages/templates')).TemplatePage }))
+const StockPage = lazy(async () => ({ default: (await import('./pages/stock')).StockPage }))
+const EventsPage = lazy(async () => ({ default: (await import('./pages/events')).EventsPage }))
+const DiaryPage = lazy(async () => ({ default: (await import('./pages/diary')).DiaryPage }))
+const TodoPage = lazy(async () => ({ default: (await import('./pages/todo')).TodoPage }))
 import { AntdProvider } from './components/antd-provider'
 import { Input, Modal, Switch as AntSwitch } from 'antd'
 import { AppMark } from './components/app-mark'
@@ -794,24 +799,31 @@ export function App(): JSX.Element {
                     ))}
                   </select>
 
-            {accountingTab === 'records' ? (
-              <RecordsPage ledgerId={activeLedgerId} ledgers={ledgers} />
-            ) : null}
-            {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
-            {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
-            {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
+            {/* 兜底是 null：按需加载的等待只有几毫秒（本机 app:// 读盘），中间插一块
+                骨架反而会闪一下。Suspense 放在 PageRailProvider **里面** —— 在外面的话
+                每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。 */}
+            <Suspense fallback={null}>
+              {accountingTab === 'records' ? (
+                <RecordsPage ledgerId={activeLedgerId} ledgers={ledgers} />
+              ) : null}
+              {accountingTab === 'charts' ? <ChartsPage ledgerId={activeLedgerId} /> : null}
+              {accountingTab === 'tags' ? <CategoryTagPage ledgerId={activeLedgerId} /> : null}
+              {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
+            </Suspense>
           </PageRailProvider>
         ) : null}
 
-        {view === 'stock' ? (
-          <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
-        ) : null}
+        <Suspense fallback={null}>
+          {view === 'stock' ? (
+            <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
+          ) : null}
 
-        {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
+          {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
 
-        {view === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
+          {view === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
 
-        {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
+          {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
+        </Suspense>
 
         {view === 'settings' ? (
           <PageLayout

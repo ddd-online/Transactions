@@ -337,6 +337,12 @@ Motion here is structural, not decorative: it says where a surface came from, th
 
 **加载指示器是唯一不吃那把兜底的东西。** 无限旋转压成 0.01ms 之后是一个静止的圆环 —— 一个正在请求的按钮看起来和空闲一模一样，而「还在忙」这件事只有它在说。所以 `.anticon-spin`（按钮里的加载图标）与 `.ant-spin-dot`（独立 Spin）换成**不位移**的替代：1.6s 的明暗呼吸（`tr-busy-pulse`，透明度 1 ↔ .4）。空间移动照旧归零 —— 减少动态要的是「别晃」，不是「别告诉我在忙」。
 
+## Performance
+
+本机读盘，没有网络时延；真正花时间的是**启动时把所有代码解析一遍**。所以这里只有一条规矩：
+
+**页面按需加载，重心不进外壳。** 八个页面在 `App.tsx` 走 `React.lazy`（一次只挂一页），`Suspense` 的兜底是 `null` —— 本机 `app://` 读一个 chunk 只有几毫秒，插一块骨架反而会闪。路由级拆分把入口从 6.5MB 压到 2.4MB：G2（约 2.7MB，分析页与股票统计）与页面各自的表、弹窗因此只在真正打开那一页时才解析。`Suspense` 的边界画在 `PageRailProvider` **里面** —— 画在外面的话，每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。外壳、antd 与共享令牌留在入口，拆它们只会把启动摊成更多个请求而对首帧没有帮助。
+
 ## Shapes
 
 Gently curved, consistent radii: 6px for tags and dropdown items, 8px for buttons, inputs, and menus, 12px for cards, popovers, and messages, 16px for modals and drawers, 9999px for switches and pills, and 20px for chat bubbles. Borders are always hairlines — never heavy outlines.
