@@ -137,6 +137,26 @@ test('动效：按钮按压、表内行底色、展开层，以及减少动态�
     expect(reduced.animationSeconds).toBeLessThan(0.05)
     expect(reduced.opacity).toBe('1')
     expect(reduced.height).toBeGreaterThan(0)
+
+    // 加载指示器是唯一的例外：全局兜底会把旋转压成一帧静态图，于是「还在忙」这一句
+    // 就没了。这里不靠真实请求的时序，直接验样式表：一个 .anticon-spin 在减少动态下
+    // 仍然在动，但动的是透明度而不是旋转。
+    const busy = await page.evaluate(() => {
+      const node = document.createElement('span')
+      node.className = 'anticon anticon-spin'
+      document.body.appendChild(node)
+      const style = getComputedStyle(node)
+      const result = {
+        name: style.animationName,
+        seconds: Number.parseFloat(style.animationDuration),
+        count: style.animationIterationCount,
+      }
+      node.remove()
+      return result
+    })
+    expect(busy.name).toBe('tr-busy-pulse')
+    expect(busy.seconds).toBeGreaterThan(1)
+    expect(busy.count).toBe('infinite')
   } finally {
     await app.close()
     rmSync(root, { recursive: true, force: true })

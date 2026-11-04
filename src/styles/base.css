@@ -367,4 +367,25 @@ textarea,
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* 加载指示器是「还在忙」的**唯一**信号，而上面那条会把无限旋转压成一帧静态图 ——
+   * 一个正在请求的按钮看起来就和空闲一模一样。所以这里换成不位移的替代：明暗呼吸。
+   * 空间移动照旧归零，只有透明度在动（AntD 的按钮加载图标是 `.anticon-spin`，
+   * 独立 Spin 是 `.ant-spin-dot`）。 */
+  .anticon-spin,
+  .ant-spin-dot,
+  .ant-spin-dot-item {
+    animation: tr-busy-pulse 1.6s ease-in-out infinite !important;
+  }
+}
+
+@keyframes tr-busy-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }

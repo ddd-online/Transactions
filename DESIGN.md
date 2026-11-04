@@ -335,6 +335,8 @@ Motion here is structural, not decorative: it says where a surface came from, th
 
 **Reduced motion.** `prefers-reduced-motion: reduce` collapses every beat to an instant state change (the global cap in `base.css`), so focus, colour and state still land. The chart asks the media query itself and turns its draw off (`animate(false)`) instead of leaning on the global cap: a 620ms stroke cut to zero by an override could leave the line hidden. 饼图的单片实心圆是 CSS 遮罩画的，就吃那把全局兜底（0.01ms 直接落到整圆）。
 
+**加载指示器是唯一不吃那把兜底的东西。** 无限旋转压成 0.01ms 之后是一个静止的圆环 —— 一个正在请求的按钮看起来和空闲一模一样，而「还在忙」这件事只有它在说。所以 `.anticon-spin`（按钮里的加载图标）与 `.ant-spin-dot`（独立 Spin）换成**不位移**的替代：1.6s 的明暗呼吸（`tr-busy-pulse`，透明度 1 ↔ .4）。空间移动照旧归零 —— 减少动态要的是「别晃」，不是「别告诉我在忙」。
+
 ## Shapes
 
 Gently curved, consistent radii: 6px for tags and dropdown items, 8px for buttons, inputs, and menus, 12px for cards, popovers, and messages, 16px for modals and drawers, 9999px for switches and pills, and 20px for chat bubbles. Borders are always hairlines — never heavy outlines.
