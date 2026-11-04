@@ -127,6 +127,31 @@ check('发布说明版本与构建脚本', () => {
   return `v${packageJson.version}`
 })
 
+check('设计令牌没有悬空引用', () => {
+  // 拼错一个令牌名不会报错：CSS 静默回退、颜色凭空消失。而令牌说改名就改名，
+  // 引用处靠肉眼追必漏 —— 所以这里把 src 下每一处 var(--transactions-*) 与
+  // tokens.css 里定义的名字对一遍。
+  const tokensCss = read('src/styles/tokens.css')
+  const defined = new Set(
+    (tokensCss.match(/--transactions-[a-z0-9-]+(?=\s*:)/g) ?? []),
+  )
+  assert(defined.size > 100, `tokens.css 只解析出 ${defined.size} 个令牌，解析规则可能已过时`)
+
+  const dangling = []
+  for (const path of walk('src')) {
+    if (!/\.(css|tsx)$/.test(path)) continue
+    const source = read(path)
+    for (const match of source.matchAll(/var\((--transactions-[a-z0-9-]+)/g)) {
+      if (!defined.has(match[1])) dangling.push(`${path} → ${match[1]}`)
+    }
+  }
+  assert(
+    dangling.length === 0,
+    `${dangling.length} 处引用了未定义的令牌（前 5 处：${dangling.slice(0, 5).join('；')}）`,
+  )
+  return `${defined.size} 个令牌，0 处悬空`
+})
+
 for (const message of passes) {
   console.log(`  ✓ ${message}`)
 }
