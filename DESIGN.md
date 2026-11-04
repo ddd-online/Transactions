@@ -98,7 +98,7 @@ components:
     height: "36px"
     padding: "0 16px"
   button-primary-hover:
-    backgroundColor: "{colors.primary-light}"
+    backgroundColor: "{colors.primary-hover}"
     textColor: "{colors.text-inverse}"
   button-primary-active:
     backgroundColor: "{colors.primary-active}"
