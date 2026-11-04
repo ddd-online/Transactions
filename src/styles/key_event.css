@@ -689,7 +689,8 @@
 }
 
 /* 缩略图本体是按钮，铺满整个槽位 —— 指针停在图上、焦点落在按钮上，说的是同一件事。
- * 焦点环画在**外层槽位**上：这一层 `overflow: hidden` 会把按钮自己的 outline 裁掉。 */
+ * 焦点环内缩 2px：槽位是 160px 宽的滚动视口，向外扩的环会被视口裁掉；
+ * 内缩之后它落在图里，压在选中的 2px 主色边框内侧，两者同时出现也分得清。 */
 .key-event-thumb__select {
   position: absolute;
   inset: 0;
@@ -704,12 +705,8 @@
 }
 
 .key-event-thumb__select:focus-visible {
-  outline: none;
-}
-
-.key-event-thumb:has(.key-event-thumb__select:focus-visible) {
   outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 .key-event-thumb.is-selected {
