@@ -59,6 +59,20 @@ function seriesOtherColor(): string {
   return readToken('--transactions-color-series-other', SERIES_OTHER_FALLBACK)
 }
 
+/**
+ * 股票统计里的盈亏两色：**盈 = 红（支出）、亏 = 绿（收入）**，与股票页 `.is-up` / `.is-down`
+ * 同一条语义（红涨绿跌），也与记录页金额的颜色同源。
+ *
+ * 这两个值以前写死在 `stock-statistics.tsx` 里（`#e5484d` / `#16a34a`）：红还不是令牌里的
+ * 那个红，而且画布只在建图时取一次色，换主题后整条曲线停在浅色档。走 `readToken` 之后
+ * 父组件把主题模式放进 effect 依赖里重画，值就跟着主题走。
+ */
+export function profitLossColor(direction: 'profit' | 'loss'): string {
+  return direction === 'profit'
+    ? readToken('--transactions-color-expense', '#dc2626')
+    : readToken('--transactions-color-income', '#16a34a')
+}
+
 /** 交易类型对应的家族中档；认不出的类型落到正文次要色。 */
 export function pieTypeColor(transactionType: string): string {
   const slot = PIE_TYPE_SLOTS[transactionType]

@@ -21,7 +21,9 @@ import { Segmented } from '../components/segmented'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
 import { chartTextTokens } from '../theme/chart-text'
+import { profitLossColor } from '../theme/chart-colors'
 import { CHART_DRAW_ANIMATION, motionAllowed } from '../theme/motion'
+import { useThemeMode } from '../theme/theme-mode'
 import {
   stockDate,
   stockErrorMessage,
@@ -142,6 +144,8 @@ function ChartBox({
   tall?: boolean
 }): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
+  // 画布读不到 CSS 变量，也不跟着主题重画 —— 换主题要自己重取一次色。
+  const mode = useThemeMode()
 
   useEffect(() => {
     const container = ref.current
@@ -204,10 +208,14 @@ function ChartBox({
       segment.rows.map((row) => ({ ...row, series: `segment-${index}` })),
     )
     const seriesColors = segments.map((segment) =>
-      segment.sign === '盈利' ? '#e5484d' : '#16a34a',
+      segment.sign === '盈利' ? profitLossColor('profit') : profitLossColor('loss'),
     )
     const colorDomain = [...segments.map((_, index) => `segment-${index}`), '盈利', '亏损']
-    const colorRange = [...seriesColors, '#e5484d', '#16a34a']
+    const colorRange = [
+      ...seriesColors,
+      profitLossColor('profit'),
+      profitLossColor('loss'),
+    ]
     const xMax = Math.max(1, rows.length - 1)
     const chart = new Chart({
       container,
@@ -305,7 +313,7 @@ function ChartBox({
       .animate(false)
     chart.render()
     return () => chart.destroy()
-  }, [metric, points])
+  }, [metric, points, mode])
 
   return (
     <div
