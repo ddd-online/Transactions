@@ -609,7 +609,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
       }
     >
       {error ? (
-        <p className="m0-error" data-testid="event-error">
+        <p role="alert" className="m0-error" data-testid="event-error">
           {error}
         </p>
       ) : null}

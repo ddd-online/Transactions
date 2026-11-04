@@ -714,8 +714,12 @@
 .key-event-thumb:has(.key-event-thumb__select:focus-visible)::after {
   content: '';
   position: absolute;
-  inset: 2px;
-  border-radius: calc(var(--transactions-radius-sm) - 2px);
+  /* 内缩一圈（2px）之后，环的圆角要跟着收一圈才是同心的：直接写 4px 会绕过圆角阶梯，
+   * 所以写成「槽位圆角 − 一圈内缩」两个令牌相减。 */
+  inset: var(--transactions-space-2xs);
+  border-radius: calc(
+    var(--transactions-radius-sm) - var(--transactions-space-2xs)
+  );
   box-shadow:
     inset 0 0 0 2px var(--transactions-color-text-major),
     inset 0 0 0 4px var(--transactions-color-primary);

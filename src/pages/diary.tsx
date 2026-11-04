@@ -347,7 +347,7 @@ export function DiaryPage({ ledgerId }: DiaryPageProps): JSX.Element {
 
               <section className="diary-editor">
                 {error ? (
-                  <p className="m0-error" data-testid="diary-error">
+                  <p role="alert" className="m0-error" data-testid="diary-error">
                     {error}
                   </p>
                 ) : null}

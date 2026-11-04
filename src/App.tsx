@@ -752,7 +752,7 @@ export function App(): JSX.Element {
         </div>
         <div className="app-router-view">
         {error ? (
-          <p className="m0-error" data-testid="error">
+          <p role="alert" className="m0-error" data-testid="error">
             {error}
           </p>
         ) : null}
@@ -1133,7 +1133,7 @@ export function App(): JSX.Element {
               />
             </div>
             {ledgerError ? (
-              <p className="m0-error" data-testid="ledger-error">
+              <p role="alert" className="m0-error" data-testid="ledger-error">
                 {ledgerError}
               </p>
             ) : null}

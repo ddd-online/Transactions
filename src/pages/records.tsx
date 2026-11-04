@@ -830,7 +830,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     >
       <div className="tr-body">
         {error ? (
-          <p className="m0-error tr-error" data-testid="tr-error">
+          <p role="alert" className="m0-error tr-error" data-testid="tr-error">
             {error}
           </p>
         ) : null}
@@ -1043,7 +1043,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           </div>
 
           {composerError ? (
-            <p className="m0-error" data-testid="tr-error">
+            <p role="alert" className="m0-error" data-testid="tr-error">
               {composerError}
             </p>
           ) : null}

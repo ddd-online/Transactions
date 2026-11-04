@@ -276,7 +276,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
     >
       <div className="page-pane tpl-pane">
         {error ? (
-          <p className="m0-error" data-testid="template-page-error">
+          <p role="alert" className="m0-error" data-testid="template-page-error">
             {error}
           </p>
         ) : null}
@@ -473,7 +473,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           </div>
 
           {formError ? (
-            <p className="m0-error" data-testid="template-modal-error">
+            <p role="alert" className="m0-error" data-testid="template-modal-error">
               {formError}
             </p>
           ) : null}

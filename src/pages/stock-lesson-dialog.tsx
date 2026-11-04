@@ -208,7 +208,7 @@ export function StockLessonDialog({
           </p>
         ) : null}
         {error ? (
-          <p className="stock-modal-error" data-testid="stock-lesson-error">
+          <p role="alert" className="stock-modal-error" data-testid="stock-lesson-error">
             {error}
           </p>
         ) : null}

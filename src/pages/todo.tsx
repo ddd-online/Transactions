@@ -640,7 +640,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       }
     >
       {error ? (
-        <p className="m0-error todo-error" data-testid="todo-error">
+        <p role="alert" className="m0-error todo-error" data-testid="todo-error">
           {error}
         </p>
       ) : null}
@@ -906,7 +906,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             onPressEnter={() => void createCard()}
           />
           {cardError ? (
-            <p className="todo-modal__error" data-testid="todo-card-error">
+            <p role="alert" className="todo-modal__error" data-testid="todo-card-error">
               {cardError}
             </p>
           ) : null}
@@ -1009,7 +1009,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             </div>
           </div>
           {itemError ? (
-            <p className="todo-modal__error" data-testid="todo-item-error">
+            <p role="alert" className="todo-modal__error" data-testid="todo-item-error">
               {itemError}
             </p>
           ) : null}

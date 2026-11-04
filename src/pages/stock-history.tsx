@@ -307,7 +307,7 @@ export function StockHistoryPanel({
         <section className="stock-history-detail" data-testid="stock-history-detail">
           {!detail ? (
             <div className="stock-detail__empty">
-              {error ? <p className="stock-inline-error">{error}</p> : null}
+              {error ? <p role="alert" className="stock-inline-error">{error}</p> : null}
             </div>
           ) : (
             <>

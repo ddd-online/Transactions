@@ -158,7 +158,7 @@ export function DiaryTransfer({ ledgerId }: DiaryTransferProps): JSX.Element {
       </div>
 
       {error ? (
-        <p className="m0-error" data-testid="diary-transfer-error">
+        <p role="alert" className="m0-error" data-testid="diary-transfer-error">
           {error}
         </p>
       ) : null}

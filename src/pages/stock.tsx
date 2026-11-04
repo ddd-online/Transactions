@@ -305,11 +305,13 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
             prefix="¥"
             placeholder="0.00"
             value={accountAmount}
+            aria-invalid={Boolean(accountError)}
+            aria-describedby={accountError ? 'stock-amount-error' : undefined}
             onChange={(event) => setAccountAmount(event.target.value)}
             onPressEnter={() => void submitAccountAction()}
           />
           {accountError ? (
-            <p className="stock-modal-error" data-testid="stock-error">
+            <p role="alert" id="stock-amount-error" className="stock-modal-error" data-testid="stock-error">
               {accountError}
             </p>
           ) : null}

@@ -830,7 +830,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       }
     >
       {error ? (
-        <p className="m0-error da-error" data-testid="chart-error">
+        <p role="alert" className="m0-error da-error" data-testid="chart-error">
           {error}
         </p>
       ) : null}
@@ -1342,7 +1342,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             </div>
           )}
           {createError ? (
-            <p className="m0-error" data-testid="chart-create-error">
+            <p role="alert" className="m0-error" data-testid="chart-create-error">
               {createError}
             </p>
           ) : null}
@@ -1384,7 +1384,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             />
           </div>
           {renameError ? (
-            <p className="m0-error" data-testid="chart-rename-error">
+            <p role="alert" className="m0-error" data-testid="chart-rename-error">
               {renameError}
             </p>
           ) : null}
@@ -1502,7 +1502,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           />
 
           {lineError ? (
-            <p className="m0-error" data-testid="chart-line-error">
+            <p role="alert" className="m0-error" data-testid="chart-line-error">
               {lineError}
             </p>
           ) : null}

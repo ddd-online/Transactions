@@ -222,7 +222,7 @@ export function UpdatePanel({ snapshot, onSnapshot }: UpdatePanelProps): JSX.Ele
       ) : null}
 
       {showError ? (
-        <p className="m0-error" data-testid="update-error">
+        <p role="alert" className="m0-error" data-testid="update-error">
           {showError}
         </p>
       ) : null}

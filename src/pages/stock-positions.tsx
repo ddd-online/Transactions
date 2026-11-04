@@ -581,7 +581,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       <section className="stock-detail">
         {!selected ? (
           <div className="stock-detail__empty">
-            {error ? <p className="stock-inline-error">{error}</p> : null}
+            {error ? <p role="alert" className="stock-inline-error">{error}</p> : null}
           </div>
         ) : (
           <>
@@ -1028,7 +1028,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             )}
           </section>
 
-          {error ? <p className="stock-modal-error">{error}</p> : null}
+          {error ? <p role="alert" className="stock-modal-error">{error}</p> : null}
           <div className="stock-modal-actions">
             <Button variant="secondary" testId="trade-cancel" onClick={() => setTradeOpen(false)}>
               取消

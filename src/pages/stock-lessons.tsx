@@ -84,7 +84,7 @@ export function StockLessonsPanel({
   return (
     <div className="stock-lessons-view">
       {error ? (
-        <p className="m0-error stock-inline-error" data-testid="stock-lesson-page-error">
+        <p role="alert" className="m0-error stock-inline-error" data-testid="stock-lesson-page-error">
           {error}
         </p>
       ) : null}

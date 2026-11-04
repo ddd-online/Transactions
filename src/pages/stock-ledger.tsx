@@ -198,7 +198,7 @@ export function StockLedgerSection({
       </header>
 
       {error ? (
-        <p className="m0-error stock-ledger__error" data-testid="stock-ledger-error">
+        <p role="alert" className="m0-error stock-ledger__error" data-testid="stock-ledger-error">
           {error}
         </p>
       ) : null}
@@ -388,7 +388,7 @@ export function StockLedgerSection({
           </label>
 
           {error ? (
-            <p className="stock-modal-error" data-testid="stock-ledger-form-error">
+            <p role="alert" className="stock-modal-error" data-testid="stock-ledger-form-error">
               {error}
             </p>
           ) : null}

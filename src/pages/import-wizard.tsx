@@ -147,7 +147,7 @@ export function ImportWizard({ progress, onImported }: ImportWizardProps): JSX.E
       ) : null}
 
       {error ? (
-        <p className="m0-error" data-testid="import-error">
+        <p role="alert" className="m0-error" data-testid="import-error">
           {error}
         </p>
       ) : null}

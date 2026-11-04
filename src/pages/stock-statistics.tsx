@@ -486,7 +486,7 @@ export function StockStatisticsPanel({
       <div className="stock-statistics-view">
         {toolbarHost ? createPortal(toolbar, toolbarHost) : null}
       {error ? (
-        <p className="m0-error stock-inline-error" data-testid="stock-statistics-error">
+        <p role="alert" className="m0-error stock-inline-error" data-testid="stock-statistics-error">
           {error}
         </p>
       ) : null}

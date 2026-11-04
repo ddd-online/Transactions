@@ -293,7 +293,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
       contentClassName="ct-page-content"
     >
       {error ? (
-        <p className="m0-error ct-error" data-testid="tag-page-error">
+        <p role="alert" className="m0-error ct-error" data-testid="tag-page-error">
           {error}
         </p>
       ) : null}
@@ -477,7 +477,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
             onPressEnter={() => void confirmCategory()}
           />
           {categoryError ? (
-            <p className="m0-error" data-testid="category-error">
+            <p role="alert" className="m0-error" data-testid="category-error">
               {categoryError}
             </p>
           ) : null}
@@ -516,7 +516,7 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
             onPressEnter={() => void confirmTag()}
           />
           {tagError ? (
-            <p className="m0-error" data-testid="tag-error">
+            <p role="alert" className="m0-error" data-testid="tag-error">
               {tagError}
             </p>
           ) : null}
