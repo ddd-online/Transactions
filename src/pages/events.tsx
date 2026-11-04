@@ -714,6 +714,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       style={{ backgroundColor: value }}
                       title={name}
                       aria-label={name}
+                      aria-pressed={color === value}
                       data-testid={`event-color-${index}`}
                       onClick={() => void changeColor(value)}
                     />
@@ -723,6 +724,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                     className={`key-event-swatch key-event-swatch--empty${color ? '' : ' is-selected'}`}
                     title="使用默认颜色"
                     aria-label="使用默认颜色"
+                    aria-pressed={!color}
                     data-testid="event-color-none"
                     onClick={() => void changeColor('')}
                   />
@@ -783,48 +785,61 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                         </div>
 
                         <ScrollArea className="key-event-gallery__thumbs">
-                          {images.map((image) => (
-                            <div
-                              key={image.id}
-                              className={`key-event-thumb${image.id === mainImage.id ? ' is-selected' : ''}`}
-                            >
-                              <img
-                                className="key-event-thumb__img"
-                                src={assetUrl(image.thumbPath)}
-                                alt="事件图片"
-                                data-testid="event-image"
-                                onClick={() => setSelectedImageId(image.id)}
-                              />
-                              {image.motionPath ? (
-                                <span
-                                  className="key-event-thumb__live"
-                                  data-testid="event-image-live"
-                                  aria-hidden="true"
-                                >
-                                  <Icon name="CaretRight" size={9} />
-                                  实况
-                                </span>
-                              ) : null}
-                              <Popconfirm
-                                title="删除这张图片？"
-                                okText="删除"
-                                cancelText="取消"
-                                okType="danger"
-                                onConfirm={() => void removeImage(image.id)}
+                          {images.map((image, index) => {
+                            const selected = image.id === mainImage.id
+                            return (
+                              <div
+                                key={image.id}
+                                className={`key-event-thumb${selected ? ' is-selected' : ''}`}
                               >
+                                {/* 缩略图是「看这张」的大按钮：选中态交给 aria-pressed，
+                                    键盘能 Tab 到、Enter / Space 能切。删除键是它的**兄弟**、叠在上面 ——
+                                    按钮套按钮是无效 HTML，Tab 顺序也会乱。 */}
                                 <button
                                   type="button"
-                                  className="tr-icon-btn key-event-thumb__delete"
-                                  aria-label="删除图片"
-                                  title="删除图片"
-                                  data-testid="event-image-delete"
-                                  onClick={(clickEvent) => clickEvent.stopPropagation()}
+                                  className="key-event-thumb__select"
+                                  aria-pressed={selected}
+                                  aria-label={`查看第 ${index + 1} 张图片，共 ${images.length} 张${image.motionPath ? '，实况照片' : ''}`}
+                                  data-testid="event-image-select"
+                                  onClick={() => setSelectedImageId(image.id)}
                                 >
-                                  <Icon name="Close" size={12} />
+                                  <img
+                                    className="key-event-thumb__img"
+                                    src={assetUrl(image.thumbPath)}
+                                    alt=""
+                                    data-testid="event-image"
+                                  />
                                 </button>
-                              </Popconfirm>
-                            </div>
-                          ))}
+                                {image.motionPath ? (
+                                  <span
+                                    className="key-event-thumb__live"
+                                    data-testid="event-image-live"
+                                    aria-hidden="true"
+                                  >
+                                    <Icon name="CaretRight" size={9} />
+                                    实况
+                                  </span>
+                                ) : null}
+                                <Popconfirm
+                                  title="删除这张图片？"
+                                  okText="删除"
+                                  cancelText="取消"
+                                  okType="danger"
+                                  onConfirm={() => void removeImage(image.id)}
+                                >
+                                  <button
+                                    type="button"
+                                    className="tr-icon-btn key-event-thumb__delete"
+                                    aria-label={`删除第 ${index + 1} 张图片`}
+                                    title="删除图片"
+                                    data-testid="event-image-delete"
+                                  >
+                                    <Icon name="Close" size={12} />
+                                  </button>
+                                </Popconfirm>
+                              </div>
+                            )
+                          })}
                         </ScrollArea>
                       </>
                     )}

@@ -389,6 +389,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 ### Media
 
 - **Photo is shown whole:** 事件主图按 `contain` 完整显示 —— 这一格是"看这张照片"的地方，宁可两侧留底色也不裁；留白由同一张图放大、模糊 24px 垫底，灯箱里是同一套底衬（48px）。缩略图反过来用 `cover`：它是 160×90 的导航槽位，要的是整齐一列，看清照片交给主图和灯箱。
+- **Thumbnail is a button:** 侧栏每一格缩略图**本身就是按钮**，不是「一个恰好带 onClick 的 `<img>`」：铺满槽位、Tab 能到、Enter / Space 能切，选中态由 `aria-pressed` 表达（`is-selected` 只管画边框），读屏名是「查看第 N 张图片，共 M 张」。里面的 `<img>` 因此 `alt=""` —— 名字在按钮上，图再报一遍就成了两遍。删除键是它的**兄弟**、绝对定位叠在右上角：按钮套按钮是无效 HTML，Tab 顺序也会乱；这也和「代码按钮叠在股票卡片上」同一条规矩。焦点环画在**外层槽位**上（`:has(...:focus-visible)`），因为这一层 `overflow: hidden` 会把按钮自己的 outline 裁掉。
 - **HEIC:** iPhone 的 HEIC 在 Chromium 里没有解码器（Windows 相册能开是系统装了 HEIF 图像扩展）。导入时主进程用 libheif（wasm）解成 RGBA、编成 JPEG q92 当展示图，缩略图从同一份像素缩到 300 宽；原图按字节原样留一份（`<uuid>.heic`），「保存图片」给的是看得见的那份 JPEG。转码只在导入时发生一次，列表与灯箱之后都读 JPEG。
 - **Live photo:** 实况是「同名照片 + 同名 MOV」两个文件：选文件时多选、按文件名主干配对，只有视频没有照片时不做猜测，直接提示「实况视频要和同名的照片一起选」。动态部分单独存（`<uuid>.mov`），主图左下角一枚「实况」胶囊按钮 —— 点一下在原位播放，再点、点视频本身或播完就回到静态照片；打开灯箱时主图那层重挂一次，声音不会在预览背后继续。缩略图左下角配一枚更小的「实况」角标（遮罩色 + 白字），和右上的删除按钮分居两角。播放在 `trasset://` 上走 Range（206 + `content-range`），`<video>` 才能拖进度，CSP 因此多了 `media-src`；HEVC 能不能解取决于系统解码器，解不了就明说「这台电脑缺少 HEVC 解码器」，不装作在播。
 

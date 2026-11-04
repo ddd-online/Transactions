@@ -104,6 +104,17 @@ test('事件图片：HEIC 转码入库，实况连播放', async () => {
     // 缩略图上的实况角标只出现在有动态的那张上
     await expect(page.getByTestId('event-image-live')).toHaveCount(1)
 
+    // 缩略图本身是按钮：键盘 Tab 得到、Enter 能切，选中态由 aria-pressed 表达（不再只写在类上）
+    const thumbs = page.getByTestId('event-image-select')
+    await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'true')
+    await thumbs.nth(0).focus()
+    await page.keyboard.press('Enter')
+    await expect(thumbs.nth(0)).toHaveAttribute('aria-pressed', 'true')
+    await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'false')
+    // 切回实况那张，后面的播放断言继续落在它身上
+    await thumbs.nth(1).click()
+    await expect(thumbs.nth(1)).toHaveAttribute('aria-pressed', 'true')
+
     // 点「实况」开始播放
     await page.getByTestId('event-live-toggle').click()
     await expect(live).toHaveAttribute('data-playing', 'true')
