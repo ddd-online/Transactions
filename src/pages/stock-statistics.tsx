@@ -22,7 +22,7 @@ import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-pi
 import { Tooltip } from '../components/tooltip'
 import { chartTextTokens } from '../theme/chart-text'
 import { profitLossColor } from '../theme/chart-colors'
-import { CHART_DRAW_ANIMATION, motionAllowed } from '../theme/motion'
+import { CHART_DRAW_ANIMATION, shouldAnimateDraw } from '../theme/motion'
 import { useThemeMode } from '../theme/theme-mode'
 import {
   stockDate,
@@ -275,7 +275,9 @@ function ChartBox({
         }),
       ],
     }
-    chart
+    // 采样点太密时不描线也不做面积的进场：620ms 里画不完几百段，只看到面积在闪。
+    const animated = shouldAnimateDraw(rows.length)
+    const area = chart
       .area()
       .data(seriesRows)
       .encode('x', 'x')
@@ -283,6 +285,7 @@ function ChartBox({
       .encode('color', 'series')
       .style('opacity', 0.18)
       .tooltip(tooltip)
+    if (!animated) area.animate(false)
     /* 数据落定那一拍：曲线沿路径自己画出来（与分析页同一份时长与缓动）。
      * 面积只做淡入 —— 它是曲线脚下的阴影，不该跟着逐段描边。 */
     const line = chart
@@ -293,7 +296,7 @@ function ChartBox({
       .encode('color', 'series')
       .style('lineWidth', 2)
       .tooltip(tooltip)
-    if (motionAllowed()) {
+    if (animated) {
       line.animate('enter', CHART_DRAW_ANIMATION)
     } else {
       line.animate(false)
@@ -333,6 +336,10 @@ export function StockStatisticsPanel({
   const [strategy, setStrategy] = useState<'cumulative' | 'grouped'>('cumulative')
   const [rangeMode, setRangeMode] = useState<RangeMode>('all')
   const [recent, setRecent] = useState('5')
+  /* 输入框里的字与「已经生效的 N」是两件事：每敲一位就重算一次曲线，等于把一次输入
+   * 拆成三次 IPC + 三遍数据库查询 + 三遍整图重绘（实测三位数 101ms 脚本）。
+   * 停下 250ms 再提交 —— 下拉、分段这些一击即中的筛选不经过这条。 */
+  const [recentText, setRecentText] = useState('5')
   const [tag, setTag] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -378,6 +385,12 @@ export function StockStatisticsPanel({
       .then((settings) => setTagOptions(settings.tags))
       .catch(() => setTagOptions([]))
   }, [ledgerId])
+
+  // 「最近 N 笔」的提交：打字停下 250ms 才生效，中途不重算。
+  useEffect(() => {
+    const timer = window.setTimeout(() => setRecent(recentText), 250)
+    return () => window.clearTimeout(timer)
+  }, [recentText])
 
   // 筛选条件一变就回到第 1 页（避免停在一个已经不存在的页码上）。
   useEffect(() => {
@@ -436,11 +449,11 @@ export function StockStatisticsPanel({
         {rangeMode === 'recent' ? (
           <Input
             data-testid="statistics-recent"
-            value={recent}
+            value={recentText}
             inputMode="numeric"
             placeholder="N"
             style={{ width: 90 }}
-            onChange={(event) => setRecent(event.target.value)}
+            onChange={(event) => setRecentText(event.target.value)}
           />
         ) : null}
         {/* 明细恒为逐笔结算：分组口径只影响曲线，进「明细」就收起这个下拉，
@@ -728,6 +741,9 @@ export function StockStatisticsPanel({
         width="90vw"
         centered
         footer={null}
+        /* 关掉就销毁。不销毁的话这张大图会一直挂在 DOM 里：之后每次换指标、换范围、
+         * 换口径都要把**两张** G2 画布重画一遍（实测多出一整份 syncHierarchy + render）。 */
+        destroyOnHidden
         onCancel={() => setExpandedChart(false)}
       >
         <div className="stock-chart-modal">

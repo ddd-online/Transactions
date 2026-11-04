@@ -333,6 +333,8 @@ Motion here is structural, not decorative: it says where a surface came from, th
 
 **Budget.** Only transform, opacity, color and shadow animate; no scroll-driven motion, no parallax, no looping animation outside loading states, and loaders stop when their surface unmounts.
 
+**描线只在看得清的时候播。** 那条 620ms 是给「一条能顺着读的曲线」定的：十几个点，眼睛跟着走。采样点上百之后，同一段时长里要画完一条几百段的折线，看到的只是面积在闪 —— 代价却是每一帧把整块画布重绘一遍。所以 `shouldAnimateDraw(pointCount)` 以 120 个点为界：密过这条线就直接画完，数据是同一份，只是不再表演它怎么长出来。股票统计页 400 个采样实测：描线时切过去 103ms 脚本，直接画完 44ms。
+
 **Reduced motion.** `prefers-reduced-motion: reduce` collapses every beat to an instant state change (the global cap in `base.css`), so focus, colour and state still land. The chart asks the media query itself and turns its draw off (`animate(false)`) instead of leaning on the global cap: a 620ms stroke cut to zero by an override could leave the line hidden. 饼图的单片实心圆是 CSS 遮罩画的，就吃那把全局兜底（0.01ms 直接落到整圆）。
 
 **加载指示器是唯一不吃那把兜底的东西。** 无限旋转压成 0.01ms 之后是一个静止的圆环 —— 一个正在请求的按钮看起来和空闲一模一样，而「还在忙」这件事只有它在说。所以 `.anticon-spin`（按钮里的加载图标）与 `.ant-spin-dot`（独立 Spin）换成**不位移**的替代：1.6s 的明暗呼吸（`tr-busy-pulse`，透明度 1 ↔ .4）。空间移动照旧归零 —— 减少动态要的是「别晃」，不是「别告诉我在忙」。
@@ -342,6 +344,10 @@ Motion here is structural, not decorative: it says where a surface came from, th
 本机读盘，没有网络时延；真正花时间的是**启动时把所有代码解析一遍**。所以这里只有一条规矩：
 
 **页面按需加载，重心不进外壳。** 八个页面在 `App.tsx` 走 `React.lazy`（一次只挂一页），`Suspense` 的兜底是 `null` —— 本机 `app://` 读一个 chunk 只有几毫秒，插一块骨架反而会闪。路由级拆分把入口从 6.5MB 压到 2.4MB：G2（约 2.7MB，分析页与股票统计）与页面各自的表、弹窗因此只在真正打开那一页时才解析。`Suspense` 的边界画在 `PageRailProvider` **里面** —— 画在外面的话，每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。外壳、antd 与共享令牌留在入口，拆它们只会把启动摊成更多个请求而对首帧没有帮助。
+
+**重的东西不许留两张。** 股票统计的「展开」大图关掉就销毁（`destroyOnHidden`）：留着它，之后每次换指标 / 换范围都要重画**两张** G2 画布。同一页里两张同源画布是纯浪费，不是"预加载"。
+
+**打字不触发重算。** 一输入就重算的筛选（股票统计的「最近 N 笔」）把一次输入拆成三次 IPC、三遍查询、三遍整图重绘 —— 实测三位数 101ms 脚本。停下来 250ms 再提交（`recentText` → `recent`），下拉、分段这些一击即中的筛选照旧即时。
 
 ## Shapes
 

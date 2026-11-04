@@ -38,3 +38,18 @@ export function motionAllowed(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true
   return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
+
+/**
+ * 描线只在**看得清**的时候播。
+ *
+ * 620ms 是给「一条能顺着读下去的曲线」定的：十几个点，眼睛跟着走，看到的是数据在到账。
+ * 采样点上百之后同一段时长里要画完一条几百段的折线，看到的只是面积在闪，代价则是
+ * 每一帧把整块画布重绘一遍 —— 股票统计页 400 个采样实测光是这张图的动画就吃掉约 80ms
+ * 主线程（`syncHierarchy` + `render2` 各帧累加）。所以超过这个密度就直接画完：
+ * 数据是同一份，只是不再表演它怎么长出来。
+ */
+export const CHART_DRAW_MAX_POINTS = 120
+
+export function shouldAnimateDraw(pointCount: number): boolean {
+  return motionAllowed() && pointCount <= CHART_DRAW_MAX_POINTS
+}
