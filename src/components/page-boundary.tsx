@@ -39,14 +39,23 @@ export class PageBoundary extends Component<PageBoundaryProps, PageBoundaryState
     return (
       <div className="page-boundary" role="alert" data-testid="page-boundary">
         <p className="page-boundary__title">这一页没有加载出来</p>
-        <p className="page-boundary__text">可能是安装文件缺失或被安全软件拦下了。重新加载一般就好。</p>
-        <Button
-          variant="secondary"
-          testId="page-boundary-retry"
-          onClick={() => window.location.reload()}
-        >
-          重新加载
-        </Button>
+        <p className="page-boundary__text">
+          可能是安装文件缺失或被安全软件拦下了。重新加载一般就好；如果反复出现，关掉应用重新打开。
+        </p>
+        {/* 两条路：先试重载（文件只是没读到的情况）；真的读不到时，关掉应用重开才是出路 ——
+            否则这个按钮会把用户困在原地循环。 */}
+        <div className="page-boundary__actions">
+          <Button variant="primary" testId="page-boundary-retry" onClick={() => window.location.reload()}>
+            重新加载
+          </Button>
+          <Button
+            variant="secondary"
+            testId="page-boundary-close"
+            onClick={() => void window.api.invoke('window_control', { action: 'close' })}
+          >
+            关闭窗口
+          </Button>
+        </div>
       </div>
     )
   }

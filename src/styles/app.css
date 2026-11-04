@@ -964,6 +964,14 @@
   font-size: var(--transactions-size-text-body-sm);
   line-height: var(--transactions-height-normal);
   color: var(--transactions-color-text-secondary);
+  /* 两行、不留孤字：中文可在任意字间断行，靠 pretty 把最后一行留在半行以上。 */
+  text-wrap: pretty;
+}
+
+.page-boundary__actions {
+  display: flex;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-xs);
 }
 
 /* 页面容器。**顶部不留内边距**：页头（顶部容器）必须从窗口顶端开始，

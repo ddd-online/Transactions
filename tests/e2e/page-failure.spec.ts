@@ -75,6 +75,9 @@ test('分页加载失败：只有这一页变成一句可重试的话', async ()
     await expect(page.getByTestId('nav-accounting')).toBeVisible()
     await expect(page.getByTestId('ledger-trigger')).toBeVisible()
     await expect(page.getByTestId('page-boundary-retry')).toBeVisible()
+    // 第二条出路：文件真的读不到时，靠关掉应用重开，而不是原地循环重载
+    await expect(page.getByTestId('page-boundary-close')).toBeVisible()
+    await expect(page.getByTestId('page-boundary')).toContainText('关掉应用重新打开')
 
     // 切走再回来：边界跟着路由重置，别的页照常
     await page.getByTestId('nav-accounting').click()
