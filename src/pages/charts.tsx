@@ -1028,13 +1028,18 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                   ) : null
                 ) : hasValues ? (
                   summaryCollapsed ? (
-                    <aside className="da-chart__sums da-chart__sums--collapsed">
+                    <aside
+                      id="chart-sums-region"
+                      className="da-chart__sums da-chart__sums--collapsed"
+                    >
                       <button
                         type="button"
                         className="da-chart__sums-rail"
                         ref={expandToggleRef}
                         data-testid="chart-sums-expand"
                         aria-label="展开曲线合计"
+                        aria-expanded={false}
+                        aria-controls="chart-sums-region"
                         title="展开曲线合计"
                         onClick={() => changeSummaryCollapsed(false)}
                       >
@@ -1043,7 +1048,11 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                       </button>
                     </aside>
                   ) : (
-                    <aside className="da-chart__sums" data-testid="chart-sums">
+                    <aside
+                      id="chart-sums-region"
+                      className="da-chart__sums"
+                      data-testid="chart-sums"
+                    >
                       <div className="da-chart__sums-head">
                         <h4 className="da-chart__sums-title">曲线合计</h4>
                         <button
@@ -1052,6 +1061,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                           ref={collapseToggleRef}
                           data-testid="chart-sums-collapse"
                           aria-label="收起曲线合计"
+                          aria-expanded
+                          aria-controls="chart-sums-region"
                           title="收起曲线合计"
                           onClick={() => changeSummaryCollapsed(true)}
                         >
@@ -1267,6 +1278,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <Input
               data-testid="chart-title"
               placeholder="图表名称"
+              aria-invalid={Boolean(createError)}
+              aria-describedby={createError ? 'chart-create-error' : undefined}
               value={createTitle}
               onChange={(event) => setCreateTitle(event.target.value)}
               onPressEnter={() => void createChart()}
@@ -1342,7 +1355,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             </div>
           )}
           {createError ? (
-            <p role="alert" className="m0-error" data-testid="chart-create-error">
+            <p role="alert" id="chart-create-error" className="m0-error" data-testid="chart-create-error">
               {createError}
             </p>
           ) : null}
@@ -1378,13 +1391,20 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <Input
               data-testid="chart-rename-input"
               placeholder="图表名称"
+              aria-invalid={Boolean(renameError)}
+              aria-describedby={renameError ? 'chart-rename-error' : undefined}
               value={renameTitle}
               onChange={(event) => setRenameTitle(event.target.value)}
               onPressEnter={() => void renameChart()}
             />
           </div>
           {renameError ? (
-            <p role="alert" className="m0-error" data-testid="chart-rename-error">
+            <p
+              role="alert"
+              id="chart-rename-error"
+              className="m0-error"
+              data-testid="chart-rename-error"
+            >
               {renameError}
             </p>
           ) : null}

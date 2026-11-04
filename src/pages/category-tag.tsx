@@ -472,12 +472,14 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
             data-testid="category-name"
             placeholder="输入分类名称"
             maxLength={NAME_MAX_LENGTH}
+            aria-invalid={Boolean(categoryError)}
+            aria-describedby={categoryError ? 'category-error' : undefined}
             value={categoryName}
             onChange={(event) => setCategoryName(event.target.value)}
             onPressEnter={() => void confirmCategory()}
           />
           {categoryError ? (
-            <p role="alert" className="m0-error" data-testid="category-error">
+            <p role="alert" id="category-error" className="m0-error" data-testid="category-error">
               {categoryError}
             </p>
           ) : null}
@@ -511,12 +513,14 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
             data-testid="tag-name"
             placeholder="输入标签名称"
             maxLength={NAME_MAX_LENGTH}
+            aria-invalid={Boolean(tagError)}
+            aria-describedby={tagError ? 'tag-error' : undefined}
             value={tagName}
             onChange={(event) => setTagName(event.target.value)}
             onPressEnter={() => void confirmTag()}
           />
           {tagError ? (
-            <p role="alert" className="m0-error" data-testid="tag-error">
+            <p role="alert" id="tag-error" className="m0-error" data-testid="tag-error">
               {tagError}
             </p>
           ) : null}

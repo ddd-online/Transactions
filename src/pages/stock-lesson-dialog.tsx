@@ -149,6 +149,8 @@ export function StockLessonDialog({
             data-testid="stock-lesson-text"
             maxLength={STOCK_LESSON_TEXT_MAX}
             showCount
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'stock-lesson-error' : undefined}
             placeholder="一句话写清楚这次做对了什么，或做错了什么。"
             value={text}
             onChange={(event) => {
@@ -208,7 +210,12 @@ export function StockLessonDialog({
           </p>
         ) : null}
         {error ? (
-          <p role="alert" className="stock-modal-error" data-testid="stock-lesson-error">
+          <p
+            role="alert"
+            id="stock-lesson-error"
+            className="stock-modal-error"
+            data-testid="stock-lesson-error"
+          >
             {error}
           </p>
         ) : null}

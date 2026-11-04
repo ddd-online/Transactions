@@ -897,6 +897,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             autoFocus
             maxLength={200}
             status={cardError ? 'error' : undefined}
+            aria-invalid={Boolean(cardError)}
+            aria-describedby={cardError ? 'todo-card-error' : undefined}
             placeholder="例如：本周工作"
             value={cardDraft}
             onChange={(event) => {
@@ -906,7 +908,12 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             onPressEnter={() => void createCard()}
           />
           {cardError ? (
-            <p role="alert" className="todo-modal__error" data-testid="todo-card-error">
+            <p
+              role="alert"
+              id="todo-card-error"
+              className="todo-modal__error"
+              data-testid="todo-card-error"
+            >
               {cardError}
             </p>
           ) : null}
@@ -943,6 +950,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
               autoFocus
               data-testid="todo-item-title"
               maxLength={500}
+              aria-invalid={Boolean(itemError)}
+              aria-describedby={itemError ? 'todo-item-error' : undefined}
               placeholder="例如：写周报"
               value={itemDraft}
               onChange={(event) => {
@@ -1009,7 +1018,12 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             </div>
           </div>
           {itemError ? (
-            <p role="alert" className="todo-modal__error" data-testid="todo-item-error">
+            <p
+              role="alert"
+              id="todo-item-error"
+              className="todo-modal__error"
+              data-testid="todo-item-error"
+            >
               {itemError}
             </p>
           ) : null}

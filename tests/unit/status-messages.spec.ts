@@ -67,4 +67,27 @@ describe('status messages', () => {
     expect(stock).toContain("aria-describedby={accountError ? 'stock-amount-error' : undefined}")
     expect(stock).toContain('aria-invalid={Boolean(accountError)}')
   })
+
+  /* 字段级关联的完整清单：每个「单一字段 + 一条错误」的表单都要
+   * ① 错误段落带 id ② 输入框带 aria-invalid ③ aria-describedby 指回那个 id。
+   * 只做一处、其余靠自觉，就是上一轮被抓到的「只补了一个地方」。 */
+  const FIELD_ERRORS: Array<{ file: string; id: string; message: string }> = [
+    { file: 'stock.tsx', id: 'stock-amount-error', message: 'accountError' },
+    { file: 'todo.tsx', id: 'todo-card-error', message: 'cardError' },
+    { file: 'todo.tsx', id: 'todo-item-error', message: 'itemError' },
+    { file: 'stock-lesson-dialog.tsx', id: 'stock-lesson-error', message: 'error' },
+    { file: 'category-tag.tsx', id: 'category-error', message: 'categoryError' },
+    { file: 'category-tag.tsx', id: 'tag-error', message: 'tagError' },
+    { file: 'charts.tsx', id: 'chart-create-error', message: 'createError' },
+    { file: 'charts.tsx', id: 'chart-rename-error', message: 'renameError' },
+  ]
+
+  it.each(FIELD_ERRORS)('$id 与输入框双向关联', ({ file, id, message }) => {
+    const source = readFileSync(join(SRC, 'pages', file), 'utf8')
+    expect(source, `${file} 缺错误段 id=${id}`).toContain(`id="${id}"`)
+    expect(source, `${file} 缺 aria-invalid`).toContain(`aria-invalid={Boolean(${message})}`)
+    expect(source, `${file} 缺 aria-describedby → ${id}`).toContain(
+      `aria-describedby={${message} ? '${id}' : undefined}`,
+    )
+  })
 })
