@@ -427,6 +427,24 @@
   border-color: var(--transactions-color-text-major);
 }
 
+/* 事件身份色是**内容**：用户挑的那一档（十六进制）存在库里，展示时按主题调一档。
+ * 浅色下原样用；深色下往白里提 32% —— 中间色调压在近黑底上会读成一团暗色，
+ * 和账本那八个身份色「深色各提亮一档」是同一条规矩。这条必须写在 `.key-event-swatch`
+ * 之后：色板按钮的 `background: none` 是简写，同权重下谁在后面谁赢。 */
+.key-event-tone {
+  background-color: var(--event-tone);
+}
+
+[data-theme='dark'] .key-event-tone {
+  background-color: color-mix(in srgb, var(--event-tone) 68%, #ffffff);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .key-event-tone {
+    background-color: color-mix(in srgb, var(--event-tone) 68%, #ffffff);
+  }
+}
+
 /* 画廊 + 上传入口 */
 .key-event-gallery {
   display: flex;

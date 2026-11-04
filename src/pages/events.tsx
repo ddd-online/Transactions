@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type JSX,
   type KeyboardEvent,
 } from 'react'
@@ -21,30 +22,8 @@ import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
+import { EVENT_TONES } from '../theme/event-colors'
 import { LivePhoto } from './event-live-photo'
-
-const EVENT_COLORS: Array<[string, string]> = [
-  ['#D9705A', '砖红'],
-  ['#C25460', '玫红'],
-  ['#D07048', '橘红'],
-  ['#D48838', '橘黄'],
-  ['#C6963A', '土黄'],
-  ['#A09040', '橄榄黄'],
-  ['#5C9858', '草绿'],
-  ['#4A8E70', '松绿'],
-  ['#5C9E7C', '豆绿'],
-  ['#3D8878', '墨绿'],
-  ['#389098', '青蓝'],
-  ['#4A78A0', '钢蓝'],
-  ['#5C8DB5', '天蓝'],
-  ['#6070A0', '靛蓝'],
-  ['#7868A0', '蓝紫'],
-  ['#8C6B9E', '紫罗兰'],
-  ['#A06088', '紫红'],
-  ['#B06078', '胭脂'],
-  ['#8C7B6E', '茶褐'],
-  ['#7E8890', '青灰'],
-]
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -659,15 +638,23 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       onKeyDown={(keyboardEvent) => onCardKeyDown(keyboardEvent, item.date)}
                     >
                       <div
-                        className="key-event-card__bar"
-                        style={{ backgroundColor: item.color || 'var(--transactions-color-primary)' }}
+                        className="key-event-card__bar key-event-tone"
+                        style={
+                          {
+                            '--event-tone': item.color || 'var(--transactions-color-primary)',
+                          } as CSSProperties
+                        }
                       />
                       <div className="key-event-card__body">
                         <div className="key-event-card__name">{item.title || item.date}</div>
                         <div className="key-event-card__date">
                           <span
-                            className="key-event-card__dot"
-                            style={{ background: item.color || 'var(--transactions-color-primary)' }}
+                            className="key-event-card__dot key-event-tone"
+                            style={
+                              {
+                                '--event-tone': item.color || 'var(--transactions-color-primary)',
+                              } as CSSProperties
+                            }
                             aria-hidden="true"
                           />
                           {shortDate(item.date)}
@@ -706,12 +693,12 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
             {event ? (
               <div className="key-event-detail__body">
                 <div className="key-event-colors">
-                  {EVENT_COLORS.map(([value, name], index) => (
+                  {EVENT_TONES.map(({ value, name }, index) => (
                     <button
                       key={value}
                       type="button"
-                      className={`key-event-swatch${color === value ? ' is-selected' : ''}`}
-                      style={{ backgroundColor: value }}
+                      className={`key-event-swatch key-event-tone${color === value ? ' is-selected' : ''}`}
+                      style={{ '--event-tone': value } as CSSProperties}
                       title={name}
                       aria-label={name}
                       aria-pressed={color === value}

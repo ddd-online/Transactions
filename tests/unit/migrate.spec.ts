@@ -43,6 +43,38 @@ describe('migration runner', () => {
     db.close()
   })
 
+  it('rewrites the two out-of-contrast event tones and leaves other colours alone', () => {
+    const path = join(temporaryDirectory(), 'transactions.db')
+    const db = openDatabase(path)
+    // 先停在 v9：这一条要验的是「老库里已经存下的那两档色被改到新值」。
+    migrate(
+      db,
+      path,
+      MIGRATIONS.filter((migration) => migration.version < 10),
+    )
+    db.exec(`
+      INSERT INTO key_event (id, date, title, content, color, created_at, updated_at, ledger_id)
+      VALUES
+        ('a', '2026-01-01', '土黄', '', '#C6963A', 1, 1, ''),
+        ('b', '2026-01-02', '橘黄', '', '#D48838', 1, 1, ''),
+        ('c', '2026-01-03', '砖红', '', '#D9705A', 1, 1, ''),
+        ('d', '2026-01-04', '没挑色', '', NULL, 1, 1, '');
+    `)
+
+    migrate(db, path)
+
+    const colors = db
+      .prepare('SELECT id, color FROM key_event ORDER BY id')
+      .all() as Array<{ id: string; color: string | null }>
+    expect(colors).toEqual([
+      { id: 'a', color: '#B08534' },
+      { id: 'b', color: '#C17C33' },
+      { id: 'c', color: '#D9705A' },
+      { id: 'd', color: null },
+    ])
+    db.close()
+  })
+
   it('backs up an existing database before upgrading and keeps only one .bak', () => {
     const directory = temporaryDirectory()
     const path = join(directory, 'transactions.db')

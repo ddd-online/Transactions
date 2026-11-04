@@ -141,6 +141,19 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE chart ADD COLUMN group_category TEXT NOT NULL DEFAULT '';
     `,
   },
+  {
+    version: 10,
+    name: 'event_tone_contrast',
+    // 事件身份色里两档在纸白/画布上不够 3:1（WCAG 1.4.11，6px 圆点与 3px 竖条都是
+    // 有意义的图形）：土黄 #C6963A 只有 2.57:1、橘黄 #D48838 2.72:1。各压暗一档，
+    // 色相与名字都不动 —— 用户当年选的是「土黄」这一档，不是那个具体十六进制，
+    // 所以老事件跟着迁移，选择器里的选中态也仍然对得上。
+    // 新值见 `src/theme/event-colors.ts`。
+    sql: `
+      UPDATE key_event SET color = '#B08534' WHERE UPPER(TRIM(color)) = '#C6963A';
+      UPDATE key_event SET color = '#C17C33' WHERE UPPER(TRIM(color)) = '#D48838';
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {
