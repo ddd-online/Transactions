@@ -758,10 +758,11 @@
   gap: 2px;
   height: 18px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--transactions-radius-full);
   background-color: color-mix(in srgb, var(--transactions-color-overlay-scrim) 72%, transparent);
   color: var(--transactions-color-text-inverse);
-  font-size: 10px;
+  /* 微标签档（11px）是阶梯里最小的一级：10px 不在阶梯上，调字号时会掉队。 */
+  font-size: var(--transactions-size-text-small);
   line-height: 1;
   pointer-events: none;
 }
