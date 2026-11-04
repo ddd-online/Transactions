@@ -21,6 +21,8 @@ interface Palette {
   active: string
   shadow: string
   shadowSecondary: string
+  /** 实色危险按钮上的字色。深色下 AntD 的危险底是亮红（#f87171），白字只有 2.8:1 —— 换墨色。 */
+  dangerInk: string
 }
 
 /** AntD 只读取这组核心颜色；其余视觉仍由 `--transactions-*` 控制。 */
@@ -32,7 +34,7 @@ export const ANT_PALETTES: Record<AntdMode, Palette> = {
     error: '#dc2626',
     text: '#0f1115',
     textSecondary: '#61666b',
-    textTertiary: '#81858c',
+    textTertiary: '#6b7078',
     bgBase: '#f9fafb',
     bgContainer: '#ffffff',
     bgElevated: '#ffffff',
@@ -44,6 +46,7 @@ export const ANT_PALETTES: Record<AntdMode, Palette> = {
     active: 'rgba(57, 100, 254, 0.10)',
     shadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
     shadowSecondary: '0 8px 24px rgba(0, 0, 0, 0.10)',
+    dangerInk: '#ffffff',
   },
   dark: {
     primary: '#3964fe',
@@ -64,6 +67,7 @@ export const ANT_PALETTES: Record<AntdMode, Palette> = {
     active: 'rgba(57, 100, 254, 0.22)',
     shadow: '0 1px 2px rgba(0, 0, 0, 0.30)',
     shadowSecondary: '0 8px 24px rgba(0, 0, 0, 0.45)',
+    dangerInk: '#0f1115',
   },
 }
 
@@ -108,6 +112,9 @@ export function buildAntdTheme(mode: AntdMode): ThemeConfig {
         defaultShadow: 'none',
         dangerShadow: 'none',
         fontWeight: 500,
+        /* 深色下危险底是亮红：#ffffff 压在上面只有 2.8:1，所以换墨色（7.8:1）。
+         * 这也是 AntD 自己在 `isBright(solidBg)` 时的做法 —— 亮底配黑字。 */
+        dangerColor: p.dangerInk,
       },
       Tabs: {
         horizontalItemPadding: '0 12px',

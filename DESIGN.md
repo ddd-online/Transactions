@@ -11,7 +11,7 @@ colors:
   surface-soft: "#f3f4f6"
   text-major: "#0f1115"
   text-secondary: "#61666b"
-  text-tertiary: "#81858c"
+  text-tertiary: "#6b7078"
   text-disabled: "#9aa0a8"
   text-inverse: "#ffffff"
   border: "#e8eaed"
@@ -173,7 +173,9 @@ Cool neutrals carry the interface; Clarity Blue is the single accent; a small se
 - **Canvas** (#f9fafb): app background behind content.
 - **Paper** (#ffffff): cards, surfaces, elevated panels, button faces.
 - **Soft Gray** (#f3f4f6): minor surfaces, sidebar fill, table headers, segmented tracks.
-- **Ink** (#0f1115): primary text and icons; secondary #61666b, tertiary #81858c, disabled #9aa0a8.
+- **Ink** (#0f1115): primary text and icons; secondary #61666b, tertiary #6b7078, disabled #9aa0a8.
+
+  三级灰的取值由对比度定，不由「比二级灰更淡」定：浅色下它压在 #ffffff / #f9fafb / #f3f4f6 三种底色上都过 4.5:1（4.98 / 4.77 / 4.53），是**能过的最后一档**。再淡一格（旧的 #81858c 只有 3.55:1）就用字号和位置去拉层级，而不是让字掉到 AA 以下 —— 中文只有 400 / 700 两档真实字重（见 Two-Real-Weights Rule），层级本来就该由字号承担。禁用色 #9aa0a8（2.64:1）是例外：WCAG 1.4.3 不要求非活动控件达标，而 AntD 给文本按钮的 25% 墨色只有 1.8:1，几乎看不见。
 - **Hairlines** (#e8eaed border, #eceef1 divider, #e2e4e8 l2, #d5d8dd l3): all 1px separations.
 - **Interactive fills**: hover rgba(15,17,21,0.06), active rgba(57,100,254,0.10).
 
@@ -338,7 +340,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 - **Secondary (default):** Paper face, 1px hairline border, ink text; hover adds a soft fill (hover-bg).
 - **Text:** neutral secondary text, hover fill; text-danger turns Expense on hover with a danger-tint fill.
 - **Disabled:** 控件自身的禁用色一律用 `--transactions-color-text-disabled`（浅色 ≈2.6:1）。AntD 给文本按钮的 25% 墨色（≈1.8:1）在纸白上几乎看不见，`antd.css` 里按 text 变体把它拉回令牌 —— 只改 text 变体，主按钮的白字与危险按钮的红字不动。
-- **Primary danger:** solid Expense, white text.
+- **Primary danger:** solid Expense, white text. **深色下例外**：深色的 Expense 是亮红 `#f87171`（它主要给数字和状态当文字色），白字压上去只有 **2.8:1**。所以实色危险按钮在那里的字色换成墨色 `#0f1115`（**7.8:1**）—— 这也是 AntD 自己对「亮底实心按钮」的处理（`isBright` 时转黑字）。一个红色没法同时当「深底上的文字」和「压白字的实心底」，两个角色就分两个值：`--transactions-color-expense` 管前者，`ANT_PALETTES.dark.dangerInk` 管后者。
 - **Focus:** 2px Clarity Blue outline, 2px offset, on `:focus-visible`.
 
 ### Cards / Containers
@@ -422,7 +424,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **退出是一次有交代的收尾，不是窗口突然消失。** 点关闭（关闭行为 = 直接退出）后，整屏用 `backdrop-filter: blur(10px)` 虚化已经画好的应用，中间一张 420px 宽的纸面小卡：**18px 600** 的「正在退出」（弹层标题那一档，不是正文 14px —— 这一屏只看得到半秒，标题得在余光里也认得出来）、一条 12px 的**斜纹横条**、一行 13px 的当前步骤。没有按钮，也不给关闭入口 —— 这一层最多存在半秒。
 - **横条是「还在忙」，不是进度。** 退出真正要干的只有两件毫秒级的事（补写窗口位置、关工作空间），报一个百分比等于装精确，所以这里不报数：45° 的斜纹由主色与主色 28% 的浅底交替铺满，图案按 16px 的砖平铺。条纹是条上的**独立一层**，只动 `transform` 平移一格（700ms 一个周期，与下一格无缝接上）—— 动 `background-position` 每帧都要重画整条，动 `transform` 走合成层，也才落进 Motion 那条「只动 transform / opacity / color / shadow」的预算里。横条对读屏是 `aria-hidden`，它只负责"没卡住"。
-- **有效信息是那句步骤文字**：13px、`text-secondary`（≈5.8:1）而不是三级灰（≈3.7:1），半秒里也读得清。它不挂 `aria-live` —— 两次换字之间只隔 90ms，读屏念不完；这一层是 `alertdialog`，焦点进入时已经报过「正在退出」，所以遮罩挂载时把焦点收进这一层（它没有可操作的东西，因此不画焦点环）。
+- **有效信息是那句步骤文字**：13px、`text-secondary`（≈5.8:1，比三级灰 4.8:1 再提一档），半秒里也读得清。它不挂 `aria-live` —— 两次换字之间只隔 90ms，读屏念不完；这一层是 `alertdialog`，焦点进入时已经报过「正在退出」，所以遮罩挂载时把焦点收进这一层（它没有可操作的东西，因此不画焦点环）。
 - **顺序是「先画面、再干活、后关窗」**：主进程发 `app:quit-started`，渲染层画完回执 `app_quit_ready`，主进程才开始补写窗口位置、关工作空间（WAL 合并），最后 `app.quit()`。回执等不到就 300ms 后继续，托盘退出（窗口不可见）直接跳过整段等待 —— 收尾不能因为界面没响应而卡住。
 - **步骤文字跟着真实步骤走**：保存窗口状态 → 关闭工作空间，步骤之间留 90ms。收尾本身是毫秒级的，不留这口气斜纹条还没动起来窗口就没了；总可见时间保底 520ms。最后不再补一句「正在退出」—— 标题已经说了，重复只会多闪一次。
 
