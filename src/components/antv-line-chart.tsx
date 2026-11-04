@@ -3,7 +3,7 @@ import { Chart } from '@antv/g2'
 
 import type { ChartLineData } from '../../shared/types/transaction'
 import { chartTextTokens } from '../theme/chart-text'
-import { CHART_DRAW_ANIMATION, motionAllowed } from '../theme/motion'
+import { CHART_DRAW_ANIMATION, shouldAnimateDraw } from '../theme/motion'
 
 export interface AntvLineChartProps {
   lines: ChartLineData[]
@@ -85,7 +85,9 @@ export const AntvLineChart = memo(function AntvLineChart({
     }
     /* 落点（DESIGN.md「Motion」里的「Draw the data」）：曲线按路径自己画出来，620ms，
      * 一条曲线一次 —— 这是这一页唯一被授权的动效，其余进场都只是 4px 的落位。
-     * 减少动态偏好下整张图直接画完，不做描线。 */
+     * 两种情况不描线：减少动态偏好下整张图直接画完；采样点密到看不清这一笔在画什么
+     * （`shouldAnimateDraw`，与股票统计同一条阈值），直接画完也更省 —— 620ms 里每帧
+     * 都要重绘整块画布。 */
     const line = chart
       .line()
       .data(rows)
@@ -94,7 +96,7 @@ export const AntvLineChart = memo(function AntvLineChart({
       .encode('color', 'label')
       .style('lineWidth', 2)
       .tooltip(tooltip)
-    if (motionAllowed() && drewRef.current !== signature) {
+    if (shouldAnimateDraw(rows.length) && drewRef.current !== signature) {
       line.animate('enter', CHART_DRAW_ANIMATION)
     } else {
       line.animate(false)
