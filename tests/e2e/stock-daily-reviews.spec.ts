@@ -18,7 +18,7 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('股票：每日复盘一天一条、倒序、一行省略，点开看全文（持仓 / 记录同一种）', async () => {
+test('股票：每日复盘一天一条、倒序、一行省略，点开看全文（持仓 / 记录同一种），持仓能改已写的那一天', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-day-reviews-'))
   const home = join(root, 'home')
@@ -62,6 +62,11 @@ test('股票：每日复盘一天一条、倒序、一行省略，点开看全�
     await page.getByTestId('trade-name').fill('浦发银行')
     await page.getByTestId('trade-price').fill('5')
     await page.getByTestId('trade-lots').fill('1')
+    // 建仓日放到三天前：服务只收「不早于建仓日」的那几天，要验证改前几天，
+    // 得先真的有一个合法的前几天（今天建仓就只能改今天）
+    const opened = addDays(todayYmd(), -3)
+    expect(opened).not.toBeNull()
+    await page.getByTestId('trade-date').fill(opened!)
     await page.getByTestId('trade-save').click()
     await expect(page.getByTestId('stock-trade')).toHaveCount(1)
 
@@ -123,6 +128,38 @@ test('股票：每日复盘一天一条、倒序、一行省略，点开看全�
     await page.keyboard.press('Escape')
     await expect(full).toBeHidden()
 
+    // 持仓时能改已经写过的那一天：读全文的弹窗底下那颗「编辑」换成同一天的编辑器
+    const editedReview = `补记：${longReview}`
+    await items.nth(1).click()
+    await page.getByTestId('position-daily-review-edit').click()
+    const editor = page.getByTestId('position-review-text')
+    await expect(editor).toHaveValue(longReview)
+    // 改的是那一天：日期没有可改的控件，只有一枚静态的日期（换一天请回列表点那一天）
+    await expect(page.getByTestId('position-review-date-value')).toHaveText(older!)
+    await expect(page.getByTestId('position-review-date')).toHaveCount(0)
+    // 弹窗有 200ms 的入场动画，等它落定再截图
+    await page.waitForTimeout(350)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-daily-review-edit.png'),
+    })
+    await editor.fill(editedReview)
+    await page.getByTestId('position-review-save').click()
+    await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
+    await expect(items).toHaveCount(2)
+    await expect(items.nth(1)).toContainText('补记：前一天的复盘')
+
+    // 改写的是库里的那一行，不是又追加了一天
+    const check = new DatabaseSync(join(workspace, 'transactions.db'))
+    const saved = check.prepare("SELECT review FROM stock_day_review WHERE id = 'day-review-older'").all() as Array<{
+      review: string
+    }>
+    const count = check.prepare('SELECT COUNT(*) AS total FROM stock_day_review').get() as {
+      total: number
+    }
+    check.close()
+    expect(saved).toEqual([{ review: editedReview }])
+    expect(count.total).toBe(2)
+
     // 清仓后同一份每日复盘出现在记录的那一轮里：同样一天一条、一行省略、点开看全文
     await page.getByTestId('stock-position-close').click()
     await page.getByTestId('trade-price').fill('6')
@@ -155,7 +192,9 @@ test('股票：每日复盘一天一条、倒序、一行省略，点开看全�
     await roundItems.nth(1).click()
     await expect(page.getByText(`每日复盘 · ${older}`)).toBeVisible()
     const roundFull = page.getByTestId('round-daily-review-full')
-    await expect(roundFull).toHaveText(longReview)
+    await expect(roundFull).toHaveText(editedReview)
+    // 记录里那一轮是收尾的，读全文的弹窗不给「编辑」
+    await expect(page.getByTestId('round-daily-review-edit')).toHaveCount(0)
     await page.waitForTimeout(350)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-daily-review-round-read.png'),

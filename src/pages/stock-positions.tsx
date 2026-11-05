@@ -6,7 +6,7 @@ import type { HTMLAttributes } from 'react'
 import { computeOrderFee, instrumentOf, isValidStockCode } from '../../shared/domain/fee'
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
-import type { StockPositionDto } from '../../shared/types/stock-position'
+import type { StockDayReviewDto, StockPositionDto } from '../../shared/types/stock-position'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import type { StockReviewSettingDto } from '../../shared/types/stock'
 import { Button } from '../components/button'
@@ -161,6 +161,8 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [tradeFee, setTradeFee] = useState<TradeFeeForm>(EMPTY_TRADE_FEE)
   const [roundEditing, setRoundEditing] = useState(false)
   const [dailyModalOpen, setDailyModalOpen] = useState(false)
+  /** 正在改的那一天；null = 打开的是「写今日」 */
+  const [dailyEdit, setDailyEdit] = useState<StockDayReviewDto | null>(null)
   const [dailyDate, setDailyDate] = useState(todayYmd())
   const [dailyText, setDailyText] = useState('')
   const [dailyTemplate, setDailyTemplate] = useState('')
@@ -389,6 +391,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       })
       notify('复盘已保存')
       setDailyModalOpen(false)
+      setDailyEdit(null)
       await load()
     } catch (reviewError) {
       notify(stockErrorMessage(reviewError), 'error')
@@ -397,10 +400,19 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
 
   const openDailyReview = (): void => {
     const today = todayYmd()
+    setDailyEdit(null)
     setDailyDate(today)
     setDailyText(
       selected?.dayReviews.find((review) => review.date === today)?.review ?? dailyTemplate,
     )
+    setDailyModalOpen(true)
+  }
+
+  /** 改已经写过的一天：日期钉在那一天（改日期等于把这段文字挪去盖掉别的日子），正文用原文打头。 */
+  const openDailyEdit = (day: StockDayReviewDto): void => {
+    setDailyEdit(day)
+    setDailyDate(day.date)
+    setDailyText(day.review)
     setDailyModalOpen(true)
   }
 
@@ -671,6 +683,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               <StockDailyReviews
                 days={selected.dayReviews}
                 testId="position-daily-review"
+                onEdit={openDailyEdit}
                 empty={
                   // 空态也是一行、也能点：点它就是「写今日」，和上面有内容的行同一种反馈
                   <div className="stock-review-line">
@@ -1084,27 +1097,40 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
 
       <Modal
         open={dailyModalOpen}
-        title="每日复盘"
+        title={dailyEdit ? `每日复盘 · ${dailyEdit.date}` : '每日复盘'}
         width={560}
         centered
         destroyOnHidden
         footer={null}
-        onCancel={() => setDailyModalOpen(false)}
+        onCancel={() => {
+          setDailyModalOpen(false)
+          setDailyEdit(null)
+        }}
       >
         <div className="stock-modal-form">
-          <label>
-            <span className="stock-label">日期</span>
-            <DatePicker
-              testId="position-review-date"
-              value={dailyDate}
-              onChange={setDailyDate}
-            />
-          </label>
+          {dailyEdit ? (
+            // 改的是某一天：日期不是字段，是这一行的身份 —— 不摆一个灰掉、看起来像坏了的选择器
+            <div>
+              <span className="stock-label">日期</span>
+              <span className="stock-review-date" data-testid="position-review-date-value">
+                {dailyEdit.date}
+              </span>
+            </div>
+          ) : (
+            <label>
+              <span className="stock-label">日期</span>
+              <DatePicker
+                testId="position-review-date"
+                value={dailyDate}
+                onChange={setDailyDate}
+              />
+            </label>
+          )}
           <label>
             <span className="stock-label">复盘</span>
             <Input.TextArea
               data-testid="position-review-text"
-              aria-label="今日的每日复盘"
+              aria-label={dailyEdit ? `${dailyEdit.date} 的每日复盘` : '今日的每日复盘'}
               rows={6}
               placeholder="记录今天的盘面与判断"
               value={dailyText}

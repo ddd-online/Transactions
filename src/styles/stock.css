@@ -2999,6 +2999,16 @@
   overflow-wrap: anywhere;
 }
 
+/* 编辑某一天时，日期是这一行的身份而不是可改的字段：写静态值，不摆一个灰掉的日期选择器
+ * （禁用控件的字色只有 ≈1.9:1，读不清，还暗示它本该能点）。 */
+.stock-review-date {
+  display: block;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
 .stock-table-foot .ant-pagination-item-active a,
 .page-footer-bar .ant-pagination-item-active a {
   color: var(--transactions-color-text-inverse);
