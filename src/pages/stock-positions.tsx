@@ -389,14 +389,14 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
         date: dailyDate,
         review: dailyText,
       })
-      notify('复盘已保存')
+      notify(dailyEdit ? '复盘已更新' : '复盘已保存')
       setDailyModalOpen(false)
       setDailyEdit(null)
       await load()
     } catch (reviewError) {
       notify(stockErrorMessage(reviewError), 'error')
     }
-  }, [dailyDate, dailyText, ledgerId, load, selected])
+  }, [dailyDate, dailyEdit, dailyText, ledgerId, load, selected])
 
   const openDailyReview = (): void => {
     const today = todayYmd()
@@ -1138,7 +1138,14 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             />
           </label>
           <div className="stock-modal-actions">
-            <Button variant="secondary" onClick={() => setDailyModalOpen(false)}>
+            <Button
+              variant="secondary"
+              testId="position-review-cancel"
+              onClick={() => {
+                setDailyModalOpen(false)
+                setDailyEdit(null)
+              }}
+            >
               取消
             </Button>
             <Button

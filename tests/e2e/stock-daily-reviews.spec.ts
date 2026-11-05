@@ -144,7 +144,8 @@ test('股票：每日复盘一天一条、倒序、一行省略，点开看全�
     })
     await editor.fill(editedReview)
     await page.getByTestId('position-review-save').click()
-    await expect(page.getByTestId('toast').last()).toContainText('复盘已保存')
+    // 改的是已经存在的那一天：提示说「已更新」，和「写今日」的「已保存」分开
+    await expect(page.getByTestId('toast').last()).toContainText('复盘已更新')
     await expect(items).toHaveCount(2)
     await expect(items.nth(1)).toContainText('补记：前一天的复盘')
 
@@ -159,6 +160,17 @@ test('股票：每日复盘一天一条、倒序、一行省略，点开看全�
     check.close()
     expect(saved).toEqual([{ review: editedReview }])
     expect(count.total).toBe(2)
+
+    // 取消编辑不残留「正在改那一天」：再点「写今日」回到可改日期的写入态，
+    // 正文是今天那一篇（不是刚才的草稿、也不是被改的那一天）
+    await items.nth(1).click()
+    await page.getByTestId('position-daily-review-edit').click()
+    await page.getByTestId('position-review-text').fill('不该被保存的草稿')
+    await page.getByTestId('position-review-cancel').click()
+    await page.getByTestId('position-review-open').click()
+    await expect(page.getByTestId('position-review-date')).toHaveValue(today)
+    await expect(page.getByTestId('position-review-text')).toHaveValue('今天的盘面：缩量整理，没动')
+    await page.getByTestId('position-review-cancel').click()
 
     // 清仓后同一份每日复盘出现在记录的那一轮里：同样一天一条、一行省略、点开看全文
     await page.getByTestId('stock-position-close').click()
