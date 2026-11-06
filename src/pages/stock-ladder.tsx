@@ -364,7 +364,9 @@ export function StockLadderPanel({
           size="sm"
           variant="secondary"
           testId="stock-ladder-open-page"
-          disabled={ladder?.status !== 'ok'}
+          // 只导出**屏幕上这一份**：换日期后、新数据回来之前，body 里还是上一天的天梯，
+          // 这时点它会把「看着像新日子、其实是旧数据」的页面发出去。
+          disabled={loading || ladder?.status !== 'ok' || ladder?.date !== date}
           loading={openingPage}
           icon={<Icon name="Export" size={14} />}
           onClick={() => void openAsPage()}

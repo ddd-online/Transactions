@@ -139,15 +139,21 @@ async function exportCurrentLadder(app: ElectronApplication, page: Page): Promis
   return openedPath
 }
 
+/** 打开导出的网页时的模拟条件：深色（系统是浅色）或打印。 */
+interface LadderPageMedia {
+  dark?: boolean
+  print?: boolean
+}
+
 /** 用应用自己的 Chromium 打开导出的网页，按给定宽度整页截图。 */
 async function captureLadderPage(
   app: ElectronApplication,
   filePath: string,
   width: number,
-  dark = false,
+  media: LadderPageMedia = {},
 ): Promise<Buffer> {
   const png = await app.evaluate(
-    async ({ BrowserWindow }, options: { filePath: string; width: number; dark: boolean }) => {
+    async ({ BrowserWindow }, options: { filePath: string; width: number; media: LadderPageMedia }) => {
       const win = new BrowserWindow({
         width: options.width,
         height: 900,
@@ -155,12 +161,19 @@ async function captureLadderPage(
         webPreferences: { sandbox: true, backgroundThrottling: false },
       })
       try {
+        win.setContentSize(options.width, 900)
         await win.loadFile(options.filePath)
-        if (options.dark) {
-          // 让 prefers-color-scheme 真的落到 dark：这台机器的系统主题是浅色
+        if (options.media.dark || options.media.print) {
+          // 让 prefers-color-scheme / media 真的换掉：这台机器的系统主题是浅色
           win.webContents.debugger.attach('1.3')
           await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {
-            features: [{ name: 'prefers-color-scheme', value: 'dark' }],
+            media: options.media.print ? 'print' : 'screen',
+            features: [
+              {
+                name: 'prefers-color-scheme',
+                value: options.media.dark ? 'dark' : 'light',
+              },
+            ],
           })
         }
         await new Promise((resolve) => {
@@ -180,7 +193,7 @@ async function captureLadderPage(
         win.destroy()
       }
     },
-    { filePath, width, dark },
+    { filePath, width, media },
   )
   return Buffer.from(png, 'base64')
 }
@@ -210,6 +223,10 @@ interface LadderPageBox {
 interface LadderPageGeometry {
   levels: LadderPageBox[]
   overflowX: number
+  /** 打印媒体下「打印」按钮应当是 none */
+  printButton: string
+  /** 一段的 display：屏幕是 grid、打印是 block（块流才能分页） */
+  levelDisplay: string
 }
 
 /** 用应用自己的 Chromium 打开导出的网页，量一遍版式：不看像素，看盒子落在哪。 */
@@ -217,9 +234,10 @@ async function inspectLadderPage(
   app: ElectronApplication,
   filePath: string,
   width: number,
+  media: LadderPageMedia = {},
 ): Promise<LadderPageGeometry> {
   return app.evaluate(
-    async ({ BrowserWindow }, options: { filePath: string; width: number }) => {
+    async ({ BrowserWindow }, options: { filePath: string; width: number; media: LadderPageMedia }) => {
       const win = new BrowserWindow({
         width: options.width,
         height: 900,
@@ -230,6 +248,15 @@ async function inspectLadderPage(
         // contentSize 而不是 window size：量出来的宽度就是页面的宽度
         win.setContentSize(options.width, 900)
         await win.loadFile(options.filePath)
+        if (options.media.dark || options.media.print) {
+          win.webContents.debugger.attach('1.3')
+          await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {
+            media: options.media.print ? 'print' : 'screen',
+            features: [
+              { name: 'prefers-color-scheme', value: options.media.dark ? 'dark' : 'light' },
+            ],
+          })
+        }
         await new Promise((resolve) => {
           setTimeout(resolve, 300)
         })
@@ -262,13 +289,21 @@ async function inspectLadderPage(
             }
           })
           const root = document.documentElement
-          return { levels, overflowX: root.scrollWidth - root.clientWidth }
+          const printButton = document.querySelector('.print')
+          return {
+            levels,
+            overflowX: root.scrollWidth - root.clientWidth,
+            printButton: printButton ? getComputedStyle(printButton).display : 'missing',
+            levelDisplay: levels.length > 0
+              ? getComputedStyle(document.querySelector('.level')).display
+              : 'none',
+          }
         })()`)
       } finally {
         win.destroy()
       }
     },
-    { filePath, width },
+    { filePath, width, media },
   )
 }
 
@@ -600,8 +635,18 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     )
     writeFileSync(
       join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-dark.png'),
-      await captureLadderPage(app, openedPath, 1440, true),
+      await captureLadderPage(app, openedPath, 1440, { dark: true }),
     )
+    writeFileSync(
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-print.png'),
+      await captureLadderPage(app, openedPath, 1440, { print: true }),
+    )
+
+    // 打印版式：按钮收起、每段改成块流（能分页）、每张卡都还在
+    const printed = await inspectLadderPage(app, openedPath, 1440, { print: true })
+    expect(printed.printButton).toBe('none')
+    expect(printed.levelDisplay).toBe('block')
+    expect(printed.levels.flatMap((level) => level.cards)).toHaveLength(cards.length)
 
     const dayCounts = (): { total: number; today: number; previous: number } => {
       const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -1115,3 +1160,4 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
     rmSync(root, { recursive: true, force: true })
   }
 })
+

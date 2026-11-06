@@ -283,7 +283,8 @@ function pageCss(): string {
   const dark = LADDER_PAGE_THEMES.dark
   return `
 /* impeccable-disable overused-font -- Inter / JetBrains Mono 是 DESIGN.md 钉下来的既定身份：界面用 Inter、数字用 JetBrains Mono；导出页跟着同一套字。 */
-/* impeccable-disable design-system-color -- 这张网页要脱离应用单文件存在：颜色是 tokens.css 的令牌混合出来的字面量，字色 × 底色的对比度在 tests/unit/ladder-page.spec.ts 里逐条算过。 */
+/* impeccable-disable design-system-color -- 这张网页要脱离应用单文件存在：主题色是 tokens.css 的令牌抄成的字面量，板块八色是纸上自己的一套（等明度等彩度的八个色相，由 scripts/ladder-board-palette.mjs 算出），字色 × 底色的对比度在 tests/unit/ladder-page.spec.ts 里逐条算过。 */
+/* impeccable-disable design-system-font-size -- 11px 是 DESIGN.md 的 micro-label 档、24px 是窄屏标题的 display-sm；单文件页面不引变量，只能写字面量。 */
 :root{color-scheme:light dark;${themeVars(light)};${tagVars(light)}}
 ${boardRules(LADDER_BOARD_PALETTES.light)}
 @media (prefers-color-scheme:dark){
@@ -305,6 +306,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .print{padding:4px 11px;border:1px solid var(--rule-strong);border-radius:8px;background:transparent;color:var(--ink-2);font:inherit;font-size:12px;line-height:20px;cursor:pointer;transition:color 120ms ease,border-color 120ms ease}
 .print:hover{color:var(--ink);border-color:var(--ink-3)}
 .print:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.print:active{translate:0 1px}
 .summary{display:flex;flex-wrap:wrap;align-items:baseline;margin:16px 0 0;padding:0;list-style:none;row-gap:8px}
 .stat{display:flex;align-items:baseline;gap:6px;padding:0 16px;border-left:1px solid var(--rule)}
 .stat:first-child{padding-left:0;border-left:0}
@@ -362,7 +364,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
   .level{grid-template-columns:minmax(0,1fr);row-gap:10px;padding:18px 0 20px}
   .level-head{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding-top:0}
   .level-num{font-size:min(calc(16px + var(--level) * 3px),36px)}
-  .level-meta{flex-direction:row;flex-wrap:wrap;gap:2px 10px}
+  .level-meta{flex-direction:row;flex-wrap:wrap;gap:2px 6px}
+  .level-meta span + span::before{content:'·';margin-right:6px}
   .colophon{margin-top:22px}
 }
 @media print{
@@ -376,9 +379,10 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
   .level{display:block;padding:10px 0}
   .level-head{display:flex;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding-top:0;break-after:avoid}
   .level-num{font-size:calc(14px + var(--level) * 2.5px)}
-  .level-meta{flex-direction:row;flex-wrap:wrap;gap:2px 8px;font-size:10px}
-  .cards{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-  .card{flex:0 0 184px;break-inside:avoid}
+  .level-meta{flex-direction:row;flex-wrap:wrap;gap:2px 6px;font-size:11px}
+  .level-meta span + span::before{content:'·';margin-right:6px}
+  .cards{display:block;margin-top:8px}
+  .card{display:inline-block;width:184px;margin:0 6px 6px 0;vertical-align:top;break-inside:avoid}
   .colophon{margin-top:16px}
   @page{size:A4 landscape;margin:10mm}
 }
@@ -582,8 +586,3 @@ ${footerHtml(ladder)}
 </html>
 `
 }
-
-
-
-
-
