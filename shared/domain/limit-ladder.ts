@@ -131,6 +131,13 @@ export interface LadderRow {
   broken: boolean
 }
 
+/** `HHMMSS` 整数 → `09:25`；缺值给破折号。天梯卡片与导出的网页共用这一份。 */
+export function ladderSealTime(value: number): string {
+  if (!Number.isInteger(value) || value <= 0) return '—'
+  const text = String(value).padStart(6, '0')
+  return `${text.slice(0, 2)}:${text.slice(2, 4)}`
+}
+
 /**
  * 板块 = 涨停池带过来的行业字段（东财 `hybk`）。
  *

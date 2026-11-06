@@ -1,17 +1,10 @@
 import type { JSX } from 'react'
 
 import { milliToYuan } from '../../shared/domain/money'
-import { boardOf, isOneWordBoard } from '../../shared/domain/limit-ladder'
+import { boardOf, isOneWordBoard, ladderSealTime } from '../../shared/domain/limit-ladder'
 import type { StockLimitBrokenEntry, StockLimitEntry } from '../../shared/types/stock-limit'
 import { BoardLabel } from './stock-board-label'
 import { StockCode } from './stock-code'
-
-/** `HHMMSS` 整数 → `09:25`；缺值给破折号。 */
-export function ladderSealTime(value: number): string {
-  if (!Number.isInteger(value) || value <= 0) return '—'
-  const text = String(value).padStart(6, '0')
-  return `${text.slice(0, 2)}:${text.slice(2, 4)}`
-}
 
 /** 断板涨跌幅标签：带符号的两位小数（`+3.33%` / `-3.33%`）。 */
 function ladderPctText(value: number): string {

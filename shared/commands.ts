@@ -483,6 +483,11 @@ export const commandSchemas = {
     date: z.string().default(''),
     refresh: z.boolean().default(false),
   }),
+  /** 把天梯渲染成单页网页并交给系统浏览器；`html` 由渲染层按当前这份数据生成。 */
+  stock_ladder_open_page: z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    html: z.string().min(1).max(4_000_000),
+  }),
   stock_trades: z.object({ ledger_id: z.string(), stock_code: z.string() }),
   template_create: z.object({
     template_id: z.string().default(''),
@@ -642,6 +647,7 @@ export interface CommandResponses {
   stock_name: StockNameDto
   stock_name_refresh: StockNameDto
   stock_limit_ladder: StockLimitLadder
+  stock_ladder_open_page: string
   stock_trades: StockTradeDto[]
   template_create: string
   template_list: TransactionTemplateDto[]

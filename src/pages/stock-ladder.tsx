@@ -12,8 +12,10 @@ import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
+import { notify } from '../components/toast'
 import { BoardLabel } from './stock-board-label'
 import { StockLadderItem } from './stock-ladder-item'
+import { renderLadderPage } from './stock-ladder-page'
 import { stockErrorMessage, stockPercent } from './stock-format'
 
 /** Listy 的 rowKey：连板与断板可能同名不同 code，用前缀分开。 */
@@ -107,6 +109,7 @@ export function StockLadderPanel({
   const [date, setDate] = useState(today)
   const [ladder, setLadder] = useState<StockLimitLadder | null>(null)
   const [loading, setLoading] = useState(false)
+  const [openingPage, setOpeningPage] = useState(false)
   const [error, setError] = useState('')
   const requestRef = useRef(0)
   const narrow = useMediaQuery('(max-width: 1000px)')
@@ -179,6 +182,23 @@ export function StockLadderPanel({
     ladder && ladder.status === 'ok'
       ? boardCounts(ladder.rungs.flatMap((rung) => rung.entries))
       : []
+
+  /** 把当前这一份天梯渲染成单页网页，交给主进程写盘并请系统浏览器打开。 */
+  const openAsPage = useCallback(async (): Promise<void> => {
+    if (!ladder || ladder.status !== 'ok') return
+    setOpeningPage(true)
+    try {
+      await window.api.invoke('stock_ladder_open_page', {
+        date: ladder.date,
+        html: renderLadderPage(ladder),
+      })
+      notify('已以网页打开')
+    } catch (pageError) {
+      notify(stockErrorMessage(pageError), 'error')
+    } finally {
+      setOpeningPage(false)
+    }
+  }, [ladder])
 
   const statusText = ((): string => {
     if (!ladder) return ''
@@ -340,6 +360,17 @@ export function StockLadderPanel({
         >
           {statusText}
         </span>
+        <Button
+          size="sm"
+          variant="secondary"
+          testId="stock-ladder-open-page"
+          disabled={ladder?.status !== 'ok'}
+          loading={openingPage}
+          icon={<Icon name="Export" size={14} />}
+          onClick={() => void openAsPage()}
+        >
+          以网页打开
+        </Button>
         <Button
           size="sm"
           variant="secondary"

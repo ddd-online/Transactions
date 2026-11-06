@@ -21,6 +21,7 @@ import {
   EditOutlined,
   ExclamationCircleOutlined,
   ExpandAltOutlined,
+  ExportOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
@@ -117,6 +118,7 @@ export type IconName =
   | 'Sliders'
   | 'CreditCard'
   | 'Signal'
+  | 'Export'
 
 type IconComponent = ComponentType<{
   className?: string
@@ -183,6 +185,7 @@ const ICONS: Record<IconName, IconComponent> = {
   Sliders: SlidersOutlined,
   CreditCard: CreditCardOutlined,
   Signal: SignalFilled,
+  Export: ExportOutlined,
 }
 
 export interface IconProps {

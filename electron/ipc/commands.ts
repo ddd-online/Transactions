@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { basename } from 'node:path'
 import { join } from 'node:path'
 
-import { app, clipboard, dialog, session } from 'electron'
+import { app, clipboard, dialog, session, shell } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
@@ -14,6 +14,7 @@ import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
 import { logInfo, logWarn } from '../logging'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
+import { embedLadderPageFonts } from '../shell/ladder-page'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
@@ -1075,6 +1076,28 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         now: limitNowSeconds(),
         quotes: createQuoteFetcher(),
       })
+    },
+
+    /**
+     * 把渲染层生成的天梯单页写到临时目录，再交给系统浏览器打开。
+     *
+     * 文件名由主进程按日期生成（不接受调用方给路径）：这条命令只做「一张当天网页」，
+     * 不是通用的文件写入。字体在这里内嵌，页面离开这台机器也还是这套字。
+     */
+    async stock_ladder_open_page(request) {
+      const raw = asObject(request)
+      const date = String(raw.date ?? '')
+      const html = String(raw.html ?? '')
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        throw new AppError('日期格式无效', { status: 400 })
+      }
+      if (!html) throw new AppError('页面内容为空', { status: 400 })
+      const file = join(app.getPath('temp'), `transactions-ladder-${date}.html`)
+      writeFileSync(file, embedLadderPageFonts(html), 'utf8')
+      const failure = await shell.openPath(file)
+      if (failure) throw new AppError(`打开网页失败：${failure}`, { status: 500 })
+      logInfo(`天梯以网页打开: ${file}`)
+      return file
     },
 
     stock_history_detail(request) {

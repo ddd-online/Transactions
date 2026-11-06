@@ -238,6 +238,22 @@ describe('command catalog', () => {
     )
   })
 
+  it('validates the ladder page export request', () => {
+    expect(
+      commandSchemas.stock_ladder_open_page.safeParse({
+        date: '2026-11-06',
+        html: '<!doctype html><html></html>',
+      }).success,
+    ).toBe(true)
+    // 日期参与文件名，只收 YYYY-MM-DD；空页面没有意义
+    expect(
+      commandSchemas.stock_ladder_open_page.safeParse({ date: '2026/11/06', html: 'x' }).success,
+    ).toBe(false)
+    expect(
+      commandSchemas.stock_ladder_open_page.safeParse({ date: '2026-11-06', html: '' }).success,
+    ).toBe(false)
+  })
+
   it('validates update requests', () => {
     expect(commandSchemas.update_check.safeParse({}).success).toBe(true)
     expect(

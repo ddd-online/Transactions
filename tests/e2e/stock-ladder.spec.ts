@@ -1,10 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, type Server, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { _electron as electron, expect, test } from '@playwright/test'
+import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
 
 import { identityTone } from '../../shared/domain/identity-color'
 import { createLedger } from './ledger-helper'
@@ -110,6 +110,79 @@ function raw(
     hybk: board,
     zttj: { days: level, ct: level },
   }
+}
+
+/** 把主进程的 `shell.openPath` 换成记录路径：测试里不真的拉起系统浏览器。 */
+async function stubOpenPath(app: ElectronApplication): Promise<void> {
+  await app.evaluate(({ shell }) => {
+    ;(globalThis as { __ladderPagePath?: string }).__ladderPagePath = ''
+    shell.openPath = async (target: string) => {
+      ;(globalThis as { __ladderPagePath?: string }).__ladderPagePath = target
+      return ''
+    }
+  })
+}
+
+/** 点「以网页打开」，等主进程写出文件，返回路径。 */
+async function exportCurrentLadder(app: ElectronApplication, page: Page): Promise<string> {
+  await page.getByTestId('stock-ladder-open-page').click()
+  await expect(page.getByTestId('toast').last()).toContainText('已以网页打开')
+  let openedPath = ''
+  await expect
+    .poll(async () => {
+      openedPath = await app.evaluate(
+        () => (globalThis as { __ladderPagePath?: string }).__ladderPagePath ?? '',
+      )
+      return openedPath
+    })
+    .not.toBe('')
+  return openedPath
+}
+
+/** 用应用自己的 Chromium 打开导出的网页，按给定宽度整页截图。 */
+async function captureLadderPage(
+  app: ElectronApplication,
+  filePath: string,
+  width: number,
+  dark = false,
+): Promise<Buffer> {
+  const png = await app.evaluate(
+    async ({ BrowserWindow }, options: { filePath: string; width: number; dark: boolean }) => {
+      const win = new BrowserWindow({
+        width: options.width,
+        height: 900,
+        show: false,
+        webPreferences: { sandbox: true, backgroundThrottling: false },
+      })
+      try {
+        await win.loadFile(options.filePath)
+        if (options.dark) {
+          // 让 prefers-color-scheme 真的落到 dark：这台机器的系统主题是浅色
+          win.webContents.debugger.attach('1.3')
+          await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {
+            features: [{ name: 'prefers-color-scheme', value: 'dark' }],
+          })
+        }
+        await new Promise((resolve) => {
+          setTimeout(resolve, 500)
+        })
+        const height = (await win.webContents.executeJavaScript(
+          'document.documentElement.scrollHeight',
+        )) as number
+        win.setContentSize(options.width, Math.min(Math.max(height, 900), 4000))
+        await new Promise((resolve) => {
+          setTimeout(resolve, 400)
+        })
+        const image = await win.webContents.capturePage()
+        return image.toPNG().toString('base64')
+      } finally {
+        if (win.webContents.debugger.isAttached()) win.webContents.debugger.detach()
+        win.destroy()
+      }
+    },
+    { filePath, width, dark },
+  )
+  return Buffer.from(png, 'base64')
 }
 
 test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () => {
@@ -349,6 +422,52 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     // 今天已是最后一天，选日器的"后一天"不可点
     await expect(page.getByTestId('stock-ladder-date-next')).toBeDisabled()
 
+    // 以网页打开：主进程写到临时目录再交给系统浏览器；测试把 openPath 换成记录路径
+    await stubOpenPath(app)
+    const openedPath = await exportCurrentLadder(app, page)
+
+    expect(openedPath).toContain(`transactions-ladder-${ymd(today)}.html`)
+    const pageHtml = readFileSync(openedPath, 'utf8')
+    // 网页按板数从高到低排（软件里是首板在左）：4 板在前、1 板在后
+    const highBoard = pageHtml.indexOf('aria-label="4 板"')
+    const lowBoard = pageHtml.indexOf('aria-label="1 板"')
+    expect(highBoard).toBeGreaterThan(-1)
+    expect(highBoard).toBeLessThan(lowBoard)
+    expect(pageHtml).toContain(`<title>连板天梯 · ${ymd(today)}</title>`)
+    // 板块身份色成为卡片底色；不同板块的卡片挂不同色的 class
+    const electricTone = identityTone('电网设备')
+    const bankTone = identityTone('银行')
+    expect(pageHtml).toContain(`class="card board-${electricTone}`)
+    expect(pageHtml).toContain(`class="card board-${bankTone}`)
+    expect(pageHtml).toContain(`.board-${electricTone}{--tone:`)
+    expect(pageHtml).toContain(`.board-${bankTone}{--tone:`)
+    // 价格与断板都在
+    expect(pageHtml).toContain('11.00')
+    expect(pageHtml).toContain('1550.00')
+    expect(pageHtml).toContain('>断</span>')
+    expect(pageHtml).toContain('+3.33%')
+    // 自包含：字体由主进程内嵌，页面没有外部请求与脚本
+    expect(pageHtml).toContain('@font-face')
+    expect(pageHtml).toContain("font-family:'Inter'")
+    expect(pageHtml).toContain('data:font/woff2;base64,')
+    expect(pageHtml).not.toMatch(/<script[\s>]/i)
+    expect(pageHtml).not.toMatch(/https?:\/\//)
+    expect(pageHtml).toContain('window.print()')
+
+    // 用真实的 Chromium 打开这张网页，按桌面 / 手机 / 深色三个宽度截图（检查用，不是断言）
+    writeFileSync(
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-desktop.png'),
+      await captureLadderPage(app, openedPath, 1440),
+    )
+    writeFileSync(
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-mobile.png'),
+      await captureLadderPage(app, openedPath, 390),
+    )
+    writeFileSync(
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-dark.png'),
+      await captureLadderPage(app, openedPath, 1440, true),
+    )
+
     const dayCounts = (): { total: number; today: number; previous: number } => {
       const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
       const total = database.prepare('SELECT COUNT(*) AS n FROM stock_limit_day').get() as {
@@ -569,6 +688,7 @@ test('连板天梯：09:30 前不支持查看当天', async () => {
 
     await expect(page.getByTestId('stock-ladder-empty')).toContainText('还没开盘')
     await expect(page.getByTestId('stock-ladder-status')).toContainText('开盘前')
+    await expect(page.getByTestId('stock-ladder-open-page')).toBeDisabled()
     await expect(page.getByTestId('stock-ladder-footer')).toContainText('—')
     expect(requests).toEqual([])
 
@@ -802,6 +922,18 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder-narrow-columns.png'),
     })
+
+    // 七列稠密版导出：1440 一屏排得下七列；960 宽切成按板数分段
+    await stubOpenPath(app)
+    const sevenLevelPath = await exportCurrentLadder(app, page)
+    writeFileSync(
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-seven-columns.png'),
+      await captureLadderPage(app, sevenLevelPath, 1440),
+    )
+    writeFileSync(
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-tablet.png'),
+      await captureLadderPage(app, sevenLevelPath, 960),
+    )
 
     // 窄窗：分层行（chips）里标签不换行、格子有左右内边距
     await app.evaluate(({ BrowserWindow }) => {
