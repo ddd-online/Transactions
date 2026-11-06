@@ -192,11 +192,14 @@ describe('ladder page palette', () => {
     expect(contrast(tag.upInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
     expect(contrast(tag.downInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
     expect(contrast(tag.hotInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
+    expect(contrast(theme.riseInk, theme.sheet)).toBeGreaterThanOrEqual(AA)
 
     for (const card of LADDER_BOARD_PALETTES[name]) {
       // 卡片底色是板块色：正文、次要文字（代码 / 封板时间）、板块名、断板底色都要单独过 AA
       expect(contrast(theme.ink, card.background)).toBeGreaterThanOrEqual(AA)
       expect(contrast(theme.ink, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
+      // 涨停的名字与价格是红的 —— 压在八张彩卡上都要过 AA
+      expect(contrast(theme.riseInk, card.background)).toBeGreaterThanOrEqual(AA)
       expect(contrast(card.subInk, card.background)).toBeGreaterThanOrEqual(AA)
       expect(contrast(card.subInk, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
       expect(contrast(card.boardInk, card.background)).toBeGreaterThanOrEqual(AA)
@@ -309,6 +312,9 @@ describe('renderLadderPage', () => {
       expect(html).toContain(`.board-s${index}{--tone:`)
     }
     expect(html).toContain('.card.is-broken{border-style:dashed;background:var(--card-bg-broken)}')
+    // 涨停的名字与价格用语义红（两处正好），断板的退成板块色的次要字
+    expect(html.match(/color:var\(--rise-ink\)/g)).toHaveLength(2)
+    expect(html).toContain('.is-broken .name,.is-broken .price{color:var(--card-sub)}')
     const brokenSlot = slots.get('专用设备')
     expect(html).toContain(`class="card board-s${brokenSlot} is-broken"`)
     expect(LADDER_BOARD_PALETTES.light[brokenSlot ?? 0].backgroundBroken).not.toBe(

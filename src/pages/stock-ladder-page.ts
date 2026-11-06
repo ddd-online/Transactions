@@ -43,6 +43,8 @@ export interface LadderPageTheme {
   minor: string
   /** 卡片上标签的面：一层半透明白，压在任何一块底色上都读得出来 */
   chip: string
+  /** 涨停卡片的名称与价格：84% 语义红 + 16% 墨，八张彩卡上都过 4.5:1 */
+  riseInk: string
   up: string
   down: string
   outlier: string
@@ -62,6 +64,7 @@ export const LADDER_PAGE_THEMES: { light: LadderPageTheme; dark: LadderPageTheme
     select: 'rgba(57, 100, 254, 0.18)',
     minor: '#f3f4f6',
     chip: 'rgba(255, 255, 255, 0.55)',
+    riseInk: '#bb2323',
     up: '#dc2626',
     down: '#16a34a',
     outlier: '#d97706',
@@ -78,6 +81,7 @@ export const LADDER_PAGE_THEMES: { light: LadderPageTheme; dark: LadderPageTheme
     select: 'rgba(57, 100, 254, 0.4)',
     minor: '#14161a',
     chip: 'rgba(255, 255, 255, 0.1)',
+    riseInk: '#f78687',
     up: '#f87171',
     down: '#4ade80',
     outlier: '#fbbf24',
@@ -231,6 +235,7 @@ function themeVars(theme: LadderPageTheme): string {
     `--select:${theme.select}`,
     `--minor:${theme.minor}`,
     `--chip:${theme.chip}`,
+    `--rise-ink:${theme.riseInk}`,
   ].join(';')
 }
 
@@ -325,8 +330,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .card.is-broken{border-style:dashed;background:var(--card-bg-broken)}
 .board-none{--card-bg:var(--sheet);--card-bg-broken:var(--minor);--card-border:var(--rule-strong);--board-ink:var(--ink-3);--card-sub:var(--ink-2)}
 .card-top{display:flex;align-items:baseline;gap:8px}
-.name{min-width:0;overflow:hidden;font-size:14px;font-weight:600;line-height:20px;color:var(--ink);text-overflow:ellipsis;white-space:nowrap}
-.price{margin-left:auto;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;font-weight:500;line-height:20px;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.name{min-width:0;overflow:hidden;font-size:14px;font-weight:600;line-height:20px;color:var(--rise-ink);text-overflow:ellipsis;white-space:nowrap}
+.price{margin-left:auto;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;font-weight:500;line-height:20px;font-variant-numeric:tabular-nums;color:var(--rise-ink);white-space:nowrap}
 .is-broken .name,.is-broken .price{color:var(--card-sub)}
 .card-quote{display:flex;gap:8px;margin-top:3px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;font-variant-numeric:tabular-nums;color:var(--card-sub)}
 .card-quote .seal{letter-spacing:0.02em}
@@ -577,6 +582,7 @@ ${footerHtml(ladder)}
 </html>
 `
 }
+
 
 
 

@@ -193,6 +193,9 @@ interface LadderPageCard {
   board: string
   broken: boolean
   borderStyle: string
+  /** 名称 / 价格的 computed color：涨停是语义红 */
+  nameColor: string
+  priceColor: string
 }
 
 interface LadderPageBox {
@@ -243,6 +246,8 @@ async function inspectLadderPage(
               headBottom: Math.round(head ? box(head).bottom : section.top),
               cards: [...level.querySelectorAll('.card')].map((card) => {
                 const cardBox = box(card)
+                const name = card.querySelector('.name')
+                const price = card.querySelector('.price')
                 return {
                   top: Math.round(cardBox.top),
                   left: Math.round(cardBox.left),
@@ -250,6 +255,8 @@ async function inspectLadderPage(
                   board: (card.querySelector('.board') || {}).textContent || '',
                   broken: card.classList.contains('is-broken'),
                   borderStyle: getComputedStyle(card).borderTopStyle,
+                  nameColor: name ? getComputedStyle(name).color : '',
+                  priceColor: price ? getComputedStyle(price).color : '',
                 }
               }),
             }
@@ -559,6 +566,14 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     }
     expect(hueOfBoard.size).toBe(5)
     expect(new Set(hueOfBoard.values()).size).toBe(hueOfBoard.size)
+
+    // 涨停的名字与价格是语义红（#bb2323），断板的退成板块色的次要字
+    const limitCard = cards.find((card) => !card.broken)
+    expect(limitCard?.nameColor).toBe('rgb(187, 35, 35)')
+    expect(limitCard?.priceColor).toBe('rgb(187, 35, 35)')
+    for (const card of cards.filter((entry) => entry.broken)) {
+      expect(card.nameColor).not.toBe('rgb(187, 35, 35)')
+    }
 
     // 一板 3 家 + 断板 1 家，桌面宽度下排在同一行
     const firstBoards = layout.levels[layout.levels.length - 1].cards
