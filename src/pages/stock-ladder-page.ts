@@ -21,7 +21,8 @@ import type {
  *
  * 约束：
  * * 与软件同一套世界（纸面、墨色、主色、语义红绿、等宽数字），但按「读」的尺度排版，
- *   不是在软件里那一屏的放大版 —— 列高从高到低、板块用身份色铺成卡片底色。
+ *   不是在软件里那一屏的放大版 —— 一个板数一段、从上到下由高到低，
+ *   板块用身份色铺成卡片底色。
  * * 单文件：样式内联、字体由主进程以 base64 注入（见 `LADDER_PAGE_FONT_MARKER`），
  *   不联网、不引外部资源；唯一的脚本是「打印 / 存为 PDF」那一下 `window.print()`。
  * * 颜色按浅色 / 深色两套预先算成字面量（不依赖 `color-mix`），并随
@@ -259,14 +260,15 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .dot{width:7px;height:7px;border-radius:50%;background:var(--tone)}
 .board-item .count{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .note{margin:10px 0 0;font-size:12px;color:var(--ink-3)}
-.ladder{display:grid;grid-template-columns:repeat(var(--levels),minmax(0,1fr));align-items:start;gap:14px;margin-top:26px}
-.level{min-width:0}
-.level-head{display:flex;flex-direction:column;justify-content:flex-end;min-height:74px;padding-bottom:8px;border-bottom:1px solid var(--rule-strong)}
-.level-title{display:flex;align-items:baseline;gap:3px;margin:0;font-weight:400}
-.level-num{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:calc(16px + var(--level) * 3.2px);font-weight:500;line-height:1;letter-spacing:-0.02em;color:var(--ink)}
+.ladder{display:flex;flex-direction:column;margin-top:14px}
+.level{display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:26px;padding:22px 0 24px}
+.level + .level{border-top:1px solid var(--rule)}
+.level-head{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding-top:2px}
+.level-title{display:flex;align-items:baseline;gap:4px;margin:0;font-weight:400}
+.level-num{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:min(calc(18px + var(--level) * 5px),58px);font-weight:500;line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;color:var(--ink)}
 .level-unit{font-size:12px;color:var(--ink-3)}
-.level-meta{margin:6px 0 0;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cards{display:flex;flex-direction:column;gap:8px;margin:10px 0 0;padding:0;list-style:none}
+.level-meta{display:flex;flex-direction:column;gap:2px;margin:0;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;line-height:1.45;font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));align-content:start;gap:8px;margin:0;padding:0;list-style:none}
 .card{padding:10px 11px;border:1px solid var(--card-border);border-radius:12px;background:var(--card-bg)}
 .card.is-broken{background:var(--card-bg-broken)}
 .board-none{--card-bg:var(--sheet);--card-bg-broken:var(--minor);--card-border:var(--rule-strong);--board-ink:var(--ink-3)}
@@ -288,23 +290,23 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .colophon{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 18px;margin-top:36px;padding-top:12px;border-top:1px solid var(--rule);font-size:11px;line-height:1.6;color:var(--ink-3)}
 .colophon p{margin:0;text-wrap:pretty}
 .colophon .brand{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;letter-spacing:0.08em;color:var(--ink-3)}
-@media (max-width:1279px){
-  .ladder{display:flex;flex-direction:column;align-items:stretch;gap:26px}
-  .level{display:grid;grid-template-columns:150px minmax(0,1fr);gap:18px;padding-top:14px;border-top:1px solid var(--rule)}
-  .level-head{min-height:0;padding-bottom:0;border-bottom:0}
-  .level-meta{white-space:normal;overflow:visible;text-overflow:clip}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:0}
+@media (max-width:1100px){
+  .level{grid-template-columns:96px minmax(0,1fr);column-gap:20px}
+  .level-num{font-size:min(calc(16px + var(--level) * 4px),48px)}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(188px,1fr))}
 }
-@media (max-width:680px){
+@media (max-width:760px){
   .sheet{padding:22px 18px 24px}
   .masthead-main{flex-direction:column;gap:10px}
   .masthead-side{flex-direction:row;align-items:center;gap:12px}
   .title{font-size:24px}
   .summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px}
   .stat{padding:0;border-left:0}
-  .level{grid-template-columns:1fr;gap:10px}
-  .cards{grid-template-columns:1fr}
-  .colophon{margin-top:26px}
+  .level{grid-template-columns:minmax(0,1fr);row-gap:10px;padding:18px 0 20px}
+  .level-head{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding-top:0}
+  .level-num{font-size:min(calc(16px + var(--level) * 3px),36px)}
+  .level-meta{flex-direction:row;flex-wrap:wrap;gap:2px 10px}
+  .colophon{margin-top:22px}
 }
 @media print{
   :root{${themeVars(light)};${tagVars(light)}}
@@ -313,13 +315,14 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .sheet{max-width:none;padding:0}
   .print{display:none}
-  .ladder{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
-  .level{display:block;padding-top:0;border-top:0}
-  .level-head{min-height:60px;border-bottom:1px solid var(--rule-strong)}
-  .cards{display:flex;flex-direction:column;gap:6px}
-  .card{break-inside:avoid}
-  .level-head{break-after:avoid}
-  .colophon{margin-top:18px}
+  .ladder{margin-top:12px}
+  .level{display:block;padding:10px 0}
+  .level-head{display:flex;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding-top:0;break-after:avoid}
+  .level-num{font-size:calc(14px + var(--level) * 2.5px)}
+  .level-meta{flex-direction:row;flex-wrap:wrap;gap:2px 8px;font-size:10px}
+  .cards{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .card{flex:0 0 184px;break-inside:avoid}
+  .colophon{margin-top:16px}
   @page{size:A4 landscape;margin:10mm}
 }
 @media (prefers-reduced-motion:reduce){
@@ -416,24 +419,32 @@ function cardHtml(
     '</li>'
 }
 
-function levelMeta(rung: StockLimitRung): string {
+/** 这一段的三个数：家数 / 晋级率 / 断板数；各自一格，窄轨里不会挂在半个分隔符上。 */
+function levelMeta(rung: StockLimitRung): string[] {
   const parts: string[] = []
   if (rung.entries.length > 0) parts.push(`${rung.entries.length} 家`)
   if (rung.level > 1 && rung.rate !== null) parts.push(`晋级 ${rateText(rung.rate)}`)
   if (rung.broken.length > 0) parts.push(`断 ${rung.broken.length}`)
-  return parts.join(' · ')
+  return parts
 }
 
+/**
+ * 段 = 板数（左轨，数字随板数变大）+ 卡片流（右侧）。
+ * 家数 / 晋级率 / 断板数压在数字下面，和它说的是同一件事；三段都是小字，
+ * 放到页面另一头就会和它对不上主人。
+ */
 function levelHtml(rung: StockLimitRung): string {
   const rows = ladderRows(rung)
   const cards = rows
     .map((row) => cardHtml(row.entry, row.broken))
     .join('')
   const meta = levelMeta(rung)
+  const metaHtml =
+    meta.length > 0
+      ? `<p class="level-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join('')}</p>`
+      : ''
   return `<section class="level" style="--level:${rung.level}" aria-label="${rung.level} 板">` +
-    `<header class="level-head"><h2 class="level-title"><span class="level-num">${rung.level}</span><span class="level-unit">板</span></h2>${
-      meta ? `<p class="level-meta">${escapeHtml(meta)}</p>` : ''
-    }</header>` +
+    `<header class="level-head"><h2 class="level-title"><span class="level-num">${rung.level}</span><span class="level-unit">板</span></h2>${metaHtml}</header>` +
     `<ul class="cards">${cards}</ul>` +
     '</section>'
 }
@@ -463,8 +474,9 @@ function statusText(ladder: StockLimitLadder): string {
 /**
  * 天梯 → 一张自包含的单页 HTML。
  *
- * 列按板数从高到低（7 板在左、首板在右）；每列内沿用天梯的板块分组顺序，
- * 断板跟在同板块的连板后面。调用方只在 `status === 'ok'` 时允许导出。
+ * 板数从上到下递减（空间板在最上、首板在最后一段）；每段左侧是这一段的板数，
+ * 段内沿用天梯的板块分组顺序，断板跟在同板块的连板后面。
+ * 调用方只在 `status === 'ok'` 时允许导出。
  */
 export function renderLadderPage(ladder: StockLimitLadder): string {
   const levels = [...ladder.rungs].sort((left, right) => right.level - left.level)
@@ -501,7 +513,7 @@ ${summaryHtml(ladder)}
 ${boardsHtml(ladder)}
 ${missingPrevious}
 </header>
-<div class="ladder" style="--levels:${Math.max(1, levels.length)}">
+<div class="ladder">
 ${ladderHtml}
 </div>
 ${footerHtml(ladder)}

@@ -206,7 +206,11 @@ describe('renderLadderPage', () => {
     expect(high).toBeGreaterThan(-1)
     expect(high).toBeLessThan(middle)
     expect(middle).toBeLessThan(low)
-    expect(html).toContain('--levels:3')
+
+    // 一段一个板数、从上往下堆：不再是按板数分栏的横向网格
+    expect(html).toContain('.ladder{display:flex;flex-direction:column;')
+    expect(html).toContain('.level{display:grid;grid-template-columns:112px minmax(0,1fr)')
+    expect(html).not.toContain('--levels')
 
     // 七板 1 行、三板 1 行 + 1 行断板、一板 2 行
     expect(html.match(/class="card /g)).toHaveLength(5)

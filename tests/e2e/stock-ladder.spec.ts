@@ -185,6 +185,69 @@ async function captureLadderPage(
   return Buffer.from(png, 'base64')
 }
 
+interface LadderPageBox {
+  label: string
+  top: number
+  left: number
+  headRight: number
+  headBottom: number
+  cards: Array<{ top: number; left: number }>
+}
+
+interface LadderPageGeometry {
+  levels: LadderPageBox[]
+  overflowX: number
+}
+
+/** 用应用自己的 Chromium 打开导出的网页，量一遍版式：不看像素，看盒子落在哪。 */
+async function inspectLadderPage(
+  app: ElectronApplication,
+  filePath: string,
+  width: number,
+): Promise<LadderPageGeometry> {
+  return app.evaluate(
+    async ({ BrowserWindow }, options: { filePath: string; width: number }) => {
+      const win = new BrowserWindow({
+        width: options.width,
+        height: 900,
+        show: false,
+        webPreferences: { sandbox: true, backgroundThrottling: false },
+      })
+      try {
+        // contentSize 而不是 window size：量出来的宽度就是页面的宽度
+        win.setContentSize(options.width, 900)
+        await win.loadFile(options.filePath)
+        await new Promise((resolve) => {
+          setTimeout(resolve, 300)
+        })
+        return await win.webContents.executeJavaScript(`(() => {
+          const box = (node) => node.getBoundingClientRect()
+          const levels = [...document.querySelectorAll('.level')].map((level) => {
+            const head = level.querySelector('.level-head')
+            const section = box(level)
+            return {
+              label: level.getAttribute('aria-label') || '',
+              top: Math.round(section.top),
+              left: Math.round(section.left),
+              headRight: Math.round(head ? box(head).right : section.left),
+              headBottom: Math.round(head ? box(head).bottom : section.top),
+              cards: [...level.querySelectorAll('.card')].map((card) => {
+                const cardBox = box(card)
+                return { top: Math.round(cardBox.top), left: Math.round(cardBox.left) }
+              }),
+            }
+          })
+          const root = document.documentElement
+          return { levels, overflowX: root.scrollWidth - root.clientWidth }
+        })()`)
+      } finally {
+        win.destroy()
+      }
+    },
+    { filePath, width },
+  )
+}
+
 test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-stock-ladder-'))
@@ -428,7 +491,7 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
 
     expect(openedPath).toContain(`transactions-ladder-${ymd(today)}.html`)
     const pageHtml = readFileSync(openedPath, 'utf8')
-    // 网页按板数从高到低排（软件里是首板在左）：4 板在前、1 板在后
+    // 网页纵向排：4 板在最上、1 板在最后一段（软件里是首板在左）
     const highBoard = pageHtml.indexOf('aria-label="4 板"')
     const lowBoard = pageHtml.indexOf('aria-label="1 板"')
     expect(highBoard).toBeGreaterThan(-1)
@@ -453,6 +516,33 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(pageHtml).not.toMatch(/<script[\s>]/i)
     expect(pageHtml).not.toMatch(/https?:\/\//)
     expect(pageHtml).toContain('window.print()')
+
+    // 版式：一段一个板数、从上往下由高到低；板数在左、卡片在右，一板的几张卡排成一行
+    const layout = await inspectLadderPage(app, openedPath, 1440)
+    expect(layout.overflowX).toBeLessThanOrEqual(1)
+    expect(layout.levels.map((level) => level.label)).toEqual(['4 板', '2 板', '1 板'])
+    for (let index = 1; index < layout.levels.length; index += 1) {
+      expect(layout.levels[index].top).toBeGreaterThan(layout.levels[index - 1].top)
+    }
+    expect(new Set(layout.levels.map((level) => level.left)).size).toBe(1)
+    for (const level of layout.levels) {
+      // 数字在卡片左边，卡片不在第一列
+      expect(level.headRight).toBeLessThanOrEqual(level.cards[0].left)
+      expect(level.cards[0].left - level.left).toBeGreaterThanOrEqual(100)
+    }
+    // 一板 3 家 + 断板 1 家，桌面宽度下排在同一行
+    const firstBoards = layout.levels[layout.levels.length - 1].cards
+    expect(firstBoards).toHaveLength(4)
+    expect(new Set(firstBoards.map((card) => card.top)).size).toBe(1)
+    expect(firstBoards[0].left).toBeLessThan(firstBoards[1].left)
+
+    // 手机：板数落到卡片上方，卡片收成一列
+    const phone = await inspectLadderPage(app, openedPath, 390)
+    expect(phone.overflowX).toBeLessThanOrEqual(1)
+    for (const level of phone.levels) {
+      expect(level.headBottom).toBeLessThanOrEqual(level.cards[0].top)
+      expect(new Set(level.cards.map((card) => card.left)).size).toBe(1)
+    }
 
     // 用真实的 Chromium 打开这张网页，按桌面 / 手机 / 深色三个宽度截图（检查用，不是断言）
     writeFileSync(
@@ -923,17 +1013,33 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder-narrow-columns.png'),
     })
 
-    // 七列稠密版导出：1440 一屏排得下七列；960 宽切成按板数分段
+    // 七层稠密版导出：1440 一段一排；960 收窄 rail；手机数字落到卡片上方
     await stubOpenPath(app)
     const sevenLevelPath = await exportCurrentLadder(app, page)
     writeFileSync(
-      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-seven-columns.png'),
+      join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-seven-levels.png'),
       await captureLadderPage(app, sevenLevelPath, 1440),
     )
     writeFileSync(
       join(repositoryRoot, 'artifacts', 'tests', 'ladder-page-tablet.png'),
       await captureLadderPage(app, sevenLevelPath, 960),
     )
+
+    // 七层也仍是纵向：960 宽下数字继续留在卡片左边，不挤成一栏
+    const tabletLayout = await inspectLadderPage(app, sevenLevelPath, 960)
+    expect(tabletLayout.levels.map((level) => level.label)).toEqual([
+      '7 板',
+      '6 板',
+      '5 板',
+      '4 板',
+      '3 板',
+      '2 板',
+      '1 板',
+    ])
+    expect(tabletLayout.overflowX).toBeLessThanOrEqual(1)
+    for (const level of tabletLayout.levels) {
+      expect(level.headRight).toBeLessThanOrEqual(level.cards[0].left)
+    }
 
     // 窄窗：分层行（chips）里标签不换行、格子有左右内边距
     await app.evaluate(({ BrowserWindow }) => {
