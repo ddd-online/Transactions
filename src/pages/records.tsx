@@ -34,8 +34,9 @@ import { Segmented } from '../components/segmented'
 import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
-import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
+import { TimeRangePicker } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
+import { useSessionTimeRange } from '../state/time-range-session'
 
 /**
  * 新增记录的默认日期：列表里选中的是某一天就记那天，否则记今天。
@@ -173,13 +174,16 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [pageSize, setPageSize] = useState(15)
-  const [rangeMode, setRangeMode] = useState<TimeRangeMode>('date')
-  const [rangeStart, setRangeStart] = useState(todayYmd())
-  const [rangeEnd, setRangeEnd] = useState(todayYmd())
-  const [committedRange, setCommittedRange] = useState(() => {
-    const today = todayYmd()
-    return { start: today, end: today }
-  })
+  const [range, updateRange] = useSessionTimeRange('records', () => ({
+    mode: 'date',
+    start: todayYmd(),
+    end: todayYmd(),
+  }))
+  const { mode: rangeMode, start: rangeStart, end: rangeEnd } = range
+  const [committedRange, setCommittedRange] = useState(() => ({
+    start: range.start,
+    end: range.end,
+  }))
 
   const [filters, setFilters] = useState<RecordFilter[]>([])
   const [filterDraft, setFilterDraft] = useState<RecordFilter[]>([])
@@ -480,19 +484,15 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     if (!parsed) return
     const [year, month] = addMonths(parsed[0], parsed[1], -1)
     const [from, to] = monthSpan(year, month)
-    setRangeMode('month')
-    setRangeStart(from)
-    setRangeEnd(to)
-  }, [])
+    updateRange({ mode: 'month', start: from, end: to })
+  }, [updateRange])
 
   const goThisYear = useCallback((): void => {
     const parsed = parseYearMonth(todayYmd())
     if (!parsed) return
     const [from, to] = yearSpan(parsed[0])
-    setRangeMode('year')
-    setRangeStart(from)
-    setRangeEnd(to)
-  }, [])
+    updateRange({ mode: 'year', start: from, end: to })
+  }, [updateRange])
 
   const openFilter = useCallback((): void => {
     setFilterDraft(filters.map((filter) => ({ ...filter, tags: [...filter.tags] })))
@@ -789,11 +789,8 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
               mode={rangeMode}
               start={rangeStart}
               end={rangeEnd}
-              onModeChange={setRangeMode}
-              onRangeChange={(start, end) => {
-                setRangeStart(start)
-                setRangeEnd(end)
-              }}
+              onModeChange={(mode) => updateRange({ mode })}
+              onRangeChange={(start, end) => updateRange({ start, end })}
             />
           </div>
         <div className="m0-actions">

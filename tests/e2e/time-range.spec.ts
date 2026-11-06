@@ -23,7 +23,7 @@ function ymd(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-test('时间范围：记录与分析共用粒度、区间与快捷项', async () => {
+test('时间范围：记录与分析共用粒度、区间与快捷项，分析默认本年、切页不丢', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-time-'))
   const home = join(root, 'home')
@@ -90,14 +90,31 @@ test('时间范围：记录与分析共用粒度、区间与快捷项', async ()
     await page.getByTestId('tr-time-trigger').click()
     await expect(page.getByTestId('tr-time-panel')).toHaveCount(0)
 
-    // 分析页使用同一个组件
+    // 分析页默认月粒度 + 本年：触发器就是「2026-01 ~ 2026-12」
     await page.getByTestId('acct-tab-charts').click()
-    await expect(page.getByTestId('chart-time-trigger')).toBeVisible()
-    await page.getByTestId('chart-time-trigger').click()
+    const chartTrigger = page.getByTestId('chart-time-trigger')
+    await expect(chartTrigger).toBeVisible()
+    await expect(chartTrigger).toHaveText(`${yearKey}-01 ~ ${yearKey}-12`)
+    await expect(page.getByTestId('chart-time-mode-month')).toHaveAttribute('aria-pressed', 'true')
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'chart-time-default.png'),
+    })
+    await chartTrigger.click()
     await expect(page.getByTestId('chart-time-panel')).toBeVisible()
     await page.getByTestId('chart-time-mode-year').click()
-    await expect(page.getByTestId('chart-time-trigger')).toContainText(yearKey)
+    await expect(chartTrigger).toContainText(yearKey)
     await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'chart-time.png') })
+    await chartTrigger.click()
+    await expect(page.getByTestId('chart-time-panel')).toHaveCount(0)
+
+    // 切页不丢时间选择：记录页仍是刚才选的那段日区间，分析页仍是年
+    await page.getByTestId('acct-tab-records').click()
+    await expect(page.getByTestId('tr-time-trigger')).toHaveText(
+      `${todayYmd} ~ ${laterYmd}`,
+    )
+    await page.getByTestId('acct-tab-charts').click()
+    await expect(page.getByTestId('chart-time-trigger')).toHaveText(yearKey)
+    await expect(page.getByTestId('chart-time-mode-year')).toHaveAttribute('aria-pressed', 'true')
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

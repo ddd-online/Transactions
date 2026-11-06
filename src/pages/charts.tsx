@@ -6,7 +6,7 @@ import { reorderWithChanges } from '../../shared/domain/list-order'
 import { PIE_OTHER_KEY, foldPieSlices } from '../../shared/domain/pie'
 import { rateText } from '../../shared/domain/format'
 import { tagNamesForCategory } from '../../shared/domain/tag-names'
-import { addMonths, monthSpan, parseYearMonth } from '../../shared/domain/calendar'
+import { parseYearMonth, yearSpan } from '../../shared/domain/calendar'
 import { rangeToSeconds, todayYmd } from '../../shared/domain/time'
 import type { ChartLine } from '../../shared/domain/models'
 import type { ChartDto } from '../../shared/types/chart'
@@ -26,8 +26,9 @@ import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { Spin } from '../components/spin'
 import { Switch } from '../components/switch'
-import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
+import { TimeRangePicker } from '../components/time-range-picker'
 import { notify } from '../components/toast'
+import { useSessionTimeRange, type SessionTimeRange } from '../state/time-range-session'
 import { pieSliceColors, seriesPalette } from '../theme/chart-colors'
 import { useThemeMode } from '../theme/theme-mode'
 
@@ -172,16 +173,18 @@ function conditionSummary(line: ChartLine): string {
     .join('；')
 }
 
-/** 分析页默认看最近 12 个月（与迁移前一致），记录页仍默认今天。 */
-function lastYearRange(): { start: string; end: string } {
+/**
+ * 分析页默认看本年、按月铺开（`2026-01 ~ 2026-12`），记录页仍默认今天。
+ *
+ * 以前默认是「最近 12 个月」的滚动窗口，打开时永远不知道自己看的是哪一年；
+ * 本年的两端是固定的，换月翻页也有明确的起点。
+ */
+function defaultChartRange(): SessionTimeRange {
   const today = todayYmd()
   const parsed = parseYearMonth(today)
-  if (!parsed) return { start: today, end: today }
-  const [startYear, startMonth] = addMonths(parsed[0], parsed[1], -11)
-  return {
-    start: monthSpan(startYear, startMonth)[0],
-    end: monthSpan(parsed[0], parsed[1])[1],
-  }
+  if (!parsed) return { mode: 'month', start: today, end: today }
+  const [start, end] = yearSpan(parsed[0])
+  return { mode: 'month', start, end }
 }
 
 export interface ChartsPageProps {
@@ -242,10 +245,12 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [lineError, setLineError] = useState('')
   const [savingLine, setSavingLine] = useState(false)
 
-  const [rangeMode, setRangeMode] = useState<TimeRangeMode>('month')
-  const [rangeStart, setRangeStart] = useState(() => lastYearRange().start)
-  const [rangeEnd, setRangeEnd] = useState(() => lastYearRange().end)
-  const [committedRange, setCommittedRange] = useState(() => lastYearRange())
+  const [range, updateRange] = useSessionTimeRange('charts', defaultChartRange)
+  const { mode: rangeMode, start: rangeStart, end: rangeEnd } = range
+  const [committedRange, setCommittedRange] = useState(() => ({
+    start: range.start,
+    end: range.end,
+  }))
 
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
@@ -812,11 +817,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             mode={rangeMode}
             start={rangeStart}
             end={rangeEnd}
-            onModeChange={setRangeMode}
-            onRangeChange={(start, end) => {
-              setRangeStart(start)
-              setRangeEnd(end)
-            }}
+            onModeChange={(mode) => updateRange({ mode })}
+            onRangeChange={(start, end) => updateRange({ start, end })}
           />
           <Button
             variant="primary"
