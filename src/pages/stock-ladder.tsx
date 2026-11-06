@@ -289,6 +289,7 @@ export function StockLadderPanel({
                         key={rowKey(row)}
                         entry={row.entry}
                         broken={row.broken}
+                        intraday={ladder.temporary}
                       />
                     ))}
                   </div>
@@ -299,7 +300,11 @@ export function StockLadderPanel({
                       virtual={false}
                       rowKey={rowKey}
                       itemRender={(row: LadderRow) => (
-                        <StockLadderItem entry={row.entry} broken={row.broken} />
+                        <StockLadderItem
+                          entry={row.entry}
+                          broken={row.broken}
+                          intraday={ladder.temporary}
+                        />
                       )}
                     />
                   </ScrollArea>

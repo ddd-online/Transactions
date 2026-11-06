@@ -79,8 +79,8 @@ export function buildLimitLadder(
       const broken = entries
         .filter((entry) => !todayCodes.has(entry.stockCode))
         .sort(byFirstSeal)
-        // 涨跌幅要问行情，纯函数这里给不出来：先留 null，服务层补上。
-        .map((entry): StockLimitBrokenEntry => ({ ...entry, todayPct: null }))
+        // 涨跌幅与价格要问行情，纯函数这里给不出来：先留 null，服务层补上。
+        .map((entry): StockLimitBrokenEntry => ({ ...entry, todayPct: null, todayPrice: null }))
       if (broken.length > 0) brokenByLevel.set(level, broken)
     }
   }

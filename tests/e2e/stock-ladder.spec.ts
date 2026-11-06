@@ -236,6 +236,16 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     )
 
     await expect(ladder.getByTestId('stock-ladder-chip').first()).toContainText('华阳智能')
+    // 卡片带当天的价格：收盘后是收盘价（涨停池里的 p），断板的价来自同一笔当天行情
+    const firstPrice = ladder
+      .getByTestId('stock-ladder-chip')
+      .first()
+      .getByTestId('stock-ladder-chip-price')
+    await expect(firstPrice).toContainText('11.00')
+    await expect(ladder.getByTestId('stock-ladder-chip').first()).toHaveAttribute(
+      'title',
+      /收盘价 11\.00/,
+    )
     await expect(ladder.getByTestId('stock-ladder-chip-word')).toHaveCount(1)
     await expect(
       ladder.getByTestId('stock-ladder-chip').first().getByTestId('stock-ladder-chip-word'),
@@ -321,10 +331,14 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       .filter({ hasText: '科瑞思' })
     await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('+3.33%')
     await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveClass(/stock-ladder__tag--up/)
+    // 断板的价格也补上了：与涨跌幅同一笔行情，收盘后就是收盘价
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-price')).toContainText('1550.00')
+    await expect(brokenMoutai).toHaveAttribute('title', /收盘价 1550\.00/)
     await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('-3.92%')
     await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveClass(
       /stock-ladder__tag--down/,
     )
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-price')).toContainText('49.00')
     await expect(page.getByTestId('stock-ladder-status')).toContainText('已写入本地')
     const footer = page.getByTestId('stock-ladder-footer')
     await expect(footer).toContainText('50%')
@@ -454,10 +468,22 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
     await expect(page.getByTestId('stock-ladder-status')).toContainText('盘中临时数据')
     await expect(ladder.getByTestId('stock-ladder-broken-chip')).toHaveCount(1)
     await expect(ladder.getByTestId('stock-ladder-broken-chip')).toContainText('贵州茅台')
-    // 盘中同样带涨跌幅：这一格跟的是实时行情
+    // 盘中同样带涨跌幅与价格：这两格跟的是实时行情
     await expect(
       ladder.getByTestId('stock-ladder-broken-chip').getByTestId('stock-ladder-chip-pct'),
     ).toHaveText('-3.33%')
+    await expect(
+      ladder.getByTestId('stock-ladder-broken-chip').getByTestId('stock-ladder-chip-price'),
+    ).toContainText('1450.00')
+    // 盘中是当时价，不是收盘价：标签跟着状态走
+    await expect(ladder.getByTestId('stock-ladder-broken-chip')).toHaveAttribute(
+      'title',
+      /当时价 1450\.00/,
+    )
+    await expect(ladder.getByTestId('stock-ladder-chip').first()).toHaveAttribute(
+      'title',
+      /当时价 11\.00/,
+    )
 
     // 当天的池子与日标记都不落库；前一天是确定数据，照常缓存
     await expect
@@ -761,6 +787,21 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
     expect(rowBox.height).toBe(66)
     expect(rowBox.overflow).toBeLessThanOrEqual(0)
     await expect(row.getByTestId('stock-ladder-chip-board')).toBeVisible()
+    // 价格与名称在同一行：价格不能被裁掉，长度超出时先截名称
+    const priced = await row.evaluate((el) => {
+      const price = el.querySelector<HTMLElement>('[data-testid="stock-ladder-chip-price"]')
+      const ident = el.querySelector<HTMLElement>('.stock-ladder__item-ident')
+      return {
+        priceVisible: price !== null && price.getBoundingClientRect().width > 0,
+        priceRight: Math.round(price?.getBoundingClientRect().right ?? -1),
+        identRight: Math.round(ident?.getBoundingClientRect().right ?? -2),
+      }
+    })
+    expect(priced.priceVisible).toBe(true)
+    expect(priced.priceRight).toBeLessThanOrEqual(priced.identRight + 1)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder-narrow-columns.png'),
+    })
 
     // 窄窗：分层行（chips）里标签不换行、格子有左右内边距
     await app.evaluate(({ BrowserWindow }) => {
@@ -782,6 +823,9 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
     expect(chips.length).toBeGreaterThan(0)
     expect(chips.every((chip) => !chip.wrapped)).toBe(true)
     expect(chips.every((chip) => chip.paddingLeft === 8)).toBe(true)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ladder-narrow-window.png'),
+    })
   } finally {
     await app.close()
     server.close()

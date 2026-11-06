@@ -213,7 +213,7 @@ describe('ladderRows', () => {
   }
 
   function brokenOf(row: StockLimitEntry): StockLimitBrokenEntry {
-    return { ...row, todayPct: null }
+    return { ...row, todayPct: null, todayPrice: null }
   }
 
   function rung(entries: StockLimitEntry[], broken: StockLimitBrokenEntry[]): StockLimitRung {
@@ -495,16 +495,19 @@ describe('getLimitLadder 断板涨跌幅', () => {
     }
   }
 
-  it('断板用当天行情补上涨跌幅', async () => {
+  it('断板用当天行情补上涨跌幅与当时价', async () => {
     const db = database()
     const fetcher = quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: day } })
     const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
 
     expect(fetcher.calls).toEqual([['C']])
     const rung = ladder.rungs.find((item) => item.level === 1)!
-    expect(rung.broken.map((row) => [row.stockCode, row.todayPct])).toEqual([['C', -3.33]])
-    // 连板股不带这个字段的语义：它们本来就在涨停池里，pct 是昨天的涨停幅度。
+    expect(rung.broken.map((row) => [row.stockCode, row.todayPct, row.todayPrice])).toEqual([
+      ['C', -3.33, 145_000],
+    ])
+    // 连板股不带这两个字段的语义：它们本来就在涨停池里，价格就是池子里的那一个。
     expect(rung.entries[0]).not.toHaveProperty('todayPct')
+    expect(rung.entries[0]).not.toHaveProperty('todayPrice')
   })
 
   it('行情日期对不上就不贴：那不是这一天的涨跌', async () => {
@@ -514,6 +517,7 @@ describe('getLimitLadder 断板涨跌幅', () => {
 
     const rung = ladder.rungs.find((item) => item.level === 1)!
     expect(rung.broken[0].todayPct).toBeNull()
+    expect(rung.broken[0].todayPrice).toBeNull()
   })
 
   it('太旧的日期不去请求行情', async () => {
@@ -540,6 +544,7 @@ describe('getLimitLadder 断板涨跌幅', () => {
     const rung = ladder.rungs.find((item) => item.level === 1)!
     expect(rung.broken[0].stockCode).toBe('C')
     expect(rung.broken[0].todayPct).toBeNull()
+    expect(rung.broken[0].todayPrice).toBeNull()
   })
 })
 

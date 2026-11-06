@@ -199,15 +199,16 @@ async function finish(
 }
 
 /**
- * 给断板条目补上"当天涨跌幅"。
+ * 给断板条目补上"当天涨跌幅"与"当天价格"。
  *
  * 断板的票已经不在涨停池里了，它今天走得怎么样只能问行情；而行情只有最新一笔，
  * 所以只采信**行情自己的交易日与天梯日期相同**的那一笔 —— 否则就是把别的交易日的
  * 涨跌贴到这一天上。周末看周五的天梯时它正好对得上；更早的日期对不上，也就不去请求。
  *
- * 行情是外部临时数据，任何失败都当"没有"：断板条目照常显示，只是没有涨跌幅标签。
+ * 价格与涨跌幅同源：盘中取到的是当时价，收盘后就是收盘价；没有当天行情就都不补。
+ * 行情是外部临时数据，任何失败都当"没有"：断板条目照常显示，只是少这两格。
  */
-async function attachBrokenPct(
+async function attachBrokenQuotes(
   ladder: StockLimitLadder,
   quotes: StockQuoteFetcher | undefined,
   today: string,
@@ -236,7 +237,11 @@ async function attachBrokenPct(
         const quote = fetched.get(entry.stockCode)
         if (!quote || quote.quoteDate !== ladder.date) return entry
         const pct = quoteChangePercent(quote.latestPrice, quote.prevClose)
-        return pct === null ? entry : { ...entry, todayPct: pct }
+        return {
+          ...entry,
+          todayPrice: quote.latestPrice,
+          ...(pct === null ? {} : { todayPct: pct }),
+        }
       }),
     })),
   }
@@ -288,7 +293,7 @@ export async function getLimitLadder(
     } catch (error) {
       // 有缓存就退回缓存（页面照常可用），没有才把错误抛给界面。
       if (cacheUsable && cached) {
-        return attachBrokenPct(
+        return attachBrokenQuotes(
           await finish(db, source, date, readCached(db, cached, date), {
             now,
             fetchedAt: cached.fetchedAt,
@@ -321,7 +326,7 @@ export async function getLimitLadder(
     // 盘中：只渲染，不写库（temporary 天然为 true）
   }
 
-  return attachBrokenPct(
+  return attachBrokenQuotes(
     await finish(db, source, date, entries, {
       now,
       fetchedAt,

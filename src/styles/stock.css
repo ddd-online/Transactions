@@ -4436,6 +4436,16 @@
   min-width: 0;
 }
 
+/* 名称与价格是一组：宽窗里靠左，窄列里主行变竖排、它们仍落在同一行。
+ * 价格不进右边那一簇（代码 + 时间）：7 板时一列只有 ~180px，
+ * 代码 + 时间 + 价格会一起溢出，名称这一行还放得下。 */
+.stock-ladder__item-ident {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
 .stock-ladder__item-name {
   min-width: 0;
   overflow: hidden;
@@ -4444,6 +4454,22 @@
   color: var(--transactions-color-text-major);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 价格：这是这一行最该被看见的数字，比代码 / 时间亮一档；名字太长时先截名字。 */
+.stock-ladder__item-price {
+  flex: none;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  color: var(--transactions-color-text-major);
+  white-space: nowrap;
+}
+
+/* 断板整行退成次要色，价格跟着退 —— 它已经不是今天的主线。 */
+.stock-ladder__item.is-broken .stock-ladder__item-price {
+  color: var(--transactions-color-text-secondary);
 }
 
 .stock-ladder__item-quote {

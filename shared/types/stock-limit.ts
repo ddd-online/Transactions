@@ -46,12 +46,18 @@ export interface StockLimitEntry {
  * 断板：昨日在这一层、今日没涨停的那只股票。
  *
  * 涨停池里没有它，所以今天走得怎么样只能看行情：{@link todayPct} 是**天梯这一天**
- * 的涨跌幅，用当天行情补出来的；没有当天行情（历史日期、行情抓取失败）时为 `null`，
- * 界面就不显示涨跌幅标签。其余字段仍是它**昨日**在涨停池里的样子。
+ * 的涨跌幅、{@link todayPrice} 是同一天的**价格**，两者来自同一笔当天行情；
+ * 没有当天行情（历史日期、行情抓取失败）时都为 `null`，界面就不显示这两格。
+ * 其余字段仍是它**昨日**在涨停池里的样子。
  */
 export interface StockLimitBrokenEntry extends StockLimitEntry {
   /** 断板当天的涨跌幅（百分数，两位小数）；无当天行情为 `null` */
   todayPct: number | null
+  /**
+   * 断板当天的价格（厘）：盘中是抓行情那一刻的价格，收盘后即当天收盘价。
+   * 无当天行情为 `null` —— 界面不拿昨收顶上。
+   */
+  todayPrice: number | null
 }
 
 /** 天梯的一层（一个板数）。 */
