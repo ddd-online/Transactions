@@ -1,4 +1,4 @@
-import { IDENTITY_TONES, identityTone, type IdentityTone } from '../../shared/domain/identity-color'
+import { IDENTITY_TONES, identityTone } from '../../shared/domain/identity-color'
 import { parseYmd } from '../../shared/domain/calendar'
 import {
   boardCounts,
@@ -41,10 +41,11 @@ export interface LadderPageTheme {
   accent: string
   select: string
   minor: string
+  /** 卡片上标签的面：一层半透明白，压在任何一块底色上都读得出来 */
+  chip: string
   up: string
   down: string
   outlier: string
-  tones: Record<IdentityTone, string>
 }
 
 /** 与 `src/styles/tokens.css` 同值；`tests/unit/ladder-page.spec.ts` 盯着它别漂。 */
@@ -60,19 +61,10 @@ export const LADDER_PAGE_THEMES: { light: LadderPageTheme; dark: LadderPageTheme
     accent: '#3964fe',
     select: 'rgba(57, 100, 254, 0.18)',
     minor: '#f3f4f6',
+    chip: 'rgba(255, 255, 255, 0.55)',
     up: '#dc2626',
     down: '#16a34a',
     outlier: '#d97706',
-    tones: {
-      forest: '#4a8e70',
-      amber: '#c6963a',
-      'slate-blue': '#5c8db5',
-      vermillion: '#d9705a',
-      'warm-brown': '#8c7b6e',
-      ochre: '#9e8c7e',
-      moss: '#6b9e7e',
-      camel: '#b89a80',
-    },
   },
   dark: {
     paper: '#0f1115',
@@ -85,40 +77,98 @@ export const LADDER_PAGE_THEMES: { light: LadderPageTheme; dark: LadderPageTheme
     accent: '#3964fe',
     select: 'rgba(57, 100, 254, 0.4)',
     minor: '#14161a',
+    chip: 'rgba(255, 255, 255, 0.1)',
     up: '#f87171',
     down: '#4ade80',
     outlier: '#fbbf24',
-    tones: {
-      forest: '#5d9e80',
-      amber: '#d4ae5e',
-      'slate-blue': '#74a0c8',
-      vermillion: '#e08a74',
-      'warm-brown': '#a2907f',
-      ochre: '#b0a092',
-      moss: '#82b096',
-      camel: '#c8ae94',
-    },
   },
 }
 
-/** 浅色 / 深色都用的卡片色阶：底色 / 断板底色 / 描边 / 板块名文字。 */
-export function ladderCardPalette(theme: LadderPageTheme, tone: IdentityTone): {
+/**
+ * 纸上的八个板块色相（OKLCH 色相角，彼此差 45°）。
+ *
+ * 软件里的账本身份色不能直接铺成卡片：那八档里有四档是暖褐（琥珀 / 暖褐 / 土黄 / 驼色），
+ * 做成卡片底色就是四张分不出来的米色。纸上要的是「一眼认得出是哪一块」，
+ * 所以另起一套等明度、等彩度、只走色相的八色 —— 八张卡一样重，谁也不比谁淡。
+ */
+export const LADDER_BOARD_HUES = [20, 65, 110, 155, 200, 245, 290, 335] as const
+
+export interface LadderBoardPalette {
+  /** 板块汇总里的圆点 */
   tone: string
+  /** 卡片底色 */
   background: string
+  /** 断板卡片底色：同一色相浅一档 */
   backgroundBroken: string
+  /** 描边（断板用同一色画成虚线） */
   border: string
-  ink: string
-} {
-  const toneHex = theme.tones[tone]
-  return {
-    tone: toneHex,
-    background: mixHex(theme.sheet, toneHex, 0.1),
-    backgroundBroken: mixHex(theme.sheet, toneHex, 0.05),
-    border: mixHex(theme.sheet, toneHex, 0.3),
-    // 64% 色相 + 36% 墨色：最浅的两档（琥珀 / 驼色）压在 10% 底色上也过 4.5:1
-    ink: mixHex(theme.ink, toneHex, 0.64),
-  }
+  /** 板块名 */
+  boardInk: string
+  /** 卡片里的次要文字（代码 / 封板时间）—— 跟着色相走，不在彩底上压中性灰 */
+  subInk: string
 }
+
+/** 由 `artifacts/board-palette.mjs` 算好后写死：对比度与色差在单测里逐条复核。 */
+export const LADDER_BOARD_PALETTES: { light: LadderBoardPalette[]; dark: LadderBoardPalette[] } = {
+  light: [
+    { tone: '#ca545a', background: '#ffd9d7', backgroundBroken: '#ffe6e5', border: '#e47b7c', boardInk: '#932a33', subInk: '#694948' },
+    { tone: '#bb6900', background: '#ffe0bf', backgroundBroken: '#ffebd5', border: '#d58c3b', boardInk: '#873e00', subInk: '#644e38' },
+    { tone: '#878600', background: '#eaecbe', backgroundBroken: '#f1f3d5', border: '#a4a537', boardInk: '#5c5a00', subInk: '#545538' },
+    { tone: '#009956', background: '#c9f4d7', backgroundBroken: '#dcf9e5', border: '#51b67a', boardInk: '#006a2f', subInk: '#3e5a48' },
+    { tone: '#0099a3', background: '#b9f5f8', backgroundBroken: '#d2f9fb', border: '#00b6be', boardInk: '#006a74', subInk: '#335a5c' },
+    { tone: '#0486d3', background: '#c7edff', backgroundBroken: '#dbf4ff', border: '#4fa6e9', boardInk: '#00599c', subInk: '#3d556a' },
+    { tone: '#816dd2', background: '#e7e2ff', backgroundBroken: '#efecff', border: '#9e8fe9', boardInk: '#57429c', subInk: '#524e6a' },
+    { tone: '#b559a3', background: '#ffd9f8', backgroundBroken: '#ffe7fb', border: '#d07ebe', boardInk: '#823073', subInk: '#62495c' },
+  ],
+  dark: [
+    { tone: '#f49191', background: '#462222', backgroundBroken: '#351c1c', border: '#9e4c4e', boardInk: '#ffb4b3', subInk: '#d0aead' },
+    { tone: '#e5a059', background: '#41270c', backgroundBroken: '#31200e', border: '#935a11', boardInk: '#fcc087', subInk: '#cab39d' },
+    { tone: '#b6b857', background: '#30300b', backgroundBroken: '#25260d', border: '#6d6e0a', boardInk: '#d1d486', subInk: '#b8ba9d' },
+    { tone: '#6dc88f', background: '#133621', backgroundBroken: '#132a1b', border: '#267b4c', boardInk: '#98e2b1', subInk: '#a4bfac' },
+    { tone: '#30c8cf', background: '#003639', backgroundBroken: '#052a2c', border: '#007b82', boardInk: '#76e2e7', subInk: '#9ac0c1' },
+    { tone: '#6bb9f8', background: '#133047', backgroundBroken: '#122636', border: '#266ea4', boardInk: '#95d5ff', subInk: '#a3bbd0' },
+    { tone: '#b0a4f8', background: '#2e2947', backgroundBroken: '#242136', border: '#695ca3', boardInk: '#ccc3ff', subInk: '#b6b4d0' },
+    { tone: '#e093cf', background: '#3f2339', backgroundBroken: '#301c2c', border: '#8f4e82', boardInk: '#f7b5e8', subInk: '#c8aec2' },
+  ],
+}
+
+
+/**
+ * 板块 → 色相槽位。
+ *
+ * 先按板块名哈希取一个槽（同一个板块换一天大概率还是同一个颜色），
+ * 同一天撞到同一个槽就顺延到下一个空槽 —— 一块纸只讲一天，一天之内彼此分得开
+ * 比跨天稳定更重要。板块超过八个时才开始复用色相。
+ *
+ * 槽位的顺序：先按涨停家数（`boardCounts` 的排法：家数多的在前、同数按名字），
+ * 再补只出现在断板里的板块（按名字），所以汇总条上那一串圆点就是这张纸的图例。
+ */
+export function boardSlots(ladder: StockLimitLadder): Map<string, number> {
+  const live = boardCounts(ladder.rungs.flatMap((rung) => rung.entries)).map(({ board }) => board)
+  const known = new Set(live)
+  const extras = new Set<string>()
+  for (const rung of ladder.rungs) {
+    for (const entry of rung.broken) {
+      const board = boardOf(entry)
+      if (board && !known.has(board)) extras.add(board)
+    }
+  }
+  const ordered = [...live, ...[...extras].sort((left, right) => (left < right ? -1 : 1))]
+
+  const slots = new Map<string, number>()
+  const used = new Set<number>()
+  const hueCount = LADDER_BOARD_HUES.length
+  for (const board of ordered) {
+    let slot = IDENTITY_TONES.indexOf(identityTone(board)) % hueCount
+    for (let step = 0; step < hueCount && used.has(slot) && used.size < hueCount; step += 1) {
+      slot = (slot + 1) % hueCount
+    }
+    used.add(slot)
+    slots.set(board, slot)
+  }
+  return slots
+}
+
 
 /** 两个 `#rrggbb` 按权重混合；`weight` 是后者的占比。 */
 export function mixHex(base: string, over: string, weight: number): string {
@@ -180,45 +230,47 @@ function themeVars(theme: LadderPageTheme): string {
     `--accent:${theme.accent}`,
     `--select:${theme.select}`,
     `--minor:${theme.minor}`,
+    `--chip:${theme.chip}`,
   ].join(';')
 }
 
-/** 标签底色 / 字色：一字与涨跌幅走语义红绿，炸板走 outlier 琥珀。 */
+/**
+ * 标签的字色：一字与涨跌幅走语义红绿，炸板走 outlier 琥珀。
+ *
+ * 标签**不再自带一层语义底色** —— 卡片本身就是一块彩底，粉卡上再压一层粉色标签，
+ * 那枚标签会整块消失。面统一用同一片浅色（`--chip`，白 55% / 深色下白 10%），
+ * 语义只由字色承担，换到任何一块底色上都读得出来。字压到 62% 墨 + 38% 语义色，
+ * 换来的余量够它在最深的几块卡面上也过 4.5:1。
+ */
 export function ladderTagPalette(theme: LadderPageTheme): {
-  upBg: string
   upInk: string
-  downBg: string
   downInk: string
-  hotBg: string
   hotInk: string
 } {
   return {
-    upBg: mixHex(theme.sheet, theme.up, 0.1),
-    upInk: mixHex(theme.ink, theme.up, 0.72),
-    downBg: mixHex(theme.sheet, theme.down, 0.1),
-    downInk: mixHex(theme.ink, theme.down, 0.72),
-    hotBg: mixHex(theme.sheet, theme.outlier, 0.12),
-    hotInk: mixHex(theme.ink, theme.outlier, 0.72),
+    upInk: mixHex(theme.ink, theme.up, 0.62),
+    downInk: mixHex(theme.ink, theme.down, 0.62),
+    hotInk: mixHex(theme.ink, theme.outlier, 0.62),
   }
 }
 
 function tagVars(theme: LadderPageTheme): string {
   const tag = ladderTagPalette(theme)
   return [
-    `--tag-up-bg:${tag.upBg}`,
+    `--chip:${theme.chip}`,
     `--tag-up-ink:${tag.upInk}`,
-    `--tag-down-bg:${tag.downBg}`,
     `--tag-down-ink:${tag.downInk}`,
-    `--tag-hot-bg:${tag.hotBg}`,
     `--tag-hot-ink:${tag.hotInk}`,
   ].join(';')
 }
 
-function boardRules(theme: LadderPageTheme): string {
-  return IDENTITY_TONES.map((tone) => {
-    const palette = ladderCardPalette(theme, tone)
-    return `.board-${tone}{--tone:${palette.tone};--card-bg:${palette.background};--card-bg-broken:${palette.backgroundBroken};--card-border:${palette.border};--board-ink:${palette.ink}}`
-  }).join('\n')
+function boardRules(palettes: LadderBoardPalette[]): string {
+  return palettes
+    .map(
+      (palette, slot) =>
+        `.board-s${slot}{--tone:${palette.tone};--card-bg:${palette.background};--card-bg-broken:${palette.backgroundBroken};--card-border:${palette.border};--board-ink:${palette.boardInk};--card-sub:${palette.subInk}}`,
+    )
+    .join('\n')
 }
 
 function pageCss(): string {
@@ -228,10 +280,10 @@ function pageCss(): string {
 /* impeccable-disable overused-font -- Inter / JetBrains Mono 是 DESIGN.md 钉下来的既定身份：界面用 Inter、数字用 JetBrains Mono；导出页跟着同一套字。 */
 /* impeccable-disable design-system-color -- 这张网页要脱离应用单文件存在：颜色是 tokens.css 的令牌混合出来的字面量，字色 × 底色的对比度在 tests/unit/ladder-page.spec.ts 里逐条算过。 */
 :root{color-scheme:light dark;${themeVars(light)};${tagVars(light)}}
-${boardRules(light)}
+${boardRules(LADDER_BOARD_PALETTES.light)}
 @media (prefers-color-scheme:dark){
   :root{${themeVars(dark)};${tagVars(dark)}}
-  ${boardRules(dark)}
+  ${boardRules(LADDER_BOARD_PALETTES.dark)}
 }
 *{box-sizing:border-box}
 html{background:var(--paper)}
@@ -270,23 +322,23 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .level-meta{display:flex;flex-direction:column;gap:2px;margin:0;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;line-height:1.45;font-variant-numeric:tabular-nums;color:var(--ink-3)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));align-content:start;gap:8px;margin:0;padding:0;list-style:none}
 .card{padding:10px 11px;border:1px solid var(--card-border);border-radius:12px;background:var(--card-bg)}
-.card.is-broken{background:var(--card-bg-broken)}
-.board-none{--card-bg:var(--sheet);--card-bg-broken:var(--minor);--card-border:var(--rule-strong);--board-ink:var(--ink-3)}
+.card.is-broken{border-style:dashed;background:var(--card-bg-broken)}
+.board-none{--card-bg:var(--sheet);--card-bg-broken:var(--minor);--card-border:var(--rule-strong);--board-ink:var(--ink-3);--card-sub:var(--ink-2)}
 .card-top{display:flex;align-items:baseline;gap:8px}
 .name{min-width:0;overflow:hidden;font-size:14px;font-weight:600;line-height:20px;color:var(--ink);text-overflow:ellipsis;white-space:nowrap}
 .price{margin-left:auto;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;font-weight:500;line-height:20px;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
-.is-broken .name,.is-broken .price{color:var(--ink-2)}
-.card-quote{display:flex;gap:8px;margin-top:3px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.is-broken .name,.is-broken .price{color:var(--card-sub)}
+.card-quote{display:flex;gap:8px;margin-top:3px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;font-variant-numeric:tabular-nums;color:var(--card-sub)}
 .card-quote .seal{letter-spacing:0.02em}
 .card-tags{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
 .board{min-width:0;overflow:hidden;font-size:11px;color:var(--board-ink);text-overflow:ellipsis;white-space:nowrap;letter-spacing:0.01em}
-.tag{flex:none;padding:0 5px;border-radius:6px;font-size:11px;line-height:16px;white-space:nowrap}
-.tag-word{background:var(--tag-up-bg);color:var(--tag-up-ink);font-weight:500}
-.tag-hot{background:var(--tag-hot-bg);color:var(--tag-hot-ink)}
-.tag-off{background:var(--minor);color:var(--ink-2)}
-.tag-pct{background:var(--tag-up-bg);color:var(--tag-up-ink);font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-variant-numeric:tabular-nums}
-.tag-pct.is-down{background:var(--tag-down-bg);color:var(--tag-down-ink)}
-.tag-pct.is-flat{background:var(--minor);color:var(--ink-2)}
+.tag{flex:none;padding:0 5px;border-radius:6px;background:var(--chip);font-size:11px;line-height:16px;white-space:nowrap}
+.tag-word{color:var(--tag-up-ink);font-weight:500}
+.tag-hot{color:var(--tag-hot-ink)}
+.tag-off{color:var(--card-sub)}
+.tag-pct{color:var(--tag-up-ink);font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-variant-numeric:tabular-nums}
+.tag-pct.is-down{color:var(--tag-down-ink)}
+.tag-pct.is-flat{color:var(--ink-2)}
 .colophon{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 18px;margin-top:36px;padding-top:12px;border-top:1px solid var(--rule);font-size:11px;line-height:1.6;color:var(--ink-3)}
 .colophon p{margin:0;text-wrap:pretty}
 .colophon .brand{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;letter-spacing:0.08em;color:var(--ink-3)}
@@ -310,7 +362,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 }
 @media print{
   :root{${themeVars(light)};${tagVars(light)}}
-  ${boardRules(light)}
+  ${boardRules(LADDER_BOARD_PALETTES.light)}
   html,body{background:#fff}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .sheet{max-width:none;padding:0}
@@ -360,13 +412,13 @@ function summaryHtml(ladder: StockLimitLadder): string {
   ].join('')}</ul>`
 }
 
-function boardsHtml(ladder: StockLimitLadder): string {
+function boardsHtml(ladder: StockLimitLadder, slots: Map<string, number>): string {
   const boards = boardCounts(ladder.rungs.flatMap((rung) => rung.entries))
   if (boards.length === 0) return ''
   const items = boards
     .map(
       ({ board, count }) =>
-        `<span class="board-item"><i class="dot board-${identityTone(board)}"></i><span>${text(board)}</span><span class="count">${count}</span></span>`,
+        `<span class="board-item"><i class="dot board-s${slots.get(board) ?? 0}"></i><span>${text(board)}</span><span class="count">${count}</span></span>`,
     )
     .join('')
   return `<p class="boards"><span class="boards-label">板块</span>${items}</p>`
@@ -401,9 +453,11 @@ function priceOf(entry: StockLimitEntry | StockLimitBrokenEntry, broken: boolean
 function cardHtml(
   entry: StockLimitEntry | StockLimitBrokenEntry,
   broken: boolean,
+  slots: Map<string, number>,
 ): string {
   const board = boardOf(entry)
-  const toneClass = board ? ` board-${identityTone(board)}` : ' board-none'
+  const slot = board ? slots.get(board) : undefined
+  const toneClass = slot === undefined ? ' board-none' : ` board-s${slot}`
   const price = priceOf(entry, broken)
   const seal = ladderSealTime(entry.firstSeal)
   return `<li class="card${toneClass}${broken ? ' is-broken' : ''}">` +
@@ -433,10 +487,10 @@ function levelMeta(rung: StockLimitRung): string[] {
  * 家数 / 晋级率 / 断板数压在数字下面，和它说的是同一件事；三段都是小字，
  * 放到页面另一头就会和它对不上主人。
  */
-function levelHtml(rung: StockLimitRung): string {
+function levelHtml(rung: StockLimitRung, slots: Map<string, number>): string {
   const rows = ladderRows(rung)
   const cards = rows
-    .map((row) => cardHtml(row.entry, row.broken))
+    .map((row) => cardHtml(row.entry, row.broken, slots))
     .join('')
   const meta = levelMeta(rung)
   const metaHtml =
@@ -475,15 +529,16 @@ function statusText(ladder: StockLimitLadder): string {
  * 天梯 → 一张自包含的单页 HTML。
  *
  * 板数从上到下递减（空间板在最上、首板在最后一段）；每段左侧是这一段的板数，
- * 段内沿用天梯的板块分组顺序，断板跟在同板块的连板后面。
+ * 段内沿用天梯的板块分组顺序，断板跟在同板块的连板后面（虚线框 + 浅一档的底）。
  * 调用方只在 `status === 'ok'` 时允许导出。
  */
 export function renderLadderPage(ladder: StockLimitLadder): string {
   const levels = [...ladder.rungs].sort((left, right) => right.level - left.level)
+  const slots = boardSlots(ladder)
   const weekday = weekdayZh(ladder.date)
   const title = `连板天梯 · ${ladder.date}`
   const ladderHtml = levels
-    .map((rung) => levelHtml(rung))
+    .map((rung) => levelHtml(rung, slots))
     .join('')
   const missingPrevious =
     ladder.previousDate === null
@@ -510,7 +565,7 @@ export function renderLadderPage(ladder: StockLimitLadder): string {
 </div>
 </div>
 ${summaryHtml(ladder)}
-${boardsHtml(ladder)}
+${boardsHtml(ladder, slots)}
 ${missingPrevious}
 </header>
 <div class="ladder">
@@ -522,3 +577,7 @@ ${footerHtml(ladder)}
 </html>
 `
 }
+
+
+
+

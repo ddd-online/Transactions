@@ -185,13 +185,23 @@ async function captureLadderPage(
   return Buffer.from(png, 'base64')
 }
 
+interface LadderPageCard {
+  top: number
+  left: number
+  /** 板块色相槽位：`s0` … `s7`，没有板块的是 `none` */
+  slot: string
+  board: string
+  broken: boolean
+  borderStyle: string
+}
+
 interface LadderPageBox {
   label: string
   top: number
   left: number
   headRight: number
   headBottom: number
-  cards: Array<{ top: number; left: number }>
+  cards: LadderPageCard[]
 }
 
 interface LadderPageGeometry {
@@ -233,7 +243,14 @@ async function inspectLadderPage(
               headBottom: Math.round(head ? box(head).bottom : section.top),
               cards: [...level.querySelectorAll('.card')].map((card) => {
                 const cardBox = box(card)
-                return { top: Math.round(cardBox.top), left: Math.round(cardBox.left) }
+                return {
+                  top: Math.round(cardBox.top),
+                  left: Math.round(cardBox.left),
+                  slot: (String(card.className).match(/board-(s\\d+|none)/) || [])[1] || '',
+                  board: (card.querySelector('.board') || {}).textContent || '',
+                  broken: card.classList.contains('is-broken'),
+                  borderStyle: getComputedStyle(card).borderTopStyle,
+                }
               }),
             }
           })
@@ -497,13 +514,11 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(highBoard).toBeGreaterThan(-1)
     expect(highBoard).toBeLessThan(lowBoard)
     expect(pageHtml).toContain(`<title>连板天梯 · ${ymd(today)}</title>`)
-    // 板块身份色成为卡片底色；不同板块的卡片挂不同色的 class
-    const electricTone = identityTone('电网设备')
-    const bankTone = identityTone('银行')
-    expect(pageHtml).toContain(`class="card board-${electricTone}`)
-    expect(pageHtml).toContain(`class="card board-${bankTone}`)
-    expect(pageHtml).toContain(`.board-${electricTone}{--tone:`)
-    expect(pageHtml).toContain(`.board-${bankTone}{--tone:`)
+    // 板块色铺成卡片底色：八个色相都写进样式，卡片挂的是当天分到的槽位
+    for (let slot = 0; slot < 8; slot += 1) {
+      expect(pageHtml).toContain(`.board-s${slot}{--tone:`)
+    }
+    expect(pageHtml).toMatch(/class="card board-s\d/)
     // 价格与断板都在
     expect(pageHtml).toContain('11.00')
     expect(pageHtml).toContain('1550.00')
@@ -530,6 +545,21 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       expect(level.headRight).toBeLessThanOrEqual(level.cards[0].left)
       expect(level.cards[0].left - level.left).toBeGreaterThanOrEqual(100)
     }
+    // 断板是虚线框，连板是实线；同一天的每个板块一个色相，互不相同
+    const cards = layout.levels.flatMap((level) => level.cards)
+    expect(cards.some((card) => card.broken)).toBe(true)
+    for (const card of cards) {
+      expect(card.borderStyle).toBe(card.broken ? 'dashed' : 'solid')
+    }
+    const hueOfBoard = new Map<string, string>()
+    for (const card of cards) {
+      const hue = hueOfBoard.get(card.board)
+      if (hue === undefined) hueOfBoard.set(card.board, card.slot)
+      else expect(card.slot).toBe(hue)
+    }
+    expect(hueOfBoard.size).toBe(5)
+    expect(new Set(hueOfBoard.values()).size).toBe(hueOfBoard.size)
+
     // 一板 3 家 + 断板 1 家，桌面宽度下排在同一行
     const firstBoards = layout.levels[layout.levels.length - 1].cards
     expect(firstBoards).toHaveLength(4)

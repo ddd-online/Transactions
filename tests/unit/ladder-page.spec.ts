@@ -4,13 +4,13 @@
  * 这里盯四件事：
  * 1. 页面结构与内容（高板在前、价格 / 断板 / 标签齐全）；
  * 2. 文本转义（股票名与板块名来自外部数据源，绝不能进 HTML）；
- * 3. 颜色：与 tokens.css 同值、卡片底色与文字都过 AA（网页不继承软件的样式，只能在这里守）；
+ * 3. 颜色：主题令牌与 tokens.css 同值、卡片底色与文字都过 AA、八个板块色相真的分得开
+ *    （网页不继承软件的样式，只能在这里守）；
  * 4. 自包含：没有外部资源、没有脚本，字体由主进程注入。
  */
 
 import { describe, expect, it } from 'vitest'
 
-import { IDENTITY_TONES, identityTone } from '../../shared/domain/identity-color'
 import type {
   StockLimitBrokenEntry,
   StockLimitEntry,
@@ -18,13 +18,13 @@ import type {
   StockLimitRung,
 } from '../../shared/types/stock-limit'
 import {
+  LADDER_BOARD_PALETTES,
   LADDER_PAGE_THEMES,
-  ladderCardPalette,
+  boardSlots,
   ladderTagPalette,
   mixHex,
   renderLadderPage,
   weekdayZh,
-  type LadderPageTheme,
 } from '../../src/pages/stock-ladder-page'
 import { block, token, tokensCss } from './css-tokens'
 
@@ -132,15 +132,36 @@ function contrast(a: string, b: string): number {
 
 const AA = 4.5
 
+/** CIE Lab 与 ΔE76：八张卡的底色必须真的分得开，不能只是数值上不同。 */
+function lab(hex: string): [number, number, number] {
+  const value = hex.replace('#', '')
+  const at = (offset: number): number => Number.parseInt(value.slice(offset, offset + 2), 16) / 255
+  const [r, g, b] = [at(0), at(2), at(4)].map(linear)
+  const x = (0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047
+  const y = 0.2126729 * r + 0.7151522 * g + 0.072175 * b
+  const z = (0.0193339 * r + 0.119192 * g + 0.9503041 * b) / 1.08883
+  const f = (channel: number): number =>
+    channel > 0.008856 ? Math.cbrt(channel) : 7.787 * channel + 16 / 116
+  const [fx, fy, fz] = [f(x), f(y), f(z)]
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)]
+}
+
+function deltaE(a: string, b: string): number {
+  const [l1, a1, b1] = lab(a)
+  const [l2, a2, b2] = lab(b)
+  return Math.hypot(l1 - l2, a1 - a2, b1 - b2)
+}
+
 describe('ladder page palette', () => {
-  const themes: Array<[string, LadderPageTheme, string]> = [
-    ['light', LADDER_PAGE_THEMES.light, LIGHT],
-    ['dark', LADDER_PAGE_THEMES.dark, DARK],
+  const themes: Array<['light' | 'dark', string]> = [
+    ['light', LIGHT],
+    ['dark', DARK],
   ]
 
-  it.each(themes)('matches the %s design tokens', (_name, theme, css) => {
-    const same = (palette: string, name: string): void => {
-      const expected = token(css, name).replace(/\s+/g, '')
+  it.each(themes)('matches the %s design tokens', (name, css) => {
+    const theme = LADDER_PAGE_THEMES[name]
+    const same = (palette: string, label: string): void => {
+      const expected = token(css, label).replace(/\s+/g, '')
       expect(sameValue(palette)).toBe(expected)
     }
     same(theme.paper, 'color-bg-base')
@@ -155,30 +176,51 @@ describe('ladder page palette', () => {
     same(theme.up, 'color-expense')
     same(theme.down, 'color-income')
     same(theme.outlier, 'color-outlier')
-    for (const tone of IDENTITY_TONES) same(theme.tones[tone], `ledger-${tone}`)
   })
 
-  it.each(themes)('keeps every text on every card readable (%s)', (_name, theme) => {
+  it.each(themes)('keeps every text on every card readable (%s)', (name) => {
+    const theme = LADDER_PAGE_THEMES[name]
     expect(contrast(theme.ink, theme.sheet)).toBeGreaterThanOrEqual(AA)
     expect(contrast(theme.ink2, theme.sheet)).toBeGreaterThanOrEqual(AA)
     expect(contrast(theme.ink3, theme.sheet)).toBeGreaterThanOrEqual(AA)
 
+    // 标签的面是一层半透明白（浅色 55% / 深色 10%），压在彩卡上还是个标签：
+    // 三枚语义字色要在这层白下面的每一种底色上都过 AA
+    const chipOn = (background: string): string =>
+      mixHex(background, '#ffffff', name === 'light' ? 0.55 : 0.1)
     const tag = ladderTagPalette(theme)
-    expect(contrast(tag.upInk, tag.upBg)).toBeGreaterThanOrEqual(AA)
-    expect(contrast(tag.downInk, tag.downBg)).toBeGreaterThanOrEqual(AA)
-    expect(contrast(tag.hotInk, tag.hotBg)).toBeGreaterThanOrEqual(AA)
+    expect(contrast(tag.upInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
+    expect(contrast(tag.downInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
+    expect(contrast(tag.hotInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
 
-    for (const tone of IDENTITY_TONES) {
-      const card = ladderCardPalette(theme, tone)
-      // 卡片底色是板块色，所以正文、次要文字、板块名、断板底色都要单独过 AA
+    for (const card of LADDER_BOARD_PALETTES[name]) {
+      // 卡片底色是板块色：正文、次要文字（代码 / 封板时间）、板块名、断板底色都要单独过 AA
       expect(contrast(theme.ink, card.background)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(theme.ink2, card.background)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(theme.ink2, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(card.ink, card.background)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(card.ink, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(theme.ink, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(card.subInk, card.background)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(card.subInk, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(card.boardInk, card.background)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(card.boardInk, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
+      for (const ink of [tag.upInk, tag.downInk, tag.hotInk]) {
+        expect(contrast(ink, chipOn(card.background))).toBeGreaterThanOrEqual(AA)
+      }
+      // 汇总条上的圆点是「有意义的图形」：3:1
+      expect(contrast(card.tone, theme.paper)).toBeGreaterThanOrEqual(3)
+      // 描边要看得见（断板的虚线框是「断了」的唯一结构线索）：对着自己的底色 2:1 起
+      expect(contrast(card.border, card.background)).toBeGreaterThanOrEqual(2)
     }
-    // 「断」标签压在次要底色上
-    expect(contrast(theme.ink2, theme.minor)).toBeGreaterThanOrEqual(AA)
+  })
+
+  it.each(themes)('gives the eight boards hues you can tell apart (%s)', (name) => {
+    const cards = LADDER_BOARD_PALETTES[name]
+    expect(cards).toHaveLength(8)
+    for (let left = 0; left < cards.length; left += 1) {
+      for (let right = left + 1; right < cards.length; right += 1) {
+        // 相邻两档只差 45°；底色是淡的，ΔE76 掉到 10 以下就真的看不出是两块了
+        expect(deltaE(cards[left].background, cards[right].background)).toBeGreaterThanOrEqual(10)
+        expect(deltaE(cards[left].boardInk, cards[right].boardInk)).toBeGreaterThanOrEqual(20)
+      }
+    }
   })
 })
 
@@ -251,19 +293,49 @@ describe('renderLadderPage', () => {
     expect(html).toContain('缺少前一交易日数据')
   })
 
-  it('tints cards by board, with the board name in the same tone', () => {
-    const html = renderLadderPage(fixture())
-    const tone = identityTone('光伏设备')
+  it('tints cards by board, one hue per board on the page', () => {
+    const ladder = fixture()
+    const slots = boardSlots(ladder)
+    const slot = slots.get('光伏设备')
+    expect(slot).toBeTypeOf('number')
+    const html = renderLadderPage(ladder)
     expect(html).toContain(
-      `<li class="card board-${tone}"><div class="card-top"><span class="name">金安国纪</span>`,
+      `<li class="card board-s${slot}"><div class="card-top"><span class="name">金安国纪</span>`,
     )
-    const palette = ladderCardPalette(LADDER_PAGE_THEMES.light, tone)
-    expect(html).toContain(`.board-${tone}{--tone:${palette.tone};--card-bg:${palette.background}`)
-    // 断板用同一板块的浅一档底色
-    const brokenTone = identityTone('专用设备')
-    const brokenPalette = ladderCardPalette(LADDER_PAGE_THEMES.light, brokenTone)
-    expect(html).toContain(`--card-bg-broken:${brokenPalette.backgroundBroken}`)
-    expect(brokenPalette.backgroundBroken).not.toBe(brokenPalette.background)
+    // 汇总条上的圆点用同一个槽位 —— 那一排就是这张纸的图例
+    expect(html).toContain(`<i class="dot board-s${slot}"></i><span>光伏设备</span>`)
+    // 八个色相都写进了样式，断板卡片是虚线框 + 浅一档的底
+    for (let index = 0; index < 8; index += 1) {
+      expect(html).toContain(`.board-s${index}{--tone:`)
+    }
+    expect(html).toContain('.card.is-broken{border-style:dashed;background:var(--card-bg-broken)}')
+    const brokenSlot = slots.get('专用设备')
+    expect(html).toContain(`class="card board-s${brokenSlot} is-broken"`)
+    expect(LADDER_BOARD_PALETTES.light[brokenSlot ?? 0].backgroundBroken).not.toBe(
+      LADDER_BOARD_PALETTES.light[brokenSlot ?? 0].background,
+    )
+  })
+
+  it('gives every board on the page its own hue slot', () => {
+    const slots = boardSlots(fixture())
+    expect(slots.size).toBe(5)
+    expect(new Set(slots.values()).size).toBe(5)
+    for (const slot of slots.values()) expect(slot).toBeGreaterThanOrEqual(0)
+
+    // 超过八个板块才开始复用色相，且不会卡死
+    const many = Array.from({ length: 10 }, (_, index) => `板块${index}`)
+    const crowded = boardSlots(
+      fixture({
+        rungs: [
+          rung(
+            1,
+            many.map((board, index) => entry(`60000${index}`, `股票${index}`, 1, 92500, board)),
+          ),
+        ],
+      }),
+    )
+    expect(crowded.size).toBe(10)
+    expect(new Set(crowded.values()).size).toBe(8)
   })
 
   it('escapes external text from the pool', () => {
@@ -313,3 +385,8 @@ describe('renderLadderPage', () => {
     expect(mixHex('#000000', '#ffffff', 0.5)).toBe('#808080')
   })
 })
+
+
+
+
+
