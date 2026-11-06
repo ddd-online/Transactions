@@ -7,13 +7,12 @@ import { app, clipboard, dialog, session } from 'electron'
 import type { CommandName } from '../../shared/commands'
 import { AppError, workspaceNotOpened } from '../../shared/errors'
 import { CLOSE_BEHAVIORS, type CloseBehavior } from '../../shared/domain/consts'
-import { DEVTOOLS_STATE_CHANGED, IMPORT_PROGRESS, WORKSPACE_CHANGED } from '../../shared/events'
+import { DEVTOOLS_STATE_CHANGED, WORKSPACE_CHANGED } from '../../shared/events'
 import type { ConfigStore } from '../config'
 import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
 import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
 import { logInfo, logWarn } from '../logging'
-import { importSourceWorkspace, probeSourceWorkspace } from '../source/importer'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
@@ -297,30 +296,6 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
 
     debug_echo(request) {
       return String(asObject(request).message ?? '')
-    },
-
-    source_import_probe(request) {
-      const workspaceDir = String(asObject(request).workspaceDir ?? '').trim()
-      if (!workspaceDir) {
-        throw new AppError('请选择源工作空间目录', { status: 400 })
-      }
-      return probeSourceWorkspace(workspaceDir)
-    },
-
-    async source_import_start(request) {
-      const raw = asObject(request)
-      const sourceDir = String(raw.sourceDir ?? '').trim()
-      const targetDir = String(raw.targetDir ?? '').trim()
-      if (!sourceDir || !targetDir) {
-        throw new AppError('源目录与目标目录都不能为空', { status: 400 })
-      }
-      const report = await importSourceWorkspace({
-        sourceDir,
-        targetDir,
-        onProgress: (progress) => sendEvent(IMPORT_PROGRESS, progress),
-      })
-      logInfo(`数据导入完成: ${sourceDir} -> ${targetDir}`)
-      return report
     },
 
     ledger_list(request) {

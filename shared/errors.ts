@@ -1,7 +1,6 @@
 /** 失败种类（界面按 code 分支，不比文案）。 */
 export const ERR_CODE_DEFAULT = -1
 export const ERR_CODE_WORKSPACE_NOT_OPENED = -2
-export const ERR_CODE_SOURCE_WORKSPACE = -3
 
 export interface ErrorEnvelope {
   code: number
@@ -28,11 +27,12 @@ export function workspaceNotOpened(): AppError {
   })
 }
 
-export function sourceWorkspace(): AppError {
-  return new AppError('这是既有工作空间，请先导入数据', {
-    code: ERR_CODE_SOURCE_WORKSPACE,
-    status: 409,
-  })
+/** 旧版工作空间（`tbl_billadm_*` 表结构）：数据导入已移除，只能拒绝打开。 */
+export function legacyWorkspace(): AppError {
+  return new AppError(
+    '这是旧版工作空间（表名带 tbl_billadm_ 前缀），当前版本不再支持打开它；请新建一个工作空间',
+    { code: ERR_CODE_DEFAULT, status: 409 },
+  )
 }
 
 export function toErrorEnvelope(error: unknown): ErrorEnvelope {

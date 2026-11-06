@@ -279,17 +279,6 @@ describe('command catalog', () => {
     expect(commandSchemas.file_save_image.safeParse({ relativePath: 'a.png' }).success).toBe(true)
     expect(commandSchemas.devtools_toggle.safeParse({ enabled: true }).success).toBe(true)
   })
-
-  it('validates import requests', () => {
-    expect(commandSchemas.source_import_probe.safeParse({ workspaceDir: 'D:\\old' }).success).toBe(
-      true,
-    )
-    expect(commandSchemas.source_import_probe.safeParse({}).success).toBe(false)
-    expect(
-      commandSchemas.source_import_start.safeParse({ sourceDir: 'a', targetDir: 'b' }).success,
-    ).toBe(true)
-    expect(commandSchemas.source_import_start.safeParse({ sourceDir: 'a' }).success).toBe(false)
-  })
 })
 
 

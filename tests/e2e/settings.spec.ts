@@ -64,8 +64,8 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await createLedger(page, '设置账本')
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
-    await page.getByTestId('settings-tab-data').click()
-    await expect(page.getByTestId('import-source')).toBeInViewport()
+    // 数据导入已移除：分栏本身不再存在
+    await expect(page.getByTestId('settings-tab-data')).toHaveCount(0)
 
     await page.getByTestId('settings-tab-general').click()
     await page.getByTestId('appearance-dark').click()

@@ -87,7 +87,7 @@ pnpm package          # NSIS 安装包，产物在 output/
 | 股票 | `stock.spec.ts`、`stock-lifecycle.spec.ts`、`stock-ladder.spec.ts` |
 | 设置 | `settings.spec.ts` |
 | 外壳 / 导航 / 窗口 | `shell.spec.ts`、`navigation.spec.ts`、`window*.spec.ts` |
-| 导入 / 同步 / 更新 | `import*.spec.ts`、`update*.spec.ts` |
+| 更新 | `update*.spec.ts` |
 
 命令示例：`pnpm build && pnpm exec playwright test tests/e2e/todo.spec.ts tests/e2e/todo-drag.spec.ts`。
 样式改动也至少跑受影响页面的 spec，不要用全量截图代替针对性检查。

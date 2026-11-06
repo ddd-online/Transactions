@@ -41,7 +41,7 @@ test('导航：首启动覆盖层 → 六个分页', async () => {
   try {
     const page = await electronApp.firstWindow()
     await expect(page.getByTestId('workspace-overlay')).toBeVisible()
-    await expect(page.getByTestId('open-import')).toBeVisible()
+    await expect(page.getByTestId('open-app-settings')).toBeVisible()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
     await expect(page.getByTestId('workspace-overlay')).toHaveCount(0)

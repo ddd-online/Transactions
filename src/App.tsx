@@ -5,21 +5,18 @@ import type { Ledger } from '../shared/domain/models'
 import {
   APP_QUIT_PROGRESS,
   APP_QUIT_STARTED,
-  IMPORT_PROGRESS,
   UPDATE_DOWNLOAD_COMPLETE,
   UPDATE_DOWNLOAD_ERROR,
   UPDATE_DOWNLOAD_PROGRESS,
   WINDOW_STATE_CHANGED,
   WORKSPACE_CHANGED,
 } from '../shared/events'
-import { ERR_CODE_SOURCE_WORKSPACE } from '../shared/errors'
 import {
   CLOSE_BEHAVIOR_ASK,
   CLOSE_BEHAVIOR_QUIT,
   CLOSE_BEHAVIOR_TRAY,
   normalizeCloseBehavior,
 } from '../shared/domain/consts'
-import type { SourceImportProgress } from '../shared/types/import'
 import type { UpdateSnapshot } from '../shared/domain/update'
 /* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
  * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
@@ -39,7 +36,6 @@ import { Input, Modal, Switch as AntSwitch } from 'antd'
 import { AppMark } from './components/app-mark'
 import { Button } from './components/button'
 import { IdentityDot } from './components/identity-dot'
-import { ImportWizard } from './pages/import-wizard'
 import { DiaryTransfer } from './pages/diary-transfer'
 import { UpdatePanel } from './pages/update-panel'
 import { ConfirmDialog } from './components/confirm-dialog'
@@ -117,12 +113,11 @@ export function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [view, setView] = useState<View>('accounting')
-  const [settingsTab, setSettingsTab] = useState<'general'|'features'|'diary'|'data'|'about'>('general')
+  const [settingsTab, setSettingsTab] = useState<'general'|'features'|'diary'|'about'>('general')
   const [ledgerMenuOpen, setLedgerMenuOpen] = useState(false)
   const [accountingTab, setAccountingTab] = useState<
     'records' | 'charts' | 'tags' | 'templates'
   >('records')
-  const [importProgress, setImportProgress] = useState<SourceImportProgress | null>(null)
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [maximized, setMaximized] = useState(false)
   const [quitting, setQuitting] = useState(false)
@@ -277,9 +272,6 @@ export function App(): JSX.Element {
       if (message.event === WORKSPACE_CHANGED && typeof message.payload === 'string') {
         setWorkspace(message.payload)
       }
-      if (message.event === IMPORT_PROGRESS) {
-        setImportProgress(message.payload as SourceImportProgress)
-      }
       if (message.event === UPDATE_DOWNLOAD_PROGRESS ||
         message.event === UPDATE_DOWNLOAD_COMPLETE ||
         message.event === UPDATE_DOWNLOAD_ERROR
@@ -335,10 +327,6 @@ export function App(): JSX.Element {
         await refreshWorkspace()
       }
     } catch (openError) {
-      if (typeof openError === 'object' && openError !== null && (openError as { code?: number }).code === ERR_CODE_SOURCE_WORKSPACE) {
-        setWorkspacePromptDismissed(true)
-        setView('settings')
-      }
       setError(errorMessage(openError))
     } finally {
       setBusy(false)
@@ -550,13 +538,6 @@ export function App(): JSX.Element {
   const pageTitle =
     view === 'settings' ? '应用设置' : (NAV.find(([key]) => key === view)?.[1] ?? '记账')
 
-  const finishImport = useCallback(async (targetDir: string): Promise<void> => {
-    await window.api.invoke('workspace_open', { workspaceDir: targetDir })
-    setWorkspace(targetDir)
-    const rows = await window.api.invoke('ledger_list', { id: 'all' })
-    setLedgers(rows)
-  }, [])
-
   return (
     <AntdProvider appearance={config?.appearance}>
       <>
@@ -576,14 +557,15 @@ export function App(): JSX.Element {
               </Button>
               <Button
                 variant="text"
-                testId="open-import"
+                testId="open-app-settings"
                 onClick={() => {
+                  // 还没有工作空间时也要能进设置：代理与检查更新是应用级的，
+                  // 不该被「先选工作空间」挡在外面。
                   setWorkspacePromptDismissed(true)
-                  setSettingsTab('data')
                   setView('settings')
                 }}
               >
-                导入数据
+                应用设置
               </Button>
             </div>
           </div>
@@ -841,7 +823,6 @@ export function App(): JSX.Element {
                     ['general', '通用设置'],
                     ['features', '功能开关'],
                     ['diary', '日记配置'],
-                    ['data', '数据导入'],
                     ['about', '关于软件'],
                   ] as const
                 ).map(([key, label]) => (
@@ -1058,12 +1039,6 @@ export function App(): JSX.Element {
                   ) : null}
 
                   {settingsTab === 'diary' ? <DiaryTransfer ledgerId={activeLedgerId} /> : null}
-
-                  {settingsTab === 'data' ? (
-                    <div className="st-list">
-                      <ImportWizard progress={importProgress} onImported={finishImport} />
-                    </div>
-                  ) : null}
 
                   {settingsTab === 'about' ? (
                     <div className="st-about">

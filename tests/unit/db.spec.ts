@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { closeWorkspace, currentWorkspace, hasWorkspace, openWorkspace } from '../../electron/db'
 import { openDatabase } from '../../electron/db/driver'
 import { MIGRATIONS } from '../../electron/db/migrate'
-import { AppError, ERR_CODE_SOURCE_WORKSPACE } from '../../shared/errors'
+import { AppError } from '../../shared/errors'
 
 const directories: string[] = []
 
@@ -64,19 +64,22 @@ describe('workspace database', () => {
     expect(count.count).toBe(0)
   })
 
-  it('rejects a source workspace with the dedicated error code', () => {
+  it('rejects a legacy workspace with a clear message', () => {
     const directory = temporaryDirectory()
     const source = openDatabase(join(directory, 'transactions.db'))
     source.exec('CREATE TABLE tbl_billadm_schema_migration (id TEXT, applied_at INTEGER)')
     source.close()
 
+    let caught: unknown = null
     try {
       openWorkspace(directory)
-      throw new Error('应当拒绝源库')
     } catch (error) {
-      expect(error).toBeInstanceOf(AppError)
-      expect((error as AppError).code).toBe(ERR_CODE_SOURCE_WORKSPACE)
+      caught = error
     }
+    expect(caught).toBeInstanceOf(AppError)
+    // 数据导入已移除：旧库只能被指出来，不能悄悄打开成一个空工作空间
+    expect((caught as AppError).status).toBe(409)
+    expect((caught as AppError).message).toContain('旧版工作空间')
   })
 
   it('rejects an existing database with an unknown app_meta version', () => {

@@ -206,12 +206,6 @@
   width: 100%;
 }
 
-.st-import-path {
-  width: 360px;
-  max-width: 100%;
-  min-width: 0;
-}
-
 /* AntD Table 对齐现有页面骨架：去掉外框，行高与金额列保持紧凑。 */
 .tr-table .ant-table {
   background: transparent;
