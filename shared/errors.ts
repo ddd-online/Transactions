@@ -44,3 +44,17 @@ export function toErrorEnvelope(error: unknown): ErrorEnvelope {
   }
   return { code: ERR_CODE_DEFAULT, msg: String(error), status: 500 }
 }
+
+/**
+ * 渲染层把一次 IPC 失败翻成一句话：信封里的 `msg` 优先，其次是 Error 的 message。
+ *
+ * 与 `toErrorEnvelope` 是同一条错误的两个方向 —— 主进程往外封、渲染层往里读；
+ * 两处各写一份时，封装的形状一变就有一边开始念错东西。
+ */
+export function errorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'msg' in error) {
+    return String((error as { msg: unknown }).msg)
+  }
+  if (error instanceof Error) return error.message
+  return String(error)
+}

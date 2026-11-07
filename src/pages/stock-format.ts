@@ -1,13 +1,8 @@
 import { centsToYuan, milliToYuan } from '../../shared/domain/money'
 import { formatTimestamp } from '../../shared/domain/time'
 
-export function stockErrorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'msg' in error) {
-    return String((error as { msg: unknown }).msg)
-  }
-  if (error instanceof Error) return error.message
-  return String(error)
-}
+/** 与外壳、设置页共用同一句「把 IPC 失败翻成话」的实现（`shared/errors.errorMessage`）。 */
+export { errorMessage as stockErrorMessage } from '../../shared/errors'
 
 export function stockMoney(cents: number): string {
   return `¥${centsToYuan(cents)}`

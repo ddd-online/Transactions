@@ -5,7 +5,7 @@
  * 所以不必起 Electron —— 生产那条 adapter 是 `shell.openPath`，这条是 recorder。
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
