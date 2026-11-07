@@ -14,7 +14,7 @@ import { currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
 import { logInfo, logWarn } from '../logging'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
-import { embedLadderPageFonts } from '../shell/ladder-page'
+import { exportLadderPage } from '../services/ladder-export'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
@@ -1086,16 +1086,11 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
      */
     async stock_ladder_open_page(request) {
       const raw = asObject(request)
-      const date = String(raw.date ?? '')
-      const html = String(raw.html ?? '')
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        throw new AppError('日期格式无效', { status: 400 })
-      }
-      if (!html) throw new AppError('页面内容为空', { status: 400 })
-      const file = join(app.getPath('temp'), `transactions-ladder-${date}.html`)
-      writeFileSync(file, embedLadderPageFonts(html), 'utf8')
-      const failure = await shell.openPath(file)
-      if (failure) throw new AppError(`打开网页失败：${failure}`, { status: 500 })
+      // 写文件 + 内嵌字体 + 交给浏览器都在 ladder-export 里；这里只做 adapter。
+      const file = await exportLadderPage(
+        { date: String(raw.date ?? ''), html: String(raw.html ?? '') },
+        { tempDirectory: app.getPath('temp'), openPath: (target) => shell.openPath(target) },
+      )
       logInfo(`天梯以网页打开: ${file}`)
       return file
     },
