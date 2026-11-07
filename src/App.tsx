@@ -538,14 +538,37 @@ export function App(): JSX.Element {
   const pageTitle =
     view === 'settings' ? '应用设置' : (NAV.find(([key]) => key === view)?.[1] ?? '记账')
 
+  // 首屏（还没有工作空间）的阻塞层：背后那副外壳仍然渲染，但对指针、键盘、读屏都关掉，
+  // 焦点落在这一层上 —— 否则 Tab 两下就走进看不见的账本菜单与导航里。
+  const blockingWorkspace = !workspace && !workspacePromptDismissed
+  const workspacePickerRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (blockingWorkspace) workspacePickerRef.current?.focus()
+  }, [blockingWorkspace])
+
   return (
     <AntdProvider appearance={config?.appearance}>
       <>
       {!workspace && !workspacePromptDismissed ? (
-        <div className="app-workspace-overlay" data-testid="workspace-overlay">
+        <div
+          className="app-workspace-overlay"
+          data-testid="workspace-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="选择工作空间"
+          tabIndex={-1}
+          ref={workspacePickerRef}
+        >
           <div className="app-workspace-card">
             <h1>Transactions</h1>
             <p className="m0-muted">选择一个工作空间开始；所有数据都保存在本地。</p>
+            {/* 打开失败的那句话必须落在这张卡上：背后的页面被遮罩盖住，
+                写在外壳里的错误谁也看不见（旧版工作空间就是这么「点了没反应」的）。 */}
+            {error ? (
+              <p role="alert" className="m0-error" data-testid="workspace-error">
+                {error}
+              </p>
+            ) : null}
             <div className="m0-actions" style={{ justifyContent: 'center' }}>
               <Button
                 variant="primary"
@@ -573,7 +596,7 @@ export function App(): JSX.Element {
       ) : null}
 
       <div className="app-shell-body is-sidebar-collapsed">
-      <aside className="app-sidebar">
+      <aside className="app-sidebar" inert={blockingWorkspace || undefined}>
         <div className="app-left-bar is-collapsed">
           <div className="sidebar-ledger">
             <div className="ledger-anchor" ref={ledgerMenuRef}>
@@ -700,7 +723,7 @@ export function App(): JSX.Element {
       </aside>
 
       <main className="app-content">
-        <PageHeader title={pageTitle} />
+        <PageHeader title={pageTitle} ariaHidden={blockingWorkspace} />
         <div className="app-top-bar">
           <div className="window-controls">
             <button
@@ -732,7 +755,7 @@ export function App(): JSX.Element {
             </button>
           </div>
         </div>
-        <div className="app-router-view">
+        <div className="app-router-view" inert={blockingWorkspace || undefined}>
         {error ? (
           <p role="alert" className="m0-error" data-testid="error">
             {error}

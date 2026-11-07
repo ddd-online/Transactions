@@ -616,6 +616,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
 
       <div className={`key-event-body${linksOpen ? '' : ' is-rail-collapsed'}`}>
         <aside className="key-event-panel key-event-panel--left">
+          <h2 className="sr-only">事件日期</h2>
           <div className="key-event-list">
             {events.length === 0 ? (
               <div className="key-event-empty">
@@ -632,7 +633,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                       className={`key-event-card${active ? ' is-active' : ''}`}
                       role="button"
                       tabIndex={0}
-                      aria-selected={active}
+                      aria-current={active ? 'true' : undefined}
                       data-testid="event-date-item"
                       onClick={() => setDate(item.date)}
                       onKeyDown={(keyboardEvent) => onCardKeyDown(keyboardEvent, item.date)}
@@ -690,6 +691,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
 
         <section className="key-event-panel key-event-panel--center">
           <div className="key-event-detail">
+          <h2 className="sr-only">事件详情</h2>
             {event ? (
               <div className="key-event-detail__body">
                 <div className="key-event-colors">
@@ -794,6 +796,8 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
                                     className="key-event-thumb__img"
                                     src={assetUrl(image.thumbPath)}
                                     alt=""
+                                    loading="lazy"
+                                    decoding="async"
                                     data-testid="event-image"
                                   />
                                 </button>
@@ -989,11 +993,12 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         <div className="tr-modal-form">
           <div className="tr-modal-field">
             <span className="tr-modal-label">日期</span>
-            <DatePicker testId="event-add-date" value={addDate} onChange={setAddDate} />
+            <DatePicker testId="event-add-date" value={addDate} onChange={setAddDate} ariaLabel="日期" />
           </div>
           <div className="tr-modal-field">
             <span className="tr-modal-label">标题</span>
             <Input
+              aria-label="标题"
               data-testid="event-add-title"
               placeholder="事件标题"
               value={addTitle}

@@ -280,10 +280,6 @@
   padding-bottom: 8px;
 }
 
-.tr-pagination .ant-pagination-item-active a {
-  color: #ffffff !important;
-}
-
 /* 日记列表：AntD Tree 的层级 + 现有紧凑排版。 */
 .diary-tree.ant-tree {
   background: transparent;

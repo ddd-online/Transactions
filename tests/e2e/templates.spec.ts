@@ -22,6 +22,9 @@ async function createTemplate(
   description: string,
 ): Promise<void> {
   await page.getByTestId('template-open-create').click()
+  // 可视标签是 span，名字走控件的 aria-label / 分段组的分组名
+  await expect(page.getByLabel('模板名称')).toBeVisible()
+  await expect(page.getByRole('group', { name: '交易类型' })).toBeVisible()
   await page.getByTestId('template-name').fill(name)
   await page.getByTestId('template-category').click()
   await page.locator('.ant-select-item-option[title="餐饮美食"]').click()

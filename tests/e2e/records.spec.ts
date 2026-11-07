@@ -81,6 +81,8 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('tr-time-trigger')).toContainText(yesterdayYmd)
     await page.getByTestId('tr-new').click()
     await expect(page.getByTestId('tr-date')).toHaveValue(yesterdayYmd)
+    // 弹窗字段靠 aria-label 认名：读屏听到的是「金额」而不是「编辑框」
+    await expect(page.getByLabel('金额')).toBeVisible()
     await page.getByTestId('tr-cancel').click()
     await page.getByTestId('tr-time').getByLabel('下一周期').click()
     await expect(page.getByTestId('tr-time-trigger')).toContainText(todayYmd)

@@ -60,6 +60,8 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-card').hover()
     await page.getByTestId('todo-item-add').click()
     await expect(page.getByRole('dialog', { name: '添加事项' })).toBeVisible()
+    // 日期字段的名字来自 aria-label（可见标签只是旁边的 span）
+    await expect(page.getByLabel('开始时间')).toBeVisible()
     // 六档默认「次低」，表单补齐起止时间与两档评估
     await expect(page.getByTestId('todo-item-urgency')).toContainText('次低')
     await expect(page.getByTestId('todo-item-importance')).toContainText('次低')

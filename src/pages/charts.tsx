@@ -997,7 +997,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                       data-testid="chart-pie-sums"
                     >
                       <div className="da-chart__sums-head">
-                        <h4 className="da-chart__sums-title">分组合计</h4>
+                        <h3 className="da-chart__sums-title">分组合计</h3>
                         <span className="da-chart__sums-total">{centsToYuan(pieTotal)}</span>
                       </div>
                       {/* 这一列就是饼图的图例：点 + 名称 + 金额 + 占比，与扇区同一份折叠结果。
@@ -1056,7 +1056,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                       data-testid="chart-sums"
                     >
                       <div className="da-chart__sums-head">
-                        <h4 className="da-chart__sums-title">曲线合计</h4>
+                        <h3 className="da-chart__sums-title">曲线合计</h3>
                         <button
                           type="button"
                           className="tr-icon-btn"
@@ -1092,7 +1092,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               {isPie ? (
                 <div className="da-chart__lines" data-testid="chart-group-config">
                   <div className="da-chart__lines-head">
-                    <h4 className="da-panel__title">分组配置</h4>
+                    <h3 className="da-panel__title">分组配置</h3>
                   </div>
                   <div className="da-group-config">
                     <div className="da-group-config__field">
@@ -1141,7 +1141,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
               ) : (
               <div className="da-chart__lines">
                 <div className="da-chart__lines-head">
-                  <h4 className="da-panel__title">曲线配置</h4>
+                  <h3 className="da-panel__title">曲线配置</h3>
                   {selected.isPreset ? null : (
                     <div className="da-chart__lines-actions">
                       <Button
@@ -1278,8 +1278,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">图表名称</span>
             <Input
+              aria-label="图表名称"
               data-testid="chart-title"
-              placeholder="图表名称"
               aria-invalid={Boolean(createError)}
               aria-describedby={createError ? 'chart-create-error' : undefined}
               value={createTitle}
@@ -1290,6 +1290,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">图表类型</span>
             <Segmented
+              ariaLabel="图表类型"
               testId="chart-create-type"
               block
               value={createType}
@@ -1391,8 +1392,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">图表名称</span>
             <Input
+              aria-label="图表名称"
               data-testid="chart-rename-input"
-              placeholder="图表名称"
               aria-invalid={Boolean(renameError)}
               aria-describedby={renameError ? 'chart-rename-error' : undefined}
               value={renameTitle}
@@ -1440,6 +1441,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">曲线名称</span>
             <Input
+              aria-label="曲线名称"
               data-testid="chart-line-label"
               placeholder="例如：餐饮支出"
               value={lineForm.label}
@@ -1455,6 +1457,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <div className="tr-modal-field">
               <span className="tr-modal-label">交易类型</span>
               <Select
+                aria-label="交易类型"
                 data-testid="chart-line-type"
                 value={lineForm.transactionType}
                 options={LINE_TYPES}
@@ -1464,6 +1467,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <div className="tr-modal-field">
               <span className="tr-modal-label">分类</span>
               <Select
+                aria-label="分类"
                 data-testid="chart-line-category"
                 value={lineForm.category || undefined}
                 placeholder="不限分类"
@@ -1478,6 +1482,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <div className="tr-modal-field">
               <span className="tr-modal-label">标签</span>
               <Select
+                aria-label="标签"
                 data-testid="chart-line-tags"
                 mode="multiple"
                 allowClear
@@ -1492,6 +1497,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             <div className="tr-modal-field">
               <span className="tr-modal-label">标签匹配</span>
               <Select
+                aria-label="标签匹配"
                 data-testid="chart-line-policy"
                 value={lineForm.tagPolicy}
                 options={TAG_POLICIES}
@@ -1505,6 +1511,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">描述包含</span>
             <Input
+              aria-label="描述包含"
               data-testid="chart-line-description"
               placeholder="输入关键词"
               value={lineForm.description}

@@ -279,6 +279,10 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 - **Label** (500, 12px, uppercase, +0.04em): table headers, statistic labels, badges; small 11px for micro-labels.
 - **Amount** (JetBrains Mono, 500, tabular-nums): every monetary figure; larger sizes use tighter tracking (−0.02em at title, −0.03em at display).
 
+### Heading levels
+
+- **三档，且不跳级。** 窗口标题带是 `h1`（`Transactions-页面名`）；页面里的顶级区块是 `h2`（设置面板、待办主题段、资金变化记录、天梯每一段、空态那句话）；区块内部才是 `h3`（分析页的「曲线配置 / 分组合计」）；`h4` 起不再使用。级别之间的差别由字号与间距承担 —— 中文只有 400 / 700 两档真实字重，再加粗也换不来一个层级（见 Two-Real-Weights Rule）。跟着读屏走一遍：从 `h1` 跳下去该能一路到 `h3`，中间不缺一级。
+
 ### Named Rules
 
 **The Two-Real-Weights Rule.** For Chinese the system face ships only Regular and Bold: 400 and 500 resolve to the same face, 600 and 700 to the same face (measured through Chromium's platform fonts). So weight alone never carries a step in Chinese — a title is 600 (the real Bold), the step from body to label comes from size or colour, and 500 is kept for Latin and mono emphasis. Above 600 there is nothing to gain; widen the size or change the tone instead.
@@ -466,7 +470,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 ### Blocking screens
 
-- **The one blocking screen is the workspace picker** (no workspace open yet). It keeps the **whole app shell rendered behind it** — sidebar, page frame and empty states — so the user sees what they are configuring, and covers it with `--transactions-color-screen-scrim` (heavier than a modal mask, lighter than the lightbox scrim). That background layer is `inert`: no pointer, no keyboard focus, nothing in the accessibility tree; only the dialog is reachable. The screen has no dismiss affordance at all — no ×, no cancel, clicking the backdrop does nothing, and the shell refuses the window close request — the user must pick a directory (escape hatch: the tray menu's quit item). Everything else in the copy goes into the ⓘ tooltip: the title and one sentence are the whole text.
+- **The one blocking screen is the workspace picker** (no workspace open yet). 它背后那副外壳**仍然挂着**（侧栏、页面框、空态都在，切回工作空间时状态不丢），但盖在上面的是**不透明**的页面底色（`--transactions-color-major-background`，不是 `screen-scrim`）：首屏只有一件事要做，背后那半屏空内容没有可看的东西 —— 遮罩要是半透明，第一眼看到的是「一个还没配好的应用」。外壳里的侧栏与内容区**整层 `inert`**：指针、键盘、读屏都进不去；只有标题栏那三颗窗口键留在遮罩之上（窗口必须还能最小化/移动）。这张卡本身是 `role="dialog"` + `aria-modal="true"` + 「选择工作空间」，打开时焦点落在卡上 —— 否则 Tab 两下就走进看不见的账本菜单里。「选择工作空间」失败的那句话（比如旧版工作空间被拒绝）**写在卡里**，不写在外壳里：被遮罩盖住的错误等于没说。 The screen has no dismiss affordance of its own — no ×, no cancel, clicking the backdrop does nothing, and the shell refuses the window close request — except 「应用设置」, which is the one way past it: 代理与检查更新是应用级的，不该被「先选工作空间」挡住。Everything else in the copy goes into the ⓘ tooltip: the title and one sentence are the whole text.
 
 ### Quit screen
 

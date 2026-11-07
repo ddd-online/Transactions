@@ -727,9 +727,9 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                           >
                             <Icon name="DragHandle" size={16} />
                           </span>
-                          <h3 className="todo-group__title" title={card.title}>
+                          <h2 className="todo-group__title" title={card.title}>
                             {card.title}
-                          </h3>
+                          </h2>
                           <span className="todo-group__count">{card.items.length} 项</span>
                           <div className="todo-group__actions">
                             {/* 空主题没有可收的东西，干脆不出这个按钮 */}
@@ -947,6 +947,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">事项</span>
             <Input
+              aria-label="事项"
               autoFocus
               data-testid="todo-item-title"
               maxLength={500}

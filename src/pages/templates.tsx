@@ -404,6 +404,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">模板名称</span>
             <Input
+              aria-label="模板名称"
               data-testid="template-name"
               placeholder="请输入模板名称"
               maxLength={NAME_MAX_LENGTH}
@@ -415,6 +416,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">交易类型</span>
             <Segmented
+              ariaLabel="交易类型"
               testId="template-type"
               value={formType}
               onChange={changeType}
@@ -425,6 +427,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">分类</span>
             <Select
+              aria-label="分类"
               data-testid="template-category"
               value={formCategory || undefined}
               placeholder="选择消费分类"
@@ -453,6 +456,7 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           <div className="tr-modal-field">
             <span className="tr-modal-label">描述</span>
             <Input
+              aria-label="标签"
               data-testid="template-description"
               placeholder="请输入描述"
               maxLength={DESCRIPTION_MAX_LENGTH}

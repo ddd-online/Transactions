@@ -496,7 +496,7 @@ export function StockStatisticsPanel({
           <section
             className={`stock-statistics-section${latest ? '' : ' stock-statistics-section--empty'}`}
           >
-            <h3 className="stock-section__title">结算统计</h3>
+            <h2 className="stock-section__title">结算统计</h2>
             {latest ? (
               <div className="stock-stat-grid" data-testid="stock-statistics-summary">
                 <div className="stock-stat-cell stock-stat-cell--wide">
@@ -553,7 +553,7 @@ export function StockStatisticsPanel({
             <section className="stock-statistics-section stock-statistics-section--chart">
               <header className="stock-statistics-section__head stock-chart-head">
                 <div className="stock-chart-head__title">
-                  <h3 className="stock-section__title">统计曲线</h3>
+                  <h2 className="stock-section__title">统计曲线</h2>
                   <Button
                     variant="text"
                     size="sm"

@@ -839,7 +839,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                 <span className="tr-empty-icon">
                   <Icon name="Transaction" size={56} />
                 </span>
-                <h3>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h3>
+                <h2>{ledgerId ? (loading ? '加载中…' : '今天还没有记录') : '请先创建/选择账本'}</h2>
                 {ledgerId ? <p className="m0-muted">换个时间范围，或直接记一笔。</p> : null}
                 <div className="m0-actions">
                   <Button variant="secondary" onClick={goLastMonth}>
@@ -921,6 +921,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <span className="tr-modal-label">模板</span>
             <div className="tr-modal-template">
               <Select
+                aria-label="模板"
                 className="tr-modal-template-select"
                 data-testid="tr-template-select"
                 value={templateId || undefined}
@@ -947,12 +948,13 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           <div className="tr-modal-row">
             <div className="tr-modal-field">
               <span className="tr-modal-label">日期</span>
-              <DatePicker testId="tr-date" value={recordDate} onChange={setRecordDate} />
+              <DatePicker testId="tr-date" value={recordDate} onChange={setRecordDate} ariaLabel="日期" />
             </div>
 
             <div className="tr-modal-field">
               <span className="tr-modal-label">类型</span>
               <Segmented
+                ariaLabel="类型"
                 testId="tr-new-type"
                 block
                 value={type}
@@ -971,13 +973,14 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                 filterOption
                 onChange={changeComposerCategory}
               >
-                <Input data-testid="tr-category" placeholder="选择或输入分类" />
+                <Input aria-label="分类" data-testid="tr-category" placeholder="选择或输入分类" />
               </AutoComplete>
             </div>
 
             <div className="tr-modal-field">
               <span className="tr-modal-label">标签</span>
               <Select
+                aria-label="标签"
                 data-testid="tr-tags"
                 mode="tags"
                 allowClear
@@ -997,6 +1000,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <div className="tr-modal-field">
               <span className="tr-modal-label">标记</span>
               <Select
+                aria-label="标记"
                 data-testid="tr-outlier"
                 mode="multiple"
                 allowClear
@@ -1010,6 +1014,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <div className="tr-modal-field">
               <span className="tr-modal-label">关联事件日期</span>
               <DatePicker
+                ariaLabel="关联事件日期"
                 testId="tr-event-date"
                 value={keyEventDate}
                 onChange={setKeyEventDate}
@@ -1021,6 +1026,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           <div className="tr-modal-field">
             <span className="tr-modal-label">描述</span>
             <Input
+              aria-label="描述"
               data-testid="tr-description"
               placeholder="描述消费内容"
               value={description}
@@ -1031,6 +1037,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           <div className="tr-modal-field">
             <span className="tr-modal-label">金额</span>
             <Input
+              aria-label="金额"
               data-testid="tr-amount"
               inputMode="decimal"
               placeholder="0.00"
@@ -1130,6 +1137,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           <div className="tr-modal-field">
             <span className="tr-modal-label">消费类型</span>
             <Segmented
+              ariaLabel="消费类型"
               testId="tr-filter-type"
               block
               value={filterEditor.transactionType || 'all'}
@@ -1147,6 +1155,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <div className="tr-modal-field">
               <span className="tr-modal-label">分类</span>
               <Select
+                aria-label="分类"
                 data-testid="tr-filter-category"
                 value={filterEditor.category || undefined}
                 placeholder="选择消费分类"
@@ -1161,6 +1170,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <div className="tr-modal-field">
               <span className="tr-modal-label">标签</span>
               <Select
+                aria-label="标签"
                 data-testid="tr-filter-tags"
                 mode="tags"
                 allowClear
@@ -1176,6 +1186,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <div className="tr-modal-field">
               <span className="tr-modal-label">标签匹配</span>
               <Select
+                aria-label="标签匹配"
                 data-testid="tr-filter-policy"
                 value={filterEditor.tagPolicy}
                 onChange={(value: string) => updateFilterEditor({ tagPolicy: value })}
@@ -1189,6 +1200,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
             <div className="tr-modal-field">
               <span className="tr-modal-label">标签取反</span>
               <Select
+                aria-label="标签取反"
                 data-testid="tr-filter-not"
                 value={filterEditor.tagNot ? 'exclude' : 'include'}
                 onChange={(value: string) =>
@@ -1205,6 +1217,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           <div className="tr-modal-field">
             <span className="tr-modal-label">描述包含</span>
             <Input
+              aria-label="描述包含"
               data-testid="tr-filter-description"
               placeholder="输入关键词"
               value={filterEditor.description}

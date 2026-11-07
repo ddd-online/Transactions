@@ -131,7 +131,7 @@ body {
   border-radius: var(--transactions-radius-md);
   border: 1px solid var(--transactions-color-primary);
   background: var(--transactions-color-primary);
-  color: #ffffff;
+  color: var(--transactions-color-text-inverse);
   font: inherit;
   cursor: pointer;
   white-space: nowrap;
@@ -262,7 +262,7 @@ body {
 
 .app-titlebar-actions button.app-titlebar-close:hover {
   background: var(--transactions-color-expense);
-  color: #ffffff;
+  color: var(--transactions-color-text-inverse);
 }
 
 .app-sidebar {
@@ -308,7 +308,7 @@ body {
 
 .app-nav button.app-nav-active {
   background: var(--transactions-color-primary);
-  color: #ffffff;
+  color: var(--transactions-color-text-inverse);
 }
 
 .app-sidebar-footer {

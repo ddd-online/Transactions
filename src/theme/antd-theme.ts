@@ -109,6 +109,9 @@ export function buildAntdTheme(mode: AntdMode): ThemeConfig {
       colorText: p.text,
       colorTextSecondary: p.textSecondary,
       colorTextTertiary: p.textTertiary,
+      // placeholder 也是字：AntD 默认那一档是 25% 墨（纸白上 ≈1.8:1），
+      // 输错一次就看不见自己在填什么；这里把它拉到三级灰（纸白 4.98:1）。
+      colorTextPlaceholder: p.textTertiary,
       colorBgBase: p.bgBase,
       colorBgContainer: p.bgContainer,
       colorBgElevated: p.bgElevated,

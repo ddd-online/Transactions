@@ -129,7 +129,7 @@ export function StockAccountPanel({
       </div>
 
       <section className="stock-section stock-section--fill">
-        <h3 className="stock-section__title">资金变化记录</h3>
+        <h2 className="stock-section__title">资金变化记录</h2>
         {/* 窄窗里表宽定在 880：放不下就让资金表自己横向滚，别把日期挤成两行 */}
         <ScrollArea className="stock-fund-scroll" axis="both">
           {!loaded ? (

@@ -3839,7 +3839,7 @@
   min-width: 0;
 }
 
-.stock-setting-row__info h3 {
+.stock-setting-row__info h2 {
   margin: 0;
   font-size: var(--transactions-size-text-body);
   font-weight: var(--transactions-weight-semibold);

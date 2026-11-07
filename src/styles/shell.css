@@ -239,7 +239,7 @@
   opacity: 0.35;
 }
 
-.tr-empty h3 {
+.tr-empty h2 {
   margin: 0;
   font-size: var(--transactions-size-text-title-sm);
   font-weight: var(--transactions-weight-semibold);

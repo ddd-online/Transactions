@@ -210,7 +210,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
       <div className="stock-settings-view">
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>交易标签</h3>
+          <h2>交易标签</h2>
           <p>每轮交易可选（最多 20 个、单个不超过 8 字）；删除不影响历史记录。</p>
           <div className="stock-tag-list">
             {(tags?.tags ?? []).map((tag) => (
@@ -252,7 +252,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>本轮复盘模板</h3>
+          <h2>本轮复盘模板</h2>
           <p>本轮复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
         </div>
         <div className="stock-setting-row__actions">
@@ -268,7 +268,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>每日复盘模板</h3>
+          <h2>每日复盘模板</h2>
           <p>每日复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
         </div>
         <div className="stock-setting-row__actions">
@@ -284,7 +284,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>交易费用设置</h3>
+          <h2>交易费用设置</h2>
           <p>
             佣金 万{Number(feeForm.commission || 0).toLocaleString('zh-CN', { maximumFractionDigits: 4 })} ·
             最低 ¥{feeForm.minCommission || '0.00'} · 印花税 {feeForm.stamp || '0'}% ·
@@ -300,7 +300,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>操作记录</h3>
+          <h2>操作记录</h2>
           <p>追加本金 / 支取 / 利息归本 / 建仓 / 加仓 / 减仓 / 清仓 各记一条，最多保留最近 10 条；回滚撤销最近一次操作。</p>
         </div>
         <div className="stock-setting-row__actions">
@@ -320,7 +320,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>归档</h3>
+          <h2>归档</h2>
           <p>
             把当前账本的账户本金、资金记录、交易与轮次/复盘迁到一个新账本；原账本只保留交易标签、复盘模板与费用设置。需先清空全部持仓。
           </p>
@@ -334,7 +334,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
-          <h3>重置</h3>
+          <h2>重置</h2>
           <p>
             清空当前账本的股票数据（账户本金、持仓、交易记录、资金记录、费用设置、交易标签与复盘模板），此操作不可恢复。
           </p>
