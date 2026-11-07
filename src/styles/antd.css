@@ -113,26 +113,6 @@
   color: var(--transactions-color-text-secondary);
 }
 
-.tr-progress {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  width: 100%;
-}
-
-.tr-progress .ant-progress {
-  flex: 1;
-  margin: 0;
-}
-
-.tr-progress__text {
-  flex-shrink: 0;
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
 .tr-empty {
   flex: 1;
   display: flex;
