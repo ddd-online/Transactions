@@ -14,7 +14,7 @@ issue 与 spec 都记在 GitHub（`ddd-online/Transactions`），用 `gh` CLI �
 
 ### Domain docs
 
-单上下文（single-context）：`CONTEXT.md` + `docs/adr/` 在仓库根。见 `docs/agents/domain.md`。
+单上下文（single-context）：`CONTEXT.md` + `docs/adr/` 在仓库根，**按需创建** —— 第一次出现需要留档的术语或决策时再建，没有就先按模块头注释与「数据契约」办事。见 `docs/agents/domain.md`。
 
 ## 架构
 

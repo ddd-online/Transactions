@@ -11,7 +11,7 @@
 * 许可：**MIT OR Apache-2.0**（`heic-rs` 的 `tests/fixtures/README.md` 明说这些图
   由 `scripts/gen-pngs.py` 逐像素合成、再用 macOS `sips` 编码成 HEIC，
   **不含任何第三方图片数据**，可自由再分发）
-* 因此这里也没有任何真实个人数据 —— 与 `fixtures/README.md` 的纪律一致。
+* 因此这里也没有任何真实个人数据 —— 与仓库对 `fixtures/` 的纪律一致（只放合成数据、不含真实个人数据，见 `AGENTS.md`）。
 
 | 文件 | 尺寸 | 内容 | 用途 |
 |---|---|---|---|

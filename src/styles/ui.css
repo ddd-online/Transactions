@@ -188,7 +188,7 @@
  * 不允许再用 CSS 画的点阵或页面内联 SVG 代替本图标。
  *
  * ⚠ 这里**故意不写 `touch-action: none`**：它是给触屏手势用的，而本应用是 Windows 桌面、
- * 鼠标 HTML5 拖拽；反而实测会让"从把手上起手拖动"偶发不进入拖拽（`ui-drag.ps1` 的注释记过这条）。 */
+ * 鼠标 HTML5 拖拽；加上它实测会让"从把手上起手拖动"偶发不进入拖拽（别再试回来）。 */
 .ui-drag-handle {
   display: inline-flex;
   align-items: center;

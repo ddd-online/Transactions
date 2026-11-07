@@ -53,7 +53,7 @@ output/
 | `tests/unit` | Vitest |
 | `tests/e2e` | Playwright（真实 Electron + 落库断言） |
 | `fixtures/` | 合成测试数据（不含真实个人数据） |
-| `docs/adr/` | 当前 Electron 架构决策 |
+| `docs/adr/` | 架构决策记录（按需创建，第一次真正需要留档时再建目录） |
 | `output/` | 构建产物（不入库） |
 
 ## 数据与配置
