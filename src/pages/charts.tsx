@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
-import { Input, Modal, Popconfirm, Select, Table } from 'antd'
+import { Popconfirm, Select, Table } from 'antd'
 
 import { centsToYuan } from '../../shared/domain/money'
 import { reorderWithChanges } from '../../shared/domain/list-order'
 import { PIE_OTHER_KEY, foldPieSlices } from '../../shared/domain/pie'
 import { rateText } from '../../shared/domain/format'
-import { tagNamesForCategory } from '../../shared/domain/tag-names'
 import { parseYearMonth, yearSpan } from '../../shared/domain/calendar'
 import { rangeToSeconds, todayYmd } from '../../shared/domain/time'
 import type { ChartLine } from '../../shared/domain/models'
@@ -17,107 +16,28 @@ import type {
   ChartQueryResponse,
 } from '../../shared/types/transaction'
 import { AntvLineChart } from '../components/antv-line-chart'
+import { ChartEditor, type ChartEditorRequest } from './chart-editor'
+import {
+  GRANULARITIES,
+  GROUP_FIELDS,
+  LINE_TYPES,
+  categoryNamesFor,
+  categoryOptionsFor,
+} from './chart-options'
+import { updateChartLines } from './chart-write'
 import { AntvPieChart } from '../components/antv-pie-chart'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
-import { Segmented } from '../components/segmented'
 import { Spin } from '../components/spin'
-import { Switch } from '../components/switch'
 import { TimeRangePicker } from '../components/time-range-picker'
 import { notify } from '../components/toast'
 import { useSessionTimeRange, type SessionTimeRange } from '../state/time-range-session'
 import { pieSliceColors, seriesPalette } from '../theme/chart-colors'
 import { useThemeMode } from '../theme/theme-mode'
 
-const CHART_TYPES = [
-  { value: 'line', label: '折线图' },
-  { value: 'pie', label: '饼图' },
-]
-
-/** 饼图的分组字段：分类（一次一种交易类型）或交易类型。 */
-const GROUP_FIELDS = [
-  { value: 'category', label: '分类' },
-  { value: 'tag', label: '标签' },
-  { value: 'transactionType', label: '交易类型' },
-]
-
-const GRANULARITIES = [
-  { value: 'month', label: '月' },
-  { value: 'year', label: '年' },
-]
-
-const LINE_TYPES = [
-  { value: 'expense', label: '支出' },
-  { value: 'income', label: '收入' },
-  { value: 'transfer', label: '转账' },
-]
-
-const TAG_POLICIES = [
-  { value: 'any', label: '任意' },
-  { value: 'all', label: '全部' },
-]
-
-const EMPTY_LINE_FORM: LineForm = {
-  label: '',
-  transactionType: 'expense',
-  category: '',
-  tags: [],
-  tagPolicy: 'any',
-  description: '',
-  includeOutlier: true,
-}
-
-/** 「添加 / 编辑曲线」弹窗的表单：条件为空时存成不限条件的曲线。 */
-interface LineForm {
-  label: string
-  transactionType: string
-  category: string
-  tags: string[]
-  tagPolicy: string
-  description: string
-  includeOutlier: boolean
-}
-
-function lineFormOf(line: ChartLine): LineForm {
-  const condition = line.conditions[0]
-  return {
-    label: line.label,
-    transactionType: line.transactionType,
-    category: condition?.category ?? '',
-    tags: condition ? [...condition.tags] : [],
-    tagPolicy: condition?.tagPolicy === 'all' ? 'all' : 'any',
-    description: condition?.description ?? '',
-    includeOutlier: line.includeOutlier,
-  }
-}
-
-/** 表单 → 一条曲线：三项条件都没填就是「不限」。 */
-function chartLineOf(form: LineForm): ChartLine {
-  const category = form.category.trim()
-  const tags = form.tags.map((tag) => tag.trim()).filter((tag) => tag !== '')
-  const description = form.description.trim()
-  return {
-    label: form.label.trim(),
-    transactionType: form.transactionType,
-    includeOutlier: form.includeOutlier,
-    conditions:
-      category === '' && tags.length === 0 && description === ''
-        ? []
-        : [
-            {
-              transactionType: form.transactionType,
-              category,
-              tags,
-              tagPolicy: form.tagPolicy,
-              tagNot: false,
-              description,
-            },
-          ],
-  }
-}
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -200,49 +120,14 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
   const [pie, setPie] = useState<ChartPieResponse | null>(null)
   const [pieLoading, setPieLoading] = useState(false)
   const [error, setError] = useState('')
+  /** 编辑器要开哪一张：null = 都关着 */
+  const [editor, setEditor] = useState<ChartEditorRequest | null>(null)
 
-  const [createOpen, setCreateOpen] = useState(false)
-  const [createTitle, setCreateTitle] = useState('')
-  const [createType, setCreateType] = useState('line')
-  const [createGranularity, setCreateGranularity] = useState('year')
-  const [createGroupField, setCreateGroupField] = useState('category')
-  const [createGroupType, setCreateGroupType] = useState('expense')
-  const [createGroupCategory, setCreateGroupCategory] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState('')
 
-  const [renameOpen, setRenameOpen] = useState(false)
-  const [renameTitle, setRenameTitle] = useState('')
-  const [renaming, setRenaming] = useState(false)
-  const [renameError, setRenameError] = useState('')
 
   const [categories, setCategories] = useState<CategoryDto[]>([])
   const [tags, setTags] = useState<TagDto[]>([])
 
-  /** 某一种交易类型下的分类名（新建弹窗与「分组配置」共用）。 */
-  const categoryNamesFor = useCallback(
-    (transactionType: string): string[] => {
-      const names = new Set<string>()
-      for (const category of categories) {
-        if (category.transactionType === transactionType) names.add(category.name)
-      }
-      return Array.from(names)
-    },
-    [categories],
-  )
-
-  const categoryOptionsFor = useCallback(
-    (transactionType: string): { value: string; label: string }[] =>
-      categoryNamesFor(transactionType).map((name) => ({ value: name, label: name })),
-    [categoryNamesFor],
-  )
-
-
-  const [lineOpen, setLineOpen] = useState(false)
-  /** 正在编辑的曲线下标；`null` 表示新增 */
-  const [lineIndex, setLineIndex] = useState<number | null>(null)
-  const [lineForm, setLineForm] = useState<LineForm>(EMPTY_LINE_FORM)
-  const [lineError, setLineError] = useState('')
   const [savingLine, setSavingLine] = useState(false)
 
   const [range, updateRange] = useSessionTimeRange('charts', defaultChartRange)
@@ -416,126 +301,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     }
   }, [committedRange.end, committedRange.start, ledgerId, selected])
 
-  const openCreate = useCallback((): void => {
-    setCreateTitle('')
-    setCreateType('line')
-    setCreateGranularity('year')
-    setCreateGroupField('category')
-    setCreateGroupType('expense')
-    setCreateGroupCategory('')
-    setCreateError('')
-    setCreateOpen(true)
-  }, [])
-
-  const closeCreate = useCallback((): void => {
-    setCreateOpen(false)
-    setCreateError('')
-  }, [])
-
-  const createChart = useCallback(async (): Promise<void> => {
-    if (!ledgerId || creating) return
-    const title = createTitle.trim()
-    if (!title) {
-      setCreateError('请输入图表名称')
-      return
-    }
-    const pieChart = createType === 'pie'
-    if (pieChart && createGroupField !== 'transactionType' && !createGroupType) {
-      setCreateError('请选择交易类型')
-      return
-    }
-    if (pieChart && createGroupField === 'tag' && !createGroupCategory) {
-      setCreateError('按标签分组时请选择分类')
-      return
-    }
-    setCreating(true)
-    setCreateError('')
-    try {
-      const created = await window.api.invoke('chart_create', {
-        ledgerId,
-        title,
-        // 饼图不分时间桶：粒度留空串，构成由分组字段描述。
-        granularity: pieChart ? '' : createGranularity,
-        chartType: pieChart ? 'pie' : 'line',
-        groupField: pieChart ? createGroupField : '',
-        groupTransactionType:
-          pieChart && createGroupField !== 'transactionType' ? createGroupType : '',
-        groupCategory: pieChart && createGroupField === 'tag' ? createGroupCategory : '',
-        lines: pieChart
-          ? []
-          : [
-              {
-                label: '支出',
-                transactionType: 'expense',
-                includeOutlier: true,
-                conditions: [],
-              },
-            ],
-      })
-      setSelectedId(created.chartId)
-      setCreateOpen(false)
-      notify('图表创建成功')
-      await load()
-    } catch (createFailure) {
-      setCreateError(errorMessage(createFailure))
-    } finally {
-      setCreating(false)
-    }
-  }, [
-    createGranularity,
-    createGroupCategory,
-    createGroupField,
-    createGroupType,
-    createTitle,
-    createType,
-    creating,
-    ledgerId,
-    load,
-  ])
-
-  const openRename = useCallback((): void => {
-    if (!selected) return
-    setRenameTitle(selected.title)
-    setRenameError('')
-    setRenameOpen(true)
-  }, [selected])
-
-  const closeRename = useCallback((): void => {
-    setRenameOpen(false)
-    setRenameError('')
-  }, [])
-
-  const renameChart = useCallback(async (): Promise<void> => {
-    if (!selected || renaming) return
-    const title = renameTitle.trim()
-    if (!title) {
-      setRenameError('请输入图表名称')
-      return
-    }
-    setRenaming(true)
-    setRenameError('')
-    try {
-      await window.api.invoke('chart_update', {
-        chartId: selected.chartId,
-        title,
-        granularity: selected.granularity,
-        lines: selected.lines,
-        chartType: selected.chartType,
-        groupField: selected.groupField,
-        groupTransactionType: selected.groupTransactionType,
-        groupCategory: selected.groupCategory,
-        sortOrder: selected.sortOrder,
-      })
-      setRenameOpen(false)
-      notify('图表更新成功')
-      await load()
-    } catch (renameFailure) {
-      setRenameError(errorMessage(renameFailure))
-    } finally {
-      setRenaming(false)
-    }
-  }, [load, renameTitle, renaming, selected])
-
   const changeGranularity = useCallback(
     async (granularity: string): Promise<void> => {
       if (!selected || selected.isPreset) return
@@ -618,7 +383,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
           : next.type ?? (selected.groupTransactionType || 'expense')
       let groupCategory = ''
       if (groupField === 'tag') {
-        const names = categoryNamesFor(groupTransactionType)
+        const names = categoryNamesFor(categories, groupTransactionType)
         const wanted = next.category ?? selected.groupCategory
         groupCategory = names.includes(wanted) ? wanted : (names[0] ?? '')
       }
@@ -683,17 +448,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       setSavingLine(true)
       setError('')
       try {
-        const updated = await window.api.invoke('chart_update', {
-          chartId: selected.chartId,
-          title: selected.title,
-          granularity: selected.granularity,
-          lines,
-          chartType: selected.chartType,
-          groupField: selected.groupField,
-          groupTransactionType: selected.groupTransactionType,
-          groupCategory: selected.groupCategory,
-          sortOrder: selected.sortOrder,
-        })
+        const updated = await updateChartLines(selected, lines)
         setCharts((current) =>
           current.map((chart) => (chart.chartId === updated.chartId ? updated : chart)),
         )
@@ -710,47 +465,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     [load, selected],
   )
 
-  const openAddLine = useCallback((): void => {
-    setLineIndex(null)
-    setLineForm(EMPTY_LINE_FORM)
-    setLineError('')
-    setLineOpen(true)
-  }, [])
-
-  const openEditLine = useCallback((index: number): void => {
-    const line = selected?.lines[index]
-    if (!line) return
-    setLineIndex(index)
-    setLineForm(lineFormOf(line))
-    setLineError('')
-    setLineOpen(true)
-  }, [selected])
-
-  const closeLine = useCallback((): void => {
-    setLineOpen(false)
-    setLineError('')
-  }, [])
-
-  const submitLine = useCallback(async (): Promise<void> => {
-    if (!selected || savingLine) return
-    const line = chartLineOf(lineForm)
-    if (!line.label) {
-      setLineError('请输入曲线名称')
-      return
-    }
-    const others = selected.lines.filter((_item, index) => index !== lineIndex)
-    if (others.some((item) => item.label === line.label)) {
-      setLineError(`已经有名为「${line.label}」的曲线`)
-      return
-    }
-    const next =
-      lineIndex === null
-        ? [...selected.lines, line]
-        : selected.lines.map((item, index) => (index === lineIndex ? line : item))
-    const saved = await applyLines(next, lineIndex === null ? '曲线已添加' : '曲线已保存')
-    if (saved) setLineOpen(false)
-  }, [applyLines, lineForm, lineIndex, savingLine, selected])
-
   const removeLine = useCallback(
     async (index: number): Promise<void> => {
       if (!selected) return
@@ -760,40 +474,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       )
     },
     [applyLines, selected],
-  )
-
-  const categoryOptions = useMemo(() => {
-    const names = new Set<string>()
-    for (const category of categories) {
-      if (category.transactionType === lineForm.transactionType) names.add(category.name)
-    }
-    return Array.from(names).map((name) => ({ value: name, label: name }))
-  }, [categories, lineForm.transactionType])
-
-  const tagOptions = useMemo(
-    () =>
-      tagNamesForCategory(tags, lineForm.category, lineForm.transactionType).map((name) => ({
-        value: name,
-        label: name,
-      })),
-    [lineForm.category, lineForm.transactionType, tags],
-  )
-
-  /** 换交易类型：分类与标签都跟着失效（标签按 `分类:类型` 归档）。 */
-  const changeLineType = useCallback((transactionType: string): void => {
-    setLineForm((current) => ({ ...current, transactionType, category: '', tags: [] }))
-  }, [])
-
-  const changeLineCategory = useCallback(
-    (category: string): void => {
-      const valid = new Set(tagNamesForCategory(tags, category, lineForm.transactionType))
-      setLineForm((current) => ({
-        ...current,
-        category,
-        tags: current.tags.filter((tag) => valid.has(tag)),
-      }))
-    },
-    [lineForm.transactionType, tags],
   )
 
   /* 颜色表按曲线条数记忆：`AntvLineChart` 的建图 effect 依赖这个数组，
@@ -824,7 +504,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
             variant="primary"
             testId="chart-open-create"
             icon={<Icon name="Plus" size={14} />}
-            onClick={openCreate}
+            onClick={() => setEditor({ kind: 'create' })}
           >
             新增图表
           </Button>
@@ -926,7 +606,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                     />
                   )}
                   {selected.isPreset ? null : (
-                    <Button variant="secondary" size="sm" testId="chart-rename" onClick={openRename}>
+                    <Button variant="secondary" size="sm" testId="chart-rename" onClick={() => setEditor({ kind: 'rename', chart: selected })}>
                       重命名
                     </Button>
                   )}
@@ -1131,7 +811,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                           size="small"
                           placeholder="选择分类"
                           value={selected.groupCategory || undefined}
-                          options={categoryOptionsFor(selected.groupTransactionType || 'expense')}
+                          options={categoryOptionsFor(categories, selected.groupTransactionType || 'expense')}
                           onChange={(value: string) => void changeGrouping({ category: value })}
                         />
                       </div>
@@ -1150,7 +830,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                         testId="chart-line-add"
                         icon={<Icon name="Plus" size={14} />}
                         loading={savingLine}
-                        onClick={openAddLine}
+                        onClick={() => setEditor({ kind: 'line', chart: selected, index: null })}
                       >
                         添加曲线
                       </Button>
@@ -1231,7 +911,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
                                   size="sm"
                                   testId="chart-line-edit"
                                   disabled={savingLine}
-                                  onClick={() => openEditLine(index)}
+                                  onClick={() => setEditor({ kind: 'line', chart: selected, index })}
                                 >
                                   编辑
                                 </Button>
@@ -1265,292 +945,23 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         </div>
       </div>
 
-      <Modal
-        open={createOpen}
-        title="新增图表"
-        width={400}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeCreate}
-      >
-        <div className="tr-modal-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">图表名称</span>
-            <Input
-              aria-label="图表名称"
-              data-testid="chart-title"
-              aria-invalid={Boolean(createError)}
-              aria-describedby={createError ? 'chart-create-error' : undefined}
-              value={createTitle}
-              onChange={(event) => setCreateTitle(event.target.value)}
-              onPressEnter={() => void createChart()}
-            />
-          </div>
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">图表类型</span>
-            <Segmented
-              ariaLabel="图表类型"
-              testId="chart-create-type"
-              block
-              value={createType}
-              options={CHART_TYPES}
-              onChange={setCreateType}
-            />
-          </div>
-          {createType === 'pie' ? (
-            <>
-              <div className="tr-modal-field">
-                <span className="tr-modal-label">分组字段</span>
-                <Select
-                  data-testid="chart-create-group"
-                  aria-label="分组字段"
-                  value={createGroupField}
-                  onChange={(value: string) => {
-                    setCreateGroupField(value)
-                    if (value === 'tag' && !createGroupCategory) {
-                      setCreateGroupCategory(categoryNamesFor(createGroupType)[0] ?? '')
-                    }
-                  }}
-                  options={GROUP_FIELDS}
-                />
-              </div>
-              {createGroupField !== 'transactionType' ? (
-                <div className="tr-modal-field">
-                  <span className="tr-modal-label">交易类型</span>
-                  <Select
-                    data-testid="chart-create-group-type"
-                    aria-label="交易类型"
-                    value={createGroupType}
-                    onChange={(value: string) => {
-                      setCreateGroupType(value)
-                      // 分类挂在类型下：换类型就把分类落到新类型的第一个
-                      setCreateGroupCategory(categoryNamesFor(value)[0] ?? '')
-                    }}
-                    options={LINE_TYPES}
-                  />
-                </div>
-              ) : null}
-              {createGroupField === 'tag' ? (
-                <div className="tr-modal-field">
-                  <span className="tr-modal-label">分类</span>
-                  <Select
-                    data-testid="chart-create-group-category"
-                    aria-label="分类"
-                    placeholder="选择分类"
-                    value={createGroupCategory || undefined}
-                    onChange={setCreateGroupCategory}
-                    options={categoryOptionsFor(createGroupType)}
-                  />
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">时间粒度</span>
-              <Select
-                data-testid="chart-create-granularity"
-                aria-label="时间粒度"
-                value={createGranularity}
-                onChange={setCreateGranularity}
-                options={GRANULARITIES}
-              />
-            </div>
-          )}
-          {createError ? (
-            <p role="alert" id="chart-create-error" className="m0-error" data-testid="chart-create-error">
-              {createError}
-            </p>
-          ) : null}
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="chart-create-cancel" onClick={closeCreate}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="chart-create"
-              loading={creating}
-              disabled={creating}
-              onClick={() => void createChart()}
-            >
-              新增
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={renameOpen}
-        title="重命名图表"
-        width={400}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeRename}
-      >
-        <div className="tr-modal-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">图表名称</span>
-            <Input
-              aria-label="图表名称"
-              data-testid="chart-rename-input"
-              aria-invalid={Boolean(renameError)}
-              aria-describedby={renameError ? 'chart-rename-error' : undefined}
-              value={renameTitle}
-              onChange={(event) => setRenameTitle(event.target.value)}
-              onPressEnter={() => void renameChart()}
-            />
-          </div>
-          {renameError ? (
-            <p
-              role="alert"
-              id="chart-rename-error"
-              className="m0-error"
-              data-testid="chart-rename-error"
-            >
-              {renameError}
-            </p>
-          ) : null}
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="chart-rename-cancel" onClick={closeRename}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="chart-rename-save"
-              loading={renaming}
-              disabled={renaming}
-              onClick={() => void renameChart()}
-            >
-              重命名
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={lineOpen}
-        title={lineIndex === null ? '添加曲线' : '编辑曲线'}
-        width={560}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeLine}
-      >
-        <div className="tr-modal-form" data-testid="chart-line-dialog">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">曲线名称</span>
-            <Input
-              aria-label="曲线名称"
-              data-testid="chart-line-label"
-              placeholder="例如：餐饮支出"
-              value={lineForm.label}
-              maxLength={40}
-              onChange={(event) =>
-                setLineForm((current) => ({ ...current, label: event.target.value }))
-              }
-              onPressEnter={() => void submitLine()}
-            />
-          </div>
-
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">交易类型</span>
-              <Select
-                aria-label="交易类型"
-                data-testid="chart-line-type"
-                value={lineForm.transactionType}
-                options={LINE_TYPES}
-                onChange={(value: string) => changeLineType(value)}
-              />
-            </div>
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">分类</span>
-              <Select
-                aria-label="分类"
-                data-testid="chart-line-category"
-                value={lineForm.category || undefined}
-                placeholder="不限分类"
-                allowClear
-                options={categoryOptions}
-                onChange={(value: string | undefined) => changeLineCategory(value ?? '')}
-              />
-            </div>
-          </div>
-
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">标签</span>
-              <Select
-                aria-label="标签"
-                data-testid="chart-line-tags"
-                mode="multiple"
-                allowClear
-                placeholder="不限标签"
-                value={lineForm.tags}
-                options={tagOptions}
-                onChange={(value: string[]) =>
-                  setLineForm((current) => ({ ...current, tags: value }))
-                }
-              />
-            </div>
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">标签匹配</span>
-              <Select
-                aria-label="标签匹配"
-                data-testid="chart-line-policy"
-                value={lineForm.tagPolicy}
-                options={TAG_POLICIES}
-                onChange={(value: string) =>
-                  setLineForm((current) => ({ ...current, tagPolicy: value }))
-                }
-              />
-            </div>
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">描述包含</span>
-            <Input
-              aria-label="描述包含"
-              data-testid="chart-line-description"
-              placeholder="输入关键词"
-              value={lineForm.description}
-              onChange={(event) =>
-                setLineForm((current) => ({ ...current, description: event.target.value }))
-              }
-            />
-          </div>
-
-          <Switch
-            checked={lineForm.includeOutlier}
-            testId="chart-line-outlier"
-            label="包含离群值"
-            onChange={(checked) =>
-              setLineForm((current) => ({ ...current, includeOutlier: checked }))
-            }
-          />
-
-          {lineError ? (
-            <p role="alert" className="m0-error" data-testid="chart-line-error">
-              {lineError}
-            </p>
-          ) : null}
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="chart-line-cancel" onClick={closeLine}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="chart-line-submit"
-              loading={savingLine}
-              disabled={savingLine}
-              onClick={() => void submitLine()}
-            >
-              {lineIndex === null ? '添加' : '保存'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <ChartEditor
+        ledgerId={ledgerId}
+        request={editor}
+        categories={categories}
+        tags={tags}
+        onCreated={async (chartId) => {
+          setSelectedId(chartId)
+          await load()
+        }}
+        onChartUpdated={(updated) =>
+          setCharts((current) =>
+            current.map((chart) => (chart.chartId === updated.chartId ? updated : chart)),
+          )
+        }
+        onRenamed={load}
+        onClose={() => setEditor(null)}
+      />
     </PageLayout>
   )
 }
