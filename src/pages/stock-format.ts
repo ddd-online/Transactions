@@ -8,6 +8,21 @@ export function stockMoney(cents: number): string {
   return `¥${centsToYuan(cents)}`
 }
 
+/** 带符号的金额：`+¥120.00` / `-¥35.50`（资金变动那一列用）。 */
+export function stockSignedMoney(cents: number): string {
+  return `${cents >= 0 ? '+' : '-'}¥${centsToYuan(Math.abs(cents))}`
+}
+
+/**
+ * 一轮的成交费用合计：只算真正成交的行（`shares > 0`），费用恒为整数分、加完再格式化。
+ *
+ * 记录页的轮次头与持仓详情的「费用合计」读同一条规则 —— 前者按可见成交过滤、
+ * 后者拿到的本来就是过滤过的那批，写在一处才不会有一天两处对不上。
+ */
+export function stockRoundFee(trades: ReadonlyArray<{ shares: number; fee: number }>): number {
+  return trades.filter((trade) => trade.shares > 0).reduce((total, trade) => total + trade.fee, 0)
+}
+
 export function stockPrice(milli: number | undefined): string {
   return milli === undefined ? '—' : milliToYuan(milli)
 }

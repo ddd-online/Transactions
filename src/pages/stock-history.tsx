@@ -28,9 +28,11 @@ import { StockRoundReview } from './stock-round-review'
 import {
   stockDateTime,
   stockErrorMessage,
+  stockMoney,
   stockPercent,
   stockPnlClass,
   stockPrice,
+  stockRoundFee,
   stockTradeTypeLabel,
 } from './stock-format'
 
@@ -41,10 +43,6 @@ export interface StockHistoryPanelProps {
   jumpTarget?: { code: string; roundId: string; token: number } | null
   /** 从某一轮直接记一条心得 */
   onCreateLesson?: (roundId: string) => void
-}
-
-function money(cents: number): string {
-  return `¥${centsToYuan(cents)}`
 }
 
 export function StockHistoryPanel({
@@ -286,7 +284,7 @@ export function StockHistoryPanel({
                         现价 <span className="stock-mono">{stockPrice(row.latestPrice)}</span>
                       </span>
                       <span className={stockPnlClass(row.totalPnl)}>
-                        {row.totalPnl >= 0 ? '盈' : '亏'} {money(Math.abs(row.totalPnl))}
+                        {row.totalPnl >= 0 ? '盈' : '亏'} {stockMoney(Math.abs(row.totalPnl))}
                       </span>
                     </div>
                     <div className="stock-master__line">
@@ -329,7 +327,7 @@ export function StockHistoryPanel({
                 </div>
                 <div className="stock-detail__summary">
                   <span className={stockPnlClass(detail.totalPnl)}>
-                    {money(detail.totalPnl)} {stockPercent(detail.totalPnlRate)}
+                    {stockMoney(detail.totalPnl)} {stockPercent(detail.totalPnlRate)}
                   </span>
                   {totals ? (
                     <span className="stock-muted">
@@ -439,7 +437,7 @@ function RoundBlock({
   const [editingReview, setEditingReview] = useState(false)
   // 费用只统计真正成交的行（和表里显示的同一批）：费用恒为整数分，加完再格式化。
   const visibleTrades = round.trades.filter((trade) => trade.shares > 0)
-  const roundFee = visibleTrades.reduce((total, trade) => total + trade.fee, 0)
+  const roundFee = stockRoundFee(visibleTrades)
   return (
     <article
       className={`stock-round${arrived ? ' is-arrived' : ''}`}
@@ -464,10 +462,10 @@ function RoundBlock({
         </button>
         <span className="stock-muted stock-round__count">{round.tradeCount} 笔成交</span>
         <span className="stock-muted stock-round__fee" data-testid="round-fee-total">
-          费用 <strong className="stock-mono">{money(roundFee)}</strong>
+          费用 <strong className="stock-mono">{stockMoney(roundFee)}</strong>
         </span>
         <span className={`stock-round__pnl ${stockPnlClass(round.pnl)}`}>
-          {money(round.pnl)} · {stockPercent(round.pnlRate)}
+          {stockMoney(round.pnl)} · {stockPercent(round.pnlRate)}
         </span>
         <span className="stock-round__tag-slot" onClick={(event) => event.stopPropagation()}>
           <Select
@@ -563,7 +561,7 @@ function RoundBlock({
                 dataIndex: 'fee',
                 align: 'right',
                 render: (value: number) => (
-                  <span data-testid="stock-trade-fee">{money(value)}</span>
+                  <span data-testid="stock-trade-fee">{stockMoney(value)}</span>
                 ),
               },
               {

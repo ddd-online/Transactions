@@ -74,11 +74,11 @@ const EMPTY_TRADE_FEE: TradeFeeForm = {
   transfer: '',
 }
 
-function money(cents: number): string {
+function stockMoney(cents: number): string {
   return `¥${centsToYuan(cents)}`
 }
 
-function signedMoney(cents: number): string {
+function stockSignedMoney(cents: number): string {
   return `${cents >= 0 ? '+' : '-'}¥${centsToYuan(Math.abs(cents))}`
 }
 
@@ -103,7 +103,7 @@ function feeText(
   if (commission === undefined) return '本轮费率沿用账本默认'
   return [
     `佣金 万${(commission * 10000).toFixed(3)}`,
-    `最低 ${minimum === undefined ? '—' : money(minimum)}`,
+    `最低 ${minimum === undefined ? '—' : stockMoney(minimum)}`,
     `印花税 ${stamp === undefined ? '—' : `${(stamp * 100).toFixed(2)}%`}`,
     `过户费 ${transfer === undefined ? '—' : `${(transfer * 100).toFixed(3)}%`}`,
   ].join(' · ')
@@ -566,7 +566,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                       ) : null}
                     </span>
                     <span className={`stock-master__stat-value stock-master__stat-value--end ${stockPnlClass(rowPnl)}`}>
-                      <span className="stock-mono">{money(rowPnl)}</span>
+                      <span className="stock-mono">{stockMoney(rowPnl)}</span>
                     </span>
                   </div>
                   <div className="stock-master__meta">
@@ -649,12 +649,12 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                 </div>
                 <div>
                   <span className="stock-label">持仓市值</span>
-                  <strong className="stock-mono">{money(marketValue)}</strong>
+                  <strong className="stock-mono">{stockMoney(marketValue)}</strong>
                 </div>
                 <div>
                   <span className="stock-label">浮动盈亏</span>
                   <strong className={stockPnlClass(pnl)}>
-                    {money(pnl)} {stockPercent(pnlRate)}
+                    {stockMoney(pnl)} {stockPercent(pnlRate)}
                   </strong>
                 </div>
               </div>
@@ -729,7 +729,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
               <span className="stock-section-title">成交记录</span>
               {trades.length > 0 ? (
                 <span className="stock-trade-total" data-testid="stock-trade-fee-total">
-                  费用合计 <strong className="stock-mono">{money(tradesFeeTotal)}</strong>
+                  费用合计 <strong className="stock-mono">{stockMoney(tradesFeeTotal)}</strong>
                 </span>
               ) : null}
             </section>
@@ -785,7 +785,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                       dataIndex: 'fee',
                       align: 'right',
                       render: (value: number) => (
-                        <span data-testid="stock-trade-fee">{money(value)}</span>
+                        <span data-testid="stock-trade-fee">{stockMoney(value)}</span>
                       ),
                     },
                     {
@@ -797,7 +797,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
                           row.tradeType === 'reduce' || row.tradeType === 'close'
                             ? row.amount - row.fee
                             : -(row.amount + row.fee)
-                        return <span className={stockPnlClass(cash)}>{signedMoney(cash)}</span>
+                        return <span className={stockPnlClass(cash)}>{stockSignedMoney(cash)}</span>
                       },
                     },
                     {
@@ -936,16 +936,16 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
             <div>
               <span>合计</span>
               <span>
-                {tradeFillAmounts.length} 笔 · {tradeLots} 手 · {money(tradeAmount)}
+                {tradeFillAmounts.length} 笔 · {tradeLots} 手 · {stockMoney(tradeAmount)}
               </span>
             </div>
             <div>
               <span>预估费用</span>
-              <span>{tradeFeeUnknown ? '—' : money(tradeFeeBreakdown.total)}</span>
+              <span>{tradeFeeUnknown ? '—' : stockMoney(tradeFeeBreakdown.total)}</span>
             </div>
             <div className="stock-trade-summary__total">
               <span>{tradeIsBuy ? '预计支出' : '预计到手'}</span>
-              <strong>{money(tradeTotal)}</strong>
+              <strong>{stockMoney(tradeTotal)}</strong>
             </div>
           </section>
 
