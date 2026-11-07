@@ -87,6 +87,18 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByTestId('close-behavior-ask')).toHaveAttribute('aria-pressed', 'true')
 
     await page.getByTestId('proxy-mode-manual').click()
+    // 手动的地址空着就保存：失败是一次动作的回执，走消息（而不是页面顶上多一行红字）
+    await page.getByTestId('proxy-url').fill('')
+    await page.getByTestId('proxy-save').click()
+    await expect(
+      page.getByTestId('toast').filter({ hasText: '请填写代理地址' }),
+    ).toBeVisible()
+    await expect(page.getByTestId('error')).toHaveCount(0)
+    await page.waitForTimeout(250)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'settings-proxy-error-toast.png'),
+    })
+
     await page.getByTestId('proxy-url').fill('http://127.0.0.1:7890')
     await page.getByTestId('proxy-save').click()
     await expect

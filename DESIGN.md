@@ -468,6 +468,11 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **红涨绿跌不跟着弹窗走 —— 弹窗要自己声明。** 股票页的涨跌语义是靠 `.stock-page .is-up` / `.is-down`（以及 `.amount-income` / `.amount-expense` 的反向映射）落在作用域上的，而 Modal 挂在 `body` 下，**不在** `.stock-page` 里面。弹窗里出现的盈亏数字必须在自己的类上再声明一次同向的映射（参照 `.stock-ledger__computed.is-up`：**盈 = 红（`--transactions-color-expense`），亏 = 绿（`--transactions-color-income`）**），写反了在页面上看着对、进弹窗就翻色。
 
+### Messages / toasts
+
+- **动作的回执走消息，页面的装载失败留在页面上。** 一次点击的结果 —— 保存代理、切换外观、删除账本、复制代码、以网页打开 —— 落在底部居中的轻提示上（`role="status"`），成功与失败只换图标与文案，新的把旧的顶上去，不排成一列。页面上那行红字只留给「这一页没装起来」（工作空间切换、账本列表、配置读取）：它是页面的状态，不是某一次点击的回执。
+- **校验失败也是消息。** 「请填写代理地址（形如 …）」不该在设置页顶上多出一行裸字 —— 那一行会和分栏、字段抢同一条竖线，看着像页面坏了。字段级错误（金额、价格、复盘正文）留在字段旁边并挂 `role="alert"`；动作级校验（这一颗按钮按下去不行）走消息。
+
 ### Blocking screens
 
 - **The one blocking screen is the workspace picker** (no workspace open yet). 它背后那副外壳**仍然挂着**（侧栏、页面框、空态都在，切回工作空间时状态不丢），但盖在上面的是**不透明**的页面底色（`--transactions-color-major-background`，不是 `screen-scrim`）：首屏只有一件事要做，背后那半屏空内容没有可看的东西 —— 遮罩要是半透明，第一眼看到的是「一个还没配好的应用」。外壳里的侧栏与内容区**整层 `inert`**：指针、键盘、读屏都进不去；只有标题栏那三颗窗口键留在遮罩之上（窗口必须还能最小化/移动）。这张卡本身是 `role="dialog"` + `aria-modal="true"` + 「选择工作空间」，打开时焦点落在卡上 —— 否则 Tab 两下就走进看不见的账本菜单里。「选择工作空间」失败的那句话（比如旧版工作空间被拒绝）**写在卡里**，不写在外壳里：被遮罩盖住的错误等于没说。 The screen has no dismiss affordance of its own — no ×, no cancel, clicking the backdrop does nothing, and the shell refuses the window close request — except 「应用设置」, which is the one way past it: 代理与检查更新是应用级的，不该被「先选工作空间」挡住。Everything else in the copy goes into the ⓘ tooltip: the title and one sentence are the whole text.

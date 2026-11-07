@@ -377,7 +377,7 @@ export function App(): JSX.Element {
         await refreshLedgers()
         notify('账本已删除')
       } catch (deleteError) {
-        setError(errorMessage(deleteError))
+        notify(errorMessage(deleteError), 'error')
       } finally {
         setBusy(false)
       }
@@ -391,7 +391,7 @@ export function App(): JSX.Element {
       await window.api.invoke('config_set_appearance', { appearance })
       setConfig((current) => (current ? { ...current, appearance } : current))
     } catch (appearanceError) {
-      setError(errorMessage(appearanceError))
+      notify(errorMessage(appearanceError), 'error')
     }
   }, [])
 
@@ -401,7 +401,7 @@ export function App(): JSX.Element {
       await window.api.invoke('config_set_close_behavior', { behavior })
       setConfig((current) => (current ? { ...current, closeBehavior: behavior } : current))
     } catch (closeError) {
-      setError(errorMessage(closeError))
+      notify(errorMessage(closeError), 'error')
     }
   }, [])
 
@@ -415,7 +415,8 @@ export function App(): JSX.Element {
       setConfig((current) => (current ? { ...current, proxy } : current))
       notify('代理设置已保存')
     } catch (proxyError) {
-      setError(errorMessage(proxyError))
+      // 设置项保存失败是一次动作的回执，不该在页面顶上留一行字：走消息，和「代理连通正常」同一处。
+      notify(errorMessage(proxyError), 'error')
     }
   }, [proxyMode, proxyUrl])
 
@@ -452,7 +453,7 @@ export function App(): JSX.Element {
         })
         setConfig((current) => (current ? { ...current, features } : current))
       } catch (featureError) {
-        setError(errorMessage(featureError))
+        notify(errorMessage(featureError), 'error')
         const snapshot = await window.api.invoke('config_get')
         setConfig(snapshot)
       }
@@ -476,7 +477,7 @@ export function App(): JSX.Element {
         notify('工作空间图标已更新')
       }
     } catch (iconError) {
-      setError(errorMessage(iconError))
+      notify(errorMessage(iconError), 'error')
     }
   }, [])
 
@@ -486,7 +487,7 @@ export function App(): JSX.Element {
       await window.api.invoke('workspace_icon_set', { data: '' })
       setWorkspaceIconUrl('')
     } catch (iconError) {
-      setError(errorMessage(iconError))
+      notify(errorMessage(iconError), 'error')
     }
   }, [])
 
@@ -509,7 +510,7 @@ export function App(): JSX.Element {
             : current,
         )
       } catch (featureError) {
-        setError(errorMessage(featureError))
+        notify(errorMessage(featureError), 'error')
       }
     },
     [activeLedgerId],
