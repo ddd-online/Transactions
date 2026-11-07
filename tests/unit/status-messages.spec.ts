@@ -78,8 +78,8 @@ describe('status messages', () => {
     { file: 'stock-lesson-dialog.tsx', id: 'stock-lesson-error', message: 'error' },
     { file: 'category-tag.tsx', id: 'category-error', message: 'categoryError' },
     { file: 'category-tag.tsx', id: 'tag-error', message: 'tagError' },
-    { file: 'charts.tsx', id: 'chart-create-error', message: 'createError' },
-    { file: 'charts.tsx', id: 'chart-rename-error', message: 'renameError' },
+    { file: 'chart-editor.tsx', id: 'chart-create-error', message: 'createError' },
+    { file: 'chart-editor.tsx', id: 'chart-rename-error', message: 'renameError' },
   ]
 
   it.each(FIELD_ERRORS)('$id 与输入框双向关联', ({ file, id, message }) => {
