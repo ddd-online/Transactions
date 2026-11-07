@@ -15,6 +15,7 @@ import {
   STOCK_TRADE_OPEN,
   STOCK_TRADE_REDUCE,
 } from './models'
+import { roundHalfAwayFromZero } from './rounding'
 
 /** 每手股数（A 股口径）。 */
 export const SHARES_PER_LOT = 100
@@ -172,11 +173,6 @@ export function settledPnl(tradesAsc: readonly StockTrade[]): number {
  */
 export function currentRoundFee(tradesAsc: readonly StockTrade[]): RoundFee | null {
   return currentRoundTrades(tradesAsc)[0]?.roundFee ?? null
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /**

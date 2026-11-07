@@ -2,9 +2,13 @@
  * 股票下单写入：一次委托 = 一个事务。
  *
  * 委托创建
- * （`normalize_trade_fills` / `instrument_of` / `resolve_round_fee` / `trade_order_remark` /
- * `create_trade_order[_with_round_fee]` / `create_trade[_with_round_fee]` / `close_round`）
- * 与它依赖的 `cost_basis_of`、`log_operation`、`amount_detail`、`trade_operation_label`。
+ * （`normalize_trade_fills` / `resolve_round_fee` / `create_trade_order[_with_round_fee]` /
+ * `create_trade[_with_round_fee]` / `close_round`）
+ * 与它依赖的 `log_operation`、`amount_detail`、`trade_operation_label`。
+ *
+ * **成交口径**（取整、成本结转、品种兜底、轮次费用设置的转换、成交 → wire 形状、资金记录
+ * 备注）不在本文件：它们在 `shared/domain/trade-rules`，与编辑回放 / 重放共用同一份——
+ * 这里只负责"按哪份费率、对哪些金额、以什么顺序写库"。
  *
  * ## 计费口径（一次委托多笔成交）
  *
@@ -57,18 +61,20 @@ import {
   STOCK_TRADE_OPEN,
   STOCK_TRADE_REDUCE,
 } from '../../shared/domain/consts'
-import {
-  type FeeBreakdown,
-  type Instrument,
-  allocateOrderFee,
-  computeOrderFee,
-  instrumentOf as feeInstrumentOf,
-} from '../../shared/domain/fee'
-import { centsToYuan, milliToYuan } from '../../shared/domain/money'
+import { type FeeBreakdown, allocateOrderFee, computeOrderFee } from '../../shared/domain/fee'
+import { centsToYuan } from '../../shared/domain/money'
 import type { RoundFee, StockFeeSetting, StockTrade } from '../../shared/domain/models'
 import { amountOf, isBuy, isSell, nextRoundNo, sharesOf } from '../../shared/domain/stock'
 import { nowSeconds } from '../../shared/domain/time'
-import { AppError } from '../../shared/errors'
+import {
+  costBasisOf,
+  roundFeeOfSetting,
+  settingOfRoundFee,
+  tradeDto,
+  tradeInstrumentOf,
+  tradeOrderRemark,
+} from '../../shared/domain/trade-rules'
+import { AppError, isNotFoundError } from '../../shared/errors'
 import type { StockFundRecord } from '../../shared/types/stock'
 import type {
   CreateTradeOrderRequest,
@@ -110,43 +116,9 @@ import { ensureStockHistoryBackfill } from './stock-history'
 
 // ---------------------------------------------------------------- 小工具
 
-/** 既有 DAO 以 404 表示"查无此行"。 */
-function isNotFound(error: unknown): boolean {
-  return error instanceof AppError && error.status === 404
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
-}
-
 /** 空费用（"只归档"那条路没有成交额，最低佣金不能凭空收一遍）。 */
 function emptyFee(): FeeBreakdown {
   return { commission: 0, stampDuty: 0, transferFee: 0, total: 0 }
-}
-
-/** 只留费用算法要的四项（既有 `RoundFee::from(&StockFeeSetting)`）。 */
-function roundFeeOfSetting(setting: StockFeeSetting): RoundFee {
-  return {
-    commissionRate: setting.commissionRate,
-    minCommission: setting.minCommission,
-    stampDutyRate: setting.stampDutyRate,
-    transferFeeRate: setting.transferFeeRate,
-  }
-}
-
-/** 折成费用算法要的形态（既有 `RoundFee::to_setting`；`id` / `ledgerId` 留空）。 */
-function settingOfRoundFee(round: RoundFee): StockFeeSetting {
-  return {
-    id: '',
-    ledgerId: '',
-    commissionRate: round.commissionRate,
-    minCommission: round.minCommission,
-    stampDutyRate: round.stampDutyRate,
-    transferFeeRate: round.transferFeeRate,
-    createdAt: 0,
-    updatedAt: 0,
-  }
 }
 
 // ---------------------------------------------------------------- 委托创建
@@ -154,26 +126,6 @@ function settingOfRoundFee(round: RoundFee): StockFeeSetting {
 /** 过滤前端未填写的空明细行（价格与手数同时 <= 0）。 */
 function normalizeTradeFills(fills: readonly StockTradeFill[]): StockTradeFill[] {
   return fills.filter((fill) => !(fill.priceMilli <= 0 && fill.lots <= 0))
-}
-
-/**
- * 品种判定（决定收哪些费）：老数据里可能存着不在支持范围的代码（例如北交所），
- * 这种记录按**深市股票**处理（卖出收印花税、不收过户费）—— 与引入品种之前的默认行为一致，
- * 不让一条历史记录把整轮重放 / 编辑打断。界面侧的下单校验会先挡住这类代码。
- */
-function instrumentOf(stockCode: string): Instrument {
-  return feeInstrumentOf(stockCode) ?? 'shenzhenStock'
-}
-
-/**
- * 减仓按剩余总成本的比例结转成本（四舍五入到分），避免整除截断造成已实现盈亏偏差。
- *
- * `shares == 0`（清仓时只归档那一笔 0 手标记成交）或没有持仓时直接 0：0/0 在浮点里是 NaN，
- * `NaN as i64` 恰好是 0 —— 别把正确性建在这个巧合上。
- */
-function costBasisOf(totalCost: number, shares: number, quantity: number): number {
-  if (shares <= 0 || quantity <= 0) return 0
-  return roundHalfAwayFromZero((totalCost * shares) / quantity)
 }
 
 /**
@@ -207,22 +159,6 @@ function resolveRoundFee(
   const ledger = getOrCreateFeeSetting(db, ledgerId)
   const round = first?.roundFee ?? roundFeeOfSetting(ledger)
   return { setting: settingOfRoundFee(round), round: { ...round } }
-}
-
-/** 生成资金记录备注：均价 + 笔数（单笔委托退化为「名称 N手 @ 价格」）。 */
-function tradeOrderRemark(
-  stockName: string,
-  totalLots: number,
-  totalAmount: number,
-  count: number,
-): string {
-  const shares = sharesOf(totalLots)
-  // 均价从**分**回到**厘**：`totalAmount / shares` 是分/股，价格口径是厘/股
-  const avgPriceMilli = shares > 0 ? roundHalfAwayFromZero((totalAmount * 10) / shares) : 0
-  if (count <= 1) {
-    return `${stockName} ${totalLots}手 @ ${milliToYuan(avgPriceMilli)}`
-  }
-  return `${stockName} ${totalLots}手 @ ${milliToYuan(avgPriceMilli)}（${count}笔成交）`
 }
 
 /** 委托类操作的固定文案（与界面上的交易类型标签同一套词）。 */
@@ -266,33 +202,6 @@ function logOperation(
   })
 }
 
-/** 成交 → wire 形状（`roundFee` 省略 = 老数据，按账本系统配置）。 */
-function tradeDto(trade: StockTrade): StockTradeDto {
-  const dto: StockTradeDto = {
-    id: trade.id,
-    ledgerId: trade.ledgerId,
-    stockCode: trade.stockCode,
-    stockName: trade.stockName,
-    tradeType: trade.tradeType,
-    roundId: trade.roundId,
-    orderId: trade.orderId,
-    orderSeq: trade.orderSeq,
-    price: trade.price,
-    lots: trade.lots,
-    shares: trade.shares,
-    amount: trade.amount,
-    fee: trade.fee,
-    commission: trade.commission,
-    stampDuty: trade.stampDuty,
-    transferFee: trade.transferFee,
-    realizedPnl: trade.realizedPnl,
-    tradeTime: trade.tradeTime,
-    remark: trade.remark,
-  }
-  if (trade.roundFee) dto.roundFee = trade.roundFee
-  return dto
-}
-
 /** 取持仓，不存在则建（数量 / 成本 / 已实现盈亏全 0）。 */
 function getOrCreatePositionIn(
   db: Db,
@@ -303,7 +212,7 @@ function getOrCreatePositionIn(
   try {
     return getPosition(db, ledgerId, stockCode)
   } catch (error) {
-    if (!isNotFound(error)) throw error
+    if (!isNotFoundError(error)) throw error
     const position: StockPosition = {
       id: randomUUID(),
       ledgerId,
@@ -366,7 +275,7 @@ function closeRound(
   try {
     history = getTradeHistory(db, ledgerId, stockCode)
   } catch (error) {
-    if (!isNotFound(error)) throw error
+    if (!isNotFoundError(error)) throw error
     history = {
       id: randomUUID(),
       ledgerId,
@@ -465,7 +374,7 @@ export function createTradeOrderWithRoundFee(
   const tradeTime = request.tradeTime <= 0 ? nowSeconds() : request.tradeTime
 
   // 品种决定收哪些费：股票（沪市才有过户费、卖出有印花税）还是场内基金（只有佣金）
-  const instrument = instrumentOf(stockCode)
+  const instrument = tradeInstrumentOf(stockCode)
   const orderId = randomUUID()
 
   const trades: StockTrade[] = []

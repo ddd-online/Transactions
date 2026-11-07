@@ -12,8 +12,9 @@
  * 前两条从前只活在页面的渲染路径里，改错了要靠截图发现。
  */
 
-import { type StockTradeDto, type StockTradeImpactDto, type StockTradeImpactRoundDto } from './stock-dto'
 import { lotsOf } from './format'
+import { roundHalfAwayFromZero } from './rounding'
+import { type StockTradeDto, type StockTradeImpactDto, type StockTradeImpactRoundDto } from './stock-dto'
 
 /** 一条渲染行：委托内的多笔成交聚合成父行 + 子行。 */
 export interface TradeRow {
@@ -37,11 +38,6 @@ export interface TradeRow {
   tradeTime: number
   /** 已实现盈亏：组内全为空则 `null` */
   realizedPnl: number | null
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /** 按 `orderId` 分组（键 = `orderId || id`，组内按 `orderSeq` 升序）。 */

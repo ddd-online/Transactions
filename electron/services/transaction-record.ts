@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-import { AppError } from '../../shared/errors'
+import { AppError, isNotFoundError } from '../../shared/errors'
 import { TRANSACTION_TYPES } from '../../shared/domain/consts'
 import type { ChartLine, TransactionRecord, TrTag } from '../../shared/domain/models'
 import { transactionTypeText } from '../../shared/domain/format'
@@ -330,7 +330,7 @@ export function unlinkFromKeyEvent(db: Db, transactionId: string): void {
     queryRecordById(db, transactionId)
     updateKeyEventDate(db, transactionId, '')
   } catch (error) {
-    if (error instanceof AppError && error.status === 404) {
+    if (isNotFoundError(error)) {
       throw new AppError(`transaction not found: ${transactionId}`, { status: 500 })
     }
     throw error instanceof AppError ? error : new AppError('解除关联失败', { status: 500 })

@@ -11,6 +11,7 @@
 
 import { centsToYuan, milliToYuan } from './money'
 import { type RoundFee } from './models'
+import { roundHalfAwayFromZero } from './rounding'
 
 /** 每手股数（A 股口径）。 */
 const SHARES_PER_LOT = 100
@@ -182,11 +183,6 @@ export function hasQuote(latestPrice: number | null): boolean {
 /** 股数 → 手数（1 手 = 100 股，**向下取整**）。 */
 export function lotsOf(shares: number): number {
   return Math.floor(shares / SHARES_PER_LOT)
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /** `format!("{value}")` 的 `-0` 表现（JS 的 `String(-0)` 会吞掉负号）。 */

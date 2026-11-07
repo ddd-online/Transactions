@@ -42,6 +42,7 @@
  */
 
 import type { StockFeeSetting } from './models'
+import { roundHalfAwayFromZero } from './rounding'
 
 /**
  * 交易品种：由六位代码判定 —— 它同时决定**收哪些费**与行情接口的市场前缀。
@@ -157,11 +158,6 @@ export function withTotal(fee: Omit<FeeBreakdown, 'total'>): FeeBreakdown {
     ...fee,
     total: feeTotal(fee.commission, fee.stampDuty, fee.transferFee),
   }
-}
-
-/** `f64::round`：四舍五入、远离零。费用恒为正，这里只是守住负半值的口径。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /** 按费率计算费用并四舍五入到分。 */

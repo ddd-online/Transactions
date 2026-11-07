@@ -40,12 +40,12 @@
  * `repair_source_trade_fund_dates`（数据按本地时区订正资金记录日期）与它的 `day_after` /
  * `has_source_trade_fund_date` 属独立的数据维护路径，不在编辑 / 删除 / 回滚语义里。
  *
- * ## 与既有的唯一结构差异
+ * ## 与下单路径的关系
  *
- * `stock-trade-write.ts` 里的若干小工具（`instrument_of` / `cost_basis_of` /
- * `trade_order_remark` / `RoundFee ↔ StockFeeSetting`）在既有是同一模块的私有函数；本切片
- * 不改动那个文件，所以这里按**逐字相同**的口径各留一份。两处一旦分叉，下单与重放算出来的
- * 费用 / 备注就会对不上 —— 新增口径请同时改两边（或把它们收进 `shared/domain`）。
+ * 两条路径共用同一份**成交口径**（取整、减仓成本结转、品种兜底、轮次费用设置的转换、
+ * 成交 → wire 形状、资金记录备注、404 判定）：它们都在 `shared/domain/trade-rules` 与
+ * `shared/errors`。本文件只留自己独有的编排 —— 改一笔成交后整体重放、预演与回滚。
+ * 新增一条成交规则请加在那个 module 里，不要在这里另写一份"字面相同"的实现。
  */
 
 import { randomUUID } from 'node:crypto'
@@ -59,16 +59,17 @@ import {
   STOCK_TAG_ANALYSIS,
   STOCK_TRADE_CLOSE,
 } from '../../shared/domain/consts'
-import {
-  type Instrument,
-  allocateOrderFee,
-  computeOrderFee,
-  instrumentOf as feeInstrumentOf,
-} from '../../shared/domain/fee'
-import { milliToYuan } from '../../shared/domain/money'
-import type { RoundFee, StockFeeSetting, StockTrade } from '../../shared/domain/models'
+import { allocateOrderFee, computeOrderFee } from '../../shared/domain/fee'
+import type { StockTrade } from '../../shared/domain/models'
 import { amountOf, isBuy, sharesOf } from '../../shared/domain/stock'
-import { AppError } from '../../shared/errors'
+import {
+  costBasisOf,
+  settingOfRoundFee,
+  tradeDto,
+  tradeInstrumentOf,
+  tradeOrderRemark,
+} from '../../shared/domain/trade-rules'
+import { AppError, isNotFoundError } from '../../shared/errors'
 import type { StockFundRecord } from '../../shared/types/stock'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import type {
@@ -131,11 +132,6 @@ import {
  */
 const PREVIEW_ROLLBACK = 'trade impact preview rollback'
 
-/** 既有 `is_not_found`：404 = 目标不存在（回滚时据此区分"跳过"与真错误）。 */
-function isNotFound(error: unknown): boolean {
-  return error instanceof AppError && error.status === 404
-}
-
 /** 预演哨兵（不是 `AppError`：它不该被当成业务失败暴露给调用方）。 */
 function previewSentinel(): Error {
   return new Error(PREVIEW_ROLLBACK)
@@ -145,7 +141,7 @@ function isPreviewSentinel(error: unknown): boolean {
   return error instanceof Error && error.message === PREVIEW_ROLLBACK
 }
 
-// ---------------------------------------------------------------- 小工具（与下单切片同一口径）
+// ---------------------------------------------------------------- 委托 / 轮次索引
 
 /** 成交所属委托 ID；存量数据未标记委托时以自身为独立委托（既有 `order_key_of`）。 */
 function orderKeyOf(trade: StockTrade): string {
@@ -155,87 +151,6 @@ function orderKeyOf(trade: StockTrade): string {
 /** 轮次索引键：股票 + 轮次序号（既有 `round_meta_key`）。 */
 function roundMetaKey(stockCode: string, roundNo: number): string {
   return `${stockCode}#${roundNo}`
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
-}
-
-/**
- * 减仓按剩余总成本的比例结转成本（四舍五入到分），避免整除截断造成已实现盈亏偏差。
- *
- * `shares == 0`（清仓时只归档那一笔 0 手标记成交）或没有持仓时直接 0。
- */
-function costBasisOf(totalCost: number, shares: number, quantity: number): number {
-  if (shares <= 0 || quantity <= 0) return 0
-  return roundHalfAwayFromZero((totalCost * shares) / quantity)
-}
-
-/**
- * 品种判定（决定收哪些费）：老数据里可能存着不在支持范围的代码（例如北交所），
- * 这种记录按**深市股票**处理 —— 与引入品种之前的默认行为一致，不让一条历史记录把
- * 整轮重放 / 编辑打断（既有 `instrument_of`）。
- */
-function instrumentOf(stockCode: string): Instrument {
-  return feeInstrumentOf(stockCode) ?? 'shenzhenStock'
-}
-
-/** 折成费用算法要的形态（既有 `RoundFee::to_setting`；`id` / `ledgerId` 留空）。 */
-function settingOfRoundFee(round: RoundFee): StockFeeSetting {
-  return {
-    id: '',
-    ledgerId: '',
-    commissionRate: round.commissionRate,
-    minCommission: round.minCommission,
-    stampDutyRate: round.stampDutyRate,
-    transferFeeRate: round.transferFeeRate,
-    createdAt: 0,
-    updatedAt: 0,
-  }
-}
-
-/** 生成资金记录备注：均价 + 笔数（单笔委托退化为「名称 N手 @ 价格」）。 */
-function tradeOrderRemark(
-  stockName: string,
-  totalLots: number,
-  totalAmount: number,
-  count: number,
-): string {
-  const shares = sharesOf(totalLots)
-  // 均价从**分**回到**厘**：`totalAmount / shares` 是分/股，价格口径是厘/股
-  const avgPriceMilli = shares > 0 ? roundHalfAwayFromZero((totalAmount * 10) / shares) : 0
-  if (count <= 1) {
-    return `${stockName} ${totalLots}手 @ ${milliToYuan(avgPriceMilli)}`
-  }
-  return `${stockName} ${totalLots}手 @ ${milliToYuan(avgPriceMilli)}（${count}笔成交）`
-}
-
-/** 成交 → wire 形状（`roundFee` 省略 = 老数据，按账本系统配置）。 */
-function tradeDto(trade: StockTrade): StockTradeDto {
-  const dto: StockTradeDto = {
-    id: trade.id,
-    ledgerId: trade.ledgerId,
-    stockCode: trade.stockCode,
-    stockName: trade.stockName,
-    tradeType: trade.tradeType,
-    roundId: trade.roundId,
-    orderId: trade.orderId,
-    orderSeq: trade.orderSeq,
-    price: trade.price,
-    lots: trade.lots,
-    shares: trade.shares,
-    amount: trade.amount,
-    fee: trade.fee,
-    commission: trade.commission,
-    stampDuty: trade.stampDuty,
-    transferFee: trade.transferFee,
-    realizedPnl: trade.realizedPnl,
-    tradeTime: trade.tradeTime,
-    remark: trade.remark,
-  }
-  if (trade.roundFee) dto.roundFee = trade.roundFee
-  return dto
 }
 
 // ---------------------------------------------------------------- 每日复盘（DAO 尚未移植）
@@ -324,7 +239,7 @@ function updateTradeFillTx(
   try {
     trade = getTrade(db, tradeId)
   } catch (error) {
-    if (isNotFound(error)) throw new AppError('交易记录不存在', { status: 404 })
+    if (isNotFoundError(error)) throw new AppError('交易记录不存在', { status: 404 })
     throw error
   }
   if (trade.ledgerId !== ledgerId) {
@@ -342,7 +257,7 @@ function updateTradeFillTx(
   const feeSetting = trade.roundFee
     ? settingOfRoundFee(trade.roundFee)
     : getOrCreateFeeSetting(db, ledgerId)
-  const instrument = instrumentOf(trade.stockCode)
+  const instrument = tradeInstrumentOf(trade.stockCode)
   const buy = isBuy(trade.tradeType)
 
   const amounts: number[] = []
@@ -391,7 +306,7 @@ function deleteTradeOrderTx(db: Db, ledgerId: string, orderId: string): string {
     try {
       trade = getTrade(db, orderId)
     } catch (error) {
-      if (isNotFound(error)) throw new AppError('交易记录不存在', { status: 404 })
+      if (isNotFoundError(error)) throw new AppError('交易记录不存在', { status: 404 })
       throw error
     }
     if (trade.ledgerId !== ledgerId) {
@@ -853,7 +768,7 @@ export function previewTradeChange(
         preview.positionAfter = position.quantity
         preview.stockName = position.stockName
       } catch (error) {
-        if (!isNotFound(error)) throw error
+        if (!isNotFoundError(error)) throw error
       }
       const latest = queryLatestFundRecord(db, ledgerId)
       if (latest) preview.cashAfter = latest.cashBalance
@@ -961,7 +876,7 @@ export function rollbackLatest(db: Db, ledgerId: string): StockOperationRollback
           try {
             deleteTradeOrderTx(db, ledgerId, operation.targetId)
           } catch (error) {
-            if (isNotFound(error)) {
+            if (isNotFoundError(error)) {
               skipped = true
             } else {
               throw error

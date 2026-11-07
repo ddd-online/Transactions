@@ -24,6 +24,7 @@
 
 import { STOCK_TAG_ANALYSIS } from '../../shared/domain/consts'
 import type { RoundFee, StockTrade } from '../../shared/domain/models'
+import { roundHalfAwayFromZero } from '../../shared/domain/rounding'
 import {
   type RoundFlow,
   amountOf,
@@ -32,7 +33,7 @@ import {
   roundFlow,
   settledPnl,
 } from '../../shared/domain/stock'
-import { AppError } from '../../shared/errors'
+import { AppError, isNotFoundError } from '../../shared/errors'
 import type {
   StockDayReviewDto,
   StockOverviewDto,
@@ -60,11 +61,6 @@ function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
   return new AppError(message, { status: 500 })
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /**
@@ -380,7 +376,7 @@ function requirePosition(db: Db, ledgerId: string, stockCode: string): StockPosi
   try {
     return getPosition(db, ledgerId, stockCode)
   } catch (error) {
-    if (error instanceof AppError && error.status === 404) {
+    if (isNotFoundError(error)) {
       throw new AppError('持仓不存在', { status: 404 })
     }
     throw databaseFailure('读取持仓失败', error)

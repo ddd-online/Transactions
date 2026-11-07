@@ -31,6 +31,7 @@
 
 import { daysInMonth } from '../../shared/domain/calendar'
 import { STOCK_EVENT_ADD_PRINCIPAL } from '../../shared/domain/consts'
+import { roundHalfAwayFromZero } from '../../shared/domain/rounding'
 import {
   type StatisticsFilter,
   createStatisticsFilter,
@@ -59,11 +60,6 @@ function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
   return new AppError(message, { status: 500 })
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /** 字符串比较：与 的 `str::cmp`（按字节）在 ASCII 上一致。 */

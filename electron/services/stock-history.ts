@@ -36,10 +36,11 @@ import {
   STOCK_TRADE_REDUCE,
 } from '../../shared/domain/consts'
 import type { StockTrade } from '../../shared/domain/models'
+import { roundHalfAwayFromZero } from '../../shared/domain/rounding'
 import { nextRoundNo } from '../../shared/domain/stock'
-import { AppError } from '../../shared/errors'
+import { tradeDto } from '../../shared/domain/trade-rules'
+import { AppError, isNotFoundError } from '../../shared/errors'
 import type {
-  StockTradeDto,
   StockTradeHistoryDetailDto,
   StockTradeHistoryDto,
   StockTradeHistorySummaryDto,
@@ -68,16 +69,6 @@ function databaseFailure(message: string, error: unknown): AppError {
   if (error instanceof AppError) return error
   logError(`${message}, err: ${String(error)}`)
   return new AppError(message, { status: 500 })
-}
-
-/** 既有 DAO 以 404 表示"查无此行"。 */
-function isNotFound(error: unknown): boolean {
-  return error instanceof AppError && error.status === 404
-}
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
 }
 
 /**
@@ -211,7 +202,7 @@ export function ensureStockHistoryBackfill(db: Db, ledgerId: string, stockCode: 
     try {
       history = getTradeHistory(db, ledgerId, stockCode)
     } catch (error) {
-      if (!isNotFound(error)) throw error
+      if (!isNotFoundError(error)) throw error
       if (cycles.length === 0) return // 尚无完整轮次（在建），不建历史集合
       history = {
         id: randomUUID(),
@@ -247,33 +238,7 @@ export function ensureStockHistoryBackfill(db: Db, ledgerId: string, stockCode: 
   }
 }
 
-// ---------------------------------------------------------------- DTO 映射
-
-function tradeDto(trade: StockTrade): StockTradeDto {
-  const dto: StockTradeDto = {
-    id: trade.id,
-    ledgerId: trade.ledgerId,
-    stockCode: trade.stockCode,
-    stockName: trade.stockName,
-    tradeType: trade.tradeType,
-    roundId: trade.roundId,
-    orderId: trade.orderId,
-    orderSeq: trade.orderSeq,
-    price: trade.price,
-    lots: trade.lots,
-    shares: trade.shares,
-    amount: trade.amount,
-    fee: trade.fee,
-    commission: trade.commission,
-    stampDuty: trade.stampDuty,
-    transferFee: trade.transferFee,
-    realizedPnl: trade.realizedPnl,
-    tradeTime: trade.tradeTime,
-    remark: trade.remark,
-  }
-  if (trade.roundFee) dto.roundFee = trade.roundFee
-  return dto
-}
+// ---------------------------------------------------------------- 每日复盘
 
 /** 某股**全部轮次**的每日复盘，按 `roundId` 分组（当前轮 `round_id = ''` 不在此列）。 */
 function dayReviewsByRound(
@@ -393,7 +358,7 @@ export function getTradeHistoryDetail(
     try {
       history = getTradeHistory(db, ledgerId, stockCode)
     } catch (error) {
-      if (isNotFound(error)) throw new AppError('该股票暂无交易历史', { status: 404 })
+      if (isNotFoundError(error)) throw new AppError('该股票暂无交易历史', { status: 404 })
       throw error
     }
 

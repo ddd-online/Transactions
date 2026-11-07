@@ -1,34 +1,10 @@
-import { AppError } from '../../shared/errors'
 import { currentRoundTrades } from '../../shared/domain/stock'
+import { tradeDto } from '../../shared/domain/trade-rules'
+import { AppError } from '../../shared/errors'
+import type { StockTrade } from '../../shared/domain/models'
+import type { StockTradeDto } from '../../shared/types/stock-history'
 import type { Db } from '../db/driver'
 import { getPosition, listTrades } from '../db/dao/stock-trade'
-import type { StockTradeDto } from '../../shared/types/stock-history'
-import type { StockTrade } from '../../shared/domain/models'
-
-function toDto(trade: StockTrade): StockTradeDto {
-  return {
-    id: trade.id,
-    ledgerId: trade.ledgerId,
-    stockCode: trade.stockCode,
-    stockName: trade.stockName,
-    tradeType: trade.tradeType,
-    roundId: trade.roundId,
-    orderId: trade.orderId,
-    orderSeq: trade.orderSeq,
-    price: trade.price,
-    lots: trade.lots,
-    shares: trade.shares,
-    amount: trade.amount,
-    fee: trade.fee,
-    commission: trade.commission,
-    stampDuty: trade.stampDuty,
-    transferFee: trade.transferFee,
-    realizedPnl: trade.realizedPnl,
-    ...(trade.roundFee ? { roundFee: trade.roundFee } : {}),
-    tradeTime: trade.tradeTime,
-    remark: trade.remark,
-  }
-}
 
 /** 某股票可见的成交：有未清仓轮次时只返回本轮，否则返回全部历史；0 手标记隐藏。 */
 export function listStockTrades(db: Db, ledgerId: string, stockCode: string): StockTradeDto[] {
@@ -45,7 +21,7 @@ export function listStockTrades(db: Db, ledgerId: string, stockCode: string): St
   }
 
   const visible = (rows: StockTrade[]): StockTradeDto[] =>
-    rows.filter((trade) => trade.shares > 0).map(toDto)
+    rows.filter((trade) => trade.shares > 0).map(tradeDto)
 
   if (position && (position.quantity > 0 || current.length > 0)) {
     return visible(current)

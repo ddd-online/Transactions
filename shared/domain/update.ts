@@ -35,6 +35,8 @@
  *   会像 `skip_serializing_if` 一样丢掉这个键），工具函数的入参用 `string | null`。
  */
 
+import { roundHalfAwayFromZero } from './rounding'
+
 // ---------------------------------------------------------------- 状态词表
 
 /** 还没检查过（按钮显示「检查更新」）。界面**本地**也用它表示"查不到可更新内容"。 */
@@ -551,11 +553,6 @@ export function digestMatches(expected: string | null, actualHex: string): boole
 
 const KIB = 1024
 const MIB = 1_048_576
-
-/** `f64::round`：四舍五入、远离零。JS `Math.round` 对负数半值朝 +∞，不能直接用。 */
-function roundHalfAwayFromZero(value: number): number {
-  return value < 0 ? -Math.round(-value) : Math.round(value)
-}
 
 /** `format!("{value}")` 的 `-0` 表现（JS 的 `String(-0)` 会吞掉负号）。 */
 function formatF64(value: number): string {

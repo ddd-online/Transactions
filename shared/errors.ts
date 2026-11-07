@@ -20,6 +20,16 @@ export class AppError extends Error {
   }
 }
 
+/**
+ * 「查无此行」：既有 DAO 以 **404** 表示目标不存在。
+ *
+ * 回滚据此区分"跳过"与真错误 —— 一条指向空气的操作记录要能被弹掉，否则它会永远卡在栈顶。
+ * 这是**错误语义**（挨着错误信封），不是某条业务规则：两个 writer 与交易历史读层都从这里读。
+ */
+export function isNotFoundError(error: unknown): boolean {
+  return error instanceof AppError && error.status === 404
+}
+
 export function workspaceNotOpened(): AppError {
   return new AppError('未打开工作空间', {
     code: ERR_CODE_WORKSPACE_NOT_OPENED,
