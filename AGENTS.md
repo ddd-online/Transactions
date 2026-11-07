@@ -2,6 +2,20 @@
 
 Transactions 是 Electron + React + TypeScript 桌面记账应用。每个工作空间是一个独立 SQLite 数据库。
 
+## Agent skills
+
+### Issue tracker
+
+issue 与 spec 都记在 GitHub（`ddd-online/Transactions`），用 `gh` CLI 读写。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+沿用默认的五个角色标签：`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+单上下文（single-context）：`CONTEXT.md` + `docs/adr/` 在仓库根。见 `docs/agents/domain.md`。
+
 ## 架构
 
 | 目录 | 职责 |
