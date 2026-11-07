@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type HTMLAttributes, type JSX } from 'react'
 
-import { centsToYuan, yuanToCents } from '../../shared/domain/money'
+import { centsToYuan } from '../../shared/domain/money'
 import type { Ledger } from '../../shared/domain/models'
-import { tagNamesForCategory } from '../../shared/domain/tag-names'
+import { signedAmount, transactionTypeText } from '../../shared/domain/format'
 import { formatTimestamp, rangeToSeconds, todayYmd } from '../../shared/domain/time'
-import { addMonths, monthSpan, parseYmd, parseYearMonth, yearSpan } from '../../shared/domain/calendar'
+import { addMonths, monthSpan, parseYearMonth, yearSpan } from '../../shared/domain/calendar'
 import type {
   QueryConditionSortField,
   TransactionRecordDto,
@@ -14,9 +14,9 @@ import type {
 import type { CategoryDto } from '../../shared/types/category'
 import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
+import { errorMessage } from '../../shared/errors'
 import { notify } from '../components/toast'
 import {
-  AutoComplete,
   Dropdown,
   Input,
   Modal,
@@ -31,51 +31,18 @@ import { Button } from '../components/button'
 import { Pagination } from '../components/pagination'
 import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
-import { DatePicker } from '../components/date-picker'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
 import { Tooltip } from '../components/tooltip'
 import { useSessionTimeRange } from '../state/time-range-session'
-
-/**
- * 新增记录的默认日期：列表里选中的是某一天就记那天，否则记今天。
- *
- * 选了单日说明用户就是在那天的账目上下文里操作，默认再落到今天会让新记录
- * 直接从当前列表里消失；跨天范围没有唯一的目标日，仍以今天为准。
- */
-function composerDefaultDate(start: string, end: string): string {
-  return start && start === end ? start : todayYmd()
-}
-
-/** 选中的日期 → 当天本地的 Unix 秒（记账只关心哪一天，取正午避开时区边界）。 */
-function timestampOfYmd(ymd: string): number {
-  const parsed = parseYmd(ymd)
-  if (!parsed) return Math.floor(Date.now() / 1000)
-  return Math.trunc(new Date(parsed.year, parsed.month - 1, parsed.day, 12, 0, 0).getTime() / 1000)
-}
-
-function errorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'msg' in error) {
-    return String((error as { msg: unknown }).msg)
-  }
-  if (error instanceof Error) return error.message
-  return String(error)
-}
-
-function signedAmount(transactionType: string, cents: number): string {
-  const text = centsToYuan(cents)
-  if (transactionType === 'income') return `+${text}`
-  if (transactionType === 'expense') return `-${text}`
-  return text
-}
-
-function typeLabel(transactionType: string): string {
-  if (transactionType === 'income') return '收入'
-  if (transactionType === 'expense') return '支出'
-  if (transactionType === 'transfer') return '转账'
-  return transactionType
-}
+import { RecordComposer } from './record-composer'
+import {
+  type ComposerRequest,
+  allTagOptions,
+  categoryOptions,
+  composerDefaultDate,
+} from './record-draft'
 
 interface RecordFilter {
   transactionType: string
@@ -106,7 +73,7 @@ function filterHasContent(filter: RecordFilter): boolean {
 /** 条件列表里的一行摘要，例如：`收入 / 工资奖金 / 工资`。 */
 function filterSummary(filter: RecordFilter): string {
   const parts: string[] = []
-  if (filter.transactionType) parts.push(typeLabel(filter.transactionType))
+  if (filter.transactionType) parts.push(transactionTypeText(filter.transactionType))
   if (filter.category) parts.push(filter.category)
   if (filter.tags.length > 0) parts.push(filter.tags.join('、'))
   if (filter.description.trim()) parts.push(`"${filter.description.trim()}"`)
@@ -141,12 +108,6 @@ const SORT_ORDER_OPTIONS = [
 const TYPE_OPTIONS = [
   { value: 'expense', label: '支出' },
   { value: 'income', label: '收入' },
-  { value: 'transfer', label: '转账' },
-]
-
-const COMPOSER_TYPE_OPTIONS = [
-  { value: 'income', label: '收入' },
-  { value: 'expense', label: '支出' },
   { value: 'transfer', label: '转账' },
 ]
 
@@ -193,19 +154,8 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   const [sortDraft, setSortDraft] = useState<QueryConditionSortField[]>(DEFAULT_SORT)
   const [showSort, setShowSort] = useState(false)
 
-  const [showComposer, setShowComposer] = useState(false)
-  const [editingRecord, setEditingRecord] = useState<TransactionRecordDto | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [composerError, setComposerError] = useState('')
-  const [recordDate, setRecordDate] = useState(todayYmd())
-  const [amount, setAmount] = useState('')
-  const [type, setType] = useState('expense')
-  const [category, setCategory] = useState('')
-  const [description, setDescription] = useState('')
-  const [tagList, setTagList] = useState<string[]>([])
-  const [templateId, setTemplateId] = useState('')
-  const [outlier, setOutlier] = useState(false)
-  const [keyEventDate, setKeyEventDate] = useState('')
+  /** 表单的开关与草稿都在 composer 里：页面只递这份请求，回执负责关窗与刷新。 */
+  const [composerRequest, setComposerRequest] = useState<ComposerRequest | null>(null)
 
   const [syncingId, setSyncingId] = useState('')
   const contentRef = useRef<HTMLDivElement>(null)
@@ -272,130 +222,27 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     void load()
   }, [load])
 
-  const resetComposerFields = useCallback((): void => {
-    setEditingRecord(null)
-    setComposerError('')
-    setRecordDate(composerDefaultDate(committedRange.start, committedRange.end))
-    setAmount('')
-    setType('expense')
-    setCategory('')
-    setDescription('')
-    setTagList([])
-    setTemplateId('')
-    setOutlier(false)
-    setKeyEventDate('')
+  const openComposer = useCallback((): void => {
+    setComposerRequest({
+      mode: 'create',
+      defaultDate: composerDefaultDate(committedRange.start, committedRange.end),
+    })
   }, [committedRange.end, committedRange.start])
 
-  const openComposer = useCallback((): void => {
-    resetComposerFields()
-    setShowComposer(true)
-  }, [resetComposerFields])
-
   const openEdit = useCallback((record: TransactionRecordDto): void => {
-    setEditingRecord(record)
-    setComposerError('')
-    setRecordDate(formatTimestamp(record.transactionAt, 'YYYY-MM-DD'))
-    setAmount(centsToYuan(record.price))
-    setType(record.transactionType)
-    setCategory(record.category)
-    setDescription(record.description)
-    setTagList([...record.tags])
-    setTemplateId('')
-    setOutlier(record.outlier)
-    setKeyEventDate(record.keyEventDate)
-    setShowComposer(true)
+    setComposerRequest({ mode: 'edit', record })
   }, [])
+
+  /** 保存成功：关表单、回第一页、刷新列表（与抽取前同一条收尾）。 */
+  const handleSaved = useCallback((): void => {
+    setComposerRequest(null)
+    setPage(1)
+    void load()
+  }, [load])
 
   const closeComposer = useCallback((): void => {
-    setShowComposer(false)
-    setEditingRecord(null)
+    setComposerRequest(null)
   }, [])
-
-  const saveRecord = useCallback(async (): Promise<void> => {
-    setComposerError('')
-    if (saving) return
-    if (!ledgerId) {
-      setComposerError('请先选择账本')
-      return
-    }
-    if (!category.trim()) {
-      setComposerError('请填写分类')
-      return
-    }
-    let price: number
-    try {
-      price = yuanToCents(amount)
-    } catch (moneyError) {
-      setComposerError(errorMessage(moneyError))
-      return
-    }
-    if (price === 0) {
-      setComposerError('金额不能为 0')
-      return
-    }
-
-    setSaving(true)
-    try {
-      const newId = await window.api.invoke('tr_create', {
-        ledgerId,
-        transactionId: '',
-        price,
-        transactionType: type,
-        category: category.trim(),
-        description: description.trim(),
-        tags: tagList,
-        transactionAt: timestampOfYmd(recordDate),
-        outlier,
-        keyEventDate: '',
-      })
-      try {
-        if (keyEventDate) {
-          await window.api.invoke('tr_link', { transaction_id: newId, date: keyEventDate })
-        }
-      } catch (linkError) {
-        await window.api.invoke('tr_delete', { id: newId }).catch(() => undefined)
-        throw linkError
-      }
-
-      if (editingRecord) {
-        try {
-          await window.api.invoke('tr_delete', { id: editingRecord.transactionId })
-        } catch (deleteError) {
-          try {
-            await window.api.invoke('tr_delete', { id: newId })
-            setComposerError(`删除旧记录失败：${errorMessage(deleteError)}`)
-          } catch {
-            setComposerError('新记录已保存，但旧记录清理失败，请手动删除重复记录')
-          }
-          return
-        }
-      }
-
-      notify(editingRecord ? '记录已更新' : '已记一笔')
-      setShowComposer(false)
-      resetComposerFields()
-      setPage(1)
-      await load()
-    } catch (createError) {
-      setComposerError(errorMessage(createError))
-    } finally {
-      setSaving(false)
-    }
-  }, [
-    amount,
-    category,
-    description,
-    editingRecord,
-    keyEventDate,
-    ledgerId,
-    load,
-    outlier,
-    recordDate,
-    resetComposerFields,
-    saving,
-    tagList,
-    type,
-  ])
 
   const otherLedgers = ledgers.filter((ledger) => ledger.id !== ledgerId)
 
@@ -439,45 +286,6 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     },
     [load],
   )
-
-  const applyTemplate = useCallback((nextId: string): void => {
-    setTemplateId(nextId)
-    if (!nextId) return
-    const template = templates.find((item) => item.templateId === nextId)
-    if (!template) return
-    setType(template.transactionType)
-    setCategory(template.category)
-    setDescription(template.description)
-    setTagList(template.tags)
-  }, [templates])
-
-  const saveTemplate = useCallback(async (): Promise<void> => {
-    setComposerError('')
-    if (!ledgerId) {
-      setComposerError('请先选择账本')
-      return
-    }
-    const name = `${typeLabel(type)} · ${category.trim() || '模板'}`
-    try {
-      const createdId = await window.api.invoke('template_create', {
-        template_id: '',
-        ledger_id: ledgerId,
-        template_name: name,
-        transaction_type: type,
-        category: category.trim(),
-        tags: tagList,
-        flags: '',
-        description: description.trim(),
-        sort_order: templates.length + 1,
-      })
-      const rows = await window.api.invoke('template_list', { ledger_id: ledgerId })
-      setTemplates(rows)
-      setTemplateId(createdId)
-      notify('模板已保存')
-    } catch (templateError) {
-      setComposerError(errorMessage(templateError))
-    }
-  }, [category, description, ledgerId, tagList, templates.length, type])
 
   const goLastMonth = useCallback((): void => {
     const parsed = parseYearMonth(todayYmd())
@@ -558,40 +366,8 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     setShowSort(false)
   }, [sortDraft])
 
-  const uniqueTagNames = Array.from(new Set(tagOptions.map((tag) => tag.name)))
-  const tagSelectOptions = uniqueTagNames.map((name) => ({ value: name, label: name }))
-  const composerTagOptions = tagNamesForCategory(tagOptions, category, type).map((name) => ({
-    value: name,
-    label: name,
-  }))
+  const tagSelectOptions = allTagOptions(tagOptions)
   const activeFilterCount = filters.filter(filterHasContent).length
-
-  /** 分类 / 类型一变，已选但不属于新组合的标签要摘掉，避免继续带着别的分类的标签保存。 */
-  const changeComposerCategory = useCallback(
-    (next: string): void => {
-      setCategory(next)
-      const valid = new Set(tagNamesForCategory(tagOptions, next, type))
-      setTagList((current) => current.filter((name) => valid.has(name)))
-    },
-    [tagOptions, type],
-  )
-
-  const changeComposerType = useCallback(
-    (next: string): void => {
-      setType(next)
-      const valid = new Set(tagNamesForCategory(tagOptions, category, next))
-      setTagList((current) => current.filter((name) => valid.has(name)))
-    },
-    [category, tagOptions],
-  )
-
-  const categoryOptionsFor = (transactionType: string): Array<{ value: string; label: string }> => {
-    const names = new Set<string>()
-    for (const item of categories) {
-      if (!transactionType || item.transactionType === transactionType) names.add(item.name)
-    }
-    return Array.from(names).map((name) => ({ value: name, label: name }))
-  }
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
@@ -626,7 +402,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
       width: 100,
       align: 'center',
       render: (value: string) => (
-        <span className={`tr-cell-type type-${value}`}>{typeLabel(value)}</span>
+        <span className={`tr-cell-type type-${value}`}>{transactionTypeText(value)}</span>
       ),
     },
     {
@@ -907,167 +683,17 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
         </div>
       </div>
 
-      <Modal
-        open={showComposer}
-        title={editingRecord ? '编辑记录' : '新增记录'}
-        width={640}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeComposer}
-      >
-        <div className="tr-modal-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">模板</span>
-            <div className="tr-modal-template">
-              <Select
-                aria-label="模板"
-                className="tr-modal-template-select"
-                data-testid="tr-template-select"
-                value={templateId || undefined}
-                placeholder="选择模板"
-                allowClear
-                popupMatchSelectWidth={false}
-                onChange={(value: string | undefined) => applyTemplate(value ?? '')}
-                options={templates.map((template) => ({
-                  value: template.templateId,
-                  label: template.templateName,
-                }))}
-              />
-              <Button
-                variant="secondary"
-                testId="tr-template-save"
-                disabled={!ledgerId}
-                onClick={() => void saveTemplate()}
-              >
-                保存为模板
-              </Button>
-            </div>
-          </div>
-
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">日期</span>
-              <DatePicker testId="tr-date" value={recordDate} onChange={setRecordDate} ariaLabel="日期" />
-            </div>
-
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">类型</span>
-              <Segmented
-                ariaLabel="类型"
-                testId="tr-new-type"
-                block
-                value={type}
-                onChange={changeComposerType}
-                options={COMPOSER_TYPE_OPTIONS}
-              />
-            </div>
-          </div>
-
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">分类</span>
-              <AutoComplete
-                value={category}
-                options={categoryOptionsFor(type)}
-                filterOption
-                onChange={changeComposerCategory}
-              >
-                <Input aria-label="分类" data-testid="tr-category" placeholder="选择或输入分类" />
-              </AutoComplete>
-            </div>
-
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">标签</span>
-              <Select
-                aria-label="标签"
-                data-testid="tr-tags"
-                mode="tags"
-                allowClear
-                virtual={false}
-                placeholder="选择一个或多个标签"
-                value={tagList}
-                onChange={(value: string[]) => setTagList(value)}
-                options={composerTagOptions}
-                notFoundContent={
-                  category.trim() ? '该分类下暂无标签' : '先填写分类，再选择标签'
-                }
-              />
-            </div>
-          </div>
-
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">标记</span>
-              <Select
-                aria-label="标记"
-                data-testid="tr-outlier"
-                mode="multiple"
-                allowClear
-                placeholder="选择标记"
-                value={outlier ? ['outlier'] : []}
-                onChange={(values: string[]) => setOutlier(values.includes('outlier'))}
-                options={[{ value: 'outlier', label: '离群值' }]}
-              />
-            </div>
-
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">关联事件日期</span>
-              <DatePicker
-                ariaLabel="关联事件日期"
-                testId="tr-event-date"
-                value={keyEventDate}
-                onChange={setKeyEventDate}
-                allowClear
-              />
-            </div>
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">描述</span>
-            <Input
-              aria-label="描述"
-              data-testid="tr-description"
-              placeholder="描述消费内容"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">金额</span>
-            <Input
-              aria-label="金额"
-              data-testid="tr-amount"
-              inputMode="decimal"
-              placeholder="0.00"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-            />
-          </div>
-
-          {composerError ? (
-            <p role="alert" className="m0-error" data-testid="tr-error">
-              {composerError}
-            </p>
-          ) : null}
-
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="tr-cancel" onClick={closeComposer}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="tr-save"
-              loading={saving}
-              disabled={!ledgerId || saving || loading}
-              onClick={() => void saveRecord()}
-            >
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <RecordComposer
+        ledgerId={ledgerId}
+        request={composerRequest}
+        categories={categories}
+        tagRows={tagOptions}
+        templates={templates}
+        listLoading={loading}
+        onSaved={handleSaved}
+        onRequestClose={closeComposer}
+        onTemplatesChanged={setTemplates}
+      />
 
       <Modal
         open={showSort}
@@ -1163,7 +789,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
                 onChange={(value: string | undefined) =>
                   updateFilterEditor({ category: value ?? '' })
                 }
-                options={categoryOptionsFor(filterEditor.transactionType)}
+                options={categoryOptions(categories, filterEditor.transactionType)}
               />
             </div>
 

@@ -80,6 +80,9 @@ describe('status messages', () => {
     { file: 'category-tag.tsx', id: 'tag-error', message: 'tagError' },
     { file: 'chart-editor.tsx', id: 'chart-create-error', message: 'createError' },
     { file: 'chart-editor.tsx', id: 'chart-rename-error', message: 'renameError' },
+    // 记录表单：动作级错误（选账本）没有字段可挂，字段级（分类 / 金额）各挂回自己的输入框
+    { file: 'record-composer.tsx', id: 'tr-composer-error', message: 'categoryError' },
+    { file: 'record-composer.tsx', id: 'tr-composer-error', message: 'amountError' },
   ]
 
   it.each(FIELD_ERRORS)('$id 与输入框双向关联', ({ file, id, message }) => {
