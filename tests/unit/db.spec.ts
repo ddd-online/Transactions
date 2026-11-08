@@ -1,4 +1,11 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -104,6 +111,65 @@ describe('workspace database', () => {
     expect(currentWorkspace()?.directory).toBe(second)
     closeWorkspace()
     expect(hasWorkspace()).toBe(false)
+  })
+})
+
+describe('corrupt workspace database', () => {
+  /** 把一个刚建好的库的文件头写坏：SQLite 之后任何一句都会报 "file is not a database"。 */
+  function corruptHeader(directory: string): { path: string; size: number } {
+    openWorkspace(directory)
+    closeWorkspace()
+    const path = join(directory, 'transactions.db')
+    const size = statSync(path).size
+    const bytes = readFileSync(path)
+    bytes.write('not a database!!', 0, 'ascii')
+    writeFileSync(path, bytes)
+    return { path, size }
+  }
+
+  it('reports the file and points at the restore entry', () => {
+    const directory = temporaryDirectory()
+    const { path } = corruptHeader(directory)
+
+    let caught: unknown = null
+    try {
+      openWorkspace(directory)
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(AppError)
+    const error = caught as AppError
+    expect(error.message).toContain('已损坏')
+    expect(error.message).toContain(path)
+    expect(error.message).toContain('从备份恢复')
+    expect(hasWorkspace()).toBe(false)
+  })
+
+  it('leaves the broken file alone instead of silently creating an empty database', () => {
+    const directory = temporaryDirectory()
+    const { path, size } = corruptHeader(directory)
+
+    expect(() => openWorkspace(directory)).toThrow(AppError)
+
+    expect(existsSync(path)).toBe(true)
+    expect(statSync(path).size).toBe(size)
+  })
+
+  it('refuses a missing directory when mustExist is set and does not create it', () => {
+    const missing = join(temporaryDirectory(), '已经删除的工作空间')
+
+    let caught: unknown = null
+    try {
+      openWorkspace(missing, { mustExist: true })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(AppError)
+    expect((caught as AppError).message).toContain('已经不存在')
+    expect((caught as AppError).status).toBe(400)
+    expect(existsSync(missing)).toBe(false)
   })
 })
 

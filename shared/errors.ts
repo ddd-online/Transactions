@@ -45,6 +45,19 @@ export function legacyWorkspace(): AppError {
   )
 }
 
+/**
+ * 工作空间数据库坏了：说清是哪个文件、坏在哪，并直接指向设置里的恢复入口。
+ *
+ * 不自动修复、不静默建空库 —— 一句 SQLite 原文会让人以为「换个工作空间」就没事了，
+ * 而这恰恰是数据最容易被再盖一次的时机。
+ */
+export function corruptWorkspace(databasePath: string, detail: string): AppError {
+  return new AppError(
+    `工作空间数据库已损坏：${databasePath}（${detail}）。请到「设置 → 数据 → 从备份恢复」用备份还原。`,
+    { code: ERR_CODE_DEFAULT, status: 500 },
+  )
+}
+
 export function toErrorEnvelope(error: unknown): ErrorEnvelope {
   if (error instanceof AppError) {
     return { code: error.code, msg: error.message, status: error.status }

@@ -1,14 +1,29 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { Db, openDatabase } from './driver'
+import { Db, openDatabase, quickCheckDetail } from './driver'
 import { migrate } from './migrate'
-import { AppError, ERR_CODE_DEFAULT, legacyWorkspace } from '../../shared/errors'
+import {
+  AppError,
+  ERR_CODE_DEFAULT,
+  corruptWorkspace,
+  legacyWorkspace,
+} from '../../shared/errors'
 
 export interface OpenedWorkspace {
   directory: string
   databasePath: string
   db: Db
+}
+
+export interface OpenWorkspaceOptions {
+  /**
+   * 目录必须已经存在（最近工作空间里点一条被删掉的记录时用）。
+   *
+   * 给 `true` 时**不建目录**：替用户把一个已经删掉的路径重新建出来，
+   * 只会让「这个工作空间不见了」变成「它怎么空了」。
+   */
+  mustExist?: boolean
 }
 
 let opened: OpenedWorkspace | null = null
@@ -20,21 +35,41 @@ function tableExists(db: Db, name: string): boolean {
   return row !== undefined
 }
 
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 /**
  * 打开（或创建）一个工作空间。
  *
- * 顺序即契约：校验路径 → 建目录 → 打开库 → 源库识别 → 建库/升级 → 记住当前工作空间。
+ * 顺序即契约：校验路径 → （可选的）目录必须存在 → 建目录 → 打开库 → 源库识别 →
+ * 快速检查 → 建库/升级 → 记住当前工作空间。
+ *
+ * 快速检查只做 `PRAGMA quick_check`（全量 `integrity_check` 留给备份与恢复两个显式动作）：
+ * 库坏了要当场说清楚「哪个文件、坏了、请从备份恢复」，绝不静默建一个空库。
  */
-export function openWorkspace(directory: string): OpenedWorkspace {
+export function openWorkspace(
+  directory: string,
+  options: OpenWorkspaceOptions = {},
+): OpenedWorkspace {
   const raw = directory.trim()
   if (!raw) {
     throw new AppError('工作目录路径不能为空', { status: 400 })
+  }
+  if (options.mustExist && !existsSync(raw)) {
+    throw new AppError(`这个工作空间目录已经不存在了：${raw}`, { status: 400 })
   }
 
   mkdirSync(raw, { recursive: true })
   const databasePath = join(raw, 'transactions.db')
   const isNew = !existsSync(databasePath)
-  const db = openDatabase(databasePath)
+  let db: Db
+  try {
+    db = openDatabase(databasePath)
+  } catch (error) {
+    // 坏到连打开 / 写 pragma 都不行：同一句「库坏了」，指到恢复入口
+    throw corruptWorkspace(databasePath, messageOf(error))
+  }
 
   try {
     if (tableExists(db, 'tbl_billadm_schema_migration')) {
@@ -45,6 +80,12 @@ export function openWorkspace(directory: string): OpenedWorkspace {
         code: ERR_CODE_DEFAULT,
         status: 409,
       })
+    }
+    if (!isNew) {
+      const detail = quickCheckDetail(db)
+      if (detail !== 'ok') {
+        throw corruptWorkspace(databasePath, detail)
+      }
     }
     migrate(db, databasePath)
   } catch (error) {

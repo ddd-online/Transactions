@@ -74,7 +74,8 @@ if (!hasSingleInstanceLock) {
       const appDirectory = isDev ? join(app.getAppPath(), 'output') : dirname(app.getPath('exe'))
       initLogging(appDirectory)
 
-      const config = ConfigStore.forApp(isDev)
+      // 「文档」由主进程给：配置层不 import electron，备份默认位置按系统文档目录解析
+      const config = ConfigStore.forApp(isDev, app.getPath('documents'))
       logStartup(isDev, config.path)
       applyAppearance(config.get().appearance)
       void applyProxy(config.get().proxy)
