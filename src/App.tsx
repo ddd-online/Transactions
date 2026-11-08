@@ -3,8 +3,6 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, type JSX } fr
 import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
 import {
-  APP_QUIT_PROGRESS,
-  APP_QUIT_STARTED,
   UPDATE_DOWNLOAD_COMPLETE,
   UPDATE_DOWNLOAD_ERROR,
   UPDATE_DOWNLOAD_PROGRESS,
@@ -40,6 +38,7 @@ import { PageBoundary } from './components/page-boundary'
 import { PageRailProvider } from './components/page-layout'
 import { QuitScreen } from './components/quit-screen'
 import { Icon, type IconName } from './components/icon'
+import { useQuitFlow } from './state/use-quit-flow'
 
 type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
 
@@ -70,11 +69,10 @@ export function App(): JSX.Element {
   >('records')
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [maximized, setMaximized] = useState(false)
-  const [quitting, setQuitting] = useState(false)
-  const [quitLabel, setQuitLabel] = useState('正在保存窗口状态')
   const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
+  const { quitting, quitLabel } = useQuitFlow()
   const ledgerMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -202,41 +200,12 @@ export function App(): JSX.Element {
       if (message.event === WINDOW_STATE_CHANGED) {
         setMaximized(message.payload === true)
       }
-      if (message.event === APP_QUIT_STARTED) {
-        // 与主进程第一步同名：遮罩出现到第一次报进度之间只隔几十毫秒，
-        // 换一句不同的字只会闪一下。
-        setQuitLabel('正在保存窗口状态')
-        setQuitting(true)
-      }
-      if (message.event === APP_QUIT_PROGRESS) {
-        const step = message.payload as { label?: unknown } | null
-        if (step && typeof step.label === 'string') setQuitLabel(step.label)
-      }
     })
 
     return () => {
       alive = false
     }
   }, [])
-
-  // 退出遮罩画到屏幕上之后再告诉主进程「可以往下走了」：主进程据此才去关库、关窗。
-  // 隐藏窗口里 rAF 不跑，所以另有一个定时器兜底；主进程自己也有超时，不会一直等。
-  useEffect(() => {
-    if (!quitting) return undefined
-    let settled = false
-    const ready = (): void => {
-      if (settled) return
-      settled = true
-      void window.api.invoke('app_quit_ready', {}).catch(() => undefined)
-    }
-    const frame = window.requestAnimationFrame(() => window.requestAnimationFrame(ready))
-    const timer = window.setTimeout(ready, 200)
-    return () => {
-      settled = true
-      window.cancelAnimationFrame(frame)
-      window.clearTimeout(timer)
-    }
-  }, [quitting])
 
   const openWorkspace = useCallback(async (): Promise<void> => {
     setBusy(true)
