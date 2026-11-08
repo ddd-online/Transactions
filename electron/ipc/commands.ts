@@ -64,6 +64,7 @@ import { createEventHandlers } from './handlers/events'
 import { createLabelHandlers } from './handlers/labels'
 import { createRecordHandlers } from './handlers/records'
 import { createTodoHandlers } from './handlers/todo'
+import { createUpdateHandlers } from './handlers/update'
 import { createSettingsHandlers } from './handlers/settings'
 import { createShellHandlers } from './handlers/shell'
 
@@ -86,27 +87,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     ...createEventHandlers(ctx),
     ...createDiaryHandlers(ctx),
     ...createTodoHandlers(ctx),
-    async update_check() {
-      return ctx.updater.check(app.getVersion())
-    },
-
-    async update_download(request) {
-      const raw = asObject(request)
-      return ctx.updater.download(String(raw.url ?? ''), String(raw.digest ?? ''))
-    },
-
-    update_download_status() {
-      return ctx.updater.snapshot()
-    },
-
-    update_cancel() {
-      return ctx.updater.cancel()
-    },
-
-    update_install() {
-      return ctx.updater.install()
-    },
-
+    ...createUpdateHandlers(ctx),
     stock_account_summary(request) {
       const ledgerId = String(asObject(request).ledger_id ?? '')
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
