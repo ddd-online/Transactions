@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
-import { Checkbox, Input, Modal, Popconfirm, Select } from 'antd'
 
 import { reorderWithChanges } from '../../shared/domain/list-order'
 import type { TransactionTemplateDto } from '../../shared/types/template'
 import { Button } from '../components/button'
-import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
-import { ScrollArea } from '../components/scroll-area'
-import { Segmented } from '../components/segmented'
 import { notify } from '../components/toast'
+import { TemplateForm } from './template-form'
+import { TemplateList } from './template-list'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -18,22 +16,6 @@ function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   return String(error)
 }
-
-function typeLabel(transactionType: string): string {
-  if (transactionType === 'income') return '收入'
-  if (transactionType === 'expense') return '支出'
-  if (transactionType === 'transfer') return '转账'
-  return transactionType
-}
-
-const TYPE_OPTIONS = [
-  { value: 'expense', label: '支出' },
-  { value: 'income', label: '收入' },
-  { value: 'transfer', label: '转账' },
-]
-
-const NAME_MAX_LENGTH = 20
-const DESCRIPTION_MAX_LENGTH = 50
 
 export interface TemplatePageProps {
   ledgerId: string
@@ -55,9 +37,6 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
   const [formError, setFormError] = useState('')
   const [categories, setCategories] = useState<string[]>([])
   const [tagNames, setTagNames] = useState<string[]>([])
-
-  const [dragFrom, setDragFrom] = useState<number | null>(null)
-  const [dragOver, setDragOver] = useState<number | null>(null)
 
   const load = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -227,8 +206,6 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
 
   const move = useCallback(
     async (from: number, to: number): Promise<void> => {
-      setDragFrom(null)
-      setDragOver(null)
       const result = reorderWithChanges(
         templates,
         from,
@@ -281,223 +258,36 @@ export function TemplatePage({ ledgerId }: TemplatePageProps): JSX.Element {
           </p>
         ) : null}
 
-        <ScrollArea className="tpl-table">
-          <div className="tpl-thead">
-            <div className="tpl-th tpl-th--drag" />
-            <div className="tpl-th">模板名称</div>
-            <div className="tpl-th tpl-th--center">交易类型</div>
-            <div className="tpl-th">分类</div>
-            <div className="tpl-th">标签</div>
-            <div className="tpl-th">标记</div>
-            <div className="tpl-th">描述</div>
-            <div className="tpl-th tpl-th--center">操作</div>
-          </div>
-
-          <div className="tpl-tbody">
-            {templates.length === 0 ? (
-              <EmptyState
-                testId="template-page-empty"
-                title={ledgerId ? '暂无模板' : '请先创建/选择账本'}
-              />
-            ) : (
-              templates.map((template, index) => (
-                <div
-                  key={template.templateId}
-                  className={`tpl-tr ui-drag-item${dragFrom === index ? ' is-dragging' : ''}${dragOver === index ? ' is-over' : ''}`}
-                  data-testid="template-row"
-                  draggable
-                  onDragStart={() => setDragFrom(index)}
-                  onDragOver={(event) => {
-                    event.preventDefault()
-                    setDragOver(index)
-                  }}
-                  onDrop={() => {
-                    if (dragFrom !== null) void move(dragFrom, index)
-                  }}
-                  onDragEnd={() => {
-                    setDragFrom(null)
-                    setDragOver(null)
-                  }}
-                >
-                  <div className="tpl-td tpl-td--drag">
-                    <span className="ui-drag-handle" title="拖动排序">
-                      <Icon name="DragHandle" size={16} />
-                    </span>
-                  </div>
-
-                  <div className="tpl-td">
-                    <span className="tpl-cell-ellipsis" title={template.templateName}>
-                      {template.templateName}
-                    </span>
-                  </div>
-
-                  <div className="tpl-td tpl-td--center">
-                    <span className={`ui-tag ui-tag--${template.transactionType}`}>
-                      {typeLabel(template.transactionType)}
-                    </span>
-                  </div>
-
-                  <div className="tpl-td">{template.category || '-'}</div>
-
-                  <div className="tpl-td tpl-td--tags">
-                    {template.tags.length === 0 ? (
-                      <span className="tpl-dash">-</span>
-                    ) : (
-                      template.tags.map((tag) => (
-                        <span key={tag} className="ui-tag">
-                          {tag}
-                        </span>
-                      ))
-                    )}
-                  </div>
-
-                  <div className="tpl-td">
-                    {template.flags ? (
-                      <span className="ui-tag ui-tag--outlier">离群值</span>
-                    ) : (
-                      <span className="tpl-dash">-</span>
-                    )}
-                  </div>
-
-                  <div className="tpl-td">
-                    <span className="tpl-cell-ellipsis" title={template.description}>
-                      {template.description || '-'}
-                    </span>
-                  </div>
-
-                  <div className="tpl-td tpl-td--center">
-                    <Popconfirm
-                      title={`删除模板「${template.templateName}」？`}
-                      okText="删除"
-                      cancelText="取消"
-                      okType="danger"
-                      placement="topRight"
-                      onConfirm={() => void remove(template.templateId)}
-                    >
-                      <button
-                        type="button"
-                        className="tr-icon-btn is-danger-static"
-                        data-testid="template-delete"
-                        aria-label={`删除模板 ${template.templateName}`}
-                      >
-                        <Icon name="Trash" size={14} />
-                      </button>
-                    </Popconfirm>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
+        <TemplateList
+          templates={templates}
+          hasLedger={Boolean(ledgerId)}
+          onMove={(from, to) => void move(from, to)}
+          onDelete={(templateId) => void remove(templateId)}
+        />
       </div>
 
-      <Modal
+      <TemplateForm
         open={createOpen}
-        title="新建模板"
-        width={520}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeCreate}
-      >
-        <div className="tr-modal-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">模板名称</span>
-            <Input
-              aria-label="模板名称"
-              data-testid="template-name"
-              placeholder="请输入模板名称"
-              maxLength={NAME_MAX_LENGTH}
-              value={formName}
-              onChange={(event) => setFormName(event.target.value)}
-            />
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">交易类型</span>
-            <Segmented
-              ariaLabel="交易类型"
-              testId="template-type"
-              value={formType}
-              onChange={changeType}
-              options={TYPE_OPTIONS}
-            />
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">分类</span>
-            <Select
-              aria-label="分类"
-              data-testid="template-category"
-              value={formCategory || undefined}
-              placeholder="选择消费分类"
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              popupMatchSelectWidth={false}
-              onChange={changeCategory}
-              options={categories.map((name) => ({ value: name, label: name }))}
-            />
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">标签</span>
-            {tagNames.length === 0 ? (
-              <span className="page-hint">该分类下暂无标签</span>
-            ) : (
-              <Checkbox.Group
-                value={formTags}
-                options={tagNames.map((name) => ({ value: name, label: name }))}
-                onChange={(values) => setFormTags(values.map(String))}
-              />
-            )}
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">描述</span>
-            <Input
-              aria-label="标签"
-              data-testid="template-description"
-              placeholder="请输入描述"
-              maxLength={DESCRIPTION_MAX_LENGTH}
-              value={formDescription}
-              onChange={(event) => setFormDescription(event.target.value)}
-            />
-          </div>
-
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">标记</span>
-            <Checkbox
-              data-testid="template-outlier"
-              checked={formOutlier}
-              onChange={(event) => setFormOutlier(event.target.checked)}
-            >
-              离群值
-            </Checkbox>
-          </div>
-
-          {formError ? (
-            <p role="alert" className="m0-error" data-testid="template-modal-error">
-              {formError}
-            </p>
-          ) : null}
-
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="template-cancel" onClick={closeCreate}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="template-create"
-              loading={saving}
-              disabled={saving || !ledgerId}
-              onClick={() => void submit()}
-            >
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        name={formName}
+        type={formType}
+        category={formCategory}
+        tags={formTags}
+        description={formDescription}
+        outlier={formOutlier}
+        error={formError}
+        saving={saving}
+        categories={categories}
+        tagNames={tagNames}
+        hasLedger={Boolean(ledgerId)}
+        onNameChange={setFormName}
+        onTypeChange={changeType}
+        onCategoryChange={changeCategory}
+        onTagsChange={setFormTags}
+        onDescriptionChange={setFormDescription}
+        onOutlierChange={setFormOutlier}
+        onClose={closeCreate}
+        onSubmit={() => void submit()}
+      />
     </PageLayout>
   )
 }

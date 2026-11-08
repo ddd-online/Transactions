@@ -1,0 +1,374 @@
+/* ---------------- 右栏：关联消费记录 ---------------- */
+
+.key-event-linked {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.key-event-linked__cards {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* 关联交易行：与事件行同一套平铺语言 —— 没有卡片壳，行间发丝线，悬停铺底色 */
+.key-event-linked__card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  min-height: 64px;
+  background-color: transparent;
+  transition: background-color var(--transactions-transition-fast);
+}
+
+.key-event-linked__card + .key-event-linked__card {
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.key-event-linked__card:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.key-event-linked__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.key-event-linked__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+}
+
+.key-event-linked__value {
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+}
+
+.key-event-linked__amount {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  flex-shrink: 0;
+}
+
+.key-event-linked__amount.amount-income {
+  color: var(--transactions-color-income);
+}
+
+.key-event-linked__amount.amount-expense {
+  color: var(--transactions-color-expense);
+}
+
+.key-event-linked__amount.amount-transfer {
+  color: var(--transactions-color-transfer);
+}
+
+.key-event-linked__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  min-height: 20px;
+}
+
+.key-event-linked__tags {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--transactions-space-xs);
+  flex-shrink: 0;
+}
+
+.key-event-linked__tag {
+  font-size: var(--transactions-size-text-caption);
+  background-color: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-primary);
+  border-radius: var(--transactions-radius-sm);
+  padding: 0 var(--transactions-space-xs);
+}
+
+.key-event-linked__desc {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------------- 图片选择器 / 文本域（组件级） ---------------- */
+
+.image-picker {
+  display: inline-flex;
+}
+
+.image-picker__input {
+  display: none;
+}
+
+/* 「添加图片」现在与「编辑描述 / 取消 / 保存」同在详情底栏，风格也统一成
+ * **Small 次要按钮**（`.ui-btn--sm` + `.ui-btn--secondary`：28px / 左右 12px / 13px）。
+ *
+ * 它渲染成 `<label>` 包一个隐藏的 `<input type=file>`（见 `ImagePicker`），
+ * 复用不了 `.ui-btn--*` 类，只能把那一档的度量手抄到这里 ——
+ * **改 `.ui-btn--sm` / `.ui-btn--secondary` 时请一并对照这两处**。
+ * 禁用态用兄弟选择器 `.image-picker__input:disabled ~ …`（DOM 里 input 在按钮之前），
+ * 取值与 `.ui-btn:disabled` 对齐。 */
+.image-picker__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  height: var(--transactions-btn-height-sm);
+  padding: 0 var(--transactions-btn-padding-h-sm);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background: var(--transactions-color-major-background);
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-btn-font-size-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transactions-transition-fast);
+  white-space: nowrap;
+}
+
+.image-picker__button:hover {
+  border-color: var(--transactions-color-border-l2);
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.image-picker__input:disabled ~ .image-picker__button {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.image-picker__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 与 `.ui-btn__icon` 同：随字号缩放（13px 字号 → 13px 图标） */
+  width: 1em;
+  height: 1em;
+}
+
+/* ---------------- 上传进度条 ---------------- */
+
+.upload-progress-bar {
+  width: 100%;
+}
+
+.upload-progress-bar .progress-summary {
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.upload-progress-bar .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--transactions-space-xs);
+}
+
+.upload-progress-bar .summary-text {
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+}
+
+.upload-progress-bar .summary-percent {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-progress-bar .summary-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-minor-background);
+  overflow: hidden;
+}
+
+.upload-progress-bar .summary-bar-fill {
+  height: 100%;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-primary);
+  transform-origin: left;
+  transition: transform var(--transactions-transition-normal);
+}
+
+.upload-progress-bar .summary-bar-fill.is-done {
+  background: var(--transactions-color-success);
+}
+
+.upload-progress-bar .summary-bar-fill.is-error {
+  background: var(--transactions-color-expense);
+}
+
+.upload-progress-bar .file-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.upload-progress-bar .file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-xs) var(--transactions-space-sm);
+  border-radius: var(--transactions-radius-sm);
+}
+
+.upload-progress-bar .file-row--uploading {
+  background: var(--transactions-color-hover-bg);
+}
+
+.upload-progress-bar .file-row--error {
+  background: var(--transactions-color-danger-hover-bg);
+}
+
+.upload-progress-bar .file-dot {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-progress-bar .file-row--done .file-dot {
+  color: var(--transactions-color-success);
+}
+
+.upload-progress-bar .file-row--uploading .file-dot {
+  color: var(--transactions-color-primary);
+}
+
+.upload-progress-bar .file-row--error .file-dot {
+  color: var(--transactions-color-expense);
+}
+
+.upload-progress-bar .dot-pending {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--transactions-color-text-disabled);
+}
+
+.upload-progress-bar .file-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.upload-progress-bar .file-name {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-progress-bar .file-bar-track {
+  width: 100%;
+  height: 2px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-minor-background);
+  overflow: hidden;
+}
+
+.upload-progress-bar .file-bar-fill {
+  height: 100%;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-primary);
+  transform-origin: left;
+  transition: transform var(--transactions-transition-fast);
+}
+
+.upload-progress-bar .file-status {
+  flex-shrink: 0;
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-progress-bar .file-status--pending {
+  color: var(--transactions-color-text-disabled);
+}
+
+.upload-progress-bar .file-status--uploading {
+  color: var(--transactions-color-primary);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.upload-progress-bar .file-status--done {
+  color: var(--transactions-color-success);
+}
+
+.upload-progress-bar .file-status--error {
+  color: var(--transactions-color-expense);
+}
+
+.upload-progress-bar .error-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--transactions-space-sm) var(--transactions-space-sm) 0;
+  gap: var(--transactions-space-sm);
+}
+
+.upload-progress-bar .error-msg {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-expense);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-progress-bar .error-btns {
+  display: flex;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .key-event-card,
+  .key-event-card__bar,
+  .key-event-thumb {
+    transition: none;
+    animation: none;
+  }
+  .key-event-card:hover,
+  .key-event-thumb:hover {
+    transform: none;
+  }
+  /* 收起/展开不做动画：栏宽与把手瞬间到位，但 `visibility` 的延迟也要撤掉，
+   * 否则收起后右栏还会在无障碍树里多留 220ms。 */
+  .key-event-body,
+  .key-event-panel--right,
+  .key-event-body.is-rail-collapsed .key-event-panel--right,
+  .key-event-rail-toggle {
+    transition: none;
+  }
+}
+
+/* 事件卡选中时名称转强调色（与持仓/已清仓卡一致） */
+.key-event-card.is-active .key-event-card__name {
+  color: var(--transactions-color-primary);
+}

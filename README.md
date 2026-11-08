@@ -77,6 +77,9 @@ pnpm test:e2e       # Playwright
 E2E 默认 **4 并发**；`$env:TRANSACTIONS_E2E_WORKERS=1; pnpm test:e2e` 退回串行（细节见
 `AGENTS.md` 的验证纪律）。
 
+静态护栏里的**文件规模棘轮**（`scripts/file-size-budget.mjs`）按页面 450 / 渲染层 500 / 样式 1200 /
+命令层 300 行卡预算；允许清单只减不增，清单归零才算收敛完成（见 `AGENTS.md` 的「文件规模」）。
+
 ## 发布纪律
 
 只有用户明确要求发布时才运行 `build/release.ps1` 或创建 GitHub Release。日常改动只构建、测试、提交、推送。

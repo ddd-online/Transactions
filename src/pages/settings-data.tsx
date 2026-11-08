@@ -1,15 +1,17 @@
-import { Switch as AntSwitch } from 'antd'
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import { formatBytes } from '../../shared/domain/backup'
-import { formatTimestamp } from '../../shared/domain/time'
 import { errorMessage } from '../../shared/errors'
 import type { BackupEntryDto, BackupResultDto } from '../../shared/types/backup'
 import type { ConfigSnapshot } from '../../shared/types/config'
-import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
-import { SettingsRow } from '../components/settings-row'
 import { notify } from '../components/toast'
+import { SettingsDataBackup } from './settings-data-backup'
+import {
+  SettingsDataBackupList,
+  SettingsDataRecentList,
+  baseName,
+  samePath,
+} from './settings-data-list'
 
 /**
  * 设置 · 数据分栏：备份、恢复、数据目录与最近工作空间。
@@ -31,18 +33,6 @@ export interface SettingsDataProps {
   /** 直接开某个目录（最近工作空间）：外壳负责落库与刷新 */
   onOpenWorkspace: (dir: string) => Promise<void>
   onConfigChanged: (config: ConfigSnapshot) => void
-}
-
-/** 目录路径的最后一段；路径为空时回退原串。 */
-function baseName(path: string): string {
-  const parts = path.split(/[\\/]/).filter((part) => part.length > 0)
-  return parts[parts.length - 1] ?? path
-}
-
-/** 路径是不是同一个目录（渲染层不能 import `node:path`：去掉尾分隔符 + Windows 不分大小写）。 */
-function samePath(left: string, right: string): boolean {
-  const normalize = (value: string): string => value.replace(/[\\/]+$/, '').toLowerCase()
-  return normalize(left) === normalize(right)
 }
 
 /** 正在进行的动作；空串 = 空闲。`open-*` 各占一项，不再拼字符串。 */
@@ -234,205 +224,41 @@ export function SettingsData({
 
   return (
     <div className="st-list">
-      <div className="st-card">
-        <div className="st-card-info">
-          <span className="st-card-title">立即备份</span>
-          <span className="st-card-desc">
-            把当前工作空间的库与图片资产复制成一份带时间戳的目录，放在下面的备份位置
-          </span>
-        </div>
-        <div className="st-card-action">
-          <Button
-            variant="secondary"
-            testId="backup-now"
-            disabled={!workspace || busyAny}
-            loading={busy === 'backup'}
-            onClick={() => void backupNow()}
-          >
-            立即备份
-          </Button>
-        </div>
-      </div>
-      {result ? (
-        <p className="st-backup-result" data-testid="backup-result">
-          已备份 <span className="st-backup-mono">{result.name}</span>（
-          <span className="st-backup-mono">{formatBytes(result.sizeBytes)}</span>，用时{' '}
-          <span className="st-backup-mono">{result.durationMs}</span>ms）
-        </p>
-      ) : null}
-
-      <SettingsRow title="备份位置" description="手动备份与恢复前副本都落在这一目录；默认在「文档」下">
-        <input
-          className="st-backup-dir-input"
-          data-testid="backup-dir"
-          readOnly
-          value={config?.backupDir ?? ''}
-          placeholder="尚未读取到备份位置"
-          title={config?.backupDir ?? ''}
-        />
-        <Button
-          variant="secondary"
-          testId="backup-dir-change"
-          disabled={!config || busyAny}
-          onClick={() => void changeBackupDir()}
-        >
-          更改
-        </Button>
-        <Button
-          variant="secondary"
-          testId="backup-open-dir"
-          disabled={busyAny}
-          onClick={() => void openDirectory('backup')}
-        >
-          打开
-        </Button>
-      </SettingsRow>
-
-      <SettingsRow title="工作空间目录" description="当前账本的库与图片所在的位置">
-        <Button
-          variant="secondary"
-          testId="workspace-open-dir"
-          disabled={!workspace || busyAny}
-          onClick={() => void openDirectory('workspace')}
-        >
-          打开
-        </Button>
-      </SettingsRow>
-
-      <SettingsRow
-        title="自动备份"
-        description="每天第一次打开工作空间时另存一份只含库的当日快照，保留最近 7 份"
+      <SettingsDataBackup
+        workspace={workspace}
+        config={config}
+        result={result}
+        busy={busyAny}
+        backingUp={busy === 'backup'}
+        onBackupNow={backupNow}
+        onChangeBackupDir={changeBackupDir}
+        onOpenDirectory={openDirectory}
+        onAutoBackupChange={setAutoBackup}
+        onPickRestoreFile={pickRestoreFile}
       >
-        <AntSwitch
-          checked={config?.autoBackup ?? true}
-          disabled={!config || busyAny}
-          data-testid="auto-backup"
-          aria-label="自动备份"
-          onChange={(next) => void setAutoBackup(next)}
+        <SettingsDataBackupList
+          workspace={workspace}
+          backups={backups}
+          loading={loading}
+          busy={busyAny}
+          onSelect={(entry) =>
+            setRestoreTarget({
+              path: entry.path,
+              name: entry.name,
+              workspaceDir: entry.workspaceDir,
+            })
+          }
         />
-      </SettingsRow>
+      </SettingsDataBackup>
 
-      <div className="st-card st-card--block">
-        <div className="st-panel-head">
-          <div className="st-card-info">
-            <span className="st-card-title">从备份恢复</span>
-            <span className="st-card-desc">
-              选中一份备份覆盖当前数据；恢复前会先把当前库另存为 pre-restore 副本，完成后应用自动重启
-            </span>
-          </div>
-          <div className="st-panel-actions">
-            <Button
-              variant="secondary"
-              testId="backup-restore-pick"
-              disabled={!workspace || busyAny}
-              onClick={() => void pickRestoreFile()}
-            >
-              从文件恢复…
-            </Button>
-          </div>
-        </div>
-        <div className="st-backup-list" data-testid="backup-list">
-          {!workspace ? (
-            <p className="st-backup-empty">尚未打开工作空间；打开后这里会列出可恢复的备份。</p>
-          ) : loading ? (
-            <p className="st-backup-empty">正在读取备份…</p>
-          ) : backups.length === 0 ? (
-            <p className="st-backup-empty">
-              暂无备份。点「立即备份」生成第一份，也可以用「从文件恢复…」打开已有的 .db。
-            </p>
-          ) : (
-            backups.map((entry) => {
-              const foreign =
-                entry.workspaceDir.trim() !== '' && !samePath(entry.workspaceDir, workspace)
-              return (
-                <button
-                  key={entry.path}
-                  type="button"
-                  className={`st-backup-row${entry.restorable ? '' : ' is-disabled'}`}
-                  data-testid="backup-row"
-                  disabled={!entry.restorable || busyAny}
-                  title={entry.restorable ? entry.path : entry.problem}
-                  onClick={() =>
-                    setRestoreTarget({
-                      path: entry.path,
-                      name: entry.name,
-                      workspaceDir: entry.workspaceDir,
-                    })
-                  }
-                >
-                  <span className="st-backup-main">
-                    <span className="st-backup-name">{entry.name}</span>
-                    {foreign ? (
-                      <span className="st-backup-badge" title={entry.workspaceDir}>
-                        其他工作空间 {entry.workspaceDir}
-                      </span>
-                    ) : null}
-                    {entry.hasAssets ? <span className="st-backup-badge">含图片</span> : null}
-                    {entry.restorable ? null : (
-                      <span className="st-backup-problem">{entry.problem}</span>
-                    )}
-                  </span>
-                  <span className="st-backup-meta">
-                    <span className="st-backup-mono">
-                      {formatTimestamp(entry.createdAt, 'YYYY-MM-DD HH:mm:ss')}
-                    </span>
-                    <span className="st-backup-mono">{formatBytes(entry.sizeBytes)}</span>
-                    <span className="st-backup-mono">库版本 v{entry.schemaVersion}</span>
-                  </span>
-                </button>
-              )
-            })
-          )}
-        </div>
-      </div>
-
-      <div className="st-card st-card--block">
-        <div className="st-panel-head">
-          <div className="st-card-info">
-            <span className="st-card-title">最近工作空间</span>
-            <span className="st-card-desc">
-              最近打开过的 5 个位置；点一条切换，当前这条置灰，不可再点
-            </span>
-          </div>
-          <div className="st-panel-actions">
-            <Button
-              variant="secondary"
-              disabled={busyAny}
-              loading={busy === 'pick-workspace'}
-              onClick={() => void pickWorkspace()}
-            >
-              选择工作空间…
-            </Button>
-          </div>
-        </div>
-        <div className="st-recent-list" data-testid="recent-workspace-list">
-          {recent.length === 0 ? (
-            <p className="st-recent-empty">还没有最近打开的工作空间。</p>
-          ) : (
-            recent.map((dir) => {
-              const current = dir === workspace
-              return (
-                <button
-                  key={dir}
-                  type="button"
-                  className={`st-recent-row${current ? ' is-current' : ''}`}
-                  data-testid="recent-workspace-row"
-                  data-current={current ? 'true' : undefined}
-                  disabled={current || busyAny}
-                  title={current ? '当前工作空间' : `切换到 ${dir}`}
-                  onClick={() => void openRecent(dir)}
-                >
-                  <span className="st-recent-main">
-                    <span className="st-recent-name">{baseName(dir)}</span>
-                    <span className="st-recent-path">{dir}</span>
-                  </span>
-                  {current ? <span className="st-recent-badge">当前</span> : null}
-                </button>
-              )
-            })
-          )}
-        </div>
-      </div>
+      <SettingsDataRecentList
+        workspace={workspace}
+        recent={recent}
+        busy={busyAny}
+        picking={busy === 'pick-workspace'}
+        onPickWorkspace={pickWorkspace}
+        onOpen={openRecent}
+      />
 
       {loadError ? (
         <p role="alert" className="m0-error" data-testid="data-error">

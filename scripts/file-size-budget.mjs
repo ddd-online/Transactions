@@ -1,0 +1,78 @@
+// 文件规模预算与允许清单：纯数据 + 纯函数，不碰 fs。
+// 脚本（scripts/static-guards.mjs）负责读文件、算行数；这里只负责判断。
+//
+// 行数口径全仓库唯一：countLines()。别用 PowerShell 的 Measure-Object ——
+// 它在最后一行没有换行时会少数几十行。
+//
+// 允许清单就是剩余工作清单：只减不增。拆到预算内必须删条目，规则 3 会红。
+
+const BUDGETS = {
+  page: 450,
+  renderer: 500,
+  command: 300,
+  stylesheet: 1200,
+}
+
+// 清单只装「已经超预算、本轮还没拆完」的文件，cap 登记当前行数。
+// 拆完一个就删一条，绝不为了过护栏加条目、抬 cap 或调大 BUDGETS。
+export const FILE_SIZE_ALLOWLIST = {}
+
+// 统一成 `/` 分隔、相对仓库根。调用方传进来的都是相对路径。
+function normalizePath(path) {
+  const normalized = path.replace(/\\/g, '/')
+  return normalized.startsWith('./') ? normalized.slice(2) : normalized
+}
+
+// 预算类别只看路径：页面 / 其他渲染层 / 样式表 / 命令层。shared 与 electron/services 不设预算。
+export function budgetKindOf(path) {
+  const file = normalizePath(path)
+  if (/^src\/pages\/.*\.(ts|tsx)$/.test(file)) return 'page'
+  if (/^src\/.*\.(ts|tsx)$/.test(file)) return 'renderer'
+  if (/^src\/styles\/[^/]+\.css$/.test(file)) return 'stylesheet'
+  if (/^electron\/ipc\/.*\.ts$/.test(file)) return 'command'
+  return null
+}
+
+export function countLines(text) {
+  return text.split('\n').length - (text.endsWith('\n') ? 1 : 0)
+}
+
+export function evaluateFileSizes(files, options = {}) {
+  const allowlist = options.allowlist ?? FILE_SIZE_ALLOWLIST
+  const failures = []
+  const allowlistPaths = Object.keys(allowlist)
+  const present = new Set(files.map((file) => normalizePath(file.path)))
+
+  for (const path of allowlistPaths) {
+    if (!present.has(normalizePath(path))) {
+      failures.push(`${path}：允许清单里的文件不存在，删掉这条。`)
+    }
+  }
+
+  for (const file of files) {
+    const path = normalizePath(file.path)
+    const kind = budgetKindOf(path)
+    if (!kind) continue
+    const budget = BUDGETS[kind]
+    const entry = allowlist[path]
+    if (!entry) {
+      if (file.lines > budget) {
+        failures.push(
+          `${path}：${file.lines} 行，预算 ${budget} 行。拆成模块，或（本轮新出现的过渡）登记一条允许清单并写清打算怎么拆。`,
+        )
+      }
+      continue
+    }
+    if (file.lines > entry.cap) {
+      failures.push(
+        `${path}：${file.lines} 行，超过登记值 ${entry.cap} 行。它只能变短，不能更长；拆完把 cap 调小或删条目。 计划拆法：${entry.hint}`,
+      )
+    } else if (file.lines <= budget) {
+      failures.push(
+        `${path}：${file.lines} 行，已在预算 ${budget} 行内，但允许清单里还留着条目。删掉这条，清单就是剩余工作清单。 计划拆法：${entry.hint}`,
+      )
+    }
+  }
+
+  return { failures, listed: allowlistPaths.length }
+}

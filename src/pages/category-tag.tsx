@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
-import { Input, Modal } from 'antd'
 
 import { reorderWithChanges } from '../../shared/domain/list-order'
 import type { CategoryDto, TagDto } from '../../shared/types/category'
-import { Button } from '../components/button'
-import { ConfirmDialog } from '../components/confirm-dialog'
-import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
-import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
+import { CategoryColumn } from './category-column'
+import { CategoryTagModals, type DeleteTarget } from './category-tag-modals'
+import { TagColumn } from './tag-column'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -23,10 +21,6 @@ const TRANSACTION_TYPES: Array<[string, string]> = [
   ['income', '收入'],
   ['transfer', '转账'],
 ]
-
-const NAME_MAX_LENGTH = 20
-
-type DeleteTarget = { kind: 'category' | 'tag'; name: string }
 
 export interface CategoryTagPageProps {
   ledgerId: string
@@ -47,11 +41,6 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
   const [tagName, setTagName] = useState('')
   const [tagError, setTagError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
-
-  const [dragCategory, setDragCategory] = useState<number | null>(null)
-  const [overCategory, setOverCategory] = useState<number | null>(null)
-  const [dragTag, setDragTag] = useState<number | null>(null)
-  const [overTag, setOverTag] = useState<number | null>(null)
 
   const loadCategories = useCallback(async (): Promise<void> => {
     if (!ledgerId) {
@@ -202,8 +191,6 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
 
   const moveCategory = useCallback(
     async (from: number, to: number): Promise<void> => {
-      setDragCategory(null)
-      setOverCategory(null)
       const result = reorderWithChanges(
         categories,
         from,
@@ -235,8 +222,6 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
 
   const moveTag = useCallback(
     async (from: number, to: number): Promise<void> => {
-      setDragTag(null)
-      setOverTag(null)
       if (!selectedCategory) return
       const result = reorderWithChanges(
         tags,
@@ -267,12 +252,6 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
     [ledgerId, loadTags, selectedCategory, tags, type],
   )
 
-  const emptyHint = (text: string): JSX.Element => (
-    <div className="ct-column-empty">
-      <span>{text}</span>
-    </div>
-  )
-
   return (
     <PageLayout
       toolbar={
@@ -299,259 +278,43 @@ export function CategoryTagPage({ ledgerId }: CategoryTagPageProps): JSX.Element
       ) : null}
 
       <div className="ct-main">
-        <section className="ct-column ct-column--categories">
-          <div className="ct-column-header">
-            <span className="ct-column-title">分类</span>
-            <span className="ct-column-count">{categories.length}</span>
-            <Button
-              variant="primary"
-              size="sm"
-              className="ct-add-btn"
-              testId="category-open-create"
-              disabled={!ledgerId}
-              icon={
-                <span className="ct-add-btn-icon">
-                  <Icon name="Plus" size={14} />
-                </span>
-              }
-              onClick={openCategoryModal}
-            >
-              新增分类
-            </Button>
-          </div>
-          <div className="ct-column-body-wrap">
-            {!ledgerId
-              ? emptyHint('请先选择工作空间')
-              : categories.length === 0
-                ? emptyHint('暂无分类')
-                : (
-                    <ScrollArea className="ct-column-body">
-                      {categories.map((category, index) => (
-                        <div
-                          key={category.name}
-                          className={`ct-drag-item ui-drag-item${dragCategory === index ? ' is-dragging' : ''}${overCategory === index ? ' is-over' : ''}`}
-                          data-testid="category-item"
-                          draggable
-                          onDragStart={() => setDragCategory(index)}
-                          onDragOver={(event) => {
-                            event.preventDefault()
-                            setOverCategory(index)
-                          }}
-                          onDrop={() => {
-                            if (dragCategory !== null) void moveCategory(dragCategory, index)
-                          }}
-                          onDragEnd={() => {
-                            setDragCategory(null)
-                            setOverCategory(null)
-                          }}
-                        >
-                          <div
-                            className={`ct-list-item${selectedCategory === category.name ? ' is-active' : ''}`}
-                            onClick={() => setSelectedCategory(category.name)}
-                          >
-                            <span className="ui-drag-handle" title="拖动排序">
-                              <Icon name="DragHandle" size={16} />
-                            </span>
-                            <div className="ct-item-main">
-                              <span className="ct-item-name">{category.name}</span>
-                              {category.recordCount !== 0 ? (
-                                <span className="ct-item-badge">{category.recordCount}</span>
-                              ) : null}
-                            </div>
-                            <div className="ct-item-actions">
-                              <button
-                                type="button"
-                                className="tr-icon-btn is-danger"
-                                data-testid="category-delete"
-                                aria-label={`删除分类 ${category.name}`}
-                                onClick={(event) => {
-                                  event.stopPropagation()
-                                  setDeleteTarget({ kind: 'category', name: category.name })
-                                }}
-                              >
-                                <Icon name="Trash" size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </ScrollArea>
-                  )}
-          </div>
-        </section>
-
-        <section className="ct-column ct-column--tags">
-          <div className="ct-column-header">
-            <span className="ct-column-title">{selectedCategory || '标签'}</span>
-            <span className="ct-column-count">{tags.length}</span>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="ct-add-btn"
-              testId="tag-open-create"
-              disabled={!ledgerId || !selectedCategory}
-              icon={
-                <span className="ct-add-btn-icon">
-                  <Icon name="Plus" size={14} />
-                </span>
-              }
-              onClick={openTagModal}
-            >
-              新增标签
-            </Button>
-          </div>
-          <div className="ct-column-body-wrap">
-            {!selectedCategory
-              ? emptyHint('选择分类查看标签')
-              : tags.length === 0
-                ? emptyHint('暂无标签')
-                : (
-                    <ScrollArea className="ct-column-body">
-                      {tags.map((tag, index) => (
-                        <div
-                          key={tag.name}
-                          className={`ct-drag-item ui-drag-item${dragTag === index ? ' is-dragging' : ''}${overTag === index ? ' is-over' : ''}`}
-                          data-testid="tag-item"
-                          draggable
-                          onDragStart={() => setDragTag(index)}
-                          onDragOver={(event) => {
-                            event.preventDefault()
-                            setOverTag(index)
-                          }}
-                          onDrop={() => {
-                            if (dragTag !== null) void moveTag(dragTag, index)
-                          }}
-                          onDragEnd={() => {
-                            setDragTag(null)
-                            setOverTag(null)
-                          }}
-                        >
-                          <div className="ct-list-item">
-                            <span className="ui-drag-handle" title="拖动排序">
-                              <Icon name="DragHandle" size={16} />
-                            </span>
-                            <div className="ct-item-main">
-                              <span className="ct-item-name">{tag.name}</span>
-                              {tag.recordCount !== 0 ? (
-                                <span className="ct-item-badge">{tag.recordCount}</span>
-                              ) : null}
-                            </div>
-                            <div className="ct-item-actions">
-                              <button
-                                type="button"
-                                className="tr-icon-btn is-danger"
-                                data-testid="tag-delete"
-                                aria-label={`删除标签 ${tag.name}`}
-                                onClick={() =>
-                                  setDeleteTarget({ kind: 'tag', name: tag.name })
-                                }
-                              >
-                                <Icon name="Trash" size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </ScrollArea>
-                  )}
-          </div>
-        </section>
+        <CategoryColumn
+          categories={categories}
+          selectedName={selectedCategory}
+          hasLedger={Boolean(ledgerId)}
+          onSelect={setSelectedCategory}
+          onAdd={openCategoryModal}
+          onDelete={(name) => setDeleteTarget({ kind: 'category', name })}
+          onMove={(from, to) => void moveCategory(from, to)}
+        />
+        <TagColumn
+          tags={tags}
+          selectedCategory={selectedCategory}
+          hasLedger={Boolean(ledgerId)}
+          onAdd={openTagModal}
+          onDelete={(name) => setDeleteTarget({ kind: 'tag', name })}
+          onMove={(from, to) => void moveTag(from, to)}
+        />
       </div>
 
-      <Modal
-        open={categoryModalOpen}
-        title="新增分类"
-        width={400}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeCategoryModal}
-      >
-        <div className="ct-modal-form">
-          <Input
-            data-testid="category-name"
-            placeholder="输入分类名称"
-            maxLength={NAME_MAX_LENGTH}
-            aria-invalid={Boolean(categoryError)}
-            aria-describedby={categoryError ? 'category-error' : undefined}
-            value={categoryName}
-            onChange={(event) => setCategoryName(event.target.value)}
-            onPressEnter={() => void confirmCategory()}
-          />
-          {categoryError ? (
-            <p role="alert" id="category-error" className="m0-error" data-testid="category-error">
-              {categoryError}
-            </p>
-          ) : null}
-        </div>
-        <div className="tr-modal-footer">
-          <Button variant="secondary" testId="category-cancel" onClick={closeCategoryModal}>
-            取消
-          </Button>
-          <Button
-            variant="primary"
-            testId="category-create"
-            disabled={!categoryName.trim() || !ledgerId}
-            onClick={() => void confirmCategory()}
-          >
-            确认
-          </Button>
-        </div>
-      </Modal>
-
-      <Modal
-        open={tagModalOpen}
-        title="新增标签"
-        width={400}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={closeTagModal}
-      >
-        <div className="ct-modal-form">
-          <Input
-            data-testid="tag-name"
-            placeholder="输入标签名称"
-            maxLength={NAME_MAX_LENGTH}
-            aria-invalid={Boolean(tagError)}
-            aria-describedby={tagError ? 'tag-error' : undefined}
-            value={tagName}
-            onChange={(event) => setTagName(event.target.value)}
-            onPressEnter={() => void confirmTag()}
-          />
-          {tagError ? (
-            <p role="alert" id="tag-error" className="m0-error" data-testid="tag-error">
-              {tagError}
-            </p>
-          ) : null}
-        </div>
-        <div className="tr-modal-footer">
-          <Button variant="secondary" testId="tag-cancel" onClick={closeTagModal}>
-            取消
-          </Button>
-          <Button
-            variant="primary"
-            testId="tag-create"
-            disabled={!tagName.trim() || !selectedCategory}
-            onClick={() => void confirmTag()}
-          >
-            确认
-          </Button>
-        </div>
-      </Modal>
-
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        title={deleteTarget?.kind === 'tag' ? '删除标签' : '删除分类'}
-        message={
-          deleteTarget
-            ? `确定删除${deleteTarget.kind === 'tag' ? '标签' : '分类'}「${deleteTarget.name}」？`
-            : ''
-        }
-        confirmText="删除"
-        danger
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => void confirmDelete()}
+      <CategoryTagModals
+        categoryOpen={categoryModalOpen}
+        categoryName={categoryName}
+        categoryError={categoryError}
+        categoryDisabled={!categoryName.trim() || !ledgerId}
+        tagOpen={tagModalOpen}
+        tagName={tagName}
+        tagError={tagError}
+        tagDisabled={!tagName.trim() || !selectedCategory}
+        deleteTarget={deleteTarget}
+        onCategoryNameChange={setCategoryName}
+        onCategoryClose={closeCategoryModal}
+        onCategoryConfirm={() => void confirmCategory()}
+        onTagNameChange={setTagName}
+        onTagClose={closeTagModal}
+        onTagConfirm={() => void confirmTag()}
+        onDeleteCancel={() => setDeleteTarget(null)}
+        onDeleteConfirm={() => void confirmDelete()}
       />
     </PageLayout>
   )

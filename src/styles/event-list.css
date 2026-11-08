@@ -1,0 +1,171 @@
+/* ---------------- 左栏：事件列表 ---------------- */
+
+.key-event-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.key-event-cards {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: block;
+}
+
+.key-event-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--transactions-space-lg);
+}
+
+.key-event-empty__text {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 详情卡里的空态（区别于两条侧轨的一行小字空态）：图标在上、文字在下，
+ * 因为详情区本身就很大，落点得有两个。 */
+.key-event-empty--detail {
+  flex-direction: column;
+  gap: var(--transactions-space-md);
+}
+
+.key-event-empty__icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  /* 图形按 3:1 的档取（`text-tertiary` = 3.9:1），不跟正文抢，也不掉到 disabled 档去 */
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 图标跟随这个 28px 方框（与全站其它图标容器同一条约定）：`.icon` 的默认尺寸是 `1em`
+ * —— 这里只有 14px，星标于是画成半个方框大、还顶在方框上沿（实测墨迹 11×15，方框下方
+ * 多出一截空白）。这条空态的用意正是"卡大而不空"，图标得撑起来。 */
+.key-event-empty__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 事件行 = 平铺在左轨上的一条记录：没有卡片壳，选中用主色 tint，行间一条发丝线。
+ * 左侧 3px 色条继续承担事件颜色。 */
+.key-event-card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  min-height: 80px;
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color var(--transactions-transition-fast);
+}
+
+.key-event-card + .key-event-card {
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.key-event-card:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.key-event-card.is-active {
+  background-color: var(--transactions-color-active-bg);
+}
+
+.key-event-card:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: -2px;
+}
+
+.key-event-card__bar {
+  width: 3px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.key-event-card__body {
+  flex: 1;
+  min-width: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  /* 右上角给删除按钮让位 */
+  padding-right: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.key-event-card__name {
+  font-size: var(--transactions-size-text-body);
+  /* 事件名是这一行的标题：与摘要同为 14px，500 在中文字面上等于 400（见 tokens.css），
+   * 只剩"选中变色"在区分状态、分不出标题与正文 —— 所以标题走 600。 */
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-major);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.key-event-card__date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 与 3px 左条同一身份色：左条给出整行色，圆点把日期也钉在同一个身份上。 */
+.key-event-card__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
+}
+
+.key-event-card__desc {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: var(--transactions-space-2xs);
+  /* 没有摘要的事件也保留这一行的高度：行高始终一致，不会因为少一行而塌下去 */
+  min-height: calc(var(--transactions-size-text-caption) * var(--transactions-height-normal));
+}
+
+/* 事件行的删除：默认隐形，hover / 选中时出现；定位在行右上角。 */
+.key-event-card__delete {
+  position: absolute;
+  top: var(--transactions-space-xs);
+  right: var(--transactions-space-xs);
+  opacity: 0;
+  transition: color var(--transactions-transition-fast),
+    opacity var(--transactions-transition-fast);
+}
+
+/* 确认弹窗的正文（删除事件不可恢复，顺带说明图片会一起删） */
+.key-event-confirm-text {
+  margin: 0;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+}
+
+.key-event-card:hover .key-event-card__delete,
+.key-event-card.is-active .key-event-card__delete {
+  opacity: 1;
+}
+
+.key-event-card__delete:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.key-event-card__delete:focus-visible {
+  opacity: 1;
+}
+

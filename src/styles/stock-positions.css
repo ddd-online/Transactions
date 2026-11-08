@@ -1,0 +1,945 @@
+/* ---------------- 子功能二：持仓 ---------------- */
+
+.stock-position__grid {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--transactions-space-lg);
+  /* 两列都拉伸到整行高；网格自身也吃掉分页签剩余高度 → 左栏通栏到底
+   * （「建仓」按钮因此贴在子功能底栏，`.stock-empty` 也能在面板里居中）。
+   * `grid-auto-rows` 与账户/成交记录两栏保持一致：隐式行按 1fr 撑满，
+   * 内容多时由面板内部的滚动容器接管。 */
+  align-items: stretch;
+  grid-auto-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+
+.stock-position__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm);
+  overflow-y: auto;
+  /* 吃掉左列剩余高度 → 其后的「建仓」按钮贴容器底部 */
+  flex: 1;
+  min-height: 0;
+}
+
+.stock-position-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  width: 100%;
+  padding: var(--transactions-space-sm);
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  /* 卡面：静息软灰（在白色页面纸上是一个层次，卡片才读得出来） */
+  background: var(--transactions-color-minor-background);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast),
+    box-shadow var(--transactions-transition-fast);
+}
+
+.stock-position-card:hover {
+  background: var(--transactions-color-major-background);
+  box-shadow: var(--transactions-shadow-sm);
+}
+
+.stock-position-card.is-active {
+  /* 选中：强调色底（全站"选中"的语言，与表格选中行一致） */
+  background: var(--transactions-color-active-bg);
+}
+
+.stock-position-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-position-card__name {
+  font-size: var(--transactions-size-text-body-sm);
+  /* 持仓卡的名字是这张卡的标题，13px 与卡内数据同档，只有字重能把它抬起来；
+   * 而 500 在中文字面上与 400 同面（见 tokens.css），所以走 600。 */
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-position-card__meta {
+  display: flex;
+  gap: var(--transactions-space-2xs);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+}
+
+.stock-position-card__row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-position-card__row.is-muted {
+  grid-template-columns: 36px minmax(0, 1fr) 36px minmax(0, 1fr);
+  color: var(--transactions-color-text-disabled);
+}
+
+.stock-position-card__label {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-position-card__value {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-position-card__rate {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.stock-detail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-detail__identity {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-detail__name {
+  font-size: var(--transactions-size-text-title-sm);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-snug);
+  letter-spacing: var(--transactions-tracking-display);
+  text-wrap: balance;
+  color: var(--transactions-color-text-major);
+}
+
+.stock-detail__code {
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 本轮标签：一枚**可就地改的标签芯片**（`ui-select--tag`，脸与「记录」页 / 明细表的标签同源，
+ * 见 ui.css 那个变体的注释）。宽度贴着内容 —— 标签两三字，没必要占一块固定宽度；
+ * 身份区按**文字基线**对齐（名字大一档、代码小一档），而控件没有基线可对，让它自己居中。 */
+.stock-detail__tag {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.stock-detail__tag .ui-select {
+  width: auto;
+}
+
+.stock-detail__actions {
+  display: flex;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-quote {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md);
+}
+
+.stock-quote--missing {
+  display: block;
+  color: var(--transactions-color-text-disabled);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.stock-quote__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+}
+
+/* 「本轮费率」那一格文案长（佣金 / 最低 / 印花税 / 过户费四项），给它多点宽度与小一号字 */
+.stock-quote__cell--wide {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+.stock-quote__value--small {
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.stock-quote__label {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-quote__value {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-major);
+}
+
+/* 本轮复盘（持仓 + 轮次共用） */
+.stock-review {
+  border-top: 1px solid var(--transactions-color-divider);
+  padding: var(--transactions-space-md);
+}
+
+.stock-review__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-review__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--transactions-color-text-major);
+}
+
+.stock-review__toggle:disabled {
+  cursor: default;
+}
+
+/* 折叠头是**裸按钮**（无边框/无底色），默认轮廓在深色主题里几乎看不见 —— 补系统统一的焦点环 */
+.stock-review__toggle:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.stock-review__title {
+  font-size: var(--transactions-size-text-body-sm);
+  /* 「复盘」这一行的标题：与右边 12px 的条数/摘要只差一档字号，字重必须真的落下来。 */
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-review__summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* 条数会变（1 篇 → 2 篇），等宽数字让它在标题后面不左右抖 */
+  font-variant-numeric: tabular-nums;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-review__text {
+  margin: var(--transactions-space-sm) 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* 行距 1.8 是长正文那一档。**正文块不封行宽**：复盘是逐条对答（买入理由 / 卖点审视 …），
+   * 不是连续散文，正文的右边界要跟上面那张成交表对齐 —— 原先这里封了 68ch，于是在面板里
+   * 只铺到六成宽，断行位置比表格短一大截，看着像内容没填满。真要控行宽的是事件描述这类
+   * 连续长文（`event-detail.css` 的 75ch），那里才是连续段落。 */
+  line-height: var(--transactions-height-relaxed);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-review__hint {
+  margin: var(--transactions-space-sm) 0 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 持仓详情：头部固定、以下内容自己滚。
+ *
+ * 面板本身是 `overflow: hidden`，而展开「每日复盘」（或本轮复盘的长文）后内容会超过面板高度 ——
+ * 不加这一层，下面的内容会被裁掉且滚不到（覆盖式滚动条静止时也看不见，读起来就是"内容丢了"）。 */
+.stock-detail__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 每日复盘：持仓期与清仓后渲染同一份只读列表（倒序，最新在前）。
+ *
+ * 一行 = 一天：日期占固定一列，正文从第二列起 —— 与上方成交表的行语言一致（8px 行距 +
+ * 发丝线分隔），多天并排时日期自然对齐成一列，扫一眼就能看出哪几天断了。 */
+.stock-day-review__hint {
+  margin: var(--transactions-space-sm) 0 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-day-review__list {
+  margin-top: var(--transactions-space-xs);
+}
+
+.stock-day-review__entry {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: var(--transactions-space-md);
+  align-items: baseline;
+  padding: var(--transactions-space-sm) 0;
+}
+
+.stock-day-review__entry + .stock-day-review__entry {
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-day-review__date {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--transactions-size-text-caption);
+  letter-spacing: var(--transactions-tracking-amount);
+  white-space: nowrap;
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-day-review__text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: var(--transactions-height-relaxed);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+/* ============================================
+ * 复盘写作面（弹窗）—— 静止时**永不裁剪**
+ *
+ * 320px 不是拍的，是算出来的：640 宽 − 48 内边距 = 592px 内容宽，14px 汉字 ≈ 42 字/行，
+ * 行高 1.8 → 25.2px/行，500 字（服务层的上限）≈ 12 行 ≈ 302px。
+ * 再往上由 `Textarea` 的 `auto_grow` 按内容长，60vh 封顶 —— 窗口很窄时同一段文字更高，
+ * 靠它撑开；面板里那条覆盖式滚动条静止时看不见，所以框绝不允许比内容矮。
+ * ============================================ */
+
+.stock-review-editor {
+  display: grid;
+  gap: var(--transactions-space-md);
+}
+
+.stock-review-editor__context {
+  margin: 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-review-editor__surface .ui-textarea__control {
+  min-height: 320px;
+  max-height: 60vh;
+  line-height: var(--transactions-height-relaxed);
+}
+
+.stock-review-editor__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-review-editor__count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-review-editor__hint {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-trades {
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* ============================================
+ * 持仓卡片 v2 —— 重做布局
+ *
+ * 旧问题：指标行的标签列写死 36px，而「浮动盈亏」四个字需要约 56px，
+ * 标签又没有 `nowrap` → 被折成「浮动盈 / 亏」两行，把整张卡撑歪。
+ *
+ * 这一版按"数据行"来排：标签列固定、数值列右对齐 + 等宽数字，
+ * 上下的数字自然对齐成一列，扫一眼就能比较；无行情时用**同一结构**（两行），
+ * 不再走 4 列的特例。选中态改与全站卡片列表一致（白底 + 轻阴影 + 强调色名称），
+ * 不再用蓝色底 —— 那张蓝底是表格行的选中语言，卡片列表用的是"纸面浮起"。
+ * ============================================ */
+
+.stock-position-card {
+  padding: var(--transactions-space-md);
+  gap: var(--transactions-space-xs);
+}
+
+/* 标题行与数据行之间留得比行距更大（"标题之上的空白多于其下"） */
+.stock-position-card__head {
+  align-items: center;
+  margin-bottom: var(--transactions-space-2xs);
+}
+
+.stock-position-card.is-active .stock-position-card__name {
+  color: var(--transactions-color-primary);
+}
+
+/* 数据行：标签（固定 56px，不换行）· 数值（右对齐，等宽）· 涨跌（右对齐，固定 48px） */
+.stock-position-card__row,
+.stock-position-card__row.is-muted {
+  grid-template-columns: 56px minmax(0, 1fr) 48px;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+}
+
+.stock-position-card__label {
+  white-space: nowrap;
+}
+
+.stock-position-card__value {
+  text-align: right;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.stock-position-card__rate {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+/* ★ 持仓子功能的包装层：必须是可伸缩的弹性列。
+ * 它是 `.stock-position__grid { flex: 1 }` 的父级，而它原先是**块级** ——
+ * 于是网格的 `flex: 1` 无处可伸长，左栏永远内容高、底栏按钮贴不到版心底部。 */
+.stock-position {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- 持仓 / 记录：列表 + 详情 ---------------- */
+
+.stock-positions-view {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.stock-master {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--transactions-color-divider);
+}
+
+.stock-master__scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.stock-master__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-master__row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border: 0;
+  border-bottom: 1px solid var(--transactions-color-divider);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  /* 选中 / 悬停是"指着哪一只"，不该跳变：140ms 的底色过渡让视线跟得上 */
+  transition: background-color var(--transactions-transition-fast);
+}
+
+/* 卡片里有个复制按钮，按钮不能套按钮：卡片本身仍是 `<button>`（键盘可选中），
+ * 铺一层透明的它盖住整张卡，文字留在下面，代码再浮到它上面。 */
+.stock-master__row-hit {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* 焦点环画在卡片边上（内缩 2px，别被列表的滚动容器切掉） */
+.stock-master__row-hit:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: -2px;
+}
+
+/* 压在整卡按钮上面，代码才点得到 */
+.stock-master__row .stock-code {
+  position: relative;
+  z-index: 1;
+}
+
+.stock-master__row:hover {
+  background: var(--transactions-color-hover-bg);
+}
+
+.stock-master__row.is-active {
+  background: var(--transactions-color-active-bg);
+}
+
+.stock-master__headline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-master__headline strong {
+  font-size: var(--transactions-size-text-body-sm);
+  /* `<strong>` 的语义就是"更重"，而 500 在中文字面上等于 400 —— 那等于把强调按回去了。 */
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-master__stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--transactions-space-sm);
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-master__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-master__stat-label--end {
+  text-align: right;
+}
+
+.stock-master__stat-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.stock-master__stat-value--end {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.stock-master__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-master__footer {
+  flex-shrink: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-history-master .stock-master__footer {
+  display: none;
+}
+
+/* 详情是一列两段：上面（行情、台账、复盘）该多高就多高，内容超高时自己滚；
+ * 成交记录吃掉剩下的高度、表格在自己的滚动区里滚。整列不再整体滚动 ——
+ * 否则一屏里只有最下面的表在动，上面那些不动的信息还占着位置。 */
+.stock-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 信息区用项目统一的悬浮滚动条：内容超高时它自己滚，不把成交记录挤没。
+ * （`overflow` 交给 ScrollArea，这里只管它在竖直方向上的伸缩。） */
+.stock-detail__info {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+.stock-detail__trades {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  /* 表头 + 三行左右：复盘写长了也不能把成交记录挤没 */
+  min-height: 180px;
+  min-width: 0;
+}
+
+.stock-detail__trades-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 表头由 AntD 的 sticky 交给滚动区（getContainer 指到 OverlayScrollbars 的视口）：
+ * 滚动的是行，列名一直看得见。CSS 的 `position: sticky` 在这里不管用 ——
+ * 表格自己的 `.ant-table-container` 就是一个不滚动的 overflow 容器。 */
+
+.stock-detail__empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 0;
+}
+
+.stock-detail__head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-detail__identity {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.stock-detail__identity h2 {
+  margin: 0;
+  font-size: var(--transactions-size-text-title-sm);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-detail__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+}
+
+/* 标签：与记录页轮次头同一枚 small Select 芯片（内容定宽 + 下拉箭头），
+ * 不再单独做一套自绘按钮。 */
+.stock-tag-select {
+  width: auto;
+  min-width: 0;
+  max-width: 140px;
+}
+
+.stock-detail__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-detail__metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-detail__metrics strong {
+  font-size: var(--transactions-size-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-fee-line {
+  margin: 0;
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-fee-line span {
+  color: var(--transactions-color-text-major);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-detail__section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  /* 区域之间收一条线，标题与内容之间不再画线。 */
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* 成交记录标题行右侧的费用合计：是这一屏里"表里那些费用一共多少"的答案，
+ * 所以和表同一档字号（12px）、数字走等宽，跟费用列的数字对得上。
+ * 标签用三级灰，数字用主文字色 —— 一眼先看到数字，再看到它是什么。 */
+.stock-trade-total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  /* 与表头同一档：12px 的三级灰只有 ≈3.7:1，读不清 "这是什么数"。 */
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  white-space: nowrap;
+}
+
+.stock-trade-total strong {
+  color: var(--transactions-color-text-major);
+  font-weight: var(--transactions-weight-medium);
+}
+
+/* 交易台账的标题与内容是一组，不在标题下画线；
+ * 区块的收口交给下一段的顶线，避免与 .stock-ledger 的底线叠成 2px。 */
+.stock-detail .stock-ledger__head,
+.stock-detail .stock-ledger {
+  border-bottom: 0;
+}
+
+.stock-section-title {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  /* 区块小标题：13px 与正文同档，只有字重能分开它与下面的内容，所以走 600。 */
+  font-weight: var(--transactions-weight-semibold);
+}
+
+/* 本轮复盘的一行只读：和每日复盘同一种行（按钮、悬停底、一行省略），
+ * 只是没有日期那一格 —— 点开是读全文的弹窗。 */
+.stock-review-line {
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
+}
+
+/* 每日复盘：一天一条（最新在上），一行放不下就省略号。
+ * 行本身是按钮 —— 整行都能点，点开是读全文的弹窗，不在原地展开。 */
+.stock-review-days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 var(--transactions-space-lg) var(--transactions-space-md);
+  list-style: none;
+}
+
+.stock-review-day {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+  padding: 2px var(--transactions-space-sm);
+  /* 行内边距靠负外边距吃掉，文字仍与上面的小标题对齐 */
+  margin-left: calc(-1 * var(--transactions-space-sm));
+  border: 0;
+  border-radius: var(--transactions-radius-sm);
+  background: transparent;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.stock-review-day:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.stock-review-day:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+.stock-review-day__date {
+  flex-shrink: 0;
+  /* 日期是这一行的身份（点开看的是哪一天），三级灰 11px 只有 ≈3.7:1。 */
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* flex 子项要 `min-width: 0` 才肯收缩，否则省略号永远不出现 */
+.stock-review-day__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 读全文的弹窗正文：保留换行，长复盘在弹窗里自己滚，不把整页顶长 */
+.stock-review-read {
+  max-height: 60vh;
+  overflow-y: auto;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-relaxed);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 编辑某一天时，日期是这一行的身份而不是可改的字段：写静态值，不摆一个灰掉的日期选择器
+ * （禁用控件的字色只有 ≈1.9:1，读不清，还暗示它本该能点）。 */
+.stock-review-date {
+  display: block;
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-table-foot .ant-pagination-item-active a,
+.page-footer-bar .ant-pagination-item-active a {
+  color: var(--transactions-color-text-inverse);
+}
+
+/* 页脚的「N 条/页」是页码旁边的同一档控件：别给它边框和纸白底 ——
+ * 一排扁平页码末尾挂一个描边输入框，会把页脚里最重的注意力吸到"改条数"上。 */
+.stock-table-foot .ant-pagination-options .ant-select {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.stock-table-foot .ant-pagination-options .ant-select:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.stock-table-foot .ant-pagination-options .ant-select-content {
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-review-list,
+.stock-operation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-review-list li,
+.stock-operation-list li {
+  display: flex;
+  gap: var(--transactions-space-md);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-review-list li span:last-child,
+.stock-operation-list li span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* 窄窗里 8 列放不下时，让轮次表在轮次体里横向滚：把数字压成竖排（1 / 0 / . / 0 / 0）
+ * 比截断更难读。单元格一律不换行，表格按内容排、至少占满宽度。 */
+.stock-round__body {
+  overflow-x: auto;
+  /* 展开的那一轮是"刚打开的一层"，用面板进场的那一拍（200ms / 4px / 自上而来）：
+   * 内容在点击之后才挂载，所以每次展开都会播一次，收起永远是瞬时的。 */
+  animation: tr-rise-in var(--transactions-transition-enter);
+}
+
+.stock-round__body > .stock-trade-table .ant-table table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.stock-round__body .stock-trade-table .ant-table-thead > tr > th,
+.stock-round__body .stock-trade-table .ant-table-tbody > tr > td {
+  white-space: nowrap;
+}
+
+.stock-round__body > .stock-trade-table {
+  width: calc(100% + var(--transactions-space-lg) + var(--transactions-space-lg));
+  max-width: none;
+  min-width: 0;
+  margin-right: calc(-1 * var(--transactions-space-lg));
+  margin-left: calc(-1 * var(--transactions-space-lg));
+}
+
+/* 持仓详情只有一列内容、没有额外横向空间：不再继承 .tr-table 的 880px 最小宽度。
+ * 表格本身按内容排、至少占满容器；放不下时由成交记录自己的滚动区横向滚
+ * （`axis="both"`）—— 用 `min-width: 0` 硬压的话，数字不换行会叠到相邻格里。 */
+.stock-detail__trades .stock-trade-table {
+  min-width: 0;
+}
+
+.stock-detail__trades .stock-trade-table .ant-table table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.stock-trade-table .ant-table-thead > tr > th {
+  padding: var(--transactions-space-xs) var(--transactions-space-sm);
+  background: var(--transactions-color-minor-background);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-trade-table .ant-table-tbody > tr > td {
+  padding: var(--transactions-space-xs) var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+}
+
+/* 窄窗里 8 列挤不下时，数字绝不换行：`1680.00` 被拆成「168 / 0.0 / 0」比截断更糟。
+ * 放不下就让成交记录自己的滚动区横向滚（`axis="both"`）。 */
+.stock-detail__trades .stock-trade-table .ant-table-thead > tr > th,
+.stock-detail__trades .stock-trade-table .ant-table-tbody > tr > td {
+  white-space: nowrap;
+}
+
+/* 时间列是一行完整日期 + 时分：11px 等宽、不换行，140px 内刚好放下。 */
+.stock-detail__trades .stock-trade-table .ant-table-tbody > tr > td:first-child {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stock-round__body .stock-trade-table .ant-table-thead > tr > th:last-child,
+.stock-round__body .stock-trade-table .ant-table-tbody > tr > td:last-child {
+  padding-right: var(--transactions-space-md);
+}
+
+.stock-trade-type {
+  display: inline-flex;
+  padding: 0 6px;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-trade-type.is-open {
+  color: var(--transactions-color-expense);
+}
+
+.stock-trade-type.is-close {
+  color: var(--transactions-color-income);
+}
+
+.stock-row-actions {
+  display: inline-flex;
+  gap: 2px;
+}
+

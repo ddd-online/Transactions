@@ -1,0 +1,548 @@
+/* ---------------- 中栏：事件详情 ----------------
+ * 详情不再是一张卡：它直接铺在画布上，只靠顶部色条、发丝线与留白分节。
+ * 内容两侧留 16px，顶部色条贴齐栏宽。 */
+.key-event-detail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--transactions-space-lg);
+  overflow: hidden;
+}
+
+.key-event-detail__body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 主图用 AntD `Image` 承载预览：它默认套一层 inline-block 的 `.ant-image`，
+ * 撑满容器后点图区域才是整张主图。 */
+.key-event-gallery__main .ant-image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.key-event-gallery__main .ant-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.key-event-content.ant-input {
+  flex: 1;
+  min-height: 180px;
+  resize: none;
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-major-warm);
+  padding: var(--transactions-space-md);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-relaxed);
+}
+
+.key-event-content.ant-input:focus {
+  border-color: var(--transactions-color-primary);
+  box-shadow: 0 0 0 2px var(--transactions-color-primary-hover);
+}
+
+.key-event-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-sm);
+  padding-bottom: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  margin-bottom: var(--transactions-space-lg);
+  flex-shrink: 0;
+}
+
+.key-event-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  padding: 0;
+  background: none;
+  transition: box-shadow var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast);
+}
+
+.key-event-swatch:hover {
+  box-shadow: 0 0 0 1px var(--transactions-color-border-l3);
+}
+
+.key-event-swatch:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.key-event-swatch.is-selected {
+  border-color: var(--transactions-color-text-major);
+}
+
+.key-event-swatch--empty {
+  border: 2px dashed var(--transactions-color-text-disabled);
+  background-color: transparent;
+}
+
+.key-event-swatch--empty.is-selected {
+  border-style: solid;
+  border-color: var(--transactions-color-text-major);
+}
+
+/* 事件身份色是**内容**：用户挑的那一档（十六进制）存在库里，展示时按主题调一档。
+ * 浅色下原样用；深色下往白里提 32% —— 中间色调压在近黑底上会读成一团暗色，
+ * 和账本那八个身份色「深色各提亮一档」是同一条规矩。这条必须写在 `.key-event-swatch`
+ * 之后：色板按钮的 `background: none` 是简写，同权重下谁在后面谁赢。 */
+.key-event-tone {
+  background-color: var(--event-tone);
+}
+
+[data-theme='dark'] .key-event-tone {
+  background-color: color-mix(in srgb, var(--event-tone) 68%, #ffffff);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .key-event-tone {
+    background-color: color-mix(in srgb, var(--event-tone) 68%, #ffffff);
+  }
+}
+
+/* 画廊 + 上传入口 */
+.key-event-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  flex: 1;
+  min-height: 0;
+  margin-bottom: var(--transactions-space-md);
+}
+
+.key-event-gallery__view {
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+}
+
+.key-event-gallery__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+}
+
+.key-event-gallery__progress {
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-sm);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.key-event-gallery__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 空态文案要读得清：`text-secondary`（≈5.4:1）而不是 `text-disabled`（≈2.6:1）——
+   * 它现在长在详情里，比原来摊在画布上时更显眼，对比度就该按正文那一档给。 */
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  border: 1px dashed var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-major-warm);
+}
+
+/* 主图容器：照片**完整**放在里面（`contain`），宁可两侧留底色也不裁 ——
+ * 这一格是"看这张照片"的地方，裁掉头和脚等于没看到（用户当场报的就是竖幅照片被 cover 裁了）。
+ * 底虚线只在**空态**（`.key-event-gallery__empty`，上传落点）保留：这里有真照片，
+ * 换一条实发丝线，跟详情里别的面一样。 */
+.key-event-gallery__main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--transactions-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background-color: var(--transactions-color-major-warm);
+  border: 1px solid var(--transactions-color-divider);
+}
+
+.key-event-gallery__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 照片完整塞进容器（contain），两侧的留白不再是纯底色：同一张图放大铺满、虚化垫在
+ * 后面，和大图预览是同一套底衬。比容器四周各宽 48px —— blur 的羽化带落在容器外，
+ * 被 `overflow: hidden` 裁掉，可见区域才是实心的。 */
+.key-event-gallery__blur {
+  position: absolute;
+  inset: -48px;
+  z-index: 0;
+  pointer-events: none;
+  background-position: center;
+  background-size: cover;
+  filter: blur(24px) saturate(1.15);
+}
+
+.key-event-gallery__blur::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--transactions-color-overlay-scrim) 36%, transparent);
+}
+
+/* 大图预览的底衬：同一张图放大铺满、虚化。
+ * 照片比例和屏幕不一致时（竖幅照片两侧原本是死黑），现在晕成照片自己的颜色。
+ * 铺满后不透明，再压一层 scrim 保证操作栏与翻页可读；只垫在
+ * `.ant-image-preview-body` 里，不接管指针事件 —— 点空白仍关闭预览。 */
+.ant-image-preview-body > .key-event-preview-blur {
+  /* 比视口四周各宽 160px：blur 会把元素边缘外的透明一起模糊进来，
+   * 边缘若落在视口里就会透出背后的界面（右/下/左/上各一条羽化带）。
+   * 放大元素让羽化带整个落到视口外，可见区域才是实心的。 */
+  position: absolute;
+  inset: -160px;
+  z-index: 0;
+  pointer-events: none;
+  background-position: center;
+  background-size: cover;
+  filter: blur(48px) saturate(1.15);
+}
+
+.ant-image-preview-body > .key-event-preview-blur::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--transactions-color-overlay-scrim);
+}
+
+/* 叠在图片上的下载：毛玻璃底压住照片，位置固定在右下角 */
+.key-event-gallery__download {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  /* 实况的动态层压在主图上（z-index 2），下载按钮要留在它上面 */
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--transactions-color-divider);
+  background-color: color-mix(in srgb, var(--transactions-color-elevated) 82%, transparent);
+  backdrop-filter: blur(2px);
+  box-shadow: var(--transactions-shadow-sm);
+}
+
+.key-event-gallery__download:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+/* 实况照片：动态视频与「实况」按钮盖在静态照片上。
+ * 静态照片仍是主图（AntD Image），这一层只接管按钮与视频；
+ * 空白处的指针事件要透给照片（点图开预览），所以整层 `pointer-events: none`。 */
+.key-event-live {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 预览里同样是绝对定位的一层；AntD 会给 `-body > *` 加 pointer-events: auto，
+ * 这里用更高优先级的选择器把它降回 none，否则点空白关不掉预览。 */
+.ant-image-preview-body > .key-event-live--preview {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.key-event-live__video {
+  max-width: 100%;
+  max-height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: auto;
+  transition: opacity var(--transactions-transition-fast);
+}
+
+/* 预览里静态照片最高 70%（AntD 的 .ant-image-preview-img），视频跟它对齐 */
+.key-event-live--preview .key-event-live__video {
+  max-height: 70%;
+}
+
+.key-event-live.is-playing .key-event-live__video {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 播放时静态照片让位：比例一致时视频本来就盖满照片，比例不一致时
+ * 也别让静态帧从视频边上露出来（底衬的虚化层还在，不会突然全黑）。 */
+.key-event-gallery__main:has(.key-event-live.is-playing) .key-event-gallery__img,
+.ant-image-preview-body:has(.key-event-live--preview.is-playing) .ant-image-preview-img {
+  visibility: hidden;
+}
+
+.key-event-live__badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--transactions-color-divider);
+  background-color: color-mix(in srgb, var(--transactions-color-elevated) 82%, transparent);
+  backdrop-filter: blur(2px);
+  box-shadow: var(--transactions-shadow-sm);
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast);
+}
+
+.key-event-live--stage .key-event-live__badge {
+  left: 8px;
+  bottom: 8px;
+}
+
+.key-event-live--preview .key-event-live__badge {
+  /* 和底部那条操作带同一条基线：灯箱的控件都贴边，实况跟着站左端。 */
+  left: 24px;
+  bottom: 24px;
+}
+
+.key-event-live__badge:hover {
+  border-color: var(--transactions-color-primary);
+  color: var(--transactions-color-primary);
+}
+
+.key-event-live__badge:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.key-event-gallery__thumbs {
+  width: 160px;
+  flex-shrink: 0;
+  min-height: 0;
+  margin-left: var(--transactions-space-sm);
+}
+
+/* ScrollArea 的滚动内容：缩略图竖排、固定 160×90 槽位。 */
+.key-event-gallery__thumbs > [data-overlayscrollbars-viewport] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+.key-event-thumb {
+  position: relative;
+  width: 100%;
+  height: 90px;
+  flex-shrink: 0;
+  border-radius: var(--transactions-radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color var(--transactions-transition-smooth),
+    transform var(--transactions-transition-fast);
+}
+
+/* 缩略图本体是按钮，铺满整个槽位 —— 指针停在图上、焦点落在按钮上，说的是同一件事。
+ * 焦点环内缩 2px：槽位是 160px 宽的滚动视口，向外扩的环会被视口裁掉；
+ * 内缩之后它落在图里，压在选中的 2px 主色边框内侧，两者同时出现也分得清。 */
+.key-event-thumb__select {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: inherit;
+}
+
+.key-event-thumb__select:focus-visible {
+  outline: none;
+}
+
+/* 焦点环压在**照片**上：只画一圈主色，遇到蓝调照片整圈会消失（WCAG 1.4.11 要 3:1）。
+ * 所以画双环：外圈用这一主题的**墨色**（浅色下近黑、深色下近白，正好是照片的反面），
+ * 内圈主色。两圈必有一圈与底片分得开。都内缩，不会被槽位的 `overflow: hidden` 裁掉。 */
+.key-event-thumb:has(.key-event-thumb__select:focus-visible)::after {
+  content: '';
+  position: absolute;
+  /* 内缩一圈（2px）之后，环的圆角要跟着收一圈才是同心的：直接写 4px 会绕过圆角阶梯，
+   * 所以写成「槽位圆角 − 一圈内缩」两个令牌相减。 */
+  inset: var(--transactions-space-2xs);
+  border-radius: calc(
+    var(--transactions-radius-sm) - var(--transactions-space-2xs)
+  );
+  box-shadow:
+    inset 0 0 0 2px var(--transactions-color-text-major),
+    inset 0 0 0 4px var(--transactions-color-primary);
+  pointer-events: none;
+}
+
+.key-event-thumb.is-selected {
+  border-color: var(--transactions-color-primary);
+  box-shadow: var(--transactions-shadow-md);
+}
+
+.key-event-thumb:hover {
+  border-color: var(--transactions-color-primary-hover);
+  transform: scale(1.03);
+}
+
+/* 缩略图保持 `cover`：它是**导航用的槽位**（160×90 固定格），要的是整齐的一列，
+ * 不是"看清这张照片"—— 完整显示交给主图和灯箱（用户明确要求侧边缩略图不改）。 */
+.key-event-thumb__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 缩略图角标：本体是 .ui-icon-btn--compact（20px 圆形），这里只固定位置与显隐 */
+.key-event-thumb__delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  z-index: 1;
+  background: var(--transactions-color-elevated);
+  box-shadow: var(--transactions-shadow-sm);
+  transition: opacity var(--transactions-transition-fast);
+}
+
+.key-event-thumb:hover .key-event-thumb__delete,
+.key-event-thumb__delete:focus-visible {
+  opacity: 1;
+}
+
+/* 缩略图上的实况角标：和删除按钮分居左下/右上，互不遮挡 */
+.key-event-thumb__live {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--transactions-radius-full);
+  background-color: color-mix(in srgb, var(--transactions-color-overlay-scrim) 72%, transparent);
+  color: var(--transactions-color-text-inverse);
+  /* 微标签档（11px）是阶梯里最小的一级：10px 不在阶梯上，调字号时会掉队。 */
+  font-size: var(--transactions-size-text-small);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* 灯箱 */
+.key-event-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--transactions-color-window-border);
+  backdrop-filter: blur(2px);
+}
+
+.key-event-lightbox__toolbar {
+  position: absolute;
+  top: var(--transactions-space-lg);
+  right: var(--transactions-space-lg);
+  display: flex;
+  gap: var(--transactions-space-sm);
+}
+
+.key-event-lightbox__img {
+  max-width: 90vw;
+  max-height: 86vh;
+  transition: transform var(--transactions-transition-normal);
+}
+
+/* 描述区 */
+.key-event-description {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.key-event-description__content {
+  /* 描述井填满详情卡分给它的高度：短描述也把灰底铺到操作栏上方，
+   * 长描述在井内滚动，不再在灰井和底栏之间留一段空白。 */
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-md);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.key-event-description__placeholder {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-text-secondary);
+  font-style: italic;
+}
+
+/* 描述是纯文本：不解析 Markdown，只保留换行与连续空格（`white-space: pre-wrap`）。
+ * 长文仍按 Panel Measure Rule 封 75ch，避免灰井里一行拉到容器边上。 */
+.key-event-description__text {
+  max-width: 75ch;
+  margin: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body);
+  line-height: var(--transactions-height-relaxed);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.key-event-description__edit {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.key-event-textarea {
+  flex: 1;
+  min-height: 160px;
+}
+
+.key-event-textarea .ui-textarea__control {
+  height: 100%;
+  min-height: 160px;
+}
+
+/* 详情底栏：一条发丝线收住动作区，按钮右对齐。 */
+.key-event-detail__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-md);
+  padding-top: var(--transactions-space-md);
+  border-top: 1px solid var(--transactions-color-divider);
+  flex-shrink: 0;
+}
+
