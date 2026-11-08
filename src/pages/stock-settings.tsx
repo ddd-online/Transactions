@@ -14,6 +14,7 @@ import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
+import { StockSettingsFees } from './stock-settings-fees'
 
 export interface StockSettingsPanelProps {
   ledgerId: string
@@ -282,21 +283,15 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         </div>
       </section>
 
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>交易费用设置</h2>
-          <p>
-            佣金 万{Number(feeForm.commission || 0).toLocaleString('zh-CN', { maximumFractionDigits: 4 })} ·
-            最低 ¥{feeForm.minCommission || '0.00'} · 印花税 {feeForm.stamp || '0'}% ·
-            过户费 {feeForm.transfer || '0'}%。建仓时按这里的默认值预填。
-          </p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button variant="secondary" testId="fee-open" onClick={() => setFeeOpen(true)}>
-            修改
-          </Button>
-        </div>
-      </section>
+      <StockSettingsFees
+        open={feeOpen}
+        form={feeForm}
+        busy={busy}
+        onOpen={() => setFeeOpen(true)}
+        onChange={setFeeForm}
+        onSave={() => void saveFees()}
+        onClose={() => setFeeOpen(false)}
+      />
 
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
@@ -408,75 +403,6 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         </div>
       </Modal>
 
-      <Modal
-        open={feeOpen}
-        title="交易费用设置"
-        width={640}
-        centered
-        footer={null}
-        onCancel={() => setFeeOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <div className="stock-fee-grid">
-            <label>
-              <span>佣金费率</span>
-              <Input
-                data-testid="fee-commission"
-                value={feeForm.commission}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, commission: event.target.value }))
-                }
-                suffix="万分之"
-              />
-            </label>
-            <label>
-              <span>最低佣金</span>
-              <Input
-                data-testid="fee-min"
-                value={feeForm.minCommission}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, minCommission: event.target.value }))
-                }
-                suffix="元/委托"
-              />
-            </label>
-            <label>
-              <span>印花税</span>
-              <Input
-                data-testid="fee-stamp"
-                value={feeForm.stamp}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, stamp: event.target.value }))
-                }
-                suffix="%"
-              />
-            </label>
-            <label>
-              <span>过户费</span>
-              <Input
-                data-testid="fee-transfer"
-                value={feeForm.transfer}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, transfer: event.target.value }))
-                }
-                suffix="%"
-              />
-            </label>
-          </div>
-          <p className="stock-fee-note">
-            这些是默认值：建仓时按它预填（可在建仓弹窗里改），建仓那一刻起本轮的费率就固定了 ——
-            改这里不影响进行中的轮次，只对之后新建仓的轮次生效。
-          </p>
-          <div className="stock-modal-actions">
-            <Button variant="secondary" onClick={() => setFeeOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="fee-save" loading={busy} onClick={() => void saveFees()}>
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         open={operationsOpen}
