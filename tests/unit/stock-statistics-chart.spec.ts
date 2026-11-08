@@ -78,6 +78,16 @@ describe('axisText', () => {
     expect(axisText(0.9375, 'pnl_ratio')).toBe('1')
     expect(axisText(12.4, 'pnl_ratio')).toBe('12')
   })
+
+  it('never prints a negative zero', () => {
+    // (-0.4).toFixed(0) === '-0'：轴上出现「-0」会被读成坏值
+    expect(axisText(-0.4, 'total_pnl')).toBe('0')
+    expect(axisText(-0.4, 'pnl_ratio')).toBe('0')
+    expect(axisText(-0.4, 'win_rate')).toBe('0%')
+    expect(axisText(-0.004, 'max_drawdown')).toBe('0%')
+    // 真的负值照旧带符号
+    expect(axisText(-0.6, 'total_pnl')).toBe('-1')
+  })
 })
 
 describe('tooltipText', () => {

@@ -59,16 +59,26 @@ export function metricValue(point: StockStatisticsPointDto, metric: MetricKey): 
   }
 }
 
+/**
+ * 轴标签上的整数：`(-0.4).toFixed(0)` 是 `'-0'`，画在轴上像一个坏值。
+ * 归到 `0` —— 轴刻度本来就不该出现「负零」。
+ */
+function fixedInt(value: number): string {
+  const text = value.toFixed(0)
+  return text === '-0' ? '0' : text
+}
+
 export function axisText(value: number, metric: MetricKey): string {
   const kind = METRICS.find((item) => item.key === metric)?.kind
   if (kind === 'percent') {
     if (metric === 'max_drawdown') {
-      return `${value.toFixed(2).replace(/\.?0+$/, '')}%`
+      // 回撤保留两位再抹掉尾零（0.79% 不是 1%），同样把「负零」并到 0
+      const trimmed = value.toFixed(2).replace(/\.?0+$/, '')
+      return `${trimmed === '-0' ? '0' : trimmed}%`
     }
-    return `${value.toFixed(0)}%`
+    return `${fixedInt(value)}%`
   }
-  if (kind === 'ratio') return value.toFixed(0)
-  return `${value.toFixed(0)}`
+  return fixedInt(value)
 }
 
 export function tooltipText(value: number, metric: MetricKey): string {
