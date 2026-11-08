@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import { Input, Modal } from 'antd'
-
 import { planLevelsOf } from '../../shared/domain/plan-levels'
 import type { StockLedgerDto } from '../../shared/types/stock-ledger'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import { Button } from '../components/button'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
+import {
+  EMPTY_FORM,
+  StockLedgerForm,
+  normalizeLedgerForm,
+  type LedgerForm,
+} from './stock-ledger-form'
 import { ledgerMarkdown } from './stock-ledger-md'
-import { StockLedgerRead, levelTone, pnlClass } from './stock-ledger-read'
+import { StockLedgerRead } from './stock-ledger-read'
 
 export interface StockLedgerSectionProps {
   ledgerId: string
@@ -20,43 +24,6 @@ export interface StockLedgerSectionProps {
   /** 这一轮 / 这个持仓的成交；复制台账时一并写进「成交记录」 */
   trades?: StockTradeDto[]
 }
-
-interface LedgerForm {
-  whyBuy: string
-  stopLoss: string
-  takeProfit: string
-  followedSystem: string
-  summary: string
-}
-
-const EMPTY_FORM: LedgerForm = {
-  whyBuy: '',
-  stopLoss: '',
-  takeProfit: '',
-  followedSystem: '',
-  summary: '',
-}
-
-/** 弹窗里贴在输入框右端的百分比 —— 边填边算，不另占一行。 */
-function DeltaSuffix({ text, id }: { text: string | null; id: string }): JSX.Element | null {
-  if (!text) return null
-  return (
-    <span id={id} data-testid={id} className={`stock-ledger__delta ${levelTone(text)}`}>
-      <span className="sr-only">较买入价 </span>
-      {text}
-    </span>
-  )
-}
-
-/**
- * 算不出盈亏比时那句话：三种原因各说各的下一步，不拿「填好后自动计算」盖住已经填过的框。
- * 保本 / 移动止损是最常见的 `blocked` —— 止损就在买入价上或之上，没有可亏的空间。
- */
-const RATIO_PROMPTS = {
-  missing: '填好止损和止盈后自动计算',
-  unreadable: '止损和止盈写成价格数字，才能算盈亏比',
-  blocked: '止盈高于买入价、止损低于买入价，才有盈亏比',
-} as const
 
 /** 持仓 / 记录共用的一张交易台账：页内只读，弹窗编辑。 */
 export function StockLedgerSection({
@@ -125,14 +92,8 @@ export function StockLedgerSection({
   }, [ledger, trades])
 
   const save = async (): Promise<void> => {
-    const trimmed: LedgerForm = {
-      whyBuy: form.whyBuy.trim(),
-      stopLoss: form.stopLoss.trim(),
-      takeProfit: form.takeProfit.trim(),
-      followedSystem: form.followedSystem.trim(),
-      summary: form.summary.trim(),
-    }
-    if (Object.values(trimmed).every((value) => value === '')) {
+    const trimmed = normalizeLedgerForm(form)
+    if (!trimmed) {
       setError('台账至少填写一项')
       return
     }
@@ -162,12 +123,6 @@ export function StockLedgerSection({
   const closed = ledger?.closed ?? Boolean(roundId)
   // 三个派生数字只在这里算：入库的是用户手写的止损 / 止盈原文，显示时才折成百分比与倍数。
   const levels = planLevelsOf(ledger?.buyPrice ?? '', ledger?.stopLoss ?? '', ledger?.takeProfit ?? '')
-  const draftLevels = planLevelsOf(ledger?.buyPrice ?? '', form.stopLoss, form.takeProfit)
-  const ratio = draftLevels.riskReward
-  const stopLabelId = 'stock-ledger-stop-label'
-  const takeLabelId = 'stock-ledger-take-label'
-  const stopDeltaId = 'stock-ledger-stop-delta'
-  const takeDeltaId = 'stock-ledger-take-delta'
 
   return (
     <section className="stock-ledger" data-testid="stock-ledger">
@@ -204,174 +159,18 @@ export function StockLedgerSection({
 
       <StockLedgerRead ledger={ledger} loaded={loaded} closed={closed} levels={levels} />
 
-      <Modal
+      <StockLedgerForm
         open={open}
-        title={ledger?.exists ? '编辑台账' : '填写台账'}
-        width={680}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={() => setOpen(false)}
-      >
-        <div className="stock-modal-form stock-ledger-form" data-testid="stock-ledger-dialog">
-          <label>
-            <span className="stock-label">为什么买</span>
-            <Input.TextArea
-              data-testid="stock-ledger-why"
-              rows={4}
-              maxLength={2000}
-              placeholder="当时为什么决定买这一轮"
-              value={form.whyBuy}
-              onChange={(event) => {
-                setForm((current) => ({ ...current, whyBuy: event.target.value }))
-                setError('')
-              }}
-            />
-          </label>
-
-          <div className="stock-modal-grid">
-            <label>
-              <span className="stock-label">买入价</span>
-              <Input
-                className="stock-ledger__computed"
-                data-testid="stock-ledger-buy-price"
-                readOnly
-                value={ledger?.buyPrice ?? ''}
-                placeholder="按成交自动计算"
-              />
-            </label>
-            <label>
-              <span className="stock-label">买入成本</span>
-              <Input
-                className="stock-ledger__computed"
-                data-testid="stock-ledger-buy-cost"
-                readOnly
-                value={ledger?.buyCost ?? ''}
-                placeholder="按成交自动计算"
-              />
-            </label>
-            <label>
-              <span className="stock-label" id={stopLabelId}>
-                止损
-              </span>
-              <Input
-                data-testid="stock-ledger-stop"
-                maxLength={200}
-                placeholder="例如：9.00"
-                aria-labelledby={stopLabelId}
-                aria-describedby={draftLevels.downside ? stopDeltaId : undefined}
-                suffix={<DeltaSuffix text={draftLevels.downside} id={stopDeltaId} />}
-                value={form.stopLoss}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, stopLoss: event.target.value }))
-                }
-              />
-            </label>
-            <label>
-              <span className="stock-label" id={takeLabelId}>
-                止盈
-              </span>
-              <Input
-                data-testid="stock-ledger-take"
-                maxLength={200}
-                placeholder="例如：12.00"
-                aria-labelledby={takeLabelId}
-                aria-describedby={draftLevels.upside ? takeDeltaId : undefined}
-                suffix={<DeltaSuffix text={draftLevels.upside} id={takeDeltaId} />}
-                value={form.takeProfit}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, takeProfit: event.target.value }))
-                }
-              />
-            </label>
-            <div className="stock-ledger-form__ratio" data-testid="stock-ledger-form-ratio">
-              <span className="stock-ledger-form__ratio-label">盈亏比</span>
-              {ratio.kind === 'value' ? (
-                <span className="stock-ledger-form__ratio-value">{ratio.text}</span>
-              ) : (
-                <span className="stock-ledger-form__ratio-empty">{RATIO_PROMPTS[ratio.kind]}</span>
-              )}
-            </div>
-            <label>
-              <span className="stock-label">卖出价</span>
-              <Input
-                className="stock-ledger__computed"
-                data-testid="stock-ledger-sell-price"
-                readOnly
-                aria-disabled={!closed}
-                value={closed ? ledger?.sellPrice ?? '' : ''}
-                placeholder={closed ? '按成交自动计算' : '清仓后回填'}
-              />
-            </label>
-            <label>
-              <span className="stock-label">卖出净额</span>
-              <Input
-                className="stock-ledger__computed"
-                data-testid="stock-ledger-sell-net"
-                readOnly
-                aria-disabled={!closed}
-                value={closed ? ledger?.sellNet ?? '' : ''}
-                placeholder={closed ? '按成交自动计算' : '清仓后回填'}
-              />
-            </label>
-            <label>
-              <span className="stock-label">净盈亏</span>
-              <Input
-                className={`stock-ledger__computed ${closed ? pnlClass(ledger?.netPnl ?? '') : ''}`}
-                data-testid="stock-ledger-pnl"
-                readOnly
-                aria-disabled={!closed}
-                value={closed ? ledger?.netPnl ?? '' : ''}
-                placeholder={closed ? '按成交自动计算' : '清仓后回填'}
-              />
-            </label>
-          </div>
-
-            <label>
-              <span className="stock-label">是否按系统执行</span>
-              <Input
-                data-testid="stock-ledger-followed"
-                maxLength={200}
-                placeholder="例如：是 / 否 / 部分"
-                value={form.followedSystem}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, followedSystem: event.target.value }))
-                }
-              />
-            </label>
-          <label>
-            <span className="stock-label">一句话</span>
-            <Input
-              data-testid="stock-ledger-summary"
-              maxLength={2000}
-              placeholder="一句话总结这一轮"
-              value={form.summary}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, summary: event.target.value }))
-              }
-            />
-          </label>
-
-          {error ? (
-            <p role="alert" className="stock-modal-error" data-testid="stock-ledger-form-error">
-              {error}
-            </p>
-          ) : null}
-          <div className="stock-modal-actions">
-            <Button variant="secondary" onClick={() => setOpen(false)}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="stock-ledger-save"
-              loading={busy}
-              onClick={() => void save()}
-            >
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        ledger={ledger}
+        closed={closed}
+        form={form}
+        error={error}
+        busy={busy}
+        onChange={setForm}
+        onClearError={() => setError('')}
+        onSave={() => void save()}
+        onClose={() => setOpen(false)}
+      />
     </section>
   )
 }
