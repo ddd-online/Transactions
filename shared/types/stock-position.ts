@@ -7,7 +7,7 @@
  *
  * 单位口径（与既有逐字一致，别在界面层再换算一次）：
  * * 金额恒为整数**分**（`totalCost` / `roundCashFlow` / `realizedPnl` / 总览的全部金额字段）；
- * * 股票价格恒为整数**厘**（`latestPrice` / `prevClose`，1/1000 元）；
+ * * 股票价格恒为整数**厘**（`latestPrice` / `prevClose` / `openPrice`，1/1000 元）；
  * * 百分比是「百分数」而不是小数（`12.5` 表示 12.5%）。
  *
  * `Option<T>` → `T | null`；但 `roundFee` / `latestPrice` / `prevClose` / `quoteTime`
@@ -30,6 +30,11 @@ export interface StockQuoteDto {
   latestPrice: number
   /** 昨收价（**厘**，每股） */
   prevClose: number
+  /**
+   * 今开价（**厘**，每股）。停牌、字段缺失或非法时为 `0`（不是"零元"）——
+   * 想算开盘涨跌幅的地方都得先确认它大于 0。
+   */
+  openPrice: number
   /** 行情时间（Unix 秒） */
   quoteTime: number
   /**

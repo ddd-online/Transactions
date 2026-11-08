@@ -17,12 +17,12 @@ import { _electron as electron, expect, test, type Page } from '@playwright/test
 import { createLedger } from './ledger-helper'
 
 /**
- * 当前迁移号（`electron/db/migrate.ts` 的 `MIGRATIONS.at(-1).version`，现在是第 11 条）。
+ * 当前迁移号（`electron/db/migrate.ts` 的 `MIGRATIONS.at(-1).version`，现在是第 12 条）。
  *
  * 写死而不是 import：migrate.ts 顶上 `import schemaSql from '.../0001_init.sql?raw'` 只有
  * electron-vite 认识，Playwright 的转译器不认识 `?raw`。加迁移时同步这一行。
  */
-const SUPPORTED_SCHEMA_VERSION = 11
+const SUPPORTED_SCHEMA_VERSION = 12
 
 function environment(overrides: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {}

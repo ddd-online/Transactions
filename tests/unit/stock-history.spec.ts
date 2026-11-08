@@ -507,10 +507,11 @@ describe('stock history read layer', () => {
         stockCode: '600000',
         latestPrice: 12_340,
         prevClose: 12_000,
+        openPrice: 12_100,
         quoteTime: 1_700_000_000,
       },
       // 0 = 停牌 / 无行情：不该回填 latestPrice
-      '000001': { stockCode: '000001', latestPrice: 0, prevClose: 0, quoteTime: 0 },
+      '000001': { stockCode: '000001', latestPrice: 0, prevClose: 0, openPrice: 0, quoteTime: 0 },
     })
 
     const items = await listTradeHistories(workspace.db, LEDGER, fetcher)

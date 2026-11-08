@@ -160,6 +160,7 @@ export const MIGRATIONS: readonly Migration[] = [
     // 断板当天的涨跌幅与价格。断板不在涨停池里，这两个数只能问行情，而行情只给
     // "最新一笔"——过了那个交易日就问不到了。所以收盘定稿那一刻把补到的写下来，
     // 之后看历史日直接读这张表；没写下的日期就是没有，不拿前后交易日顶替。
+    // v12 会把这张表并进 `stock_limit_quote`（那时还没发布过，旧表里的行直接搬走）。
     sql: `
       CREATE TABLE IF NOT EXISTS stock_limit_broken_quote (
         trade_date TEXT NOT NULL,
@@ -169,6 +170,30 @@ export const MIGRATIONS: readonly Migration[] = [
         fetched_at INTEGER NOT NULL,
         PRIMARY KEY (trade_date, stock_code)
       );
+    `,
+  },
+  {
+    version: 12,
+    name: 'stock_limit_quote_open',
+    // v11 那张表只管断板那两格；天梯每一行现在还要"开盘涨跌幅"，两者来自同一笔
+    // 当天行情、同一天落库，所以并成一张 `stock_limit_quote`：
+    // * `open_pct` —— 今开对昨收，每一行都有（涨停股也有）；
+    // * `close_pct` / `close_price_milli` —— 收盘涨跌幅与价格，只有断板行用得上。
+    // v11 没发布过，旧表里的行原样搬过来再删掉，不留两套。
+    sql: `
+      CREATE TABLE IF NOT EXISTS stock_limit_quote (
+        trade_date TEXT NOT NULL,
+        stock_code TEXT NOT NULL,
+        open_pct REAL,
+        close_pct REAL,
+        close_price_milli INTEGER,
+        fetched_at INTEGER NOT NULL,
+        PRIMARY KEY (trade_date, stock_code)
+      );
+      INSERT OR IGNORE INTO stock_limit_quote
+        (trade_date, stock_code, close_pct, close_price_milli, fetched_at)
+        SELECT trade_date, stock_code, pct, price_milli, fetched_at FROM stock_limit_broken_quote;
+      DROP TABLE stock_limit_broken_quote;
     `,
   },
 ]

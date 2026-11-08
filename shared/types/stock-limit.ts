@@ -40,6 +40,13 @@ export interface StockLimitEntry {
   statDays: number
   /** N 天 M 板里的 M */
   statCount: number
+  /**
+   * 当天**开盘涨跌幅**（百分数）：今开对比昨收，来自行情源，不在涨停池里。
+   *
+   * 库里只存池子（开盘价不在池子里），所以从库读回来的条目这里是 `null` ——
+   * 由服务层按"那一天存下的行情快照"补上；没抓过行情的那一天就是 `null`，界面不显示。
+   */
+  openPct: number | null
 }
 
 /**

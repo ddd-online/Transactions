@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { migrate } from '../../electron/db/migrate'
-import { getLimitDay, listBrokenQuotes, saveBrokenQuotes } from '../../electron/db/dao/stock-limit'
+import {
+  getLimitDay,
+  listLadderQuotes,
+  saveLadderQuotes,
+} from '../../electron/db/dao/stock-limit'
 import { openDatabase, type Db } from '../../electron/db/driver'
 import {
   boardCounts,
@@ -56,6 +60,7 @@ function entry(stockCode: string, level: number, firstSeal: number, name = stock
     industry: '银行',
     statDays: level,
     statCount: level,
+    openPct: null,
   }
 }
 
@@ -450,10 +455,13 @@ describe('getLimitLadder 缓存纪律', () => {
   })
 })
 
-describe('getLimitLadder 断板涨跌幅', () => {
+describe('getLimitLadder 开盘涨跌幅与断板行情', () => {
   /** 按代码返回行情的桩；`calls` 记录每次请求的代码。 */
   function quotes(
-    entries: Record<string, { latest: number; prevClose: number; quoteDate: string }>,
+    entries: Record<
+      string,
+      { latest: number; prevClose: number; quoteDate: string; open?: number }
+    >,
   ): StockQuoteFetcher & { calls: string[][] } {
     const calls: string[][] = []
     return {
@@ -468,6 +476,7 @@ describe('getLimitLadder 断板涨跌幅', () => {
             stockCode: code,
             latestPrice: hit.latest,
             prevClose: hit.prevClose,
+            openPrice: hit.open ?? 0,
             quoteTime: 0,
             quoteDate: hit.quoteDate,
           })
@@ -486,6 +495,12 @@ describe('getLimitLadder 断板涨跌幅', () => {
   }
   const day = '2026-10-23'
   const now = at(2026, 10, 23, 16)
+  // A 今开 +3.00%、B 今开 -2.00%、C 今开 +1.33%；C 还没封住（断板），收盘 -3.33%。
+  const dayQuotes = {
+    A: { latest: 110_000, prevClose: 100_000, open: 103_000, quoteDate: day },
+    B: { latest: 55_000, prevClose: 50_000, open: 49_000, quoteDate: day },
+    C: { latest: 145_000, prevClose: 150_000, open: 152_000, quoteDate: day },
+  }
 
   function ladderSource(): { fetchDay: (date: string) => Promise<StockLimitEntry[]> } {
     return {
@@ -495,77 +510,137 @@ describe('getLimitLadder 断板涨跌幅', () => {
     }
   }
 
-  it('断板用当天行情补上涨跌幅与当时价', async () => {
+  it('每一行都用当天行情补开盘涨跌幅，断板再补收盘涨跌幅与价格', async () => {
     const db = database()
-    const fetcher = quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: day } })
+    const fetcher = quotes(dayQuotes)
     const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
 
-    expect(fetcher.calls).toEqual([['C']])
-    const rung = ladder.rungs.find((item) => item.level === 1)!
-    expect(rung.broken.map((row) => [row.stockCode, row.todayPct, row.todayPrice])).toEqual([
-      ['C', -3.33, 145_000],
-    ])
-    // 连板股不带这两个字段的语义：它们本来就在涨停池里，价格就是池子里的那一个。
-    expect(rung.entries[0]).not.toHaveProperty('todayPct')
-    expect(rung.entries[0]).not.toHaveProperty('todayPrice')
+    // 一次请求把这一屏的股票都问了（涨停的不在池子里才有今开）
+    expect(fetcher.calls).toHaveLength(1)
+    expect(fetcher.calls[0].slice().sort()).toEqual(['A', 'B', 'C'])
+
+    const rung1 = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung1.entries[0].openPct).toBe(-2)
+    expect(rung1.broken[0].openPct).toBe(1.33)
+    expect(rung1.broken[0].todayPct).toBe(-3.33)
+    expect(rung1.broken[0].todayPrice).toBe(145_000)
+    expect(ladder.rungs.find((item) => item.level === 2)!.entries[0].openPct).toBe(3)
+    // 连板股不带收盘那两格：它们本来就在涨停池里，价格就是池子里的那一个。
+    expect(rung1.entries[0]).not.toHaveProperty('todayPct')
+    expect(rung1.entries[0]).not.toHaveProperty('todayPrice')
+  })
+
+  it('今开缺失（0）时没有开盘涨跌幅，不拿最新价顶上去', async () => {
+    const db = database()
+    const fetcher = quotes({
+      A: { latest: 110_000, prevClose: 100_000, open: 0, quoteDate: day },
+      B: { latest: 55_000, prevClose: 50_000, open: 0, quoteDate: day },
+      C: { latest: 145_000, prevClose: 150_000, open: 0, quoteDate: day },
+    })
+    const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
+
+    expect(
+      ladder.rungs.every((rung) => rung.entries.every((item) => item.openPct === null)),
+    ).toBe(true)
+    expect(ladder.rungs.find((item) => item.level === 1)!.broken[0].openPct).toBeNull()
+    // 收盘那两格与今开无关，照常补上
+    expect(ladder.rungs.find((item) => item.level === 1)!.broken[0].todayPct).toBe(-3.33)
+    // 没有任何一格可存的涨停行不落库：留着只会挡住下次重试
+    expect([...listLadderQuotes(db, day)].map(([code]) => code)).toEqual(['C'])
   })
 
   it('收盘定稿时把补到的行情落库，之后翻历史不再问行情', async () => {
     const db = database()
-    await getLimitLadder(db, ladderSource(), day, {
-      now,
-      quotes: quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: day } }),
-    })
-    expect([...listBrokenQuotes(db, day)]).toEqual([['C', { pct: -3.33, priceMilli: 145_000 }]])
+    await getLimitLadder(db, ladderSource(), day, { now, quotes: quotes(dayQuotes) })
+    const stored = [...listLadderQuotes(db, day)].sort((left, right) =>
+      left[0].localeCompare(right[0]),
+    )
+    expect(stored).toEqual([
+      ['A', { openPct: 3, closePct: null, closePriceMilli: null }],
+      ['B', { openPct: -2, closePct: null, closePriceMilli: null }],
+      ['C', { openPct: 1.33, closePct: -3.33, closePriceMilli: 145_000 }],
+    ])
 
     // 一周后再看这一天：行情早就走到别的交易日了，库里的那一笔还在。
-    const later = quotes({ C: { latest: 1, prevClose: 1, quoteDate: '2026-10-27' } })
+    const later = quotes({
+      A: { latest: 1, prevClose: 1, quoteDate: '2026-10-27' },
+      B: { latest: 1, prevClose: 1, quoteDate: '2026-10-27' },
+      C: { latest: 1, prevClose: 1, quoteDate: '2026-10-27' },
+    })
     const ladder = await getLimitLadder(db, ladderSource(), day, {
       now: at(2026, 10, 27, 16),
       quotes: later,
     })
     expect(later.calls).toEqual([])
     const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.entries[0].openPct).toBe(-2)
+    expect(rung.broken[0].openPct).toBe(1.33)
     expect(rung.broken[0].todayPct).toBe(-3.33)
     expect(rung.broken[0].todayPrice).toBe(145_000)
   })
 
   it('盘中只渲染不落库：那一刻的价格还会变', async () => {
     const db = database()
-    const fetcher = quotes({ C: { latest: 148_000, prevClose: 150_000, quoteDate: day } })
+    const fetcher = quotes({
+      A: { latest: 110_000, prevClose: 100_000, open: 103_000, quoteDate: day },
+      B: { latest: 55_000, prevClose: 50_000, open: 49_000, quoteDate: day },
+      C: { latest: 148_000, prevClose: 150_000, open: 152_000, quoteDate: day },
+    })
     const ladder = await getLimitLadder(db, ladderSource(), day, {
       now: at(2026, 10, 23, 10),
       quotes: fetcher,
     })
 
     const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.entries[0].openPct).toBe(-2)
     expect(rung.broken[0].todayPct).toBe(-1.33)
-    expect(listBrokenQuotes(db, day).size).toBe(0)
+    expect(listLadderQuotes(db, day).size).toBe(0)
   })
 
   it('库里有就不再请求行情，也不被后来的行情改写', async () => {
     const db = database()
-    saveBrokenQuotes(db, day, new Map([['C', { pct: -3.33, priceMilli: 145_000 }]]), now)
+    saveLadderQuotes(
+      db,
+      day,
+      new Map([
+        ['A', { openPct: 3, closePct: null, closePriceMilli: null }],
+        ['B', { openPct: -2, closePct: null, closePriceMilli: null }],
+        ['C', { openPct: 1.33, closePct: -3.33, closePriceMilli: 145_000 }],
+      ]),
+      now,
+    )
 
-    const fetcher = quotes({ C: { latest: 160_000, prevClose: 150_000, quoteDate: day } })
+    const fetcher = quotes({
+      A: { latest: 120_000, prevClose: 100_000, open: 101_000, quoteDate: day },
+      B: { latest: 60_000, prevClose: 50_000, open: 60_000, quoteDate: day },
+      C: { latest: 160_000, prevClose: 150_000, open: 140_000, quoteDate: day },
+    })
     const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
 
     expect(fetcher.calls).toEqual([])
     const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.entries[0].openPct).toBe(-2)
+    expect(rung.broken[0].openPct).toBe(1.33)
     expect(rung.broken[0].todayPct).toBe(-3.33)
     expect(rung.broken[0].todayPrice).toBe(145_000)
   })
 
   it('行情日期对不上就不贴：那不是这一天的涨跌', async () => {
     const db = database()
-    const fetcher = quotes({ C: { latest: 145_000, prevClose: 150_000, quoteDate: '2026-10-22' } })
+    const fetcher = quotes({
+      A: { latest: 110_000, prevClose: 100_000, open: 103_000, quoteDate: '2026-10-22' },
+      B: { latest: 55_000, prevClose: 50_000, open: 49_000, quoteDate: '2026-10-22' },
+      C: { latest: 145_000, prevClose: 150_000, open: 152_000, quoteDate: '2026-10-22' },
+    })
     const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: fetcher })
 
     const rung = ladder.rungs.find((item) => item.level === 1)!
+    expect(rung.entries[0].openPct).toBeNull()
+    expect(rung.broken[0].openPct).toBeNull()
     expect(rung.broken[0].todayPct).toBeNull()
     expect(rung.broken[0].todayPrice).toBeNull()
     // 对不上的那一笔也不许落库，否则它就成了这一天的"历史"。
-    expect(listBrokenQuotes(db, day).size).toBe(0)
+    expect(listLadderQuotes(db, day).size).toBe(0)
   })
 
   it('太旧的日期不去请求行情', async () => {
@@ -591,6 +666,7 @@ describe('getLimitLadder 断板涨跌幅', () => {
     const ladder = await getLimitLadder(db, ladderSource(), day, { now, quotes: failing })
     const rung = ladder.rungs.find((item) => item.level === 1)!
     expect(rung.broken[0].stockCode).toBe('C')
+    expect(rung.broken[0].openPct).toBeNull()
     expect(rung.broken[0].todayPct).toBeNull()
     expect(rung.broken[0].todayPrice).toBeNull()
   })

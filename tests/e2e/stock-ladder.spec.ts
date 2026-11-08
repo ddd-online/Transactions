@@ -47,26 +47,33 @@ function at(date: Date, hour: number): number {
   return Math.trunc(copy.getTime() / 1000)
 }
 
-/** 腾讯行情的一段：`~` 分隔的字段，行情时间固定放第 30 位（`YYYYMMDDHHMMSS`）。 */
-function quoteLine(code: string, latest: string, prevClose: string, day: string): string {
+/** 腾讯行情的一段：`~` 分隔的字段，最新价[3]、昨收[4]、今开[5]，行情时间固定放第 30 位（`YYYYMMDDHHMMSS`）。 */
+function quoteLine(
+  code: string,
+  latest: string,
+  prevClose: string,
+  day: string,
+  open = '',
+): string {
   const fields = Array.from({ length: 31 }, () => '')
   fields[0] = '1'
   fields[1] = code
   fields[2] = code
   fields[3] = latest
   fields[4] = prevClose
+  fields[5] = open
   fields[30] = `${day.replaceAll('-', '')}150000`
   return `v_${code.startsWith('6') ? 'sh' : 'sz'}${code}="${fields.join('~')}";`
 }
 
 /**
  * 应答行情请求（`/q=sh600519,sz301314`），
- * 并告诉调用方"这条请求归我管"：天梯拿它给断板补当天涨跌幅。
+ * 并告诉调用方"这条请求归我管"：天梯拿它补开盘涨跌幅、断板的收盘涨跌幅与价格。
  */
 function respondQuotes(
   pathname: string,
   response: ServerResponse,
-  quotes: Record<string, { latest: string; prevClose: string }>,
+  quotes: Record<string, { latest: string; prevClose: string; open?: string }>,
   day: string,
 ): boolean {
   if (!pathname.startsWith('/q=')) return false
@@ -76,7 +83,7 @@ function respondQuotes(
     .map((symbol) => symbol.replace(/^[a-z]{2}/, ''))
     .map((code) => {
       const quote = quotes[code]
-      return quote ? quoteLine(code, quote.latest, quote.prevClose, day) : ''
+      return quote ? quoteLine(code, quote.latest, quote.prevClose, day, quote.open ?? '') : ''
     })
     .filter(Boolean)
   response.setHeader('content-type', 'text/plain; charset=GBK')
@@ -357,10 +364,14 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
   }
 
   const requests: string[] = []
-  // 断板行情：茅台 +3.33%（红）、科瑞思 -3.92%（绿）。
+  // 行情：涨停的两只也带今开（开盘涨跌幅每一行都有）；断板的再加收盘那两格。
+  // 上海九百今开 +6.00%、平安银行今开 -3.00%；茅台今开 +1.00%、收盘 +3.33%；
+  // 科瑞思今开 -1.96%、收盘 -3.92%。
   const quotes = {
-    '600519': { latest: '1550.00', prevClose: '1500.00' },
-    '301314': { latest: '49.00', prevClose: '51.00' },
+    '600838': { latest: '11.00', prevClose: '10.00', open: '10.60' },
+    '000001': { latest: '11.00', prevClose: '10.00', open: '9.70' },
+    '600519': { latest: '1550.00', prevClose: '1500.00', open: '1515.00' },
+    '301314': { latest: '49.00', prevClose: '51.00', open: '50.00' },
   }
   // 行情自己的交易日。默认就是天梯这一天；后面会把它拨到下一天，
   // 模拟"过了这个交易日，行情只肯给最新一笔"。
@@ -537,15 +548,51 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       /stock-ladder__tag--down/,
     )
     await expect(brokenKeruisi.getByTestId('stock-ladder-chip-price')).toContainText('49.00')
-    // 断板那两格落库了：这一天收盘定稿时存下的就是这一笔（历史日靠它，不靠行情）
+    // 开盘涨跌幅：涨停行也有（今开对昨收），红涨绿跌，排在收盘涨跌幅前面
+    const limitShanghai = ladder.getByTestId('stock-ladder-chip').filter({ hasText: '上海九百' })
+    const limitPingan = ladder.getByTestId('stock-ladder-chip').filter({ hasText: '平安银行' })
+    await expect(limitShanghai.getByTestId('stock-ladder-chip-open')).toHaveText('开 +6.00%')
+    await expect(limitShanghai.getByTestId('stock-ladder-chip-open')).toHaveClass(
+      /stock-ladder__tag--up/,
+    )
+    await expect(limitPingan.getByTestId('stock-ladder-chip-open')).toHaveText('开 -3.00%')
+    await expect(limitPingan.getByTestId('stock-ladder-chip-open')).toHaveClass(
+      /stock-ladder__tag--down/,
+    )
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-open')).toHaveText('开 +1.00%')
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-open')).toHaveText('开 -1.96%')
+    // 一行里按时间先后读：断 → 开 → 收；涨停行是 炸 → 开
+    expect(await brokenMoutai.locator('.stock-ladder__tag').allTextContents()).toEqual([
+      '断',
+      '开 +1.00%',
+      '+3.33%',
+    ])
+    expect(await limitShanghai.locator('.stock-ladder__tag').allTextContents()).toEqual([
+      '炸 1',
+      '开 +6.00%',
+    ])
+    // 行情落库：涨停行只有开盘涨跌幅，断板行连收盘那两格一起存
     const storedDb = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
-    const storedQuotes = storedDb
-      .prepare('SELECT stock_code, pct, price_milli FROM stock_limit_broken_quote ORDER BY stock_code')
+    const storedBroken = storedDb
+      .prepare(
+        'SELECT stock_code, open_pct, close_pct, close_price_milli FROM stock_limit_quote ' +
+          'WHERE close_pct IS NOT NULL ORDER BY stock_code',
+      )
+      .all()
+    const storedLimit = storedDb
+      .prepare(
+        'SELECT stock_code, open_pct, close_pct FROM stock_limit_quote ' +
+          'WHERE close_pct IS NULL ORDER BY stock_code',
+      )
       .all()
     storedDb.close()
-    expect(storedQuotes).toEqual([
-      { stock_code: '301314', pct: -3.92, price_milli: 49_000 },
-      { stock_code: '600519', pct: 3.33, price_milli: 1_550_000 },
+    expect(storedBroken).toEqual([
+      { stock_code: '301314', open_pct: -1.96, close_pct: -3.92, close_price_milli: 49_000 },
+      { stock_code: '600519', open_pct: 1, close_pct: 3.33, close_price_milli: 1_550_000 },
+    ])
+    expect(storedLimit).toEqual([
+      { stock_code: '000001', open_pct: -3, close_pct: null },
+      { stock_code: '600838', open_pct: 6, close_pct: null },
     ])
     await expect(page.getByTestId('stock-ladder-status')).toContainText('已写入本地')
     const footer = page.getByTestId('stock-ladder-footer')
@@ -578,6 +625,8 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(pageHtml).toContain('11.00')
     expect(pageHtml).toContain('1550.00')
     expect(pageHtml).toContain('>断</span>')
+    expect(pageHtml).toContain('开 +1.00%')
+    expect(pageHtml).toContain('开 +6.00%')
     expect(pageHtml).toContain('+3.33%')
     // 自包含：字体由主进程内嵌，页面没有外部请求与脚本
     expect(pageHtml).toContain('@font-face')
@@ -696,14 +745,18 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     await page.getByTestId('stock-ladder-refresh').click()
     await expect.poll(todayRequests).toBe(beforeSwitch + 1)
 
-    // 行情只给"最新一笔"：把它的交易日拨到之后，这一天就再也问不到断板涨跌幅了。
-    // 但收盘定稿时已经落库 —— 翻回这一天，那两格还在（旧实现到这里就只剩「断」）。
+    // 行情只给"最新一笔"：把它的交易日拨到之后，这一天就再也问不到这些涨跌幅了。
+    // 但收盘定稿时已经落库 —— 翻回这一天，断板的收盘两格与每一行的开盘涨跌幅都还在
+    //（旧实现到这里就只剩「断」）。
     const nextDay = new Date(today)
     nextDay.setDate(nextDay.getDate() + 1)
     quoteDay = ymd(nextDay)
     await page.getByTestId('stock-ladder-refresh').click()
     await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('+3.33%')
     await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('-3.92%')
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-open')).toHaveText('开 +1.00%')
+    await expect(limitShanghai.getByTestId('stock-ladder-chip-open')).toHaveText('开 +6.00%')
+    await expect(limitPingan.getByTestId('stock-ladder-chip-open')).toHaveText('开 -3.00%')
   } finally {
     await app.close()
     server.close()
@@ -750,7 +803,14 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
 
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
-    if (respondQuotes(url.pathname, response, { '600519': { latest: '1450.00', prevClose: '1500.00' } }, ymd(today))) {
+    if (
+      respondQuotes(
+        url.pathname,
+        response,
+        { '600519': { latest: '1450.00', prevClose: '1500.00', open: '1490.00' } },
+        ymd(today),
+      )
+    ) {
       return
     }
     const date = url.searchParams.get('date') ?? ''
@@ -947,7 +1007,14 @@ test('连板天梯：首板很多时列内滚动，页面不跟着变长', async
 
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
-    if (respondQuotes(url.pathname, response, { '600000': { latest: '10.45', prevClose: '10.00' } }, ymd(today))) {
+    if (
+      respondQuotes(
+        url.pathname,
+        response,
+        { '600000': { latest: '10.45', prevClose: '10.00', open: '10.20' } },
+        ymd(today),
+      )
+    ) {
       return
     }
     const date = url.searchParams.get('date') ?? ''
@@ -1060,8 +1127,31 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
     ],
   }
 
+  // 行情：开盘涨跌幅每一行都有（夹具供给；不去问真行情，否则标签数会随真网络变成偶然的）。
+  // 今开在红 / 绿之间交替，两种色都覆盖到。
+  const quotes: Record<string, { latest: string; prevClose: string; open: string }> = {}
+  const codes = [
+    '600001',
+    '600002',
+    '600003',
+    '600004',
+    '600005',
+    '600006',
+    '600007',
+    '600008',
+    '600010',
+  ]
+  codes.forEach((code, index) => {
+    quotes[code] = {
+      latest: '11.00',
+      prevClose: '10.00',
+      open: index % 2 === 0 ? '10.50' : '9.80',
+    }
+  })
+
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
+    if (respondQuotes(url.pathname, response, quotes, ymd(today))) return
     const date = url.searchParams.get('date') ?? ''
     const pool = pools[date] ?? []
     response.setHeader('content-type', 'application/json; charset=UTF-8')
@@ -1079,6 +1169,7 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
       TRANSACTIONS_TEST_DIALOG_DIR: workspace,
       TRANSACTIONS_TEST_CLOSE: 'quit',
       TRANSACTIONS_TEST_LIMIT_SOURCE: `http://127.0.0.1:${port}`,
+      TRANSACTIONS_TEST_QUOTE_SOURCE: `http://127.0.0.1:${port}`,
       TRANSACTIONS_TEST_LADDER_NOW: String(at(today, 16)),
     }),
   })
@@ -1095,20 +1186,24 @@ test('连板天梯：窄列与窄窗下板块、标签都不被裁掉', async ()
     const ladder = page.getByTestId('stock-ladder')
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(7)
 
-    // 窄列：行换成 66px，板块与标签整行落在行内（此前被 48px 裁掉）
+    // 窄列：行底 66px（三行版式），标签多到换行就把行撑高 —— 标签不许被裁
     const row = ladder.getByTestId('stock-ladder-chip').first()
     const rowBox = await row.evaluate((el) => {
       const tags = el.querySelector('.stock-ladder__item-tags')
+      const tagNodes = [...el.querySelectorAll('.stock-ladder__tag')]
+      const bottom = el.getBoundingClientRect().bottom
       return {
         height: Math.round(el.getBoundingClientRect().height),
-        overflow: tags
-          ? Math.round(tags.getBoundingClientRect().bottom - el.getBoundingClientRect().bottom)
-          : 999,
+        overflow: tags ? Math.round(tags.getBoundingClientRect().bottom - bottom) : 999,
+        // 每一枚标签都得整枚落在行里（高度而不是横向）：横向放不下就换行
+        clipped: tagNodes.filter((node) => node.getBoundingClientRect().bottom > bottom + 1).length,
       }
     })
-    expect(rowBox.height).toBe(66)
+    expect(rowBox.height).toBeGreaterThanOrEqual(66)
     expect(rowBox.overflow).toBeLessThanOrEqual(0)
+    expect(rowBox.clipped).toBe(0)
     await expect(row.getByTestId('stock-ladder-chip-board')).toBeVisible()
+    await expect(row.getByTestId('stock-ladder-chip-open')).toBeVisible()
     // 价格与名称在同一行：价格不能被裁掉，长度超出时先截名称
     const priced = await row.evaluate((el) => {
       const price = el.querySelector<HTMLElement>('[data-testid="stock-ladder-chip-price"]')

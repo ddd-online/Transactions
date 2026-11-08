@@ -56,6 +56,8 @@ function entryFromRow(row: EntryDbRow): StockLimitEntry {
     industry: row.industry,
     statDays: row.stat_days,
     statCount: row.stat_count,
+    // 开盘价不在涨停池里：从库读回来先留空，由服务层按那一天的行情快照补。
+    openPct: null,
   }
 }
 
@@ -73,53 +75,68 @@ export function getLimitDay(db: Db, date: string): StockLimitDayRow | null {
 }
 
 /**
- * 断板当天的行情：涨跌幅（百分数，算不出时 `null`）与价格（厘）。
+ * 天梯这一天的行情快照（来自行情源，只对**收盘定稿**的日期有值）。
  *
- * 只对**收盘定稿**的日期有值 —— 见 `services/stock-limit` 的落库纪律。
+ * * `openPct` —— 开盘涨跌幅（今开对昨收），天梯每一行都看这一格；
+ * * `closePct` / `closePriceMilli` —— 收盘涨跌幅与收盘价，只有断板行用得上。
+ *
+ * 三格都可能为 `null`：行情没给今开、昨收非正算不出，或者这一行本来不用收盘那两格。
+ * 落库纪律见 `services/stock-limit`。
  */
-export interface BrokenQuote {
-  pct: number | null
-  priceMilli: number
+export interface LadderQuote {
+  openPct: number | null
+  closePct: number | null
+  closePriceMilli: number | null
 }
 
-interface BrokenQuoteDbRow {
+interface LadderQuoteDbRow {
   stock_code: string
-  pct: number | null
-  price_milli: number
+  open_pct: number | null
+  close_pct: number | null
+  close_price_milli: number | null
 }
 
-/** 某天已经存下的断板行情，按代码索引；没有就是空映射。 */
-export function listBrokenQuotes(db: Db, date: string): Map<string, BrokenQuote> {
+/** 某天已经存下的行情快照，按代码索引；没有就是空映射。 */
+export function listLadderQuotes(db: Db, date: string): Map<string, LadderQuote> {
   const rows = db
     .prepare(
-      'SELECT stock_code, pct, price_milli FROM stock_limit_broken_quote WHERE trade_date = ?',
+      'SELECT stock_code, open_pct, close_pct, close_price_milli ' +
+        'FROM stock_limit_quote WHERE trade_date = ?',
     )
-    .all(date) as unknown as BrokenQuoteDbRow[]
+    .all(date) as unknown as LadderQuoteDbRow[]
   return new Map(
-    rows.map((row) => [row.stock_code, { pct: row.pct, priceMilli: row.price_milli }]),
+    rows.map((row) => [
+      row.stock_code,
+      {
+        openPct: row.open_pct,
+        closePct: row.close_pct,
+        closePriceMilli: row.close_price_milli,
+      },
+    ]),
   )
 }
 
 /**
- * 写某天的断板行情（只覆盖同一天的同一只股票，不动别的日期）。
+ * 写某天的行情快照（只覆盖同一天的同一只股票，不动别的日期）。
  *
- * 用 `INSERT OR REPLACE` 而不是先删后插：一天的断板是"昨日池 − 今日池"算出来的，
- * 分开几次补（有的股票有行情、有的停牌）时，已经存下的那几行不该被删掉。
+ * 用 `INSERT OR REPLACE` 而不是先删后插：这一天的行可能分几次补（有的股票有行情、
+ * 有的停牌；断板行还多两格收盘），已经存下的那几行不该被删掉。
  */
-export function saveBrokenQuotes(
+export function saveLadderQuotes(
   db: Db,
   date: string,
-  quotes: ReadonlyMap<string, BrokenQuote>,
+  quotes: ReadonlyMap<string, LadderQuote>,
   fetchedAt: number,
 ): void {
   if (quotes.size === 0) return
   const insert = db.prepare(
-    'INSERT OR REPLACE INTO stock_limit_broken_quote ' +
-      '(trade_date, stock_code, pct, price_milli, fetched_at) VALUES (?, ?, ?, ?, ?)',
+    'INSERT OR REPLACE INTO stock_limit_quote ' +
+      '(trade_date, stock_code, open_pct, close_pct, close_price_milli, fetched_at) ' +
+      'VALUES (?, ?, ?, ?, ?, ?)',
   )
   db.transaction(() => {
     for (const [code, quote] of quotes) {
-      insert.run(date, code, quote.pct, quote.priceMilli, fetchedAt)
+      insert.run(date, code, quote.openPct, quote.closePct, quote.closePriceMilli, fetchedAt)
     }
   })
 }

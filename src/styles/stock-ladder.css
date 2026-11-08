@@ -254,14 +254,14 @@
   list-style: none;
 }
 
-/* 行高固定：有没有标签都占同一条高度，列里的分隔线才会等距。
+/* 行高随内容长高：一行标签（板块 / 一字 / 炸 / 断 / 开 / 收）放得下就停在 48px，
+ * 窄列里标签多到换行就长一行 —— 标签宁可把行撑高，也不许被裁掉。
  * 左右 8px 内边距：底色铺满整行时，文字不贴着色的边。 */
 .stock-ladder__item {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 4px;
-  height: 48px;
   min-height: 48px;
   padding: 4px var(--transactions-space-sm);
   border-top: 1px solid var(--transactions-color-divider);
@@ -423,10 +423,9 @@
  * 否则 4 个字的股票名会被截成两个字。
  * 阈值跟着列宽算：列内容 = 列宽 − 8（左右各 4 的列内边距），
  * 所以 216 = 旧规则 200 + 省下来的 16，切换点与改版前一致。
- * 这段必须排在上面两条规则之后：同一条选择器，靠源码顺序覆盖 48px 的行高。 */
+ * 这段必须排在上面两条规则之后：同一条选择器，靠源码顺序盖掉 48px 的下限。 */
 @container (max-width: 216px) {
   .stock-ladder__item {
-    height: 66px;
     min-height: 66px;
   }
 
@@ -650,7 +649,8 @@
   }
 
   .stock-ladder__item {
-    /* 164px：装得下「5 字板块 + 断 + 涨跌幅」一整行，标签不在格子里换行。 */
+    /* 164px：装得下「5 字板块 + 断 + 涨跌幅」；再多一枚「开」就换到第二行 ——
+     * 格子按内容长高（auto），标签不裁、不横着挤。 */
     flex: 0 0 164px;
     min-width: 0;
     height: auto;

@@ -162,6 +162,8 @@ export function parseLimitPoolPayload(text: string): LimitPoolPayload | null {
       industry: typeof raw.hybk === 'string' ? raw.hybk.trim() : '',
       statDays: integerValue(statistics?.days),
       statCount: integerValue(statistics?.ct),
+      // 开盘价不在这份数据里：天梯每一行的"开盘涨跌幅"由服务层另问行情。
+      openPct: null,
     })
   }
 

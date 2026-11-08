@@ -56,6 +56,7 @@ function entry(
     industry: board,
     statDays: level,
     statCount: level,
+    openPct: null,
     ...overrides,
   }
 }
@@ -384,6 +385,34 @@ describe('renderLadderPage', () => {
     expect(html).not.toContain('class="price"')
     expect(html).not.toContain('tag tag-pct')
     expect(html).toContain('<span class="tag tag-off">断</span>')
+  })
+
+  it('puts the open change before the close change', () => {
+    const html = renderLadderPage(
+      fixture({
+        rungs: [
+          rung(
+            1,
+            [entry('600001', '金安国纪', 1, 92500, '光伏设备', { openPct: 2.5 })],
+            [
+              broken(
+                entry('600010', '大族数控', 1, 95000, '专用设备', { openPct: -1.2 }),
+                1990,
+                -3.33,
+              ),
+            ],
+          ),
+        ],
+      }),
+    )
+    // 涨停行：只有开盘涨跌幅（收盘涨跌幅由「封在板上」本身说明）
+    expect(html).toContain('<span class="tag tag-pct">开 +2.50%</span>')
+    // 断板行：开在收前面，绿的是跌
+    expect(html).toContain('<span class="tag tag-pct is-down">开 -1.20%</span>')
+    const openAt = html.indexOf('开 -1.20%')
+    const closeAt = html.indexOf('-3.33%')
+    expect(openAt).toBeGreaterThan(-1)
+    expect(openAt).toBeLessThan(closeAt)
   })
 
   it('mixes hex channels deterministically', () => {

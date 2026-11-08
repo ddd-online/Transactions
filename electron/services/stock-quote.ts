@@ -220,8 +220,10 @@ function parseDecimal(raw: string): number | null {
 /**
  * 解析腾讯行情响应文本，返回全部可识别的 A 股行情。
  *
- * 腾讯字段以 `~` 分隔：名称[1]、代码[2]、最新价[3]、昨收[4]、行情时间[30]（`YYYYMMDDHHMMSS`）。
+ * 腾讯字段以 `~` 分隔：名称[1]、代码[2]、最新价[3]、昨收[4]、今开[5]、
+ * 行情时间[30]（`YYYYMMDDHHMMSS`）。
  * 字段不足 5 段、代码不合法、价格 <= 0（停牌）或无法解析时跳过该股。
+ * 今开缺失 / 非法时记 `0`（"没有这一格"），不影响这一笔行情的其余字段。
  * 行情时间缺失 / 非法时退化为"当前时间"（`now` 可注入，测试用），`quoteDate` 一并省略。
  */
 export function parseTencentQuotePayload(
@@ -241,6 +243,9 @@ export function parseTencentQuotePayload(
     if (latestYuan === null || prevCloseYuan === null) continue
     if (latestYuan <= 0 || prevCloseYuan <= 0) continue // 停牌 / 非法值视为该股无行情
 
+    // 今开是可选的一格：缺了只是算不出开盘涨跌幅，这一笔行情本身仍然可用。
+    const openYuan = parts.length > 5 ? parseDecimal(parts[5].trim()) : null
+
     let quoteTime = now
     let quoteDate: string | undefined
     if (parts.length > 30) {
@@ -256,6 +261,7 @@ export function parseTencentQuotePayload(
       // 价格由元换算为整数**厘**：规则在 `shared/domain/money`（别在这儿再写一遍）
       latestPrice: priceYuanToMilli(latestYuan),
       prevClose: priceYuanToMilli(prevCloseYuan),
+      openPrice: openYuan !== null && openYuan > 0 ? priceYuanToMilli(openYuan) : 0,
       quoteTime,
       ...(quoteDate === undefined ? {} : { quoteDate }),
     })

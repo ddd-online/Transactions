@@ -195,7 +195,7 @@ function quoteFetcher(entries: Record<string, QuoteEntry>): StockQuoteFetcher {
       const result = new Map<string, StockQuoteDto>()
       for (const code of codes) {
         const entry = entries[code]
-        if (entry) result.set(code, { stockCode: code, ...entry })
+        if (entry) result.set(code, { stockCode: code, openPrice: 0, ...entry })
       }
       return result
     },
@@ -223,19 +223,21 @@ function positionOf(items: readonly StockPositionDto[], code: string): StockPosi
 
 // ---------------------------------------------------------------- 腾讯 payload 造数
 
-/** 造一条 32 段的腾讯行情行：名称[1]、代码[2]、最新价[3]、昨收[4]、时间[30]，其余为 `-`。 */
+/** 造一条 32 段的腾讯行情行：名称[1]、代码[2]、最新价[3]、昨收[4]、今开[5]、时间[30]，其余为 `-`。 */
 function quoteLine(
   code: string,
   latest: string,
   prev: string,
   timestamp: string,
   name = '测试股票',
+  open = '-',
 ): string {
   const parts = new Array<string>(32).fill('-')
   parts[1] = name
   parts[2] = code
   parts[3] = latest
   parts[4] = prev
+  parts[5] = open
   parts[30] = timestamp
   return `v_sh${code}="${parts.join('~')}";`
 }
@@ -298,6 +300,18 @@ describe('stock quote fetcher (Tencent)', () => {
     expect(quote.stockCode).toBe('600000')
     // 行情属于哪一天：天梯要把断板的涨跌幅贴到某一天上，先认这个日期。
     expect(quote.quoteDate).toBe('2026-09-04')
+  })
+
+  it('reads the open price (今开), and 0 when the field is missing', () => {
+    // 天梯的"开盘涨跌幅"要今开：它不在涨停池里，只能从行情这一格读。
+    const withOpen = quoteLine('600000', '10.20', '10.05', '20260904150000', '测试股票', '10.10')
+    expect(quoteOf(parseTencentQuotePayload(withOpen), '600000').openPrice).toBe(10_100)
+
+    // 缺失 / 非法都记 0（"没有这一格"），不影响这一笔行情的其余字段
+    const missing = quoteLine('000001', '10.20', '10.05', '20260904150000')
+    const broken = quoteLine('000002', '10.20', '10.05', '20260904150000', '测试股票', '不能解析')
+    expect(quoteOf(parseTencentQuotePayload(missing), '000001').openPrice).toBe(0)
+    expect(quoteOf(parseTencentQuotePayload(broken), '000002').openPrice).toBe(0)
   })
 
   it('keeps milli precision for exchange-traded funds', () => {

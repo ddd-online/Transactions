@@ -234,8 +234,13 @@ function tagsOf(entry: StockLimitEntry | StockLimitBrokenEntry, broken: boolean)
   if (!broken && entry.brokenCount > 0) {
     tags.push(`<span class="tag tag-hot">炸 ${entry.brokenCount}</span>`)
   }
+  if (broken) tags.push('<span class="tag tag-off">断</span>')
+  // 开盘涨跌幅：按时间先后排在收盘涨跌幅前（09:30 竞价开盘 → 收盘）。
+  if (typeof entry.openPct === 'number') {
+    const tone = entry.openPct > 0 ? '' : entry.openPct < 0 ? ' is-down' : ' is-flat'
+    tags.push(`<span class="tag tag-pct${tone}">开 ${percentText(entry.openPct)}</span>`)
+  }
   if (broken) {
-    tags.push('<span class="tag tag-off">断</span>')
     const todayPct = (entry as StockLimitBrokenEntry).todayPct
     if (typeof todayPct === 'number') {
       const tone = todayPct > 0 ? '' : todayPct < 0 ? ' is-down' : ' is-flat'
