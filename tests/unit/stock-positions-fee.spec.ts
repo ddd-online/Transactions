@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { StockPositionDto } from '../../shared/types/stock-position'
 import {
   EMPTY_TRADE_FEE,
+  feeFormForTrade,
   feeFormOf,
   feeRatesOf,
   feeText,
@@ -76,5 +77,33 @@ describe('stock positions fee form', () => {
 
   it('says the ledger default applies when neither side has a rate', () => {
     expect(feeText(position(), null)).toBe('本轮费率沿用账本默认')
+  })
+
+  it('starts a new position on the ledger rates', () => {
+    expect(feeFormForTrade('open', undefined, LEDGER_FEE)).toEqual(feeFormOf(LEDGER_FEE))
+  })
+
+  it('starts add / reduce / close on the round rates when the position has them', () => {
+    const roundFee = {
+      commissionRate: 0.0003,
+      minCommission: 1000,
+      stampDutyRate: 0.001,
+      transferFeeRate: 0.00002,
+    }
+    expect(feeFormForTrade('close', position({ roundFee }), LEDGER_FEE)).toEqual(feeFormOf(roundFee))
+    expect(feeFormForTrade('add', position({ roundFee }), null)).toEqual(feeFormOf(roundFee))
+  })
+
+  it('falls back to the ledger rates when the position has no round fee', () => {
+    expect(feeFormForTrade('reduce', position(), LEDGER_FEE)).toEqual(feeFormOf(LEDGER_FEE))
+  })
+
+  it('treats missing rates on both sides as zero, matching the editable form', () => {
+    expect(feeFormForTrade('close', position(), null)).toEqual({
+      commission: '0',
+      min: '0.00',
+      stamp: '0',
+      transfer: '0',
+    })
   })
 })

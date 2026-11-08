@@ -1,20 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
 
-import { Input, Modal } from 'antd'
-
 import { isValidStockCode } from '../../shared/domain/fee'
 import { milliToYuan } from '../../shared/domain/money'
 import { todayYmd } from '../../shared/domain/time'
 import type { StockDayReviewDto, StockPositionDto } from '../../shared/types/stock-position'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import type { StockReviewSettingDto } from '../../shared/types/stock'
-import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
-import { DatePicker } from '../components/date-picker'
 import { notify } from '../components/toast'
-import { StockDailyReviews } from './stock-daily-reviews'
-import { StockRoundReview } from './stock-round-review'
-import { EMPTY_TRADE_FEE, feeFormOf, feeRatesOf, type TradeFeeForm } from './stock-positions-fee'
+import { EMPTY_TRADE_FEE, feeFormForTrade, feeRatesOf, type StockFeeRates, type TradeFeeForm } from './stock-positions-fee'
+import { StockPositionsReview } from './stock-positions-review'
 import { StockPositionsTable } from './stock-positions-table'
 import { EMPTY_TRADE, StockPositionsTrade, type TradeForm } from './stock-positions-trade'
 import { stockErrorMessage } from './stock-format'
@@ -28,12 +23,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
   const [selectedCode, setSelectedCode] = useState('')
   const [trades, setTrades] = useState<StockTradeDto[]>([])
   const [tags, setTags] = useState<string[]>(['分析'])
-  const [fee, setFee] = useState<{
-    commissionRate: number
-    minCommission: number
-    stampDutyRate: number
-    transferFeeRate: number
-  } | null>(null)
+  const [fee, setFee] = useState<StockFeeRates | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [tradeOpen, setTradeOpen] = useState(false)
@@ -177,19 +167,7 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
       tag: position?.tag ?? tags[0] ?? '分析',
       remark: '',
     })
-    setTradeFee(
-      feeFormOf(
-        type === 'open'
-          ? fee
-          : {
-              commissionRate: position?.roundFee?.commissionRate ?? fee?.commissionRate ?? 0,
-              minCommission: position?.roundFee?.minCommission ?? fee?.minCommission ?? 0,
-              stampDutyRate: position?.roundFee?.stampDutyRate ?? fee?.stampDutyRate ?? 0,
-              transferFeeRate:
-                position?.roundFee?.transferFeeRate ?? fee?.transferFeeRate ?? 0,
-            },
-      ),
-    )
+    setTradeFee(feeFormForTrade(type, position, fee))
     setError('')
     setTradeOpen(true)
   }
@@ -393,62 +371,26 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
         onDeleteOrder={setDeleteOrder}
         review={
           selected ? (
-            <>
-              <section className="stock-detail__section">
-                <span className="stock-section-title">每日复盘</span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  testId="position-review-open"
-                  onClick={openDailyReview}
-                >
-                  写今日
-                </Button>
-              </section>
-              <StockDailyReviews
-                days={selected.dayReviews}
-                testId="position-daily-review"
-                onEdit={openDailyEdit}
-                empty={
-                  // 空态也是一行、也能点：点它就是「写今日」，和上面有内容的行同一种反馈
-                  <div className="stock-review-line">
-                    <button
-                      type="button"
-                      className="stock-review-day"
-                      data-testid="position-daily-review"
-                      aria-label="写今日的每日复盘"
-                      onClick={openDailyReview}
-                    >
-                      <span className="stock-review-day__text stock-muted">
-                        还没有写每日复盘，点「写今日」记下今天的盘面和判断。
-                      </span>
-                    </button>
-                  </div>
-                }
-              />
-
-              <section className="stock-detail__section">
-                <span className="stock-section-title">本轮复盘</span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  testId="position-round-edit"
-                  onClick={() => setRoundEditing(true)}
-                >
-                  编辑
-                </Button>
-              </section>
-              <StockRoundReview
-                key={selected.stockCode}
-                testId="position-round"
-                review={selected.review}
-                template={roundTemplate}
-                emptyText="还没有写本轮复盘，点「编辑」记录买入与卖出的理由。"
-                editing={roundEditing}
-                onEditingChange={setRoundEditing}
-                onSave={saveRound}
-              />
-            </>
+            <StockPositionsReview
+              position={selected}
+              roundTemplate={roundTemplate}
+              roundEditing={roundEditing}
+              onRoundEditingChange={setRoundEditing}
+              onSaveRound={saveRound}
+              reviewOpen={dailyModalOpen}
+              editingDay={dailyEdit}
+              dailyDate={dailyDate}
+              dailyText={dailyText}
+              onDailyDateChange={setDailyDate}
+              onDailyTextChange={setDailyText}
+              onOpenDaily={openDailyReview}
+              onEditDay={openDailyEdit}
+              onCloseDaily={() => {
+                setDailyModalOpen(false)
+                setDailyEdit(null)
+              }}
+              onSaveDaily={() => void saveDaily()}
+            />
           ) : null
         }
       />
@@ -476,70 +418,6 @@ export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX
         onCancelEdit={() => setEditingTrade(null)}
         onSaveEdit={() => void saveTradeEdit()}
       />
-      <Modal
-        open={dailyModalOpen}
-        title={dailyEdit ? `每日复盘 · ${dailyEdit.date}` : '每日复盘'}
-        width={560}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={() => {
-          setDailyModalOpen(false)
-          setDailyEdit(null)
-        }}
-      >
-        <div className="stock-modal-form">
-          {dailyEdit ? (
-            // 改的是某一天：日期不是字段，是这一行的身份 —— 不摆一个灰掉、看起来像坏了的选择器
-            <div>
-              <span className="stock-label">日期</span>
-              <span className="stock-review-date" data-testid="position-review-date-value">
-                {dailyEdit.date}
-              </span>
-            </div>
-          ) : (
-            <label>
-              <span className="stock-label">日期</span>
-              <DatePicker
-                testId="position-review-date"
-                value={dailyDate}
-                onChange={setDailyDate}
-              />
-            </label>
-          )}
-          <label>
-            <span className="stock-label">复盘</span>
-            <Input.TextArea
-              data-testid="position-review-text"
-              aria-label={dailyEdit ? `${dailyEdit.date} 的每日复盘` : '今日的每日复盘'}
-              rows={6}
-              placeholder="记录今天的盘面与判断"
-              value={dailyText}
-              onChange={(event) => setDailyText(event.target.value)}
-            />
-          </label>
-          <div className="stock-modal-actions">
-            <Button
-              variant="secondary"
-              testId="position-review-cancel"
-              onClick={() => {
-                setDailyModalOpen(false)
-                setDailyEdit(null)
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="position-review-save"
-              onClick={() => void saveDaily()}
-            >
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
       <ConfirmDialog
         open={deleteOrder !== null}
         title="删除整笔委托"

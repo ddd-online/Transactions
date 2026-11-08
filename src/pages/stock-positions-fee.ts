@@ -60,3 +60,24 @@ export function feeRatesOf(form: TradeFeeForm): StockFeeRates {
     transferFeeRate: Number(form.transfer) / 100,
   }
 }
+
+/**
+ * 打开成交弹窗时费用表单的起头：建仓用账本费率；加仓 / 减仓 / 清仓用这一轮的费率
+ * （老数据没有本轮费率时回落到账本）。
+ */
+export function feeFormForTrade(
+  type: string,
+  position: StockPositionDto | undefined,
+  fee: StockFeeRates | null,
+): TradeFeeForm {
+  return feeFormOf(
+    type === 'open'
+      ? fee
+      : {
+          commissionRate: position?.roundFee?.commissionRate ?? fee?.commissionRate ?? 0,
+          minCommission: position?.roundFee?.minCommission ?? fee?.minCommission ?? 0,
+          stampDutyRate: position?.roundFee?.stampDutyRate ?? fee?.stampDutyRate ?? 0,
+          transferFeeRate: position?.roundFee?.transferFeeRate ?? fee?.transferFeeRate ?? 0,
+        },
+  )
+}
