@@ -71,6 +71,18 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect(page.getByRole('button', { name: /导入/ })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /导入/ })).toHaveCount(0)
 
+    // 连续两次动作只留一条提示：新的把旧的顶上去，不排成一列
+    await page.getByTestId('backup-now').click()
+    await expect(page.getByTestId('backup-result')).toContainText('已备份')
+    await page.getByTestId('backup-now').click()
+    await expect(page.getByTestId('toast')).toHaveCount(1)
+    const latestBackup = await page
+      .getByTestId('backup-result')
+      .locator('.st-backup-mono')
+      .first()
+      .innerText()
+    await expect(page.getByTestId('toast')).toContainText(latestBackup)
+
     await page.getByTestId('settings-tab-general').click()
     await page.getByTestId('appearance-dark').click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
