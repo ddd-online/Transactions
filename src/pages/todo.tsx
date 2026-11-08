@@ -18,6 +18,7 @@ import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { TodoQuadrant } from '../components/todo-quadrant'
 import { doneCountOf, formatItemDates, formatMoment } from './todo-format'
+import { TodoProgressPanel } from './todo-progress'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -462,66 +463,16 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         </div>
 
         {open ? (
-          <div className="todo-progress">
-            {item.progress.length > 0 ? (
-              <ul className="todo-progress__list">
-                {item.progress.map((progress) => (
-                  <li
-                    key={progress.id}
-                    className={`todo-progress__row${progress.done ? ' is-done' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="todo-progress__check"
-                      data-testid="todo-progress-done"
-                      aria-label={progress.done ? '取消完成这条进度' : '完成这条进度'}
-                      aria-pressed={progress.done}
-                      onClick={() => void toggleProgress(progress.id, !progress.done)}
-                    >
-                      <Icon name="Check" size={10} />
-                    </button>
-                    <span className="todo-progress__text">{progress.content}</span>
-                    <span className="todo-progress__time">{formatMoment(progress.createdAt, true)}</span>
-                    <Popconfirm
-                      title="删除这条进度？"
-                      okText="删除"
-                      cancelText="取消"
-                      okType="danger"
-                      onConfirm={() => void removeProgress(progress.id)}
-                    >
-                      <button
-                        type="button"
-                        className="tr-icon-btn is-danger-static todo-progress__delete"
-                        data-testid="todo-progress-delete"
-                        aria-label="删除进度"
-                        title="删除进度"
-                      >
-                        <Icon name="Trash" size={12} />
-                      </button>
-                    </Popconfirm>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="todo-progress__empty">还没有进度记录</p>
-            )}
-
-            <div className="todo-progress__add">
-              <Input
-                size="small"
-                data-testid="todo-progress-input"
-                placeholder="记一条进度…"
-                value={progressText[item.id] ?? ''}
-                onChange={(event) =>
-                  setProgressText((current) => ({ ...current, [item.id]: event.target.value }))
-                }
-                onPressEnter={() => void addProgress(item.id)}
-              />
-              <Button variant="secondary" size="sm" testId="todo-progress-add" onClick={() => void addProgress(item.id)}>
-                记录
-              </Button>
-            </div>
-          </div>
+          <TodoProgressPanel
+            progress={item.progress}
+            text={progressText[item.id] ?? ''}
+            onTextChange={(value) =>
+              setProgressText((current) => ({ ...current, [item.id]: value }))
+            }
+            onAdd={() => void addProgress(item.id)}
+            onToggleDone={(id, done) => void toggleProgress(id, done)}
+            onRemove={(id) => void removeProgress(id)}
+          />
         ) : null}
       </li>
     )
