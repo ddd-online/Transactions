@@ -318,7 +318,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         setError(errorMessage(updateError))
       }
     },
-    [categoryNamesFor, load, selected],
+    [categories, load, selected],
   )
 
   // ---------------------------------------------------------------- 曲线的增 / 改 / 删
