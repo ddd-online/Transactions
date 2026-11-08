@@ -36,11 +36,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 599,
     hint: '曲线列表 / 曲线条件表单 / 新建与改名',
   },
-  // 967 行：图表网格 / 曲线合计条 / 范围选择
-  'src/pages/charts.tsx': {
-    cap: 967,
-    hint: '图表网格 / 曲线合计条 / 范围选择',
-  },
   // 1026 行：图库 / 编辑器 / 图片选择与分组
   'src/pages/events.tsx': {
     cap: 1026,

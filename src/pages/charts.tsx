@@ -1,42 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react'
-import { Popconfirm, Select, Table } from 'antd'
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
-import { centsToYuan } from '../../shared/domain/money'
 import { reorderWithChanges } from '../../shared/domain/list-order'
-import { PIE_OTHER_KEY, foldPieSlices } from '../../shared/domain/pie'
-import { rateText } from '../../shared/domain/format'
-import { parseYearMonth, yearSpan } from '../../shared/domain/calendar'
-import { rangeToSeconds, todayYmd } from '../../shared/domain/time'
+import { rangeToSeconds } from '../../shared/domain/time'
 import type { ChartLine } from '../../shared/domain/models'
 import type { ChartDto } from '../../shared/types/chart'
 import type { CategoryDto, TagDto } from '../../shared/types/category'
-import type {
-  ChartLineData,
-  ChartPieResponse,
-  ChartQueryResponse,
-} from '../../shared/types/transaction'
-import { AntvLineChart } from '../components/antv-line-chart'
+import type { ChartPieResponse, ChartQueryResponse } from '../../shared/types/transaction'
 import { ChartEditor, type ChartEditorRequest } from './chart-editor'
-import {
-  GRANULARITIES,
-  GROUP_FIELDS,
-  LINE_TYPES,
-  categoryNamesFor,
-  categoryOptionsFor,
-} from './chart-options'
+import { categoryNamesFor } from './chart-options'
 import { updateChartLines } from './chart-write'
-import { AntvPieChart } from '../components/antv-pie-chart'
+import { ChartRangePicker, useChartRange } from './chart-range'
+import { ChartGrid } from './chart-grid'
 import { Button } from '../components/button'
-import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
-import { ScrollArea } from '../components/scroll-area'
-import { Spin } from '../components/spin'
-import { TimeRangePicker } from '../components/time-range-picker'
 import { notify } from '../components/toast'
-import { useSessionTimeRange, type SessionTimeRange } from '../state/time-range-session'
-import { pieSliceColors, seriesPalette } from '../theme/chart-colors'
-import { useThemeMode } from '../theme/theme-mode'
 
 
 function errorMessage(error: unknown): string {
@@ -45,66 +23,6 @@ function errorMessage(error: unknown): string {
   }
   if (error instanceof Error) return error.message
   return String(error)
-}
-
-function typeLabel(transactionType: string): string {
-  if (transactionType === 'income') return '收入'
-  if (transactionType === 'expense') return '支出'
-  if (transactionType === 'transfer') return '转账'
-  return transactionType
-}
-
-/**
- * 饼图的空态把「为什么空」说清楚，三级各有各的说法：
- * 整个范围没有记录 → 换范围；没有这一种类型 / 分类 → 换类型或分类；
- * 有记录但都没有标签 → 去给记录打标签。
- */
-function pieEmptyDescription(pie: ChartPieResponse | null, chart: ChartDto): string {
-  if (!pie || pie.rangeRecords === 0) {
-    return '这个时间范围里没有记录，换一个范围试试。'
-  }
-  const scope = typeLabel(chart.groupTransactionType)
-  if (pie.filteredRecords === 0) {
-    if (chart.groupField === 'tag') {
-      return `这个范围里没有「${scope} · ${chart.groupCategory}」记录，换一种交易类型或分类看看。`
-    }
-    if (chart.groupField === 'category') {
-      return `这个范围里没有「${scope}」记录，换一种交易类型看看。`
-    }
-    return '这个范围里没有可统计的记录，换一个范围试试。'
-  }
-  if (chart.groupField === 'tag') {
-    return `这个范围里「${scope} · ${chart.groupCategory}」的记录都没有标签，先给记录加上标签。`
-  }
-  return '这个范围里没有可统计的记录，换一个范围试试。'
-}
-
-function conditionSummary(line: ChartLine): string {
-  if (line.conditions.length === 0) return '不限'
-  return line.conditions
-    .map((condition) => {
-      const parts: string[] = []
-      if (condition.transactionType) parts.push(typeLabel(condition.transactionType))
-      if (condition.category) parts.push(condition.category)
-      if (condition.tags.length > 0) parts.push(condition.tags.join('/'))
-      if (condition.description) parts.push(`“${condition.description}”`)
-      return parts.join(' · ') || '不限'
-    })
-    .join('；')
-}
-
-/**
- * 分析页默认看本年、按月铺开（`2026-01 ~ 2026-12`），记录页仍默认今天。
- *
- * 以前默认是「最近 12 个月」的滚动窗口，打开时永远不知道自己看的是哪一年；
- * 本年的两端是固定的，换月翻页也有明确的起点。
- */
-function defaultChartRange(): SessionTimeRange {
-  const today = todayYmd()
-  const parsed = parseYearMonth(today)
-  if (!parsed) return { mode: 'month', start: today, end: today }
-  const [start, end] = yearSpan(parsed[0])
-  return { mode: 'month', start, end }
 }
 
 export interface ChartsPageProps {
@@ -130,15 +48,12 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const [savingLine, setSavingLine] = useState(false)
 
-  const [range, updateRange] = useSessionTimeRange('charts', defaultChartRange)
-  const { mode: rangeMode, start: rangeStart, end: rangeEnd } = range
+  const [range, updateRange] = useChartRange()
+  const { start: rangeStart, end: rangeEnd } = range
   const [committedRange, setCommittedRange] = useState(() => ({
     start: range.start,
     end: range.end,
   }))
-
-  const [dragFrom, setDragFrom] = useState<number | null>(null)
-  const [dragOver, setDragOver] = useState<number | null>(null)
 
   /** 右侧「曲线合计」的收起状态：存在配置 JSON 里，重开应用/重新进入分析页都保持。 */
   const [summaryCollapsed, setSummaryCollapsed] = useState(false)
@@ -341,8 +256,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const moveChart = useCallback(
     async (from: number, to: number): Promise<void> => {
-      setDragFrom(null)
-      setDragOver(null)
       const result = reorderWithChanges(
         charts,
         from,
@@ -408,37 +321,6 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     [categoryNamesFor, load, selected],
   )
 
-  const responseLines: ChartLineData[] = data?.lines ?? []
-  const hasValues = responseLines.some((line) => line.data.some((point) => point.amount !== 0))
-
-  const isPie = selected?.chartType === 'pie'
-  const pieTotal = pie?.total ?? 0
-  /** 图上与右侧合计列读同一份折叠结果：超过 10 组折成一片「其他（N 组）」。 */
-  const pieSlices = useMemo(() => {
-    const folded = foldPieSlices(pie?.slices ?? [])
-    if (folded.folded === 0) return folded.slices
-    return folded.slices.map((slice) =>
-      slice.key === PIE_OTHER_KEY ? { ...slice, label: `其他（${folded.folded} 组）` } : slice,
-    )
-  }, [pie])
-  /** 用画布画的图读不到 CSS 变量：主题一变就得重算颜色（`mode` 只用来触发重新解析令牌）。 */
-  const mode = useThemeMode()
-  /** 折线图与饼图共用这一份色板 —— 第 N 条曲线和第 N 名是同一个颜色。 */
-  const seriesColors = useMemo(() => seriesPalette(), [mode])
-  const pieColors = useMemo(
-    () => pieSliceColors(pieSlices, selected?.groupField ?? ''),
-    [pieSlices, selected?.groupField, mode],
-  )
-  const hasPie = pieSlices.length > 0
-  const pieLabel = useMemo(() => {
-    if (!selected || selected.chartType !== 'pie') return ''
-    if (selected.groupField === 'category') return `${typeLabel(selected.groupTransactionType)}按分类`
-    if (selected.groupField === 'tag') {
-      return `${typeLabel(selected.groupTransactionType)} · ${selected.groupCategory} 按标签`
-    }
-    return '按交易类型'
-  }, [selected])
-
   // ---------------------------------------------------------------- 曲线的增 / 改 / 删
 
   /** 整行回写（只换曲线）：本地先换成服务端返回的那一份，图表随之重算。 */
@@ -476,30 +358,16 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
     [applyLines, selected],
   )
 
-  /* 颜色表按曲线条数记忆：`AntvLineChart` 的建图 effect 依赖这个数组，
-   * 以前每次渲染都 `slice()` 出一个新数组 → 重命名弹窗里每敲一个字都销毁重画整张图
-   * （实测 20 个字 = 20 次重建、926ms）。数组现在只在条数变化时换新。 */
-  const lineCount = responseLines.length
-  const colors = useMemo(
-    () => seriesColors.slice(0, Math.max(1, lineCount)),
-    [lineCount, seriesColors],
-  )
-  const lineRows = selected?.lines ?? []
-  const hasLines = lineRows.length > 0
+  const openLineEditor = (index: number | null): void => {
+    if (selected) setEditor({ kind: 'line', chart: selected, index })
+  }
 
   return (
     <PageLayout
       contentClassName="da-page-content"
       toolbar={
         <>
-          <TimeRangePicker
-            testId="chart-time"
-            mode={rangeMode}
-            start={rangeStart}
-            end={rangeEnd}
-            onModeChange={(mode) => updateRange({ mode })}
-            onRangeChange={(start, end) => updateRange({ start, end })}
-          />
+          <ChartRangePicker range={range} onChange={updateRange} />
           <Button
             variant="primary"
             testId="chart-open-create"
@@ -517,433 +385,30 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
         </p>
       ) : null}
 
-      <div className="da-main">
-        <ScrollArea className="da-sidebar">
-          <div className="da-list">
-            {charts.length === 0 ? (
-              <div className="da-list__empty" data-testid="chart-empty">
-                暂无图表
-              </div>
-            ) : (
-              charts.map((chart, index) => (
-                <div
-                  key={chart.chartId}
-                  className={`da-list__row ui-drag-item${dragFrom === index ? ' is-dragging' : ''}${dragOver === index ? ' is-over' : ''}`}
-                  draggable
-                  onDragStart={() => setDragFrom(index)}
-                  onDragOver={(event) => {
-                    event.preventDefault()
-                    setDragOver(index)
-                  }}
-                  onDrop={() => {
-                    if (dragFrom !== null) void moveChart(dragFrom, index)
-                  }}
-                  onDragEnd={() => {
-                    setDragFrom(null)
-                    setDragOver(null)
-                  }}
-                >
-                  <div
-                    className={`da-list__item${chart.chartId === selectedId ? ' is-active' : ''}`}
-                    data-testid="chart-item"
-                    onClick={() => setSelectedId(chart.chartId)}
-                  >
-                    <span className="ui-drag-handle" title="拖动排序">
-                      <Icon name="DragHandle" size={16} />
-                    </span>
-                    <span className="da-list__title" title={chart.title}>
-                      {chart.title}
-                    </span>
-                    <Popconfirm
-                      title={`删除图表「${chart.title}」？`}
-                      okText="删除"
-                      cancelText="取消"
-                      okType="danger"
-                      placement="topRight"
-                      onConfirm={() => void removeChart(chart.chartId)}
-                    >
-                      <button
-                        type="button"
-                        className="tr-icon-btn is-danger-static da-list__delete"
-                        data-testid="chart-delete"
-                        aria-label={`删除图表 ${chart.title}`}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <Icon name="Trash" size={14} />
-                      </button>
-                    </Popconfirm>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-
-        <div className="da-content">
-          {!selected ? (
-            <div className="da-empty">
-              <EmptyState
-                testId="chart-selection-empty"
-                title="请选择左侧图表，或点右上角「新增图表」"
-              />
-            </div>
-          ) : (
-            <div className="da-chart">
-              <div className="da-chart__header">
-                <h2 className="da-chart__title">{selected.title}</h2>
-                <div className="da-chart__meta">
-                  {/* 饼图没有时间粒度：构成不按时间分桶，摆一个用不上的选择器只会让人以为它能改。 */}
-                  {isPie ? null : (
-                    <Select
-                      data-testid="chart-granularity"
-                      aria-label="曲线粒度"
-                      size="small"
-                      value={selected.granularity}
-                      disabled={selected.isPreset}
-                      onChange={(value) => void changeGranularity(value)}
-                      options={GRANULARITIES}
-                      style={{ width: 72 }}
-                    />
-                  )}
-                  {selected.isPreset ? null : (
-                    <Button variant="secondary" size="sm" testId="chart-rename" onClick={() => setEditor({ kind: 'rename', chart: selected })}>
-                      重命名
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="da-chart__body">
-                <div className="da-chart__canvas">
-                  {isPie ? (
-                    pieLoading && !pie ? (
-                      <div className="da-chart__loading">
-                        <Spin />
-                      </div>
-                    ) : hasPie ? (
-                      <AntvPieChart
-                        slices={pieSlices}
-                        colors={pieColors}
-                        total={pieTotal}
-                        label={pieLabel}
-                      />
-                    ) : (
-                      <div className="da-chart__empty" data-testid="chart-data-empty">
-                        <EmptyState
-                          title="暂无数据"
-                          description={pieEmptyDescription(pie, selected)}
-                        />
-                      </div>
-                    )
-                  ) : loading && !data ? (
-                    <div className="da-chart__loading">
-                      <Spin />
-                    </div>
-                  ) : !hasLines ? (
-                    // 一条曲线都没有时，画布不摆第二个空态插画：这里说的不是「没数据」，
-                    // 而是「没东西可画」，一句安静的话把眼睛交给下面的曲线配置。
-                    <p className="da-chart__canvas-hint" data-testid="chart-canvas-hint">
-                      加一条曲线之后，这里会画出趋势。
-                    </p>
-                  ) : hasValues ? (
-                    <>
-                      <ul className="da-chart__legend">
-                        {responseLines.map((line, index) => (
-                          <li key={line.label}>
-                            <span
-                              className="da-chart__legend-dot"
-                              style={{ background: colors[index % colors.length] }}
-                            />
-                            <span>{line.label}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <AntvLineChart lines={responseLines} colors={colors} />
-                    </>
-                  ) : (
-                    <div className="da-chart__empty" data-testid="chart-data-empty">
-                      <EmptyState
-                        title="暂无数据"
-                        description="这个时间范围里没有可统计的记录，换一个范围试试。"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {isPie ? (
-                  hasPie ? (
-                    <aside
-                      className="da-chart__sums da-chart__sums--pie"
-                      data-testid="chart-pie-sums"
-                    >
-                      <div className="da-chart__sums-head">
-                        <h3 className="da-chart__sums-title">分组合计</h3>
-                        <span className="da-chart__sums-total">{centsToYuan(pieTotal)}</span>
-                      </div>
-                      {/* 这一列就是饼图的图例：点 + 名称 + 金额 + 占比，与扇区同一份折叠结果。
-                          没有收起态 —— 收起之后没人分得清哪一片是哪一组。 */}
-                      <div className="da-chart__pie-list">
-                        {pieSlices.map((slice, index) => (
-                          <div
-                            className="da-chart__pie-row"
-                            key={slice.key}
-                            data-testid="chart-pie-sum"
-                          >
-                            <span
-                              className="da-list__dot"
-                              style={{ background: pieColors[index] }}
-                            />
-                            <span className="da-chart__pie-name" title={slice.label}>
-                              {slice.label}
-                            </span>
-                            <span className="da-chart__pie-value">{centsToYuan(slice.amount)}</span>
-                            <span className="da-chart__pie-share">
-                              {rateText(pieTotal > 0 ? (slice.amount / pieTotal) * 100 : 0)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {pie && pie.total > pie.filteredTotal ? (
-                        <p className="da-chart__pie-note">多标签的记录会重复计入</p>
-                      ) : null}
-                    </aside>
-                  ) : null
-                ) : hasValues ? (
-                  summaryCollapsed ? (
-                    <aside
-                      id="chart-sums-region"
-                      className="da-chart__sums da-chart__sums--collapsed"
-                    >
-                      <button
-                        type="button"
-                        className="da-chart__sums-rail"
-                        ref={expandToggleRef}
-                        data-testid="chart-sums-expand"
-                        aria-label="展开曲线合计"
-                        aria-expanded={false}
-                        aria-controls="chart-sums-region"
-                        title="展开曲线合计"
-                        onClick={() => changeSummaryCollapsed(false)}
-                      >
-                        <Icon name="ChevronLeft" size={14} className="da-chart__sums-chevron" />
-                        <span className="da-chart__sums-rail-title">曲线合计</span>
-                      </button>
-                    </aside>
-                  ) : (
-                    <aside
-                      id="chart-sums-region"
-                      className="da-chart__sums"
-                      data-testid="chart-sums"
-                    >
-                      <div className="da-chart__sums-head">
-                        <h3 className="da-chart__sums-title">曲线合计</h3>
-                        <button
-                          type="button"
-                          className="tr-icon-btn"
-                          ref={collapseToggleRef}
-                          data-testid="chart-sums-collapse"
-                          aria-label="收起曲线合计"
-                          aria-expanded
-                          aria-controls="chart-sums-region"
-                          title="收起曲线合计"
-                          onClick={() => changeSummaryCollapsed(true)}
-                        >
-                          <Icon name="ChevronRight" size={14} className="da-chart__sums-chevron" />
-                        </button>
-                      </div>
-                      {responseLines.map((line, index) => {
-                        const total = line.data.reduce((sum, point) => sum + point.amount, 0)
-                        return (
-                          <div className="da-chart__sum-row" key={line.label}>
-                            <span
-                              className="da-list__dot"
-                              style={{ background: colors[index % colors.length] }}
-                            />
-                            <span className="da-chart__sum-label">{line.label}</span>
-                            <span className="da-chart__sum-value">{centsToYuan(total)}</span>
-                          </div>
-                        )
-                      })}
-                    </aside>
-                  )
-                ) : null}
-              </div>
-
-              {isPie ? (
-                <div className="da-chart__lines" data-testid="chart-group-config">
-                  <div className="da-chart__lines-head">
-                    <h3 className="da-panel__title">分组配置</h3>
-                  </div>
-                  <div className="da-group-config">
-                    <div className="da-group-config__field">
-                      <span className="da-group-config__label">分组字段</span>
-                      <Select
-                        className="da-group-config__select"
-                        data-testid="chart-group-field"
-                        aria-label="分组字段"
-                        size="small"
-                        value={selected.groupField}
-                        options={GROUP_FIELDS}
-                        onChange={(value: string) => void changeGrouping({ field: value })}
-                      />
-                    </div>
-                    {selected.groupField === 'category' || selected.groupField === 'tag' ? (
-                      <div className="da-group-config__field">
-                        <span className="da-group-config__label">交易类型</span>
-                        <Select
-                          className="da-group-config__select"
-                          data-testid="chart-group-type"
-                          aria-label="交易类型"
-                          size="small"
-                          value={selected.groupTransactionType || 'expense'}
-                          options={LINE_TYPES}
-                          onChange={(value: string) => void changeGrouping({ type: value })}
-                        />
-                      </div>
-                    ) : null}
-                    {selected.groupField === 'tag' ? (
-                      <div className="da-group-config__field">
-                        <span className="da-group-config__label">分类</span>
-                        <Select
-                          className="da-group-config__select"
-                          data-testid="chart-group-category"
-                          aria-label="分类"
-                          size="small"
-                          placeholder="选择分类"
-                          value={selected.groupCategory || undefined}
-                          options={categoryOptionsFor(categories, selected.groupTransactionType || 'expense')}
-                          onChange={(value: string) => void changeGrouping({ category: value })}
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-              <div className="da-chart__lines">
-                <div className="da-chart__lines-head">
-                  <h3 className="da-panel__title">曲线配置</h3>
-                  {selected.isPreset ? null : (
-                    <div className="da-chart__lines-actions">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        testId="chart-line-add"
-                        icon={<Icon name="Plus" size={14} />}
-                        loading={savingLine}
-                        onClick={() => setEditor({ kind: 'line', chart: selected, index: null })}
-                      >
-                        添加曲线
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <Table<ChartLine>
-                  className="tr-table da-table"
-                  rowKey={(line) => line.label}
-                  pagination={false}
-                  size="small"
-                  dataSource={lineRows}
-                  // 窄窗里放不下时由表格自己横向滚，别把整页顶出可视区
-                  scroll={{ x: 'max-content' }}
-                  locale={{
-                    emptyText: (
-                      <div className="da-chart__lines-empty">
-                        <EmptyState
-                          testId="chart-lines-empty"
-                          title="还没有曲线"
-                          description={
-                            selected.isPreset
-                              ? '预设图表的曲线由系统提供'
-                              : '点右上角「添加曲线」建一条'
-                          }
-                        />
-                      </div>
-                    ),
-                  }}
-                  columns={[
-                    {
-                      title: '曲线名称',
-                      dataIndex: 'label',
-                      render: (value: string, _line: ChartLine, index: number) => (
-                        <span className="da-line-name">
-                          <span
-                            className="da-line-swatch"
-                            style={{ background: seriesColors[index % seriesColors.length] }}
-                            aria-hidden="true"
-                          />
-                          {value}
-                        </span>
-                      ),
-                    },
-                    {
-                      title: '交易类型',
-                      dataIndex: 'transactionType',
-                      width: 100,
-                      align: 'center',
-                      render: (value: string) => (
-                        <span className={`ui-tag ui-tag--${value}`}>{typeLabel(value)}</span>
-                      ),
-                    },
-                    {
-                      title: '包含离群值',
-                      dataIndex: 'includeOutlier',
-                      width: 120,
-                      align: 'center',
-                      render: (value: boolean) => (value ? '是' : '否'),
-                    },
-                    {
-                      title: '筛选条件',
-                      dataIndex: 'conditions',
-                      render: (_: unknown, line: ChartLine) => conditionSummary(line),
-                    },
-                    ...(selected.isPreset
-                      ? []
-                      : [
-                          {
-                            title: '操作',
-                            key: 'actions',
-                            width: 120,
-                            align: 'center' as const,
-                            render: (_: unknown, line: ChartLine, index: number) => (
-                              <span className="da-line-actions">
-                                <Button
-                                  variant="text"
-                                  size="sm"
-                                  testId="chart-line-edit"
-                                  disabled={savingLine}
-                                  onClick={() => setEditor({ kind: 'line', chart: selected, index })}
-                                >
-                                  编辑
-                                </Button>
-                                <Popconfirm
-                                  title={`删除曲线「${line.label}」？`}
-                                  okText="删除"
-                                  cancelText="取消"
-                                  okType="danger"
-                                  placement="topRight"
-                                  onConfirm={() => void removeLine(index)}
-                                >
-                                  <Button
-                                    variant="text-danger"
-                                    size="sm"
-                                    testId="chart-line-delete"
-                                    disabled={savingLine}
-                                  >
-                                    删除
-                                  </Button>
-                                </Popconfirm>
-                              </span>
-                            ),
-                          },
-                        ]),
-                  ]}
-                />
-              </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <ChartGrid
+        charts={charts}
+        selectedId={selectedId}
+        selected={selected}
+        onSelect={setSelectedId}
+        onDelete={(chartId) => void removeChart(chartId)}
+        onMove={(from, to) => void moveChart(from, to)}
+        onChangeGranularity={(granularity) => void changeGranularity(granularity)}
+        onRename={(chart) => setEditor({ kind: 'rename', chart })}
+        onAddLine={() => openLineEditor(null)}
+        onEditLine={(index) => openLineEditor(index)}
+        onRemoveLine={(index) => void removeLine(index)}
+        onChangeGrouping={(next) => void changeGrouping(next)}
+        data={data}
+        loading={loading}
+        pie={pie}
+        pieLoading={pieLoading}
+        categories={categories}
+        savingLine={savingLine}
+        summaryCollapsed={summaryCollapsed}
+        onToggleSummaryCollapsed={changeSummaryCollapsed}
+        collapseToggleRef={collapseToggleRef}
+        expandToggleRef={expandToggleRef}
+      />
 
       <ChartEditor
         ledgerId={ledgerId}
