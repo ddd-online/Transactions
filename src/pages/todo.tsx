@@ -5,17 +5,14 @@ import type {
   TodoHistoryDto,
   TodoItemDto,
 } from '../../shared/types/todo'
-import { Modal, Popconfirm } from 'antd'
-
 import { TODO_LEVELS } from '../../shared/domain/consts'
 import { Button } from '../components/button'
-import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { TodoCardColumns, TodoCardCreateModal, TodoQuadrantView } from './todo-card-columns'
-import { doneCountOf, formatMoment } from './todo-format'
+import { TodoHistoryProgressModal, TodoHistoryView } from './todo-history'
 import { TodoItemEditor } from './todo-item-editor'
 
 function errorMessage(error: unknown): string {
@@ -353,19 +350,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     )
   }, [cards])
 
-  /** 首次取数期间画两段骨架，避免先闪一下「还没有待办主题」再出现真实内容。 */
-  const renderSkeleton = (): JSX.Element => (
-    <div className="todo-skeleton" aria-hidden="true">
-      {[0, 1].map((group) => (
-        <div className="todo-skeleton__group" key={group}>
-          <div className="todo-skeleton__band" />
-          <div className="todo-skeleton__row" />
-          <div className="todo-skeleton__row" />
-        </div>
-      ))}
-    </div>
-  )
-
   const changeCardDraft = (value: string): void => {
     setCardDraft(value)
     setCardError('')
@@ -523,93 +507,14 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                 onToggleProgress={(id, done) => void toggleProgress(id, done)}
                 onRemoveProgress={(id) => void removeProgress(id)}
               />
-            ) : !loaded ? (
-              renderSkeleton()
-            ) : history.length === 0 ? (
-              <EmptyState
-                testId="todo-history-empty"
-                title="还没有已完成事项"
-                description="完成的事项会在这里留档。"
-              />
             ) : (
-              <div className="todo-history">
-                <table className="todo-table">
-                  <thead>
-                    <tr>
-                      <th className="is-center">完成时间</th>
-                      <th>主题</th>
-                      <th>事项</th>
-                      <th className="is-center">进度</th>
-                      <th className="is-center">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((item) => (
-                      <tr key={item.id} data-testid="todo-history-item">
-                        <td className="is-center todo-table__time">
-                          <span className="todo-table__done">
-                            <span className="todo-table__done-icon">
-                              <Icon name="Check" size={12} />
-                            </span>
-                            {formatMoment(item.completedAt)}
-                          </span>
-                        </td>
-                        <td className="todo-table__card" title={item.cardTitle}>
-                          {item.cardTitle}
-                        </td>
-                        <td className="todo-table__title">{item.title}</td>
-                        <td className="is-center todo-table__progress">
-                          {item.progress.length > 0 ? (
-                            <Button
-                              variant="text"
-                              size="sm"
-                              className="todo-history-progress-trigger"
-                              testId="todo-history-progress"
-                              aria-label={`查看「${item.title}」的进度记录`}
-                              title="查看进度记录"
-                              onClick={() => setHistoryProgress(item)}
-                            >
-                              {`${doneCountOf(item.progress)}/${item.progress.length}`}
-                            </Button>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="is-center">
-                          <div className="todo-table__actions">
-                            <Button
-                              variant="text"
-                              size="sm"
-                              testId="todo-history-reopen"
-                              onClick={() => void setStatus(item.id, 'doing')}
-                            >
-                              回到待办
-                            </Button>
-                            <Popconfirm
-                              title={`删除事项「${item.title}」？`}
-                              okText="删除"
-                              cancelText="取消"
-                              okType="danger"
-                              onConfirm={() => void removeItem(item.id)}
-                            >
-                              <span className="todo-history__delete">
-                                <Button
-                                  variant="text-danger"
-                                  size="sm"
-                                  testId="todo-history-delete"
-                                  title="删除事项"
-                                >
-                                  删除
-                                </Button>
-                              </span>
-                            </Popconfirm>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TodoHistoryView
+                history={history}
+                loaded={loaded}
+                onOpenProgress={setHistoryProgress}
+                onReopen={(id) => void setStatus(id, 'doing')}
+                onRemove={(id) => void removeItem(id)}
+              />
             )}
           </ScrollArea>
         )}
@@ -646,48 +551,10 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         onSubmit={() => void createItem()}
       />
 
-      <Modal
-        open={historyProgress !== null}
-        title="进度记录"
-        width={520}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={() => setHistoryProgress(null)}
-      >
-        {historyProgress ? (
-          <div className="todo-history-progress" data-testid="todo-history-progress-modal">
-            <p className="todo-history-progress__meta">
-              <span>{historyProgress.cardTitle}</span>
-              <span aria-hidden="true">·</span>
-              <span>{historyProgress.title}</span>
-              <span aria-hidden="true">·</span>
-              <span>完成于 {formatMoment(historyProgress.completedAt)}</span>
-            </p>
-            {historyProgress.progress.length > 0 ? (
-              <ul className="todo-history-progress__list">
-                {historyProgress.progress.map((progress) => (
-                  <li
-                    key={progress.id}
-                    className={`todo-history-progress__row${progress.done ? ' is-done' : ''}`}
-                    data-testid="todo-history-progress-row"
-                  >
-                    <span className="todo-history-progress__check" aria-hidden="true">
-                      {progress.done ? <Icon name="Check" size={10} /> : null}
-                    </span>
-                    <span className="todo-history-progress__text">{progress.content}</span>
-                    <span className="todo-history-progress__time">
-                      {formatMoment(progress.createdAt, true)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="todo-history-progress__empty">还没有进度记录</p>
-            )}
-          </div>
-        ) : null}
-      </Modal>
+      <TodoHistoryProgressModal
+        item={historyProgress}
+        onClose={() => setHistoryProgress(null)}
+      />
     </PageLayout>
   )
 }
