@@ -67,6 +67,21 @@ if (!hasSingleInstanceLock) {
   )
   app.setAppUserModelId('com.github.Transactions')
 
+  /**
+   * 系统「文档」目录；拿不到就返回 undefined，让 ConfigStore 退回 `homedir()/Documents`。
+   *
+   * `app.getPath('documents')` 在目录不存在时会抛错（一次性 profile、被重定向或删掉的
+   * 文档目录都会中招）。默认备份位置跟着退一步就够了：不该因为一个可选功能的默认路径
+   * 让整个应用起不来。
+   */
+  function documentsDirectory(): string | undefined {
+    try {
+      return app.getPath('documents')
+    } catch {
+      return undefined
+    }
+  }
+
   void app
     .whenReady()
     .then(() => {
@@ -75,7 +90,7 @@ if (!hasSingleInstanceLock) {
       initLogging(appDirectory)
 
       // 「文档」由主进程给：配置层不 import electron，备份默认位置按系统文档目录解析
-      const config = ConfigStore.forApp(isDev, app.getPath('documents'))
+      const config = ConfigStore.forApp(isDev, documentsDirectory())
       logStartup(isDev, config.path)
       applyAppearance(config.get().appearance)
       void applyProxy(config.get().proxy)
