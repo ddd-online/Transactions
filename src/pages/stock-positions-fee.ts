@@ -24,13 +24,28 @@ export const EMPTY_TRADE_FEE: TradeFeeForm = {
   transfer: '',
 }
 
+/** 本轮实际生效的费率：本轮覆盖账本，缺的字段各自回落。 */
+function effectiveFeeRates(
+  position: StockPositionDto | undefined,
+  ledgerFee: StockFeeRates | null,
+): Partial<StockFeeRates> {
+  const round = position?.roundFee
+  return {
+    commissionRate: round?.commissionRate ?? ledgerFee?.commissionRate,
+    minCommission: round?.minCommission ?? ledgerFee?.minCommission,
+    stampDutyRate: round?.stampDutyRate ?? ledgerFee?.stampDutyRate,
+    transferFeeRate: round?.transferFeeRate ?? ledgerFee?.transferFeeRate,
+  }
+}
+
 /** 本轮费率的一句话：有没有单独一套、以及四个费率各是多少。 */
 export function feeText(position: StockPositionDto, fee: StockFeeRates | null): string {
-  const round = position.roundFee
-  const commission = round?.commissionRate ?? fee?.commissionRate
-  const minimum = round?.minCommission ?? fee?.minCommission
-  const stamp = round?.stampDutyRate ?? fee?.stampDutyRate
-  const transfer = round?.transferFeeRate ?? fee?.transferFeeRate
+  const {
+    commissionRate: commission,
+    minCommission: minimum,
+    stampDutyRate: stamp,
+    transferFeeRate: transfer,
+  } = effectiveFeeRates(position, fee)
   if (commission === undefined) return '本轮费率沿用账本默认'
   return [
     `佣金 万${(commission * 10000).toFixed(3)}`,
@@ -70,14 +85,12 @@ export function feeFormForTrade(
   position: StockPositionDto | undefined,
   fee: StockFeeRates | null,
 ): TradeFeeForm {
-  return feeFormOf(
-    type === 'open'
-      ? fee
-      : {
-          commissionRate: position?.roundFee?.commissionRate ?? fee?.commissionRate ?? 0,
-          minCommission: position?.roundFee?.minCommission ?? fee?.minCommission ?? 0,
-          stampDutyRate: position?.roundFee?.stampDutyRate ?? fee?.stampDutyRate ?? 0,
-          transferFeeRate: position?.roundFee?.transferFeeRate ?? fee?.transferFeeRate ?? 0,
-        },
-  )
+  if (type === 'open') return feeFormOf(fee)
+  const rates = effectiveFeeRates(position, fee)
+  return feeFormOf({
+    commissionRate: rates.commissionRate ?? 0,
+    minCommission: rates.minCommission ?? 0,
+    stampDutyRate: rates.stampDutyRate ?? 0,
+    transferFeeRate: rates.transferFeeRate ?? 0,
+  })
 }
