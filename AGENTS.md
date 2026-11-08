@@ -122,6 +122,22 @@ pnpm package          # NSIS 安装包，产物在 output/
 命令示例：`pnpm build && pnpm exec playwright test tests/e2e/todo.spec.ts tests/e2e/todo-drag.spec.ts`。
 样式改动也至少跑受影响页面的 spec，不要用全量截图代替针对性检查。
 
+## 文件规模
+
+- 每个源文件都有预算，超预算即静态护栏失败：页面模块（`src/pages/**/*.{ts,tsx}`）**450 行**；
+  其他渲染层模块（`src/**/*.{ts,tsx}`）**500 行**；样式表（`src/styles/*.css`）**1200 行**；
+  命令层单文件（`electron/ipc/**/*.ts`）**300 行**。`shared/` 与 `electron/services` 不设预算
+  —— 规格只对页面 / 渲染层 / 命令层 / 样式设了预算。
+- 允许清单在 `scripts/file-size-budget.mjs` 的 `FILE_SIZE_ALLOWLIST`，**它就是剩余工作清单**，不另建。
+  三条规则：清单外超预算 → 失败；清单内超过登记 `cap` → 失败；文件降到预算内而条目还在 → 失败
+  （必须删条目）。清单里的路径不存在也失败。
+- 行数口径全仓库唯一：`text.split('\n').length - (text.endsWith('\n') ? 1 : 0)`（`countLines`）。
+  别用 PowerShell 的 `Measure-Object`，它会少数几十行。
+- 拆到预算内就**把条目删掉**；绝不能为了过护栏加条目、抬 `cap` 或调大 `BUDGETS`。新写的文件天然受限。
+- **清单归零才算这件事做完**（规格 #4 的完成定义）。
+- 什么时候该拆：一个文件混着多个职责、改一处要在上千行里重建上下文。不是为拆而拆 —— 一个
+  600 行的纯渲染表格可能比两个 300 行的纠缠模块好；行数只是抓手，不是目标。
+
 ## 数据契约
 
 - 金额恒为整数分；股票价格恒为整数厘。
