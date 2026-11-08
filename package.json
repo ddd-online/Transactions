@@ -19,7 +19,7 @@
     "test:unit": "vitest run",
     "test:guards": "node scripts/static-guards.mjs",
     "test:e2e": "pnpm build && playwright test",
-    "test:e2e:packaged": "playwright test tests/e2e/packaged.spec.ts",
+    "test:e2e:packaged": "playwright test --config=playwright.packaged.config.ts",
     "test": "pnpm typecheck && pnpm test:unit && pnpm test:guards",
     "package:dir": "pnpm build && electron-builder --win --dir",
     "package": "pnpm build && electron-builder --win",
