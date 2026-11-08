@@ -60,7 +60,7 @@ export function signedAmount(transactionType: string, cents: number): string {
   }
 }
 
-/** 金额语义色类名（`app.css` 的 `.tr-cell-price.price-*`）。 */
+/** 金额语义色类名（`transactions.css` 的 `.tr-cell-price.price-*`）。 */
 export function amountClass(transactionType: string): string {
   switch (transactionType) {
     case 'income':
@@ -79,7 +79,7 @@ export function rowClass(transactionType: string): string {
   return `row-type-${transactionType}`
 }
 
-/** 交易类型文字色类名（`app.css` 的 `.tr-cell-type.type-*`）。 */
+/** 交易类型文字色类名（`transactions.css` 的 `.tr-cell-type.type-*`）。 */
 export function typeClass(transactionType: string): string {
   return `type-${transactionType}`
 }

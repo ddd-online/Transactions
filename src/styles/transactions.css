@@ -1,11 +1,11 @@
 /* ============================================
  * 消费记录页专属样式（P6-a 写操作扩展）
  *
- * 底样式在 base.css（`.table-wrapper`）与 app.css（`.tr-*`）；
+ * 底样式在 base.css（`.table-wrapper`）与 transactions.css（`.tr-*`）；
  * 这里只放本轮的：时间范围选择器、记录弹窗、筛选弹窗、排序弹窗、
  * 行内操作列、标签多选、同步气泡、悬浮按钮。
  *
- * 类名前缀一律 `tr-`，且避开 app.css 里已有的 `.tr-*`
+ * 类名前缀一律 `tr-`，且避开 transactions.css 里已有的 `.tr-*`
  * （toolbar / body / content / footer / pagination / table / cell 系列）。
  * 取值只用 `--transactions-*` 令牌，禁止裸 hex / rgb。
  * ============================================ */
