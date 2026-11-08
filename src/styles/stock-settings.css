@@ -1,0 +1,218 @@
+/* ---------------- 子功能五：设置 ---------------- */
+
+/* 「操作记录」弹窗里的列表：一行一次操作 —— 上一行是操作名（+「最新」标记）与时间，
+ * 下一行是摘要。窄弹窗里三列会挤，所以纵向堆叠而不是做表格。 */
+.stock-op-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.stock-op-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border-radius: var(--transactions-radius-md);
+  background-color: var(--transactions-color-minor-background);
+}
+
+.stock-op-item__head {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-op-item__action {
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+}
+
+/* 「最新」= 下一次回滚会撤销的那一条：用强调色 tint（全站"选中/当前"的语言） */
+.stock-op-item__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--transactions-space-sm);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-primary-tint);
+  color: var(--transactions-color-primary);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.stock-op-item__time {
+  margin-left: auto;
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+  white-space: nowrap;
+}
+
+.stock-op-item__detail {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 只读弹窗（`footer=false`）自带的关闭入口：贴右下，与 `Modal` 底栏同一位置 */
+.stock-op-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--transactions-space-md);
+}
+
+/* ---------------- 设置 ---------------- */
+
+.stock-settings-view {
+  min-height: 100%;
+  padding-bottom: var(--transactions-space-xl);
+}
+
+.stock-setting-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--transactions-space-xl);
+  padding: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-setting-row__info {
+  min-width: 0;
+}
+
+.stock-setting-row__info h2 {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-setting-row__info p {
+  margin: 4px 0 0;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-normal);
+}
+
+.stock-setting-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-shrink: 0;
+}
+
+.stock-setting-row__actions .ant-input {
+  width: 220px;
+}
+
+.stock-setting-row--stack {
+  flex-wrap: wrap;
+}
+
+.stock-setting-row--stack .stock-template-input {
+  flex: 1 0 100%;
+}
+
+.stock-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-xs);
+  margin-top: var(--transactions-space-sm);
+}
+
+.stock-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-tag-chip button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  /* 图标本身只有 10px，指针目标却要 ≥24px：用一层不吃布局的伪元素把热区撑开，
+   * 芯片的视觉高度与外框都不变（实测热区 10×10 → 24×24）。 */
+  position: relative;
+}
+
+.stock-tag-chip button::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+}
+
+.stock-tag-chip:has(button:focus-visible) {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.stock-tag-chip button:focus-visible {
+  outline: none;
+}
+
+.stock-fee-panel {
+  margin: var(--transactions-space-lg);
+  padding: var(--transactions-space-md);
+  background: var(--transactions-color-minor-background);
+}
+
+.stock-fee-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-fee-panel__head h3 {
+  margin: 0;
+  font-size: var(--transactions-size-text-body);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-fee-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-md);
+  margin-top: var(--transactions-space-md);
+}
+
+.stock-fee-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-fee-note {
+  margin: var(--transactions-space-sm) 0 0;
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-operation-list {
+  gap: var(--transactions-space-sm);
+}
+
+.stock-operation-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-sm) 0;
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
