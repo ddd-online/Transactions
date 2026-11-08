@@ -46,16 +46,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 654,
     hint: '轮次列表与分页 / 单轮详情',
   },
-  // 588 行：天梯导出页的排版与渲染
-  'src/pages/stock-ladder-page.ts': {
-    cap: 588,
-    hint: '天梯导出页的排版与渲染',
-  },
-  // 465 行：天梯表格 / 行 / 汇总
-  'src/pages/stock-ladder.tsx': {
-    cap: 465,
-    hint: '天梯表格 / 行 / 汇总',
-  },
   // 499 行：只读台账 / 编辑弹窗 / 落差计算
   'src/pages/stock-ledger.tsx': {
     cap: 499,
