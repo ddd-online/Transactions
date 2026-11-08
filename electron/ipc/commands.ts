@@ -11,13 +11,11 @@ import { DEVTOOLS_STATE_CHANGED, WORKSPACE_CHANGED } from '../../shared/events'
 import { addRecentWorkspace, resolveBackupDir } from '../../shared/domain/backup'
 import type { ConfigStore } from '../config'
 import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
-import { closeWorkspace, currentWorkspace, openWorkspace } from '../db'
-import type { Db } from '../db/driver'
-import { MIGRATIONS } from '../db/migrate'
+import { currentWorkspace, openWorkspace } from '../db'
 import { logInfo, logWarn } from '../logging'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { exportLadderPage } from '../services/ladder-export'
-import { backupDirProblem, createBackupService } from '../services/backup'
+import { backupDirProblem } from '../services/backup'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
@@ -33,8 +31,6 @@ import {
   updatePositionReview,
   updatePositionTag,
 } from '../services/stock-positions'
-import { TencentStockQuoteFetcher } from '../services/stock-quote'
-import { EastmoneyLimitPoolSource } from '../services/stock-limit-pool'
 import { getLimitLadder } from '../services/stock-limit'
 import {
   getTradeHistoryDetail,
@@ -76,10 +72,9 @@ import {
 } from '../services/assets'
 import { encodeJpeg } from '../services/image-codec'
 import { prepareEventImage } from '../services/image-import'
-import { UpdaterService } from '../services/updater'
 import { applyProxy, appFetch } from '../shell/net'
 import { priceYuanToMilli } from '../../shared/domain/money'
-import { nowSeconds, todayYmd } from '../../shared/domain/time'
+import { todayYmd } from '../../shared/domain/time'
 import {
   createStatisticsFilter,
   normalizeRecent,
@@ -107,11 +102,20 @@ import {
   applyAppearance,
   getMainWindow,
   notifyQuitReady,
-  quitApp,
   registerWindowControl,
 } from '../shell/window'
 import { sendEvent } from './events'
 import { pickEnvProxy, validatedProxySetting } from '../../shared/domain/proxy'
+import {
+  asObject,
+  createHandlerContext,
+  createLimitPoolSource,
+  createQuoteFetcher,
+  limitNowSeconds,
+  openDirectoryInShell,
+  queryNumber,
+  workspaceDb,
+} from './handlers/context'
 
 export type Handler = (request: unknown) => unknown | Promise<unknown>
 export type HandlerMap = Record<CommandName, Handler>
@@ -119,101 +123,12 @@ export type HandlerMap = Record<CommandName, Handler>
 const PNG_1X1 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
-const updater = new UpdaterService({
-  fetchImpl: (input, init) => appFetch(input, init as RequestInit),
-  releaseApi: process.env.TRANSACTIONS_TEST_RELEASE_API,
-  tempDir: process.env.TRANSACTIONS_TEST_UPDATE_DIR,
-  onEvent: (event, snapshot) => sendEvent(event, snapshot),
-  // 装完更新后同样是"退出"：走同一条收尾流程，窗口位置与工作空间都要落盘。
-  quit: () => quitApp(),
-})
-
-function createQuoteFetcher(): TencentStockQuoteFetcher {
-  const testBase = process.env.TRANSACTIONS_TEST_QUOTE_SOURCE
-  return new TencentStockQuoteFetcher({
-    fetchImpl: (url, signal) => appFetch(url, { signal }),
-    ...(testBase ? { baseUrl: testBase } : {}),
-    // 夹具服务器没有 GBK 编码器：要测中文名称时由测试指定 UTF-8 回包。
-    ...(process.env.TRANSACTIONS_TEST_QUOTE_CHARSET === 'utf-8'
-      ? { charset: 'utf-8' as const }
-      : {}),
-  })
-}
-
-/** 涨停池数据源：地址与代理都走注入的 fetch（测试可用环境变量指到本地服务）。 */
-function createLimitPoolSource(): EastmoneyLimitPoolSource {
-  const testBase = process.env.TRANSACTIONS_TEST_LIMIT_SOURCE
-  return new EastmoneyLimitPoolSource({
-    fetchImpl: (url, init) => appFetch(url, init),
-    ...(testBase ? { baseUrl: testBase } : {}),
-  })
-}
-
-/** 天梯的当前时间：测试环境可用 `TRANSACTIONS_TEST_LADDER_NOW` 钉住"盘中/收盘后"。 */
-function limitNowSeconds(): number {
-  const raw = process.env.TRANSACTIONS_TEST_LADDER_NOW
-  if (raw) {
-    const parsed = Number(raw)
-    if (Number.isFinite(parsed)) return Math.trunc(parsed)
-  }
-  return nowSeconds()
-}
-
 export interface HandlerOptions {
   config: ConfigStore
 }
 
-function asObject(request: unknown): Record<string, unknown> {
-  return typeof request === 'object' && request !== null ? (request as Record<string, unknown>) : {}
-}
-
-/** QueryNumber 语义：数字/数字字符串 → 整数；空串或非数字 → null。 */
-function queryNumber(value: unknown): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? Math.trunc(value) : null
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? Math.trunc(parsed) : null
-  }
-  return null
-}
-
-function workspaceDb(): Db {
-  const workspace = currentWorkspace()
-  if (!workspace) throw workspaceNotOpened()
-  return workspace.db
-}
-
-/**
- * 恢复之后的「重启」。
- *
- * `TRANSACTIONS_TEST_RESTART=exit` 时只退出：E2E 自己再起一个进程，避免真的多开。
- */
-function restartApp(): void {
-  if (process.env.TRANSACTIONS_TEST_RESTART === 'exit') {
-    quitApp()
-    return
-  }
-  app.relaunch()
-  quitApp()
-}
-
-/** 在资源管理器里打开一个目录；`shell.openPath` 用空串表示成功。 */
-async function openDirectoryInShell(directory: string): Promise<void> {
-  const failure = await shell.openPath(directory)
-  if (failure) throw new AppError(failure, { status: 500 })
-}
-
 export function createHandlers(options: HandlerOptions): HandlerMap {
-  const backup = createBackupService({
-    workspace: currentWorkspace,
-    backupDir: () => options.config.backupDir(),
-    autoBackupEnabled: () => options.config.get().autoBackup,
-    supportedSchemaVersion: MIGRATIONS[MIGRATIONS.length - 1].version,
-    closeWorkspace,
-    restart: restartApp,
-    now: () => new Date(),
-    log: logWarn,
-  })
+  const ctx = createHandlerContext(options.config)
 
   return {
     app_info(request) {
@@ -231,24 +146,24 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     },
 
     async update_check() {
-      return updater.check(app.getVersion())
+      return ctx.updater.check(app.getVersion())
     },
 
     async update_download(request) {
       const raw = asObject(request)
-      return updater.download(String(raw.url ?? ''), String(raw.digest ?? ''))
+      return ctx.updater.download(String(raw.url ?? ''), String(raw.digest ?? ''))
     },
 
     update_download_status() {
-      return updater.snapshot()
+      return ctx.updater.snapshot()
     },
 
     update_cancel() {
-      return updater.cancel()
+      return ctx.updater.cancel()
     },
 
     update_install() {
-      return updater.install()
+      return ctx.updater.install()
     },
 
     config_get() {
@@ -281,7 +196,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       })
       // 每天第一次打开时的自动备份：失败只记日志，绝不能挡住「打开工作空间」
       try {
-        const entry = backup.autoBackupIfNeeded()
+        const entry = ctx.backup.autoBackupIfNeeded()
         if (entry) logInfo(`自动备份完成: ${entry.name}`)
       } catch (error) {
         logWarn(`自动备份失败: ${errorMessage(error)}`)
@@ -1490,15 +1405,15 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     // 数据安全底座：备份 / 恢复 / 最近工作空间（设置 → 数据）。
     // 纯逻辑在 shared/domain/backup，磁盘动作在 services/backup（不 import electron）。
     backup_create() {
-      return backup.createManual()
+      return ctx.backup.createManual()
     },
 
     backup_list() {
-      return backup.list()
+      return ctx.backup.list()
     },
 
     backup_restore(request) {
-      return backup.restore(String(asObject(request).path ?? ''))
+      return ctx.backup.restore(String(asObject(request).path ?? ''))
     },
 
     async workspace_open_dir(request) {
