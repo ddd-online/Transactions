@@ -4,12 +4,11 @@ import type {
   TodoCardDto,
   TodoHistoryDto,
   TodoItemDto,
-  TodoProgressDto,
 } from '../../shared/types/todo'
 import { Input, Modal, Popconfirm, Select } from 'antd'
 
 import { TODO_LEVELS, TODO_LEVEL_LABELS, todoLevelLabel } from '../../shared/domain/consts'
-import { todoDueState, type TodoDueState } from '../../shared/domain/todo-due'
+import { todoDueState } from '../../shared/domain/todo-due'
 import { Button } from '../components/button'
 import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
@@ -18,6 +17,7 @@ import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { TodoQuadrant } from '../components/todo-quadrant'
+import { doneCountOf, formatItemDates, formatMoment } from './todo-format'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -31,31 +31,6 @@ const LEVEL_OPTIONS = TODO_LEVELS.map((value, index) => ({
   value,
   label: TODO_LEVEL_LABELS[index],
 }))
-
-/** 完成时间（历史）/ 进度时间（`short`）—— 都用本地时区、等宽数字排版。 */
-function formatMoment(seconds: number, short = false): string {
-  if (!seconds) return ''
-  const date = new Date(seconds * 1000)
-  const pad = (value: number): string => String(value).padStart(2, '0')
-  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`
-  const day = `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-  return short ? `${day} ${time}` : `${date.getFullYear()}-${day} ${time}`
-}
-
-function doneCountOf(progress: TodoProgressDto[]): number {
-  return progress.filter((entry) => entry.done).length
-}
-
-function formatItemDates(
-  startDate: string,
-  dueDate: string,
-  due: TodoDueState,
-): string {
-  if (!startDate && !dueDate) return ''
-  if (startDate && !dueDate) return `${startDate} 起`
-  if (!startDate && dueDate) return due === 'today' ? '今天截止' : `${dueDate} 截止`
-  return due === 'today' ? `${startDate} → 今天截止` : `${startDate} → ${dueDate}`
-}
 
 export interface TodoPageProps {
   ledgerId: string
