@@ -12,7 +12,7 @@ import {
   WORKSPACE_CHANGED,
 } from '../shared/events'
 import type { UpdateSnapshot } from '../shared/domain/update'
-import { errorMessage } from '../shared/errors'
+import { errorMessage, isWorkspaceNotOpenedError } from '../shared/errors'
 /* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
  * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
  * antd，图表页与日记页各自带着自己的那份（详见 DESIGN.md「Performance」）。 */
@@ -140,7 +140,9 @@ export function App(): JSX.Element {
       const rows = await window.api.invoke('ledger_list', { id: 'all' })
       setLedgers(rows)
     } catch (listError) {
-      setError(errorMessage(listError))
+      // 工作空间打不开时这条查询必然回「未打开工作空间」：它不是账本列表坏了，
+      // 不能盖住上一个错误里那句真正可操作的话（数据库已损坏…请从备份恢复）。
+      if (!isWorkspaceNotOpenedError(listError)) setError(errorMessage(listError))
     }
   }, [workspace])
 

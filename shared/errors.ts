@@ -37,6 +37,23 @@ export function workspaceNotOpened(): AppError {
   })
 }
 
+/**
+ * 失败是不是「工作空间没打开」。
+ *
+ * 工作空间打开失败之后，页面级的查询（例如账本列表）一定也会失败；那不是一条新的错误，
+ * 调用方据此跳过它，避免用一句更笼统的话盖掉真正的失败原因（库损坏 / 目录已不存在）。
+ * 与 {@link isNotFoundError} 同一个写法：错误语义只在这一处判断。
+ */
+export function isWorkspaceNotOpenedError(error: unknown): boolean {
+  if (error instanceof AppError) return error.code === ERR_CODE_WORKSPACE_NOT_OPENED
+  // 渲染层拿到的是 preload 原样抛出的 IPC 错误信封（普通对象，没有类身份），只能认 code。
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: unknown }).code === ERR_CODE_WORKSPACE_NOT_OPENED
+  )
+}
+
 /** 旧版工作空间（`tbl_billadm_*` 表结构）：数据导入已移除，只能拒绝打开。 */
 export function legacyWorkspace(): AppError {
   return new AppError(
