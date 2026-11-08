@@ -1,0 +1,256 @@
+/* ---------------- 交易台账（持仓 / 记录共用） ---------------- */
+
+.stock-ledger {
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ledger__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+/* 台账标题行右侧的一簇：复制是 text 按钮（悬停才有底），编辑是唯一的描边按钮。
+ * 两者之间留 12px —— 8px 时悬停底与焦点环会贴到「编辑」的边框上。 */
+.stock-ledger__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+.stock-ledger__sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.stock-ledger__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+}
+
+.stock-ledger__group-label {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-snug);
+}
+
+.stock-ledger__row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+/* 买入计划这一行比别的行多一格：止损 / 止盈的落差跟在价位右边，盈亏比也是一格，
+ * 三个派生数因此和价格排在同一条线上（窄窗仍按下面那两档收成 2 列 / 1 列）。 */
+.stock-ledger__row--plan {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.stock-ledger__row--sell {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stock-ledger__execution {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 3fr);
+  gap: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+.stock-ledger__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stock-ledger__field--wide {
+  grid-column: 1 / -1;
+}
+
+/* 一段数字可以带一个尾巴（止损 / 止盈后面的落差）：贴着数字排，挤不下时整段换行，
+ * 不把价位切成两半。 */
+.stock-ledger__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  margin: 0;
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-relaxed);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.stock-ledger__value--muted {
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 止损 / 止盈的落差：「9  较买入价 -3.30%」。只在填了纯数字时出现 —— 没填、写了一句
+ * 「破 15 就走」时这一段不占位，价位还是用户原文。 */
+.stock-ledger__delta-note {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  white-space: nowrap;
+}
+
+.stock-ledger__delta-note-value {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.stock-ledger__empty {
+  margin: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+}
+
+.stock-ledger__error {
+  padding: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
+.stock-ledger__computed.ant-input {
+  background-color: var(--transactions-color-minor-background);
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 弹窗挂在 body 下，不在 `.stock-page` 里，红涨绿跌要在这里再声明一次 —— 与
+ * `.stock-page .is-up` / `.is-down` 同向，别写反：盈是红（expense 令牌），亏是绿。 */
+.stock-ledger__computed.ant-input.is-up {
+  color: var(--transactions-color-expense);
+}
+
+.stock-ledger__computed.ant-input.is-down {
+  color: var(--transactions-color-income);
+}
+
+/* 输入框右端的百分比：「较买入价」的落差就写在这一个数字里，不另占一行。 */
+.stock-ledger__delta {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+/* 12px 的语义红绿要压一档墨才过 AA：收入绿原值在纸白上只有 3.30:1、画布上 3.15:1。
+ * 配比与天梯的小标签同一条（`.stock-ladder__tag--*`）：72% 语义色 + 28% 主文字色。
+ * 只读台账那一行在 `.stock-page` 里，`.stock-page .is-up` 也管得到它，所以这里两种
+ * 落点（页内 / 弹窗）一起声明，颜色不靠祖先元素决定。 */
+.stock-ledger__delta.is-up,
+.stock-ledger__delta-note-value.is-up {
+  color: color-mix(
+    in srgb,
+    var(--transactions-color-expense) 72%,
+    var(--transactions-color-text-major)
+  );
+}
+
+.stock-ledger__delta.is-down,
+.stock-ledger__delta-note-value.is-down {
+  color: color-mix(
+    in srgb,
+    var(--transactions-color-income) 72%,
+    var(--transactions-color-text-major)
+  );
+}
+
+/* 弹窗里的盈亏比：横跨两列、挂在止损 / 止盈下面一行。算不出来的时候这一行也在
+ * （三种原因各写一句），免得边填边算时下面几行跟着上下跳。 */
+.stock-ledger-form__ratio {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  margin-top: calc(-1 * var(--transactions-space-sm));
+}
+
+.stock-ledger-form__ratio-label {
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ledger-form__ratio-value {
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.stock-ledger-form__ratio-empty {
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ledger__computed.ant-input[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+@media (max-width: 1000px) {
+  .stock-ledger__row,
+  .stock-ledger__row--sell,
+  .stock-ledger__execution {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .stock-ledger__row,
+  .stock-ledger__row--sell,
+  .stock-ledger__execution {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stock-ledger-form .stock-modal-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 记录页里的台账跟每日 / 本轮复盘同一套平铺段落：无外层边框，
+ * 与正文共用轮次内边距，只用一条上发丝线分节。 */
+.stock-round__body .stock-ledger {
+  margin-top: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  border-top: 0;
+  border-bottom: 0;
+}
+
+/* 台账与每日复盘之间不再加发丝线，保持一段连续的工作区。 */
+.stock-round__body .stock-ledger + .stock-round__daily {
+  border-top: 0;
+}
+
+.stock-round__body .stock-ledger__head {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.stock-round__body .stock-ledger__sheet {
+  padding: var(--transactions-space-sm) 0 var(--transactions-space-md);
+}
+
+.stock-round__body .stock-ledger__empty {
+  padding: var(--transactions-space-sm) 0 var(--transactions-space-md);
+}
+
+.stock-round__body .stock-ledger__error {
+  padding: var(--transactions-space-sm) 0 0;
+}
