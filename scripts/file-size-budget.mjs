@@ -16,60 +16,10 @@ export const BUDGETS = {
 // 清单只装「已经超预算、本轮还没拆完」的文件，cap 登记当前行数。
 // 拆完一个就删一条，绝不为了过护栏加条目、抬 cap 或调大 BUDGETS。
 export const FILE_SIZE_ALLOWLIST = {
-  // 1690 行：按领域拆注册函数（记账 / 图表 / 标签与模板 / 事件 / 日记 / 待办 / 股票 / 设置与更新）
-  'electron/ipc/commands.ts': {
-    cap: 1690,
-    hint: '按领域拆注册函数（记账 / 图表 / 标签与模板 / 事件 / 日记 / 待办 / 股票 / 设置与更新）',
-  },
   // 780 行：启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染
   'src/App.tsx': {
     cap: 780,
     hint: '启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染',
-  },
-  // 558 行：分类栏 / 标签栏 / 拖拽排序 / 弹窗
-  'src/pages/category-tag.tsx': {
-    cap: 558,
-    hint: '分类栏 / 标签栏 / 拖拽排序 / 弹窗',
-  },
-  // 599 行：曲线列表 / 曲线条件表单 / 新建与改名
-  'src/pages/chart-editor.tsx': {
-    cap: 599,
-    hint: '曲线列表 / 曲线条件表单 / 新建与改名',
-  },
-  // 654 行：轮次列表与分页 / 单轮详情
-  'src/pages/stock-history.tsx': {
-    cap: 654,
-    hint: '轮次列表与分页 / 单轮详情',
-  },
-  // 588 行：天梯导出页的排版与渲染
-  'src/pages/stock-ladder-page.ts': {
-    cap: 588,
-    hint: '天梯导出页的排版与渲染',
-  },
-  // 465 行：天梯表格 / 行 / 汇总
-  'src/pages/stock-ladder.tsx': {
-    cap: 465,
-    hint: '天梯表格 / 行 / 汇总',
-  },
-  // 499 行：只读台账 / 编辑弹窗 / 落差计算
-  'src/pages/stock-ledger.tsx': {
-    cap: 499,
-    hint: '只读台账 / 编辑弹窗 / 落差计算',
-  },
-  // 545 行：费率表单 / 复盘模板 / 危险操作
-  'src/pages/stock-settings.tsx': {
-    cap: 545,
-    hint: '费率表单 / 复盘模板 / 危险操作',
-  },
-  // 767 行：指标条 / 曲线 / 明细表 / 分页
-  'src/pages/stock-statistics.tsx': {
-    cap: 767,
-    hint: '指标条 / 曲线 / 明细表 / 分页',
-  },
-  // 503 行：模板列表 / 新建弹窗
-  'src/pages/templates.tsx': {
-    cap: 503,
-    hint: '模板列表 / 新建弹窗',
   },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {
