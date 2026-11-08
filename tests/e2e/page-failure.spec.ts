@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
@@ -24,31 +24,36 @@ function environment(overrides: Record<string, string>): Record<string, string> 
  */
 test('分页加载失败：只有这一页变成一句可重试的话', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
-  const assets = join(repositoryRoot, 'output', 'out', 'renderer', 'assets')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-boundary-'))
   const home = join(root, 'home')
   const workspace = join(root, 'ws')
   const userData = join(root, 'user-data')
+  // 这条用例要在磁盘上「弄坏」一个 chunk。并发下不能动共享的 output/out：同一时刻跑
+  // 股票页的 spec 会跟着读不到 chunk，表现成「并发下的偶发失败」，而根因是共享路径。
+  // 所以先把整份构建产物复制到自己的临时根，只在副本上改名。
+  const appDir = join(root, 'app')
   mkdirSync(home, { recursive: true })
   mkdirSync(userData, { recursive: true })
   mkdirSync(workspace, { recursive: true })
+  mkdirSync(appDir, { recursive: true })
+  cpSync(join(repositoryRoot, 'output', 'out'), join(appDir, 'out'), { recursive: true })
+  writeFileSync(
+    join(appDir, 'package.json'),
+    JSON.stringify({ name: 'tr-e2e-boundary', main: 'out/main/index.js' }),
+  )
   writeFileSync(
     join(home, '.tr.dev.json'),
     JSON.stringify({ width: 1400, height: 1000, closeBehavior: 'quit', appearance: 'light' }),
   )
 
-  // 上一次跑崩了会把 chunk 留在 .parked：先恢复，再挑一个。
-  for (const name of readdirSync(assets).filter((entry) => entry.endsWith('.js.parked'))) {
-    renameSync(join(assets, name), join(assets, name.replace(/\.parked$/, '')))
-  }
-
+  const assets = join(appDir, 'out', 'renderer', 'assets')
   const chunks = readdirSync(assets).filter((name) => /^stock-.*\.js$/.test(name))
   expect(chunks.length).toBeGreaterThan(0)
   const victim = join(assets, chunks[0])
   const parked = `${victim}.parked`
 
   const electronApp = await electron.launch({
-    args: ['.'],
+    args: [appDir],
     cwd: repositoryRoot,
     env: environment({
       USERPROFILE: home,
@@ -83,7 +88,7 @@ test('分页加载失败：只有这一页变成一句可重试的话', async ()
     await page.getByTestId('nav-accounting').click()
     await expect(page.getByTestId('page-boundary')).toHaveCount(0)
   } finally {
-    renameSync(parked, victim)
+    // 副本随临时根一起删，不需要把 chunk 改回来，也没有「上次跑崩了先恢复」的前置。
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
   }
