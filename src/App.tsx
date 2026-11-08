@@ -1,8 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import type { FeatureFlags } from '../shared/types/config'
-import type { Ledger } from '../shared/domain/models'
-import { errorMessage, isWorkspaceNotOpenedError } from '../shared/errors'
 /* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
  * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
  * antd，图表页与日记页各自带着自己的那份（详见 DESIGN.md「Performance」）。 */
@@ -23,7 +21,6 @@ import { Button } from './components/button'
 import { IdentityDot } from './components/identity-dot'
 import { ConfirmDialog } from './components/confirm-dialog'
 import { Tooltip } from './components/tooltip'
-import { notify } from './components/toast'
 import { PageHeader } from './components/page-header'
 import { SettingsPage } from './pages/settings'
 import { PageBoundary } from './components/page-boundary'
@@ -33,6 +30,7 @@ import { Icon, type IconName } from './components/icon'
 import { useQuitFlow } from './state/use-quit-flow'
 import { useAppStartup } from './state/use-app-startup'
 import { useWorkspaceSession } from './state/use-workspace-session'
+import { useLedgerSession } from './state/use-ledger-session'
 
 type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
 
@@ -45,8 +43,6 @@ const NAV: Array<[View, string, keyof FeatureFlags]> = [
 ]
 
 export function App(): JSX.Element {
-  const [ledgers, setLedgers] = useState<Ledger[]>([])
-  const [activeLedgerId, setActiveLedgerId] = useState('')
   const [ledgerName, setLedgerName] = useState('')
   const [ledgerDescription, setLedgerDescription] = useState('')
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false)
@@ -78,6 +74,21 @@ export function App(): JSX.Element {
     onConfigChanged: setConfig,
     onError: setError,
   })
+  const {
+    ledgers,
+    activeLedgerId,
+    setActiveLedgerId,
+    activeLedgerName,
+    effectiveFeatures,
+    refreshLedgers,
+    createLedger,
+    deleteLedger,
+  } = useLedgerSession({
+    workspace,
+    config,
+    setBusy,
+    onError: setError,
+  })
 
   useEffect(() => {
     if (!ledgerMenuOpen) return
@@ -97,61 +108,20 @@ export function App(): JSX.Element {
     }
   }, [ledgerMenuOpen])
 
-  const refreshLedgers = useCallback(async (): Promise<void> => {
-    if (!workspace) {
-      setLedgers([])
-      return
-    }
-    try {
-      const rows = await window.api.invoke('ledger_list', { id: 'all' })
-      setLedgers(rows)
-    } catch (listError) {
-      // 工作空间打不开时这条查询必然回「未打开工作空间」：它不是账本列表坏了，
-      // 不能盖住上一个错误里那句真正可操作的话（数据库已损坏…请从备份恢复）。
-      if (!isWorkspaceNotOpenedError(listError)) setError(errorMessage(listError))
-    }
-  }, [workspace])
-
-  useEffect(() => {
-    void refreshLedgers()
-  }, [refreshLedgers])
-
-  useEffect(() => {
-    if (ledgers.length === 0) {
-      setActiveLedgerId('')
-      return
-    }
-    if (!ledgers.some((ledger) => ledger.id === activeLedgerId)) {
-      setActiveLedgerId(ledgers[0].id)
-    }
-  }, [activeLedgerId, ledgers])
-
-  const createLedger = useCallback(async (): Promise<void> => {
+  const submitLedger = useCallback(async (): Promise<void> => {
     const name = ledgerName.trim()
     if (!name) {
       setLedgerError('请输入账本名称')
       return
     }
-    setBusy(true)
     setLedgerError('')
-    try {
-      const ledgerId = await window.api.invoke('ledger_create', {
-        name,
-        description: ledgerDescription.trim(),
-      })
-      await window.api.invoke('category_initialize', { ledgerId })
+    const failure = await createLedger(name, ledgerDescription.trim(), () => {
       setLedgerName('')
       setLedgerDescription('')
       setLedgerDialogOpen(false)
-      await refreshLedgers()
-      setActiveLedgerId(ledgerId)
-      notify('账本已创建')
-    } catch (createError) {
-      setLedgerError(errorMessage(createError))
-    } finally {
-      setBusy(false)
-    }
-  }, [ledgerDescription, ledgerName, refreshLedgers])
+    })
+    if (failure) setLedgerError(failure)
+  }, [createLedger, ledgerDescription, ledgerName])
 
   const openLedgerDialog = useCallback((): void => {
     setLedgerMenuOpen(false)
@@ -161,34 +131,12 @@ export function App(): JSX.Element {
     setLedgerDialogOpen(true)
   }, [])
 
-  const deleteLedger = useCallback(
-    async (id: string): Promise<void> => {
-      setBusy(true)
-      setError('')
-      try {
-        await window.api.invoke('ledger_delete', { id })
-        await refreshLedgers()
-        notify('账本已删除')
-      } catch (deleteError) {
-        notify(errorMessage(deleteError), 'error')
-      } finally {
-        setBusy(false)
-      }
-    },
-    [refreshLedgers],
-  )
-
-  const effectiveFeatures = config
-    ? { ...config.features, ...(config.ledgerFeatures[activeLedgerId] ?? {}) }
-    : null
-
   useEffect(() => {
     if (view === 'settings') return
     const entry = NAV.find(([key]) => key === view)
     if (entry && effectiveFeatures?.[entry[2]] === false) setView('accounting')
   }, [effectiveFeatures, view])
 
-  const activeLedgerName = ledgers.find((ledger) => ledger.id === activeLedgerId)?.name ?? '默认账本'
   const navIcon: Record<View, IconName> = {
     accounting: 'Transaction',
     stock: 'Sliders',
@@ -534,7 +482,7 @@ export function App(): JSX.Element {
                 disabled={busy || !workspace}
                 onChange={(event) => setLedgerName(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') void createLedger()
+                  if (event.key === 'Enter') void submitLedger()
                 }}
               />
             </div>
@@ -547,7 +495,7 @@ export function App(): JSX.Element {
                 disabled={busy || !workspace}
                 onChange={(event) => setLedgerDescription(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') void createLedger()
+                  if (event.key === 'Enter') void submitLedger()
                 }}
               />
             </div>
@@ -564,7 +512,7 @@ export function App(): JSX.Element {
                 variant="primary"
                 testId="ledger-create"
                 disabled={busy || !workspace}
-                onClick={() => void createLedger()}
+                onClick={() => void submitLedger()}
               >
                 创建
               </Button>
