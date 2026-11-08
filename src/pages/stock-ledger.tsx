@@ -415,10 +415,7 @@ export function StockLedgerSection({
             <div className="stock-ledger-form__ratio" data-testid="stock-ledger-form-ratio">
               <span className="stock-ledger-form__ratio-label">盈亏比</span>
               {ratio.kind === 'value' ? (
-                <>
-                  <span className="stock-ledger-form__ratio-value">{ratio.text}</span>
-                  <span className="stock-ledger-form__ratio-note">止盈空间 ÷ 止损空间</span>
-                </>
+                <span className="stock-ledger-form__ratio-value">{ratio.text}</span>
               ) : (
                 <span className="stock-ledger-form__ratio-empty">{RATIO_PROMPTS[ratio.kind]}</span>
               )}

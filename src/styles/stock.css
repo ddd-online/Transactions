@@ -3486,15 +3486,9 @@
   letter-spacing: var(--transactions-tracking-amount);
 }
 
-.stock-ledger-form__ratio-note,
 .stock-ledger-form__ratio-empty {
   color: var(--transactions-color-text-tertiary);
   font-size: var(--transactions-size-text-caption);
-}
-
-/* 算式跟在数字后面一点，不当成这一行的右对齐尾巴 —— 右对齐时会像「止盈」那一格的注解。 */
-.stock-ledger-form__ratio-note {
-  margin-left: var(--transactions-space-sm);
 }
 
 .stock-ledger__computed.ant-input[aria-disabled='true'] {
