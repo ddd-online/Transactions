@@ -31,21 +31,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 599,
     hint: '曲线列表 / 曲线条件表单 / 新建与改名',
   },
-  // 967 行：图表网格 / 曲线合计条 / 范围选择
-  'src/pages/charts.tsx': {
-    cap: 967,
-    hint: '图表网格 / 曲线合计条 / 范围选择',
-  },
-  // 1026 行：图库 / 编辑器 / 图片选择与分组
-  'src/pages/events.tsx': {
-    cap: 1026,
-    hint: '图库 / 编辑器 / 图片选择与分组',
-  },
-  // 908 行：筛选条 / 表格 / 批量动作
-  'src/pages/records.tsx': {
-    cap: 908,
-    hint: '筛选条 / 表格 / 批量动作',
-  },
   // 459 行：备份动作 / 备份列表 / 最近工作空间
   'src/pages/settings-data.tsx': {
     cap: 459,
@@ -91,11 +76,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 503,
     hint: '模板列表 / 新建弹窗',
   },
-  // 1092 行：卡片列 / 事项编辑 / 进度记录 / 历史视图
-  'src/pages/todo.tsx': {
-    cap: 1092,
-    hint: '卡片列 / 事项编辑 / 进度记录 / 历史视图',
-  },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {
     cap: 1341,
@@ -105,11 +85,6 @@ export const FILE_SIZE_ALLOWLIST = {
   'src/styles/key_event.css': {
     cap: 1253,
     hint: '图库 / 编辑器 / 图片块',
-  },
-  // 4939 行：基类 / 账户 / 持仓 / 记录 / 统计 / 设置 / 天梯
-  'src/styles/stock.css': {
-    cap: 4939,
-    hint: '基类 / 账户 / 持仓 / 记录 / 统计 / 设置 / 天梯',
   },
 }
 
