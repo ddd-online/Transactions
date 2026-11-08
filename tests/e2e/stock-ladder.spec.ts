@@ -538,12 +538,12 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     const brokenKeruisi = ladder
       .getByTestId('stock-ladder-broken-chip')
       .filter({ hasText: '科瑞思' })
-    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('+3.33%')
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('收 +3.33%')
     await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveClass(/stock-ladder__tag--up/)
     // 断板的价格也补上了：与涨跌幅同一笔行情，收盘后就是收盘价
     await expect(brokenMoutai.getByTestId('stock-ladder-chip-price')).toContainText('1550.00')
     await expect(brokenMoutai).toHaveAttribute('title', /收盘价 1550\.00/)
-    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('-3.92%')
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('收 -3.92%')
     await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveClass(
       /stock-ladder__tag--down/,
     )
@@ -565,7 +565,7 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(await brokenMoutai.locator('.stock-ladder__tag').allTextContents()).toEqual([
       '断',
       '开 +1.00%',
-      '+3.33%',
+      '收 +3.33%',
     ])
     expect(await limitShanghai.locator('.stock-ladder__tag').allTextContents()).toEqual([
       '炸 1',
@@ -627,7 +627,8 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(pageHtml).toContain('>断</span>')
     expect(pageHtml).toContain('开 +1.00%')
     expect(pageHtml).toContain('开 +6.00%')
-    expect(pageHtml).toContain('+3.33%')
+    expect(pageHtml).toContain('收 +3.33%')
+    expect(pageHtml).toContain('<span class="tag-pair">')
     // 自包含：字体由主进程内嵌，页面没有外部请求与脚本
     expect(pageHtml).toContain('@font-face')
     expect(pageHtml).toContain("font-family:'Inter'")
@@ -752,8 +753,8 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     nextDay.setDate(nextDay.getDate() + 1)
     quoteDay = ymd(nextDay)
     await page.getByTestId('stock-ladder-refresh').click()
-    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('+3.33%')
-    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('-3.92%')
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('收 +3.33%')
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('收 -3.92%')
     await expect(brokenMoutai.getByTestId('stock-ladder-chip-open')).toHaveText('开 +1.00%')
     await expect(limitShanghai.getByTestId('stock-ladder-chip-open')).toHaveText('开 +6.00%')
     await expect(limitPingan.getByTestId('stock-ladder-chip-open')).toHaveText('开 -3.00%')
@@ -852,7 +853,7 @@ test('连板天梯：15:00 前只渲染临时数据，不入库', async () => {
     // 盘中同样带涨跌幅与价格：这两格跟的是实时行情
     await expect(
       ladder.getByTestId('stock-ladder-broken-chip').getByTestId('stock-ladder-chip-pct'),
-    ).toHaveText('-3.33%')
+    ).toHaveText('收 -3.33%')
     await expect(
       ladder.getByTestId('stock-ladder-broken-chip').getByTestId('stock-ladder-chip-price'),
     ).toContainText('1450.00')

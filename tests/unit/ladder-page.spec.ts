@@ -407,12 +407,18 @@ describe('renderLadderPage', () => {
     )
     // 涨停行：只有开盘涨跌幅（收盘涨跌幅由「封在板上」本身说明）
     expect(html).toContain('<span class="tag tag-pct">开 +2.50%</span>')
-    // 断板行：开在收前面，绿的是跌
+    // 断板行：开在收前面，绿的是跌；两枚同一对，换行时一起走
     expect(html).toContain('<span class="tag tag-pct is-down">开 -1.20%</span>')
+    expect(html).toContain('<span class="tag tag-pct is-down">收 -3.33%</span>')
     const openAt = html.indexOf('开 -1.20%')
-    const closeAt = html.indexOf('-3.33%')
+    const closeAt = html.indexOf('收 -3.33%')
     expect(openAt).toBeGreaterThan(-1)
     expect(openAt).toBeLessThan(closeAt)
+    // 一对涨跌幅包在同一个 tag-pair 里：换行拆不开
+    expect(html).toContain(
+      '<span class="tag-pair"><span class="tag tag-pct is-down">开 -1.20%</span>' +
+        '<span class="tag tag-pct is-down">收 -3.33%</span></span>',
+    )
   })
 
   it('mixes hex channels deterministically', () => {

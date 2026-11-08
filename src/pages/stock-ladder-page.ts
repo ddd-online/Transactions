@@ -135,6 +135,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .card-tags{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:7px}
 .board{min-width:0;overflow:hidden;font-size:11px;color:var(--board-ink);text-overflow:ellipsis;white-space:nowrap;letter-spacing:0.01em}
 .tag{flex:none;padding:0 5px;border-radius:6px;background:var(--chip);font-size:11px;line-height:16px;white-space:nowrap}
+.tag-pair{display:inline-flex;align-items:center;gap:6px}
 .tag-word{color:var(--tag-up-ink);font-weight:500}
 .tag-hot{color:var(--tag-hot-ink)}
 .tag-off{color:var(--card-sub)}
@@ -229,27 +230,31 @@ function boardsHtml(ladder: StockLimitLadder, slots: Map<string, number>): strin
 }
 
 function tagsOf(entry: StockLimitEntry | StockLimitBrokenEntry, broken: boolean): string {
-  const tags: string[] = []
-  if (!broken && isOneWordBoard(entry)) tags.push('<span class="tag tag-word">一字</span>')
+  const identity: string[] = []
+  if (!broken && isOneWordBoard(entry)) identity.push('<span class="tag tag-word">一字</span>')
   if (!broken && entry.brokenCount > 0) {
-    tags.push(`<span class="tag tag-hot">炸 ${entry.brokenCount}</span>`)
+    identity.push(`<span class="tag tag-hot">炸 ${entry.brokenCount}</span>`)
   }
-  if (broken) tags.push('<span class="tag tag-off">断</span>')
-  // 开盘涨跌幅：按时间先后排在收盘涨跌幅前（09:30 竞价开盘 → 收盘）。
+  if (broken) identity.push('<span class="tag tag-off">断</span>')
+
+  // 开盘与收盘是同一段时间的两端：各自带「开 / 收」，换行时整对一起走。
+  const pcts: string[] = []
   if (typeof entry.openPct === 'number') {
     const tone = entry.openPct > 0 ? '' : entry.openPct < 0 ? ' is-down' : ' is-flat'
-    tags.push(`<span class="tag tag-pct${tone}">开 ${percentText(entry.openPct)}</span>`)
+    pcts.push(`<span class="tag tag-pct${tone}">开 ${percentText(entry.openPct)}</span>`)
   }
   if (broken) {
     const todayPct = (entry as StockLimitBrokenEntry).todayPct
     if (typeof todayPct === 'number') {
       const tone = todayPct > 0 ? '' : todayPct < 0 ? ' is-down' : ' is-flat'
-      tags.push(
-        `<span class="tag tag-pct${tone}">${percentText(todayPct)}</span>`,
-      )
+      pcts.push(`<span class="tag tag-pct${tone}">收 ${percentText(todayPct)}</span>`)
     }
   }
-  return tags.join('')
+
+  return (
+    identity.join('') +
+    (pcts.length > 0 ? `<span class="tag-pair">${pcts.join('')}</span>` : '')
+  )
 }
 
 function priceOf(entry: StockLimitEntry | StockLimitBrokenEntry, broken: boolean): string {

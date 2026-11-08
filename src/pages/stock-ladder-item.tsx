@@ -26,9 +26,17 @@ export interface StockLadderItemProps {
   intraday?: boolean
 }
 
+/** 标签：身份（一字 / 炸 / 断）与涨跌幅两类，样式与位置都不同。 */
+interface LadderTag {
+  key: string
+  text: string
+  tone: string
+  testId?: string
+}
+
 /**
  * 连板天梯的一行：名称与价格在左、代码与封板时间在右；
- * 第二行是板块 + 标签（一字 / 炸 N / 断 / 开盘涨跌幅 / 断板当天的收盘涨跌幅），有才显示。
+ * 第二行是板块 + 标签（一字 / 炸 N / 断，然后是开盘与收盘两枚涨跌幅），有才显示。
  * 板块名带身份色（同一板块同一色），行也是按板块聚在一起的。
  *
  * 价格：涨停池里的条目本来就是抓取那一刻的价（收盘后即收盘价）；
@@ -52,32 +60,58 @@ export function StockLadderItem({
   const priceText = typeof priceMilli === 'number' && priceMilli > 0 ? milliToYuan(priceMilli) : ''
   const board = boardOf(entry)
 
-  const tags: Array<{ key: string; text: string; tone: string }> = []
-  if (oneWord) tags.push({ key: 'word', text: '一字', tone: 'word' })
-  if (!broken && entry.brokenCount > 0) {
-    tags.push({ key: 'broken', text: `炸 ${entry.brokenCount}`, tone: 'broken' })
+  const identity: LadderTag[] = []
+  if (oneWord) {
+    identity.push({ key: 'word', text: '一字', tone: 'word', testId: 'stock-ladder-chip-word' })
   }
-  if (broken) tags.push({ key: 'off', text: '断', tone: 'off' })
-  // 开盘涨跌幅排在收盘涨跌幅前：同一行按时间先后读（09:30 竞价开盘 → 收盘）。
+  if (!broken && entry.brokenCount > 0) {
+    identity.push({ key: 'broken', text: `炸 ${entry.brokenCount}`, tone: 'broken' })
+  }
+  if (broken) identity.push({ key: 'off', text: '断', tone: 'off' })
+
+  // 开盘与收盘是同一段时间的两端：带上「开 / 收」才分得清是哪一端，
+  // 换行时也整对一起走，不拆到两条线上。
+  const pcts: LadderTag[] = []
   if (typeof openPct === 'number') {
-    tags.push({ key: 'open', text: `开 ${ladderPctText(openPct)}`, tone: pctTone(openPct) })
+    pcts.push({
+      key: 'open',
+      text: `开 ${ladderPctText(openPct)}`,
+      tone: pctTone(openPct),
+      testId: 'stock-ladder-chip-open',
+    })
   }
   if (broken && typeof todayPct === 'number') {
-    tags.push({ key: 'pct', text: ladderPctText(todayPct), tone: pctTone(todayPct) })
+    pcts.push({
+      key: 'pct',
+      text: `收 ${ladderPctText(todayPct)}`,
+      tone: pctTone(todayPct),
+      testId: 'stock-ladder-chip-pct',
+    })
   }
 
+  // 读屏与提示都按时间顺序讲：先封板、再开盘、最后是收盘（或炸板次数）。
   const detail = [
     `${entry.stockName} ${entry.stockCode}`,
     priceText ? `${priceLabel} ${priceText}` : '',
-    broken
-      ? `昨日首封 ${seal}，今日断板${typeof todayPct === 'number' ? ` ${ladderPctText(todayPct)}` : ''}`
-      : `首封 ${seal}`,
+    broken ? `昨日首封 ${seal}` : `首封 ${seal}`,
     typeof openPct === 'number' ? `开盘 ${ladderPctText(openPct)}` : '',
+    broken ? '今日断板' : '',
+    broken && typeof todayPct === 'number' ? `收盘 ${ladderPctText(todayPct)}` : '',
     !broken && entry.brokenCount > 0 ? `炸板 ${entry.brokenCount} 次` : '',
     board ? `板块 ${board}` : '',
   ]
     .filter(Boolean)
     .join(' · ')
+
+  const tagNode = (tag: LadderTag): JSX.Element => (
+    <span
+      key={tag.key}
+      className={`stock-ladder__tag stock-ladder__tag--${tag.tone}`}
+      data-testid={tag.testId}
+    >
+      {tag.text}
+    </span>
+  )
 
   return (
     <div
@@ -103,26 +137,13 @@ export function StockLadderItem({
           </span>
         </span>
       </div>
-      {board || tags.length > 0 ? (
+      {board || identity.length > 0 || pcts.length > 0 ? (
         <div className="stock-ladder__item-tags">
           {board ? <BoardLabel board={board} testId="stock-ladder-chip-board" /> : null}
-          {tags.map((tag) => (
-            <span
-              key={tag.key}
-              className={`stock-ladder__tag stock-ladder__tag--${tag.tone}`}
-              data-testid={
-                tag.key === 'word'
-                  ? 'stock-ladder-chip-word'
-                  : tag.key === 'open'
-                    ? 'stock-ladder-chip-open'
-                    : tag.key === 'pct'
-                      ? 'stock-ladder-chip-pct'
-                      : undefined
-              }
-            >
-              {tag.text}
-            </span>
-          ))}
+          {identity.map(tagNode)}
+          {pcts.length > 0 ? (
+            <span className="stock-ladder__item-pcts">{pcts.map(tagNode)}</span>
+          ) : null}
         </div>
       ) : null}
     </div>

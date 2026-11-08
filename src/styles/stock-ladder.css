@@ -443,6 +443,14 @@
   gap: 6px;
 }
 
+/* 开盘 / 收盘是同一段时间的两端：换行时整对一起走，不拆到两条线上；
+ * 两枚之间的间距与标签行一致。 */
+.stock-ladder__item-pcts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* 板块名：行按板块聚在一起，这一格就是那一组的抬头。
  * 身份色（与账本同一组 8 个自然色）按板块名哈希取一个，同一板块永远同色；
  * 70% 身份色 + 30% 墨色：浅色下压暗到小字也够对比度，深色下自动提亮。 */
@@ -499,6 +507,8 @@
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-small);
   line-height: 16px;
+  /* 标签是自己断行的单位：`开 +3.33%` 不许在「开」和数字之间折开。 */
+  white-space: nowrap;
 }
 
 /* 一字板：红色小标（红 = 涨停方向），10% 底色 + 语义文字。 */
