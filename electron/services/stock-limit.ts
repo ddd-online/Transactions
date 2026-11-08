@@ -11,7 +11,9 @@
  * * 前一交易日也缓存（它已经是确定数据），天梯的断板与晋级率都靠它。
  *
  * 断板不在涨停池里，它当天的涨跌幅只能问行情：只有行情自己的交易日与天梯日期相同才采信，
- * 行情失败一律当"没有"（断板照常显示，只是少一枚涨跌幅标签）。
+ * 行情失败一律当"没有"（断板照常显示，只是少一枚涨跌幅标签）。行情只给"最新一笔"，
+ * 过了那个交易日就问不到了 —— 所以**收盘定稿**那一刻把补到的断板行情写进
+ * `stock_limit_broken_quote`，之后翻历史直接读库；没写下的日期就是没有，不拿别的交易日顶替。
  *
  * 数据源覆盖最近约一个月：更早且本地没缓存的日期返回 `unavailable`，
  * 不写空标记（免得数据源将来补了历史也永远读不到）。
@@ -27,8 +29,11 @@ import type { StockQuoteDto } from '../../shared/types/stock-position'
 import type { Db } from '../db/driver'
 import {
   getLimitDay,
+  listBrokenQuotes,
   listLimitEntries,
+  saveBrokenQuotes,
   saveLimitDay,
+  type BrokenQuote,
   type StockLimitDayRow,
 } from '../db/dao/stock-limit'
 import type { LimitPoolSource } from './stock-limit-pool'
@@ -207,40 +212,81 @@ async function finish(
  *
  * 价格与涨跌幅同源：盘中取到的是当时价，收盘后就是收盘价；没有当天行情就都不补。
  * 行情是外部临时数据，任何失败都当"没有"：断板条目照常显示，只是少这两格。
+ *
+ * 行情走过那个交易日就问不到了，所以**定稿的那一天**（`temporary` 为假）把补到的写进
+ * `stock_limit_broken_quote`：之后再看这一天（哪怕翻回几个月前）直接读库，不再问行情。
+ * 盘中不写 —— 那一刻的价格还会变；没在这一天收盘后打开过应用，这一天就永远没有这两格，
+ * 也不拿前后交易日的行情顶替（宁可少一枚标签，也不给一段假的涨跌）。
  */
 async function attachBrokenQuotes(
+  db: Db,
   ladder: StockLimitLadder,
   quotes: StockQuoteFetcher | undefined,
   today: string,
+  now: number,
 ): Promise<StockLimitLadder> {
-  if (!quotes) return ladder
-  const age = daysBetween(ladder.date, today)
-  if (age === null || age > BROKEN_QUOTE_DAYS) return ladder
-
   const codes = [
     ...new Set(ladder.rungs.flatMap((rung) => rung.broken.map((entry) => entry.stockCode))),
   ]
   if (codes.length === 0) return ladder
 
-  let fetched: Map<string, StockQuoteDto>
-  try {
-    fetched = await quotes.fetchQuotes(codes)
-  } catch {
-    return ladder
+  // 库里存过的就是那一天收盘后的定稿：先读它，缺了的才去问行情。
+  const stored = listBrokenQuotes(db, ladder.date)
+  const values = new Map<string, BrokenQuote>()
+  for (const code of codes) {
+    const hit = stored.get(code)
+    if (hit) values.set(code, hit)
   }
 
+  const missing = codes.filter((code) => !values.has(code))
+  if (missing.length === 0) return applyBrokenQuotes(ladder, values)
+
+  const age = daysBetween(ladder.date, today)
+  if (!quotes || age === null || age > BROKEN_QUOTE_DAYS) {
+    return applyBrokenQuotes(ladder, values)
+  }
+
+  let fetched: Map<string, StockQuoteDto>
+  try {
+    fetched = await quotes.fetchQuotes(missing)
+  } catch {
+    return applyBrokenQuotes(ladder, values)
+  }
+
+  const persist = new Map<string, BrokenQuote>()
+  for (const code of missing) {
+    const quote = fetched.get(code)
+    if (!quote || quote.quoteDate !== ladder.date) continue
+    const value: BrokenQuote = {
+      pct: quoteChangePercent(quote.latestPrice, quote.prevClose),
+      priceMilli: quote.latestPrice,
+    }
+    values.set(code, value)
+    // 盘中数据每分钟都在变，只渲染不落库（与涨停池同一条纪律）。
+    if (!ladder.temporary) persist.set(code, value)
+  }
+  if (persist.size > 0) saveBrokenQuotes(db, ladder.date, persist, now)
+
+  return applyBrokenQuotes(ladder, values)
+}
+
+/** 把查到的断板行情贴回条目上；没有的那几只保持"没有"，不造数。 */
+function applyBrokenQuotes(
+  ladder: StockLimitLadder,
+  values: ReadonlyMap<string, BrokenQuote>,
+): StockLimitLadder {
+  if (values.size === 0) return ladder
   return {
     ...ladder,
     rungs: ladder.rungs.map((rung) => ({
       ...rung,
       broken: rung.broken.map((entry) => {
-        const quote = fetched.get(entry.stockCode)
-        if (!quote || quote.quoteDate !== ladder.date) return entry
-        const pct = quoteChangePercent(quote.latestPrice, quote.prevClose)
+        const hit = values.get(entry.stockCode)
+        if (!hit) return entry
         return {
           ...entry,
-          todayPrice: quote.latestPrice,
-          ...(pct === null ? {} : { todayPct: pct }),
+          todayPrice: hit.priceMilli,
+          ...(hit.pct === null ? {} : { todayPct: hit.pct }),
         }
       }),
     })),
@@ -294,6 +340,7 @@ export async function getLimitLadder(
       // 有缓存就退回缓存（页面照常可用），没有才把错误抛给界面。
       if (cacheUsable && cached) {
         return attachBrokenQuotes(
+          db,
           await finish(db, source, date, readCached(db, cached, date), {
             now,
             fetchedAt: cached.fetchedAt,
@@ -303,6 +350,7 @@ export async function getLimitLadder(
           }),
           options.quotes,
           today,
+          now,
         )
       }
       throw error
@@ -327,6 +375,7 @@ export async function getLimitLadder(
   }
 
   return attachBrokenQuotes(
+    db,
     await finish(db, source, date, entries, {
       now,
       fetchedAt,
@@ -336,5 +385,6 @@ export async function getLimitLadder(
     }),
     options.quotes,
     today,
+    now,
   )
 }

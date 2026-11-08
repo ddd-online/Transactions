@@ -72,6 +72,58 @@ export function getLimitDay(db: Db, date: string): StockLimitDayRow | null {
   }
 }
 
+/**
+ * 断板当天的行情：涨跌幅（百分数，算不出时 `null`）与价格（厘）。
+ *
+ * 只对**收盘定稿**的日期有值 —— 见 `services/stock-limit` 的落库纪律。
+ */
+export interface BrokenQuote {
+  pct: number | null
+  priceMilli: number
+}
+
+interface BrokenQuoteDbRow {
+  stock_code: string
+  pct: number | null
+  price_milli: number
+}
+
+/** 某天已经存下的断板行情，按代码索引；没有就是空映射。 */
+export function listBrokenQuotes(db: Db, date: string): Map<string, BrokenQuote> {
+  const rows = db
+    .prepare(
+      'SELECT stock_code, pct, price_milli FROM stock_limit_broken_quote WHERE trade_date = ?',
+    )
+    .all(date) as unknown as BrokenQuoteDbRow[]
+  return new Map(
+    rows.map((row) => [row.stock_code, { pct: row.pct, priceMilli: row.price_milli }]),
+  )
+}
+
+/**
+ * 写某天的断板行情（只覆盖同一天的同一只股票，不动别的日期）。
+ *
+ * 用 `INSERT OR REPLACE` 而不是先删后插：一天的断板是"昨日池 − 今日池"算出来的，
+ * 分开几次补（有的股票有行情、有的停牌）时，已经存下的那几行不该被删掉。
+ */
+export function saveBrokenQuotes(
+  db: Db,
+  date: string,
+  quotes: ReadonlyMap<string, BrokenQuote>,
+  fetchedAt: number,
+): void {
+  if (quotes.size === 0) return
+  const insert = db.prepare(
+    'INSERT OR REPLACE INTO stock_limit_broken_quote ' +
+      '(trade_date, stock_code, pct, price_milli, fetched_at) VALUES (?, ?, ?, ?, ?)',
+  )
+  db.transaction(() => {
+    for (const [code, quote] of quotes) {
+      insert.run(date, code, quote.pct, quote.priceMilli, fetchedAt)
+    }
+  })
+}
+
 /** 某天的涨停股，按首次封板时间升序（与天梯层内顺序一致）。 */
 export function listLimitEntries(db: Db, date: string): StockLimitEntry[] {
   const rows = db

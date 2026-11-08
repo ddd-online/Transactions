@@ -362,9 +362,12 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     '600519': { latest: '1550.00', prevClose: '1500.00' },
     '301314': { latest: '49.00', prevClose: '51.00' },
   }
+  // 行情自己的交易日。默认就是天梯这一天；后面会把它拨到下一天，
+  // 模拟"过了这个交易日，行情只肯给最新一笔"。
+  let quoteDay = ymd(today)
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
-    if (respondQuotes(url.pathname, response, quotes, ymd(today))) return
+    if (respondQuotes(url.pathname, response, quotes, quoteDay)) return
     if (url.pathname !== '/getTopicZTPool') {
       response.statusCode = 404
       response.end('{}')
@@ -534,6 +537,16 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       /stock-ladder__tag--down/,
     )
     await expect(brokenKeruisi.getByTestId('stock-ladder-chip-price')).toContainText('49.00')
+    // 断板那两格落库了：这一天收盘定稿时存下的就是这一笔（历史日靠它，不靠行情）
+    const storedDb = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
+    const storedQuotes = storedDb
+      .prepare('SELECT stock_code, pct, price_milli FROM stock_limit_broken_quote ORDER BY stock_code')
+      .all()
+    storedDb.close()
+    expect(storedQuotes).toEqual([
+      { stock_code: '301314', pct: -3.92, price_milli: 49_000 },
+      { stock_code: '600519', pct: 3.33, price_milli: 1_550_000 },
+    ])
     await expect(page.getByTestId('stock-ladder-status')).toContainText('已写入本地')
     const footer = page.getByTestId('stock-ladder-footer')
     await expect(footer).toContainText('50%')
@@ -682,6 +695,15 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     // 刷新会重新抓当天
     await page.getByTestId('stock-ladder-refresh').click()
     await expect.poll(todayRequests).toBe(beforeSwitch + 1)
+
+    // 行情只给"最新一笔"：把它的交易日拨到之后，这一天就再也问不到断板涨跌幅了。
+    // 但收盘定稿时已经落库 —— 翻回这一天，那两格还在（旧实现到这里就只剩「断」）。
+    const nextDay = new Date(today)
+    nextDay.setDate(nextDay.getDate() + 1)
+    quoteDay = ymd(nextDay)
+    await page.getByTestId('stock-ladder-refresh').click()
+    await expect(brokenMoutai.getByTestId('stock-ladder-chip-pct')).toHaveText('+3.33%')
+    await expect(brokenKeruisi.getByTestId('stock-ladder-chip-pct')).toHaveText('-3.92%')
   } finally {
     await app.close()
     server.close()

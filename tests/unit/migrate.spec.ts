@@ -210,6 +210,43 @@ describe('migration runner', () => {
     db.close()
   })
 
+  it('adds the broken-quote table without touching the cached limit pool', () => {
+    const path = join(temporaryDirectory(), 'transactions.db')
+    const db = openDatabase(path)
+    // 上一版（v10）的库：断板当天的涨跌幅还没有地方存
+    migrate(
+      db,
+      path,
+      MIGRATIONS.filter((migration) => migration.version <= 10),
+    )
+    db.prepare(
+      `INSERT INTO stock_limit_pool (trade_date, stock_code, stock_name, level, pct)
+       VALUES ('2026-10-23', '600519', '贵州茅台', 2, 10.01)`,
+    ).run()
+    db.prepare(
+      "INSERT INTO stock_limit_day (trade_date, status, count, fetched_at) VALUES ('2026-10-23', 'ok', 1, 0)",
+    ).run()
+    expect(
+      db
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+        .get('stock_limit_broken_quote'),
+    ).toBeUndefined()
+
+    migrate(db, path)
+
+    expect(schemaVersion(db)).toBe(LATEST)
+    // 已有的涨停池不被这一条迁移动到
+    expect(db.prepare('SELECT COUNT(*) AS n FROM stock_limit_pool').get()).toEqual({ n: 1 })
+    db.prepare(
+      `INSERT INTO stock_limit_broken_quote (trade_date, stock_code, pct, price_milli, fetched_at)
+       VALUES ('2026-10-23', '600519', -3.33, 145000, 0)`,
+    ).run()
+    expect(
+      db.prepare('SELECT pct, price_milli FROM stock_limit_broken_quote').get(),
+    ).toEqual({ pct: -3.33, price_milli: 145_000 })
+    db.close()
+  })
+
   it('adds the pie grouping columns, reading old charts back as line charts', () => {
     const path = join(temporaryDirectory(), 'transactions.db')
     const db = openDatabase(path)

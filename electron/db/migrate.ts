@@ -154,6 +154,23 @@ export const MIGRATIONS: readonly Migration[] = [
       UPDATE key_event SET color = '#C17C33' WHERE UPPER(TRIM(color)) = '#D48838';
     `,
   },
+  {
+    version: 11,
+    name: 'stock_limit_broken_quote',
+    // 断板当天的涨跌幅与价格。断板不在涨停池里，这两个数只能问行情，而行情只给
+    // "最新一笔"——过了那个交易日就问不到了。所以收盘定稿那一刻把补到的写下来，
+    // 之后看历史日直接读这张表；没写下的日期就是没有，不拿前后交易日顶替。
+    sql: `
+      CREATE TABLE IF NOT EXISTS stock_limit_broken_quote (
+        trade_date TEXT NOT NULL,
+        stock_code TEXT NOT NULL,
+        pct REAL,
+        price_milli INTEGER NOT NULL,
+        fetched_at INTEGER NOT NULL,
+        PRIMARY KEY (trade_date, stock_code)
+      );
+    `,
+  },
 ]
 
 function hasMetaTable(db: Db): boolean {
