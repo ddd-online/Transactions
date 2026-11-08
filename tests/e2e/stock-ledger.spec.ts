@@ -202,6 +202,15 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ledger-archive.png'),
     })
 
+    // 窄窗：台账的 4 列收成 2 列，百分比与盈亏比仍各自贴在字段上
+    await app.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.setSize(900, 1000)
+    })
+    await page.waitForTimeout(300)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ledger-narrow.png'),
+    })
+
     // 历史里继续修改文字字段
     await page.getByTestId('stock-ledger-edit').click()
     await page.getByTestId('stock-ledger-summary').fill('清仓后回看：执行到位')

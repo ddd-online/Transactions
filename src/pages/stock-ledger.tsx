@@ -72,7 +72,7 @@ function DeltaSuffix({ text, id }: { text: string | null; id: string }): JSX.Ele
 
 /**
  * 算不出盈亏比时那句话：三种原因各说各的下一步，不拿「填好后自动计算」盖住已经填过的框。
- * 保本 / 移动止损是最常见的 `blocked` —— 止损就在成本上或成本之上，没有可亏的空间。
+ * 保本 / 移动止损是最常见的 `blocked` —— 止损就在买入价上或之上，没有可亏的空间。
  */
 const RATIO_PROMPTS = {
   missing: '填好止损和止盈后自动计算',
