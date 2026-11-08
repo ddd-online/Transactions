@@ -5,12 +5,11 @@ import type {
   TodoHistoryDto,
   TodoItemDto,
 } from '../../shared/types/todo'
-import { Input, Modal, Popconfirm, Select } from 'antd'
+import { Input, Modal, Popconfirm } from 'antd'
 
-import { TODO_LEVELS, TODO_LEVEL_LABELS, todoLevelLabel } from '../../shared/domain/consts'
+import { TODO_LEVELS, todoLevelLabel } from '../../shared/domain/consts'
 import { todoDueState } from '../../shared/domain/todo-due'
 import { Button } from '../components/button'
-import { DatePicker } from '../components/date-picker'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
@@ -18,6 +17,7 @@ import { ScrollArea } from '../components/scroll-area'
 import { Segmented } from '../components/segmented'
 import { TodoQuadrant } from '../components/todo-quadrant'
 import { doneCountOf, formatItemDates, formatMoment } from './todo-format'
+import { TodoItemEditor } from './todo-item-editor'
 import { TodoProgressPanel } from './todo-progress'
 
 function errorMessage(error: unknown): string {
@@ -27,11 +27,6 @@ function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   return String(error)
 }
-
-const LEVEL_OPTIONS = TODO_LEVELS.map((value, index) => ({
-  value,
-  label: TODO_LEVEL_LABELS[index],
-}))
 
 export interface TodoPageProps {
   ledgerId: string
@@ -143,6 +138,31 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     setItemEditingId('')
     setItemError('')
   }, [])
+
+  const changeItemTitle = (value: string): void => {
+    setItemDraft(value)
+    setItemError('')
+  }
+
+  const changeItemStart = (value: string): void => {
+    setItemStart(value)
+    setItemError('')
+  }
+
+  const changeItemDue = (value: string): void => {
+    setItemDue(value)
+    setItemError('')
+  }
+
+  const changeItemUrgency = (value: number): void => {
+    setItemUrgency(value)
+    setItemError('')
+  }
+
+  const changeItemImportance = (value: number): void => {
+    setItemImportance(value)
+    setItemError('')
+  }
 
   const createItem = useCallback(async (): Promise<void> => {
     const title = itemDraft.trim()
@@ -860,116 +880,25 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         </div>
       </Modal>
 
-      <Modal
+      <TodoItemEditor
         open={itemOpen}
-        title={itemEditingId ? '编辑事项' : '添加事项'}
-        width={520}
-        centered
-        destroyOnHidden
-        footer={null}
+        editing={itemEditingId !== ''}
+        title={itemDraft}
+        start={itemStart}
+        due={itemDue}
+        urgency={itemUrgency}
+        importance={itemImportance}
+        error={itemError}
+        busy={busy}
+        saveDisabled={!ledgerId}
+        onTitleChange={changeItemTitle}
+        onStartChange={changeItemStart}
+        onDueChange={changeItemDue}
+        onUrgencyChange={changeItemUrgency}
+        onImportanceChange={changeItemImportance}
         onCancel={closeItemModal}
-      >
-        <div className="tr-modal-form todo-item-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">事项</span>
-            <Input
-              aria-label="事项"
-              autoFocus
-              data-testid="todo-item-title"
-              maxLength={500}
-              aria-invalid={Boolean(itemError)}
-              aria-describedby={itemError ? 'todo-item-error' : undefined}
-              placeholder="例如：写周报"
-              value={itemDraft}
-              onChange={(event) => {
-                setItemDraft(event.target.value)
-                setItemError('')
-              }}
-              onPressEnter={() => void createItem()}
-            />
-          </div>
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">开始时间</span>
-              <DatePicker
-                testId="todo-item-start"
-                ariaLabel="开始时间"
-                allowClear
-                value={itemStart}
-                onChange={(value) => {
-                  setItemStart(value)
-                  setItemError('')
-                }}
-              />
-            </div>
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">截止时间</span>
-              <DatePicker
-                testId="todo-item-due"
-                ariaLabel="截止时间"
-                allowClear
-                value={itemDue}
-                onChange={(value) => {
-                  setItemDue(value)
-                  setItemError('')
-                }}
-              />
-            </div>
-          </div>
-          <div className="tr-modal-row">
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">紧急度</span>
-              <Select
-                data-testid="todo-item-urgency"
-                aria-label="紧急度"
-                value={itemUrgency}
-                options={LEVEL_OPTIONS}
-                onChange={(value) => {
-                  setItemUrgency(value)
-                  setItemError('')
-                }}
-              />
-            </div>
-            <div className="tr-modal-field">
-              <span className="tr-modal-label">重要度</span>
-              <Select
-                data-testid="todo-item-importance"
-                aria-label="重要度"
-                value={itemImportance}
-                options={LEVEL_OPTIONS}
-                onChange={(value) => {
-                  setItemImportance(value)
-                  setItemError('')
-                }}
-              />
-            </div>
-          </div>
-          {itemError ? (
-            <p
-              role="alert"
-              id="todo-item-error"
-              className="todo-modal__error"
-              data-testid="todo-item-error"
-            >
-              {itemError}
-            </p>
-          ) : null}
-          <div className="todo-modal__actions">
-            <Button variant="secondary" testId="todo-item-cancel" onClick={closeItemModal}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="todo-item-create"
-              loading={busy}
-              disabled={!ledgerId}
-              onClick={() => void createItem()}
-            >
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onSubmit={() => void createItem()}
+      />
 
       <Modal
         open={historyProgress !== null}
