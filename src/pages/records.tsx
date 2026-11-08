@@ -16,16 +16,7 @@ import type { TagDto } from '../../shared/types/category'
 import type { TransactionTemplateDto } from '../../shared/types/template'
 import { errorMessage } from '../../shared/errors'
 import { notify } from '../components/toast'
-import {
-  Dropdown,
-  Input,
-  Modal,
-  Popconfirm,
-  Select,
-  Table,
-  type MenuProps,
-  type TableProps,
-} from 'antd'
+import { Input, Modal, Select, Table, type TableProps } from 'antd'
 
 import { Button } from '../components/button'
 import { Pagination } from '../components/pagination'
@@ -34,9 +25,9 @@ import { Segmented } from '../components/segmented'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { TimeRangePicker } from '../components/time-range-picker'
-import { Tooltip } from '../components/tooltip'
 import { useSessionTimeRange } from '../state/time-range-session'
 import { RecordComposer } from './record-composer'
+import { RecordRowActions } from './records-row-actions'
 import {
   type ComposerRequest,
   allTagOptions,
@@ -371,16 +362,6 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
-  const syncMenuFor = (record: TransactionRecordDto): MenuProps => ({
-    items:
-      otherLedgers.length > 0
-        ? otherLedgers.map((ledger) => ({ key: ledger.id, label: ledger.name }))
-        : [{ key: '__none__', label: '无可用账本', disabled: true }],
-    onClick: ({ key }) => {
-      if (key !== '__none__') void syncRecord(record, key)
-    },
-  })
-
   const columns: TableProps<TransactionRecordDto>['columns'] = [
     {
       title: '日期',
@@ -470,62 +451,16 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
       title: '操作',
       width: 130,
       align: 'center',
-      render: (_, row) => {
-        const syncing = syncingId === row.transactionId
-        return (
-          <div className="tr-cell-actions">
-            <Tooltip text="编辑记录">
-              <button
-                type="button"
-                className="tr-icon-btn"
-                data-testid="tr-edit"
-                aria-label="编辑记录"
-                onClick={() => openEdit(row)}
-              >
-                <Icon name="Edit" size={15} />
-              </button>
-            </Tooltip>
-
-            <Tooltip text="同步到其他账本">
-              <Dropdown
-                trigger={['click']}
-                disabled={syncing}
-                menu={syncMenuFor(row)}
-              >
-                <button
-                  type="button"
-                  className="tr-icon-btn"
-                  data-testid="tr-sync"
-                  aria-label="同步到其他账本"
-                  disabled={syncing}
-                >
-                  <span className={syncing ? 'tr-sync-icon is-spinning' : 'tr-sync-icon'}>
-                    <Icon name="Sync" size={15} />
-                  </span>
-                </button>
-              </Dropdown>
-            </Tooltip>
-
-            <Popconfirm
-              title="删除这条消费记录？"
-              okText="删除"
-              okType="danger"
-              showCancel={false}
-              placement="topRight"
-              onConfirm={() => void remove(row.transactionId)}
-            >
-              <button
-                type="button"
-                className="tr-icon-btn is-danger"
-                data-testid="tr-delete"
-                aria-label="删除记录"
-              >
-                <Icon name="Trash" size={15} />
-              </button>
-            </Popconfirm>
-          </div>
-        )
-      },
+      render: (_, row) => (
+        <RecordRowActions
+          record={row}
+          syncing={syncingId === row.transactionId}
+          otherLedgers={otherLedgers}
+          onEdit={openEdit}
+          onSync={syncRecord}
+          onRemove={remove}
+        />
+      ),
     },
   ]
 
