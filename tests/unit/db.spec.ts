@@ -1,11 +1,18 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { closeWorkspace, currentWorkspace, hasWorkspace, openWorkspace } from '../../electron/db'
-import { openDatabase } from '../../electron/db/driver'
+import { openDatabase, probeDatabase } from '../../electron/db/driver'
 import { MIGRATIONS } from '../../electron/db/migrate'
 import { AppError } from '../../shared/errors'
 
@@ -82,6 +89,24 @@ describe('workspace database', () => {
     expect((caught as AppError).message).toContain('旧版工作空间')
   })
 
+  it('rejects a database without app_meta as not a workspace', () => {
+    const directory = temporaryDirectory()
+    const source = openDatabase(join(directory, 'transactions.db'))
+    source.exec('CREATE TABLE something_else (id TEXT)')
+    source.close()
+
+    let caught: unknown = null
+    try {
+      openWorkspace(directory)
+    } catch (error) {
+      caught = error
+    }
+    // 快速检查能过、但不是工作空间：这条既有语义要排在快速检查之后、迁移之前
+    expect(caught).toBeInstanceOf(AppError)
+    expect((caught as AppError).status).toBe(409)
+    expect((caught as AppError).message).toContain('不是 Transactions 工作空间')
+  })
+
   it('rejects an existing database with an unknown app_meta version', () => {
     const directory = temporaryDirectory()
     const database = openDatabase(join(directory, 'transactions.db'))
@@ -103,6 +128,145 @@ describe('workspace database', () => {
     openWorkspace(second)
     expect(currentWorkspace()?.directory).toBe(second)
     closeWorkspace()
+    expect(hasWorkspace()).toBe(false)
+  })
+})
+
+describe('corrupt workspace database', () => {
+  /** 把一个刚建好的库的文件头写坏：SQLite 之后任何一句都会报 "file is not a database"。 */
+  function corruptHeader(directory: string): { path: string; size: number } {
+    openWorkspace(directory)
+    closeWorkspace()
+    const path = join(directory, 'transactions.db')
+    const size = statSync(path).size
+    const bytes = readFileSync(path)
+    bytes.write('not a database!!', 0, 'ascii')
+    writeFileSync(path, bytes)
+    return { path, size }
+  }
+
+  it('reports the file and points at the restore entry', () => {
+    const directory = temporaryDirectory()
+    const { path } = corruptHeader(directory)
+
+    let caught: unknown = null
+    try {
+      openWorkspace(directory)
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(AppError)
+    const error = caught as AppError
+    expect(error.message).toContain('已损坏')
+    expect(error.message).toContain(path)
+    expect(error.message).toContain('从备份恢复')
+    expect(hasWorkspace()).toBe(false)
+  })
+
+  it('leaves the broken file alone instead of silently creating an empty database', () => {
+    const directory = temporaryDirectory()
+    const { path, size } = corruptHeader(directory)
+
+    expect(() => openWorkspace(directory)).toThrow(AppError)
+
+    expect(existsSync(path)).toBe(true)
+    expect(statSync(path).size).toBe(size)
+  })
+
+  it('refuses a missing directory when mustExist is set and does not create it', () => {
+    const missing = join(temporaryDirectory(), '已经删除的工作空间')
+
+    let caught: unknown = null
+    try {
+      openWorkspace(missing, { mustExist: true })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(AppError)
+    expect((caught as AppError).message).toContain('已经不存在')
+    expect((caught as AppError).status).toBe(400)
+    expect(existsSync(missing)).toBe(false)
+  })
+
+  /**
+   * 只破坏一页：文件头完好、`sqlite_master` 也读得到，`PRAGMA quick_check` 才报
+   * "database disk image is malformed"。文件头烂掉的那一种由 `corruptHeader` 覆盖。
+   */
+  function corruptPage(directory: string): string {
+    const workspace = openWorkspace(directory)
+    workspace.db.exec('CREATE TABLE page_payload (id INTEGER PRIMARY KEY, body BLOB)')
+    workspace.db.exec('INSERT INTO page_payload VALUES (1, zeroblob(4000))')
+    const row = workspace.db
+      .prepare("SELECT rootpage FROM sqlite_master WHERE name = 'page_payload'")
+      .get() as { rootpage: number }
+    closeWorkspace()
+
+    const path = join(directory, 'transactions.db')
+    const bytes = readFileSync(path)
+    const pageSize = bytes.readUInt16BE(16) || 4096
+    // b-tree 页头第一个字节是页类型；清零后整页解析不了，但别的页（含 sqlite_master）不受影响
+    bytes[(row.rootpage - 1) * pageSize] = 0
+    writeFileSync(path, bytes)
+    return path
+  }
+
+  it('reports a page-level corruption the same way instead of letting SQLite speak', () => {
+    const directory = temporaryDirectory()
+    const path = corruptPage(directory)
+
+    // 前提：能打开、sqlite_master 可读、快速检查报错 —— 坏的是页，不是文件头
+    const probe = probeDatabase(path)
+    expect(probe.opened).toBe(true)
+    expect(probe.hasAppMeta).toBe(true)
+    expect(probe.quickCheck).not.toBe('ok')
+    // 全量检查同样抓得住（restore 的候选校验走这一条）
+    const deep = probeDatabase(path, { deep: true })
+    expect(deep.opened).toBe(true)
+    expect(deep.quickCheck).not.toBe('ok')
+
+    let caught: unknown = null
+    try {
+      openWorkspace(directory)
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(AppError)
+    expect((caught as AppError).message).toContain('已损坏')
+    expect((caught as AppError).message).toContain(path)
+    expect((caught as AppError).message).toContain('从备份恢复')
+    expect(hasWorkspace()).toBe(false)
+  })
+
+  /** 破坏第 1 页的 b-tree 页头（文件头之后 100 字节）：能打开，但 sqlite_master 本身读不了。 */
+  function corruptSchemaPage(directory: string): string {
+    openWorkspace(directory)
+    closeWorkspace()
+    const path = join(directory, 'transactions.db')
+    const bytes = readFileSync(path)
+    bytes[100] = 0
+    writeFileSync(path, bytes)
+    return path
+  }
+
+  it('never lets the raw SQLite error escape when sqlite_master itself is unreadable', () => {
+    const directory = temporaryDirectory()
+    const path = corruptSchemaPage(directory)
+
+    let caught: unknown = null
+    try {
+      openWorkspace(directory)
+    } catch (error) {
+      caught = error
+    }
+
+    // 旧顺序让 tableExists() 的 SQLite 原文直接冒到界面；这里必须是「坏了，去恢复」
+    expect(caught).toBeInstanceOf(AppError)
+    expect((caught as AppError).message).toContain('已损坏')
+    expect((caught as AppError).message).toContain(path)
+    expect((caught as AppError).message).toContain('从备份恢复')
     expect(hasWorkspace()).toBe(false)
   })
 })

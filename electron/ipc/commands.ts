@@ -5,16 +5,19 @@ import { join } from 'node:path'
 import { app, clipboard, dialog, session, shell } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
-import { AppError, workspaceNotOpened } from '../../shared/errors'
+import { AppError, errorMessage, workspaceNotOpened } from '../../shared/errors'
 import { CLOSE_BEHAVIORS, type CloseBehavior } from '../../shared/domain/consts'
 import { DEVTOOLS_STATE_CHANGED, WORKSPACE_CHANGED } from '../../shared/events'
+import { addRecentWorkspace, resolveBackupDir } from '../../shared/domain/backup'
 import type { ConfigStore } from '../config'
 import type { FeatureFlags, ProxySetting } from '../../shared/types/config'
-import { currentWorkspace, openWorkspace } from '../db'
+import { closeWorkspace, currentWorkspace, openWorkspace } from '../db'
 import type { Db } from '../db/driver'
+import { MIGRATIONS } from '../db/migrate'
 import { logInfo, logWarn } from '../logging'
 import { assetUrl, normalizeAssetRequestPath } from '../shell/asset-path'
 import { exportLadderPage } from '../services/ladder-export'
+import { backupDirProblem, createBackupService } from '../services/backup'
 import { setFeatureIn } from '../services/config'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
@@ -99,7 +102,7 @@ import {
   modifyLedger,
   queryLedgerById,
 } from '../services/ledger'
-import { openDirectory } from '../shell/dialogs'
+import { openDirectory, openFile } from '../shell/dialogs'
 import {
   applyAppearance,
   getMainWindow,
@@ -180,7 +183,38 @@ function workspaceDb(): Db {
   return workspace.db
 }
 
+/**
+ * 恢复之后的「重启」。
+ *
+ * `TRANSACTIONS_TEST_RESTART=exit` 时只退出：E2E 自己再起一个进程，避免真的多开。
+ */
+function restartApp(): void {
+  if (process.env.TRANSACTIONS_TEST_RESTART === 'exit') {
+    quitApp()
+    return
+  }
+  app.relaunch()
+  quitApp()
+}
+
+/** 在资源管理器里打开一个目录；`shell.openPath` 用空串表示成功。 */
+async function openDirectoryInShell(directory: string): Promise<void> {
+  const failure = await shell.openPath(directory)
+  if (failure) throw new AppError(failure, { status: 500 })
+}
+
 export function createHandlers(options: HandlerOptions): HandlerMap {
+  const backup = createBackupService({
+    workspace: currentWorkspace,
+    backupDir: () => options.config.backupDir(),
+    autoBackupEnabled: () => options.config.get().autoBackup,
+    supportedSchemaVersion: MIGRATIONS[MIGRATIONS.length - 1].version,
+    closeWorkspace,
+    restart: restartApp,
+    now: () => new Date(),
+    log: logWarn,
+  })
+
   return {
     app_info(request) {
       const field = String(asObject(request).field ?? '')
@@ -230,15 +264,28 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     },
 
     workspace_open(request) {
-      const workspaceDir = String(asObject(request).workspaceDir ?? '').trim()
+      const raw = asObject(request)
+      const workspaceDir = String(raw.workspaceDir ?? '').trim()
       if (!workspaceDir) {
         throw new AppError('工作目录路径不能为空', { status: 400 })
       }
 
-      const workspace = openWorkspace(workspaceDir)
+      const workspace = openWorkspace(workspaceDir, { mustExist: raw.mustExist === true })
       options.config.update((config) => {
         config.workspaceDir = workspace.directory
+        // 最近工作空间：最新的在前、去重、最多 5 条（成功打开时才写）
+        config.recentWorkspaces = addRecentWorkspace(
+          config.recentWorkspaces,
+          workspace.directory,
+        )
       })
+      // 每天第一次打开时的自动备份：失败只记日志，绝不能挡住「打开工作空间」
+      try {
+        const entry = backup.autoBackupIfNeeded()
+        if (entry) logInfo(`自动备份完成: ${entry.name}`)
+      } catch (error) {
+        logWarn(`自动备份失败: ${errorMessage(error)}`)
+      }
       logInfo(`工作空间已打开: ${workspace.directory}`)
       sendEvent(WORKSPACE_CHANGED, workspace.directory)
       return null
@@ -1438,6 +1485,74 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         return ''
       }
       return saveWorkspaceIcon(workspace.directory, data)
+    },
+
+    // 数据安全底座：备份 / 恢复 / 最近工作空间（设置 → 数据）。
+    // 纯逻辑在 shared/domain/backup，磁盘动作在 services/backup（不 import electron）。
+    backup_create() {
+      return backup.createManual()
+    },
+
+    backup_list() {
+      return backup.list()
+    },
+
+    backup_restore(request) {
+      return backup.restore(String(asObject(request).path ?? ''))
+    },
+
+    async workspace_open_dir(request) {
+      const target = String(asObject(request).target ?? '')
+      if (target === 'workspace') {
+        const workspace = currentWorkspace()
+        if (!workspace) throw workspaceNotOpened()
+        await openDirectoryInShell(workspace.directory)
+        return null
+      }
+      if (target === 'backup') {
+        const directory = options.config.backupDir()
+        // 「打开备份目录」在还没备份过时也要能点开：先建出来
+        mkdirSync(directory, { recursive: true })
+        await openDirectoryInShell(directory)
+        return null
+      }
+      throw new AppError(`未知的目录目标: ${target}`, { status: 400 })
+    },
+
+    backup_dir_set(request) {
+      const requested = String(asObject(request).dir ?? '').trim()
+      const resolved = resolveBackupDir(requested, options.config.documentsDir)
+      const workspace = currentWorkspace()
+      if (workspace) {
+        // 不合格时既不写配置也不建目录：设置里能存下的位置，备份时就必须能写
+        const problem = backupDirProblem(resolved, workspace.directory)
+        if (problem) throw new AppError(problem, { status: 400 })
+      }
+      // 先建目录再写配置：目录建不出来时配置不能已经指向一个用不了的位置
+      mkdirSync(resolved, { recursive: true })
+      options.config.update((config) => {
+        config.backupDir = requested
+      })
+      return options.config.snapshot()
+    },
+
+    config_set_auto_backup(request) {
+      const enabled = asObject(request).enabled === true
+      options.config.update((config) => {
+        config.autoBackup = enabled
+      })
+      return options.config.snapshot()
+    },
+
+    dialog_open_file(request) {
+      const raw = asObject(request)
+      return openFile({
+        title: typeof raw.title === 'string' ? raw.title : undefined,
+        defaultPath: typeof raw.defaultPath === 'string' ? raw.defaultPath : undefined,
+        extensions: Array.isArray(raw.extensions)
+          ? raw.extensions.map((extension) => String(extension))
+          : undefined,
+      })
     },
 
     async proxy_resolve(request) {

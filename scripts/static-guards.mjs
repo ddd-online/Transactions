@@ -152,6 +152,55 @@ check('设计令牌没有悬空引用', () => {
   return `${defined.size} 个令牌，0 处悬空`
 })
 
+check('数据分栏与备份配置字段', () => {
+  // 「数据」分栏是备份 / 恢复唯一的入口：分栏数与顺序一旦漂移，用户就找不到那条路。
+  // 配置三项必须在读取归一化与写回序列化两侧都出现，否则升级后旧配置文件写回时会丢字段。
+  const BACKUP_FIELDS = ['backupDir', 'autoBackup', 'recentWorkspaces']
+  const EXPECTED_TABS = ['general', 'features', 'data', 'diary', 'about']
+
+  const settings = read('src/pages/settings.tsx')
+  const tabsBlock = /const TABS[^=]*=\s*\[([\s\S]*?)\n\]/.exec(settings)
+  assert(tabsBlock, '找不到 src/pages/settings.tsx 里的 TABS 字面量')
+  const tabs = [...tabsBlock[1].matchAll(/\['([a-z]+)',\s*'/g)].map((match) => match[1])
+  assert(tabs.length === 5, `TABS 应为 5 项，实际 ${tabs.length} 项：${tabs.join(',')}`)
+  assert(
+    tabs.join(',') === EXPECTED_TABS.join(','),
+    `TABS 顺序应为 ${EXPECTED_TABS.join(',')}，实际 ${tabs.join(',')}`,
+  )
+
+  const configTypes = read('shared/types/config.ts')
+  // 读取归一化看 AppConfig、写回序列化看 ConfigSnapshot：两个接口都要有，缺一个升级后就丢字段
+  for (const interfaceName of ['AppConfig', 'ConfigSnapshot']) {
+    const body = new RegExp(
+      `export interface ${interfaceName} \\{([\\s\\S]*?)\\n\\}`,
+    ).exec(configTypes)
+    assert(body, `找不到 shared/types/config.ts 的 ${interfaceName} 接口`)
+    for (const field of BACKUP_FIELDS) {
+      assert(
+        new RegExp(`^\\s*${field}\\??:`, 'm').test(body[1]),
+        `${interfaceName} 缺少 ${field} 字段`,
+      )
+    }
+  }
+
+  const configSource = read('electron/config.ts')
+  for (const functionName of ['normalizeConfig', 'serializeConfig']) {
+    const body = new RegExp(
+      `function ${functionName}\\([^)]*\\)[^{]*\\{([\\s\\S]*?)\\n\\}`,
+    ).exec(configSource)
+    assert(body, `找不到 electron/config.ts 的 ${functionName} 函数体`)
+    for (const field of BACKUP_FIELDS) {
+      // 必须是 `字段:` 这种真赋值形状：`body.includes(field)` 会被注释里提一句蒙过去
+      assert(
+        new RegExp(`^\\s*${field}\\s*:`, 'm').test(body[1]),
+        `${functionName} 的函数体缺少 ${field} 赋值（读取归一化与写回序列化两侧都要有，注释里提一句不算）`,
+      )
+    }
+  }
+
+  return `5 个分栏（${tabs.join(',')}）+ ${BACKUP_FIELDS.length} 个配置字段两侧齐全`
+})
+
 for (const message of passes) {
   console.log(`  ✓ ${message}`)
 }

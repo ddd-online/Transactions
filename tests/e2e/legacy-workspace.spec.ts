@@ -76,10 +76,15 @@ test('旧版工作空间：打开被拒绝，设置里不再有数据导入', as
     await expect(page.getByTestId('workspace-error')).toContainText('旧版工作空间')
     await expect(page.getByTestId('workspace-error')).toContainText('不再支持打开')
 
-    // 没有工作空间也要进得了设置（代理 / 检查更新是应用级的）；但导入分栏已经没了
+    // 没有工作空间也要进得了设置（代理 / 检查更新是应用级的）；数据分栏在，
+    // 但只有备份与恢复，没有任何导入入口
     await page.getByTestId('open-app-settings').click()
     await expect(page.getByTestId('settings-tab-general')).toBeVisible()
-    await expect(page.getByTestId('settings-tab-data')).toHaveCount(0)
+    await page.getByTestId('settings-tab-data').click()
+    await expect(page.getByTestId('settings-tab-data')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByTestId('backup-now')).toBeVisible()
+    await expect(page.getByRole('button', { name: /导入/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /导入/ })).toHaveCount(0)
     await expect(page.getByTestId('workspace-state')).toContainText('未打开工作空间')
   } finally {
     await electronApp.close()

@@ -12,7 +12,7 @@ import {
   WORKSPACE_CHANGED,
 } from '../shared/events'
 import type { UpdateSnapshot } from '../shared/domain/update'
-import { errorMessage } from '../shared/errors'
+import { errorMessage, isWorkspaceNotOpenedError } from '../shared/errors'
 /* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
  * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
  * antd，图表页与日记页各自带着自己的那份（详见 DESIGN.md「Performance」）。 */
@@ -140,7 +140,9 @@ export function App(): JSX.Element {
       const rows = await window.api.invoke('ledger_list', { id: 'all' })
       setLedgers(rows)
     } catch (listError) {
-      setError(errorMessage(listError))
+      // 工作空间打不开时这条查询必然回「未打开工作空间」：它不是账本列表坏了，
+      // 不能盖住上一个错误里那句真正可操作的话（数据库已损坏…请从备份恢复）。
+      if (!isWorkspaceNotOpenedError(listError)) setError(errorMessage(listError))
     }
   }, [workspace])
 
@@ -244,6 +246,8 @@ export function App(): JSX.Element {
       if (!picked.canceled && picked.filePaths[0]) {
         await window.api.invoke('workspace_open', { workspaceDir: picked.filePaths[0] })
         await refreshWorkspace()
+        // 最近工作空间跟着变了：设置页的数据分栏读的是配置里那一份。
+        setConfig(await window.api.invoke('config_get'))
       }
     } catch (openError) {
       setError(errorMessage(openError))
@@ -251,6 +255,16 @@ export function App(): JSX.Element {
       setBusy(false)
     }
   }, [refreshWorkspace])
+
+  /** 直接开一个已知目录（最近工作空间）：目录已被删掉就拒绝，不替它建。 */
+  const openWorkspaceAt = useCallback(
+    async (dir: string): Promise<void> => {
+      await window.api.invoke('workspace_open', { workspaceDir: dir, mustExist: true })
+      await refreshWorkspace()
+      setConfig(await window.api.invoke('config_get'))
+    },
+    [refreshWorkspace],
+  )
 
   const createLedger = useCallback(async (): Promise<void> => {
     const name = ledgerName.trim()
@@ -636,6 +650,7 @@ export function App(): JSX.Element {
             updateSnapshot={updateSnapshot}
             onUpdateSnapshot={setUpdateSnapshot}
             onPickWorkspace={openWorkspace}
+            onOpenWorkspace={openWorkspaceAt}
             onConfigChanged={setConfig}
             onWorkspaceIconChanged={setWorkspaceIconUrl}
           />
