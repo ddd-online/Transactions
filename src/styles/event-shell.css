@@ -1,0 +1,160 @@
+/* ============================================
+ * 事件页（`/key_event_view`）
+ * 取值全部走 `--transactions-*` 令牌。
+ * 布局：工具栏（年份）+ 三栏（平铺事件列表 / 平铺详情 / 关联消费记录；
+ * 两侧宽度跟着窗口在 200~280px / 180~280px 之间收放，见 `.key-event-body`）。
+ * 右栏可收起（`is-rail-collapsed`）：栏宽归 0、竖线隐去，中栏吃满；把手一直骑在竖线上。
+ * ============================================ */
+
+/* 这一页是三栏铺满的版心：页面自己不吃内边距，栏间竖线才能通到工具栏底边。 */
+.page-content.key-event-page {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.page-content.key-event-page > .m0-error {
+  margin: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
+.key-event-page .page-header {
+  align-items: center;
+}
+
+.key-event-yearbar {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+}
+
+/* 年份切换是图标按钮，但在页头工具区里与 32px 的年份文字对齐 */
+.key-event-yearbar .ui-icon-btn {
+  --ui-icon-btn-size: 32px;
+}
+
+.key-event-yearbar__value {
+  min-width: 80px;
+  text-align: center;
+  font-size: var(--transactions-size-text-display-sm);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+  line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 三栏 = 同一张纸上的三条轨道：没有卡片底、描边与阴影，行直接铺在画布上。
+ * 左右两条侧轨不填色，栏间只留一条竖直发丝线；行与行之间再用横向发丝线分。
+ * 内边距下放给各栏自己，竖线才能从版心顶贯通到底。 */
+.key-event-body {
+  /* 右轨宽度只有这一个来源：网格第三列与收起把手的落点都用它。
+   * 宽度跟着窗口走（宽屏 280 封顶、窄窗收到 180 下限）：事件这页有三栏，
+   * 两侧写死 280 时窗口一窄，先被挤掉的是中间的详情 —— 正文才是这一页的主角。 */
+  --key-event-rail-w: clamp(180px, 19vw, 280px);
+  /* 收起/展开的时长：网格列宽与把手的位移用同一条，竖直方向的 `visibility` 也按它延迟 */
+  --key-event-rail-dur: 220ms;
+  flex: 1;
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(200px, 20vw, 280px) minmax(0, 1fr) var(--key-event-rail-w);
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+  transition: grid-template-columns var(--key-event-rail-dur)
+    var(--transactions-ease-out-expo);
+}
+
+/* 收起右栏：第三列归 0。中栏自己会把这部分宽度吃掉（`1fr`），
+ * 所以不需要给中栏写任何"展开动画"，宽度只有一个动因。 */
+.key-event-body.is-rail-collapsed {
+  grid-template-columns: clamp(200px, 20vw, 280px) minmax(0, 1fr) 0px;
+}
+
+/* 中间详情栏：不再有卡片内边距，详情自己留 16px（顶部为 0，色条贴工具栏底线） */
+.key-event-panel--center {
+  padding: 0;
+}
+
+.key-event-panel {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 左右两条侧轨之间、以及轨道与中间详情之间：一条贯通的竖线 */
+.key-event-panel--left,
+.key-event-panel--right {
+  min-width: 0;
+}
+
+.key-event-panel--left {
+  border-right: 1px solid var(--transactions-color-divider);
+}
+
+.key-event-panel--right {
+  border-left: 1px solid var(--transactions-color-divider);
+  /* 收起时才切 `visibility`，且**延迟到收起动画结束**：动画期间内容还在（不会先空掉），
+   * 收完才退出无障碍树与键盘序（`visibility: hidden` 的元素不可聚焦、也不被读屏念）。 */
+  transition: border-color var(--key-event-rail-dur) var(--transactions-ease-out-expo),
+    visibility 0s linear 0s;
+}
+
+.key-event-body.is-rail-collapsed .key-event-panel--right {
+  border-left-color: transparent;
+  visibility: hidden;
+  transition: border-color var(--key-event-rail-dur) var(--transactions-ease-out-expo),
+    visibility 0s linear var(--key-event-rail-dur);
+}
+
+/* 收起/展开把手：骑在中栏与右栏的竖线上（半颗在左半颗在右），收起后贴窗口右缘。
+ * 24 × 48 药丸，Paper 面 + 发丝由共用的 `.ui-icon-btn--bordered` 给；**静置不投影**
+ * （与卡片"静置 shadow-sm"不同档，因为它骑在线上、靠形状立住即可），悬停才抬到 `shadow-md`。
+ * 读起来是"这条线上的一个把手"而不是又一张卡。
+ * 24px 宽同时是**点按目标下限**（WCAG 2.5.8 的 24×24）—— 这一栏唯一的开关不该比页面里
+ * 别的控件更难点到。 */
+.key-event-rail-toggle {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--key-event-rail-w) - 12px);
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 24px;
+  height: 48px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--transactions-radius-full);
+  border: 1px solid var(--transactions-color-divider);
+  background-color: var(--transactions-color-major-background);
+  /* 尖角按 body 档（14px）画：药丸只有 24px 宽，caption 档的尖角太小、
+   * 作为"这一栏唯一的开关"不够显眼。 */
+  font-size: var(--transactions-size-text-body);
+  color: var(--transactions-color-icon);
+  transition: right var(--key-event-rail-dur) var(--transactions-ease-out-expo),
+    box-shadow var(--transactions-transition-fast),
+    border-color var(--transactions-transition-fast),
+    background-color var(--transactions-transition-fast);
+}
+
+.key-event-rail-toggle:hover:not(:disabled) {
+  box-shadow: var(--transactions-shadow-md);
+  /* 底**不换**：`.ui-icon-btn--bordered` 的悬停底是半透明的 `--hover-bg`，而这颗药丸正骑在
+   * 右栏的左边线上 —— 半透明的圆会把那条线从里面透出来。反馈交给发丝色与投影。 */
+  background-color: var(--transactions-color-major-background);
+  border-color: var(--transactions-color-border-l2);
+}
+
+/* 这一颗不要按压反馈：它自己靠 `translateY(-50%)` 定位，任何按下位移都会让它看起来"跳"一下
+ * （48px 高的药丸按 1px 下沉，读起来是整颗歪了）。 */
+.key-event-rail-toggle:active:not(:disabled) {
+  translate: none;
+}
+
+/* 收起后竖线没了，把手贴到版心右缘（`- 8px` 内缩，不贴死窗口边） */
+.key-event-body.is-rail-collapsed .key-event-rail-toggle {
+  right: var(--transactions-space-sm);
+}
+

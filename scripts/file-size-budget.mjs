@@ -66,11 +66,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 503,
     hint: '模板列表 / 新建弹窗',
   },
-  // 1253 行：图库 / 编辑器 / 图片块
-  'src/styles/key_event.css': {
-    cap: 1253,
-    hint: '图库 / 编辑器 / 图片块',
-  },
 }
 
 // 统一成 `/` 分隔、相对仓库根。调用方传进来的都是相对路径。
