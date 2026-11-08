@@ -68,7 +68,7 @@ export interface StockLedgerFormProps {
   error: string
   busy: boolean
   onChange: (update: (current: LedgerForm) => LedgerForm) => void
-  /** 「为什么买」改动时清掉残留的错误提示（其余字段不清，与拆分前一致） */
+  /** 任何字段改动时清掉残留的错误提示（校验失败 / 保存失败之后都该跟着消失） */
   onClearError: () => void
   onSave: () => void
   onClose: () => void
@@ -95,6 +95,17 @@ export function StockLedgerForm({
   const stopDeltaId = 'stock-ledger-stop-delta'
   const takeDeltaId = 'stock-ledger-take-delta'
 
+  /**
+   * 改任何一个字段都清掉残留的错误提示。
+   *
+   * 原来只有「为什么买」清：校验失败（「台账至少填写一项」）或保存失败之后，改止损 / 止盈
+   * 那几个框，红字还挂在那儿，像是这次输入仍然不合法。
+   */
+  const change = (update: (current: LedgerForm) => LedgerForm): void => {
+    onChange(update)
+    onClearError()
+  }
+
   return (
     <Modal
       open={open}
@@ -114,10 +125,7 @@ export function StockLedgerForm({
             maxLength={2000}
             placeholder="当时为什么决定买这一轮"
             value={form.whyBuy}
-            onChange={(event) => {
-              onChange((current) => ({ ...current, whyBuy: event.target.value }))
-              onClearError()
-            }}
+            onChange={(event) => change((current) => ({ ...current, whyBuy: event.target.value }))}
           />
         </label>
 
@@ -155,7 +163,7 @@ export function StockLedgerForm({
               suffix={<DeltaSuffix text={draftLevels.downside} id={stopDeltaId} />}
               value={form.stopLoss}
               onChange={(event) =>
-                onChange((current) => ({ ...current, stopLoss: event.target.value }))
+                change((current) => ({ ...current, stopLoss: event.target.value }))
               }
             />
           </label>
@@ -172,7 +180,7 @@ export function StockLedgerForm({
               suffix={<DeltaSuffix text={draftLevels.upside} id={takeDeltaId} />}
               value={form.takeProfit}
               onChange={(event) =>
-                onChange((current) => ({ ...current, takeProfit: event.target.value }))
+                change((current) => ({ ...current, takeProfit: event.target.value }))
               }
             />
           </label>
@@ -227,7 +235,7 @@ export function StockLedgerForm({
             placeholder="例如：是 / 否 / 部分"
             value={form.followedSystem}
             onChange={(event) =>
-              onChange((current) => ({ ...current, followedSystem: event.target.value }))
+              change((current) => ({ ...current, followedSystem: event.target.value }))
             }
           />
         </label>
@@ -238,7 +246,7 @@ export function StockLedgerForm({
             maxLength={2000}
             placeholder="一句话总结这一轮"
             value={form.summary}
-            onChange={(event) => onChange((current) => ({ ...current, summary: event.target.value }))}
+            onChange={(event) => change((current) => ({ ...current, summary: event.target.value }))}
           />
         </label>
 

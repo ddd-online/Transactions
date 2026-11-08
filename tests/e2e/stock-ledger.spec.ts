@@ -123,6 +123,12 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     await expect(page.getByRole('dialog', { name: '填写台账' })).toBeVisible()
     await expect(page.getByTestId('stock-ledger-buy-price')).toHaveValue('5.00')
     await expect(page.getByTestId('stock-ledger-sell-price')).toBeDisabled()
+    // 校验失败只挂一条红字；改任何一个字段（不只是「为什么买」）就该清掉
+    await page.getByTestId('stock-ledger-save').click()
+    await expect(page.getByTestId('stock-ledger-form-error')).toContainText('台账至少填写一项')
+    await page.getByTestId('stock-ledger-stop').fill('4.60')
+    await expect(page.getByTestId('stock-ledger-form-error')).toHaveCount(0)
+    await page.getByTestId('stock-ledger-stop').fill('')
     await page.getByTestId('stock-ledger-why').fill('回踩确认后买入，控制单笔仓位')
     // 盈亏比 / 涨跌百分比是边填边算的：还没填全时那一行说的是「填好…自动计算」
     await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('填好止损和止盈后自动计算')
