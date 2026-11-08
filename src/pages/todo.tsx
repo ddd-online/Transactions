@@ -200,6 +200,9 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         await load()
       } catch (sortError) {
         setError(errorMessage(sortError))
+        // 落库失败就把界面拉回库里的顺序：只报错不重拉会留下「看着换了、其实没换」，
+        // 下一次刷新才悄悄变回去。
+        await load()
       }
     },
     [cards, load],
