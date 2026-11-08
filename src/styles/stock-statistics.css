@@ -1,0 +1,550 @@
+/* ---------------- 子功能四：统计 ---------------- */
+
+/* 统计子功能：**左侧分栏页签 + 右侧筛选组**。
+ * `margin-left: auto` 把筛选组顶到最右（`.stock-toolbar` 那行仍是 flex，
+ * 第一条是页签、按内容宽度排），于是页签贴左、筛选贴右，两边都不抢宽度。 */
+.stock-statistics__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* 月份区间：两个输入框**各自定宽**，这一行由它们自己撑开。
+ *
+ * ⚠ 别写"给这一行定宽、让输入框自己缩"（原来就是 `width: 260px`）：`.ui-input` 是
+ * `width: 100%`，而 `<input>` 的固有宽度（默认 `size=20`，随字体约 180~207px）就是它的
+ * **自动最小尺寸**，flex 缩不到那个数以下 —— 260px 装不下两个字段，第二个字段溢出到
+ * 「逐笔累计」下拉底下（占位文案只剩「结束」两个字，鼠标也点不进去）。
+ * UIA **看不见**"被盖住"（它照报完整矩形），所以这条只能靠"两个矩形不许重叠"来判 ——
+ * 在界面里量一下两个输入框的矩形，别只看 UIA 报的完整性。
+ * 168px = 占位文案「开始月份 YYYY-MM」128 + 左右内边距 24 + 边框 2 + 余量。 */
+.stock-statistics__range {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+}
+
+.stock-statistics__range > .ui-input {
+  flex: 0 0 168px;
+  /* 上面那条 `flex-basis` 只有配合这一条才生效：自动最小尺寸（= min-content ≈ 181px）
+   * 会把用到的宽度顶回去。 */
+  min-width: 0;
+}
+
+.stock-statistics__range-sep {
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 筛选组里的四个下拉（最近 N 笔 / 统计口径 / 每组笔数 / 标签）**同宽** ——
+ * 它们是同一排的同类控件，宽度不一致会显得像三种东西。 */
+.stock-statistics__recent,
+.stock-statistics__strategy,
+.stock-statistics__group-size,
+.stock-statistics__tag {
+  width: 136px;
+}
+
+.stock-stats-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: var(--transactions-space-lg);
+  padding: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+  /* 指标块是"引文"：按内容高排版，剩余高度全留给下面的曲线 */
+  flex-shrink: 0;
+}
+
+.stock-stats-overview__lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+}
+
+.stock-stats-overview__label {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-stats-overview__value {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-display-sm);
+  font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-amount-xl);
+}
+
+.stock-stats-overview__sub {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-stats-overview__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-md);
+}
+
+.stock-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  padding-left: var(--transactions-space-md);
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+/* 指标名 + 那颗 ⓘ 排在同一行：释义跟着**名字**走，不跟数字走。
+ * 两者都在 12px 的 caption 上（`.icon` 是 1em，所以 ⓘ 正好是名字的字号）。 */
+.stock-kpi__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* ⓘ 触发器：比名字再退一档（它不该跟指标名抢注意力），`cursor: help` 与设置页那颗同款。
+ * 可聚焦：键盘 Tab 到它时 `.ui-tooltip:focus-within` 让气泡显形，因此它也吃全站那条
+ * 2px 主色焦点环（与 `.ui-icon-btn` 同一条写法）—— 释义不能只有鼠标能读到。 */
+.stock-kpi__tip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-text-tertiary);
+  cursor: help;
+}
+
+.stock-kpi__tip:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+/* 气泡上限 180px —— 这个数是算出来的，不是随手写的：
+ * 最右那一格（4 栏时是「最大回撤」，2 栏窄窗时是右列那两张）距面板右内边不到 100px，
+ * 而 `.stock-panel { overflow: hidden }` 会把越出的气泡**从中间裁掉**（"释义只剩半句"）。
+ * 居中展开时左右各占一半，180px 在最窄的 2 栏（窗口约 460px 逻辑宽）也仍在面板内；
+ * 最长的那两句会折成两行 —— 与费用设置那三条多行说明同一个表现。 */
+.stock-kpi-tip::after {
+  max-width: 180px;
+}
+
+.stock-kpi__value {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--transactions-height-snug);
+  letter-spacing: var(--transactions-tracking-amount-lg);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-kpi__sub {
+  font-size: var(--transactions-size-text-small);
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 统计曲线块：**吃掉结算统计之外的全部高度**（"这一页不再整页滚动"的关键一环）。
+ * 它自己不再给内边距与下边线 —— 头部用面板那套 `.stock-panel__head`（自带发丝线），
+ * 内边距下放给 `__body`，图表贴着自己那块留白。 */
+.stock-chart-block {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-chart-block__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--transactions-space-md);
+}
+
+/* 曲线块的标题组：「统计曲线」+ 右边那颗「放大」。图标按钮自带约 7px 内边距，
+ * 所以组内只留 4px —— 视觉上约 11px，既不贴住标题，也不像两个彼此独立的块。 */
+.stock-chart-block__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  min-width: 0;
+  /* 这一组**不许收缩**：它是两个固定尺寸的东西，被压扁的只会是标题 ——
+   * 窄窗里「统计曲线」会变成一列单字（窗口 760px 逻辑宽时实测 16×103）。 */
+  flex-shrink: 0;
+}
+
+/* 曲线块的头在窄窗里**换行**而不是把标题挤扁：标题组不许收缩，7 档指标选择器是 `nowrap`
+ * 的、也缩不动，于是两者放不下时整组移到第二行（宽窗里仍然是一行，布局不变）。
+ * 只作用于这一块的头部：其余面板的头都很短，还不需要这条兜底。 */
+.stock-chart-block .stock-panel__head {
+  flex-wrap: wrap;
+  row-gap: var(--transactions-space-sm);
+}
+
+/* 7 档指标选择器本身也要能换行：它是 `nowrap` 的，窄到一行放不下时硬撑会顶破卡片宽度，
+ * 而 `.stock-panel { overflow: hidden }` 会从中间把最后一档裁掉（窗口 760px 逻辑宽时
+ * 实测「最大回撤」只剩半个字形）。整组换行后七档都读得到；宽窗里仍然是一行。
+ * 放大层里那一份同样处理 —— 它自己不裁，但窄到放不下时会溢出到面板外。 */
+.stock-chart-block .ui-segmented,
+.stock-chart-zoom__actions .ui-segmented {
+  flex-wrap: wrap;
+  row-gap: var(--transactions-space-xs);
+  max-width: 100%;
+}
+
+/* 图表根吃满 `__body`：`.chart__canvas` 自己 `flex: 1`，
+ * 于是画布拿到的是"图例之下、块之内的实际像素"（`watch_canvas_size` 按它重画 SVG）。
+ * 这覆盖了 ui.css 里"内容流里固定 320px"的用法 —— 在分栏里高度由容器决定。 */
+.stock-chart-block .chart {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+/* ---------------- 放大层：铺满窗口内容区的统计曲线 ---------------- */
+/* 入口是曲线块标题右边那颗「放大」。它不是"又一个弹窗"：弹窗最大也只有 640px，
+ * 而这一层要的是**画布**——吃掉整个窗口内容区（含侧栏），只让开顶部 48px 的自绘标题栏，
+ * 于是窗口三按钮仍可直接点，不必先关掉它。 */
+.stock-chart-zoom {
+  position: fixed;
+  /* 从标题栏下沿开始（`--transactions-size-top-band`，与 `size-top-band` 同一个 48px） */
+  top: var(--transactions-size-top-band);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* **低于侧栏菜单与下拉（1050）**：放大期间账本切换器仍然要能用
+   * （切了账本这一层留在原地、曲线跟着换，见 chart_zoom_overlay 的文档注释）。 */
+  z-index: 1000;
+  display: flex;
+  /* 四周留白：既是"浮在上面"的那层意思，也露出一点被压暗的原页面 */
+  padding: var(--transactions-space-lg);
+  background-color: var(--transactions-color-hover-bg);
+  /* 遮罩只淡入（与 `.ui-modal__mask` 同一条）：整屏会动的层读起来像"窗口在动" */
+  animation: tr-fade-in var(--transactions-transition-fast);
+}
+
+.stock-chart-zoom__panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--transactions-color-major-background);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-xl);
+  box-shadow: var(--transactions-shadow-xl);
+  /* 面板本体的落位：遮罩淡入、面板自己 4px 落定（与 `.ui-modal__content` 同一拍） */
+  animation: tr-rise-in var(--transactions-transition-enter);
+}
+
+/* 头部：左「标题 + 筛选摘要」、右「指标选择器 + 关闭」。
+ * `flex-wrap` 是窄窗兜底：7 档指标选择器是 `nowrap` 的，放不下时让右组整体换到第二行，
+ * 而不是被挤出面板外。 */
+.stock-chart-zoom__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-sm) var(--transactions-space-md);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-chart-zoom__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  min-width: 0;
+}
+
+/* 标题 = 弹窗标题那一档（18px / 600）：这一层本来就是"对话框式"的整屏层 */
+.stock-chart-zoom__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-title-sm);
+  font-weight: var(--transactions-weight-semibold);
+  line-height: var(--transactions-height-snug);
+  letter-spacing: var(--transactions-tracking-display);
+  color: var(--transactions-color-text-major);
+}
+
+/* 筛选摘要：这一层盖住了工具栏，所以"现在看的是哪一段"只有这一个出处。
+ * 用 secondary 而不是 tertiary —— 它是给人读的信息，不是可以淡掉的标签。 */
+.stock-chart-zoom__scope {
+  margin: 0;
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-chart-zoom__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+/* 图表吃掉面板剩余高度：与 `.stock-chart-block` 同一条口径
+ * （`.chart` 自己 `flex: 1`，画布因此拿到实际像素，`watch_canvas_size` 按它出图）。 */
+.stock-chart-zoom__chart {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
+}
+
+.stock-chart-zoom__chart .chart {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+/* 明细分栏：表格区吃掉面板剩余高度（纵向/横向滚动都发生在这一块里），
+ * 「共 N 条 + 分页」那一行因此贴在分栏底边 —— 与账户子功能的资金记录同一条口径。
+ * 只作用于统计子功能的页签面板，不动其余子功能里的同名表格。 */
+.stock-statistics__pane .stock-table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------------- 自绘 SVG 图表 ---------------- */
+
+/* ============================================
+ * 统计子功能（`.stock-statistics`）—— 两个分栏都**恰好填满内容区**
+ *
+ * 这一页原来整页滚动：根容器是 `flex: 1 0 auto`（可长高、不压缩），
+ * 指标 + 定高 320px 的曲线 + 不设上限的明细表摞起来必然超过可视区，
+ * 于是滚动条落在 `.stock-body` 上（用户看到的"页面滚动"）。
+ * 现在明细搬进第二个分栏并分页、曲线按剩余高度自适应，根容器就必须**恰好等于**内容区：
+ *   ① `flex: 1` + `min-height: 0`：不溢出（溢出就在 `.stock-body` 出现滚动条）；
+ *   ② 下面每一级（页签面板 → 面板 / 居中空态）同样可伸缩，剩余高度才有处可去。
+ *
+ * 早前这里曾用 `.ui-tab-pane > *` 一刀切把根容器变弹性列，曲线面板被挤到 213px 宽
+ * （图表按实测尺寸出 SVG，压一次就画坏了）—— 压不坏的前提是"分栏内部已经把剩余高度
+ * 指派给了曲线"，而那正是这一版把明细移走换来的空间。
+ * ============================================ */
+
+.stock-statistics {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 页签面板（`TabPane` 渲染出的 `.ui-tab-pane`）与它的唯一子节点都要可伸缩：
+ * 前者承接根容器给的高度，后者（面板 / 居中空态）再吃满它。
+ * 加载态与空态是面板的替代品，所以这里用 `> *` —— 两条分支都在这一个钩子下。 */
+.stock-statistics > .ui-tab-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-statistics > .ui-tab-pane > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------------- 统计 ---------------- */
+
+.stock-statistics-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* 筛选条在布局工具栏里（`.page-toolbar` 给内边距与发丝线）。 */
+.stock-statistics__toolbar-host {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+}
+
+.stock-statistics-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  width: 100%;
+}
+
+.stock-statistics-filters {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  flex-wrap: wrap;
+}
+
+.stock-statistics-section {
+  padding: 0 0 var(--transactions-space-lg);
+}
+
+/* 空态撑满工具栏以下的剩余高度，让图标和文案真正居中。 */
+.stock-statistics-section--empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 曲线吃掉剩余高度，而不是固定 420px 后在页面底部留一大块空白。 */
+.stock-statistics-section--chart {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stock-statistics-section--chart .stock-curve {
+  flex: 1;
+  height: auto;
+  min-height: 360px;
+}
+
+.stock-statistics-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-md) var(--transactions-space-lg) 0;
+}
+
+.stock-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-lg) var(--transactions-space-md);
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+}
+
+.stock-stat-cell--wide {
+  grid-column: span 2;
+}
+
+.stock-stat-cell.stock-stat-cell--wide strong {
+  font-size: var(--transactions-size-text-display-xl);
+  line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-amount-xl);
+}
+
+.stock-stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stock-stat-cell strong {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-section);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-stat-cell small {
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-chart-head {
+  flex-wrap: wrap;
+}
+
+.stock-chart-head__title {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-2xs);
+}
+
+/* 区块头已经给了左右 16px，标题自己再带一份就会比「结算统计」多缩进一格。 */
+.stock-chart-head .stock-section__title {
+  padding: 0;
+}
+
+.stock-chart-head .tr-segmented {
+  margin-left: auto;
+}
+
+.stock-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-stat-hint {
+  display: inline-flex;
+  color: var(--transactions-color-text-disabled);
+  cursor: help;
+}
+
+.stock-stat-hint:hover {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-chart-metrics {
+  padding: 0 var(--transactions-space-lg);
+  margin: var(--transactions-space-sm) 0 var(--transactions-space-xs);
+  overflow-x: auto;
+}
+
+.stock-chart-modal .stock-chart-metrics {
+  padding: 0;
+}
+
+.stock-statistics-table .ant-table-cell {
+  padding: 7px 6px;
+  font-size: var(--transactions-size-text-body-sm);
+  white-space: nowrap;
+}
+
+.stock-template-actions {
+  align-items: center;
+}
+
+.stock-template-actions__spacer {
+  flex: 1;
+}
+
+.stock-stats-stock {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.stock-stats-stock:hover,
+.stock-stats-stock:focus-visible {
+  color: var(--transactions-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.stock-statistics-table .stock-stats-date {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-stats-drawdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: var(--transactions-height-snug);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-curve {
+  height: 420px;
+  margin: var(--transactions-space-sm) var(--transactions-space-lg) 0;
+}
+
+.stock-curve--tall {
+  height: 70vh;
+}
+
+.stock-chart-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+}
+

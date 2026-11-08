@@ -1,0 +1,372 @@
+/* ---------------- 下单 / 编辑弹窗 ---------------- */
+
+.stock-trade-form__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--transactions-space-md);
+}
+
+/* 名称/代码两格之后直接是成交明细：这一条上边距原来由「查询股票名称」那一行
+ * （`.stock-trade-form__code-actions`）撑着，按钮去掉后补回来 */
+.stock-trade-form__fills {
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-md);
+  margin-bottom: var(--transactions-space-md);
+}
+
+.stock-trade-form__fills-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.stock-fill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 110px 56px;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-xs);
+}
+
+.stock-fill-row__amount {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  text-align: right;
+  color: var(--transactions-color-text-major);
+}
+
+.stock-fill-row__spacer {
+  display: block;
+  width: 56px;
+}
+
+.stock-trade-form__summary {
+  border: 1px solid var(--transactions-color-divider);
+  border-radius: var(--transactions-radius-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  margin-bottom: var(--transactions-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+}
+
+/* 本轮费用设置（建仓可改 / 加仓减仓清仓只读） */
+.stock-trade-form__fee {
+  border-top: 1px solid var(--transactions-color-divider);
+  padding-top: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-md);
+}
+
+.stock-trade-form__fee-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-xs);
+}
+
+.stock-trade-form__fee-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--transactions-space-sm) var(--transactions-space-md);
+}
+
+.stock-trade-form__fee-hint {
+  margin: var(--transactions-space-xs) 0 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 成交明细那一段的提示（清仓时"本轮已无持仓、确认即归档"） */
+.stock-trade-form__hint {
+  margin: var(--transactions-space-xs) 0 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-trade-form__fee-readonly {
+  margin: 0;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-body-sm);
+}
+
+.stock-summary-row.is-total .stock-summary-row__value {
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-summary-row__label {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-summary-row__value {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-major);
+  text-align: right;
+}
+
+.stock-summary-hint {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-trade-edit__head {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-bottom: var(--transactions-space-sm);
+}
+
+.stock-trade-edit__name {
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-trade-edit__count {
+  margin-left: auto;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-trade-edit__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--transactions-space-md);
+}
+
+.stock-trade-edit__row {
+  display: grid;
+  grid-template-columns: 72px 1fr 1fr 1fr;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-xs) var(--transactions-space-sm);
+  border-radius: var(--transactions-radius-sm);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-trade-edit__row.is-current {
+  background: var(--transactions-color-primary-tint);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-trade-edit__tag {
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-trade-edit__hint {
+  margin: var(--transactions-space-sm) 0 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-tertiary);
+}
+
+.stock-impact__text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: var(--transactions-height-relaxed);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+/* ---------------- 弹窗 ---------------- */
+
+.stock-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--transactions-space-md);
+}
+
+.stock-modal-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stock-modal-form .tr-date-picker,
+.stock-modal-form .tr-date-picker .ant-picker {
+  width: 100%;
+}
+
+.stock-modal-error {
+  margin: 0;
+  color: var(--transactions-color-expense);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-sm);
+}
+
+.stock-trade-form {
+  gap: var(--transactions-space-md);
+}
+
+.stock-trade-block,
+.stock-trade-summary {
+  padding: var(--transactions-space-sm) var(--transactions-space-md);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-md);
+}
+
+.stock-trade-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-trade-block__head .tr-btn,
+.stock-trade-fees .tr-btn {
+  color: var(--transactions-color-primary);
+}
+
+.stock-trade-section__title {
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-trade-fill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 36px;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  margin-top: var(--transactions-space-sm);
+}
+
+.stock-trade-fill__dash {
+  color: var(--transactions-color-text-disabled);
+  text-align: center;
+}
+
+.stock-trade-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-xs);
+  border-color: transparent;
+  background: var(--transactions-color-minor-background);
+}
+
+.stock-trade-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-trade-summary__total strong {
+  color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-trade-fees {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-trade-fee-text {
+  margin: 0;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+@media (max-width: 1080px) {
+  .stock-positions-view,
+  .stock-history-main {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .stock-metrics,
+  .stock-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-table-skeleton span {
+    animation: none;
+  }
+}
+
+
+/* 窄窗：行改成块，让整句读完整；操作移到正文下方，不再和正文抢宽度。 */
+@media (max-width: 820px) {
+  .stock-lesson__code {
+    display: none;
+  }
+
+  .stock-lessons-table .ant-table-thead {
+    display: none;
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row {
+    display: block;
+    border-bottom: 1px solid var(--transactions-color-divider);
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
+    display: block;
+    width: 100%;
+    padding: var(--transactions-space-sm) var(--transactions-space-md);
+    border-bottom: 0;
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row > td.ant-table-cell:first-child {
+    padding-bottom: var(--transactions-space-2xs);
+  }
+
+  .stock-lessons-table .ant-table-tbody > tr.ant-table-row > td.ant-table-cell:last-child {
+    padding-top: 0;
+    padding-bottom: var(--transactions-space-sm);
+  }
+
+  .stock-lesson__text {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+
+  .stock-lesson__source-label {
+    display: inline;
+  }
+
+  .stock-lesson__actions {
+    justify-content: flex-end;
+  }
+}
+

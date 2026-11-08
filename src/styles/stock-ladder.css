@@ -1,0 +1,695 @@
+/* ============================================
+ * 连板天梯（第七个子功能）
+ *
+ * 竖向的"天梯"横过来放：一个板数一列，首板在左、最高板在右。
+ * 列高天然是"市场金字塔"——首板一列最长，越往右越短。
+ * 整页只有墨色与灰阶：琥珀只留给"炸板次数"，其余强度靠字号、对齐和发丝线。
+ * ============================================ */
+
+.stock-ladder-view {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: var(--transactions-space-lg);
+}
+
+/* 日期行在布局组件的工具栏里（`.page-toolbar` 给内边距与发丝线），
+ * 这里只负责左右分布；portal 的落点 `__toolbar-host` 填满那一行。 */
+.stock-ladder__toolbar-host {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+}
+
+.stock-ladder__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md) var(--transactions-space-lg);
+  width: 100%;
+}
+
+.stock-ladder__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__status.is-live,
+.stock-ladder__status.is-warning {
+  color: color-mix(in srgb, var(--transactions-color-outlier) 70%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__status.is-live::before,
+.stock-ladder__status.is-warning::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--transactions-radius-full);
+  background: var(--transactions-color-outlier);
+}
+
+.stock-ladder__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+  flex-wrap: wrap;
+}
+
+/* 数据状态贴着刷新按钮：右侧一组，读作「现在这份数据 + 重新抓取」。 */
+.stock-ladder__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-md);
+  flex-wrap: wrap;
+}
+
+/* ---------------- 汇总数字（版心底栏） ---------------- */
+
+/* 与「记录」页共用 .statistics-footer；这里只补两处：
+ * 把副信息（昨日家数 / 空间板个股 / 晋级分数 / 对照日）收在数值后面。 */
+.stock-ladder-footer {
+  gap: var(--transactions-space-xl);
+}
+
+.stock-ladder-footer .statistics-footer-item-label {
+  letter-spacing: 0;
+}
+
+.stock-ladder-footer .statistics-footer-item-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.stock-ladder-footer__note {
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-small);
+  font-weight: var(--transactions-weight-regular);
+  letter-spacing: 0;
+  color: var(--transactions-color-text-tertiary);
+  white-space: nowrap;
+}
+
+/* ---------------- 天梯列 ---------------- */
+
+/* 工具栏下的板块汇总：把当天的涨停股按板块数一遍（板块名 + 家数）。
+ * 板块名沿用行里那套身份色，同一个板块在汇总和列里同色。 */
+.stock-ladder__boards {
+  display: flex;
+  padding: 10px var(--transactions-space-lg) var(--transactions-space-md);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__boards-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6px var(--transactions-space-lg);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-ladder__boards-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* 汇总条里的板块名是整句的主角：比行里的 11px 大一号，也不做省略。 */
+.stock-ladder__boards .stock-ladder__board {
+  flex: none;
+  overflow: visible;
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ladder__boards-count {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__rungs {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  min-height: 0;
+  /* 页边距 16：工具栏、首列板数、底栏落在同一条竖线上。 */
+  padding: 0 var(--transactions-space-xs);
+}
+
+/* 一列 = 列头 + 可滚动的股票列表（Listy 虚拟列表，高度由 flex 量出来）。
+ * 左右只留 4px：行的底色要铺到列的近边缘，文字的位置由行自己的内边距给（8px），
+ * 两者加起来仍是页边距 16，首列板数、工具栏、底栏还在同一条竖线上。 */
+.stock-ladder__rung {
+  container-type: inline-size;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-xs) var(--transactions-space-sm);
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* OverlayScrollbars 的滑块浮在右缘：让出 16px 的位置改由行自己的右内边距给，
+ * 行的底色才能铺满整列（不再在右侧留一条白边）。 */
+.stock-ladder__list .rc-listy {
+  padding-right: 0;
+}
+
+/* 行：左右各 8 的内边距（右侧再加 16 给滚动条滑块），文字不再贴着底色边缘。 */
+.stock-ladder__list .stock-ladder__item {
+  padding-right: calc(var(--transactions-space-sm) + var(--transactions-space-lg));
+}
+
+/* Listy 在这里只负责按行渲染；滚动条交给外层的 OverlayScrollbars。 */
+.stock-ladder__list .rc-listy-item {
+  overflow: hidden;
+}
+
+/* 最后一行补一条底线：滚到底或列本身很短时，列有收口。 */
+.stock-ladder__list .rc-listy > .rc-listy-item:last-child .stock-ladder__item {
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-ladder__rung:first-child {
+  border-left: 0;
+}
+
+.stock-ladder__rung-rail {
+  display: flex;
+  flex-direction: column;
+  /* 与行内文字同一条竖线：行的内边距 8，列头也补 8。 */
+  padding-left: var(--transactions-space-sm);
+}
+
+.stock-ladder__rung-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  /* 最高板数字大一号：行盒固定 26px，所有列头等高，晋级率与列表从同一条线开始。 */
+  height: 26px;
+}
+
+.stock-ladder__level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.stock-ladder__level-num {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title);
+  font-weight: var(--transactions-weight-medium);
+  line-height: 26px;
+  letter-spacing: var(--transactions-tracking-amount-lg);
+  color: var(--transactions-color-text-major);
+}
+
+/* 最高板是这一天的天花板：只放大两级字号，不加颜色。 */
+.stock-ladder__rung.is-top .stock-ladder__level-num {
+  font-size: var(--transactions-size-text-display-sm);
+}
+
+.stock-ladder__level-unit {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__rung-count {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__rung-rate {
+  margin: var(--transactions-space-2xs) 0 var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__chips {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 行高固定：有没有标签都占同一条高度，列里的分隔线才会等距。
+ * 左右 8px 内边距：底色铺满整行时，文字不贴着色的边。 */
+.stock-ladder__item {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  height: 48px;
+  min-height: 48px;
+  padding: 4px var(--transactions-space-sm);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* 今天还在板上的行铺一层微红底；断板不铺，两种行一眼分得开。
+ * 底色要淡过行上的 10% 小标签，不能把「一字 / 炸 / 涨跌幅」压下去。 */
+.stock-ladder__item.is-limit {
+  background: var(--transactions-color-expense-tint-soft);
+}
+
+.stock-ladder__item-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+/* 名称与价格是一组：宽窗里靠左，窄列里主行变竖排、它们仍落在同一行。
+ * 价格不进右边那一簇（代码 + 时间）：7 板时一列只有 ~180px，
+ * 代码 + 时间 + 价格会一起溢出，名称这一行还放得下。 */
+.stock-ladder__item-ident {
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
+.stock-ladder__item-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--transactions-size-text-body);
+  line-height: 18px;
+  color: var(--transactions-color-text-major);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 价格：这是这一行最该被看见的数字，比代码 / 时间亮一档；名字太长时先截名字。 */
+.stock-ladder__item-price {
+  flex: none;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  color: var(--transactions-color-text-major);
+  white-space: nowrap;
+}
+
+/* 断板整行退成次要色，价格跟着退 —— 它已经不是今天的主线。 */
+.stock-ladder__item.is-broken .stock-ladder__item-price {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__item-quote {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  color: var(--transactions-color-text-secondary);
+  white-space: nowrap;
+}
+
+/* 股票代码：点一下复制。静止和旁边的时间戳同一档字，悬停才亮主色 + 下划线，
+ * 让「这里能点」只在鼠标真的过来时才说话。 */
+.stock-code {
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: color var(--transactions-transition-fast);
+}
+
+/* 复制按钮只是叠了「可点」这一层：字号 / 等宽 / 次要色仍由调用方给的类说了算
+ * —— 上面那条 `font: inherit` 会把 `.stock-mono` 的等宽按回去。 */
+.stock-code.stock-muted {
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-code.stock-mono {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+.stock-code:hover {
+  color: var(--transactions-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.stock-code:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+/* 名称刷新：代码后面一枚 20px 的静默按钮 —— 名称会随除权除息、摘帽、更名变，
+ * 代码不变，所以「按代码重取名称」贴着代码放。
+ * 静止是三级灰（比次要的代码还轻一档，它是一年用不上几次的动作），悬停才亮主色；
+ * 请求中图标自转，转的是 transform（合成层），减少动态偏好下直接不转。 */
+.stock-name-refresh {
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-tertiary);
+  font-size: 0;
+  cursor: pointer;
+  transition:
+    color var(--transactions-transition-fast),
+    background-color var(--transactions-transition-fast);
+}
+
+.stock-name-refresh:hover {
+  color: var(--transactions-color-primary);
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.stock-name-refresh:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 1px;
+}
+
+.stock-name-refresh.is-spinning {
+  cursor: progress;
+}
+
+.stock-name-refresh.is-spinning .icon {
+  animation: tr-spin 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-name-refresh.is-spinning .icon {
+    animation: none;
+  }
+}
+
+.stock-ladder__item-time {
+  letter-spacing: 0.02em;
+}
+
+/* 板数多（7 板）时一列只有 ~160px：名称独占一行，代码/时间落到下一行，
+ * 否则 4 个字的股票名会被截成两个字。
+ * 阈值跟着列宽算：列内容 = 列宽 − 8（左右各 4 的列内边距），
+ * 所以 216 = 旧规则 200 + 省下来的 16，切换点与改版前一致。
+ * 这段必须排在上面两条规则之后：同一条选择器，靠源码顺序覆盖 48px 的行高。 */
+@container (max-width: 216px) {
+  .stock-ladder__item {
+    height: 66px;
+    min-height: 66px;
+  }
+
+  .stock-ladder__item-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+}
+
+.stock-ladder__item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 板块名：行按板块聚在一起，这一格就是那一组的抬头。
+ * 身份色（与账本同一组 8 个自然色）按板块名哈希取一个，同一板块永远同色；
+ * 70% 身份色 + 30% 墨色：浅色下压暗到小字也够对比度，深色下自动提亮。 */
+.stock-ladder__board {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--transactions-size-text-small);
+  line-height: 16px;
+  color: color-mix(
+    in srgb,
+    var(--board-tone, var(--transactions-color-text-secondary)) 70%,
+    var(--transactions-color-text-major)
+  );
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-ladder__board--forest {
+  --board-tone: var(--transactions-ledger-forest);
+}
+
+.stock-ladder__board--amber {
+  --board-tone: var(--transactions-ledger-amber);
+}
+
+.stock-ladder__board--slate-blue {
+  --board-tone: var(--transactions-ledger-slate-blue);
+}
+
+.stock-ladder__board--vermillion {
+  --board-tone: var(--transactions-ledger-vermillion);
+}
+
+.stock-ladder__board--warm-brown {
+  --board-tone: var(--transactions-ledger-warm-brown);
+}
+
+.stock-ladder__board--ochre {
+  --board-tone: var(--transactions-ledger-ochre);
+}
+
+.stock-ladder__board--moss {
+  --board-tone: var(--transactions-ledger-moss);
+}
+
+.stock-ladder__board--camel {
+  --board-tone: var(--transactions-ledger-camel);
+}
+
+.stock-ladder__tag {
+  padding: 0 4px;
+  border-radius: var(--transactions-radius-sm);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-small);
+  line-height: 16px;
+}
+
+/* 一字板：红色小标（红 = 涨停方向），10% 底色 + 语义文字。 */
+.stock-ladder__tag--word {
+  background: var(--transactions-color-expense-tint);
+  color: color-mix(in srgb, var(--transactions-color-expense) 72%, var(--transactions-color-text-major));
+  font-weight: var(--transactions-weight-medium);
+}
+
+.stock-ladder__tag--broken {
+  background: var(--transactions-color-outlier-tint);
+  color: color-mix(in srgb, var(--transactions-color-outlier) 70%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__tag--off {
+  background: var(--transactions-color-minor-background);
+  color: color-mix(in srgb, var(--transactions-color-text-tertiary) 70%, var(--transactions-color-text-major));
+}
+
+/* 断板当天的涨跌幅：红涨绿跌（与股票页 `.is-up` / `.is-down` 同一套语义色），
+ * 等宽数字让一列里的百分号对齐。 */
+.stock-ladder__tag--up,
+.stock-ladder__tag--down,
+.stock-ladder__tag--flat {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-ladder__tag--up {
+  background: var(--transactions-color-expense-tint);
+  color: color-mix(in srgb, var(--transactions-color-expense) 72%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__tag--down {
+  background: var(--transactions-color-income-tint);
+  color: color-mix(in srgb, var(--transactions-color-income) 72%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__tag--flat {
+  background: var(--transactions-color-minor-background);
+  color: color-mix(in srgb, var(--transactions-color-text-tertiary) 70%, var(--transactions-color-text-major));
+}
+
+.stock-ladder__item.is-broken .stock-ladder__item-name {
+  color: var(--transactions-color-text-secondary);
+}
+
+/* ---------------- 空态 / 错误 / 骨架 ---------------- */
+
+.stock-ladder__hint {
+  margin: var(--transactions-space-md) var(--transactions-space-lg) 0;
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-ladder__error {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--transactions-space-sm);
+  margin: 0;
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-ladder__error .icon {
+  color: var(--transactions-color-expense);
+}
+
+.stock-ladder__skeleton {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-lg);
+  padding: var(--transactions-space-lg);
+}
+
+.stock-ladder__skeleton span {
+  height: 220px;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
+  animation: stock-pulse 1.4s ease-in-out infinite;
+}
+
+.stock-ladder__skeleton span:nth-child(2) {
+  height: 170px;
+}
+
+.stock-ladder__skeleton span:nth-child(3) {
+  height: 120px;
+}
+
+.stock-ladder__skeleton span:nth-child(4) {
+  height: 90px;
+}
+
+@media (max-width: 1080px) {
+  .stock-ladder__rung {
+    padding: var(--transactions-space-md) var(--transactions-space-sm) var(--transactions-space-lg);
+  }
+}
+
+/* 一列首板可能几十只：窄窗下不再并排成列，改成"板数在左、股票横向铺开"的按层行，
+ * 否则高板会被首板那一列的长列表挤到下一行、要滚很久才看得到。 */
+@media (max-width: 1000px) {
+  /* 窄窗回到「按层行」的普通文档流：不再撑满视口，整页自己滚。 */
+  .stock-ladder-view {
+    flex: 1 0 auto;
+  }
+
+  .stock-ladder__rungs {
+    flex: 0 0 auto;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .stock-ladder__rung {
+    display: grid;
+    flex: none;
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: var(--transactions-space-md);
+    padding: var(--transactions-space-md) var(--transactions-space-lg);
+    border-top: 1px solid var(--transactions-color-divider);
+    border-left: 0;
+  }
+
+  .stock-ladder__rung:first-child {
+    border-top: 0;
+  }
+
+  .stock-ladder__rung-rail {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .stock-ladder__rung-rate {
+    margin: var(--transactions-space-2xs) 0 0;
+  }
+
+  .stock-ladder__chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    grid-column: 2;
+    grid-row: 1;
+    column-gap: var(--transactions-space-lg);
+    align-items: stretch;
+  }
+
+  .stock-ladder__item {
+    /* 164px：装得下「5 字板块 + 断 + 涨跌幅」一整行，标签不在格子里换行。 */
+    flex: 0 0 164px;
+    min-width: 0;
+    height: auto;
+    min-height: 40px;
+    padding: 2px var(--transactions-space-sm);
+    border-top: 0;
+  }
+
+  /* 窄窗一格只有 164px：名称独占一行，代码/时间落到第二行，避免名字被截断。 */
+  .stock-ladder__item-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+}
+
+/* 窄窗底栏放不下四个副注：只留标签与数字。 */
+@media (max-width: 720px) {
+  .stock-ladder-footer {
+    gap: var(--transactions-space-md);
+  }
+
+  .stock-ladder-footer__note {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .stock-ladder__head {
+    align-items: flex-start;
+  }
+
+  .stock-ladder__item {
+    flex: 1 1 132px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-ladder__skeleton span {
+    animation: none;
+  }
+}
