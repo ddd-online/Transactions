@@ -66,11 +66,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 767,
     hint: '指标条 / 曲线 / 明细表 / 分页',
   },
-  // 503 行：模板列表 / 新建弹窗
-  'src/pages/templates.tsx': {
-    cap: 503,
-    hint: '模板列表 / 新建弹窗',
-  },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {
     cap: 1341,
