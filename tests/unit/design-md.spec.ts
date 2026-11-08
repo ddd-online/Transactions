@@ -62,9 +62,11 @@ const TOKENS: Record<string, string> = {
 
 /** 取 frontmatter 里 `colors:` 下的键值对。 */
 function frontmatterColors(source: string): Record<string, string> {
-  const frontmatter = source.match(/^---\n([\s\S]*?)\n---/)
+  // 行尾可能是 LF 也可能是 CRLF：本机 `core.autocrlf=true`，谁 checkout 一次 DESIGN.md，
+  // 工作区里就是 CRLF —— 用 `\n` 硬匹配会报「没有 frontmatter」，而那和文档内容无关。
+  const frontmatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---/)
   if (!frontmatter) throw new Error('DESIGN.md has no frontmatter')
-  const colors = frontmatter[1].match(/^colors:\n([\s\S]*?)(?=\n\S)/m)
+  const colors = frontmatter[1].match(/^colors:\r?\n([\s\S]*?)(?=\r?\n\S)/m)
   if (!colors) throw new Error('frontmatter has no colors block')
   const entries = [...colors[1].matchAll(/^\s{2}([a-z0-9-]+):\s*"([^"]+)"\s*$/gm)]
   return Object.fromEntries(entries.map(([, key, value]) => [key, value]))
