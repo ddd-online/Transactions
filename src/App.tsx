@@ -1,14 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
-import type { ConfigSnapshot, FeatureFlags } from '../shared/types/config'
+import type { FeatureFlags } from '../shared/types/config'
 import type { Ledger } from '../shared/domain/models'
-import {
-  UPDATE_DOWNLOAD_COMPLETE,
-  UPDATE_DOWNLOAD_ERROR,
-  UPDATE_DOWNLOAD_PROGRESS,
-  WINDOW_STATE_CHANGED,
-} from '../shared/events'
-import type { UpdateSnapshot } from '../shared/domain/update'
 import { errorMessage, isWorkspaceNotOpenedError } from '../shared/errors'
 /* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
  * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
@@ -38,6 +31,7 @@ import { PageRailProvider } from './components/page-layout'
 import { QuitScreen } from './components/quit-screen'
 import { Icon, type IconName } from './components/icon'
 import { useQuitFlow } from './state/use-quit-flow'
+import { useAppStartup } from './state/use-app-startup'
 import { useWorkspaceSession } from './state/use-workspace-session'
 
 type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
@@ -51,8 +45,6 @@ const NAV: Array<[View, string, keyof FeatureFlags]> = [
 ]
 
 export function App(): JSX.Element {
-  const [version, setVersion] = useState('…')
-  const [config, setConfig] = useState<ConfigSnapshot | null>(null)
   const [ledgers, setLedgers] = useState<Ledger[]>([])
   const [activeLedgerId, setActiveLedgerId] = useState('')
   const [ledgerName, setLedgerName] = useState('')
@@ -66,11 +58,12 @@ export function App(): JSX.Element {
   const [accountingTab, setAccountingTab] = useState<
     'records' | 'charts' | 'tags' | 'templates'
   >('records')
-  const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
-  const [maximized, setMaximized] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const { quitting, quitLabel } = useQuitFlow()
   const ledgerMenuRef = useRef<HTMLDivElement>(null)
+  const { version, config, setConfig, updateSnapshot, setUpdateSnapshot, maximized } = useAppStartup({
+    onError: setError,
+  })
   const {
     workspace,
     workspaceIconUrl,
@@ -104,15 +97,6 @@ export function App(): JSX.Element {
     }
   }, [ledgerMenuOpen])
 
-  useEffect(() => {
-    const root = document.documentElement
-    if (config?.appearance === 'light' || config?.appearance === 'dark') {
-      root.dataset.theme = config.appearance
-    } else {
-      delete root.dataset.theme
-    }
-  }, [config?.appearance])
-
   const refreshLedgers = useCallback(async (): Promise<void> => {
     if (!workspace) {
       setLedgers([])
@@ -141,39 +125,6 @@ export function App(): JSX.Element {
       setActiveLedgerId(ledgers[0].id)
     }
   }, [activeLedgerId, ledgers])
-
-  useEffect(() => {
-    let alive = true
-    void (async () => {
-      try {
-        const [appVersion, snapshot] = await Promise.all([
-          window.api.invoke('app_info', { field: 'version' }),
-          window.api.invoke('config_get'),
-        ])
-        if (!alive) return
-        setVersion(appVersion)
-        setConfig(snapshot)
-      } catch (startupError) {
-        if (alive) setError(errorMessage(startupError))
-      }
-    })()
-
-    window.api.onEvent((message) => {
-      if (message.event === UPDATE_DOWNLOAD_PROGRESS ||
-        message.event === UPDATE_DOWNLOAD_COMPLETE ||
-        message.event === UPDATE_DOWNLOAD_ERROR
-      ) {
-        setUpdateSnapshot(message.payload as UpdateSnapshot)
-      }
-      if (message.event === WINDOW_STATE_CHANGED) {
-        setMaximized(message.payload === true)
-      }
-    })
-
-    return () => {
-      alive = false
-    }
-  }, [])
 
   const createLedger = useCallback(async (): Promise<void> => {
     const name = ledgerName.trim()
