@@ -18,8 +18,8 @@ import { notify } from '../components/toast'
  * 以及把用户的动作原样交给命令目录。路径一律由主进程给、原样回传 ——
  * 渲染层不拼路径，也就不会出现「界面以为的备份位置」和「实际写盘的位置」两套。
  *
- * 所有动作的回执走 `notify`；`data-error` 只留给这一页确实失败的时刻
- * （列表读不出来、恢复被拒绝），它带 `role="alert"`，读屏也要听得到。
+ * 所有动作的回执走 `notify`（成功失败都是）；`data-error` 只留给「这一页装不起来」
+ * （`backup_list` 读不出来的那一刻），它带 `role="alert"`，读屏也要听得到。
  */
 
 export interface SettingsDataProps {
@@ -45,6 +45,18 @@ function samePath(left: string, right: string): boolean {
   return normalize(left) === normalize(right)
 }
 
+/** 正在进行的动作；空串 = 空闲。`open-*` 各占一项，不再拼字符串。 */
+type Action =
+  | 'backup'
+  | 'dir'
+  | 'auto'
+  | 'pick'
+  | 'restore'
+  | 'pick-workspace'
+  | 'recent'
+  | 'open-workspace'
+  | 'open-backup'
+
 /** 正在恢复的候选：列表里的一行，或文件框选中的任意 .db。 */
 interface RestoreTarget {
   path: string
@@ -61,27 +73,30 @@ export function SettingsData({
   onConfigChanged,
 }: SettingsDataProps): JSX.Element {
   /** 正在进行的动作；空串 = 空闲。任何动作进行中都禁止重复点击。 */
-  const [busy, setBusy] = useState('')
+  const [busy, setBusy] = useState<Action | ''>('')
   const [backups, setBackups] = useState<BackupEntryDto[]>([])
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<BackupResultDto | null>(null)
   const [status, setStatus] = useState('')
-  const [error, setError] = useState('')
+  /** 只放「这一页装不起来」：动作失败一律走 notify，不在页面上再报一遍。 */
+  const [loadError, setLoadError] = useState('')
   const [restoreTarget, setRestoreTarget] = useState<RestoreTarget | null>(null)
 
   const reloadBackups = useCallback(async (): Promise<void> => {
     // 没有工作空间就没有「当前数据」，备份目录也不必去读：空态比一句报错更准确。
     if (!workspace) {
       setBackups([])
+      setLoadError('')
       setLoading(false)
       return
     }
     setLoading(true)
     try {
       setBackups(await window.api.invoke('backup_list'))
+      setLoadError('')
     } catch (listError) {
       setBackups([])
-      setError(errorMessage(listError))
+      setLoadError(errorMessage(listError))
     } finally {
       setLoading(false)
     }
@@ -95,145 +110,116 @@ export function SettingsData({
     onConfigChanged(await window.api.invoke('config_get'))
   }, [onConfigChanged])
 
-  const backupNow = useCallback(async (): Promise<void> => {
-    if (!workspace) return
-    setBusy('backup')
-    setError('')
-    setStatus('正在备份…')
-    try {
+  /**
+   * 所有动作走同一段 try/catch/finally：失败只 `notify`。
+   *
+   * DESIGN 的规矩是「动作的回执走消息，页面的装载失败留在页面上」—— 动作失败再往
+   * `data-error` 上写一遍，用户会在两处看到同一句话。
+   */
+  const runAction = useCallback(
+    async (action: Action, work: () => Promise<void>): Promise<void> => {
+      setBusy(action)
+      try {
+        await work()
+      } catch (actionError) {
+        setStatus('')
+        notify(errorMessage(actionError), 'error')
+      } finally {
+        setBusy('')
+      }
+    },
+    [],
+  )
+
+  const backupNow = useCallback((): Promise<void> => {
+    if (!workspace) return Promise.resolve()
+    return runAction('backup', async () => {
+      setStatus('正在备份…')
       const created = await window.api.invoke('backup_create')
       setResult(created)
       setStatus('')
       notify(`已备份 ${created.name}`)
       await reloadBackups()
-    } catch (backupError) {
-      setStatus('')
-      setError(errorMessage(backupError))
-      notify(errorMessage(backupError), 'error')
-    } finally {
-      setBusy('')
-    }
-  }, [reloadBackups, workspace])
+    })
+  }, [reloadBackups, runAction, workspace])
 
-  const changeBackupDir = useCallback(async (): Promise<void> => {
-    setBusy('dir')
-    setError('')
-    try {
-      const picked = await window.api.invoke('dialog_open', { title: '选择备份位置' })
-      if (picked.canceled || !picked.filePaths[0]) return
-      const next = await window.api.invoke('backup_dir_set', { dir: picked.filePaths[0] })
-      onConfigChanged(next)
-      notify('备份位置已更新')
-    } catch (dirError) {
-      setError(errorMessage(dirError))
-      notify(errorMessage(dirError), 'error')
-    } finally {
-      setBusy('')
-    }
-  }, [onConfigChanged])
-
-  const openDirectory = useCallback(async (target: 'workspace' | 'backup'): Promise<void> => {
-    setBusy(`open-${target}`)
-    setError('')
-    try {
-      await window.api.invoke('workspace_open_dir', { target })
-    } catch (openError) {
-      setError(errorMessage(openError))
-      notify(errorMessage(openError), 'error')
-    } finally {
-      setBusy('')
-    }
-  }, [])
-
-  const setAutoBackup = useCallback(
-    async (enabled: boolean): Promise<void> => {
-      setBusy('auto')
-      setError('')
-      try {
-        const next = await window.api.invoke('config_set_auto_backup', { enabled })
+  const changeBackupDir = useCallback(
+    (): Promise<void> =>
+      runAction('dir', async () => {
+        const picked = await window.api.invoke('dialog_open', { title: '选择备份位置' })
+        if (picked.canceled || !picked.filePaths[0]) return
+        const next = await window.api.invoke('backup_dir_set', { dir: picked.filePaths[0] })
         onConfigChanged(next)
-      } catch (autoError) {
-        setError(errorMessage(autoError))
-        notify(errorMessage(autoError), 'error')
-      } finally {
-        setBusy('')
-      }
-    },
-    [onConfigChanged],
+        notify('备份位置已更新')
+      }),
+    [onConfigChanged, runAction],
   )
 
-  const pickRestoreFile = useCallback(async (): Promise<void> => {
-    setBusy('pick')
-    setError('')
-    try {
-      const picked = await window.api.invoke('dialog_open_file', {
-        title: '选择要恢复的备份文件',
-        extensions: ['db'],
-      })
-      if (picked.canceled || !picked.filePaths[0]) return
-      const path = picked.filePaths[0]
-      // 选中的是不是工作空间、版本高不高，由主进程在恢复时校验并给出那句原因。
-      setRestoreTarget({ path, name: baseName(path), workspaceDir: '' })
-    } catch (pickError) {
-      setError(errorMessage(pickError))
-      notify(errorMessage(pickError), 'error')
-    } finally {
-      setBusy('')
-    }
-  }, [])
+  const openDirectory = useCallback(
+    (target: 'workspace' | 'backup'): Promise<void> =>
+      runAction(target === 'workspace' ? 'open-workspace' : 'open-backup', async () => {
+        await window.api.invoke('workspace_open_dir', { target })
+      }),
+    [runAction],
+  )
 
-  const confirmRestore = useCallback(async (): Promise<void> => {
+  const setAutoBackup = useCallback(
+    (enabled: boolean): Promise<void> =>
+      runAction('auto', async () => {
+        const next = await window.api.invoke('config_set_auto_backup', { enabled })
+        onConfigChanged(next)
+      }),
+    [onConfigChanged, runAction],
+  )
+
+  const pickRestoreFile = useCallback(
+    (): Promise<void> =>
+      runAction('pick', async () => {
+        const picked = await window.api.invoke('dialog_open_file', {
+          title: '选择要恢复的备份文件',
+          extensions: ['db'],
+        })
+        if (picked.canceled || !picked.filePaths[0]) return
+        const path = picked.filePaths[0]
+        // 选中的是不是工作空间、版本高不高，由主进程在恢复时校验并给出那句原因。
+        setRestoreTarget({ path, name: baseName(path), workspaceDir: '' })
+      }),
+    [runAction],
+  )
+
+  const confirmRestore = useCallback((): Promise<void> => {
     const target = restoreTarget
     setRestoreTarget(null)
-    if (!target) return
-    setBusy('restore')
-    setError('')
-    setStatus('正在恢复…')
-    try {
+    if (!target) return Promise.resolve()
+    return runAction('restore', async () => {
+      setStatus('正在恢复…')
       await window.api.invoke('backup_restore', { path: target.path })
+      // 进行中状态，不是错误：保留在 data-status 上（重启前用户要看到它在动）
       setStatus('已恢复，正在重启…')
       notify('已恢复，正在重启…')
-    } catch (restoreError) {
-      setStatus('')
-      setError(errorMessage(restoreError))
-      notify(errorMessage(restoreError), 'error')
-    } finally {
-      setBusy('')
-    }
-  }, [restoreTarget])
+    })
+  }, [restoreTarget, runAction])
 
-  const pickWorkspace = useCallback(async (): Promise<void> => {
-    setBusy('pick-workspace')
-    setError('')
-    try {
-      await onPickWorkspace()
-      await refreshConfig()
-    } catch (pickError) {
-      setError(errorMessage(pickError))
-      notify(errorMessage(pickError), 'error')
-    } finally {
-      setBusy('')
-    }
-  }, [onPickWorkspace, refreshConfig])
+  const pickWorkspace = useCallback(
+    (): Promise<void> =>
+      runAction('pick-workspace', async () => {
+        await onPickWorkspace()
+        await refreshConfig()
+      }),
+    [onPickWorkspace, refreshConfig, runAction],
+  )
 
   const openRecent = useCallback(
-    async (dir: string): Promise<void> => {
-      if (dir === workspace) return
-      setBusy('recent')
-      setError('')
-      try {
+    (dir: string): Promise<void> => {
+      if (dir === workspace) return Promise.resolve()
+      return runAction('recent', async () => {
         await onOpenWorkspace(dir)
         // 最近工作空间是外壳写进去的：换完必须重拉一次，顺序与置灰项才对。
         await refreshConfig()
         notify(`已切换到 ${baseName(dir)}`)
-      } catch (openError) {
-        setError(errorMessage(openError))
-        notify(errorMessage(openError), 'error')
-      } finally {
-        setBusy('')
-      }
+      })
     },
-    [onOpenWorkspace, refreshConfig, workspace],
+    [onOpenWorkspace, refreshConfig, runAction, workspace],
   )
 
   const busyAny = busy !== ''
@@ -448,9 +434,9 @@ export function SettingsData({
         </div>
       </div>
 
-      {error ? (
+      {loadError ? (
         <p role="alert" className="m0-error" data-testid="data-error">
-          {error}
+          {loadError}
         </p>
       ) : null}
       {status ? (
