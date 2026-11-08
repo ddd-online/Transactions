@@ -36,11 +36,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 599,
     hint: '曲线列表 / 曲线条件表单 / 新建与改名',
   },
-  // 459 行：备份动作 / 备份列表 / 最近工作空间
-  'src/pages/settings-data.tsx': {
-    cap: 459,
-    hint: '备份动作 / 备份列表 / 最近工作空间',
-  },
   // 654 行：轮次列表与分页 / 单轮详情
   'src/pages/stock-history.tsx': {
     cap: 654,

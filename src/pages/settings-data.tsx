@@ -1,4 +1,3 @@
-import { Switch as AntSwitch } from 'antd'
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import { formatBytes } from '../../shared/domain/backup'
@@ -8,8 +7,8 @@ import type { BackupEntryDto, BackupResultDto } from '../../shared/types/backup'
 import type { ConfigSnapshot } from '../../shared/types/config'
 import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
-import { SettingsRow } from '../components/settings-row'
 import { notify } from '../components/toast'
+import { SettingsDataBackup } from './settings-data-backup'
 
 /**
  * 设置 · 数据分栏：备份、恢复、数据目录与最近工作空间。
@@ -234,103 +233,18 @@ export function SettingsData({
 
   return (
     <div className="st-list">
-      <div className="st-card">
-        <div className="st-card-info">
-          <span className="st-card-title">立即备份</span>
-          <span className="st-card-desc">
-            把当前工作空间的库与图片资产复制成一份带时间戳的目录，放在下面的备份位置
-          </span>
-        </div>
-        <div className="st-card-action">
-          <Button
-            variant="secondary"
-            testId="backup-now"
-            disabled={!workspace || busyAny}
-            loading={busy === 'backup'}
-            onClick={() => void backupNow()}
-          >
-            立即备份
-          </Button>
-        </div>
-      </div>
-      {result ? (
-        <p className="st-backup-result" data-testid="backup-result">
-          已备份 <span className="st-backup-mono">{result.name}</span>（
-          <span className="st-backup-mono">{formatBytes(result.sizeBytes)}</span>，用时{' '}
-          <span className="st-backup-mono">{result.durationMs}</span>ms）
-        </p>
-      ) : null}
-
-      <SettingsRow title="备份位置" description="手动备份与恢复前副本都落在这一目录；默认在「文档」下">
-        <input
-          className="st-backup-dir-input"
-          data-testid="backup-dir"
-          readOnly
-          value={config?.backupDir ?? ''}
-          placeholder="尚未读取到备份位置"
-          title={config?.backupDir ?? ''}
-        />
-        <Button
-          variant="secondary"
-          testId="backup-dir-change"
-          disabled={!config || busyAny}
-          onClick={() => void changeBackupDir()}
-        >
-          更改
-        </Button>
-        <Button
-          variant="secondary"
-          testId="backup-open-dir"
-          disabled={busyAny}
-          onClick={() => void openDirectory('backup')}
-        >
-          打开
-        </Button>
-      </SettingsRow>
-
-      <SettingsRow title="工作空间目录" description="当前账本的库与图片所在的位置">
-        <Button
-          variant="secondary"
-          testId="workspace-open-dir"
-          disabled={!workspace || busyAny}
-          onClick={() => void openDirectory('workspace')}
-        >
-          打开
-        </Button>
-      </SettingsRow>
-
-      <SettingsRow
-        title="自动备份"
-        description="每天第一次打开工作空间时另存一份只含库的当日快照，保留最近 7 份"
+      <SettingsDataBackup
+        workspace={workspace}
+        config={config}
+        result={result}
+        busy={busyAny}
+        backingUp={busy === 'backup'}
+        onBackupNow={backupNow}
+        onChangeBackupDir={changeBackupDir}
+        onOpenDirectory={openDirectory}
+        onAutoBackupChange={setAutoBackup}
+        onPickRestoreFile={pickRestoreFile}
       >
-        <AntSwitch
-          checked={config?.autoBackup ?? true}
-          disabled={!config || busyAny}
-          data-testid="auto-backup"
-          aria-label="自动备份"
-          onChange={(next) => void setAutoBackup(next)}
-        />
-      </SettingsRow>
-
-      <div className="st-card st-card--block">
-        <div className="st-panel-head">
-          <div className="st-card-info">
-            <span className="st-card-title">从备份恢复</span>
-            <span className="st-card-desc">
-              选中一份备份覆盖当前数据；恢复前会先把当前库另存为 pre-restore 副本，完成后应用自动重启
-            </span>
-          </div>
-          <div className="st-panel-actions">
-            <Button
-              variant="secondary"
-              testId="backup-restore-pick"
-              disabled={!workspace || busyAny}
-              onClick={() => void pickRestoreFile()}
-            >
-              从文件恢复…
-            </Button>
-          </div>
-        </div>
         <div className="st-backup-list" data-testid="backup-list">
           {!workspace ? (
             <p className="st-backup-empty">尚未打开工作空间；打开后这里会列出可恢复的备份。</p>
@@ -384,7 +298,7 @@ export function SettingsData({
             })
           )}
         </div>
-      </div>
+      </SettingsDataBackup>
 
       <div className="st-card st-card--block">
         <div className="st-panel-head">
