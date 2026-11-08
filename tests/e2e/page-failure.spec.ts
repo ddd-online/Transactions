@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
@@ -18,7 +18,7 @@ function environment(overrides: Record<string, string>): Record<string, string> 
 /**
  * 分页按需加载之后多了一种新的坏法：chunk 读不到。
  *
- * 这条用例把股票页的 chunk 改名（等于安装文件缺失 / 被安全软件拦下），再点进去 ——
+ * 这条用例把股票页的 chunk 删掉（等于安装文件缺失 / 被安全软件拦下），再点进去 ——
  * 期望是**只有这一页**换成「这一页没有加载出来 + 重新加载」，外壳、导航、账本都还在；
  * 原来没有边界时，React 会把整棵树卸掉，窗口只剩标题栏。
  */
@@ -50,7 +50,6 @@ test('分页加载失败：只有这一页变成一句可重试的话', async ()
   const chunks = readdirSync(assets).filter((name) => /^stock-.*\.js$/.test(name))
   expect(chunks.length).toBeGreaterThan(0)
   const victim = join(assets, chunks[0])
-  const parked = `${victim}.parked`
 
   const electronApp = await electron.launch({
     args: [appDir],
@@ -71,10 +70,11 @@ test('分页加载失败：只有这一页变成一句可重试的话', async ()
     await page.getByTestId('nav-settings').click()
     await createLedger(page, '边界账本')
 
-    renameSync(victim, parked)
+    // 只是让这份副本读不到这个 chunk：副本用完连临时根一起删，不需要还原。
+    rmSync(victim)
 
     await page.getByTestId('nav-stock').click()
-    await expect(page.getByTestId('page-boundary')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByTestId('page-boundary')).toBeVisible()
     await expect(page.getByTestId('page-boundary')).toContainText('这一页没有加载出来')
     // 外壳还在：侧栏、账本菜单、底栏都还能用，不是整窗白屏
     await expect(page.getByTestId('nav-accounting')).toBeVisible()
