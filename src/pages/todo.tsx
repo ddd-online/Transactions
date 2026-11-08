@@ -1,19 +1,21 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import type {
-  TodoCardDto,
-  TodoHistoryDto,
-  TodoItemDto,
-} from '../../shared/types/todo'
-import { TODO_LEVELS } from '../../shared/domain/consts'
-import { Button } from '../components/button'
+import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
-import { Segmented } from '../components/segmented'
-import { TodoCardColumns, TodoCardCreateModal, TodoQuadrantView } from './todo-card-columns'
+import {
+  TodoBoardToolbar,
+  TodoCardColumns,
+  TodoQuadrantView,
+} from './todo-card-columns'
 import { TodoHistoryProgressModal, TodoHistoryView } from './todo-history'
-import { TodoItemEditor } from './todo-item-editor'
+import {
+  TodoCardCreateModal,
+  TodoItemEditor,
+  type TodoItemDraft,
+  type TodoItemEditorRequest,
+} from './todo-item-editor'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -36,17 +38,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   const [history, setHistory] = useState<TodoHistoryDto[]>([])
   const [historyProgress, setHistoryProgress] = useState<TodoHistoryDto | null>(null)
   const [cardOpen, setCardOpen] = useState(false)
-  const [cardDraft, setCardDraft] = useState('')
-  const [cardError, setCardError] = useState('')
-  const [itemOpen, setItemOpen] = useState(false)
-  const [itemCardId, setItemCardId] = useState('')
-  const [itemEditingId, setItemEditingId] = useState('')
-  const [itemDraft, setItemDraft] = useState('')
-  const [itemStart, setItemStart] = useState('')
-  const [itemDue, setItemDue] = useState('')
-  const [itemUrgency, setItemUrgency] = useState<number>(TODO_LEVELS[2])
-  const [itemImportance, setItemImportance] = useState<number>(TODO_LEVELS[2])
-  const [itemError, setItemError] = useState('')
+  const [itemRequest, setItemRequest] = useState<TodoItemEditorRequest | null>(null)
   const [progressText, setProgressText] = useState<Record<string, string>>({})
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
   /** 主题默认展开；收起只记在这一次会话里，切页回来重新铺开。 */
@@ -82,137 +74,72 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   }, [load])
 
   const openCardModal = useCallback((): void => {
-    setCardDraft('')
-    setCardError('')
     setCardOpen(true)
   }, [])
 
   const closeCardModal = useCallback((): void => {
     setCardOpen(false)
-    setCardDraft('')
-    setCardError('')
   }, [])
 
-  const createCard = useCallback(async (): Promise<void> => {
-    const title = cardDraft.trim()
-    if (!title) {
-      setCardError('请输入主题名称')
-      return
-    }
-    setBusy(true)
-    setCardError('')
-    setError('')
-    try {
-      await window.api.invoke('todo_card_create', { ledger_id: ledgerId, title })
-      setCardOpen(false)
-      setCardDraft('')
-      await load()
-    } catch (createError) {
-      setCardError(errorMessage(createError))
-    } finally {
-      setBusy(false)
-    }
-  }, [cardDraft, ledgerId, load])
+  const createCard = useCallback(
+    async (title: string): Promise<void> => {
+      setBusy(true)
+      setError('')
+      try {
+        await window.api.invoke('todo_card_create', { ledger_id: ledgerId, title })
+        setCardOpen(false)
+        await load()
+      } finally {
+        setBusy(false)
+      }
+    },
+    [ledgerId, load],
+  )
 
   const openItemModal = useCallback((cardId: string, item?: TodoItemDto): void => {
     // 往收起的主题里加事项时先展开它，否则新事项落在看不见的地方。
     setCollapsedCards((current) => (current[cardId] ? { ...current, [cardId]: false } : current))
-    setItemCardId(cardId)
-    setItemEditingId(item?.id ?? '')
-    setItemDraft(item?.title ?? '')
-    setItemStart(item?.startDate ?? '')
-    setItemDue(item?.dueDate ?? '')
-    setItemUrgency(item?.urgency ?? TODO_LEVELS[2])
-    setItemImportance(item?.importance ?? TODO_LEVELS[2])
-    setItemError('')
-    setItemOpen(true)
+    setItemRequest({ cardId, item })
   }, [])
 
   const closeItemModal = useCallback((): void => {
-    setItemOpen(false)
-    setItemEditingId('')
-    setItemError('')
+    setItemRequest(null)
   }, [])
 
-  const changeItemTitle = (value: string): void => {
-    setItemDraft(value)
-    setItemError('')
-  }
-
-  const changeItemStart = (value: string): void => {
-    setItemStart(value)
-    setItemError('')
-  }
-
-  const changeItemDue = (value: string): void => {
-    setItemDue(value)
-    setItemError('')
-  }
-
-  const changeItemUrgency = (value: number): void => {
-    setItemUrgency(value)
-    setItemError('')
-  }
-
-  const changeItemImportance = (value: number): void => {
-    setItemImportance(value)
-    setItemError('')
-  }
-
-  const createItem = useCallback(async (): Promise<void> => {
-    const title = itemDraft.trim()
-    if (!title) {
-      setItemError('请输入事项')
-      return
-    }
-    if (itemStart !== '' && itemDue !== '' && itemStart > itemDue) {
-      setItemError('截止日期不能早于开始日期')
-      return
-    }
-    setBusy(true)
-    setItemError('')
-    setError('')
-    try {
-      if (itemEditingId) {
-        await window.api.invoke('todo_item_update', {
-          ledger_id: ledgerId,
-          id: itemEditingId,
-          title,
-          start_date: itemStart,
-          due_date: itemDue,
-          urgency: itemUrgency,
-          importance: itemImportance,
-        })
-      } else {
-        await window.api.invoke('todo_item_create', {
-          ledger_id: ledgerId,
-          card_id: itemCardId,
-          title,
-          start_date: itemStart,
-          due_date: itemDue,
-          urgency: itemUrgency,
-          importance: itemImportance,
-        })
+  const createItem = useCallback(
+    async (draft: TodoItemDraft): Promise<void> => {
+      setBusy(true)
+      setError('')
+      try {
+        if (draft.id) {
+          await window.api.invoke('todo_item_update', {
+            ledger_id: ledgerId,
+            id: draft.id,
+            title: draft.title,
+            start_date: draft.startDate,
+            due_date: draft.dueDate,
+            urgency: draft.urgency,
+            importance: draft.importance,
+          })
+        } else {
+          await window.api.invoke('todo_item_create', {
+            ledger_id: ledgerId,
+            card_id: draft.cardId,
+            title: draft.title,
+            start_date: draft.startDate,
+            due_date: draft.dueDate,
+            urgency: draft.urgency,
+            importance: draft.importance,
+          })
+        }
+        setItemRequest(null)
+        await load()
+      } finally {
+        setBusy(false)
       }
-      setItemOpen(false)
-      setItemEditingId('')
-      await load()
-    } catch (createError) {
-      setItemError(errorMessage(createError))
-    } finally {
-      setBusy(false)
-    }
-  }, [
-    itemCardId,
-    itemDraft,
-    itemDue,
-    itemEditingId,
-    itemImportance,
-    itemStart,
-    itemUrgency,
-    ledgerId,
-    load,
-  ])
+    },
+    [ledgerId, load],
+  )
 
   const setStatus = useCallback(
     async (id: string, status: string): Promise<void> => {
@@ -334,10 +261,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
   const activeCount = cards.reduce((total, card) => total + card.items.length, 0)
 
-  /** 只有装着事项的主题才谈得上收起；空主题没有可收的东西。 */
-  const collapsibleCards = cards.filter((card) => card.items.length > 0)
-  const collapsedCount = collapsibleCards.filter((card) => collapsedCards[card.id]).length
-
   const expandAllCards = useCallback((): void => {
     setCollapsedCards({})
   }, [])
@@ -349,11 +272,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       ),
     )
   }, [cards])
-
-  const changeCardDraft = (value: string): void => {
-    setCardDraft(value)
-    setCardError('')
-  }
 
   const changeProgressText = (itemId: string, value: string): void => {
     setProgressText((current) => ({ ...current, [itemId]: value }))
@@ -415,48 +333,16 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       }
       toolbar={
         todoMode === 'cards' ? (
-          <div className="todo-toolbar">
-            <Segmented
-              testId="todo-view"
-              value={todoView}
-              onChange={(value) => setTodoView(value as 'board' | 'quadrant')}
-              options={[
-                { value: 'board', label: '待办视图' },
-                { value: 'quadrant', label: '四象限图' },
-              ]}
-            />
-            {todoView === 'board' ? (
-              <div className="todo-toolbar-actions">
-                <Button
-                  variant="text"
-                  size="sm"
-                  testId="todo-expand-all"
-                  disabled={collapsedCount === 0}
-                  onClick={expandAllCards}
-                >
-                  全部展开
-                </Button>
-                <Button
-                  variant="text"
-                  size="sm"
-                  testId="todo-collapse-all"
-                  disabled={collapsedCount >= collapsibleCards.length}
-                  onClick={collapseAllCards}
-                >
-                  全部收起
-                </Button>
-                <Button
-                  variant="primary"
-                  testId="todo-card-open"
-                  icon={<Icon name="Plus" size={14} />}
-                  disabled={!ledgerId || busy}
-                  onClick={openCardModal}
-                >
-                  新建主题
-                </Button>
-              </div>
-            ) : null}
-          </div>
+          <TodoBoardToolbar
+            view={todoView}
+            onViewChange={setTodoView}
+            cards={cards}
+            collapsedCards={collapsedCards}
+            onExpandAll={expandAllCards}
+            onCollapseAll={collapseAllCards}
+            canCreate={Boolean(ledgerId) && !busy}
+            onCreate={openCardModal}
+          />
         ) : undefined
       }
       footer={
@@ -522,33 +408,18 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
       <TodoCardCreateModal
         open={cardOpen}
-        title={cardDraft}
-        error={cardError}
         busy={busy}
         createDisabled={!ledgerId}
-        onTitleChange={changeCardDraft}
+        onSubmit={createCard}
         onCancel={closeCardModal}
-        onSubmit={() => void createCard()}
       />
 
       <TodoItemEditor
-        open={itemOpen}
-        editing={itemEditingId !== ''}
-        title={itemDraft}
-        start={itemStart}
-        due={itemDue}
-        urgency={itemUrgency}
-        importance={itemImportance}
-        error={itemError}
+        request={itemRequest}
         busy={busy}
         saveDisabled={!ledgerId}
-        onTitleChange={changeItemTitle}
-        onStartChange={changeItemStart}
-        onDueChange={changeItemDue}
-        onUrgencyChange={changeItemUrgency}
-        onImportanceChange={changeItemImportance}
+        onSubmit={createItem}
         onCancel={closeItemModal}
-        onSubmit={() => void createItem()}
       />
 
       <TodoHistoryProgressModal

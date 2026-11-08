@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 
-import { Input, Modal, Popconfirm } from 'antd'
+import { Popconfirm } from 'antd'
 
 import { TODO_LEVELS, todoLevelLabel } from '../../shared/domain/consts'
 import { todoDueState } from '../../shared/domain/todo-due'
@@ -8,16 +8,16 @@ import type { TodoCardDto, TodoItemDto } from '../../shared/types/todo'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
+import { Segmented } from '../components/segmented'
 import { TodoQuadrant } from '../components/todo-quadrant'
 import { doneCountOf, formatItemDates } from './todo-format'
 import { TodoProgressPanel } from './todo-progress'
 
 /**
- * 待办页的两种卡片视图与新建主题表单。
+ * 待办页的两种卡片视图与卡片工具条：四象限图、卡片列、骨架、工具栏。
  *
- * 四象限图（`TodoQuadrantView`）与卡片列（`TodoCardColumns`）都只画页面递下来的数据；
- * 勾选、展开 / 收起、拖拽排序、删除都通过显式回调回传页面。拖拽中的两个 id 由页面持有
- * ——它们是「拖到哪了」的交互状态，排序落库也在页面。
+ * 两个视图都只画页面递下来的数据；勾选、展开 / 收起、拖拽排序、删除都通过显式回调
+ * 回传页面。拖拽中的两个 id 由页面持有——它们是「拖到哪了」的交互状态，排序落库也在页面。
  */
 export interface TodoQuadrantViewProps {
   cards: TodoCardDto[]
@@ -350,76 +350,75 @@ export function TodoCardColumns({
   )
 }
 
-export interface TodoCardCreateModalProps {
-  open: boolean
-  title: string
-  error: string
-  busy: boolean
-  createDisabled: boolean
-  onTitleChange: (value: string) => void
-  onCancel: () => void
-  onSubmit: () => void
+export interface TodoBoardToolbarProps {
+  view: 'board' | 'quadrant'
+  onViewChange: (value: 'board' | 'quadrant') => void
+  cards: TodoCardDto[]
+  collapsedCards: Record<string, boolean>
+  onExpandAll: () => void
+  onCollapseAll: () => void
+  /** 有账本且不在提交中 */
+  canCreate: boolean
+  onCreate: () => void
 }
 
-export function TodoCardCreateModal({
-  open,
-  title,
-  error,
-  busy,
-  createDisabled,
-  onTitleChange,
-  onCancel,
-  onSubmit,
-}: TodoCardCreateModalProps): JSX.Element {
+/** 卡片视图的工具栏：视图切换、全部展开 / 收起、新建主题。 */
+export function TodoBoardToolbar({
+  view,
+  onViewChange,
+  cards,
+  collapsedCards,
+  onExpandAll,
+  onCollapseAll,
+  canCreate,
+  onCreate,
+}: TodoBoardToolbarProps): JSX.Element {
+  /** 只有装着事项的主题才谈得上收起；空主题没有可收的东西。 */
+  const collapsibleCards = cards.filter((card) => card.items.length > 0)
+  const collapsedCount = collapsibleCards.filter((card) => collapsedCards[card.id]).length
   return (
-    <Modal
-      open={open}
-      title="新建主题"
-      width={520}
-      centered
-      destroyOnHidden
-      footer={null}
-      onCancel={onCancel}
-    >
-      <div className="todo-modal">
-        <Input
-          data-testid="todo-card-title"
-          autoFocus
-          maxLength={200}
-          status={error ? 'error' : undefined}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? 'todo-card-error' : undefined}
-          placeholder="例如：本周工作"
-          value={title}
-          onChange={(event) => onTitleChange(event.target.value)}
-          onPressEnter={onSubmit}
-        />
-        {error ? (
-          <p
-            role="alert"
-            id="todo-card-error"
-            className="todo-modal__error"
-            data-testid="todo-card-error"
+    <div className="todo-toolbar">
+      <Segmented
+        testId="todo-view"
+        value={view}
+        onChange={(value) => onViewChange(value as 'board' | 'quadrant')}
+        options={[
+          { value: 'board', label: '待办视图' },
+          { value: 'quadrant', label: '四象限图' },
+        ]}
+      />
+      {view === 'board' ? (
+        <div className="todo-toolbar-actions">
+          <Button
+            variant="text"
+            size="sm"
+            testId="todo-expand-all"
+            disabled={collapsedCount === 0}
+            onClick={onExpandAll}
           >
-            {error}
-          </p>
-        ) : null}
-        <div className="todo-modal__actions">
-          <Button variant="secondary" onClick={onCancel}>
-            取消
+            全部展开
+          </Button>
+          <Button
+            variant="text"
+            size="sm"
+            testId="todo-collapse-all"
+            disabled={collapsedCount >= collapsibleCards.length}
+            onClick={onCollapseAll}
+          >
+            全部收起
           </Button>
           <Button
             variant="primary"
-            testId="todo-card-create"
-            loading={busy}
-            disabled={createDisabled}
-            onClick={onSubmit}
+            testId="todo-card-open"
+            icon={<Icon name="Plus" size={14} />}
+            disabled={!canCreate}
+            onClick={onCreate}
           >
-            创建
+            新建主题
           </Button>
         </div>
-      </div>
-    </Modal>
+      ) : null}
+    </div>
   )
 }
 

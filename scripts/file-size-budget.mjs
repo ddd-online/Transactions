@@ -101,11 +101,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 503,
     hint: '模板列表 / 新建弹窗',
   },
-  // 1092 行：卡片列 / 事项编辑 / 进度记录 / 历史视图
-  'src/pages/todo.tsx': {
-    cap: 1092,
-    hint: '卡片列 / 事项编辑 / 进度记录 / 历史视图',
-  },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {
     cap: 1341,
