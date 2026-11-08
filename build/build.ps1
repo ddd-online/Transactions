@@ -51,7 +51,9 @@ try {
     if ($E2E) {
         Write-Host "[build] 打包产物冒烟"
         $env:TRANSACTIONS_PACKAGED_EXE = $unpacked
-        pnpm exec playwright test tests/e2e/packaged.spec.ts
+        # 默认配置把 packaged.spec.ts 排在收集范围外（它要的是安装目录里的真产物）：
+        # 这里必须点名它自己的配置，否则 Playwright 会说「没有找到测试」。
+        pnpm exec playwright test --config=playwright.packaged.config.ts
         if ($LASTEXITCODE -ne 0) { throw "打包产物冒烟失败（exit $LASTEXITCODE）" }
     }
 
