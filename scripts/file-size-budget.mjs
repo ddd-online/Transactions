@@ -15,18 +15,7 @@ export const BUDGETS = {
 
 // 清单只装「已经超预算、本轮还没拆完」的文件，cap 登记当前行数。
 // 拆完一个就删一条，绝不为了过护栏加条目、抬 cap 或调大 BUDGETS。
-export const FILE_SIZE_ALLOWLIST = {
-  // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
-  'src/styles/app.css': {
-    cap: 1341,
-    hint: '外壳 / 侧栏 / 工具栏 / 遮罩',
-  },
-  // 1253 行：图库 / 编辑器 / 图片块
-  'src/styles/key_event.css': {
-    cap: 1253,
-    hint: '图库 / 编辑器 / 图片块',
-  },
-}
+export const FILE_SIZE_ALLOWLIST = {}
 
 // 统一成 `/` 分隔、相对仓库根。调用方传进来的都是相对路径。
 function normalizePath(path) {
