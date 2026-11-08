@@ -16,11 +16,6 @@ export const BUDGETS = {
 // 清单只装「已经超预算、本轮还没拆完」的文件，cap 登记当前行数。
 // 拆完一个就删一条，绝不为了过护栏加条目、抬 cap 或调大 BUDGETS。
 export const FILE_SIZE_ALLOWLIST = {
-  // 780 行：启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染
-  'src/App.tsx': {
-    cap: 780,
-    hint: '启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染',
-  },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {
     cap: 1341,
