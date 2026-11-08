@@ -81,11 +81,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 499,
     hint: '只读台账 / 编辑弹窗 / 落差计算',
   },
-  // 1173 行：持仓表 / 成交录入弹窗（含费用表单）/ 资金记录弹窗 / 复盘入口
-  'src/pages/stock-positions.tsx': {
-    cap: 1173,
-    hint: '持仓表 / 成交录入弹窗（含费用表单）/ 资金记录弹窗 / 复盘入口',
-  },
   // 545 行：费率表单 / 复盘模板 / 危险操作
   'src/pages/stock-settings.tsx': {
     cap: 545,
