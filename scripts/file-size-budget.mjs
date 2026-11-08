@@ -6,7 +6,7 @@
 //
 // 允许清单就是剩余工作清单：只减不增。拆到预算内必须删条目，规则 3 会红。
 
-export const BUDGETS = {
+const BUDGETS = {
   page: 450,
   renderer: 500,
   command: 300,
@@ -39,7 +39,6 @@ export function countLines(text) {
 
 export function evaluateFileSizes(files, options = {}) {
   const allowlist = options.allowlist ?? FILE_SIZE_ALLOWLIST
-  const budgets = options.budgets ?? BUDGETS
   const failures = []
   const allowlistPaths = Object.keys(allowlist)
   const present = new Set(files.map((file) => normalizePath(file.path)))
@@ -50,13 +49,11 @@ export function evaluateFileSizes(files, options = {}) {
     }
   }
 
-  let checked = 0
   for (const file of files) {
     const path = normalizePath(file.path)
     const kind = budgetKindOf(path)
     if (!kind) continue
-    checked += 1
-    const budget = budgets[kind]
+    const budget = BUDGETS[kind]
     const entry = allowlist[path]
     if (!entry) {
       if (file.lines > budget) {
@@ -77,5 +74,5 @@ export function evaluateFileSizes(files, options = {}) {
     }
   }
 
-  return { failures, listed: allowlistPaths.length, checked }
+  return { failures, listed: allowlistPaths.length }
 }
