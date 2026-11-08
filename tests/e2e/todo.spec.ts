@@ -217,10 +217,12 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.keyboard.press('Escape')
     await expect(progressModal).toBeHidden()
 
-    // 历史里的删除也是文本按钮，点开二次确认
+    // 历史里的删除也是文本按钮，点开二次确认；先点「取消」：事项还在（first 是取消）
     await page.getByTestId('todo-history-delete').click()
     await expect(page.getByText('删除事项「写周报」？')).toBeVisible()
     await page.locator('.ant-popconfirm-buttons button').first().click()
+    await expect(page.getByText('删除事项「写周报」？')).toBeHidden()
+    await expect(page.getByTestId('todo-history-item')).toHaveCount(1)
 
     // 「回到待办」把事项从历史放回卡片，再完成一次
     await page.getByTestId('todo-history-reopen').click()
@@ -260,6 +262,21 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     })
     expect(item.completed_at).toBeGreaterThan(0)
     expect(progress).toEqual({ content: '完成一半', done: 1 })
+
+    // 二次确认点「删除」：历史与库里都不再有这一条
+    await page.getByTestId('todo-history-delete').click()
+    await expect(page.getByText('删除事项「写周报」？')).toBeVisible()
+    await page.locator('.ant-popconfirm-buttons button').last().click()
+    await expect(page.getByTestId('todo-history-item')).toHaveCount(0)
+    const afterDelete = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
+    try {
+      const remaining = afterDelete.prepare('SELECT COUNT(*) AS n FROM todo_item').get() as {
+        n: number
+      }
+      expect(remaining.n).toBe(0)
+    } finally {
+      afterDelete.close()
+    }
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })
