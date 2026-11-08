@@ -3323,8 +3323,7 @@
 .stock-ledger__group-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
+  gap: var(--transactions-space-md);
 }
 
 .stock-ledger__group-label {
@@ -3334,7 +3333,8 @@
   line-height: var(--transactions-height-snug);
 }
 
-/* 买入计划这一组的右上角：止盈盈亏比（两边都填了才有，所以这组头平时只有标题）。 */
+/* 买入计划组头上紧挨着组名的那一句「盈亏比 3.75」：两边都填对才有，所以组头平时只有标题。
+ * 贴着组名而不是顶到最右 —— 1400 时最右离那一对价位 500px，窄窗又落不到任何列边上。 */
 .stock-ledger__ratio {
   display: inline-flex;
   align-items: baseline;
@@ -3348,8 +3348,11 @@
 
 .stock-ledger__ratio-value {
   color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-body-sm);
   font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
 }
 
 .stock-ledger__row {
@@ -3439,7 +3442,7 @@
   color: var(--transactions-color-income);
 }
 
-/* 输入框右端的百分比：「较成本」的落差就写在这一个数字里，不另占一行。 */
+/* 输入框右端的百分比：「较买入价」的落差就写在这一个数字里，不另占一行。 */
 .stock-ledger__delta {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
@@ -3447,20 +3450,30 @@
   letter-spacing: var(--transactions-tracking-amount);
 }
 
-/* 只读台账那一行在 `.stock-page` 里，色号本来就有了；这里一并声明，是为了两种落点
- * （页内 / 弹窗）读同一份规则，不靠祖先元素决定颜色。 */
+/* 12px 的语义红绿要压一档墨才过 AA：收入绿原值在纸白上只有 3.30:1、画布上 3.15:1。
+ * 配比与天梯的小标签同一条（`.stock-ladder__tag--*`）：72% 语义色 + 28% 主文字色。
+ * 只读台账那一行在 `.stock-page` 里，`.stock-page .is-up` 也管得到它，所以这里两种
+ * 落点（页内 / 弹窗）一起声明，颜色不靠祖先元素决定。 */
 .stock-ledger__delta.is-up,
 .stock-ledger__hint-value.is-up {
-  color: var(--transactions-color-expense);
+  color: color-mix(
+    in srgb,
+    var(--transactions-color-expense) 72%,
+    var(--transactions-color-text-major)
+  );
 }
 
 .stock-ledger__delta.is-down,
 .stock-ledger__hint-value.is-down {
-  color: var(--transactions-color-income);
+  color: color-mix(
+    in srgb,
+    var(--transactions-color-income) 72%,
+    var(--transactions-color-text-major)
+  );
 }
 
-/* 弹窗里的盈亏比：横跨两列、挂在止损 / 止盈下面一行。没填全的时候这一行也在
- * （写的是「填好止损和止盈后自动计算」），免得边填边算时下面几行跟着上下跳。 */
+/* 弹窗里的盈亏比：横跨两列、挂在止损 / 止盈下面一行。算不出来的时候这一行也在
+ * （三种原因各写一句），免得边填边算时下面几行跟着上下跳。 */
 .stock-ledger-form__ratio {
   grid-column: 1 / -1;
   display: flex;
@@ -3476,8 +3489,11 @@
 
 .stock-ledger-form__ratio-value {
   color: var(--transactions-color-text-major);
+  font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-body-sm);
   font-weight: var(--transactions-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
 }
 
 .stock-ledger-form__ratio-note,
@@ -3486,8 +3502,9 @@
   font-size: var(--transactions-size-text-caption);
 }
 
+/* 算式跟在数字后面一点，不当成这一行的右对齐尾巴 —— 右对齐时会像「止盈」那一格的注解。 */
 .stock-ledger-form__ratio-note {
-  margin-left: auto;
+  margin-left: var(--transactions-space-sm);
 }
 
 .stock-ledger__computed.ant-input[aria-disabled='true'] {

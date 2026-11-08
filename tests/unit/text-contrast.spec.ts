@@ -52,6 +52,17 @@ function contrast(a: string, b: string): number {
   return (high + 0.05) / (low + 0.05)
 }
 
+/** `color-mix(in srgb, a <weight>, b)` 的取值；与 CSS 一样在 0–255 的通道上按权重插值。 */
+function mix(a: string, b: string, weight: number): string {
+  const [left, right] = [channels(a), channels(b)]
+  const body = left.map((channel, index) =>
+    Math.round((weight * channel + (1 - weight) * right[index]) * 255)
+      .toString(16)
+      .padStart(2, '0'),
+  )
+  return `#${body.join('')}`
+}
+
 const AA = 4.5
 
 describe('text contrast', () => {
@@ -162,5 +173,25 @@ describe('text contrast', () => {
     expect(tertiary).toBeLessThan(secondary * 0.95)
     // 但差距不许大到靠「不合格」来拉开。
     expect(secondary - tertiary).toBeLessThan(1.2)
+  })
+
+  /* 12px 的语义红绿（台账止损 / 止盈的落差）要压一档墨才过 AA：收入绿原值在纸白上只有
+   * 3.30:1、画布上 3.15:1，红勉强 4.83:1。配比写在 `stock.css` 的
+   * `.stock-ledger__delta.is-up/.is-down`（72% 语义色 + 28% 主文字色，与天梯小标签同一条）
+   * —— 改配比就得改这里，两边一起红。 */
+  it('小字语义红绿压一档墨后过 AA', () => {
+    for (const [theme, css] of [
+      ['light', LIGHT],
+      ['dark', DARK],
+    ] as const) {
+      const ink = token(css, 'color-text-major')
+      for (const semantic of ['color-expense', 'color-income']) {
+        const mixed = mix(token(css, semantic), ink, 0.72)
+        for (const surface of SURFACES) {
+          const ratio = contrast(mixed, token(css, surface))
+          expect(ratio, `${theme} ${semantic} on ${surface} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA)
+        }
+      }
+    }
   })
 })

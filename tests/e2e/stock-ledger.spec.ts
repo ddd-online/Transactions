@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-import { _electron as electron, expect, test } from '@playwright/test'
+import { _electron as electron, expect, test, type Locator } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
 
@@ -86,6 +86,37 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
         probe.remove()
         return value
       }, token)
+    /** 元素自己的字色对它最近一块**上了色**的底色的对比度（12px 小字要 ≥4.5:1）。 */
+    const contrastOnOwnSurface = (locator: Locator): Promise<number> =>
+      locator.evaluate((element) => {
+        // `color-mix(...)` 在 Chromium 里算成 `color(srgb 0.07 0.48 0.23)`，通道是 0–1 的小数
+        const rgbOf = (value: string): number[] => {
+          const numbers = value.match(/[\d.]+/g)!.slice(0, 3).map(Number)
+          return value.startsWith('color(') ? numbers.map((channel) => channel * 255) : numbers
+        }
+        const lum = (rgb: number[]): number => {
+          const [r, g, b] = rgb.map((channel) => {
+            const c = channel / 255
+            return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+          })
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b
+        }
+        let node: Element | null = element
+        let background = 'rgb(255, 255, 255)'
+        while (node) {
+          const value = getComputedStyle(node).backgroundColor
+          if (value !== 'rgba(0, 0, 0, 0)' && value !== 'transparent') {
+            background = value
+            break
+          }
+          node = node.parentElement
+        }
+        const [high, low] = [
+          lum(rgbOf(getComputedStyle(element).color)),
+          lum(rgbOf(background)),
+        ].sort((a, b) => b - a)
+        return (high + 0.05) / (low + 0.05)
+      })
     await expect(ledger).toContainText('还没有台账')
     await expect(page.getByTestId('stock-ledger-copy')).toBeDisabled()
     await page.getByTestId('stock-ledger-edit').click()
@@ -96,28 +127,42 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     // 盈亏比 / 涨跌百分比是边填边算的：还没填全时那一行说的是「填好…自动计算」
     await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('填好止损和止盈后自动计算')
     await page.getByTestId('stock-ledger-stop').fill('4.60')
-    await expect(page.getByTestId('stock-ledger-stop-delta')).toContainText('较成本 -8.00%')
+    await expect(page.getByTestId('stock-ledger-stop-delta')).toContainText('较买入价 -8.00%')
     await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('填好止损和止盈后自动计算')
     await page.getByTestId('stock-ledger-take').fill('6.50')
-    await expect(page.getByTestId('stock-ledger-take-delta')).toContainText('较成本 +30.00%')
+    await expect(page.getByTestId('stock-ledger-take-delta')).toContainText('较买入价 +30.00%')
     // (6.50 - 5.00) / (5.00 - 4.60) = 3.75
     await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('3.75')
-    // 拉高那一段：止损在成本之下走绿、止盈在成本之上走红（弹窗挂在 body 下，
-    // 不在 `.stock-page` 作用域里，颜色靠 `.stock-ledger__delta` 自己声明）
     const stopDelta = page.getByTestId('stock-ledger-stop-delta')
     const takeDelta = page.getByTestId('stock-ledger-take-delta')
-    expect(await stopDelta.evaluate((element) => getComputedStyle(element).color)).toBe(
-      await tokenColor('--transactions-color-income'),
-    )
-    expect(await takeDelta.evaluate((element) => getComputedStyle(element).color)).toBe(
-      await tokenColor('--transactions-color-expense'),
-    )
+    await expect(stopDelta).toContainText('较买入价 -8.00%')
+    await expect(takeDelta).toContainText('较买入价 +30.00%')
+    // 弹窗挂在 body 下（不在 `.stock-page` 作用域里），颜色靠 `.stock-ledger__delta` 自己声明：
+    // 止损在成本之下走绿、止盈在成本之上走红，且 12px 的小字压过一档墨，底上要过 AA。
+    const rgbOf = (locator: Locator): Promise<number[]> =>
+      locator.evaluate((element) => {
+        const value = getComputedStyle(element).color
+        const numbers = value.match(/[\d.]+/g)!.slice(0, 3).map(Number)
+        return value.startsWith('color(') ? numbers.map((channel) => channel * 255) : numbers
+      })
+    const [stopRgb, takeRgb] = await Promise.all([rgbOf(stopDelta), rgbOf(takeDelta)])
+    expect(stopRgb[1]).toBeGreaterThan(stopRgb[0])
+    expect(takeRgb[0]).toBeGreaterThan(takeRgb[1])
+    expect(await contrastOnOwnSurface(stopDelta)).toBeGreaterThanOrEqual(4.5)
+    expect(await contrastOnOwnSurface(takeDelta)).toBeGreaterThanOrEqual(4.5)
+
     const ratioLine = page.getByTestId('stock-ledger-form-ratio')
-    // 止损抬到成本之上：百分比照给（+2.00%），盈亏比没有意义，回到说明
+    // 止损抬到成本之上（保本 / 移动止损）：百分比照给（+2.00%），盈亏比说明方向不成立
     await page.getByTestId('stock-ledger-stop').fill('5.10')
     await expect(stopDelta).toContainText('+2.00%')
-    await expect(ratioLine).toContainText('填好止损和止盈后自动计算')
+    await expect(ratioLine).toContainText('止盈高于买入价、止损低于买入价，才有盈亏比')
     await page.getByTestId('stock-ledger-stop').fill('4.60')
+    await expect(ratioLine).toContainText('3.75')
+    // 写了但不是数字：那一侧的百分比消失，说明指向「写法」而不是「没填」
+    await page.getByTestId('stock-ledger-take').fill('破 6.5 就走')
+    await expect(takeDelta).toHaveCount(0)
+    await expect(ratioLine).toContainText('止损和止盈写成价格数字，才能算盈亏比')
+    await page.getByTestId('stock-ledger-take').fill('6.50')
     await expect(ratioLine).toContainText('3.75')
     await page.getByTestId('stock-ledger-followed').fill('是')
     await page.getByTestId('stock-ledger-summary').fill('先小仓试错')

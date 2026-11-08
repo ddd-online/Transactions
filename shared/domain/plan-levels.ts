@@ -7,26 +7,37 @@
  *
  * ## 口径
  *
- * - 分母是**买入价**（每股平均成交价，不含费用），不是「买入成本」那个总额 —— 盈亏比看的是
- *   每股的赔率，与手数无关。百分比也以它为基准：`(价位 - 买入价) / 买入价`。
- * - 盈亏比 = 止盈空间 ÷ 止损空间 = `(止盈 - 买入价) / (买入价 - 止损)`。止损在成本之上
- *   （保本止损 / 移动止损）时没有「亏多少」可除，止盈不高于成本时也没有「赚多少」，都不出
- *   这个数 —— 一个负的或除不出来的比值比空着更容易被误读。
+ * - 分母是**买入价**（每股平均成交价，不含费用）—— 台账里那个叫「买入成本」的数是总额、
+ *   含佣金，拿它对百分比或盈亏比都对不上。同一个分母也让盈亏比与手数无关：它看的是每股赔率。
+ * - 盈亏比 = 止盈空间 ÷ 止损空间 = `(止盈 - 买入价) / (买入价 - 止损)`。
  * - 两位小数，四舍五入（与价格、金额同一个取整函数）。正数带 `+`、负数带 `-`，
  *   正好为零写 `0.00%`：零既不是涨也不是跌。
  * - 止损 / 止盈是自由文本（用户可能写「破 15 就走」），只认纯数字、最多三位小数；读不出
  *   数字就当没填。两个字段各自独立：一边写坏不影响另一边的百分比。
+ *
+ * ## 盈亏比为什么是一个状态而不是空串
+ *
+ * 「算不出来」有三种完全不同的原因，界面要说三种话：还没填（`missing`）、填了但不是数字
+ * （`unreadable`）、两个数字都在但方向不成立（`blocked` —— 止盈不高于买入价，或止损不低于
+ * 买入价，保本 / 移动止损就是这一种）。都退化成空串时，弹窗只能对着填满的两个框说「填好
+ * 后自动计算」，那是假话；分开之后每一句都能指出下一步。
  */
 
 import { roundHalfAwayFromZero } from './rounding'
+
+/** 盈亏比：`value` 才有数字，另外三种是「为什么还没有」。 */
+export type PlanRatio =
+  | { kind: 'missing' }
+  | { kind: 'unreadable' }
+  | { kind: 'blocked' }
+  | { kind: 'value'; text: string }
 
 export interface PlanLevels {
   /** 止盈相对买入价，如 `+6.53%`；没填或不是数字时 `null` */
   upside: string | null
   /** 止损相对买入价，如 `-7.64%`；没填或不是数字时 `null` */
   downside: string | null
-  /** 盈亏比（两位小数，不带符号与单位），如 `1.73`；缺一边或方向不成立时 `null` */
-  riskReward: string | null
+  riskReward: PlanRatio
 }
 
 /** 元文本：可带一个 `+`，整数部分必填，小数最多三位（价格的口径是厘）。 */
@@ -56,6 +67,19 @@ function percentOf(level: number, cost: number): string {
   return `${hundredths > 0 ? '+' : '-'}${fixed2(hundredths)}%`
 }
 
+function ratioOf(
+  cost: number,
+  stop: number | null,
+  take: number | null,
+  stopText: string,
+  takeText: string,
+): PlanRatio {
+  if (!stopText || !takeText) return { kind: 'missing' }
+  if (stop === null || take === null) return { kind: 'unreadable' }
+  if (take <= cost || stop >= cost) return { kind: 'blocked' }
+  return { kind: 'value', text: fixed2(roundHalfAwayFromZero(((take - cost) * 100) / (cost - stop))) }
+}
+
 /**
  * @param buyPrice 台账里的买入价（元字符串，`16.24`）
  * @param stopLoss 台账里手写的止损原文
@@ -63,18 +87,15 @@ function percentOf(level: number, cost: number): string {
  */
 export function planLevelsOf(buyPrice: string, stopLoss: string, takeProfit: string): PlanLevels {
   const cost = milliOf(buyPrice)
-  if (cost === null || cost <= 0) return { upside: null, downside: null, riskReward: null }
+  if (cost === null || cost <= 0) {
+    return { upside: null, downside: null, riskReward: { kind: 'missing' } }
+  }
 
   const take = milliOf(takeProfit)
   const stop = milliOf(stopLoss)
-  const reward =
-    take !== null && stop !== null && take > cost && stop < cost
-      ? roundHalfAwayFromZero(((take - cost) * 100) / (cost - stop))
-      : null
-
   return {
     upside: take === null ? null : percentOf(take, cost),
     downside: stop === null ? null : percentOf(stop, cost),
-    riskReward: reward === null ? null : fixed2(reward),
+    riskReward: ratioOf(cost, stop, take, stopLoss.trim(), takeProfit.trim()),
   }
 }

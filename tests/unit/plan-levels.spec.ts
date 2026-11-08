@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { planLevelsOf } from '../../shared/domain/plan-levels'
 
+const value = (text: string) => ({ kind: 'value', text })
+
 describe('planLevelsOf', () => {
   it('两条都填：上涨 / 下降百分比与盈亏比一起给出', () => {
     // 5.00 → 6.50 是 +30%，5.00 → 4.60 是 -8%，
@@ -9,7 +11,7 @@ describe('planLevelsOf', () => {
     expect(planLevelsOf('5.00', '4.60', '6.50')).toEqual({
       upside: '+30.00%',
       downside: '-8.00%',
-      riskReward: '3.75',
+      riskReward: value('3.75'),
     })
   })
 
@@ -18,60 +20,57 @@ describe('planLevelsOf', () => {
     expect(planLevelsOf('4.389', '4.20', '5.00')).toEqual({
       upside: '+13.92%',
       downside: '-4.31%',
-      riskReward: '3.23',
+      riskReward: value('3.23'),
     })
   })
 
-  it('只填止盈：只出上涨百分比，盈亏比缺一边不出', () => {
+  it('只填一边：只出那一边的百分比，盈亏比还是「没填」', () => {
     expect(planLevelsOf('5.00', '', '6.50')).toEqual({
       upside: '+30.00%',
       downside: null,
-      riskReward: null,
+      riskReward: { kind: 'missing' },
     })
-  })
-
-  it('只填止损：只出下降百分比', () => {
     expect(planLevelsOf('5.00', '4.60', '')).toEqual({
       upside: null,
       downside: '-8.00%',
-      riskReward: null,
+      riskReward: { kind: 'missing' },
     })
+    // 空白（只有空格）也算没填，不算「写了但不是数字」
+    expect(planLevelsOf('5.00', '   ', '6.50').riskReward).toEqual({ kind: 'missing' })
   })
 
-  it('不填 / 不是数字 / 带负号：当没填，且不牵连另一边', () => {
+  it('填了但不是数字：当没填（百分比不再出），盈亏比说明是「写法」的问题', () => {
     expect(planLevelsOf('5.00', '破 4.6 就走', '6.50')).toEqual({
       upside: '+30.00%',
       downside: null,
-      riskReward: null,
+      riskReward: { kind: 'unreadable' },
     })
-    expect(planLevelsOf('5.00', '4.60', '破 6.5 就走')).toEqual({
-      upside: null,
-      downside: '-8.00%',
-      riskReward: null,
-    })
-    expect(planLevelsOf('5.00', '-4.60', '6.50').riskReward).toBeNull()
-    expect(planLevelsOf('5.00', '4.6元', '6.5元').downside).toBeNull()
+    expect(planLevelsOf('5.00', '4.60', '破 6.5 就走').riskReward).toEqual({ kind: 'unreadable' })
+    expect(planLevelsOf('5.00', '4.6元', '6.5元').riskReward).toEqual({ kind: 'unreadable' })
+    expect(planLevelsOf('5.00', '-4.60', '6.50').riskReward).toEqual({ kind: 'unreadable' })
   })
 
-  it('止损在成本之上（保本 / 移动止损）：百分比照给，但盈亏比不成立', () => {
+  it('止损在买入价之上（保本 / 移动止损）：百分比照给，盈亏比是「方向不成立」', () => {
     expect(planLevelsOf('5.00', '5.10', '6.50')).toEqual({
       upside: '+30.00%',
       downside: '+2.00%',
-      riskReward: null,
+      riskReward: { kind: 'blocked' },
     })
+    // 正好等于成本也算没有可亏的空间
+    expect(planLevelsOf('5.00', '5.00', '6.50').riskReward).toEqual({ kind: 'blocked' })
   })
 
-  it('止盈不高于成本：没有「赚多少」可除，盈亏比不成立', () => {
+  it('止盈不高于买入价：没有「赚多少」可除，盈亏比是「方向不成立」', () => {
     expect(planLevelsOf('5.00', '4.60', '5.00')).toEqual({
       upside: '0.00%',
       downside: '-8.00%',
-      riskReward: null,
+      riskReward: { kind: 'blocked' },
     })
-    expect(planLevelsOf('5.00', '4.60', '4.80').riskReward).toBeNull()
+    expect(planLevelsOf('5.00', '4.60', '4.80').riskReward).toEqual({ kind: 'blocked' })
   })
 
   it('买入价为空 / 为 0：三个数字都不出', () => {
-    const empty = { upside: null, downside: null, riskReward: null }
+    const empty = { upside: null, downside: null, riskReward: { kind: 'missing' } }
     expect(planLevelsOf('', '4.60', '6.50')).toEqual(empty)
     expect(planLevelsOf('0.00', '4.60', '6.50')).toEqual(empty)
   })
@@ -80,17 +79,20 @@ describe('planLevelsOf', () => {
     expect(planLevelsOf('+5.00', '4.6', '+6.5')).toEqual({
       upside: '+30.00%',
       downside: '-8.00%',
-      riskReward: '3.75',
+      riskReward: value('3.75'),
     })
     // 「4.」「6.」是敲「4.60」「6.00」路上的中间态，按 4 / 6 算，不闪成空
     expect(planLevelsOf('5.00', '4.', '6.')).toEqual({
       upside: '+20.00%',
       downside: '-20.00%',
-      riskReward: '1.00',
+      riskReward: value('1.00'),
     })
   })
 
-  it('超出安全整数范围的数字当没填，不折成 Infinity 之类的值', () => {
+  it('超出安全整数范围的数字算「读不出」，不折成 Infinity 之类的值', () => {
     expect(planLevelsOf('5.00', '99999999999999999999', '6.50').downside).toBeNull()
+    expect(planLevelsOf('5.00', '99999999999999999999', '6.50').riskReward).toEqual({
+      kind: 'unreadable',
+    })
   })
 })

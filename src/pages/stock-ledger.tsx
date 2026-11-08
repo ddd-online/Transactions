@@ -48,12 +48,12 @@ function levelTone(text: string): string {
   return ''
 }
 
-/** 只读台账里挂在价位下面的一行：「较成本 -7.64%」。 */
+/** 只读台账里挂在价位下面的一行：「较买入价 -7.64%」。 */
 function PlanDelta({ text, testId }: { text: string | null; testId: string }): JSX.Element | null {
   if (!text) return null
   return (
     <p className="stock-ledger__hint" data-testid={testId}>
-      <span className="stock-ledger__hint-label">较成本</span>
+      <span className="stock-ledger__hint-label">较买入价</span>
       <span className={`stock-ledger__hint-value ${levelTone(text)}`}>{text}</span>
     </p>
   )
@@ -64,11 +64,21 @@ function DeltaSuffix({ text, id }: { text: string | null; id: string }): JSX.Ele
   if (!text) return null
   return (
     <span id={id} data-testid={id} className={`stock-ledger__delta ${levelTone(text)}`}>
-      <span className="sr-only">较成本 </span>
+      <span className="sr-only">较买入价 </span>
       {text}
     </span>
   )
 }
+
+/**
+ * 算不出盈亏比时那句话：三种原因各说各的下一步，不拿「填好后自动计算」盖住已经填过的框。
+ * 保本 / 移动止损是最常见的 `blocked` —— 止损就在成本上或成本之上，没有可亏的空间。
+ */
+const RATIO_PROMPTS = {
+  missing: '填好止损和止盈后自动计算',
+  unreadable: '止损和止盈写成价格数字，才能算盈亏比',
+  blocked: '止盈高于买入价、止损低于买入价，才有盈亏比',
+} as const
 
 function Field({
   label,
@@ -205,6 +215,9 @@ export function StockLedgerSection({
   // 三个派生数字只在这里算：入库的是用户手写的止损 / 止盈原文，显示时才折成百分比与倍数。
   const levels = planLevelsOf(ledger?.buyPrice ?? '', ledger?.stopLoss ?? '', ledger?.takeProfit ?? '')
   const draftLevels = planLevelsOf(ledger?.buyPrice ?? '', form.stopLoss, form.takeProfit)
+  const ratio = draftLevels.riskReward
+  const stopLabelId = 'stock-ledger-stop-label'
+  const takeLabelId = 'stock-ledger-take-label'
   const stopDeltaId = 'stock-ledger-stop-delta'
   const takeDeltaId = 'stock-ledger-take-delta'
 
@@ -248,10 +261,10 @@ export function StockLedgerSection({
           <div className="stock-ledger__group">
             <div className="stock-ledger__group-head">
               <span className="stock-ledger__group-label">买入计划</span>
-              {levels.riskReward ? (
+              {levels.riskReward.kind === 'value' ? (
                 <span className="stock-ledger__ratio" data-testid="stock-ledger-ratio">
                   <span className="stock-ledger__ratio-label">盈亏比</span>
-                  <span className="stock-ledger__ratio-value stock-mono">{levels.riskReward}</span>
+                  <span className="stock-ledger__ratio-value">{levels.riskReward.text}</span>
                 </span>
               ) : null}
             </div>
@@ -362,11 +375,14 @@ export function StockLedgerSection({
               />
             </label>
             <label>
-              <span className="stock-label">止损</span>
+              <span className="stock-label" id={stopLabelId}>
+                止损
+              </span>
               <Input
                 data-testid="stock-ledger-stop"
                 maxLength={200}
                 placeholder="例如：9.00"
+                aria-labelledby={stopLabelId}
                 aria-describedby={draftLevels.downside ? stopDeltaId : undefined}
                 suffix={<DeltaSuffix text={draftLevels.downside} id={stopDeltaId} />}
                 value={form.stopLoss}
@@ -376,11 +392,14 @@ export function StockLedgerSection({
               />
             </label>
             <label>
-              <span className="stock-label">止盈</span>
+              <span className="stock-label" id={takeLabelId}>
+                止盈
+              </span>
               <Input
                 data-testid="stock-ledger-take"
                 maxLength={200}
                 placeholder="例如：12.00"
+                aria-labelledby={takeLabelId}
                 aria-describedby={draftLevels.upside ? takeDeltaId : undefined}
                 suffix={<DeltaSuffix text={draftLevels.upside} id={takeDeltaId} />}
                 value={form.takeProfit}
@@ -391,15 +410,13 @@ export function StockLedgerSection({
             </label>
             <div className="stock-ledger-form__ratio" data-testid="stock-ledger-form-ratio">
               <span className="stock-ledger-form__ratio-label">盈亏比</span>
-              {draftLevels.riskReward ? (
+              {ratio.kind === 'value' ? (
                 <>
-                  <span className="stock-ledger-form__ratio-value stock-mono">
-                    {draftLevels.riskReward}
-                  </span>
+                  <span className="stock-ledger-form__ratio-value">{ratio.text}</span>
                   <span className="stock-ledger-form__ratio-note">止盈空间 ÷ 止损空间</span>
                 </>
               ) : (
-                <span className="stock-ledger-form__ratio-empty">填好止损和止盈后自动计算</span>
+                <span className="stock-ledger-form__ratio-empty">{RATIO_PROMPTS[ratio.kind]}</span>
               )}
             </div>
             <label>
