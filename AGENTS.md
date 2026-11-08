@@ -41,8 +41,8 @@ pnpm package:dir      # output/win-unpacked/Transactions.exe（E2E 可用）
 pnpm package          # NSIS 安装包，产物在 output/
 ```
 
-`pnpm test:e2e:packaged` 需要先 `pnpm package:dir`，并设置 `TRANSACTIONS_PACKAGED_EXE` 指向
-`output/win-unpacked/Transactions.exe`。
+`pnpm test:e2e:packaged` 走 `playwright.packaged.config.ts`（单 worker），需要先 `pnpm package:dir`，
+再设 `$env:TRANSACTIONS_PACKAGED_EXE` 指向 `output/win-unpacked/Transactions.exe`。
 
 ## 发布纪律
 
@@ -81,7 +81,23 @@ pnpm package          # NSIS 安装包，产物在 output/
 - **全量 `pnpm test` / `pnpm test:e2e` 只在这些时候跑**：发布前；改了跨页面共享组件
   （`PageLayout`、`ScrollArea`、`Button`、`Modal` 等）或全局样式；路由或 IPC 契约改动；
   一次改动覆盖多个页面；或者定位不到受影响 spec。
-- E2E 一律用一次性 `USERPROFILE`、`TRANSACTIONS_USER_DATA` 与临时工作空间；断言落在库/磁盘。
+- **全量 E2E 默认 4 并发**：`pnpm test:e2e` 直接按 4 个 worker 跑；
+  `$env:TRANSACTIONS_E2E_WORKERS=1; pnpm test:e2e` 退回串行（正整数都可调，上限 16）。
+  实测（16 逻辑核 / 27.9 GB 内存的 Windows 开发机、同一份 `pnpm build` 产物；数字取自并行化
+  落地那次测量）：串行基线 **4 分 59 秒**（63 passed / 0 failed）→ 4 并发 **99–100.5 秒**
+  （连跑三次 99.0 / 100.5 / 99.1，均值 99.5 秒），约为基线的 33%；并发时峰值 17 个 Electron
+  进程、约 3.0 GB 工作集、整机 CPU 峰值占用约 47%。默认全量收集 **63 条、零 skipped、零 failed**。
+- **什么时候退回串行**：定位只在并发下出现的失败（先查那条 spec 是否共享了临时路径、
+  端口、单实例锁、对话框队列或构建产物，修隔离而不是加 retry），以及内存 / 磁盘吃紧的
+  低配机。
+- **`packaged.spec.ts` 始终单独跑**：它走自己的配置 `playwright.packaged.config.ts`
+  （单 worker），默认全量里不收集它 —— 它要的是 `pnpm package:dir` 的安装目录，不和开发
+  构建的实例混在一起。要跑：先 `pnpm package:dir`，再
+  `$env:TRANSACTIONS_PACKAGED_EXE="…\output\win-unpacked\Transactions.exe"; pnpm test:e2e:packaged`。
+- E2E 一律用一次性 `USERPROFILE`、`TRANSACTIONS_USER_DATA` 与临时工作空间，断言落在库/磁盘；
+  **并发的前提是逐 spec 隔离**：对话框队列、需要改构建产物时自建应用副本 —— 新写 spec 必须
+  继续自己建这些。并发下抓到过一处：`page-failure.spec.ts` 原来改名共享构建产物里的 chunk，
+  同批跑股票页的 spec 会读不到 → 改成自建应用副本。
 - 测试缝（仅测试环境变量）：`TRANSACTIONS_TEST_DIALOG_DIR` 绕过原生目录框；
   `TRANSACTIONS_TEST_CLOSE` 固定关闭行为；`TRANSACTIONS_USER_DATA` 隔离单实例锁；
   `TRANSACTIONS_TEST_PROXY_TARGET` 把代理连通性检测指向本地测试服务；

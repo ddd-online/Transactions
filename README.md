@@ -74,7 +74,8 @@ pnpm test           # typecheck + Vitest + 静态护栏
 pnpm test:e2e       # Playwright
 ```
 
-E2E 使用一次性 `USERPROFILE`、`TRANSACTIONS_USER_DATA` 与临时工作空间，不触碰真实数据。
+E2E 默认 **4 并发**；`$env:TRANSACTIONS_E2E_WORKERS=1; pnpm test:e2e` 退回串行（细节见
+`AGENTS.md` 的验证纪律）。
 
 ## 发布纪律
 
