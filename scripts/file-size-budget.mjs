@@ -41,11 +41,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 967,
     hint: '图表网格 / 曲线合计条 / 范围选择',
   },
-  // 1026 行：图库 / 编辑器 / 图片选择与分组
-  'src/pages/events.tsx': {
-    cap: 1026,
-    hint: '图库 / 编辑器 / 图片选择与分组',
-  },
   // 908 行：筛选条 / 表格 / 批量动作
   'src/pages/records.tsx': {
     cap: 908,

@@ -1,23 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type JSX } from 'react'
-import { Input, Modal } from 'antd'
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import type { TransactionRecordDto } from '../../shared/types/transaction'
 import { todayYmd } from '../../shared/domain/time'
-import { Button } from '../components/button'
-import { DatePicker } from '../components/date-picker'
-import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
-import { TimeRangePicker } from '../components/time-range-picker'
-import { EVENT_TONES } from '../theme/event-colors'
-import { EventDateList, EventImageGallery, EventLinkedPanel } from './event-gallery'
-import {
-  EventImagePicker,
-  groupPickedFiles,
-  isHeicFile,
-  makeThumbnail,
-  readDataUrl,
-} from './event-images'
+import { AddEventModal, EventEditor, EventToolbar } from './event-editor'
+import { EventDateList, EventLinkedPanel } from './event-gallery'
+import { groupPickedFiles, prepareImageUpload, uploadProblems } from './event-images'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -309,20 +298,11 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [date, ledgerId],
   )
 
-  // 事件图片按原图上传：不裁剪、不重编码，缩略图只为列表另存一份。
-  // HEIC 例外：Chromium 解码不了，交给主进程转码并生成缩略图；
-  // 实况照片则会连同同名的 MOV 一起上传，动态部分单独存一份。
   const addImages = useCallback(
     async (files: File[]): Promise<void> => {
       if (!ledgerId || files.length === 0) return
       const picked = groupPickedFiles(files)
-      const problems: string[] = []
-      if (picked.orphanMotions.length > 0) {
-        problems.push(`实况视频要和同名的照片一起选：${picked.orphanMotions.join('、')}`)
-      }
-      if (picked.unsupported.length > 0) {
-        problems.push(`不支持的格式：${picked.unsupported.join('、')}`)
-      }
+      const problems = uploadProblems(picked)
 
       setError('')
       if (picked.images.length === 0) {
@@ -344,14 +324,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         }
         for (const pickedImage of picked.images) {
           try {
-            const heic = await isHeicFile(pickedImage.still)
-            const data = await readDataUrl(pickedImage.still)
-            const motion = pickedImage.motion ? await readDataUrl(pickedImage.motion) : undefined
-            if (heic) {
-              await uploadImage({ data, motion })
-            } else {
-              await uploadImage({ data, thumb: await makeThumbnail(data), motion })
-            }
+            await uploadImage(await prepareImageUpload(pickedImage))
           } catch (imageError) {
             problems.push(`${pickedImage.still.name}：${errorMessage(imageError)}`)
           }
@@ -413,27 +386,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   return (
     <PageLayout
       contentClassName="key-event-page"
-      toolbar={
-        <>
-          <TimeRangePicker
-            testId="event-year"
-            yearOnly
-            mode="year"
-            start={`${year}-01-01`}
-            end={`${year}-12-31`}
-            onModeChange={() => undefined}
-            onRangeChange={changeYear}
-          />
-          <Button
-            variant="primary"
-            testId="event-add"
-            icon={<Icon name="Plus" size={14} />}
-            onClick={openAdd}
-          >
-            新增事件
-          </Button>
-        </>
-      }
+      toolbar={<EventToolbar year={year} onYearChange={changeYear} onAdd={openAdd} />}
     >
       {error ? (
         <p role="alert" className="m0-error" data-testid="event-error">
@@ -449,120 +402,27 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
           onDeleteEvent={removeEvent}
         />
 
-        <section className="key-event-panel key-event-panel--center">
-          <div className="key-event-detail">
-          <h2 className="sr-only">事件详情</h2>
-            {event ? (
-              <div className="key-event-detail__body">
-                <div className="key-event-colors">
-                  {EVENT_TONES.map(({ value, name }, index) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`key-event-swatch key-event-tone${color === value ? ' is-selected' : ''}`}
-                      style={{ '--event-tone': value } as CSSProperties}
-                      title={name}
-                      aria-label={name}
-                      aria-pressed={color === value}
-                      data-testid={`event-color-${index}`}
-                      onClick={() => void changeColor(value)}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    className={`key-event-swatch key-event-swatch--empty${color ? '' : ' is-selected'}`}
-                    title="使用默认颜色"
-                    aria-label="使用默认颜色"
-                    aria-pressed={!color}
-                    data-testid="event-color-none"
-                    onClick={() => void changeColor('')}
-                  />
-                </div>
-
-                <EventImageGallery
-                  images={images}
-                  selectedImageId={selectedImageId}
-                  onSelectImage={setSelectedImageId}
-                  onDeleteImage={removeImage}
-                  onSaveImage={saveImage}
-                />
-
-                <div className="key-event-description">
-                  {editing ? (
-                    <div className="key-event-description__edit">
-                      <Input.TextArea
-                        className="key-event-content"
-                        data-testid="event-content"
-                        placeholder="写下这件事……"
-                        value={draftContent}
-                        maxLength={5000}
-                        autoSize={{ minRows: 6, maxRows: 14 }}
-                        onChange={(changeEvent) => setDraftContent(changeEvent.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="key-event-description__content" data-testid="event-content-view">
-                      {content.trim() ? (
-                        <p className="key-event-description__text">{content}</p>
-                      ) : (
-                        <p className="key-event-description__placeholder">暂无描述</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="key-event-detail__footer">
-                  {editing ? (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        testId="event-edit-cancel"
-                        disabled={busy}
-                        onClick={cancelEdit}
-                      >
-                        取消
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        testId="event-save"
-                        disabled={!ledgerId || busy}
-                        onClick={() => void saveContent()}
-                      >
-                        保存
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <EventImagePicker
-                        busy={busy}
-                        inputRef={fileRef}
-                        onSelect={(files) => void addImages(files)}
-                      />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        testId="event-edit-content"
-                        icon={<Icon name="Edit" size={14} />}
-                        onClick={startEdit}
-                      >
-                        编辑描述
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="key-event-empty key-event-empty--detail">
-                <span className="key-event-empty__icon">
-                  <Icon name="Star" size={28} />
-                </span>
-                <span className="key-event-empty__text">选择左侧事件查看详情</span>
-              </div>
-            )}
-          </div>
-        </section>
+        <EventEditor
+          event={event}
+          color={color}
+          content={content}
+          draftContent={draftContent}
+          editing={editing}
+          busy={busy}
+          canSave={Boolean(ledgerId)}
+          images={images}
+          selectedImageId={selectedImageId}
+          imageInputRef={fileRef}
+          onColorChange={changeColor}
+          onDraftChange={setDraftContent}
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSave={saveContent}
+          onSelectImages={(files) => void addImages(files)}
+          onSelectImage={setSelectedImageId}
+          onDeleteImage={removeImage}
+          onSaveImage={saveImage}
+        />
 
         <EventLinkedPanel
           date={date}
@@ -572,46 +432,16 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         />
       </div>
 
-      <Modal
+      <AddEventModal
         open={addOpen}
-        title="新增事件"
-        width={420}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={() => setAddOpen(false)}
-      >
-        <div className="tr-modal-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">日期</span>
-            <DatePicker testId="event-add-date" value={addDate} onChange={setAddDate} ariaLabel="日期" />
-          </div>
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">标题</span>
-            <Input
-              aria-label="标题"
-              data-testid="event-add-title"
-              placeholder="事件标题"
-              value={addTitle}
-              maxLength={200}
-              onChange={(changeEvent) => setAddTitle(changeEvent.target.value)}
-            />
-          </div>
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="event-add-cancel" onClick={() => setAddOpen(false)}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="event-add-confirm"
-              disabled={!addDate || addBusy}
-              onClick={() => void createEvent()}
-            >
-              新增
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        date={addDate}
+        title={addTitle}
+        busy={addBusy}
+        onDateChange={setAddDate}
+        onTitleChange={setAddTitle}
+        onClose={() => setAddOpen(false)}
+        onConfirm={() => void createEvent()}
+      />
     </PageLayout>
   )
 }

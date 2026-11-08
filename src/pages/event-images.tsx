@@ -105,6 +105,36 @@ export function groupPickedFiles(files: File[]): PickedFiles {
   return { images, orphanMotions, unsupported }
 }
 
+/** 选中的文件里不能直接用的部分：孤立的实况视频、认不出的格式。 */
+export function uploadProblems(picked: PickedFiles): string[] {
+  const problems: string[] = []
+  if (picked.orphanMotions.length > 0) {
+    problems.push(`实况视频要和同名的照片一起选：${picked.orphanMotions.join('、')}`)
+  }
+  if (picked.unsupported.length > 0) {
+    problems.push(`不支持的格式：${picked.unsupported.join('、')}`)
+  }
+  return problems
+}
+
+export interface ImageUploadPayload {
+  data: string
+  thumb?: string
+  motion?: string
+}
+
+/**
+ * 一张（或一组实况）照片的上传材料：原图不裁剪、不重编码，缩略图只为列表另存一份；
+ * HEIC 不在这里生成缩略图（交给主进程转码时一并生成），实况视频一并读进来。
+ */
+export async function prepareImageUpload(picked: PickedImage): Promise<ImageUploadPayload> {
+  const heic = await isHeicFile(picked.still)
+  const data = await readDataUrl(picked.still)
+  const motion = picked.motion ? await readDataUrl(picked.motion) : undefined
+  if (heic) return { data, motion }
+  return { data, thumb: await makeThumbnail(data), motion }
+}
+
 export const EVENT_IMAGE_ACCEPT =
   'image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,video/quicktime,video/mp4,video/webm,.heic,.heif,.mov,.mp4,.m4v,.webm'
 
