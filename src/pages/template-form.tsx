@@ -129,7 +129,7 @@ export function TemplateForm({
         <div className="tr-modal-field">
           <span className="tr-modal-label">描述</span>
           <Input
-            aria-label="标签"
+            aria-label="描述"
             data-testid="template-description"
             placeholder="请输入描述"
             maxLength={DESCRIPTION_MAX_LENGTH}
