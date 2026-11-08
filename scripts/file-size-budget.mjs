@@ -46,11 +46,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 1026,
     hint: '图库 / 编辑器 / 图片选择与分组',
   },
-  // 908 行：筛选条 / 表格 / 批量动作
-  'src/pages/records.tsx': {
-    cap: 908,
-    hint: '筛选条 / 表格 / 批量动作',
-  },
   // 459 行：备份动作 / 备份列表 / 最近工作空间
   'src/pages/settings-data.tsx': {
     cap: 459,
