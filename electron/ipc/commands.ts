@@ -8,7 +8,6 @@ import { logInfo } from '../logging'
 import { exportLadderPage } from '../services/ladder-export'
 import * as categoryService from '../services/category'
 import * as tagService from '../services/tag'
-import * as transactionService from '../services/transaction-record'
 import * as diaryService from '../services/diary'
 import * as keyEventService from '../services/key-event'
 import * as todoService from '../services/todo'
@@ -64,17 +63,6 @@ import {
   type StatisticsFilter,
 } from '../../shared/domain/statistics'
 import type { RoundFee } from '../../shared/domain/models'
-import type {
-  TransactionRecordDto,
-  TrQueryCondition,
-} from '../../shared/types/transaction'
-import {
-  createLedger,
-  deleteLedgerById,
-  listAllLedgers,
-  modifyLedger,
-  queryLedgerById,
-} from '../services/ledger'
 import { createChartHandlers } from './handlers/charts'
 import {
   asObject,
@@ -85,6 +73,7 @@ import {
   queryNumber,
   workspaceDb,
 } from './handlers/context'
+import { createRecordHandlers } from './handlers/records'
 import { createSettingsHandlers } from './handlers/settings'
 import { createShellHandlers } from './handlers/shell'
 
@@ -102,6 +91,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     ...createShellHandlers(ctx),
     ...createSettingsHandlers(ctx),
     ...createChartHandlers(ctx),
+    ...createRecordHandlers(ctx),
     async update_check() {
       return ctx.updater.check(app.getVersion())
     },
@@ -121,58 +111,6 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
 
     update_install() {
       return ctx.updater.install()
-    },
-
-    ledger_list(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) {
-        throw new AppError('missing required query parameter: id', { status: 400 })
-      }
-      const db = workspaceDb()
-      if (id === 'all') return listAllLedgers(db)
-      return id.split(',').map((raw) => {
-        const ledgerId = raw.trim()
-        try {
-          return queryLedgerById(db, ledgerId)
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error)
-          throw new AppError(`查询账本 ${ledgerId} 失败: ${message}`, { status: 500 })
-        }
-      })
-    },
-
-    ledger_create(request) {
-      const raw = asObject(request)
-      if (typeof raw.name !== 'string') {
-        throw new AppError('name在请求体中不存在', { status: 400 })
-      }
-      const description = typeof raw.description === 'string' ? raw.description : ''
-      return createLedger(workspaceDb(), raw.name, description)
-    },
-
-    ledger_get(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('missing ledger id', { status: 400 })
-      return queryLedgerById(workspaceDb(), id)
-    },
-
-    ledger_update(request) {
-      const raw = asObject(request)
-      const id = String(raw.id ?? '')
-      if (!id) throw new AppError('missing ledger id', { status: 400 })
-      if (typeof raw.name !== 'string') {
-        throw new AppError('name在请求体中不存在', { status: 400 })
-      }
-      const description = typeof raw.description === 'string' ? raw.description : ''
-      modifyLedger(workspaceDb(), id, raw.name, description)
-      return null
-    },
-
-    ledger_delete(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('missing ledger id', { status: 400 })
-      deleteLedgerById(workspaceDb(), id)
-      return null
     },
 
     category_list(request) {
@@ -283,63 +221,6 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         Number(raw.sortOrder ?? 0),
       )
       return null
-    },
-
-    tr_query(request) {
-      return transactionService.queryTrsOnCondition(workspaceDb(), request as TrQueryCondition)
-    },
-
-    tr_create(request) {
-      return transactionService.createTr(workspaceDb(), request as TransactionRecordDto)
-    },
-
-    tr_batch_create(request) {
-      const dtos = request as TransactionRecordDto[]
-      dtos.forEach((dto, index) => {
-        try {
-          transactionService.validateTransactionDto(dto)
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error)
-          throw new AppError(`record ${index + 1}: ${message}`, { status: 400 })
-        }
-      })
-      return transactionService.batchCreateTr(workspaceDb(), dtos)
-    },
-
-    tr_delete(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('missing transaction id', { status: 400 })
-      transactionService.deleteTrById(workspaceDb(), id)
-      return null
-    },
-
-    tr_link(request) {
-      const raw = asObject(request)
-      const transactionId = String(raw.transaction_id ?? '')
-      const date = String(raw.date ?? '')
-      if (!transactionId || !date) {
-        throw new AppError('transaction_id and date are required', { status: 400 })
-      }
-      transactionService.linkToKeyEvent(workspaceDb(), transactionId, date)
-      return date
-    },
-
-    tr_unlink(request) {
-      const transactionId = String(asObject(request).transaction_id ?? '')
-      if (!transactionId) {
-        throw new AppError('transaction_id is required', { status: 400 })
-      }
-      transactionService.unlinkFromKeyEvent(workspaceDb(), transactionId)
-      return transactionId
-    },
-
-    tr_linked_by_date(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      const date = String(raw.date ?? '')
-      if (!date) throw new AppError('date is required', { status: 400 })
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return transactionService.queryLinkedByDate(workspaceDb(), ledgerId, date)
     },
 
     diary_list_dates(request) {
