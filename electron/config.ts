@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import type { AppConfig, ConfigSnapshot, FeatureFlags, ProxySetting } from '../shared/types/config'
 import { defaultFeatures, defaultProxy } from '../shared/types/config'
 import { CLOSE_BEHAVIOR_ASK, normalizeCloseBehavior } from '../shared/domain/consts'
+import { normalizeRecentWorkspaces, resolveBackupDir } from '../shared/domain/backup'
 
 export const CONFIG_FILE = '.tr.json'
 export const CONFIG_FILE_DEV = '.tr.dev.json'
@@ -78,6 +79,9 @@ export function defaultConfig(): AppConfig {
     sidebarCollapsed: false,
     chartSummaryCollapsed: false,
     dataVersion: 2,
+    backupDir: '',
+    autoBackup: true,
+    recentWorkspaces: [],
   }
 }
 
@@ -98,6 +102,10 @@ export function normalizeConfig(raw: Record<string, unknown>): AppConfig {
     sidebarCollapsed: boolOr(raw.sidebarCollapsed, defaults.sidebarCollapsed),
     chartSummaryCollapsed: boolOr(raw.chartSummaryCollapsed, defaults.chartSummaryCollapsed),
     dataVersion: numberOr(raw.dataVersion, defaults.dataVersion),
+    // 备份位置保留 raw 里的空串（空串 = 默认目录）；最近工作空间是用户数据，脏值逐条丢掉
+    backupDir: stringOr(raw.backupDir, defaults.backupDir),
+    autoBackup: boolOr(raw.autoBackup, defaults.autoBackup),
+    recentWorkspaces: normalizeRecentWorkspaces(raw.recentWorkspaces),
   }
 }
 
@@ -117,6 +125,9 @@ function serializeConfig(config: AppConfig): Record<string, unknown> {
     sidebarCollapsed: config.sidebarCollapsed,
     chartSummaryCollapsed: config.chartSummaryCollapsed,
     dataVersion: config.dataVersion,
+    backupDir: config.backupDir,
+    autoBackup: config.autoBackup,
+    recentWorkspaces: config.recentWorkspaces,
   }
 }
 
@@ -144,22 +155,31 @@ function writeRaw(path: string, raw: Record<string, unknown>): void {
 export class ConfigStore {
   readonly path: string
   readonly isDev: boolean
+  /** 「文档」目录：解析默认备份位置用；主进程注入，测试可换 */
+  readonly documentsDir: string
   private raw: Record<string, unknown>
   private config: AppConfig
 
-  constructor(options: { path: string; isDev: boolean }) {
+  constructor(options: { path: string; isDev: boolean; documentsDir?: string }) {
     this.path = options.path
     this.isDev = options.isDev
+    this.documentsDir = options.documentsDir ?? join(homedir(), 'Documents')
     this.raw = readRaw(options.path)
     this.config = normalizeConfig(this.raw)
   }
 
-  static forApp(isDev: boolean): ConfigStore {
-    return new ConfigStore({ path: configPath(isDev), isDev })
+  /** 生产用入口；`documentsDir` 由主进程给（`app.getPath('documents')`），不 import electron。 */
+  static forApp(isDev: boolean, documentsDir?: string): ConfigStore {
+    return new ConfigStore({ path: configPath(isDev), isDev, documentsDir })
   }
 
   get(): AppConfig {
     return structuredClone(this.config)
+  }
+
+  /** 解析后的备份位置：绝对路径，永远非空（raw 是空串时取「文档」下的默认目录）。 */
+  backupDir(): string {
+    return resolveBackupDir(this.config.backupDir, this.documentsDir)
   }
 
   snapshot(): ConfigSnapshot {
@@ -175,6 +195,10 @@ export class ConfigStore {
       keyEventLinkedOpen: this.config.keyEventLinkedOpen,
       sidebarCollapsed: this.config.sidebarCollapsed,
       chartSummaryCollapsed: this.config.chartSummaryCollapsed,
+      // 与 raw 里的 backupDir 不同：快照给的是解析后的绝对路径
+      backupDir: this.backupDir(),
+      autoBackup: this.config.autoBackup,
+      recentWorkspaces: structuredClone(this.config.recentWorkspaces),
     }
   }
 

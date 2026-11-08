@@ -295,6 +295,51 @@ describe('command catalog', () => {
     expect(commandSchemas.file_save_image.safeParse({ relativePath: 'a.png' }).success).toBe(true)
     expect(commandSchemas.devtools_toggle.safeParse({ enabled: true }).success).toBe(true)
   })
+
+  // 数据安全底座的七个命令：请求形状来自共享契约，渲染层只照这里的名字 invoke
+  it('validates data safety requests', () => {
+    expect(commandSchemas.backup_create.safeParse(undefined).success).toBe(true)
+    expect(commandSchemas.backup_list.safeParse(undefined).success).toBe(true)
+    expect(
+      commandSchemas.backup_restore.safeParse({ path: 'D:\\备份\\auto-20260105.db' }).success,
+    ).toBe(true)
+    // 恢复必须带一份备份的路径
+    expect(commandSchemas.backup_restore.safeParse({ path: '' }).success).toBe(false)
+    expect(commandSchemas.backup_restore.safeParse({}).success).toBe(false)
+
+    expect(commandSchemas.workspace_open_dir.safeParse({ target: 'workspace' }).success).toBe(true)
+    expect(commandSchemas.workspace_open_dir.safeParse({ target: 'backup' }).success).toBe(true)
+    expect(commandSchemas.workspace_open_dir.safeParse({ target: 'data' }).success).toBe(false)
+    expect(commandSchemas.workspace_open_dir.safeParse({}).success).toBe(false)
+
+    // 空串 = 回到「文档」下的默认目录
+    expect(commandSchemas.backup_dir_set.safeParse({ dir: '' }).success).toBe(true)
+    expect(commandSchemas.backup_dir_set.safeParse({ dir: 'E:\\备份' }).success).toBe(true)
+    expect(commandSchemas.backup_dir_set.safeParse({}).success).toBe(false)
+
+    expect(commandSchemas.config_set_auto_backup.safeParse({ enabled: false }).success).toBe(true)
+    expect(commandSchemas.config_set_auto_backup.safeParse({}).success).toBe(false)
+
+    // 文件框的字段全是可选的：{} 是"用默认标题与默认目录"
+    expect(commandSchemas.dialog_open_file.safeParse({}).success).toBe(true)
+    expect(
+      commandSchemas.dialog_open_file.safeParse({
+        title: '选择备份',
+        defaultPath: 'D:\\备份',
+        extensions: ['db'],
+      }).success,
+    ).toBe(true)
+  })
+
+  it('accepts the optional mustExist flag on workspace_open', () => {
+    expect(commandSchemas.workspace_open.safeParse({ workspaceDir: 'D:\\ws' }).success).toBe(true)
+    expect(
+      commandSchemas.workspace_open.safeParse({ workspaceDir: 'D:\\ws', mustExist: true }).success,
+    ).toBe(true)
+    expect(
+      commandSchemas.workspace_open.safeParse({ workspaceDir: 'D:\\ws', mustExist: 'yes' }).success,
+    ).toBe(false)
+  })
 })
 
 

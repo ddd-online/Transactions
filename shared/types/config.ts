@@ -30,6 +30,12 @@ export interface AppConfig {
   /** 分析页右侧「曲线合计」是否收起；true = 只留窄条。 */
   chartSummaryCollapsed: boolean
   dataVersion: number
+  /** 备份位置；空串 = 「文档」下的默认目录 */
+  backupDir: string
+  /** 每天第一次打开工作空间时另存一份当日快照 */
+  autoBackup: boolean
+  /** 最近成功打开过的工作空间，最新的在前，最多 5 条 */
+  recentWorkspaces: string[]
 }
 
 export interface ConfigSnapshot {
@@ -44,6 +50,10 @@ export interface ConfigSnapshot {
   keyEventLinkedOpen: boolean
   sidebarCollapsed: boolean
   chartSummaryCollapsed: boolean
+  /** 解析后的绝对路径（永远非空）；raw 里的 `backupDir` 可能是空串 */
+  backupDir: string
+  autoBackup: boolean
+  recentWorkspaces: string[]
 }
 
 export interface DialogOpenResponse {
