@@ -36,11 +36,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 599,
     hint: '曲线列表 / 曲线条件表单 / 新建与改名',
   },
-  // 1026 行：图库 / 编辑器 / 图片选择与分组
-  'src/pages/events.tsx': {
-    cap: 1026,
-    hint: '图库 / 编辑器 / 图片选择与分组',
-  },
   // 908 行：筛选条 / 表格 / 批量动作
   'src/pages/records.tsx': {
     cap: 908,
@@ -90,11 +85,6 @@ export const FILE_SIZE_ALLOWLIST = {
   'src/pages/templates.tsx': {
     cap: 503,
     hint: '模板列表 / 新建弹窗',
-  },
-  // 1092 行：卡片列 / 事项编辑 / 进度记录 / 历史视图
-  'src/pages/todo.tsx': {
-    cap: 1092,
-    hint: '卡片列 / 事项编辑 / 进度记录 / 历史视图',
   },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {

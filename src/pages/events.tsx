@@ -1,29 +1,12 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type JSX,
-  type KeyboardEvent,
-} from 'react'
-import { Image as AntImage, Input, Modal, Popconfirm } from 'antd'
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import type { TransactionRecordDto } from '../../shared/types/transaction'
-import { centsToYuan } from '../../shared/domain/money'
-import { isHeicSignature } from '../../shared/domain/image-signature'
 import { todayYmd } from '../../shared/domain/time'
-import { Button } from '../components/button'
-import { DatePicker } from '../components/date-picker'
-import { FileButton } from '../components/file-button'
-import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
-import { ScrollArea } from '../components/scroll-area'
-import { TimeRangePicker } from '../components/time-range-picker'
-import { EVENT_TONES } from '../theme/event-colors'
-import { LivePhoto } from './event-live-photo'
+import { AddEventModal, EventEditor, EventToolbar } from './event-editor'
+import { EventDateList, EventLinkedPanel } from './event-gallery'
+import { groupPickedFiles, prepareImageUpload, uploadProblems } from './event-images'
 
 function errorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'msg' in error) {
@@ -31,120 +14,6 @@ function errorMessage(error: unknown): string {
   }
   if (error instanceof Error) return error.message
   return String(error)
-}
-
-function assetUrl(relativePath: string): string {
-  return `trasset://local/${relativePath
-    .split('/')
-    .map((segment) => encodeURIComponent(segment))
-    .join('/')}`
-}
-
-async function makeThumbnail(dataUrl: string): Promise<string> {
-  const image = new Image()
-  image.src = dataUrl
-  await image.decode()
-  const width = Math.min(300, image.naturalWidth || 300)
-  const height = Math.max(1, Math.round((image.naturalHeight * width) / image.naturalWidth))
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const context = canvas.getContext('2d')
-  if (!context) throw new Error('无法创建缩略图画布')
-  context.drawImage(image, 0, 0, width, height)
-  return canvas.toDataURL('image/jpeg', 0.75)
-}
-
-function readDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error ?? new Error('读取图片失败'))
-    reader.readAsDataURL(file)
-  })
-}
-
-const STILL_EXTENSIONS = new Set(['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'gif'])
-const MOTION_EXTENSIONS = new Set(['mov', 'mp4', 'm4v', 'webm'])
-
-function extensionOf(name: string): string {
-  const dot = name.lastIndexOf('.')
-  return dot >= 0 ? name.slice(dot + 1).toLowerCase() : ''
-}
-
-function stemOf(name: string): string {
-  const dot = name.lastIndexOf('.')
-  return (dot > 0 ? name.slice(0, dot) : name).toLowerCase()
-}
-
-/** 按字节判断，不信扩展名：改过后缀的 HEIC 也能走对分支（主进程同样按字节判断）。 */
-async function isHeicFile(file: File): Promise<boolean> {
-  const head = await file.slice(0, 64).arrayBuffer()
-  return isHeicSignature(new Uint8Array(head))
-}
-
-/** 一次选中的照片（可带实况视频）。 */
-interface PickedImage {
-  still: File
-  motion?: File
-}
-
-interface PickedFiles {
-  images: PickedImage[]
-  orphanMotions: string[]
-  unsupported: string[]
-}
-
-/**
- * iPhone 导出的实况是「同名照片 + 同名 MOV」两个文件：按文件名主干配对。
- * 只有视频没有照片时不做猜测，直接报给用户，避免把一段孤立视频存成"实况"。
- */
-function groupPickedFiles(files: File[]): PickedFiles {
-  const groups = new Map<string, { still?: File; motion?: File }>()
-  const order: string[] = []
-  const unsupported: string[] = []
-
-  for (const file of files) {
-    const extension = extensionOf(file.name)
-    const isStill = STILL_EXTENSIONS.has(extension) || file.type.startsWith('image/')
-    const isMotion = MOTION_EXTENSIONS.has(extension) || file.type.startsWith('video/')
-    if (!isStill && !isMotion) {
-      unsupported.push(file.name)
-      continue
-    }
-    const key = stemOf(file.name)
-    let group = groups.get(key)
-    if (!group) {
-      group = {}
-      groups.set(key, group)
-      order.push(key)
-    }
-    if (isStill && !group.still) group.still = file
-    else if (isMotion && !group.motion) group.motion = file
-  }
-
-  const images: PickedImage[] = []
-  const orphanMotions: string[] = []
-  for (const key of order) {
-    const group = groups.get(key)
-    if (!group) continue
-    if (group.still) images.push({ still: group.still, motion: group.motion })
-    else if (group.motion) orphanMotions.push(group.motion.name)
-  }
-  return { images, orphanMotions, unsupported }
-}
-
-function shortDate(date: string): string {
-  return date.length >= 10 ? date.slice(5) : date
-}
-
-function summaryOf(content: string): string {
-  return content.replace(/\s+/g, ' ').trim().slice(0, 30)
-}
-
-function signedAmount(row: TransactionRecordDto): string {
-  const sign = row.transactionType === 'expense' ? '-' : row.transactionType === 'income' ? '+' : ''
-  return `${sign}¥${centsToYuan(row.price)}`
 }
 
 export interface EventsPageProps {
@@ -165,10 +34,6 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draftContent, setDraftContent] = useState('')
   const [selectedImageId, setSelectedImageId] = useState('')
-  // 预览打开时锁定的底衬图：换图只换前景，虚化底不再跟着加载/闪烁。
-  const [previewBackdrop, setPreviewBackdrop] = useState('')
-  // 打开预览时让主图上的实况层重挂一次：视频随组件卸载停下，不在预览背后继续出声。
-  const [stageEpoch, setStageEpoch] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -433,20 +298,11 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [date, ledgerId],
   )
 
-  // 事件图片按原图上传：不裁剪、不重编码，缩略图只为列表另存一份。
-  // HEIC 例外：Chromium 解码不了，交给主进程转码并生成缩略图；
-  // 实况照片则会连同同名的 MOV 一起上传，动态部分单独存一份。
   const addImages = useCallback(
     async (files: File[]): Promise<void> => {
       if (!ledgerId || files.length === 0) return
       const picked = groupPickedFiles(files)
-      const problems: string[] = []
-      if (picked.orphanMotions.length > 0) {
-        problems.push(`实况视频要和同名的照片一起选：${picked.orphanMotions.join('、')}`)
-      }
-      if (picked.unsupported.length > 0) {
-        problems.push(`不支持的格式：${picked.unsupported.join('、')}`)
-      }
+      const problems = uploadProblems(picked)
 
       setError('')
       if (picked.images.length === 0) {
@@ -468,14 +324,7 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
         }
         for (const pickedImage of picked.images) {
           try {
-            const heic = await isHeicFile(pickedImage.still)
-            const data = await readDataUrl(pickedImage.still)
-            const motion = pickedImage.motion ? await readDataUrl(pickedImage.motion) : undefined
-            if (heic) {
-              await uploadImage({ data, motion })
-            } else {
-              await uploadImage({ data, thumb: await makeThumbnail(data), motion })
-            }
+            await uploadImage(await prepareImageUpload(pickedImage))
           } catch (imageError) {
             problems.push(`${pickedImage.still.name}：${errorMessage(imageError)}`)
           }
@@ -507,20 +356,19 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     [loadEvent],
   )
 
-  const saveImage = useCallback(async (): Promise<void> => {
-    const current = images.find((image) => image.id === selectedImageId) ?? images[0]
-    if (!current) return
+  const saveImage = useCallback(async (relativePath: string): Promise<void> => {
+    if (!relativePath) return
     setError('')
     try {
       const result = await window.api.invoke('file_save_image', {
-        relativePath: current.filePath,
+        relativePath,
       })
       if (result.canceled) return
       if (!result.success) setError(result.error ?? '保存图片失败')
     } catch (saveError) {
       setError(errorMessage(saveError))
     }
-  }, [images, selectedImageId])
+  }, [])
 
   const toggleLinks = useCallback(async (): Promise<void> => {
     const next = !linksOpen
@@ -535,78 +383,10 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
     }
   }, [linksOpen])
 
-  const onCardKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>, targetDate: string): void => {
-    // 事件行里的删除按钮也有键盘焦点：Enter/Space 只应触发按钮本身
-    if (keyboardEvent.target !== keyboardEvent.currentTarget) return
-    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
-      keyboardEvent.preventDefault()
-      setDate(targetDate)
-    }
-  }
-
-  const mainImage = images.find((image) => image.id === selectedImageId) ?? images[0]
-  const previewItems = images.map((image) => assetUrl(image.filePath))
-  // 实况照片在预览里也要能播：按预览项的 URL 反查同一条记录。
-  const motionByUrl = useMemo(
-    () =>
-      new Map(
-        images
-          .filter((image) => image.motionPath)
-          .map((image) => [assetUrl(image.filePath), image.motionPath]),
-      ),
-    [images],
-  )
-
-  // 底衬固定为"打开预览时那张图"：翻页只换前景，避免新背景图加载期间虚化层闪空。
-  const renderPreviewImage = useCallback(
-    (node: JSX.Element, info: { image: { url: string } }): JSX.Element => {
-      const motionPath = motionByUrl.get(info.image.url)
-      return (
-        <>
-          <div
-            className="key-event-preview-blur"
-            aria-hidden="true"
-            style={{ backgroundImage: `url("${previewBackdrop || info.image.url}")` }}
-          />
-          {node}
-          {motionPath ? (
-            <LivePhoto
-              key={motionPath}
-              motionUrl={assetUrl(motionPath)}
-              variant="preview"
-              testId="event-live-preview"
-            />
-          ) : null}
-        </>
-      )
-    },
-    [motionByUrl, previewBackdrop],
-  )
-
   return (
     <PageLayout
       contentClassName="key-event-page"
-      toolbar={
-        <>
-          <TimeRangePicker
-            testId="event-year"
-            yearOnly
-            mode="year"
-            start={`${year}-01-01`}
-            end={`${year}-12-31`}
-            onModeChange={() => undefined}
-            onRangeChange={changeYear}
-          />
-          <Button
-            variant="primary"
-            testId="event-add"
-            icon={<Icon name="Plus" size={14} />}
-            onClick={openAdd}
-          >
-            新增事件
-          </Button>
-        </>
-      }
+      toolbar={<EventToolbar year={year} onYearChange={changeYear} onAdd={openAdd} />}
     >
       {error ? (
         <p role="alert" className="m0-error" data-testid="event-error">
@@ -615,412 +395,53 @@ export function EventsPage({ ledgerId }: EventsPageProps): JSX.Element {
       ) : null}
 
       <div className={`key-event-body${linksOpen ? '' : ' is-rail-collapsed'}`}>
-        <aside className="key-event-panel key-event-panel--left">
-          <h2 className="sr-only">事件日期</h2>
-          <div className="key-event-list">
-            {events.length === 0 ? (
-              <div className="key-event-empty">
-                <span className="key-event-empty__text">暂无事件</span>
-              </div>
-            ) : (
-              <ScrollArea className="key-event-cards">
-                {events.map((item) => {
-                  const active = item.date === date
-                  const summary = summaryOf(item.content)
-                  return (
-                    <div
-                      key={item.id}
-                      className={`key-event-card${active ? ' is-active' : ''}`}
-                      role="button"
-                      tabIndex={0}
-                      aria-current={active ? 'true' : undefined}
-                      data-testid="event-date-item"
-                      onClick={() => setDate(item.date)}
-                      onKeyDown={(keyboardEvent) => onCardKeyDown(keyboardEvent, item.date)}
-                    >
-                      <div
-                        className="key-event-card__bar key-event-tone"
-                        style={
-                          {
-                            '--event-tone': item.color || 'var(--transactions-color-primary)',
-                          } as CSSProperties
-                        }
-                      />
-                      <div className="key-event-card__body">
-                        <div className="key-event-card__name">{item.title || item.date}</div>
-                        <div className="key-event-card__date">
-                          <span
-                            className="key-event-card__dot key-event-tone"
-                            style={
-                              {
-                                '--event-tone': item.color || 'var(--transactions-color-primary)',
-                              } as CSSProperties
-                            }
-                            aria-hidden="true"
-                          />
-                          {shortDate(item.date)}
-                        </div>
-                        <div className="key-event-card__desc">{summary}</div>
-                      </div>
-                      <Popconfirm
-                        title={`删除事件「${item.title || item.date}」？`}
-                        description="事件里的图片会一并删除。"
-                        okText="删除"
-                        cancelText="取消"
-                        okType="danger"
-                        onConfirm={() => void removeEvent(item.date)}
-                      >
-                        <button
-                          type="button"
-                          className="tr-icon-btn key-event-card__delete"
-                          aria-label="删除事件"
-                          title="删除事件"
-                          data-testid="event-delete"
-                          onClick={(clickEvent) => clickEvent.stopPropagation()}
-                        >
-                          <Icon name="Close" size={13} />
-                        </button>
-                      </Popconfirm>
-                    </div>
-                  )
-                })}
-              </ScrollArea>
-            )}
-          </div>
-        </aside>
+        <EventDateList
+          events={events}
+          activeDate={date}
+          onSelectDate={setDate}
+          onDeleteEvent={removeEvent}
+        />
 
-        <section className="key-event-panel key-event-panel--center">
-          <div className="key-event-detail">
-          <h2 className="sr-only">事件详情</h2>
-            {event ? (
-              <div className="key-event-detail__body">
-                <div className="key-event-colors">
-                  {EVENT_TONES.map(({ value, name }, index) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`key-event-swatch key-event-tone${color === value ? ' is-selected' : ''}`}
-                      style={{ '--event-tone': value } as CSSProperties}
-                      title={name}
-                      aria-label={name}
-                      aria-pressed={color === value}
-                      data-testid={`event-color-${index}`}
-                      onClick={() => void changeColor(value)}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    className={`key-event-swatch key-event-swatch--empty${color ? '' : ' is-selected'}`}
-                    title="使用默认颜色"
-                    aria-label="使用默认颜色"
-                    aria-pressed={!color}
-                    data-testid="event-color-none"
-                    onClick={() => void changeColor('')}
-                  />
-                </div>
+        <EventEditor
+          event={event}
+          color={color}
+          content={content}
+          draftContent={draftContent}
+          editing={editing}
+          busy={busy}
+          canSave={Boolean(ledgerId)}
+          images={images}
+          selectedImageId={selectedImageId}
+          imageInputRef={fileRef}
+          onColorChange={changeColor}
+          onDraftChange={setDraftContent}
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSave={saveContent}
+          onSelectImages={(files) => void addImages(files)}
+          onSelectImage={setSelectedImageId}
+          onDeleteImage={removeImage}
+          onSaveImage={saveImage}
+        />
 
-                <div className="key-event-gallery">
-                  <div className="key-event-gallery__view">
-                    {!mainImage ? (
-                      <div className="key-event-gallery__empty" data-testid="event-gallery-empty">
-                        暂无图片
-                      </div>
-                    ) : (
-                      <>
-                        <div className="key-event-gallery__main">
-                          {/* 照片按 contain 完整显示，两侧留白由同一张图放大虚化垫底 */}
-                          <div
-                            className="key-event-gallery__blur"
-                            aria-hidden="true"
-                            style={{ backgroundImage: `url("${assetUrl(mainImage.thumbPath)}")` }}
-                          />
-                          <AntImage.PreviewGroup
-                            items={previewItems}
-                            preview={{
-                              imageRender: renderPreviewImage,
-                              // 只在打开时锁定底衬；关闭时不改，淡出过程里背景也不会跳。
-                              onOpenChange: (open, info) => {
-                                if (!open) return
-                                setPreviewBackdrop(previewItems[info.current] ?? '')
-                                setStageEpoch((value) => value + 1)
-                              },
-                            }}
-                          >
-                            <AntImage
-                              className="key-event-gallery__img"
-                              src={assetUrl(mainImage.filePath)}
-                              alt="事件图片"
-                              data-testid="event-image-main"
-                            />
-                          </AntImage.PreviewGroup>
-                          {mainImage.motionPath ? (
-                            <LivePhoto
-                              key={`${mainImage.id}-${stageEpoch}`}
-                              motionUrl={assetUrl(mainImage.motionPath)}
-                              variant="stage"
-                              testId="event-live"
-                            />
-                          ) : null}
-                          <button
-                            type="button"
-                            className="tr-icon-btn key-event-gallery__download"
-                            aria-label="保存图片"
-                            title="保存图片"
-                            data-testid="event-image-save"
-                            onClick={() => void saveImage()}
-                          >
-                            <Icon name="Download" size={14} />
-                          </button>
-                        </div>
-
-                        <ScrollArea className="key-event-gallery__thumbs">
-                          {images.map((image, index) => {
-                            const selected = image.id === mainImage.id
-                            return (
-                              <div
-                                key={image.id}
-                                className={`key-event-thumb${selected ? ' is-selected' : ''}`}
-                              >
-                                {/* 缩略图是「看这张」的大按钮：选中态交给 aria-pressed，
-                                    键盘能 Tab 到、Enter / Space 能切。删除键是它的**兄弟**、叠在上面 ——
-                                    按钮套按钮是无效 HTML，Tab 顺序也会乱。 */}
-                                <button
-                                  type="button"
-                                  className="key-event-thumb__select"
-                                  aria-pressed={selected}
-                                  aria-label={`查看第 ${index + 1} 张图片，共 ${images.length} 张${image.motionPath ? '，实况照片' : ''}`}
-                                  data-testid="event-image-select"
-                                  onClick={() => setSelectedImageId(image.id)}
-                                >
-                                  <img
-                                    className="key-event-thumb__img"
-                                    src={assetUrl(image.thumbPath)}
-                                    alt=""
-                                    loading="lazy"
-                                    decoding="async"
-                                    data-testid="event-image"
-                                  />
-                                </button>
-                                {image.motionPath ? (
-                                  <span
-                                    className="key-event-thumb__live"
-                                    data-testid="event-image-live"
-                                    aria-hidden="true"
-                                  >
-                                    <Icon name="CaretRight" size={9} />
-                                    实况
-                                  </span>
-                                ) : null}
-                                <Popconfirm
-                                  title="删除这张图片？"
-                                  okText="删除"
-                                  cancelText="取消"
-                                  okType="danger"
-                                  onConfirm={() => void removeImage(image.id)}
-                                >
-                                  <button
-                                    type="button"
-                                    className="tr-icon-btn key-event-thumb__delete"
-                                    aria-label={`删除第 ${index + 1} 张图片`}
-                                    title="删除图片"
-                                    data-testid="event-image-delete"
-                                  >
-                                    <Icon name="Close" size={12} />
-                                  </button>
-                                </Popconfirm>
-                              </div>
-                            )
-                          })}
-                        </ScrollArea>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="key-event-description">
-                  {editing ? (
-                    <div className="key-event-description__edit">
-                      <Input.TextArea
-                        className="key-event-content"
-                        data-testid="event-content"
-                        placeholder="写下这件事……"
-                        value={draftContent}
-                        maxLength={5000}
-                        autoSize={{ minRows: 6, maxRows: 14 }}
-                        onChange={(changeEvent) => setDraftContent(changeEvent.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="key-event-description__content" data-testid="event-content-view">
-                      {content.trim() ? (
-                        <p className="key-event-description__text">{content}</p>
-                      ) : (
-                        <p className="key-event-description__placeholder">暂无描述</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="key-event-detail__footer">
-                  {editing ? (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        testId="event-edit-cancel"
-                        disabled={busy}
-                        onClick={cancelEdit}
-                      >
-                        取消
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        testId="event-save"
-                        disabled={!ledgerId || busy}
-                        onClick={() => void saveContent()}
-                      >
-                        保存
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <FileButton
-                        testId="event-image-input"
-                        accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,video/quicktime,video/mp4,video/webm,.heic,.heif,.mov,.mp4,.m4v,.webm"
-                        label={busy ? '正在添加…' : '添加图片'}
-                        title="支持 HEIC；实况照片请同时选中照片与同名的 .MOV"
-                        icon={<Icon name="Download" size={14} />}
-                        size="sm"
-                        multiple
-                        disabled={busy}
-                        inputRef={fileRef}
-                        onSelectMany={(files) => void addImages(files)}
-                      />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        testId="event-edit-content"
-                        icon={<Icon name="Edit" size={14} />}
-                        onClick={startEdit}
-                      >
-                        编辑描述
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="key-event-empty key-event-empty--detail">
-                <span className="key-event-empty__icon">
-                  <Icon name="Star" size={28} />
-                </span>
-                <span className="key-event-empty__text">选择左侧事件查看详情</span>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <aside className="key-event-panel key-event-panel--right">
-          <div className="key-event-linked">
-            {!date ? (
-              <div className="key-event-empty">
-                <span className="key-event-empty__text">选择事件查看关联交易</span>
-              </div>
-            ) : linked.length === 0 ? (
-              <div className="key-event-empty">
-                <span className="key-event-empty__text">暂无关联交易</span>
-              </div>
-            ) : (
-              <ScrollArea className="key-event-linked__cards">
-                {linked.map((row) => (
-                  <div key={row.transactionId} className="key-event-linked__card">
-                    <div className="key-event-linked__body">
-                      <div className="key-event-linked__row">
-                        <span className="key-event-linked__value">
-                          {row.description || row.category || '交易'}
-                        </span>
-                        <span
-                          className={`key-event-linked__amount amount-${row.transactionType}`}
-                        >
-                          {signedAmount(row)}
-                        </span>
-                      </div>
-                      <div className="key-event-linked__meta">
-                        <div className="key-event-linked__tags">
-                          {row.tags.map((tag) => (
-                            <span key={tag} className="key-event-linked__tag">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                        <span className="key-event-linked__desc">
-                          {row.transactionAt
-                            ? new Date(row.transactionAt * 1000).toLocaleDateString('zh-CN')
-                            : ''}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </ScrollArea>
-            )}
-          </div>
-        </aside>
-
-        <button
-          type="button"
-          className="tr-icon-btn key-event-rail-toggle"
-          data-testid="event-links-toggle"
-          aria-label={linksOpen ? '收起关联交易' : '展开关联交易'}
-          aria-expanded={linksOpen}
-          title={linksOpen ? '收起关联交易' : '展开关联交易'}
-          onClick={() => void toggleLinks()}
-        >
-          <Icon name={linksOpen ? 'ChevronRight' : 'ChevronLeft'} size={14} />
-        </button>
+        <EventLinkedPanel
+          date={date}
+          linked={linked}
+          linksOpen={linksOpen}
+          onToggleLinks={toggleLinks}
+        />
       </div>
 
-      <Modal
+      <AddEventModal
         open={addOpen}
-        title="新增事件"
-        width={420}
-        centered
-        destroyOnHidden
-        footer={null}
-        onCancel={() => setAddOpen(false)}
-      >
-        <div className="tr-modal-form">
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">日期</span>
-            <DatePicker testId="event-add-date" value={addDate} onChange={setAddDate} ariaLabel="日期" />
-          </div>
-          <div className="tr-modal-field">
-            <span className="tr-modal-label">标题</span>
-            <Input
-              aria-label="标题"
-              data-testid="event-add-title"
-              placeholder="事件标题"
-              value={addTitle}
-              maxLength={200}
-              onChange={(changeEvent) => setAddTitle(changeEvent.target.value)}
-            />
-          </div>
-          <div className="tr-modal-footer">
-            <Button variant="secondary" testId="event-add-cancel" onClick={() => setAddOpen(false)}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              testId="event-add-confirm"
-              disabled={!addDate || addBusy}
-              onClick={() => void createEvent()}
-            >
-              新增
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        date={addDate}
+        title={addTitle}
+        busy={addBusy}
+        onDateChange={setAddDate}
+        onTitleChange={setAddTitle}
+        onClose={() => setAddOpen(false)}
+        onConfirm={() => void createEvent()}
+      />
     </PageLayout>
   )
 }
