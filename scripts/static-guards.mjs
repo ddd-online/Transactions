@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { countLines, evaluateFileSizes } from './file-size-budget.mjs'
 
 const root = process.cwd()
 const failures = []
@@ -199,6 +200,19 @@ check('数据分栏与备份配置字段', () => {
   }
 
   return `5 个分栏（${tabs.join(',')}）+ ${BACKUP_FIELDS.length} 个配置字段两侧齐全`
+})
+
+check('文件规模棘轮', () => {
+  // 预算判据是唯一的结构抓手：清单外超预算失败，清单内超 cap 失败，拆进预算还留着条目也失败。
+  // 行数口径用 countLines（scripts/file-size-budget.mjs），与允许清单登记的 cap 对齐。
+  const files = []
+  for (const path of walk('src').concat(walk('electron/ipc'))) {
+    if (!/\.(ts|tsx|css)$/.test(path)) continue
+    files.push({ path, lines: countLines(read(path)) })
+  }
+  const result = evaluateFileSizes(files)
+  assert(result.failures.length === 0, result.failures.join('\n'))
+  return result.listed === 0 ? '允许清单已清空' : `允许清单 ${result.listed} 条 / 0 条越界`
 })
 
 for (const message of passes) {
