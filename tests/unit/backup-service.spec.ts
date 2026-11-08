@@ -18,6 +18,7 @@ import { MIGRATIONS } from '../../electron/db/migrate'
 import { create } from '../../electron/db/dao/transaction-record'
 import {
   backupDirProblem,
+  comparable,
   createBackupService,
   type BackupServiceOptions,
 } from '../../electron/services/backup'
@@ -135,6 +136,20 @@ describe('backupDirProblem', () => {
     expect(backupDirProblem(join(tmpdir(), 'tr-problem-ws-2'), workspace)).toBe('')
     expect(backupDirProblem(join(tmpdir(), 'elsewhere'), workspace)).toBe('')
   })
+
+  it('compares Windows paths case-insensitively and ignores trailing separators', () => {
+    // 同一个目录被写成不同大小写 / 带尾分隔符时，仍然要认出「这是工作空间自己」
+    expect(backupDirProblem('C:\\Work\\Books\\', 'c:\\work\\books')).not.toBe('')
+    expect(backupDirProblem('C:\\WORK\\BOOKS\\sub', 'c:\\work\\books')).not.toBe('')
+    expect(backupDirProblem('C:\\Work\\Books2', 'c:\\work\\books')).toBe('')
+  })
+})
+
+describe('comparable', () => {
+  it('normalizes case and trailing separators so two spellings of one path match', () => {
+    expect(comparable('C:\\Work\\Books\\')).toBe(comparable('c:\\work\\books'))
+    expect(comparable('C:\\Work\\Books\\')).not.toBe(comparable('C:\\Work\\Books2'))
+  })
 })
 
 describe('manual backup', () => {
@@ -151,7 +166,7 @@ describe('manual backup', () => {
     expect(result.path).toBe(join(fixture.backupDirectory, result.name))
     expect(statSync(result.path).isDirectory()).toBe(true)
     expect(result.sizeBytes).toBeGreaterThan(0)
-    expect(typeof result.durationMs).toBe('number')
+    expect(result.durationMs).toBeGreaterThanOrEqual(0)
     expect(result.createdAt).toBe(Math.trunc(fixture.clock.value.getTime() / 1000))
 
     // 快照库能独立只读打开，版本与快速检查都对
@@ -162,6 +177,10 @@ describe('manual backup', () => {
     expect(probe.quickCheck).toBe('ok')
     expect(probe.hasAppMeta).toBe(true)
     expect(probe.schemaVersion).toBe(SUPPORTED_VERSION)
+    // 快照记住自己来自哪个工作空间：列表据此分辨归属、恢复时据此提醒
+    expect(probe.workspaceDir).toBe(fixture.workspaceDirectory)
+    // 产出的快照必须过全量检查（不是只看名字 / 只看 quick_check）
+    expect(probeDatabase(snapshotPath, { deep: true }).quickCheck).toBe('ok')
     expect(judgeSnapshot(probe, SUPPORTED_VERSION).status).toBe('ok')
 
     // 刚写的记录在快照里
@@ -233,6 +252,9 @@ describe('backup list', () => {
     expect(autoEntry.path).toBe(join(fixture.backupDirectory, autoEntry.name))
     expect(autoEntry.createdAt).toBe(Math.trunc(new Date(2026, 4, 4).getTime() / 1000))
     expect(autoEntry.sizeBytes).toBeGreaterThan(0)
+    // 列表带出快照自己的来源工作空间
+    expect(autoEntry.workspaceDir).toBe(fixture.workspaceDirectory)
+    expect(olderEntry.workspaceDir).toBe(fixture.workspaceDirectory)
 
     expect(olderEntry.kind).toBe('manual')
     expect(olderEntry.hasAssets).toBe(true)
@@ -363,6 +385,61 @@ describe('auto backup', () => {
     expect(names).toContain(manual.name)
     expect(existsSync(manual.path)).toBe(true)
   })
+
+  it('keeps one snapshot per workspace per day and marks each with its own workspace', () => {
+    const fixture = setup()
+    openWorkspace(fixture.workspaceDirectory)
+    const service = serviceFor(fixture)
+    const first = service.autoBackupIfNeeded()
+    expect(first?.name).toBe(autoBackupName('2026-05-01'))
+    expect(probeDatabase(first!.path).workspaceDir).toBe(fixture.workspaceDirectory)
+
+    // 同一天再开另一个工作空间：今天的 base 名字属于 A，B 走到 -2，而不是被静默跳过
+    const secondDirectory = join(dirname(fixture.workspaceDirectory), 'workspace-b')
+    openWorkspace(secondDirectory)
+    const second = service.autoBackupIfNeeded()
+    expect(second?.name).toBe('auto-20260501-2.db')
+    expect(existsSync(join(fixture.backupDirectory, 'auto-20260501-2.db'))).toBe(true)
+    expect(probeDatabase(second!.path).workspaceDir).toBe(secondDirectory)
+
+    // 列表分得出归属：两份 auto 各带自己的工作空间
+    const autoEntries = service.list().filter((entry) => entry.kind === 'auto')
+    expect(autoEntries.map((entry) => entry.workspaceDir).sort()).toEqual(
+      [secondDirectory, fixture.workspaceDirectory].sort(),
+    )
+    expect(service.autoBackupIfNeeded()).toBeNull()
+  })
+
+  it('treats an untagged snapshot as the current workspace (files from older versions)', () => {
+    const fixture = setup()
+    openWorkspace(fixture.workspaceDirectory)
+    mkdirSync(fixture.backupDirectory, { recursive: true })
+    // 升级前产出的 auto 没有 workspace_dir 标记：按「当前的」算，不能因此多产一份
+    writeFileSync(join(fixture.backupDirectory, autoBackupName('2026-05-01')), '')
+
+    expect(serviceFor(fixture).autoBackupIfNeeded()).toBeNull()
+    expect(existsSync(join(fixture.backupDirectory, 'auto-20260501-2.db'))).toBe(false)
+  })
+
+  it('prunes old snapshots even when today is skipped', () => {
+    const fixture = setup()
+    openWorkspace(fixture.workspaceDirectory)
+    const service = serviceFor(fixture)
+    // 先产出今天这一份（带 workspace_dir 标记），再铺 7 份旧文件：共 8 份
+    expect(service.autoBackupIfNeeded()).not.toBeNull()
+    for (const day of [20, 21, 22, 23, 24, 25, 26]) {
+      writeFileSync(join(fixture.backupDirectory, `auto-202604${day}.db`), '')
+    }
+
+    // 今天的不再写第二份，但裁剪照跑：攒到 8 份也能降回 7 份
+    expect(service.autoBackupIfNeeded()).toBeNull()
+    const autos = readdirSync(fixture.backupDirectory)
+      .filter((name) => name.startsWith('auto-'))
+      .sort()
+    expect(autos).toHaveLength(7)
+    expect(autos).not.toContain('auto-20260420.db')
+    expect(autos).toContain('auto-20260501.db')
+  })
 })
 
 describe('restore', () => {
@@ -393,6 +470,8 @@ describe('restore', () => {
     } finally {
       preRestore.close()
     }
+    // pre-restore 也带上来源工作空间：它同样是会被列表看到的一份快照
+    expect(probeDatabase(result.preRestorePath).workspaceDir).toBe(fixture.workspaceDirectory)
 
     // 重新打开工作空间：回到快照状态
     const reopened = openWorkspace(fixture.workspaceDirectory)

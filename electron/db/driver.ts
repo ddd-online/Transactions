@@ -78,19 +78,49 @@ export function quickCheckDetail(db: Db): string {
   return quickCheckOf(() => db.prepare('PRAGMA quick_check').all())
 }
 
-/** `app_meta` 里记的库版本；没有表或读不到 → 0。 */
-function schemaVersionOf(raw: DatabaseSync): { hasAppMeta: boolean; schemaVersion: number } {
+/** `app_meta` 里记的库版本与来源工作空间；没有表或读不到 → 0 / 空串。 */
+function metaOf(raw: DatabaseSync): {
+  hasAppMeta: boolean
+  schemaVersion: number
+  workspaceDir: string
+} {
   const table = raw
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'app_meta'")
     .get()
-  if (table === undefined) return { hasAppMeta: false, schemaVersion: 0 }
-  const row = raw.prepare("SELECT value FROM app_meta WHERE key = 'schema_version'").get() as
+  if (table === undefined) return { hasAppMeta: false, schemaVersion: 0, workspaceDir: '' }
+  const versionRow = raw.prepare("SELECT value FROM app_meta WHERE key = 'schema_version'").get() as
     | { value: unknown }
     | undefined
-  const parsed = Number(row?.value)
+  const parsed = Number(versionRow?.value)
+  const workspaceRow = raw.prepare("SELECT value FROM app_meta WHERE key = 'workspace_dir'").get() as
+    | { value: unknown }
+    | undefined
   return {
     hasAppMeta: true,
     schemaVersion: Number.isInteger(parsed) && parsed > 0 ? parsed : 0,
+    workspaceDir: typeof workspaceRow?.value === 'string' ? workspaceRow.value : '',
+  }
+}
+
+/**
+ * 给一份刚产出的快照盖上「它是从哪个工作空间来的」标记（覆盖写）。
+ *
+ * 自动备份的名字只到天：同一天里两个工作空间的快照形状完全一样，没有这枚标记，
+ * 列表分不出归属，恢复时也无从提醒「你正在把 A 的备份盖到 B 上」。
+ * `node:sqlite` 仍然只出现在这个文件里。
+ */
+export function stampWorkspaceDir(databasePath: string, workspaceDir: string): void {
+  const raw = new DatabaseSync(databasePath)
+  try {
+    raw.exec('CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+    raw
+      .prepare(
+        "INSERT INTO app_meta(key, value) VALUES ('workspace_dir', ?) " +
+          'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      )
+      .run(workspaceDir)
+  } finally {
+    raw.close()
   }
 }
 
@@ -98,22 +128,31 @@ function schemaVersionOf(raw: DatabaseSync): { hasAppMeta: boolean; schemaVersio
  * 只读探一份候选快照。
  *
  * 打不开（文件不存在 / 没有权限）时让异常冒出去 —— 那是"这个路径没有备份"，
- * 由调用方记成 `opened: false`；能打开但内容坏掉时回 `quickCheck` 的原文。
+ * 由调用方记成 `opened: false`；能打开但内容坏掉时回检查结果的原文。
+ *
+ * `deep: true` 用 `PRAGMA integrity_check`（全量）代替 `quick_check`：全量只属于备份与恢复
+ * 两个显式动作，打开工作空间与列备份列表都用快速检查。
  */
-export function probeDatabase(path: string): SnapshotProbe {
+export function probeDatabase(
+  path: string,
+  options: { deep?: boolean } = {},
+): SnapshotProbe {
   const raw = new DatabaseSync(path, { readOnly: true })
   try {
-    const quickCheck = quickCheckOf(() => raw.prepare('PRAGMA quick_check').all())
+    const pragma = options.deep ? 'PRAGMA integrity_check' : 'PRAGMA quick_check'
+    const quickCheck = quickCheckOf(() => raw.prepare(pragma).all())
     let hasAppMeta = false
     let schemaVersion = 0
+    let workspaceDir = ''
     try {
-      const meta = schemaVersionOf(raw)
+      const meta = metaOf(raw)
       hasAppMeta = meta.hasAppMeta
       schemaVersion = meta.schemaVersion
+      workspaceDir = meta.workspaceDir
     } catch {
-      // 坏库读不了 sqlite_master：结论已经由 quickCheck 给出，这里保持 0
+      // 坏库读不了 sqlite_master：结论已经由 quickCheck 给出，这里保持 0 / 空串
     }
-    return { opened: true, hasAppMeta, schemaVersion, quickCheck }
+    return { opened: true, hasAppMeta, schemaVersion, workspaceDir, quickCheck }
   } finally {
     try {
       raw.close()

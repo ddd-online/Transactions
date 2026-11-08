@@ -28,11 +28,16 @@ export const RECENT_WORKSPACE_LIMIT = 5
 
 const AUTO_NAME_PATTERN = /^auto-(\d{4})(\d{2})(\d{2})\.db$/
 const STAMP_PATTERN = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/
+/**
+ * `uniqueName` 为同名同秒的第二份加的 `-2` / `-3` 后缀：
+ * `auto-20260105-2.db`、`pre-restore-20260105-030405-2.db`、`Transactions-备份-20260105-030405-2`。
+ */
+const NAME_SUFFIX_PATTERN = /^(.*)-(\d+)(\.db)?$/
 const DB_EXTENSION = '.db'
 const SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const
 const BYTES_PER_UNIT = 1024
 
-/** 一份快照的探针结果：主进程只读打开候选文件后读到的四件事。 */
+/** 一份快照的探针结果：主进程只读打开候选文件后读到的几件事。 */
 export interface SnapshotProbe {
   /** 能否以只读方式打开 */
   opened: boolean
@@ -40,6 +45,8 @@ export interface SnapshotProbe {
   hasAppMeta: boolean
   /** app_meta.schema_version；读不到为 0 */
   schemaVersion: number
+  /** app_meta.workspace_dir（产出它的工作空间）；读不到为 '' */
+  workspaceDir: string
   /** 'ok' 或错误原文 */
   quickCheck: string
 }
@@ -60,8 +67,13 @@ export type SnapshotVerdict =
  */
 function joinPath(directory: string, name: string): string {
   const trimmed = directory.replace(/[\\/]+$/, '')
-  if (trimmed.length === 0) return name
-  const separator = trimmed.includes('\\') ? '\\' : '/'
+  if (trimmed.length === 0) {
+    // 根路径（`/` / `\`）剥完只剩空串：分隔符要补回去，否则会拼出一个相对名字
+    if (directory.length === 0) return name
+    return `${directory[0] === '\\' ? '\\' : '/'}${name}`
+  }
+  // 分隔符跟原始输入走：`D:\` 剥完只剩 `D:`，不能因此判定成用 `/`
+  const separator = directory.includes('\\') ? '\\' : '/'
   return `${trimmed}${separator}${name}`
 }
 
@@ -155,14 +167,13 @@ function autoNameSeconds(name: string): number | null {
 
 /** 按名字认备份种类；名字认不出（不规则 / 不是备份）返回 null。 */
 export function backupKindOf(name: string): BackupKind | null {
-  if (manualNameSeconds(name) !== null) return 'manual'
-  if (autoNameSeconds(name) !== null) return 'auto'
-  if (preRestoreSeconds(name) !== null) return 'pre-restore'
-  return null
+  return parseBackupName(name)?.kind ?? null
 }
 
-/** 按名字读出种类与时间；名字认不出返回 null。 */
-export function parseBackupName(name: string): { kind: BackupKind; timestamp: number } | null {
+/** 严格形状解析（不带 `-<n>` 后缀）：三选一，认不出返回 null。 */
+function strictParseBackupName(
+  name: string,
+): { kind: BackupKind; timestamp: number } | null {
   const manual = manualNameSeconds(name)
   if (manual !== null) return { kind: 'manual', timestamp: manual }
   const auto = autoNameSeconds(name)
@@ -173,18 +184,66 @@ export function parseBackupName(name: string): { kind: BackupKind; timestamp: nu
 }
 
 /**
- * 自动备份的保留裁剪：只认 `auto-YYYYMMDD.db`，按名字里的日期新 → 旧保留前 `keep` 个，
- * 返回该删的文件名。
+ * 剥掉一次 `-<n>` 后缀；没剥掉返回原串。
+ *
+ * 先按严格形状解析再走这里：`auto-20260105.db` 本身就是合法名字，不能被当成
+ * 「`auto` + 后缀 `20260105`」剥成 `auto.db`。
+ */
+function withoutNameSuffix(name: string): string {
+  const match = NAME_SUFFIX_PATTERN.exec(name)
+  if (!match) return name
+  return `${match[1]}${match[3] ?? ''}`
+}
+
+/** 按名字读出种类与时间；名字认不出返回 null。 */
+export function parseBackupName(name: string): { kind: BackupKind; timestamp: number } | null {
+  const direct = strictParseBackupName(name)
+  if (direct) return direct
+  const stripped = withoutNameSuffix(name)
+  if (stripped === name) return null
+  return strictParseBackupName(stripped)
+}
+
+/** 一份 auto 快照：时间来自名字里的日期；`rank` 是同一天多份时的先后（base = 0）。 */
+interface AutoEntry {
+  name: string
+  timestamp: number
+  rank: number
+}
+
+/** 认一份 auto 快照；同一天的第二份带 `-2` 后缀，rank 记下它比 base 新。 */
+function autoEntryOf(name: string): AutoEntry | null {
+  const direct = autoNameSeconds(name)
+  if (direct !== null) return { name, timestamp: direct, rank: 0 }
+  const stripped = withoutNameSuffix(name)
+  if (stripped === name) return null
+  const timestamp = autoNameSeconds(stripped)
+  if (timestamp === null) return null
+  const match = NAME_SUFFIX_PATTERN.exec(name)
+  return { name, timestamp, rank: match ? Number(match[2]) : 0 }
+}
+
+/**
+ * 自动备份的保留裁剪：只认 `auto-YYYYMMDD.db`（及同日多份的 `-<n>` 后缀），
+ * 按名字里的日期新 → 旧保留前 `keep` 个，返回该删的文件名。
+ *
+ * 同一天多份时先比后缀号（base 最早、后缀越大越新），再比名字 —— 边界由排序规则定死，
+ * 不依赖目录返回顺序的偶然性。
  *
  * 手动备份与 pre-restore 永远不参与 —— 「我特意留下的那一份」不能被自动清理吃掉。
  */
 export function autoBackupsToDelete(names: string[], keep: number = AUTO_BACKUP_KEEP): string[] {
-  const autos: { name: string; timestamp: number }[] = []
+  const autos: AutoEntry[] = []
   for (const name of names) {
-    const timestamp = autoNameSeconds(name)
-    if (timestamp !== null) autos.push({ name, timestamp })
+    const entry = autoEntryOf(name)
+    if (entry) autos.push(entry)
   }
-  autos.sort((left, right) => right.timestamp - left.timestamp)
+  autos.sort(
+    (left, right) =>
+      right.timestamp - left.timestamp ||
+      right.rank - left.rank ||
+      left.name.localeCompare(right.name),
+  )
   // keep 为负按 0 处理：删完比留负数个更接近调用方的意图
   return autos.slice(Math.max(0, keep)).map((entry) => entry.name)
 }

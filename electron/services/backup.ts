@@ -22,10 +22,9 @@ import { statfsSync } from 'node:fs'
 import { join, resolve, sep } from 'node:path'
 
 import type { Db } from '../db/driver'
-import { probeDatabase } from '../db/driver'
+import { probeDatabase, stampWorkspaceDir } from '../db/driver'
 import type {
   BackupEntryDto,
-  BackupKind,
   BackupResultDto,
   RestoreResultDto,
 } from '../../shared/types/backup'
@@ -42,7 +41,7 @@ import {
   type SnapshotProbe,
 } from '../../shared/domain/backup'
 import { formatTimestamp } from '../../shared/domain/time'
-import { AppError, workspaceNotOpened } from '../../shared/errors'
+import { AppError, errorMessage, workspaceNotOpened } from '../../shared/errors'
 
 /** 恢复后等界面把回执说完再重启的间隔（与更新安装同一节奏）。 */
 export const RESTART_DELAY_MS = 600
@@ -72,27 +71,8 @@ export interface BackupService {
   autoBackupIfNeeded(): BackupEntryDto | null
 }
 
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
-
-/**
- * 名字识别：同一秒里的第二份备份会被 `uniqueName` 加上 `-2` / `-3` 后缀
- * （手动备份是目录名，pre-restore 的文件名带 `.db`）。
- *
- * 后缀不改变备份的种类与时间，但 `parseBackupName` 只认严格名字 ——
- * 不在这里补一下，同一秒连点两次时第二份备份会从列表里「消失」。
- */
-function parseEntryName(name: string): { kind: BackupKind; timestamp: number } | null {
-  const direct = parseBackupName(name)
-  if (direct) return direct
-  const match = /^(.*)-(\d+)(\.db)?$/.exec(name)
-  if (!match) return null
-  return parseBackupName(`${match[1]}${match[3] ?? ''}`)
-}
-
 /** 比较路径时的同一口径：解析成绝对路径、去掉尾部分隔符、Windows 不区分大小写。 */
-function comparable(path: string): string {
+export function comparable(path: string): string {
   return resolve(path)
     .replace(/[\\/]+$/, '')
     .toLowerCase()
@@ -149,12 +129,23 @@ function vacuumInto(db: Db, target: string): void {
 }
 
 /** 只读探一份快照；打不开就记成 `opened: false`，不往外抛。 */
-function probeOf(path: string): SnapshotProbe {
+function probeOf(path: string, options: { deep?: boolean } = {}): SnapshotProbe {
   try {
-    return probeDatabase(path)
+    return probeDatabase(path, options)
   } catch {
-    return { opened: false, hasAppMeta: false, schemaVersion: 0, quickCheck: '' }
+    return { opened: false, hasAppMeta: false, schemaVersion: 0, workspaceDir: '', quickCheck: '' }
   }
+}
+
+/**
+ * 产出的快照必须过全量检查。
+ *
+ * 全量只在这两个显式动作上跑（产出备份 / 恢复候选）；产出一份通不过检查的快照比没有备份
+ * 更危险 —— 用户会以为数据已经在里面了。
+ */
+function passesIntegrityCheck(path: string): boolean {
+  const probe = probeOf(path, { deep: true })
+  return probe.opened && probe.quickCheck === 'ok'
 }
 
 /** 工作空间所在盘的可用字节；拿不到（平台不支持 / 无权限）返回 null。 */
@@ -175,7 +166,7 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
   }
 
   function buildEntry(directory: string, name: string): BackupEntryDto | null {
-    const parsed = parseEntryName(name)
+    const parsed = parseBackupName(name)
     if (!parsed) return null
     const path = join(directory, name)
     let sizeBytes = 0
@@ -194,6 +185,7 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
       createdAt: parsed.timestamp,
       sizeBytes,
       schemaVersion: probe.schemaVersion,
+      workspaceDir: probe.workspaceDir,
       hasAssets: manual && existsSync(join(path, 'data', 'assets')),
       restorable: verdict.status === 'ok',
       status: verdict.status,
@@ -208,7 +200,7 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     try {
       names = readdirSync(directory)
     } catch (error) {
-      options.log?.(`读取备份目录失败: ${messageOf(error)}`)
+      options.log?.(`读取备份目录失败: ${errorMessage(error)}`)
       return []
     }
     const entries: BackupEntryDto[] = []
@@ -238,7 +230,15 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     )
     const target = join(directory, name)
     mkdirSync(target)
-    vacuumInto(workspace.db, join(target, 'transactions.db'))
+    const snapshotPath = join(target, 'transactions.db')
+    vacuumInto(workspace.db, snapshotPath)
+    // 快照记住自己来自哪个工作空间：列表据此分辨归属、恢复时据此提醒
+    stampWorkspaceDir(snapshotPath, workspace.directory)
+    // 全量检查：产出一份坏快照比没有备份更危险
+    if (!passesIntegrityCheck(snapshotPath)) {
+      rmSync(target, { recursive: true, force: true })
+      throw new AppError(`备份产出的快照没有通过完整性检查，已删除：${name}`)
+    }
 
     const assetsSource = join(workspace.directory, 'data', 'assets')
     if (existsSync(assetsSource)) {
@@ -254,6 +254,28 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     }
   }
 
+  /**
+   * 今天已有当前工作空间的一份 → 视为「今天做过了」。
+   *
+   * 标记为空（升级前产出的文件 / 读不到）按「当前的」算：否则升级当天会为每个工作空间
+   * 多产一份。标记属于别的工作空间时不算，B 会拿到 `auto-YYYYMMDD-2.db`。
+   */
+  function autoBackupCoversWorkspace(path: string, workspace: BackupWorkspace): boolean {
+    const marker = probeOf(path).workspaceDir.trim()
+    return marker === '' || comparable(marker) === comparable(workspace.directory)
+  }
+
+  /** 只裁剪自动备份：手动备份与 pre-restore 永远不参与。 */
+  function pruneAutoBackups(directory: string): void {
+    for (const stale of autoBackupsToDelete(readdirSync(directory))) {
+      try {
+        rmSync(join(directory, stale), { force: true })
+      } catch (error) {
+        options.log?.(`清理旧自动备份失败: ${errorMessage(error)}`)
+      }
+    }
+  }
+
   function autoBackupIfNeeded(): BackupEntryDto | null {
     if (!options.autoBackupEnabled()) return null
     const workspace = options.workspace()
@@ -262,24 +284,44 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     // 配置被手改成工作空间内部时静默跳过：打开工作空间不能因此失败
     if (backupDirProblem(directory, workspace.directory)) return null
 
-    const name = autoBackupName(
+    const todayName = autoBackupName(
       formatTimestamp(Math.trunc(options.now().getTime() / 1000), 'YYYY-MM-DD'),
     )
-    const target = join(directory, name)
-    if (existsSync(target)) return null
+    // 同一天同一工作空间只做一次：base 或它的 -2 / -3 后缀里只要有一份属于当前
+    // 工作空间（或标记为空）就算今天做过了。只看 base 的话，B 每打开一次就会多产一份。
+    const todayStem = todayName.slice(0, -'.db'.length)
+    const sameDayPattern = new RegExp(`^${todayStem}-\\d+\\.db$`)
+    const covered =
+      existsSync(directory) &&
+      readdirSync(directory).some(
+        (candidate) =>
+          (candidate === todayName || sameDayPattern.test(candidate)) &&
+          autoBackupCoversWorkspace(join(directory, candidate), workspace),
+      )
 
-    mkdirSync(directory, { recursive: true })
-    vacuumInto(workspace.db, target)
-
-    // 只裁剪自动备份：手动备份与 pre-restore 永远不参与
-    for (const stale of autoBackupsToDelete(readdirSync(directory))) {
-      try {
-        rmSync(join(directory, stale), { force: true })
-      } catch (error) {
-        options.log?.(`清理旧自动备份失败: ${messageOf(error)}`)
+    let created: string | null = null
+    if (!covered) {
+      mkdirSync(directory, { recursive: true })
+      // 同一天的下一个工作空间用 uniqueName 产 -2 / -3，不另写一套名字规则
+      const name = uniqueName(todayName, (candidate) => existsSync(join(directory, candidate)))
+      const target = join(directory, name)
+      vacuumInto(workspace.db, target)
+      stampWorkspaceDir(target, workspace.directory)
+      if (!passesIntegrityCheck(target)) {
+        rmSync(target, { force: true })
+        throw new AppError(`备份产出的快照没有通过完整性检查，已删除：${name}`)
       }
+      created = name
     }
-    return buildEntry(directory, name)
+
+    // 无论这次有没有写盘都要裁剪：只在新建时裁的话，攒到 8 份也降不下来。
+    // 快速检查也打不开的目录（例如没有权限）不能让「打开工作空间」失败
+    try {
+      pruneAutoBackups(directory)
+    } catch (error) {
+      options.log?.(`清理旧自动备份失败: ${errorMessage(error)}`)
+    }
+    return created ? buildEntry(directory, created) : null
   }
 
   function restore(source: string): RestoreResultDto {
@@ -298,8 +340,8 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
       throw new AppError('不能从当前正在使用的库恢复，请选择另一份备份', { status: 400 })
     }
 
-    // 1. 校验候选：只读打开、快速检查、app_meta、库版本不高于本程序
-    const verdict = judgeSnapshot(probeOf(snapshotPath), options.supportedSchemaVersion)
+    // 1. 校验候选：只读打开、全量检查、app_meta、库版本不高于本程序
+    const verdict = judgeSnapshot(probeOf(snapshotPath, { deep: true }), options.supportedSchemaVersion)
     if (verdict.status !== 'ok') {
       throw new AppError(snapshotProblem(verdict), { status: 400 })
     }
@@ -328,6 +370,8 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     )
     const preRestorePath = join(backupDirectory, preRestoreNameValue)
     vacuumInto(workspace.db, preRestorePath)
+    // pre-restore 同样是列表里会看到的一份快照：也盖上来源工作空间
+    stampWorkspaceDir(preRestorePath, workspace.directory)
 
     // 4. 关库；5. 删掉当前库与 -wal / -shm；6. 写入快照
     options.closeWorkspace()
@@ -345,7 +389,7 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
       }
     } catch (error) {
       throw new AppError(
-        `恢复失败，当前数据已经另存为 ${preRestorePath}：${messageOf(error)}`,
+        `恢复失败，当前数据已经另存为 ${preRestorePath}：${errorMessage(error)}`,
         { status: 500 },
       )
     }

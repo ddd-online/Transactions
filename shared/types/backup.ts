@@ -24,6 +24,8 @@ export interface BackupEntryDto {
   sizeBytes: number
   /** 读不出来 0 */
   schemaVersion: number
+  /** 产出这份快照的工作空间绝对路径；读不到为空串 */
+  workspaceDir: string
   /** 手动备份且带了 data/assets */
   hasAssets: boolean
   /** status === 'ok' */

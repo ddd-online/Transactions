@@ -349,8 +349,12 @@ test('备份位置指到工作空间内部：被拒绝，不建目录，不产�
     expect(before.some((name) => name.startsWith('auto-'))).toBe(true)
 
     await page.getByTestId('backup-dir-change').click()
-    await expect(page.getByTestId('data-error')).toContainText('不能放在工作空间内部')
-    await expect(page.getByTestId('data-error')).toContainText(fixture.workspace)
+    // 动作失败只走消息；页面上那行红字（data-error）只留给「这一页装不起来」
+    await expect(
+      page.getByTestId('toast').filter({ hasText: '不能放在工作空间内部' }),
+    ).toBeVisible()
+    await expect(page.getByTestId('toast').filter({ hasText: fixture.workspace })).toBeVisible()
+    await expect(page.getByTestId('data-error')).toHaveCount(0)
 
     // 拒绝必须是「什么都不做」：不建目录、不写配置、备份目录里不添东西
     expect(existsSync(inside)).toBe(false)

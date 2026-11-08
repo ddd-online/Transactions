@@ -1092,7 +1092,7 @@
 .st-recent-main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--transactions-space-2xs);
   min-width: 0;
 }
 

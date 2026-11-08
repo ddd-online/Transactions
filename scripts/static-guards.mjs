@@ -169,13 +169,18 @@ check('数据分栏与备份配置字段', () => {
   )
 
   const configTypes = read('shared/types/config.ts')
-  const appConfig = /export interface AppConfig \{([\s\S]*?)\n\}/.exec(configTypes)
-  assert(appConfig, '找不到 shared/types/config.ts 的 AppConfig 接口')
-  for (const field of BACKUP_FIELDS) {
-    assert(
-      new RegExp(`^\\s*${field}\\??:`, 'm').test(appConfig[1]),
-      `AppConfig 缺少 ${field} 字段`,
-    )
+  // 读取归一化看 AppConfig、写回序列化看 ConfigSnapshot：两个接口都要有，缺一个升级后就丢字段
+  for (const interfaceName of ['AppConfig', 'ConfigSnapshot']) {
+    const body = new RegExp(
+      `export interface ${interfaceName} \\{([\\s\\S]*?)\\n\\}`,
+    ).exec(configTypes)
+    assert(body, `找不到 shared/types/config.ts 的 ${interfaceName} 接口`)
+    for (const field of BACKUP_FIELDS) {
+      assert(
+        new RegExp(`^\\s*${field}\\??:`, 'm').test(body[1]),
+        `${interfaceName} 缺少 ${field} 字段`,
+      )
+    }
   }
 
   const configSource = read('electron/config.ts')
@@ -185,9 +190,10 @@ check('数据分栏与备份配置字段', () => {
     ).exec(configSource)
     assert(body, `找不到 electron/config.ts 的 ${functionName} 函数体`)
     for (const field of BACKUP_FIELDS) {
+      // 必须是 `字段:` 这种真赋值形状：`body.includes(field)` 会被注释里提一句蒙过去
       assert(
-        body[1].includes(field),
-        `${functionName} 的函数体缺少 ${field}（读取归一化与写回序列化两侧都要有）`,
+        new RegExp(`^\\s*${field}\\s*:`, 'm').test(body[1]),
+        `${functionName} 的函数体缺少 ${field} 赋值（读取归一化与写回序列化两侧都要有，注释里提一句不算）`,
       )
     }
   }

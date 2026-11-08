@@ -137,6 +137,26 @@ describe('backup name recognition', () => {
     expect(parseBackupName('Transactions-备份-20260105-0304')).toBeNull()
     expect(parseBackupName('')).toBeNull()
   })
+
+  it('recognizes the -2 / -3 suffix uniqueName adds', () => {
+    // 同一秒里的第二份被 uniqueName 改了名：不认这个后缀，它就会从列表里消失
+    expect(parseBackupName('auto-20260105-2.db')).toEqual({
+      kind: 'auto',
+      timestamp: localSeconds(2026, 1, 5),
+    })
+    expect(parseBackupName('pre-restore-20260105-030405-2.db')).toEqual({
+      kind: 'pre-restore',
+      timestamp: localSeconds(2026, 1, 5, 3, 4, 5),
+    })
+    expect(parseBackupName('Transactions-备份-20260105-030405-2')).toEqual({
+      kind: 'manual',
+      timestamp: localSeconds(2026, 1, 5, 3, 4, 5),
+    })
+    expect(backupKindOf('auto-20260105-2.db')).toBe('auto')
+    // 只剥一次后缀：叠两层就不是我们产出的名字了
+    expect(parseBackupName('auto-20260105-2-3.db')).toBeNull()
+    expect(parseBackupName('auto-20260105.db.bak')).toBeNull()
+  })
 })
 
 describe('automatic backup retention', () => {
@@ -199,6 +219,19 @@ describe('automatic backup retention', () => {
       ]),
     ).toEqual([])
   })
+
+  it('orders same-day duplicates deterministically and keeps the newest', () => {
+    // 同一天的多份（base、-2、-3）：base 最早、后缀越大越新。
+    // 边界必须靠排序规则定死，不能依赖目录返回顺序。
+    const names = ['auto-20260105.db', 'auto-20260105-2.db', 'auto-20260105-3.db']
+    expect(autoBackupsToDelete(names, 1)).toEqual(['auto-20260105-2.db', 'auto-20260105.db'])
+    expect(autoBackupsToDelete([...names].reverse(), 1)).toEqual([
+      'auto-20260105-2.db',
+      'auto-20260105.db',
+    ])
+    expect(autoBackupsToDelete(names, 2)).toEqual(['auto-20260105.db'])
+    expect(autoBackupsToDelete(names, 3)).toEqual([])
+  })
 })
 
 describe('recent workspaces', () => {
@@ -238,7 +271,14 @@ describe('recent workspaces', () => {
 
 describe('snapshot verdicts', () => {
   function probe(partial: Partial<SnapshotProbe>): SnapshotProbe {
-    return { opened: true, hasAppMeta: true, schemaVersion: 3, quickCheck: 'ok', ...partial }
+    return {
+      opened: true,
+      hasAppMeta: true,
+      schemaVersion: 3,
+      workspaceDir: '',
+      quickCheck: 'ok',
+      ...partial,
+    }
   }
 
   it('reports an unreadable file as corrupt', () => {
@@ -313,6 +353,13 @@ describe('backup directory', () => {
   it('keeps a configured directory as given (trimmed)', () => {
     expect(resolveBackupDir(' E:\\备份 ', 'D:\\Documents')).toBe('E:\\备份')
     expect(resolveBackupDir('E:\\备份', 'D:\\Documents')).toBe('E:\\备份')
+  })
+
+  it('keeps the separator when the parent is a filesystem root', () => {
+    // 根路径剥掉尾分隔符后只剩空串：补不回来就会拼成一个相对名字
+    expect(defaultBackupDir('/')).toBe('/Transactions 备份')
+    expect(defaultBackupDir('\\')).toBe('\\Transactions 备份')
+    expect(defaultBackupDir('D:\\')).toBe('D:\\Transactions 备份')
   })
 })
 
