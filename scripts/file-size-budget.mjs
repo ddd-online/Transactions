@@ -66,11 +66,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 465,
     hint: '天梯表格 / 行 / 汇总',
   },
-  // 499 行：只读台账 / 编辑弹窗 / 落差计算
-  'src/pages/stock-ledger.tsx': {
-    cap: 499,
-    hint: '只读台账 / 编辑弹窗 / 落差计算',
-  },
   // 545 行：费率表单 / 复盘模板 / 危险操作
   'src/pages/stock-settings.tsx': {
     cap: 545,

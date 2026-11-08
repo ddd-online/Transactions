@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type JSX, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import { Input, Modal } from 'antd'
 
@@ -9,6 +9,7 @@ import { Button } from '../components/button'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
 import { ledgerMarkdown } from './stock-ledger-md'
+import { StockLedgerRead, levelTone, pnlClass } from './stock-ledger-read'
 
 export interface StockLedgerSectionProps {
   ledgerId: string
@@ -36,29 +37,6 @@ const EMPTY_FORM: LedgerForm = {
   summary: '',
 }
 
-function pnlClass(value: string): string {
-  if (!value || value === '¥0.00') return ''
-  return value.startsWith('¥-') ? 'is-down' : 'is-up'
-}
-
-/** 百分比 / 盈亏比的涨跌色：正数红（涨）、负数绿（跌）、零不上色。 */
-function levelTone(text: string): string {
-  if (text.startsWith('+')) return 'is-up'
-  if (text.startsWith('-')) return 'is-down'
-  return ''
-}
-
-/** 只读台账里贴在价位右边的落差：「9  较买入价 -3.30%」—— 和价格同一行，不另占一行。 */
-function PlanDelta({ text, testId }: { text: string | null; testId: string }): JSX.Element | null {
-  if (!text) return null
-  return (
-    <span className="stock-ledger__delta-note" data-testid={testId}>
-      <span className="stock-ledger__delta-note-label">较买入价</span>
-      <span className={`stock-ledger__delta-note-value ${levelTone(text)}`}>{text}</span>
-    </span>
-  )
-}
-
 /** 弹窗里贴在输入框右端的百分比 —— 边填边算，不另占一行。 */
 function DeltaSuffix({ text, id }: { text: string | null; id: string }): JSX.Element | null {
   if (!text) return null
@@ -79,40 +57,6 @@ const RATIO_PROMPTS = {
   unreadable: '止损和止盈写成价格数字，才能算盈亏比',
   blocked: '止盈高于买入价、止损低于买入价，才有盈亏比',
 } as const
-
-function Field({
-  label,
-  value,
-  wide = false,
-  mono = false,
-  muted = false,
-  tone = '',
-  aside,
-  testId,
-}: {
-  label: string
-  value: string
-  wide?: boolean
-  mono?: boolean
-  muted?: boolean
-  tone?: string
-  /** 跟在数字右边的那一小段（止损 / 止盈的落差），与价位同一行 */
-  aside?: ReactNode
-  testId?: string
-}): JSX.Element {
-  return (
-    <div className={`stock-ledger__field${wide ? ' stock-ledger__field--wide' : ''}`}>
-      <span className="stock-label">{label}</span>
-      <p
-        className={`stock-ledger__value${mono ? ' stock-mono' : ''}${muted ? ' stock-ledger__value--muted' : ''}${tone ? ` ${tone}` : ''}`}
-        data-testid={testId}
-      >
-        <span>{value || '—'}</span>
-        {aside}
-      </p>
-    </div>
-  )
-}
 
 /** 持仓 / 记录共用的一张交易台账：页内只读，弹窗编辑。 */
 export function StockLedgerSection({
@@ -258,73 +202,7 @@ export function StockLedgerSection({
         </p>
       ) : null}
 
-      {!loaded ? (
-        <p className="stock-ledger__empty">正在读取台账…</p>
-      ) : ledger?.exists ? (
-        <div className="stock-ledger__sheet">
-          <div className="stock-ledger__group">
-            <span className="stock-ledger__group-label">买入计划</span>
-            <Field label="为什么买" value={ledger.whyBuy} wide />
-            <div className="stock-ledger__row stock-ledger__row--plan">
-              <Field label="买入价" value={ledger.buyPrice} mono />
-              <Field label="买入成本" value={ledger.buyCost} mono />
-              <Field
-                label="止损"
-                value={ledger.stopLoss}
-                aside={<PlanDelta text={levels.downside} testId="stock-ledger-plan-stop" />}
-              />
-              <Field
-                label="止盈"
-                value={ledger.takeProfit}
-                aside={<PlanDelta text={levels.upside} testId="stock-ledger-plan-take" />}
-              />
-              <Field
-                label="盈亏比"
-                value={levels.riskReward.kind === 'value' ? levels.riskReward.text : ''}
-                mono
-                testId="stock-ledger-ratio"
-              />
-            </div>
-          </div>
-
-          <div className="stock-ledger__group">
-            <span className="stock-ledger__group-label">清仓结果</span>
-            <div className="stock-ledger__row stock-ledger__row--sell">
-              <Field
-                label="卖出价"
-                value={closed ? ledger.sellPrice : '清仓后回填'}
-                mono={closed}
-                muted={!closed}
-              />
-              <Field
-                label="卖出净额"
-                value={closed ? ledger.sellNet : '清仓后回填'}
-                mono={closed}
-                muted={!closed}
-              />
-              <Field
-                label="净盈亏"
-                value={closed ? ledger.netPnl : '清仓后回填'}
-                mono={closed}
-                muted={!closed}
-                tone={closed ? pnlClass(ledger.netPnl) : ''}
-              />
-            </div>
-          </div>
-
-          <div className="stock-ledger__group">
-            <span className="stock-ledger__group-label">执行复盘</span>
-            <div className="stock-ledger__execution">
-              <Field label="是否按系统执行" value={ledger.followedSystem} />
-              <Field label="一句话" value={ledger.summary} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <p className="stock-ledger__empty">
-          还没有台账。把买入理由、止损止盈和一句总结记在这里。
-        </p>
-      )}
+      <StockLedgerRead ledger={ledger} loaded={loaded} closed={closed} levels={levels} />
 
       <Modal
         open={open}
