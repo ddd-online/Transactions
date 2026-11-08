@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useState, type JSX, type ReactNode } from 'react'
 
 import { Input, Modal } from 'antd'
 
+import { planLevelsOf } from '../../shared/domain/plan-levels'
 import type { StockLedgerDto } from '../../shared/types/stock-ledger'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import { Button } from '../components/button'
@@ -40,6 +41,35 @@ function pnlClass(value: string): string {
   return value.startsWith('¥-') ? 'is-down' : 'is-up'
 }
 
+/** 百分比 / 盈亏比的涨跌色：正数红（涨）、负数绿（跌）、零不上色。 */
+function levelTone(text: string): string {
+  if (text.startsWith('+')) return 'is-up'
+  if (text.startsWith('-')) return 'is-down'
+  return ''
+}
+
+/** 只读台账里挂在价位下面的一行：「较成本 -7.64%」。 */
+function PlanDelta({ text, testId }: { text: string | null; testId: string }): JSX.Element | null {
+  if (!text) return null
+  return (
+    <p className="stock-ledger__hint" data-testid={testId}>
+      <span className="stock-ledger__hint-label">较成本</span>
+      <span className={`stock-ledger__hint-value ${levelTone(text)}`}>{text}</span>
+    </p>
+  )
+}
+
+/** 弹窗里贴在输入框右端的百分比 —— 边填边算，不另占一行。 */
+function DeltaSuffix({ text, id }: { text: string | null; id: string }): JSX.Element | null {
+  if (!text) return null
+  return (
+    <span id={id} data-testid={id} className={`stock-ledger__delta ${levelTone(text)}`}>
+      <span className="sr-only">较成本 </span>
+      {text}
+    </span>
+  )
+}
+
 function Field({
   label,
   value,
@@ -47,6 +77,7 @@ function Field({
   mono = false,
   muted = false,
   tone = '',
+  hint,
 }: {
   label: string
   value: string
@@ -54,6 +85,7 @@ function Field({
   mono?: boolean
   muted?: boolean
   tone?: string
+  hint?: ReactNode
 }): JSX.Element {
   return (
     <div className={`stock-ledger__field${wide ? ' stock-ledger__field--wide' : ''}`}>
@@ -63,6 +95,7 @@ function Field({
       >
         {value || '—'}
       </p>
+      {hint}
     </div>
   )
 }
@@ -169,6 +202,11 @@ export function StockLedgerSection({
   }
 
   const closed = ledger?.closed ?? Boolean(roundId)
+  // 三个派生数字只在这里算：入库的是用户手写的止损 / 止盈原文，显示时才折成百分比与倍数。
+  const levels = planLevelsOf(ledger?.buyPrice ?? '', ledger?.stopLoss ?? '', ledger?.takeProfit ?? '')
+  const draftLevels = planLevelsOf(ledger?.buyPrice ?? '', form.stopLoss, form.takeProfit)
+  const stopDeltaId = 'stock-ledger-stop-delta'
+  const takeDeltaId = 'stock-ledger-take-delta'
 
   return (
     <section className="stock-ledger" data-testid="stock-ledger">
@@ -208,18 +246,36 @@ export function StockLedgerSection({
       ) : ledger?.exists ? (
         <div className="stock-ledger__sheet">
           <div className="stock-ledger__group">
-            <span className="stock-ledger__group-label">买入计划</span>
+            <div className="stock-ledger__group-head">
+              <span className="stock-ledger__group-label">买入计划</span>
+              {levels.riskReward ? (
+                <span className="stock-ledger__ratio" data-testid="stock-ledger-ratio">
+                  <span className="stock-ledger__ratio-label">盈亏比</span>
+                  <span className="stock-ledger__ratio-value stock-mono">{levels.riskReward}</span>
+                </span>
+              ) : null}
+            </div>
             <Field label="为什么买" value={ledger.whyBuy} wide />
             <div className="stock-ledger__row">
               <Field label="买入价" value={ledger.buyPrice} mono />
               <Field label="买入成本" value={ledger.buyCost} mono />
-              <Field label="止损" value={ledger.stopLoss} />
-              <Field label="止盈" value={ledger.takeProfit} />
+              <Field
+                label="止损"
+                value={ledger.stopLoss}
+                hint={<PlanDelta text={levels.downside} testId="stock-ledger-plan-stop" />}
+              />
+              <Field
+                label="止盈"
+                value={ledger.takeProfit}
+                hint={<PlanDelta text={levels.upside} testId="stock-ledger-plan-take" />}
+              />
             </div>
           </div>
 
           <div className="stock-ledger__group">
-            <span className="stock-ledger__group-label">清仓结果</span>
+            <div className="stock-ledger__group-head">
+              <span className="stock-ledger__group-label">清仓结果</span>
+            </div>
             <div className="stock-ledger__row stock-ledger__row--sell">
               <Field
                 label="卖出价"
@@ -244,7 +300,9 @@ export function StockLedgerSection({
           </div>
 
           <div className="stock-ledger__group">
-            <span className="stock-ledger__group-label">执行复盘</span>
+            <div className="stock-ledger__group-head">
+              <span className="stock-ledger__group-label">执行复盘</span>
+            </div>
             <div className="stock-ledger__execution">
               <Field label="是否按系统执行" value={ledger.followedSystem} />
               <Field label="一句话" value={ledger.summary} />
@@ -309,6 +367,8 @@ export function StockLedgerSection({
                 data-testid="stock-ledger-stop"
                 maxLength={200}
                 placeholder="例如：9.00"
+                aria-describedby={draftLevels.downside ? stopDeltaId : undefined}
+                suffix={<DeltaSuffix text={draftLevels.downside} id={stopDeltaId} />}
                 value={form.stopLoss}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, stopLoss: event.target.value }))
@@ -321,12 +381,27 @@ export function StockLedgerSection({
                 data-testid="stock-ledger-take"
                 maxLength={200}
                 placeholder="例如：12.00"
+                aria-describedby={draftLevels.upside ? takeDeltaId : undefined}
+                suffix={<DeltaSuffix text={draftLevels.upside} id={takeDeltaId} />}
                 value={form.takeProfit}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, takeProfit: event.target.value }))
                 }
               />
             </label>
+            <div className="stock-ledger-form__ratio" data-testid="stock-ledger-form-ratio">
+              <span className="stock-ledger-form__ratio-label">盈亏比</span>
+              {draftLevels.riskReward ? (
+                <>
+                  <span className="stock-ledger-form__ratio-value stock-mono">
+                    {draftLevels.riskReward}
+                  </span>
+                  <span className="stock-ledger-form__ratio-note">止盈空间 ÷ 止损空间</span>
+                </>
+              ) : (
+                <span className="stock-ledger-form__ratio-empty">填好止损和止盈后自动计算</span>
+              )}
+            </div>
             <label>
               <span className="stock-label">卖出价</span>
               <Input

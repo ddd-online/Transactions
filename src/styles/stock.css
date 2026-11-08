@@ -3320,11 +3320,36 @@
   min-width: 0;
 }
 
+.stock-ledger__group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
 .stock-ledger__group-label {
   color: var(--transactions-color-text-major);
   font-size: var(--transactions-size-text-caption);
   font-weight: var(--transactions-weight-semibold);
   line-height: var(--transactions-height-snug);
+}
+
+/* 买入计划这一组的右上角：止盈盈亏比（两边都填了才有，所以这组头平时只有标题）。 */
+.stock-ledger__ratio {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+}
+
+.stock-ledger__ratio-label {
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ledger__ratio-value {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-semibold);
 }
 
 .stock-ledger__row {
@@ -3367,6 +3392,24 @@
   color: var(--transactions-color-text-secondary);
 }
 
+/* 止损 / 止盈下面那一行「较成本 -7.64%」：价位仍是用户原文，百分比才是算出来的。
+ * 只在填了纯数字时出现 —— 没填、写了一句「破 15 就走」时整行不占位。 */
+.stock-ledger__hint {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+  line-height: var(--transactions-height-snug);
+}
+
+.stock-ledger__hint-value {
+  font-family: var(--transactions-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
 .stock-ledger__empty {
   margin: 0;
   padding: var(--transactions-space-md) var(--transactions-space-lg) var(--transactions-space-lg);
@@ -3394,6 +3437,57 @@
 
 .stock-ledger__computed.ant-input.is-down {
   color: var(--transactions-color-income);
+}
+
+/* 输入框右端的百分比：「较成本」的落差就写在这一个数字里，不另占一行。 */
+.stock-ledger__delta {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--transactions-tracking-amount);
+}
+
+/* 只读台账那一行在 `.stock-page` 里，色号本来就有了；这里一并声明，是为了两种落点
+ * （页内 / 弹窗）读同一份规则，不靠祖先元素决定颜色。 */
+.stock-ledger__delta.is-up,
+.stock-ledger__hint-value.is-up {
+  color: var(--transactions-color-expense);
+}
+
+.stock-ledger__delta.is-down,
+.stock-ledger__hint-value.is-down {
+  color: var(--transactions-color-income);
+}
+
+/* 弹窗里的盈亏比：横跨两列、挂在止损 / 止盈下面一行。没填全的时候这一行也在
+ * （写的是「填好止损和止盈后自动计算」），免得边填边算时下面几行跟着上下跳。 */
+.stock-ledger-form__ratio {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--transactions-space-xs);
+  margin-top: calc(-1 * var(--transactions-space-sm));
+}
+
+.stock-ledger-form__ratio-label {
+  color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ledger-form__ratio-value {
+  color: var(--transactions-color-text-major);
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-ledger-form__ratio-note,
+.stock-ledger-form__ratio-empty {
+  color: var(--transactions-color-text-tertiary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+.stock-ledger-form__ratio-note {
+  margin-left: auto;
 }
 
 .stock-ledger__computed.ant-input[aria-disabled='true'] {

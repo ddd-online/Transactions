@@ -390,6 +390,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **Style:** Paper face, 1px hairline border, 8px radius, 36px height, padding 0 12px.
 - **Errors are spoken.** 错误段落一律带 `role="alert"`：红字插进 DOM 的那一刻读屏也要念出来，否则对看不见的人「什么都没发生」。能落到某个字段上的错误（「金额（元）」输错、价格非法）再给那个输入框挂 `aria-invalid` 与 `aria-describedby` 指回错误段的 id —— 焦点回到框里时也听得到原因，范例见 `stock.tsx` 的金额弹窗。全仓 31 处错误段落由 `tests/unit/status-messages.spec.ts` 扫源码盯着，新加一处忘了带 role 就会红。
+- **Derived figures ride their field.** 台账里止损 / 止盈各自挂一行「较成本 -8.00%」（12px 等宽、涨红跌绿），弹窗里同一条信息缩成输入框右端的后缀 —— 两个落点是同一份 `shared/domain/plan-levels` 的读数，不各算一遍。这三个数（两个百分比 + 盈亏比）都是**显示时算的**：入库的只有用户手写的价位原文，读不出数字就当没填，那一行跟着消失，不写「—」假装有值。后缀同时挂 `aria-describedby`，焦点进框时读屏念的是「止损 较成本 -8.00%」。买入计划组头右侧是盈亏比（两位小数，无单位）；弹窗里它横跨两列、压在止损 / 止盈下面，没填全时写「填好止损和止盈后自动计算」占住那一行 —— 边填边算时，下面几行不许跟着上下跳。
 - **Focus:** border turns Clarity Blue with the 2px focus ring.
 - **DatePicker / Select:** same height and radius; hover darkens border to l2.
 - **Rows of fields:** size the **fields**, not the row. `.ui-input` is `width: 100%` and an `<input>`'s intrinsic width (its default 20-character size, ≈181px here) is that field's *automatic minimum*, so "give the row a width and let the fields shrink" cannot work: a fixed 260px row of two month fields overflowed and the next control painted over the second one, leaving 「结束」 visible. Each field takes `flex: 0 0 <n>px` **plus `min-width: 0`** (without it the automatic minimum wins and the basis is ignored) and the row sizes to its content — 168px holds 「开始月份 YYYY-MM」 with its 12px padding on both ends.

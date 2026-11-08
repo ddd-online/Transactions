@@ -77,6 +77,15 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     await page.getByTestId('stock-position-row').click()
 
     const ledger = page.getByTestId('stock-ledger')
+    const tokenColor = (token: string) =>
+      page.evaluate((name) => {
+        const probe = document.createElement('span')
+        probe.style.color = `var(${name})`
+        document.body.append(probe)
+        const value = getComputedStyle(probe).color
+        probe.remove()
+        return value
+      }, token)
     await expect(ledger).toContainText('还没有台账')
     await expect(page.getByTestId('stock-ledger-copy')).toBeDisabled()
     await page.getByTestId('stock-ledger-edit').click()
@@ -84,8 +93,32 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     await expect(page.getByTestId('stock-ledger-buy-price')).toHaveValue('5.00')
     await expect(page.getByTestId('stock-ledger-sell-price')).toBeDisabled()
     await page.getByTestId('stock-ledger-why').fill('回踩确认后买入，控制单笔仓位')
+    // 盈亏比 / 涨跌百分比是边填边算的：还没填全时那一行说的是「填好…自动计算」
+    await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('填好止损和止盈后自动计算')
     await page.getByTestId('stock-ledger-stop').fill('4.60')
+    await expect(page.getByTestId('stock-ledger-stop-delta')).toContainText('较成本 -8.00%')
+    await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('填好止损和止盈后自动计算')
     await page.getByTestId('stock-ledger-take').fill('6.50')
+    await expect(page.getByTestId('stock-ledger-take-delta')).toContainText('较成本 +30.00%')
+    // (6.50 - 5.00) / (5.00 - 4.60) = 3.75
+    await expect(page.getByTestId('stock-ledger-form-ratio')).toContainText('3.75')
+    // 拉高那一段：止损在成本之下走绿、止盈在成本之上走红（弹窗挂在 body 下，
+    // 不在 `.stock-page` 作用域里，颜色靠 `.stock-ledger__delta` 自己声明）
+    const stopDelta = page.getByTestId('stock-ledger-stop-delta')
+    const takeDelta = page.getByTestId('stock-ledger-take-delta')
+    expect(await stopDelta.evaluate((element) => getComputedStyle(element).color)).toBe(
+      await tokenColor('--transactions-color-income'),
+    )
+    expect(await takeDelta.evaluate((element) => getComputedStyle(element).color)).toBe(
+      await tokenColor('--transactions-color-expense'),
+    )
+    const ratioLine = page.getByTestId('stock-ledger-form-ratio')
+    // 止损抬到成本之上：百分比照给（+2.00%），盈亏比没有意义，回到说明
+    await page.getByTestId('stock-ledger-stop').fill('5.10')
+    await expect(stopDelta).toContainText('+2.00%')
+    await expect(ratioLine).toContainText('填好止损和止盈后自动计算')
+    await page.getByTestId('stock-ledger-stop').fill('4.60')
+    await expect(ratioLine).toContainText('3.75')
     await page.getByTestId('stock-ledger-followed').fill('是')
     await page.getByTestId('stock-ledger-summary').fill('先小仓试错')
     await page.waitForTimeout(200)
@@ -98,6 +131,10 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     await expect(ledger).toContainText('止损')
     await expect(ledger).toContainText('清仓后回填')
     await expect(ledger).toContainText('5.00')
+    // 只读台账说的是同一份数：百分比挂在价位下面，盈亏比在组头右上
+    await expect(page.getByTestId('stock-ledger-plan-stop')).toContainText('-8.00%')
+    await expect(page.getByTestId('stock-ledger-plan-take')).toContainText('+30.00%')
+    await expect(page.getByTestId('stock-ledger-ratio')).toContainText('3.75')
     await page.waitForTimeout(200)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-ledger-holding.png'),
@@ -128,15 +165,6 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
 
     // 红涨绿跌：这轮是盈利，弹窗里的净盈亏必须是红（弹窗挂在 body 下，
     // 不在 `.stock-page` 作用域里，颜色靠 `.stock-ledger__computed` 自己声明）。
-    const tokenColor = (token: string) =>
-      page.evaluate((name) => {
-        const probe = document.createElement('span')
-        probe.style.color = `var(${name})`
-        document.body.append(probe)
-        const value = getComputedStyle(probe).color
-        probe.remove()
-        return value
-      }, token)
     const pnl = page.getByTestId('stock-ledger-pnl')
     await expect(pnl).toHaveValue(/^¥-?\d/)
     const pnlColor = await pnl.evaluate((element) => getComputedStyle(element).color)
