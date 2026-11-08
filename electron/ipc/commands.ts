@@ -5,7 +5,6 @@ import { AppError } from '../../shared/errors'
 import type { ConfigStore } from '../config'
 import { logInfo } from '../logging'
 import { exportLadderPage } from '../services/ladder-export'
-import * as todoService from '../services/todo'
 import * as stockAccount from '../services/stock-account'
 import {
   getOverview,
@@ -64,6 +63,7 @@ import { createDiaryHandlers } from './handlers/diary'
 import { createEventHandlers } from './handlers/events'
 import { createLabelHandlers } from './handlers/labels'
 import { createRecordHandlers } from './handlers/records'
+import { createTodoHandlers } from './handlers/todo'
 import { createSettingsHandlers } from './handlers/settings'
 import { createShellHandlers } from './handlers/shell'
 
@@ -85,6 +85,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
     ...createLabelHandlers(ctx),
     ...createEventHandlers(ctx),
     ...createDiaryHandlers(ctx),
+    ...createTodoHandlers(ctx),
     async update_check() {
       return ctx.updater.check(app.getVersion())
     },
@@ -104,122 +105,6 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
 
     update_install() {
       return ctx.updater.install()
-    },
-
-    todo_cards(request) {
-      const ledgerId = String(asObject(request).ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.listCards(workspaceDb(), ledgerId)
-    },
-
-    todo_history(request) {
-      const ledgerId = String(asObject(request).ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.listHistory(workspaceDb(), ledgerId)
-    },
-
-    todo_card_create(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.createCard(
-        workspaceDb(),
-        ledgerId,
-        typeof raw.title === 'string' ? raw.title : '',
-      )
-    },
-
-    todo_card_delete(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('id is required', { status: 400 })
-      todoService.deleteCard(workspaceDb(), id)
-      return null
-    },
-
-    todo_card_sort(request) {
-      const raw = asObject(request)
-      const id = String(raw.id ?? '')
-      if (!id) throw new AppError('id is required', { status: 400 })
-      todoService.updateCardSort(workspaceDb(), id, Number(raw.sort_order ?? 0))
-      return null
-    },
-
-    todo_item_create(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.createItem(
-        workspaceDb(),
-        ledgerId,
-        String(raw.card_id ?? ''),
-        typeof raw.title === 'string' ? raw.title : '',
-        typeof raw.start_date === 'string' ? raw.start_date : '',
-        typeof raw.due_date === 'string' ? raw.due_date : '',
-        Number(raw.urgency ?? 0),
-        Number(raw.importance ?? 0),
-      )
-    },
-
-    todo_item_update(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.updateItem(
-        workspaceDb(),
-        ledgerId,
-        String(raw.id ?? ''),
-        typeof raw.title === 'string' ? raw.title : '',
-        typeof raw.start_date === 'string' ? raw.start_date : '',
-        typeof raw.due_date === 'string' ? raw.due_date : '',
-        Number(raw.urgency ?? 0),
-        Number(raw.importance ?? 0),
-      )
-    },
-
-    todo_item_status(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.setItemStatus(
-        workspaceDb(),
-        ledgerId,
-        String(raw.id ?? ''),
-        typeof raw.status === 'string' ? raw.status : '',
-      )
-    },
-
-    todo_item_delete(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('id is required', { status: 400 })
-      todoService.deleteItem(workspaceDb(), id)
-      return null
-    },
-
-    todo_progress_add(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return todoService.addProgress(
-        workspaceDb(),
-        ledgerId,
-        String(raw.item_id ?? ''),
-        typeof raw.content === 'string' ? raw.content : '',
-      )
-    },
-
-    todo_progress_delete(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('id is required', { status: 400 })
-      todoService.deleteProgress(workspaceDb(), id)
-      return null
-    },
-
-    todo_progress_done(request) {
-      const raw = asObject(request)
-      const id = String(raw.id ?? '')
-      if (!id) throw new AppError('id is required', { status: 400 })
-      todoService.setProgressDone(workspaceDb(), id, raw.done === true)
-      return null
     },
 
     stock_account_summary(request) {
