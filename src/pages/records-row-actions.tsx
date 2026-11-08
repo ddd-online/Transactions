@@ -18,6 +18,8 @@ export interface RecordRowActionsProps {
   record: TransactionRecordDto
   /** 这一行正在同步：同步按钮禁用并转圈，编辑/删除跟着禁用（与拆出前一致） */
   syncing: boolean
+  /** 有同步在跑（可能是别的行）：同步入口一律禁用，免得点了没有任何反馈 */
+  syncBusy: boolean
   /** 可同步的目标账本（不含当前账本） */
   otherLedgers: Ledger[]
   onEdit: (record: TransactionRecordDto) => void
@@ -28,11 +30,15 @@ export interface RecordRowActionsProps {
 export function RecordRowActions({
   record,
   syncing,
+  syncBusy,
   otherLedgers,
   onEdit,
   onSync,
   onRemove,
 }: RecordRowActionsProps): JSX.Element {
+  // 一次只同步一条：请求在飞的时候，其他行的同步入口也必须禁掉 ——
+  // 它们原来可点，点下去被页面的 `syncingId` 守卫直接吞掉，用户以为发出去了。
+  const syncBlocked = syncing || syncBusy
   const syncMenu: MenuProps = {
     items:
       otherLedgers.length > 0
@@ -58,13 +64,13 @@ export function RecordRowActions({
       </Tooltip>
 
       <Tooltip text="同步到其他账本">
-        <Dropdown trigger={['click']} disabled={syncing} menu={syncMenu}>
+        <Dropdown trigger={['click']} disabled={syncBlocked} menu={syncMenu}>
           <button
             type="button"
             className="tr-icon-btn"
             data-testid="tr-sync"
             aria-label="同步到其他账本"
-            disabled={syncing}
+            disabled={syncBlocked}
           >
             <span className={syncing ? 'tr-sync-icon is-spinning' : 'tr-sync-icon'}>
               <Icon name="Sync" size={15} />

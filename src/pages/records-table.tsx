@@ -188,6 +188,7 @@ export function RecordsTable({
         <RecordRowActions
           record={row}
           syncing={syncingId === row.transactionId}
+          syncBusy={syncingId !== ''}
           otherLedgers={otherLedgers}
           onEdit={onEdit}
           onSync={onSync}
