@@ -66,11 +66,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 503,
     hint: '模板列表 / 新建弹窗',
   },
-  // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
-  'src/styles/app.css': {
-    cap: 1341,
-    hint: '外壳 / 侧栏 / 工具栏 / 遮罩',
-  },
   // 1253 行：图库 / 编辑器 / 图片块
   'src/styles/key_event.css': {
     cap: 1253,
