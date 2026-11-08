@@ -26,11 +26,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 780,
     hint: '启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染',
   },
-  // 558 行：分类栏 / 标签栏 / 拖拽排序 / 弹窗
-  'src/pages/category-tag.tsx': {
-    cap: 558,
-    hint: '分类栏 / 标签栏 / 拖拽排序 / 弹窗',
-  },
   // 459 行：备份动作 / 备份列表 / 最近工作空间
   'src/pages/settings-data.tsx': {
     cap: 459,
