@@ -41,16 +41,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 498,
     hint: '各分栏面板（通用 / 功能 / 日记 / 关于）',
   },
-  // 499 行：只读台账 / 编辑弹窗 / 落差计算
-  'src/pages/stock-ledger.tsx': {
-    cap: 499,
-    hint: '只读台账 / 编辑弹窗 / 落差计算',
-  },
-  // 545 行：费率表单 / 复盘模板 / 危险操作
-  'src/pages/stock-settings.tsx': {
-    cap: 545,
-    hint: '费率表单 / 复盘模板 / 危险操作',
-  },
   // 503 行：模板列表 / 新建弹窗
   'src/pages/templates.tsx': {
     cap: 503,
