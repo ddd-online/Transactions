@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import { Input, Modal } from 'antd'
+import { Input } from 'antd'
 
 import { centsToYuan, yuanToCents } from '../../shared/domain/money'
 import type {
@@ -9,11 +9,16 @@ import type {
   StockTradeTagSettingDto,
 } from '../../shared/types/stock'
 import { Button } from '../components/button'
-import { ConfirmDialog } from '../components/confirm-dialog'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
+import { StockSettingsDanger } from './stock-settings-danger'
+import { StockSettingsFees, type StockFeeForm } from './stock-settings-fees'
+import {
+  StockSettingsTemplates,
+  type StockReviewTemplateWrite,
+} from './stock-settings-templates'
 
 export interface StockSettingsPanelProps {
   ledgerId: string
@@ -22,23 +27,16 @@ export interface StockSettingsPanelProps {
 
 export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsPanelProps): JSX.Element {
   const [tags, setTags] = useState<StockTradeTagSettingDto | null>(null)
-  const [template, setTemplate] = useState('')
-  const [dailyTemplate, setDailyTemplate] = useState('')
-  const [templateOpen, setTemplateOpen] = useState(false)
-  const [dailyTemplateOpen, setDailyTemplateOpen] = useState(false)
+  const [review, setReview] = useState<StockReviewSettingDto | null>(null)
   const [feeOpen, setFeeOpen] = useState(false)
   const [operations, setOperations] = useState<StockOperationDto[]>([])
   const [newTag, setNewTag] = useState('')
-  const [feeForm, setFeeForm] = useState({
+  const [feeForm, setFeeForm] = useState<StockFeeForm>({
     commission: '',
     minCommission: '',
     stamp: '',
     transfer: '',
   })
-  const [operationsOpen, setOperationsOpen] = useState(false)
-  const [archiveOpen, setArchiveOpen] = useState(false)
-  const [archiveName, setArchiveName] = useState('')
-  const [resetOpen, setResetOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async (): Promise<void> => {
@@ -51,8 +49,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         window.api.invoke('stock_operation_list', { ledger_id: ledgerId }),
       ])
       setTags(tagSettings)
-      setTemplate((reviewSettings as StockReviewSettingDto).template)
-      setDailyTemplate((reviewSettings as StockReviewSettingDto).dailyTemplate)
+      setReview(reviewSettings as StockReviewSettingDto)
       setOperations(operationRows)
       setFeeForm({
         commission: (feeSettings.commissionRate * 10000).toString(),
@@ -85,64 +82,6 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
     [ledgerId],
   )
 
-  const saveTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template,
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-      setTemplateOpen(false)
-      notify('复盘模板已保存')
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [ledgerId, template])
-
-  const saveDailyTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template,
-        daily_template: dailyTemplate,
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-      setDailyTemplateOpen(false)
-      notify('每日复盘模板已保存')
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [dailyTemplate, ledgerId, template])
-
-  const resetTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template: '',
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [ledgerId])
-
-  const resetDailyTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template,
-        daily_template: '',
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [ledgerId, template])
-
   const saveFees = useCallback(async (): Promise<void> => {
     setBusy(true)
     try {
@@ -168,6 +107,25 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
     }
   }, [feeForm, ledgerId])
 
+  /** 模板的保存与恢复默认共用：`dailyTemplate` 省略时服务端保持每日模板不动。 */
+  const saveReview = useCallback(
+    async (write: StockReviewTemplateWrite): Promise<StockReviewSettingDto | null> => {
+      try {
+        const result = await window.api.invoke('stock_review_template_put', {
+          ledger_id: ledgerId,
+          template: write.template,
+          ...(write.dailyTemplate === undefined ? {} : { daily_template: write.dailyTemplate }),
+        })
+        setReview(result)
+        return result
+      } catch (templateError) {
+        notify(stockErrorMessage(templateError), 'error')
+        return null
+      }
+    },
+    [ledgerId],
+  )
+
   const rollback = useCallback(async (): Promise<void> => {
     try {
       const result = await window.api.invoke('stock_operation_rollback', { ledger_id: ledgerId })
@@ -178,30 +136,33 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
     }
   }, [ledgerId, load])
 
-  const archive = useCallback(async (): Promise<void> => {
-    if (!archiveName.trim()) return
-    try {
-      await window.api.invoke('stock_archive', {
-        ledger_id: ledgerId,
-        name: archiveName.trim(),
-      })
-      setArchiveOpen(false)
-      setArchiveName('')
-      notify('股票数据已归档')
-      onLedgerChanged?.()
-    } catch (archiveError) {
-      notify(stockErrorMessage(archiveError), 'error')
-    }
-  }, [archiveName, ledgerId, onLedgerChanged])
+  const archive = useCallback(
+    async (name: string): Promise<boolean> => {
+      try {
+        await window.api.invoke('stock_archive', {
+          ledger_id: ledgerId,
+          name,
+        })
+        notify('股票数据已归档')
+        onLedgerChanged?.()
+        return true
+      } catch (archiveError) {
+        notify(stockErrorMessage(archiveError), 'error')
+        return false
+      }
+    },
+    [ledgerId, onLedgerChanged],
+  )
 
-  const reset = useCallback(async (): Promise<void> => {
+  const reset = useCallback(async (): Promise<boolean> => {
     try {
       await window.api.invoke('stock_reset', { ledger_id: ledgerId })
-      setResetOpen(false)
       notify('股票数据已重置')
       await load()
+      return true
     } catch (resetError) {
       notify(stockErrorMessage(resetError), 'error')
+      return false
     }
   }, [ledgerId, load])
 
@@ -250,294 +211,23 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         </div>
       </section>
 
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>本轮复盘模板</h2>
-          <p>本轮复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button
-            variant="secondary"
-            testId="stock-template-open"
-            onClick={() => setTemplateOpen(true)}
-          >
-            修改
-          </Button>
-        </div>
-      </section>
+      <StockSettingsTemplates settings={review} onSave={saveReview} />
 
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>每日复盘模板</h2>
-          <p>每日复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button
-            variant="secondary"
-            testId="stock-daily-template-open"
-            onClick={() => setDailyTemplateOpen(true)}
-          >
-            修改
-          </Button>
-        </div>
-      </section>
-
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>交易费用设置</h2>
-          <p>
-            佣金 万{Number(feeForm.commission || 0).toLocaleString('zh-CN', { maximumFractionDigits: 4 })} ·
-            最低 ¥{feeForm.minCommission || '0.00'} · 印花税 {feeForm.stamp || '0'}% ·
-            过户费 {feeForm.transfer || '0'}%。建仓时按这里的默认值预填。
-          </p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button variant="secondary" testId="fee-open" onClick={() => setFeeOpen(true)}>
-            修改
-          </Button>
-        </div>
-      </section>
-
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>操作记录</h2>
-          <p>追加本金 / 支取 / 利息归本 / 建仓 / 加仓 / 减仓 / 清仓 各记一条，最多保留最近 10 条；回滚撤销最近一次操作。</p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button variant="secondary" testId="stock-operations-open" onClick={() => setOperationsOpen(true)}>
-            查看记录
-          </Button>
-          <Button
-            variant="secondary"
-            testId="stock-operation-rollback"
-            disabled={operations.length === 0}
-            onClick={() => void rollback()}
-          >
-            回滚
-          </Button>
-        </div>
-      </section>
-
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>归档</h2>
-          <p>
-            把当前账本的账户本金、资金记录、交易与轮次/复盘迁到一个新账本；原账本只保留交易标签、复盘模板与费用设置。需先清空全部持仓。
-          </p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button variant="secondary" testId="stock-archive-open" onClick={() => setArchiveOpen(true)}>
-            归档
-          </Button>
-        </div>
-      </section>
-
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>重置</h2>
-          <p>
-            清空当前账本的股票数据（账户本金、持仓、交易记录、资金记录、费用设置、交易标签与复盘模板），此操作不可恢复。
-          </p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button variant="danger" testId="stock-reset" onClick={() => setResetOpen(true)}>
-            重置
-          </Button>
-        </div>
-      </section>
-
-      <Modal
-        open={templateOpen}
-        title="本轮复盘模板"
-        width={720}
-        centered
-        footer={null}
-        onCancel={() => setTemplateOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <Input.TextArea
-            className="stock-template-input"
-            data-testid="stock-template"
-            rows={8}
-            value={template}
-            onChange={(event) => setTemplate(event.target.value)}
-          />
-          <div className="stock-modal-actions stock-template-actions">
-            <Button variant="secondary" testId="stock-template-reset" onClick={() => void resetTemplate()}>
-              恢复默认
-            </Button>
-            <span className="stock-template-actions__spacer" />
-            <Button variant="secondary" onClick={() => setTemplateOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="stock-template-save" onClick={() => void saveTemplate()}>
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={dailyTemplateOpen}
-        title="每日复盘模板"
-        width={720}
-        centered
-        footer={null}
-        onCancel={() => setDailyTemplateOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <Input.TextArea
-            className="stock-template-input"
-            data-testid="stock-daily-template"
-            rows={6}
-            value={dailyTemplate}
-            onChange={(event) => setDailyTemplate(event.target.value)}
-          />
-          <div className="stock-modal-actions stock-template-actions">
-            <Button variant="secondary" testId="stock-daily-template-reset" onClick={() => void resetDailyTemplate()}>
-              恢复默认
-            </Button>
-            <span className="stock-template-actions__spacer" />
-            <Button variant="secondary" onClick={() => setDailyTemplateOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="stock-daily-template-save" onClick={() => void saveDailyTemplate()}>
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
+      <StockSettingsFees
         open={feeOpen}
-        title="交易费用设置"
-        width={640}
-        centered
-        footer={null}
-        onCancel={() => setFeeOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <div className="stock-fee-grid">
-            <label>
-              <span>佣金费率</span>
-              <Input
-                data-testid="fee-commission"
-                value={feeForm.commission}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, commission: event.target.value }))
-                }
-                suffix="万分之"
-              />
-            </label>
-            <label>
-              <span>最低佣金</span>
-              <Input
-                data-testid="fee-min"
-                value={feeForm.minCommission}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, minCommission: event.target.value }))
-                }
-                suffix="元/委托"
-              />
-            </label>
-            <label>
-              <span>印花税</span>
-              <Input
-                data-testid="fee-stamp"
-                value={feeForm.stamp}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, stamp: event.target.value }))
-                }
-                suffix="%"
-              />
-            </label>
-            <label>
-              <span>过户费</span>
-              <Input
-                data-testid="fee-transfer"
-                value={feeForm.transfer}
-                onChange={(event) =>
-                  setFeeForm((current) => ({ ...current, transfer: event.target.value }))
-                }
-                suffix="%"
-              />
-            </label>
-          </div>
-          <p className="stock-fee-note">
-            这些是默认值：建仓时按它预填（可在建仓弹窗里改），建仓那一刻起本轮的费率就固定了 ——
-            改这里不影响进行中的轮次，只对之后新建仓的轮次生效。
-          </p>
-          <div className="stock-modal-actions">
-            <Button variant="secondary" onClick={() => setFeeOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="fee-save" loading={busy} onClick={() => void saveFees()}>
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        form={feeForm}
+        busy={busy}
+        onOpen={() => setFeeOpen(true)}
+        onChange={setFeeForm}
+        onSave={() => void saveFees()}
+        onClose={() => setFeeOpen(false)}
+      />
 
-      <Modal
-        open={operationsOpen}
-        title="操作记录"
-        width={560}
-        centered
-        footer={null}
-        onCancel={() => setOperationsOpen(false)}
-      >
-        {operations.length === 0 ? (
-          <p className="stock-muted">还没有可回滚的操作</p>
-        ) : (
-          <ul className="stock-operation-list">
-            {operations.map((operation) => (
-              <li key={operation.id} data-testid="stock-operation">
-                <span>{operation.action}</span>
-                <span className="stock-muted">{operation.detail}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Modal>
-
-      <Modal
-        open={archiveOpen}
-        title="归档到新账本"
-        width={440}
-        centered
-        footer={null}
-        onCancel={() => setArchiveOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <label>
-            <span className="stock-label">新账本名称</span>
-            <Input
-              data-testid="stock-archive-name"
-              autoFocus
-              value={archiveName}
-              onChange={(event) => setArchiveName(event.target.value)}
-              onPressEnter={() => void archive()}
-            />
-          </label>
-          <div className="stock-modal-actions">
-            <Button variant="secondary" onClick={() => setArchiveOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="stock-archive" onClick={() => void archive()}>
-              归档
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <ConfirmDialog
-        open={resetOpen}
-        title="重置全部股票数据"
-        message="将清空当前账本的股票数据，且不可恢复。"
-        confirmText="重置"
-        danger
-        onCancel={() => setResetOpen(false)}
-        onConfirm={() => void reset()}
+      <StockSettingsDanger
+        operations={operations}
+        onRollback={rollback}
+        onArchive={archive}
+        onReset={reset}
       />
       </div>
     </ScrollArea>

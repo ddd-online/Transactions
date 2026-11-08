@@ -21,16 +21,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 780,
     hint: '启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染',
   },
-  // 558 行：分类栏 / 标签栏 / 拖拽排序 / 弹窗
-  'src/pages/category-tag.tsx': {
-    cap: 558,
-    hint: '分类栏 / 标签栏 / 拖拽排序 / 弹窗',
-  },
-  // 599 行：曲线列表 / 曲线条件表单 / 新建与改名
-  'src/pages/chart-editor.tsx': {
-    cap: 599,
-    hint: '曲线列表 / 曲线条件表单 / 新建与改名',
-  },
   // 459 行：备份动作 / 备份列表 / 最近工作空间
   'src/pages/settings-data.tsx': {
     cap: 459,
@@ -40,31 +30,6 @@ export const FILE_SIZE_ALLOWLIST = {
   'src/pages/settings.tsx': {
     cap: 498,
     hint: '各分栏面板（通用 / 功能 / 日记 / 关于）',
-  },
-  // 654 行：轮次列表与分页 / 单轮详情
-  'src/pages/stock-history.tsx': {
-    cap: 654,
-    hint: '轮次列表与分页 / 单轮详情',
-  },
-  // 499 行：只读台账 / 编辑弹窗 / 落差计算
-  'src/pages/stock-ledger.tsx': {
-    cap: 499,
-    hint: '只读台账 / 编辑弹窗 / 落差计算',
-  },
-  // 545 行：费率表单 / 复盘模板 / 危险操作
-  'src/pages/stock-settings.tsx': {
-    cap: 545,
-    hint: '费率表单 / 复盘模板 / 危险操作',
-  },
-  // 767 行：指标条 / 曲线 / 明细表 / 分页
-  'src/pages/stock-statistics.tsx': {
-    cap: 767,
-    hint: '指标条 / 曲线 / 明细表 / 分页',
-  },
-  // 503 行：模板列表 / 新建弹窗
-  'src/pages/templates.tsx': {
-    cap: 503,
-    hint: '模板列表 / 新建弹窗',
   },
 }
 
