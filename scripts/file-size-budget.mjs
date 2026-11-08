@@ -31,11 +31,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 558,
     hint: '分类栏 / 标签栏 / 拖拽排序 / 弹窗',
   },
-  // 599 行：曲线列表 / 曲线条件表单 / 新建与改名
-  'src/pages/chart-editor.tsx': {
-    cap: 599,
-    hint: '曲线列表 / 曲线条件表单 / 新建与改名',
-  },
   // 459 行：备份动作 / 备份列表 / 最近工作空间
   'src/pages/settings-data.tsx': {
     cap: 459,
