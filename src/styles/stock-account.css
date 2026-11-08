@@ -1,0 +1,284 @@
+/* ---------------- 子功能一：账户 ---------------- */
+
+/* 总资产是页面的主角：靠**字号与留白**立起来，不靠再套一层卡片。
+ * 底边一条发丝线把它与下方两个分区分开（它是这一页的引言带）。 */
+.stock-overview {
+  padding: var(--transactions-space-lg);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.stock-overview__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-overview__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-overview__lead {
+  margin: var(--transactions-space-md) 0;
+  color: var(--transactions-color-text-major);
+}
+
+.stock-overview__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-md);
+}
+
+.stock-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+}
+
+.stock-stat__label {
+  font-size: var(--transactions-size-text-caption);
+  color: var(--transactions-color-text-secondary);
+}
+
+.stock-stat__value {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-title-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--transactions-height-snug);
+  letter-spacing: var(--transactions-tracking-amount-lg);
+  color: var(--transactions-color-text-major);
+}
+
+.stock-overview__notice {
+  margin-top: var(--transactions-space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-accent);
+}
+
+.stock-overview__hint {
+  margin-top: var(--transactions-space-md);
+  font-size: var(--transactions-size-text-body-sm);
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 资金变化记录：占满整行（费用设置已移出本页，原来这里是 "1fr + 340px" 两列） */
+.stock-account__grid {
+  margin-top: var(--transactions-space-lg);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--transactions-space-lg);
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+/* 账户子功能：让网格**填满内容区高度**、行也撑满，资金变化记录面板才会跟着长高；
+ * 面板内部的表格区再吃掉剩余高度 → 「共 N 条 + 分页」那一行贴到版心底部。 */
+.stock-body .stock-account__grid {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.stock-panel--records {
+  min-height: 320px;
+}
+
+/* 资金变化记录：表格区吃掉面板剩余高度，把「共 N 条 + 分页」那一行**压到版心底部**
+ * （与其他页面的底栏一致）。只作用于这一块，不动股票页其他面板里的表格。 */
+.stock-panel--records .stock-table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 费用设置的编辑入口在本页的「设置」子功能（见 stock.rs 的 settings_view）。 */
+
+/* ============================================
+ * 账户子功能：「资金变化记录」的分页行贴版心底部
+ *
+ * 高度链上**每一级都必须可伸缩**，面板内部的表格区（`flex: 1`）才有剩余高度可吃：
+ *   卡片内容区 → 包装层 → 网格 → 网格行 → 面板 → 表格区 → 分页行贴底
+ * 原先 `.stock-account__grid` 的 `align-items: start` 让网格项只占内容高度，
+ * 版心底部的空白因此漏在网格**下面**（面板外面），面板里再怎么写 flex 都没有空间。
+ * ============================================ */
+
+.stock-body .stock-account__grid {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+/* 持仓子功能：卡片列表与右侧详情之间一条发丝线（与事件页的三栏同一手法）。
+ * 网格是 `280px + 1fr` 两列，`gap` 提供间距，发丝线挂在第二列的左边；
+ * `align-self: stretch` 让线贯通整行高度（而不是只有详情那么高）。 */
+.stock-position__grid > *:nth-child(2) {
+  align-self: stretch;
+  padding-left: var(--transactions-space-md);
+  border-left: 1px solid var(--transactions-color-divider);
+}
+
+/* 资金表与记账表同一行高：记账行 37px（4px 上下内边距 + 28px 内容），
+ * 这里给资金行 8px 上下内边距，得到同一档 37px。 */
+.stock-page .stock-fund-table.ant-table-wrapper .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* 资金表列宽按容器百分比分配：备注吃掉剩余空间，窗口变宽变窄时整表跟着伸缩。 */
+.stock-page .stock-fund-table.ant-table-wrapper .ant-table table {
+  table-layout: fixed;
+}
+
+
+/* ---------------- 账户 ---------------- */
+
+.stock-account-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.stock-section--fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stock-fund-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.stock-fund-scroll .tr-empty {
+  min-height: 100%;
+}
+
+.stock-toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.stock-hero--flat {
+  padding: var(--transactions-space-md) var(--transactions-space-lg);
+  gap: 2px;
+}
+
+.stock-hero--flat strong {
+  font-size: var(--transactions-size-text-display-xl);
+  line-height: var(--transactions-height-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--transactions-space-lg) var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-lg)
+    var(--transactions-space-lg);
+}
+
+.stock-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stock-metric strong {
+  font-family: var(--transactions-font-mono);
+  font-size: var(--transactions-size-text-section);
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-skeleton {
+  display: inline-block;
+  border-radius: var(--transactions-radius-sm);
+  background: var(--transactions-color-minor-background);
+}
+
+.stock-skeleton--hero {
+  width: 180px;
+  height: 32px;
+  margin-top: 4px;
+}
+
+.stock-skeleton--metric {
+  width: 96px;
+  height: 16px;
+}
+
+.stock-table-skeleton {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--transactions-space-lg);
+}
+
+.stock-table-skeleton span {
+  height: 48px;
+  border-bottom: 1px solid var(--transactions-color-divider);
+  background: linear-gradient(
+    90deg,
+    var(--transactions-color-minor-background) 0%,
+    var(--transactions-color-hover-bg) 50%,
+    var(--transactions-color-minor-background) 100%
+  );
+  background-size: 200% 100%;
+  animation: stock-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes stock-skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.stock-section {
+  margin-top: var(--transactions-space-md);
+  /* 指标区与资金记录是两个区域：在记录标题上方收一条线。 */
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-section__title {
+  margin: 0;
+  padding: var(--transactions-space-md) var(--transactions-space-lg)
+    var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-section);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.stock-fund-table .ant-table {
+  background: transparent;
+}
+
+.stock-table-foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.stock-fund-table .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
