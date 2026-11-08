@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { app, clipboard, dialog, session, shell } from 'electron'
 
 import type { CommandName } from '../../shared/commands'
-import { AppError, workspaceNotOpened } from '../../shared/errors'
+import { AppError, errorMessage, workspaceNotOpened } from '../../shared/errors'
 import { CLOSE_BEHAVIORS, type CloseBehavior } from '../../shared/domain/consts'
 import { DEVTOOLS_STATE_CHANGED, WORKSPACE_CHANGED } from '../../shared/events'
 import { addRecentWorkspace, resolveBackupDir } from '../../shared/domain/backup'
@@ -284,7 +284,7 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         const entry = backup.autoBackupIfNeeded()
         if (entry) logInfo(`自动备份完成: ${entry.name}`)
       } catch (error) {
-        logWarn(`自动备份失败: ${error instanceof Error ? error.message : String(error)}`)
+        logWarn(`自动备份失败: ${errorMessage(error)}`)
       }
       logInfo(`工作空间已打开: ${workspace.directory}`)
       sendEvent(WORKSPACE_CHANGED, workspace.directory)
@@ -1528,10 +1528,11 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
         const problem = backupDirProblem(resolved, workspace.directory)
         if (problem) throw new AppError(problem, { status: 400 })
       }
+      // 先建目录再写配置：目录建不出来时配置不能已经指向一个用不了的位置
+      mkdirSync(resolved, { recursive: true })
       options.config.update((config) => {
         config.backupDir = requested
       })
-      mkdirSync(resolved, { recursive: true })
       return options.config.snapshot()
     },
 
