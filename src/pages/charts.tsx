@@ -5,8 +5,7 @@ import { centsToYuan } from '../../shared/domain/money'
 import { reorderWithChanges } from '../../shared/domain/list-order'
 import { PIE_OTHER_KEY, foldPieSlices } from '../../shared/domain/pie'
 import { rateText } from '../../shared/domain/format'
-import { parseYearMonth, yearSpan } from '../../shared/domain/calendar'
-import { rangeToSeconds, todayYmd } from '../../shared/domain/time'
+import { rangeToSeconds } from '../../shared/domain/time'
 import type { ChartLine } from '../../shared/domain/models'
 import type { ChartDto } from '../../shared/types/chart'
 import type { CategoryDto, TagDto } from '../../shared/types/category'
@@ -25,6 +24,7 @@ import {
   categoryOptionsFor,
 } from './chart-options'
 import { updateChartLines } from './chart-write'
+import { ChartRangePicker, useChartRange } from './chart-range'
 import { AntvPieChart } from '../components/antv-pie-chart'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
@@ -32,9 +32,7 @@ import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import { Spin } from '../components/spin'
-import { TimeRangePicker } from '../components/time-range-picker'
 import { notify } from '../components/toast'
-import { useSessionTimeRange, type SessionTimeRange } from '../state/time-range-session'
 import { pieSliceColors, seriesPalette } from '../theme/chart-colors'
 import { useThemeMode } from '../theme/theme-mode'
 
@@ -93,20 +91,6 @@ function conditionSummary(line: ChartLine): string {
     .join('；')
 }
 
-/**
- * 分析页默认看本年、按月铺开（`2026-01 ~ 2026-12`），记录页仍默认今天。
- *
- * 以前默认是「最近 12 个月」的滚动窗口，打开时永远不知道自己看的是哪一年；
- * 本年的两端是固定的，换月翻页也有明确的起点。
- */
-function defaultChartRange(): SessionTimeRange {
-  const today = todayYmd()
-  const parsed = parseYearMonth(today)
-  if (!parsed) return { mode: 'month', start: today, end: today }
-  const [start, end] = yearSpan(parsed[0])
-  return { mode: 'month', start, end }
-}
-
 export interface ChartsPageProps {
   ledgerId: string
 }
@@ -130,8 +114,8 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
 
   const [savingLine, setSavingLine] = useState(false)
 
-  const [range, updateRange] = useSessionTimeRange('charts', defaultChartRange)
-  const { mode: rangeMode, start: rangeStart, end: rangeEnd } = range
+  const [range, updateRange] = useChartRange()
+  const { start: rangeStart, end: rangeEnd } = range
   const [committedRange, setCommittedRange] = useState(() => ({
     start: range.start,
     end: range.end,
@@ -492,14 +476,7 @@ export function ChartsPage({ ledgerId }: ChartsPageProps): JSX.Element {
       contentClassName="da-page-content"
       toolbar={
         <>
-          <TimeRangePicker
-            testId="chart-time"
-            mode={rangeMode}
-            start={rangeStart}
-            end={rangeEnd}
-            onModeChange={(mode) => updateRange({ mode })}
-            onRangeChange={(start, end) => updateRange({ start, end })}
-          />
+          <ChartRangePicker range={range} onChange={updateRange} />
           <Button
             variant="primary"
             testId="chart-open-create"
