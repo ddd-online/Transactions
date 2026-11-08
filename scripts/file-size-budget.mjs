@@ -21,16 +21,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 780,
     hint: '启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染',
   },
-  // 459 行：备份动作 / 备份列表 / 最近工作空间
-  'src/pages/settings-data.tsx': {
-    cap: 459,
-    hint: '备份动作 / 备份列表 / 最近工作空间',
-  },
-  // 498 行：各分栏面板（通用 / 功能 / 日记 / 关于）
-  'src/pages/settings.tsx': {
-    cap: 498,
-    hint: '各分栏面板（通用 / 功能 / 日记 / 关于）',
-  },
   // 1341 行：外壳 / 侧栏 / 工具栏 / 遮罩
   'src/styles/app.css': {
     cap: 1341,
