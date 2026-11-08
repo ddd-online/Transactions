@@ -73,13 +73,16 @@ describe('status messages', () => {
    * 只做一处、其余靠自觉，就是上一轮被抓到的「只补了一个地方」。 */
   const FIELD_ERRORS: Array<{ file: string; id: string; message: string }> = [
     { file: 'stock.tsx', id: 'stock-amount-error', message: 'accountError' },
-    { file: 'todo.tsx', id: 'todo-card-error', message: 'cardError' },
-    { file: 'todo.tsx', id: 'todo-item-error', message: 'itemError' },
+    // 待办的事项 / 主题两张表单在拆分后各自住进 todo-item-editor.tsx，错误 prop 统一叫 error
+    { file: 'todo-item-editor.tsx', id: 'todo-card-error', message: 'error' },
+    { file: 'todo-item-editor.tsx', id: 'todo-item-error', message: 'error' },
     { file: 'stock-lesson-dialog.tsx', id: 'stock-lesson-error', message: 'error' },
-    { file: 'category-tag.tsx', id: 'category-error', message: 'categoryError' },
-    { file: 'category-tag.tsx', id: 'tag-error', message: 'tagError' },
-    { file: 'chart-editor.tsx', id: 'chart-create-error', message: 'createError' },
-    { file: 'chart-editor.tsx', id: 'chart-rename-error', message: 'renameError' },
+    // 分类 / 标签的新建弹窗拆到 category-tag-modals.tsx
+    { file: 'category-tag-modals.tsx', id: 'category-error', message: 'categoryError' },
+    { file: 'category-tag-modals.tsx', id: 'tag-error', message: 'tagError' },
+    // 图表的新建 / 改名弹窗拆到 chart-editor-dialogs.tsx，错误 prop 统一叫 error
+    { file: 'chart-editor-dialogs.tsx', id: 'chart-create-error', message: 'error' },
+    { file: 'chart-editor-dialogs.tsx', id: 'chart-rename-error', message: 'error' },
     // 记录表单：动作级错误（选账本）没有字段可挂，字段级（分类 / 金额）各挂回自己的输入框
     { file: 'record-composer.tsx', id: 'tr-composer-error', message: 'categoryError' },
     { file: 'record-composer.tsx', id: 'tr-composer-error', message: 'amountError' },
