@@ -7,25 +7,31 @@ import { defineConfig } from '@playwright/test'
  * 真正的约束是内存与磁盘 I/O，不是核数 —— 按 16 核开 16 个实例只会互相抢磁盘、越跑越慢。
  * 默认值要保守到普通开发机能直接跑，想压满再用环境变量加。
  */
-function workers(): number {
+function resolveWorkerCount(): number {
   const raw = process.env.TRANSACTIONS_E2E_WORKERS?.trim()
+  // 空串 / 非数字 / 0 / 负数都回落默认值：这些写法多半是手滑，不该把整台机器拖住。
   if (!raw || !/^\d+$/.test(raw)) return 4
   const parsed = Number(raw)
-  return parsed > 0 ? parsed : 4
+  if (parsed <= 0) return 4
+  // 上限 16：防止手滑写 1000 把机器打死；要更多就改这里。
+  return Math.min(16, parsed)
 }
 
 export default defineConfig({
   testDir: './tests/e2e',
-  // 隔离单元是**文件**，不是用例：每个 spec 自己建临时根目录 / USERPROFILE / 用户数据 /
-  // 工作空间 / 对话框队列，同一个文件里的用例共享这些前提，所以文件内必须串行。
-  // 改成 true 会让文件内用例并发，那不是这次要的隔离。
+  // 打包冒烟有自己的配置（playwright.packaged.config.ts，单 worker）。它跑的是安装目录里的
+  // 真产物，和开发构建的实例不是一类东西，所以默认全量里根本不收集它。
+  testIgnore: ['**/packaged.spec.ts'],
+  // 这次只验证了**文件级**并行：一个文件一个临时根，是实测过的隔离单元。
+  // 文件内逐条并发没有逐条验证过，要开需要另一轮测量，所以保持 false。
   fullyParallel: false,
-  workers: workers(),
-  // 并发争用会让冷启动、落盘断言变慢：单测与断言超时都上调一档，用来吸收排队，
-  // 不是为了掩盖问题 —— 真坏了就该失败（retries 保持 0）。
+  workers: resolveWorkerCount(),
+  // 并发下冷启动与排队会让个别用例比串行慢一档；上调一档是给这种尾部延迟留余量，
+  // 不是把慢当成好 —— 真坏了仍然失败（retries: 0）。
   timeout: 120_000,
   expect: { timeout: 20_000 },
-  // 失败即暴露：并发下的偶发失败要修那条 spec 的隔离，不靠重试糊过去。
+  // 显式写出来：默认就是 0，写出来是为了让「不允许重试」这条纪律在配置里可见，
+  // 别哪天被顺手调成 1。
   retries: 0,
   reporter: [['list']],
   outputDir: 'artifacts/tests/playwright',
