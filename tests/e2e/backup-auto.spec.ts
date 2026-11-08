@@ -9,6 +9,7 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 
 import { _electron as electron, expect, test } from '@playwright/test'
 
@@ -86,7 +87,21 @@ function daysAgo(days: number): Date {
 
 function autoNames(directory: string): string[] {
   if (!existsSync(directory)) return []
-  return readdirSync(directory).filter((name) => /^auto-\d{8}\.db$/.test(name))
+  // 同一天第二个工作空间的快照带 -2 后缀（uniqueName）：数份数时也要算进来
+  return readdirSync(directory).filter((name) => /^auto-\d{8}(?:-\d+)?\.db$/.test(name))
+}
+
+/** 读快照里记的来源工作空间（`app_meta.workspace_dir`）。 */
+function workspaceMarker(path: string): string {
+  const database = new DatabaseSync(path, { readOnly: true })
+  try {
+    const row = database
+      .prepare("SELECT value FROM app_meta WHERE key = 'workspace_dir'")
+      .get() as { value: string } | undefined
+    return row?.value ?? ''
+  } finally {
+    database.close()
+  }
 }
 
 function readConfig(fixture: Fixture): Record<string, unknown> {
@@ -209,6 +224,70 @@ test('自动备份：开关关掉时既不写当日快照，开关也显示为�
     await page.waitForTimeout(200)
     await page.screenshot({
       path: join(resolve(__dirname, '../..'), 'artifacts', 'tests', 'backup-auto-off.png'),
+    })
+  } finally {
+    await electronApp.close().catch(() => undefined)
+    rmSync(fixture.root, { recursive: true, force: true })
+  }
+})
+
+test('自动备份：开 A 再开 B，当天两份各自标记，列表把 A 那份标成其他工作空间', async () => {
+  const fixture = setup('tr-e2e-auto-workspaces-')
+  // 自动备份开着；workspaceDir 留空，靠目录框依次打开 A、B
+  writeConfig(fixture, { workspaceDir: '' })
+  const first = join(fixture.root, 'ws-a')
+  const second = join(fixture.root, 'ws-b')
+  const todayName = autoName(new Date())
+  const secondName = todayName.replace(/\.db$/, '-2.db')
+
+  const electronApp = await electron.launch({
+    args: ['.'],
+    cwd: resolve(__dirname, '../..'),
+    env: environment({
+      USERPROFILE: fixture.home,
+      HOME: fixture.home,
+      TRANSACTIONS_USER_DATA: fixture.userData,
+      TRANSACTIONS_TEST_DIALOG_DIRS: `${first}|${second}`,
+      TRANSACTIONS_TEST_CLOSE: 'quit',
+    }),
+  })
+
+  try {
+    const page = await electronApp.firstWindow()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText(first)
+
+    // A 的当日快照落在 base 名字上，并记住自己是 A 的
+    expect(existsSync(join(fixture.backupDir, todayName))).toBe(true)
+    expect(workspaceMarker(join(fixture.backupDir, todayName))).toBe(first)
+
+    // 同一次运行里再开 B：今天的 base 名字已经属于 A，B 必须拿到 -2，而不是被静默跳过
+    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('open-workspace').click()
+    await expect(page.getByTestId('workspace-state')).toContainText(second)
+    expect(existsSync(join(fixture.backupDir, secondName))).toBe(true)
+    expect(workspaceMarker(join(fixture.backupDir, secondName))).toBe(second)
+    expect(workspaceMarker(join(fixture.backupDir, todayName))).toBe(first)
+
+    // 列表里分得清归属：A 那份带「其他工作空间」徽标（并给出路径），B 那份不带
+    await page.getByTestId('settings-tab-data').click()
+    const rows = page.getByTestId('backup-row')
+    const foreignRow = rows.filter({ hasText: todayName })
+    const currentRow = rows.filter({ hasText: secondName })
+    await expect(foreignRow).toContainText('其他工作空间')
+    await expect(foreignRow).toContainText(first)
+    await expect(currentRow).not.toContainText('其他工作空间')
+
+    // 恢复确认框也要提醒「这份备份来自另一个工作空间，恢复会覆盖当前数据」
+    await foreignRow.click()
+    await expect(page.getByText(/这份备份来自另一个工作空间/)).toBeVisible()
+    await expect(page.locator('.tr-confirm-message')).toContainText(todayName)
+    // AntD 会给两个汉字的按钮文案中间插空格：按正则匹配，别按精确名
+    await page.getByRole('button', { name: /取\s*消/ }).click()
+
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(resolve(__dirname, '../..'), 'artifacts', 'tests', 'backup-auto-workspaces.png'),
     })
   } finally {
     await electronApp.close().catch(() => undefined)

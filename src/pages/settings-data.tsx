@@ -39,10 +39,18 @@ function baseName(path: string): string {
   return parts[parts.length - 1] ?? path
 }
 
+/** 路径是不是同一个目录（渲染层不能 import `node:path`：去掉尾分隔符 + Windows 不分大小写）。 */
+function samePath(left: string, right: string): boolean {
+  const normalize = (value: string): string => value.replace(/[\\/]+$/, '').toLowerCase()
+  return normalize(left) === normalize(right)
+}
+
 /** 正在恢复的候选：列表里的一行，或文件框选中的任意 .db。 */
 interface RestoreTarget {
   path: string
   name: string
+  /** 来源工作空间（列表里的那一行带出来；文件框选中的读不到，为空串） */
+  workspaceDir: string
 }
 
 export function SettingsData({
@@ -165,7 +173,7 @@ export function SettingsData({
       if (picked.canceled || !picked.filePaths[0]) return
       const path = picked.filePaths[0]
       // 选中的是不是工作空间、版本高不高，由主进程在恢复时校验并给出那句原因。
-      setRestoreTarget({ path, name: baseName(path) })
+      setRestoreTarget({ path, name: baseName(path), workspaceDir: '' })
     } catch (pickError) {
       setError(errorMessage(pickError))
       notify(errorMessage(pickError), 'error')
@@ -230,6 +238,13 @@ export function SettingsData({
 
   const busyAny = busy !== ''
   const recent = config?.recentWorkspaces ?? []
+  const foreignTarget =
+    restoreTarget !== null &&
+    restoreTarget.workspaceDir.trim() !== '' &&
+    !samePath(restoreTarget.workspaceDir, workspace)
+  const restoreMessage = `${
+    foreignTarget ? `这份备份来自另一个工作空间（${restoreTarget.workspaceDir}）。` : ''
+  }将用 ${restoreTarget?.name ?? ''} 覆盖当前数据。当前的库会先另存为 pre-restore 副本，然后应用会自动重启。`
 
   return (
     <div className="st-list">
@@ -340,30 +355,47 @@ export function SettingsData({
               暂无备份。点「立即备份」生成第一份，也可以用「从文件恢复…」打开已有的 .db。
             </p>
           ) : (
-            backups.map((entry) => (
-              <button
-                key={entry.path}
-                type="button"
-                className={`st-backup-row${entry.restorable ? '' : ' is-disabled'}`}
-                data-testid="backup-row"
-                disabled={!entry.restorable || busyAny}
-                title={entry.restorable ? entry.path : entry.problem}
-                onClick={() => setRestoreTarget({ path: entry.path, name: entry.name })}
-              >
-                <span className="st-backup-main">
-                  <span className="st-backup-name">{entry.name}</span>
-                  {entry.hasAssets ? <span className="st-backup-badge">含图片</span> : null}
-                  {entry.restorable ? null : <span className="st-backup-problem">{entry.problem}</span>}
-                </span>
-                <span className="st-backup-meta">
-                  <span className="st-backup-mono">
-                    {formatTimestamp(entry.createdAt, 'YYYY-MM-DD HH:mm:ss')}
+            backups.map((entry) => {
+              const foreign =
+                entry.workspaceDir.trim() !== '' && !samePath(entry.workspaceDir, workspace)
+              return (
+                <button
+                  key={entry.path}
+                  type="button"
+                  className={`st-backup-row${entry.restorable ? '' : ' is-disabled'}`}
+                  data-testid="backup-row"
+                  disabled={!entry.restorable || busyAny}
+                  title={entry.restorable ? entry.path : entry.problem}
+                  onClick={() =>
+                    setRestoreTarget({
+                      path: entry.path,
+                      name: entry.name,
+                      workspaceDir: entry.workspaceDir,
+                    })
+                  }
+                >
+                  <span className="st-backup-main">
+                    <span className="st-backup-name">{entry.name}</span>
+                    {foreign ? (
+                      <span className="st-backup-badge" title={entry.workspaceDir}>
+                        其他工作空间 {entry.workspaceDir}
+                      </span>
+                    ) : null}
+                    {entry.hasAssets ? <span className="st-backup-badge">含图片</span> : null}
+                    {entry.restorable ? null : (
+                      <span className="st-backup-problem">{entry.problem}</span>
+                    )}
                   </span>
-                  <span className="st-backup-mono">{formatBytes(entry.sizeBytes)}</span>
-                  <span className="st-backup-mono">库版本 v{entry.schemaVersion}</span>
-                </span>
-              </button>
-            ))
+                  <span className="st-backup-meta">
+                    <span className="st-backup-mono">
+                      {formatTimestamp(entry.createdAt, 'YYYY-MM-DD HH:mm:ss')}
+                    </span>
+                    <span className="st-backup-mono">{formatBytes(entry.sizeBytes)}</span>
+                    <span className="st-backup-mono">库版本 v{entry.schemaVersion}</span>
+                  </span>
+                </button>
+              )
+            })
           )}
         </div>
       </div>
@@ -430,7 +462,7 @@ export function SettingsData({
       <ConfirmDialog
         open={restoreTarget !== null}
         title="从备份恢复"
-        message={`将用 ${restoreTarget?.name ?? ''} 覆盖当前数据。当前的库会先另存为 pre-restore 副本，然后应用会自动重启。`}
+        message={restoreMessage}
         confirmText="恢复"
         danger
         onCancel={() => setRestoreTarget(null)}
