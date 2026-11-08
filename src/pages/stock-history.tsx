@@ -15,14 +15,13 @@ import type {
 import type { StockTradeTagSettingDto } from '../../shared/types/stock'
 import { Button } from '../components/button'
 import { ConfirmDialog } from '../components/confirm-dialog'
-import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { StockCode } from './stock-code'
 import { StockDailyReviews } from './stock-daily-reviews'
+import { StockHistoryList } from './stock-history-list'
 import { StockLedgerSection } from './stock-ledger'
-import { StockMasterRow } from './stock-master-row'
 import { StockNameRefresh } from './stock-name-refresh'
 import { StockRoundReview } from './stock-round-review'
 import {
@@ -31,7 +30,6 @@ import {
   stockMoney,
   stockPercent,
   stockPnlClass,
-  stockPrice,
   stockRoundFee,
   stockTradeTypeLabel,
 } from './stock-format'
@@ -260,47 +258,12 @@ export function StockHistoryPanel({
   return (
     <div className="stock-history-view">
       <div className="stock-history-main">
-        <aside className="stock-master stock-history-master">
-          {rows.length === 0 ? (
-            <EmptyState
-              testId="stock-history-empty"
-              title={ledgerId ? '还没有已清仓的交易历史' : '请先创建/选择账本'}
-            />
-          ) : (
-            <ScrollArea className="stock-master__scroll">
-              <div className="stock-master__list">
-                {rows.map((row) => (
-                  <StockMasterRow
-                    key={row.id}
-                    stockName={row.stockName}
-                    stockCode={row.stockCode}
-                    active={row.stockCode === selectedCode}
-                    testId="stock-history-row"
-                    codeTestId="stock-history-row-code"
-                    onSelect={() => void openDetail(row.stockCode)}
-                  >
-                    <div className="stock-master__line">
-                      <span className="stock-muted">
-                        现价 <span className="stock-mono">{stockPrice(row.latestPrice)}</span>
-                      </span>
-                      <span className={stockPnlClass(row.totalPnl)}>
-                        {row.totalPnl >= 0 ? '盈' : '亏'} {stockMoney(Math.abs(row.totalPnl))}
-                      </span>
-                    </div>
-                    <div className="stock-master__line">
-                      <span className="stock-muted">
-                        {row.roundCount} 轮 · 最近 {formatTimestamp(row.lastClosedAt, 'YYYY-MM-DD')}
-                      </span>
-                      <span className={stockPnlClass(row.totalPnlRate)}>
-                        {stockPercent(row.totalPnlRate)}
-                      </span>
-                    </div>
-                  </StockMasterRow>
-                ))}
-              </div>
-            </ScrollArea>
-          )}
-        </aside>
+        <StockHistoryList
+          ledgerId={ledgerId}
+          rows={rows}
+          selectedCode={selectedCode}
+          onSelect={(stockCode) => void openDetail(stockCode)}
+        />
 
         <section className="stock-history-detail" data-testid="stock-history-detail">
           {!detail ? (
