@@ -3,15 +3,12 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 import { errorMessage } from '../../shared/errors'
 import type { UpdateSnapshot } from '../../shared/domain/update'
 import type { ConfigSnapshot, FeatureFlags } from '../../shared/types/config'
-import { AppMark } from '../components/app-mark'
-import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { notify } from '../components/toast'
-import { DiaryTransfer } from './diary-transfer'
+import { SettingsAbout, SettingsDiary } from './settings-about'
 import { SettingsData } from './settings-data'
 import { SettingsFeatures } from './settings-features'
 import { SettingsGeneral, type ProxyState } from './settings-general'
-import { UpdatePanel } from './update-panel'
 
 /**
  * 设置页：五个分栏、四类写入（外观 / 关闭行为 / 代理 / 功能开关）、图标与关于。
@@ -303,35 +300,14 @@ export function SettingsPage({
         />
       ) : null}
 
-      {tab === 'diary' ? <DiaryTransfer ledgerId={activeLedgerId} /> : null}
+      {tab === 'diary' ? <SettingsDiary ledgerId={activeLedgerId} /> : null}
 
       {tab === 'about' ? (
-        <div className="st-about">
-          <div className="st-about-main">
-            <div className="st-about-header">
-              <div className="st-app-logo">
-                <AppMark />
-              </div>
-              <h2 className="st-app-name">Transactions</h2>
-              <p className="st-app-version">版本 {version}</p>
-            </div>
-            <UpdatePanel snapshot={updateSnapshot} onSnapshot={onUpdateSnapshot} />
-            <div className="st-about-footer">
-              <a
-                className="st-about-link"
-                href="https://github.com/ddd-online/Transactions"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Icon name="GitHub" size={14} />
-                <span className="st-about-link-text">GitHub</span>
-              </a>
-              <p className="st-about-copyright">
-                © {new Date().getFullYear()} Transactions. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </div>
+        <SettingsAbout
+          version={version}
+          updateSnapshot={updateSnapshot}
+          onUpdateSnapshot={onUpdateSnapshot}
+        />
       ) : null}
     </PageLayout>
   )
