@@ -1,25 +1,16 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
-import { Input, Switch as AntSwitch } from 'antd'
+import { Switch as AntSwitch } from 'antd'
 
-import {
-  CLOSE_BEHAVIOR_ASK,
-  CLOSE_BEHAVIOR_QUIT,
-  CLOSE_BEHAVIOR_TRAY,
-  normalizeCloseBehavior,
-} from '../../shared/domain/consts'
 import { errorMessage } from '../../shared/errors'
 import type { UpdateSnapshot } from '../../shared/domain/update'
 import type { ConfigSnapshot, FeatureFlags } from '../../shared/types/config'
 import { AppMark } from '../components/app-mark'
-import { Button } from '../components/button'
-import { FileButton } from '../components/file-button'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
-import { Segmented } from '../components/segmented'
-import { SettingsRow } from '../components/settings-row'
 import { notify } from '../components/toast'
 import { DiaryTransfer } from './diary-transfer'
 import { SettingsData } from './settings-data'
+import { SettingsGeneral, type ProxyState } from './settings-general'
 import { UpdatePanel } from './update-panel'
 
 /**
@@ -93,7 +84,7 @@ export function SettingsPage({
   const [proxyUrl, setProxyUrl] = useState('')
   const [proxyTesting, setProxyTesting] = useState(false)
   const [proxyResolved, setProxyResolved] = useState('')
-  const [proxyState, setProxyState] = useState<'idle' | 'ok' | 'fail'>('idle')
+  const [proxyState, setProxyState] = useState<ProxyState>('idle')
   const [picking, setPicking] = useState(false)
 
   const applyConfig = useCallback(
@@ -183,6 +174,21 @@ export function SettingsPage({
     }
   }
 
+  // 改了代理设置，上一次的检测结果就不作数了：那枚小圆点回到 idle。
+  const changeProxyMode = (mode: string): void => {
+    setProxyMode(mode)
+    setProxyState('idle')
+  }
+
+  const changeProxyUrl = (url: string): void => {
+    setProxyUrl(url)
+    setProxyState('idle')
+  }
+
+  const openDevtools = (): void => {
+    void window.api.invoke('devtools_toggle', { enabled: true })
+  }
+
   const setFeature = async (feature: string, enabled: boolean): Promise<void> => {
     if (!config) return
     // 乐观更新：受控开关要立刻反映点击，不能等 IPC 回来再渲染。
@@ -267,156 +273,27 @@ export function SettingsPage({
       }
     >
       {tab === 'general' ? (
-        <div className="st-list">
-          <SettingsRow title="工作空间" description={workspace || '尚未选择工作空间'} mono>
-            <Button
-              variant="secondary"
-              testId="open-workspace"
-              disabled={picking}
-              onClick={() => void pickWorkspace()}
-            >
-              切换
-            </Button>
-          </SettingsRow>
-
-          <div className="st-card">
-            <div className="st-card-info">
-              <span className="st-card-title">软件图标</span>
-              <span className="st-card-desc">
-                侧栏左上角的方形图标；保存在当前工作空间里，切换工作空间会跟着换
-              </span>
-            </div>
-            <div className="st-card-action">
-              {workspaceIconUrl ? <img className="st-icon-preview" src={workspaceIconUrl} alt="" /> : null}
-              <FileButton
-                testId="workspace-icon-input"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                onSelect={(file) => void changeWorkspaceIcon(file)}
-              />
-              <Button
-                variant="secondary"
-                testId="workspace-icon-clear"
-                onClick={() => void clearWorkspaceIcon()}
-              >
-                恢复默认
-              </Button>
-            </div>
-          </div>
-
-          <SettingsRow title="外观" description="界面配色，可跟随系统">
-            <Segmented
-              testId="appearance"
-              value={config?.appearance ?? 'system'}
-              disabled={!config}
-              onChange={(value) => void setAppearance(value)}
-              options={[
-                { value: 'light', label: '浅色' },
-                { value: 'dark', label: '深色' },
-                { value: 'system', label: '跟随系统' },
-              ]}
-            />
-          </SettingsRow>
-
-          <SettingsRow title="关闭行为" description="点击右上角关闭按钮时的行为">
-            <Segmented
-              testId="close-behavior"
-              value={normalizeCloseBehavior(config?.closeBehavior)}
-              disabled={!config}
-              onChange={(value) => void setCloseBehavior(value)}
-              options={[
-                { value: CLOSE_BEHAVIOR_QUIT, label: '直接退出' },
-                { value: CLOSE_BEHAVIOR_TRAY, label: '最小化到托盘' },
-                { value: CLOSE_BEHAVIOR_ASK, label: '每次询问' },
-              ]}
-            />
-          </SettingsRow>
-
-          <div className="st-card">
-            <div className="st-card-info">
-              <span className="st-card-title">
-                代理
-                {proxyState !== 'idle' ? (
-                  <span
-                    className={`st-proxy-dot is-${proxyState}`}
-                    title={proxyState === 'ok' ? '上次检测：连通' : '上次检测：失败'}
-                  />
-                ) : null}
-              </span>
-              <span className="st-card-desc">
-                网络请求（行情、更新检查）走 HTTP 代理；检测会用当前设置请求 GitHub
-              </span>
-            </div>
-            <div className="st-card-action">
-              <Segmented
-                testId="proxy-mode"
-                value={proxyMode}
-                disabled={!config}
-                onChange={(value) => {
-                  setProxyMode(value)
-                  setProxyState('idle')
-                }}
-                options={[
-                  { value: 'off', label: '不使用' },
-                  { value: 'auto', label: '自动探测' },
-                  { value: 'manual', label: '手动' },
-                ]}
-              />
-              {proxyMode === 'auto' ? (
-                <Input
-                  className="st-proxy-resolved"
-                  data-testid="proxy-resolved"
-                  readOnly
-                  value={proxyResolved}
-                  placeholder="探测中…"
-                  title="自动探测到的代理地址"
-                />
-              ) : null}
-              {proxyMode === 'manual' ? (
-                <Input
-                  data-testid="proxy-url"
-                  placeholder="http://127.0.0.1:7890"
-                  value={proxyUrl}
-                  disabled={!config}
-                  onChange={(event) => {
-                    setProxyUrl(event.target.value)
-                    setProxyState('idle')
-                  }}
-                />
-              ) : null}
-              {proxyMode === 'manual' ? (
-                <Button
-                  variant="secondary"
-                  testId="proxy-save"
-                  disabled={!config}
-                  onClick={() => void saveProxy()}
-                >
-                  保存
-                </Button>
-              ) : null}
-              {proxyMode !== 'off' ? (
-                <Button
-                  variant="secondary"
-                  testId="proxy-detect"
-                  loading={proxyTesting}
-                  disabled={!config || proxyTesting}
-                  onClick={() => void detectProxy()}
-                >
-                  检测
-                </Button>
-              ) : null}
-            </div>
-          </div>
-
-          <SettingsRow title="开发者工具" description="打开开发者工具，用于调试界面代码">
-            <Button
-              variant="secondary"
-              testId="devtools-open"
-              onClick={() => void window.api.invoke('devtools_toggle', { enabled: true })}
-            >
-              打开
-            </Button>
-          </SettingsRow>
-        </div>
+        <SettingsGeneral
+          workspace={workspace}
+          config={config}
+          workspaceIconUrl={workspaceIconUrl}
+          picking={picking}
+          proxyMode={proxyMode}
+          proxyUrl={proxyUrl}
+          proxyResolved={proxyResolved}
+          proxyState={proxyState}
+          proxyTesting={proxyTesting}
+          onPickWorkspace={pickWorkspace}
+          onAppearanceChange={setAppearance}
+          onCloseBehaviorChange={setCloseBehavior}
+          onProxyModeChange={changeProxyMode}
+          onProxyUrlChange={changeProxyUrl}
+          onProxySave={saveProxy}
+          onProxyDetect={detectProxy}
+          onWorkspaceIconChange={changeWorkspaceIcon}
+          onWorkspaceIconClear={clearWorkspaceIcon}
+          onOpenDevtools={openDevtools}
+        />
       ) : null}
 
       {tab === 'features' ? (

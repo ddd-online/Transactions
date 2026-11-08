@@ -41,11 +41,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 459,
     hint: '备份动作 / 备份列表 / 最近工作空间',
   },
-  // 498 行：各分栏面板（通用 / 功能 / 日记 / 关于）
-  'src/pages/settings.tsx': {
-    cap: 498,
-    hint: '各分栏面板（通用 / 功能 / 日记 / 关于）',
-  },
   // 654 行：轮次列表与分页 / 单轮详情
   'src/pages/stock-history.tsx': {
     cap: 654,
