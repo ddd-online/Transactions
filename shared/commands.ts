@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { ConfigSnapshot, DialogOpenResponse, FeatureFlags, ProxySetting } from './types/config'
+import type { BackupEntryDto, BackupResultDto, RestoreResultDto } from './types/backup'
 import type { CategoryDto, InitializeCategoriesResponse, TagDto } from './types/category'
 import type { ChartDto } from './types/chart'
 import type {
@@ -122,7 +123,11 @@ export const commandSchemas = {
   config_get: z.undefined(),
   config_file_path: z.undefined(),
   workspace_get: z.undefined(),
-  workspace_open: z.object({ workspaceDir: z.string() }),
+  workspace_open: z.object({
+    workspaceDir: z.string(),
+    /** 最近工作空间里点一个已被删掉的目录时用：目录不存在就拒绝，不替它建 */
+    mustExist: z.boolean().optional(),
+  }),
   asset_url: z.object({ filePath: z.string() }),
   dialog_open: z.object({
     title: z.string().optional(),
@@ -517,6 +522,19 @@ export const commandSchemas = {
   proxy_test: z.object({ mode: z.string(), url: z.string().default('') }),
   proxy_resolve: z.object({ mode: z.string(), url: z.string().default('') }),
   file_save_image: z.object({ relativePath: z.string() }),
+  // 数据安全底座：备份 / 恢复 / 最近工作空间（设置 → 数据）
+  backup_create: z.undefined(),
+  backup_list: z.undefined(),
+  backup_restore: z.object({ path: z.string().min(1) }),
+  workspace_open_dir: z.object({ target: z.enum(['workspace', 'backup']) }),
+  /** 空串 = 回到「文档」下的默认目录 */
+  backup_dir_set: z.object({ dir: z.string() }),
+  config_set_auto_backup: z.object({ enabled: z.boolean() }),
+  dialog_open_file: z.object({
+    title: z.string().optional(),
+    defaultPath: z.string().optional(),
+    extensions: z.array(z.string()).optional(),
+  }),
   /** 渲染层把「正在退出」画到屏幕上之后的回执（退出流程据此继续） */
   app_quit_ready: z.object({}),
   devtools_get_state: z.object({}),
@@ -659,6 +677,13 @@ export interface CommandResponses {
   proxy_test: ProxyTestResponse
   proxy_resolve: ProxyResolveResponse
   file_save_image: FileSaveResponse
+  backup_create: BackupResultDto
+  backup_list: BackupEntryDto[]
+  backup_restore: RestoreResultDto
+  workspace_open_dir: null
+  backup_dir_set: ConfigSnapshot
+  config_set_auto_backup: ConfigSnapshot
+  dialog_open_file: DialogOpenResponse
   app_quit_ready: null
   devtools_get_state: boolean
   devtools_toggle: boolean

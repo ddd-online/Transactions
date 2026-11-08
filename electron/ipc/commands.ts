@@ -1440,6 +1440,36 @@ export function createHandlers(options: HandlerOptions): HandlerMap {
       return saveWorkspaceIcon(workspace.directory, data)
     },
 
+    // 数据安全底座的命令：本 ticket 只钉契约（名字与请求形状），
+    // 真正的实现（BackupService / 备份位置校验 / 文件框）由 T2 换掉这些占位。
+    backup_create() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
+    backup_list() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
+    backup_restore() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
+    workspace_open_dir() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
+    backup_dir_set() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
+    config_set_auto_backup() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
+    dialog_open_file() {
+      throw new AppError('尚未实现', { status: 500 })
+    },
+
     async proxy_resolve(request) {
       const raw = asObject(request)
       const setting = validatedProxySetting(
