@@ -3333,32 +3333,16 @@
   line-height: var(--transactions-height-snug);
 }
 
-/* 买入计划组头上紧挨着组名的那一句「盈亏比 3.75」：两边都填对才有，所以组头平时只有标题。
- * 贴着组名而不是顶到最右 —— 1400 时最右离那一对价位 500px，窄窗又落不到任何列边上。 */
-.stock-ledger__ratio {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--transactions-space-xs);
-}
-
-.stock-ledger__ratio-label {
-  color: var(--transactions-color-text-secondary);
-  font-size: var(--transactions-size-text-caption);
-}
-
-.stock-ledger__ratio-value {
-  color: var(--transactions-color-text-major);
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-}
-
 .stock-ledger__row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+/* 买入计划这一行比别的行多一格：止损 / 止盈的落差跟在价位右边，盈亏比也是一格，
+ * 三个派生数因此和价格排在同一条线上（窄窗仍按下面那两档收成 2 列 / 1 列）。 */
+.stock-ledger__row--plan {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .stock-ledger__row--sell {
@@ -3382,7 +3366,13 @@
   grid-column: 1 / -1;
 }
 
+/* 一段数字可以带一个尾巴（止损 / 止盈后面的落差）：贴着数字排，挤不下时整段换行，
+ * 不把价位切成两半。 */
 .stock-ledger__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
   margin: 0;
   color: var(--transactions-color-text-major);
   font-size: var(--transactions-size-text-body-sm);
@@ -3395,19 +3385,19 @@
   color: var(--transactions-color-text-secondary);
 }
 
-/* 止损 / 止盈下面那一行「较买入价 -7.64%」：价位仍是用户原文，百分比才是算出来的。
- * 只在填了纯数字时出现 —— 没填、写了一句「破 15 就走」时整行不占位。 */
-.stock-ledger__hint {
-  display: flex;
+/* 止损 / 止盈的落差：「9  较买入价 -3.30%」。只在填了纯数字时出现 —— 没填、写了一句
+ * 「破 15 就走」时这一段不占位，价位还是用户原文。 */
+.stock-ledger__delta-note {
+  display: inline-flex;
   align-items: baseline;
   gap: 4px;
-  margin: 0;
   color: var(--transactions-color-text-tertiary);
   font-size: var(--transactions-size-text-caption);
   line-height: var(--transactions-height-snug);
+  white-space: nowrap;
 }
 
-.stock-ledger__hint-value {
+.stock-ledger__delta-note-value {
   font-family: var(--transactions-font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--transactions-tracking-amount);
@@ -3455,7 +3445,7 @@
  * 只读台账那一行在 `.stock-page` 里，`.stock-page .is-up` 也管得到它，所以这里两种
  * 落点（页内 / 弹窗）一起声明，颜色不靠祖先元素决定。 */
 .stock-ledger__delta.is-up,
-.stock-ledger__hint-value.is-up {
+.stock-ledger__delta-note-value.is-up {
   color: color-mix(
     in srgb,
     var(--transactions-color-expense) 72%,
@@ -3464,7 +3454,7 @@
 }
 
 .stock-ledger__delta.is-down,
-.stock-ledger__hint-value.is-down {
+.stock-ledger__delta-note-value.is-down {
   color: color-mix(
     in srgb,
     var(--transactions-color-income) 72%,

@@ -176,7 +176,7 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     await expect(ledger).toContainText('止损')
     await expect(ledger).toContainText('清仓后回填')
     await expect(ledger).toContainText('5.00')
-    // 只读台账说的是同一份数：百分比挂在价位下面，盈亏比在组头右上
+    // 只读台账说的是同一份数：落差跟在价位右边，盈亏比在买入计划那一行的最后一格
     await expect(page.getByTestId('stock-ledger-plan-stop')).toContainText('-8.00%')
     await expect(page.getByTestId('stock-ledger-plan-take')).toContainText('+30.00%')
     await expect(page.getByTestId('stock-ledger-ratio')).toContainText('3.75')

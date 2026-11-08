@@ -48,14 +48,14 @@ function levelTone(text: string): string {
   return ''
 }
 
-/** 只读台账里挂在价位下面的一行：「较买入价 -7.64%」。 */
+/** 只读台账里贴在价位右边的落差：「9  较买入价 -3.30%」—— 和价格同一行，不另占一行。 */
 function PlanDelta({ text, testId }: { text: string | null; testId: string }): JSX.Element | null {
   if (!text) return null
   return (
-    <p className="stock-ledger__hint" data-testid={testId}>
-      <span className="stock-ledger__hint-label">较买入价</span>
-      <span className={`stock-ledger__hint-value ${levelTone(text)}`}>{text}</span>
-    </p>
+    <span className="stock-ledger__delta-note" data-testid={testId}>
+      <span className="stock-ledger__delta-note-label">较买入价</span>
+      <span className={`stock-ledger__delta-note-value ${levelTone(text)}`}>{text}</span>
+    </span>
   )
 }
 
@@ -87,7 +87,8 @@ function Field({
   mono = false,
   muted = false,
   tone = '',
-  hint,
+  aside,
+  testId,
 }: {
   label: string
   value: string
@@ -95,17 +96,20 @@ function Field({
   mono?: boolean
   muted?: boolean
   tone?: string
-  hint?: ReactNode
+  /** 跟在数字右边的那一小段（止损 / 止盈的落差），与价位同一行 */
+  aside?: ReactNode
+  testId?: string
 }): JSX.Element {
   return (
     <div className={`stock-ledger__field${wide ? ' stock-ledger__field--wide' : ''}`}>
       <span className="stock-label">{label}</span>
       <p
         className={`stock-ledger__value${mono ? ' stock-mono' : ''}${muted ? ' stock-ledger__value--muted' : ''}${tone ? ` ${tone}` : ''}`}
+        data-testid={testId}
       >
-        {value || '—'}
+        <span>{value || '—'}</span>
+        {aside}
       </p>
-      {hint}
     </div>
   )
 }
@@ -261,26 +265,26 @@ export function StockLedgerSection({
           <div className="stock-ledger__group">
             <div className="stock-ledger__group-head">
               <span className="stock-ledger__group-label">买入计划</span>
-              {levels.riskReward.kind === 'value' ? (
-                <span className="stock-ledger__ratio" data-testid="stock-ledger-ratio">
-                  <span className="stock-ledger__ratio-label">盈亏比</span>
-                  <span className="stock-ledger__ratio-value">{levels.riskReward.text}</span>
-                </span>
-              ) : null}
             </div>
             <Field label="为什么买" value={ledger.whyBuy} wide />
-            <div className="stock-ledger__row">
+            <div className="stock-ledger__row stock-ledger__row--plan">
               <Field label="买入价" value={ledger.buyPrice} mono />
               <Field label="买入成本" value={ledger.buyCost} mono />
               <Field
                 label="止损"
                 value={ledger.stopLoss}
-                hint={<PlanDelta text={levels.downside} testId="stock-ledger-plan-stop" />}
+                aside={<PlanDelta text={levels.downside} testId="stock-ledger-plan-stop" />}
               />
               <Field
                 label="止盈"
                 value={ledger.takeProfit}
-                hint={<PlanDelta text={levels.upside} testId="stock-ledger-plan-take" />}
+                aside={<PlanDelta text={levels.upside} testId="stock-ledger-plan-take" />}
+              />
+              <Field
+                label="盈亏比"
+                value={levels.riskReward.kind === 'value' ? levels.riskReward.text : ''}
+                mono
+                testId="stock-ledger-ratio"
               />
             </div>
           </div>
