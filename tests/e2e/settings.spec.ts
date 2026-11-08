@@ -64,8 +64,12 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await createLedger(page, '设置账本')
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
-    // 数据导入已移除：分栏本身不再存在
-    await expect(page.getByTestId('settings-tab-data')).toHaveCount(0)
+    // 数据导入已移除：分栏回归为「备份 / 恢复」，没有任何导入入口
+    await page.getByTestId('settings-tab-data').click()
+    await expect(page.getByTestId('settings-tab-data')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByTestId('backup-now')).toBeVisible()
+    await expect(page.getByRole('button', { name: /导入/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /导入/ })).toHaveCount(0)
 
     await page.getByTestId('settings-tab-general').click()
     await page.getByTestId('appearance-dark').click()

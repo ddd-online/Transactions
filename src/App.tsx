@@ -244,6 +244,8 @@ export function App(): JSX.Element {
       if (!picked.canceled && picked.filePaths[0]) {
         await window.api.invoke('workspace_open', { workspaceDir: picked.filePaths[0] })
         await refreshWorkspace()
+        // 最近工作空间跟着变了：设置页的数据分栏读的是配置里那一份。
+        setConfig(await window.api.invoke('config_get'))
       }
     } catch (openError) {
       setError(errorMessage(openError))
@@ -251,6 +253,16 @@ export function App(): JSX.Element {
       setBusy(false)
     }
   }, [refreshWorkspace])
+
+  /** 直接开一个已知目录（最近工作空间）：目录已被删掉就拒绝，不替它建。 */
+  const openWorkspaceAt = useCallback(
+    async (dir: string): Promise<void> => {
+      await window.api.invoke('workspace_open', { workspaceDir: dir, mustExist: true })
+      await refreshWorkspace()
+      setConfig(await window.api.invoke('config_get'))
+    },
+    [refreshWorkspace],
+  )
 
   const createLedger = useCallback(async (): Promise<void> => {
     const name = ledgerName.trim()
@@ -636,6 +648,7 @@ export function App(): JSX.Element {
             updateSnapshot={updateSnapshot}
             onUpdateSnapshot={setUpdateSnapshot}
             onPickWorkspace={openWorkspace}
+            onOpenWorkspace={openWorkspaceAt}
             onConfigChanged={setConfig}
             onWorkspaceIconChanged={setWorkspaceIconUrl}
           />

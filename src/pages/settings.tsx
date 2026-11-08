@@ -19,6 +19,7 @@ import { Segmented } from '../components/segmented'
 import { SettingsRow } from '../components/settings-row'
 import { notify } from '../components/toast'
 import { DiaryTransfer } from './diary-transfer'
+import { SettingsData } from './settings-data'
 import { UpdatePanel } from './update-panel'
 
 /**
@@ -29,11 +30,12 @@ import { UpdatePanel } from './update-panel'
  * 配置换了（主题 / 导航可见性）、图标换了（侧栏左上角）、以及「切换工作空间」这个动作。
  */
 
-type SettingsTab = 'general' | 'features' | 'diary' | 'about'
+type SettingsTab = 'general' | 'features' | 'data' | 'diary' | 'about'
 
 const TABS: ReadonlyArray<readonly [SettingsTab, string]> = [
   ['general', '通用设置'],
   ['features', '功能开关'],
+  ['data', '数据'],
   ['diary', '日记配置'],
   ['about', '关于软件'],
 ]
@@ -64,6 +66,8 @@ export interface SettingsPageProps {
   onUpdateSnapshot: (snapshot: UpdateSnapshot | null) => void
   /** 换一个工作空间：由外壳弹目录框并落库 */
   onPickWorkspace: () => Promise<void>
+  /** 直接打开某个目录（数据分栏的最近工作空间）：由外壳落库并刷新 */
+  onOpenWorkspace: (dir: string) => Promise<void>
   /** 配置改了：外壳据此换主题、收放导航 */
   onConfigChanged: (config: ConfigSnapshot) => void
   /** 图标改了：侧栏左上角立刻跟着换 */
@@ -80,6 +84,7 @@ export function SettingsPage({
   updateSnapshot,
   onUpdateSnapshot,
   onPickWorkspace,
+  onOpenWorkspace,
   onConfigChanged,
   onWorkspaceIconChanged,
 }: SettingsPageProps): JSX.Element {
@@ -446,6 +451,16 @@ export function SettingsPage({
             })}
           </div>
         </div>
+      ) : null}
+
+      {tab === 'data' ? (
+        <SettingsData
+          workspace={workspace}
+          config={config}
+          onPickWorkspace={onPickWorkspace}
+          onOpenWorkspace={onOpenWorkspace}
+          onConfigChanged={onConfigChanged}
+        />
       ) : null}
 
       {tab === 'diary' ? <DiaryTransfer ledgerId={activeLedgerId} /> : null}
