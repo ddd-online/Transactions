@@ -22,6 +22,13 @@ import { StockMasterRow } from './stock-master-row'
 import { StockNameRefresh } from './stock-name-refresh'
 import { StockRoundReview } from './stock-round-review'
 import {
+  EMPTY_TRADE_FEE,
+  feeFormOf,
+  feeRatesOf,
+  feeText,
+  type TradeFeeForm,
+} from './stock-positions-fee'
+import {
   stockDateTime,
   stockErrorMessage,
   stockPercent,
@@ -50,13 +57,6 @@ interface TradeForm {
   remark: string
 }
 
-interface TradeFeeForm {
-  commission: string
-  min: string
-  stamp: string
-  transfer: string
-}
-
 const EMPTY_TRADE: TradeForm = {
   type: 'open',
   code: '',
@@ -65,13 +65,6 @@ const EMPTY_TRADE: TradeForm = {
   date: todayYmd(),
   tag: '分析',
   remark: '',
-}
-
-const EMPTY_TRADE_FEE: TradeFeeForm = {
-  commission: '',
-  min: '',
-  stamp: '',
-  transfer: '',
 }
 
 function stockMoney(cents: number): string {
@@ -89,58 +82,6 @@ function marketValueOf(position: StockPositionDto): number {
 
 function pnlOf(position: StockPositionDto): number {
   return marketValueOf(position) + position.roundCashFlow
-}
-
-function feeText(
-  position: StockPositionDto,
-  fee: { commissionRate: number; minCommission: number; stampDutyRate: number; transferFeeRate: number } | null,
-): string {
-  const round = position.roundFee
-  const commission = round?.commissionRate ?? fee?.commissionRate
-  const minimum = round?.minCommission ?? fee?.minCommission
-  const stamp = round?.stampDutyRate ?? fee?.stampDutyRate
-  const transfer = round?.transferFeeRate ?? fee?.transferFeeRate
-  if (commission === undefined) return '本轮费率沿用账本默认'
-  return [
-    `佣金 万${(commission * 10000).toFixed(3)}`,
-    `最低 ${minimum === undefined ? '—' : stockMoney(minimum)}`,
-    `印花税 ${stamp === undefined ? '—' : `${(stamp * 100).toFixed(2)}%`}`,
-    `过户费 ${transfer === undefined ? '—' : `${(transfer * 100).toFixed(3)}%`}`,
-  ].join(' · ')
-}
-
-function feeFormOf(
-  rates:
-    | {
-        commissionRate: number
-        minCommission: number
-        stampDutyRate: number
-        transferFeeRate: number
-      }
-    | null
-    | undefined,
-): TradeFeeForm {
-  if (!rates) return EMPTY_TRADE_FEE
-  return {
-    commission: String(Number((rates.commissionRate * 10000).toFixed(4))),
-    min: (rates.minCommission / 100).toFixed(2),
-    stamp: String(Number((rates.stampDutyRate * 100).toFixed(4))),
-    transfer: String(Number((rates.transferFeeRate * 100).toFixed(4))),
-  }
-}
-
-function feeRatesOf(form: TradeFeeForm): {
-  commissionRate: number
-  minCommission: number
-  stampDutyRate: number
-  transferFeeRate: number
-} {
-  return {
-    commissionRate: Number(form.commission) / 10000,
-    minCommission: Math.round(Number(form.min) * 100),
-    stampDutyRate: Number(form.stamp) / 100,
-    transferFeeRate: Number(form.transfer) / 100,
-  }
 }
 
 export function StockPositionsPanel({ ledgerId }: StockPositionsPanelProps): JSX.Element {
