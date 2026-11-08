@@ -50,7 +50,8 @@ export function SettingsDataBackupList({
         <p className="st-backup-empty">正在读取备份…</p>
       ) : backups.length === 0 ? (
         <p className="st-backup-empty">
-          暂无备份。点「立即备份」生成第一份，也可以用「从文件恢复…」打开已有的 .db。
+          <span className="st-backup-empty-title">还没有备份</span>
+          <span>点「立即备份」生成第一份；也可以用「从文件恢复…」打开已有的 .db。</span>
         </p>
       ) : (
         backups.map((entry) => {
@@ -68,6 +69,10 @@ export function SettingsDataBackupList({
             >
               <span className="st-backup-main">
                 <span className="st-backup-name">{entry.name}</span>
+                {entry.kind === 'auto' ? <span className="st-backup-badge">自动</span> : null}
+                {entry.kind === 'pre-restore' ? (
+                  <span className="st-backup-badge">恢复前</span>
+                ) : null}
                 {foreign ? (
                   <span className="st-backup-badge" title={entry.workspaceDir}>
                     其他工作空间 {entry.workspaceDir}
@@ -84,6 +89,8 @@ export function SettingsDataBackupList({
                 </span>
                 <span className="st-backup-mono">{formatBytes(entry.sizeBytes)}</span>
                 <span className="st-backup-mono">库版本 v{entry.schemaVersion}</span>
+                {/* 行是按钮，这一枚是它的动作名：没有它，行看起来只是三列元信息。 */}
+                {entry.restorable ? <span className="st-backup-action">恢复</span> : null}
               </span>
             </button>
           )
@@ -155,7 +162,11 @@ export function SettingsDataRecentList({
                   <span className="st-recent-name">{baseName(dir)}</span>
                   <span className="st-recent-path">{dir}</span>
                 </span>
-                {current ? <span className="st-recent-badge">当前</span> : null}
+                {current ? (
+                  <span className="st-recent-badge">当前</span>
+                ) : (
+                  <span className="st-recent-action">切换</span>
+                )}
               </button>
             )
           })

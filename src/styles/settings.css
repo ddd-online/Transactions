@@ -1025,6 +1025,38 @@
   line-height: var(--transactions-height-snug);
 }
 
+/* 行尾的动作词：这一行是按钮，但三列元信息读完看不出「点它会怎样」。
+ * 「恢复」常驻（不靠悬停才出现），行悬停时加下划线 —— 与全站链接的悬停读法一致。 */
+.st-backup-action,
+.st-recent-action {
+  flex-shrink: 0;
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  font-weight: var(--transactions-weight-medium);
+  white-space: nowrap;
+}
+
+.st-backup-action {
+  margin-left: var(--transactions-space-sm);
+  color: var(--transactions-color-primary);
+}
+
+.st-backup-row:hover:not(:disabled) .st-backup-action {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 「切换」比「恢复」低一档：这一页的主线是备份 / 恢复，最近工作空间只是入口。 */
+.st-recent-action {
+  color: var(--transactions-color-text-tertiary);
+}
+
+.st-recent-row:hover:not(:disabled) .st-recent-action {
+  color: var(--transactions-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* 校验失败的原因（版本过高 / 已损坏 / 不是工作空间）：一行说明，不抢行的主信息。 */
 .st-backup-problem {
   flex-basis: 100%;
@@ -1042,6 +1074,20 @@
   font-size: var(--transactions-size-text-caption);
   line-height: var(--transactions-height-snug);
   color: var(--transactions-color-text-tertiary);
+}
+
+/* 备份列表的空态是「这一块还没东西」而不是一句报错：给一句标题 + 一句下一步。 */
+.st-backup-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+}
+
+.st-backup-empty-title {
+  font-size: var(--transactions-size-text-body-sm);
+  /* 中文只有 400 / 700 两档真实字重：标题要压过下面那句说明，只能走 600（真 Bold） */
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-secondary);
 }
 
 /* 最近工作空间：目录名在上、完整路径在下；当前那条置灰并带一枚「当前」。 */

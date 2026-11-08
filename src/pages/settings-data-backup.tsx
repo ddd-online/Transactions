@@ -133,7 +133,7 @@ export function SettingsDataBackup({
           <div className="st-card-info">
             <span className="st-card-title">从备份恢复</span>
             <span className="st-card-desc">
-              选中一份备份覆盖当前数据；恢复前会先把当前库另存为 pre-restore 副本，完成后应用自动重启
+              点一行恢复；恢复前会先把当前库另存为 pre-restore 副本，完成后应用自动重启
             </span>
           </div>
           <div className="st-panel-actions">
