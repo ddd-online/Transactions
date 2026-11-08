@@ -16,11 +16,6 @@ export const BUDGETS = {
 // 清单只装「已经超预算、本轮还没拆完」的文件，cap 登记当前行数。
 // 拆完一个就删一条，绝不为了过护栏加条目、抬 cap 或调大 BUDGETS。
 export const FILE_SIZE_ALLOWLIST = {
-  // 1690 行：按领域拆注册函数（记账 / 图表 / 标签与模板 / 事件 / 日记 / 待办 / 股票 / 设置与更新）
-  'electron/ipc/commands.ts': {
-    cap: 1690,
-    hint: '按领域拆注册函数（记账 / 图表 / 标签与模板 / 事件 / 日记 / 待办 / 股票 / 设置与更新）',
-  },
   // 780 行：启动与工作空间 / 账本导航与功能开关 / 退出流程 / 外壳渲染
   'src/App.tsx': {
     cap: 780,
@@ -35,11 +30,6 @@ export const FILE_SIZE_ALLOWLIST = {
   'src/pages/chart-editor.tsx': {
     cap: 599,
     hint: '曲线列表 / 曲线条件表单 / 新建与改名',
-  },
-  // 908 行：筛选条 / 表格 / 批量动作
-  'src/pages/records.tsx': {
-    cap: 908,
-    hint: '筛选条 / 表格 / 批量动作',
   },
   // 459 行：备份动作 / 备份列表 / 最近工作空间
   'src/pages/settings-data.tsx': {
@@ -85,11 +75,6 @@ export const FILE_SIZE_ALLOWLIST = {
   'src/styles/key_event.css': {
     cap: 1253,
     hint: '图库 / 编辑器 / 图片块',
-  },
-  // 4939 行：基类 / 账户 / 持仓 / 记录 / 统计 / 设置 / 天梯
-  'src/styles/stock.css': {
-    cap: 4939,
-    hint: '基类 / 账户 / 持仓 / 记录 / 统计 / 设置 / 天梯',
   },
 }
 
