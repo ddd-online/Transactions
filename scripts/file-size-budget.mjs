@@ -36,11 +36,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 599,
     hint: '曲线列表 / 曲线条件表单 / 新建与改名',
   },
-  // 1026 行：图库 / 编辑器 / 图片选择与分组
-  'src/pages/events.tsx': {
-    cap: 1026,
-    hint: '图库 / 编辑器 / 图片选择与分组',
-  },
   // 908 行：筛选条 / 表格 / 批量动作
   'src/pages/records.tsx': {
     cap: 908,
