@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
-import { Switch as AntSwitch } from 'antd'
 
 import { errorMessage } from '../../shared/errors'
 import type { UpdateSnapshot } from '../../shared/domain/update'
@@ -10,6 +9,7 @@ import { PageLayout } from '../components/page-layout'
 import { notify } from '../components/toast'
 import { DiaryTransfer } from './diary-transfer'
 import { SettingsData } from './settings-data'
+import { SettingsFeatures } from './settings-features'
 import { SettingsGeneral, type ProxyState } from './settings-general'
 import { UpdatePanel } from './update-panel'
 
@@ -29,18 +29,6 @@ const TABS: ReadonlyArray<readonly [SettingsTab, string]> = [
   ['data', '数据'],
   ['diary', '日记配置'],
   ['about', '关于软件'],
-]
-
-const FEATURES: ReadonlyArray<{
-  key: keyof FeatureFlags
-  title: string
-  description: string
-}> = [
-  { key: 'accounting', title: '记账', description: '记录 / 分析 / 标签 / 模板，默认功能' },
-  { key: 'stock', title: '股票', description: '建仓、持仓、成交与资金记录、行情统计' },
-  { key: 'keyEvent', title: '事件', description: '关键事件与日记、交易的关联' },
-  { key: 'diary', title: '日记', description: '按账本隔离的纯文本日记，可导入导出 txt' },
-  { key: 'todo', title: '待办', description: '卡片式待办、进度记录与四象限视图' },
 ]
 
 export interface SettingsPageProps {
@@ -297,37 +285,12 @@ export function SettingsPage({
       ) : null}
 
       {tab === 'features' ? (
-        <div className="st-feature-pane">
-          {!activeLedgerId ? (
-            <div className="st-feature-hint" data-testid="feature-hint">
-              当前没有账本：以下开关作为默认值，新账本沿用。
-            </div>
-          ) : null}
-          <div className="st-list">
-            {FEATURES.map(({ key, title, description }) => {
-              const checked = activeLedgerId
-                ? (effectiveFeatures?.[key] ?? true)
-                : (config?.features[key] ?? true)
-              return (
-                <div className="st-card" key={key} data-testid={`feature-row-${key}`}>
-                  <div className="st-card-info">
-                    <span className="st-card-title">{title}</span>
-                    <span className="st-card-desc">{description}</span>
-                  </div>
-                  <div className="st-card-action">
-                    <AntSwitch
-                      checked={checked}
-                      disabled={!config}
-                      data-testid={`feature-${key}`}
-                      aria-label={title}
-                      onChange={(next) => void setFeature(key, next)}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <SettingsFeatures
+          activeLedgerId={activeLedgerId}
+          config={config}
+          effectiveFeatures={effectiveFeatures}
+          onFeatureChange={setFeature}
+        />
       ) : null}
 
       {tab === 'data' ? (
