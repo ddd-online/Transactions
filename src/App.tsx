@@ -7,7 +7,6 @@ import {
   UPDATE_DOWNLOAD_ERROR,
   UPDATE_DOWNLOAD_PROGRESS,
   WINDOW_STATE_CHANGED,
-  WORKSPACE_CHANGED,
 } from '../shared/events'
 import type { UpdateSnapshot } from '../shared/domain/update'
 import { errorMessage, isWorkspaceNotOpenedError } from '../shared/errors'
@@ -39,6 +38,7 @@ import { PageRailProvider } from './components/page-layout'
 import { QuitScreen } from './components/quit-screen'
 import { Icon, type IconName } from './components/icon'
 import { useQuitFlow } from './state/use-quit-flow'
+import { useWorkspaceSession } from './state/use-workspace-session'
 
 type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
 
@@ -53,7 +53,6 @@ const NAV: Array<[View, string, keyof FeatureFlags]> = [
 export function App(): JSX.Element {
   const [version, setVersion] = useState('…')
   const [config, setConfig] = useState<ConfigSnapshot | null>(null)
-  const [workspace, setWorkspace] = useState('')
   const [ledgers, setLedgers] = useState<Ledger[]>([])
   const [activeLedgerId, setActiveLedgerId] = useState('')
   const [ledgerName, setLedgerName] = useState('')
@@ -69,11 +68,23 @@ export function App(): JSX.Element {
   >('records')
   const [updateSnapshot, setUpdateSnapshot] = useState<UpdateSnapshot | null>(null)
   const [maximized, setMaximized] = useState(false)
-  const [workspacePromptDismissed, setWorkspacePromptDismissed] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
-  const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
   const { quitting, quitLabel } = useQuitFlow()
   const ledgerMenuRef = useRef<HTMLDivElement>(null)
+  const {
+    workspace,
+    workspaceIconUrl,
+    setWorkspaceIconUrl,
+    blockingWorkspace,
+    openWorkspace,
+    openWorkspaceAt,
+    dismissPrompt,
+  } = useWorkspaceSession({
+    config,
+    setBusy,
+    onConfigChanged: setConfig,
+    onError: setError,
+  })
 
   useEffect(() => {
     if (!ledgerMenuOpen) return
@@ -94,28 +105,6 @@ export function App(): JSX.Element {
   }, [ledgerMenuOpen])
 
   useEffect(() => {
-    let alive = true
-    if (!workspace) {
-      setWorkspaceIconUrl('')
-      return
-    }
-    void (async () => {
-      try {
-        const relative = await window.api.invoke('workspace_icon_get', {})
-        const url = relative
-          ? await window.api.invoke('asset_url', { filePath: relative })
-          : ''
-        if (alive) setWorkspaceIconUrl(url)
-      } catch {
-        if (alive) setWorkspaceIconUrl('')
-      }
-    })()
-    return () => {
-      alive = false
-    }
-  }, [workspace])
-
-  useEffect(() => {
     const root = document.documentElement
     if (config?.appearance === 'light' || config?.appearance === 'dark') {
       root.dataset.theme = config.appearance
@@ -123,11 +112,6 @@ export function App(): JSX.Element {
       delete root.dataset.theme
     }
   }, [config?.appearance])
-
-  const refreshWorkspace = useCallback(async (): Promise<void> => {
-    const directory = await window.api.invoke('workspace_get')
-    setWorkspace(directory)
-  }, [])
 
   const refreshLedgers = useCallback(async (): Promise<void> => {
     if (!workspace) {
@@ -169,28 +153,12 @@ export function App(): JSX.Element {
         if (!alive) return
         setVersion(appVersion)
         setConfig(snapshot)
-
-        const savedWorkspace = await window.api.invoke('workspace_get')
-        if (!alive) return
-        setWorkspace(savedWorkspace)
-
-        if (snapshot.workspaceDir) {
-          try {
-            await window.api.invoke('workspace_open', { workspaceDir: snapshot.workspaceDir })
-            if (alive) setWorkspace(snapshot.workspaceDir)
-          } catch (openError) {
-            if (alive) setError(errorMessage(openError))
-          }
-        }
       } catch (startupError) {
         if (alive) setError(errorMessage(startupError))
       }
     })()
 
     window.api.onEvent((message) => {
-      if (message.event === WORKSPACE_CHANGED && typeof message.payload === 'string') {
-        setWorkspace(message.payload)
-      }
       if (message.event === UPDATE_DOWNLOAD_PROGRESS ||
         message.event === UPDATE_DOWNLOAD_COMPLETE ||
         message.event === UPDATE_DOWNLOAD_ERROR
@@ -206,34 +174,6 @@ export function App(): JSX.Element {
       alive = false
     }
   }, [])
-
-  const openWorkspace = useCallback(async (): Promise<void> => {
-    setBusy(true)
-    setError('')
-    try {
-      const picked = await window.api.invoke('dialog_open', { title: '选择工作空间' })
-      if (!picked.canceled && picked.filePaths[0]) {
-        await window.api.invoke('workspace_open', { workspaceDir: picked.filePaths[0] })
-        await refreshWorkspace()
-        // 最近工作空间跟着变了：设置页的数据分栏读的是配置里那一份。
-        setConfig(await window.api.invoke('config_get'))
-      }
-    } catch (openError) {
-      setError(errorMessage(openError))
-    } finally {
-      setBusy(false)
-    }
-  }, [refreshWorkspace])
-
-  /** 直接开一个已知目录（最近工作空间）：目录已被删掉就拒绝，不替它建。 */
-  const openWorkspaceAt = useCallback(
-    async (dir: string): Promise<void> => {
-      await window.api.invoke('workspace_open', { workspaceDir: dir, mustExist: true })
-      await refreshWorkspace()
-      setConfig(await window.api.invoke('config_get'))
-    },
-    [refreshWorkspace],
-  )
 
   const createLedger = useCallback(async (): Promise<void> => {
     const name = ledgerName.trim()
@@ -312,7 +252,6 @@ export function App(): JSX.Element {
 
   // 首屏（还没有工作空间）的阻塞层：背后那副外壳仍然渲染，但对指针、键盘、读屏都关掉，
   // 焦点落在这一层上 —— 否则 Tab 两下就走进看不见的账本菜单与导航里。
-  const blockingWorkspace = !workspace && !workspacePromptDismissed
   const workspacePickerRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     if (blockingWorkspace) workspacePickerRef.current?.focus()
@@ -321,7 +260,7 @@ export function App(): JSX.Element {
   return (
     <AntdProvider appearance={config?.appearance}>
       <>
-      {!workspace && !workspacePromptDismissed ? (
+      {blockingWorkspace ? (
         <div
           className="app-workspace-overlay"
           data-testid="workspace-overlay"
@@ -356,7 +295,7 @@ export function App(): JSX.Element {
                 onClick={() => {
                   // 还没有工作空间时也要能进设置：代理与检查更新是应用级的，
                   // 不该被「先选工作空间」挡在外面。
-                  setWorkspacePromptDismissed(true)
+                  dismissPrompt()
                   setView('settings')
                 }}
               >
