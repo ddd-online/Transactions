@@ -263,9 +263,7 @@ export function StockLedgerSection({
       ) : ledger?.exists ? (
         <div className="stock-ledger__sheet">
           <div className="stock-ledger__group">
-            <div className="stock-ledger__group-head">
-              <span className="stock-ledger__group-label">买入计划</span>
-            </div>
+            <span className="stock-ledger__group-label">买入计划</span>
             <Field label="为什么买" value={ledger.whyBuy} wide />
             <div className="stock-ledger__row stock-ledger__row--plan">
               <Field label="买入价" value={ledger.buyPrice} mono />
@@ -290,9 +288,7 @@ export function StockLedgerSection({
           </div>
 
           <div className="stock-ledger__group">
-            <div className="stock-ledger__group-head">
-              <span className="stock-ledger__group-label">清仓结果</span>
-            </div>
+            <span className="stock-ledger__group-label">清仓结果</span>
             <div className="stock-ledger__row stock-ledger__row--sell">
               <Field
                 label="卖出价"
@@ -317,9 +313,7 @@ export function StockLedgerSection({
           </div>
 
           <div className="stock-ledger__group">
-            <div className="stock-ledger__group-head">
-              <span className="stock-ledger__group-label">执行复盘</span>
-            </div>
+            <span className="stock-ledger__group-label">执行复盘</span>
             <div className="stock-ledger__execution">
               <Field label="是否按系统执行" value={ledger.followedSystem} />
               <Field label="一句话" value={ledger.summary} />

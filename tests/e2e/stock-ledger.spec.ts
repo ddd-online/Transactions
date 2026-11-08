@@ -152,6 +152,10 @@ test('股票台账：持仓填写、清仓归档、历史继续修改', async ()
     expect(await contrastOnOwnSurface(takeDelta)).toBeGreaterThanOrEqual(4.5)
 
     const ratioLine = page.getByTestId('stock-ledger-form-ratio')
+    // 带后缀时输入框的可访问名仍是「止损」/「止盈」，百分比只挂在描述里 ——
+    // 不然包着输入框的 label 会把后缀算进名字，读屏把同一个数字念两遍
+    await expect(page.getByRole('textbox', { name: '止损', exact: true })).toHaveValue('4.60')
+    await expect(page.getByRole('textbox', { name: '止盈', exact: true })).toHaveValue('6.50')
     // 止损抬到成本之上（保本 / 移动止损）：百分比照给（+2.00%），盈亏比说明方向不成立
     await page.getByTestId('stock-ledger-stop').fill('5.10')
     await expect(stopDelta).toContainText('+2.00%')

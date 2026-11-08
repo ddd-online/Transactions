@@ -3320,12 +3320,6 @@
   min-width: 0;
 }
 
-.stock-ledger__group-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-md);
-}
-
 .stock-ledger__group-label {
   color: var(--transactions-color-text-major);
   font-size: var(--transactions-size-text-caption);
