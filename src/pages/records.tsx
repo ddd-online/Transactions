@@ -95,9 +95,9 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   }, [ledgerId])
 
   useEffect(() => {
-    if (rangeStart && rangeEnd) {
-      setCommittedRange({ start: rangeStart, end: rangeEnd })
-    }
+    // 只提交「两端都有」的范围会让清掉一端时停在上一段：一端为空就是那一端不限，
+    // 查询必须跟着界面走，否则看到的行数与范围选择器对不上。
+    setCommittedRange({ start: rangeStart, end: rangeEnd })
   }, [rangeStart, rangeEnd])
 
   const load = useCallback(async (): Promise<void> => {
