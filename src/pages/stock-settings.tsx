@@ -15,6 +15,7 @@ import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { stockErrorMessage } from './stock-format'
 import { StockSettingsFees } from './stock-settings-fees'
+import { StockSettingsTemplates, type StockReviewTemplateWrite } from './stock-settings-templates'
 
 export interface StockSettingsPanelProps {
   ledgerId: string
@@ -23,10 +24,7 @@ export interface StockSettingsPanelProps {
 
 export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsPanelProps): JSX.Element {
   const [tags, setTags] = useState<StockTradeTagSettingDto | null>(null)
-  const [template, setTemplate] = useState('')
-  const [dailyTemplate, setDailyTemplate] = useState('')
-  const [templateOpen, setTemplateOpen] = useState(false)
-  const [dailyTemplateOpen, setDailyTemplateOpen] = useState(false)
+  const [review, setReview] = useState<StockReviewSettingDto | null>(null)
   const [feeOpen, setFeeOpen] = useState(false)
   const [operations, setOperations] = useState<StockOperationDto[]>([])
   const [newTag, setNewTag] = useState('')
@@ -52,8 +50,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         window.api.invoke('stock_operation_list', { ledger_id: ledgerId }),
       ])
       setTags(tagSettings)
-      setTemplate((reviewSettings as StockReviewSettingDto).template)
-      setDailyTemplate((reviewSettings as StockReviewSettingDto).dailyTemplate)
+      setReview(reviewSettings as StockReviewSettingDto)
       setOperations(operationRows)
       setFeeForm({
         commission: (feeSettings.commissionRate * 10000).toString(),
@@ -86,63 +83,24 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
     [ledgerId],
   )
 
-  const saveTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template,
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-      setTemplateOpen(false)
-      notify('复盘模板已保存')
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [ledgerId, template])
-
-  const saveDailyTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template,
-        daily_template: dailyTemplate,
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-      setDailyTemplateOpen(false)
-      notify('每日复盘模板已保存')
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [dailyTemplate, ledgerId, template])
-
-  const resetTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template: '',
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [ledgerId])
-
-  const resetDailyTemplate = useCallback(async (): Promise<void> => {
-    try {
-      const result = await window.api.invoke('stock_review_template_put', {
-        ledger_id: ledgerId,
-        template,
-        daily_template: '',
-      })
-      setTemplate((result as StockReviewSettingDto).template)
-      setDailyTemplate((result as StockReviewSettingDto).dailyTemplate)
-    } catch (templateError) {
-      notify(stockErrorMessage(templateError), 'error')
-    }
-  }, [ledgerId, template])
+  /** 模板的保存与恢复默认共用：`dailyTemplate` 省略时服务端保持每日模板不动。 */
+  const saveReview = useCallback(
+    async (write: StockReviewTemplateWrite): Promise<StockReviewSettingDto | null> => {
+      try {
+        const result = await window.api.invoke('stock_review_template_put', {
+          ledger_id: ledgerId,
+          template: write.template,
+          ...(write.dailyTemplate === undefined ? {} : { daily_template: write.dailyTemplate }),
+        })
+        setReview(result)
+        return result
+      } catch (templateError) {
+        notify(stockErrorMessage(templateError), 'error')
+        return null
+      }
+    },
+    [ledgerId],
+  )
 
   const saveFees = useCallback(async (): Promise<void> => {
     setBusy(true)
@@ -251,37 +209,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         </div>
       </section>
 
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>本轮复盘模板</h2>
-          <p>本轮复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button
-            variant="secondary"
-            testId="stock-template-open"
-            onClick={() => setTemplateOpen(true)}
-          >
-            修改
-          </Button>
-        </div>
-      </section>
-
-      <section className="stock-setting-row">
-        <div className="stock-setting-row__info">
-          <h2>每日复盘模板</h2>
-          <p>每日复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
-        </div>
-        <div className="stock-setting-row__actions">
-          <Button
-            variant="secondary"
-            testId="stock-daily-template-open"
-            onClick={() => setDailyTemplateOpen(true)}
-          >
-            修改
-          </Button>
-        </div>
-      </section>
+      <StockSettingsTemplates settings={review} onSave={saveReview} />
 
       <StockSettingsFees
         open={feeOpen}
@@ -341,67 +269,6 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
         </div>
       </section>
 
-      <Modal
-        open={templateOpen}
-        title="本轮复盘模板"
-        width={720}
-        centered
-        footer={null}
-        onCancel={() => setTemplateOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <Input.TextArea
-            className="stock-template-input"
-            data-testid="stock-template"
-            rows={8}
-            value={template}
-            onChange={(event) => setTemplate(event.target.value)}
-          />
-          <div className="stock-modal-actions stock-template-actions">
-            <Button variant="secondary" testId="stock-template-reset" onClick={() => void resetTemplate()}>
-              恢复默认
-            </Button>
-            <span className="stock-template-actions__spacer" />
-            <Button variant="secondary" onClick={() => setTemplateOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="stock-template-save" onClick={() => void saveTemplate()}>
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={dailyTemplateOpen}
-        title="每日复盘模板"
-        width={720}
-        centered
-        footer={null}
-        onCancel={() => setDailyTemplateOpen(false)}
-      >
-        <div className="stock-modal-form">
-          <Input.TextArea
-            className="stock-template-input"
-            data-testid="stock-daily-template"
-            rows={6}
-            value={dailyTemplate}
-            onChange={(event) => setDailyTemplate(event.target.value)}
-          />
-          <div className="stock-modal-actions stock-template-actions">
-            <Button variant="secondary" testId="stock-daily-template-reset" onClick={() => void resetDailyTemplate()}>
-              恢复默认
-            </Button>
-            <span className="stock-template-actions__spacer" />
-            <Button variant="secondary" onClick={() => setDailyTemplateOpen(false)}>
-              取消
-            </Button>
-            <Button variant="primary" testId="stock-daily-template-save" onClick={() => void saveDailyTemplate()}>
-              保存
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
 
       <Modal

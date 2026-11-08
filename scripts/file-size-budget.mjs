@@ -66,11 +66,6 @@ export const FILE_SIZE_ALLOWLIST = {
     cap: 465,
     hint: '天梯表格 / 行 / 汇总',
   },
-  // 545 行：费率表单 / 复盘模板 / 危险操作
-  'src/pages/stock-settings.tsx': {
-    cap: 545,
-    hint: '费率表单 / 复盘模板 / 危险操作',
-  },
   // 767 行：指标条 / 曲线 / 明细表 / 分页
   'src/pages/stock-statistics.tsx': {
     cap: 767,
