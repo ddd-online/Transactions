@@ -316,6 +316,7 @@ export const commandSchemas = {
   }),
   todo_progress_delete: z.object({ id: z.string() }),
   todo_progress_done: z.object({ id: z.string(), done: z.boolean().nullable().optional() }),
+  todo_progress_update: z.object({ id: z.string(), content: z.string().nullable().optional() }),
   stock_account_summary: z.object({ ledger_id: z.string() }),
   stock_principal_add: z.object({
     ledger_id: z.string(),
@@ -619,6 +620,7 @@ export interface CommandResponses {
   todo_progress_add: TodoProgressDto
   todo_progress_delete: null
   todo_progress_done: null
+  todo_progress_update: TodoProgressDto
   stock_account_summary: StockAccountSummary
   stock_principal_add: StockAccountSummary
   stock_interest_add: StockAccountSummary

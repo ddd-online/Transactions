@@ -34,6 +34,7 @@ import {
   deleteProgressByItem,
   findCard,
   findItem,
+  findProgress,
   getMaxCardSort,
   listCardsByLedger,
   listItemsByCard,
@@ -43,6 +44,7 @@ import {
   updateCardSort as updateCardSortRow,
   updateItem as updateItemRow,
   updateItemStatus,
+  updateProgressContent,
   updateProgressDone,
 } from '../db/dao/todo'
 import { logError } from '../logging'
@@ -430,7 +432,7 @@ export function deleteItem(db: Db, itemId: string): void {
 
 // ---------------------------------------------------------------- 进度记录
 
-/** 追加一条进度记录（只增不写：要改就删了重记）。 */
+/** 追加一条进度记录（时间戳由 DAO 填当前时刻）。 */
 export function addProgress(
   db: Db,
   ledgerId: string,
@@ -451,6 +453,24 @@ export function addProgress(
   const saved = listProgressByLedger(db, ledgerId).find((row) => row.id === progress.id)
   if (!saved) {
     throw new AppError('写入进度记录后未取到该行', { status: 500 })
+  }
+  return progressDto(saved)
+}
+
+/**
+ * 订正一条进度记录的正文。
+ *
+ * 只换那几个字：`createdAt`（记录时刻）与 `done`（勾选）都留着 —— 改错字不是重记一条，
+ * 也不该顺手把它变回「没做」。校验与截断和 {@link addProgress} 同一口径。
+ */
+export function updateProgress(db: Db, progressId: string, content: string): TodoProgressDto {
+  const normalizedContent = requireText(content, '请输入进度', TODO_PROGRESS_MAX)
+  if (updateProgressContent(db, progressId, normalizedContent) === 0) {
+    throw new AppError('进度记录不存在', { status: 404 })
+  }
+  const saved = findProgress(db, progressId)
+  if (!saved) {
+    throw new AppError('进度记录不存在', { status: 404 })
   }
   return progressDto(saved)
 }

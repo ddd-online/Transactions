@@ -19,6 +19,7 @@ import {
   setProgressDone,
   updateCardSort,
   updateItem,
+  updateProgress,
 } from '../../electron/services/todo'
 import {
   TODO_CARD_TITLE_MAX,
@@ -339,6 +340,38 @@ describe('todo service', () => {
 
     // 仍在历史里，标题已更新
     expect(listHistory(db, LEDGER)[0]?.title).toBe('新标题')
+  })
+
+  it('edits progress text without touching its check, record time or row', () => {
+    const db = database()
+    const card = cardId(db, '主题')
+    const item = createItem(db, LEDGER, card, '事项', '', '', -1, -1)
+    const progress = addProgress(db, LEDGER, item.id, '进度一')
+    setProgressDone(db, progress.id, true)
+
+    const updated = updateProgress(db, progress.id, '  订正后的进度  ')
+    expect(updated.content).toBe('订正后的进度')
+    expect(updated.done, '订正不动勾选').toBe(true)
+    expect(updated.createdAt, '订正不动记录时间').toBe(progress.createdAt)
+    expect(updated.itemId).toBe(item.id)
+
+    // 卡片视图里读回来就是新正文（顺序与勾选都不变）
+    const row = listCards(db, LEDGER)[0]?.items[0]?.progress[0]
+    expect(row?.content).toBe('订正后的进度')
+    expect(row?.done).toBe(true)
+
+    // 已完成的事项照样能订正：历史里读回新正文
+    setItemStatus(db, LEDGER, item.id, TODO_STATUS_DONE)
+    updateProgress(db, progress.id, '完成后订正')
+    expect(listHistory(db, LEDGER)[0]?.progress[0]?.content).toBe('完成后订正')
+
+    // 校验与 404 和新增同一口径
+    expectAppError(() => updateProgress(db, progress.id, '   '), 400, '请输入进度')
+    expectAppError(() => updateProgress(db, 'missing-progress', '进度'), 404, '进度记录不存在')
+
+    // 超过上限按码点截断
+    const long = updateProgress(db, progress.id, '进'.repeat(TODO_PROGRESS_MAX + 1))
+    expect(Array.from(long.content)).toHaveLength(TODO_PROGRESS_MAX)
   })
 
   it('orders history by completion time (newest first) and carries the card title', () => {

@@ -1,18 +1,20 @@
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
 
 import { Modal, Popconfirm } from 'antd'
 
-import type { TodoHistoryDto } from '../../shared/types/todo'
+import type { TodoHistoryDto, TodoProgressDto } from '../../shared/types/todo'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
 import { TodoSkeleton } from './todo-card-columns'
 import { doneCountOf, formatMoment } from './todo-format'
+import { TodoProgressEditor } from './todo-progress'
 
 /**
- * 历史视图：已完成事项的表格，以及只读的「进度记录」弹窗。
+ * 历史视图：已完成事项的表格，以及「进度记录」弹窗。
  *
- * 表格里「回到待办」与删除都回传页面；弹窗只显示打开的那一条（`null` 时关闭）。
+ * 表格里「回到待办」与删除都回传页面；弹窗只显示打开的那一条（`null` 时关闭），
+ * 弹窗里只做一件事 —— 订正进度正文（勾选 / 删除 / 新增仍旧只在待办视图里）。
  */
 export interface TodoHistoryViewProps {
   history: TodoHistoryDto[]
@@ -121,15 +123,62 @@ export function TodoHistoryView({
   )
 }
 
+/** 把订正后的那一行换进历史弹层手里的拷贝（弹层不跟着整表刷新）。 */
+export function withProgressRow(item: TodoHistoryDto, row: TodoProgressDto): TodoHistoryDto {
+  return {
+    ...item,
+    progress: item.progress.map((entry) => (entry.id === row.id ? row : entry)),
+  }
+}
+
 export interface TodoHistoryProgressModalProps {
   item: TodoHistoryDto | null
+  /** 页面级错误：订正失败时也要在弹层里念出来，不能只报在它背后的页面上 */
+  error: string
+  /** 订正正文；失败时抛出，弹层留在编辑态、正文不丢（错误由页面统一报） */
+  onEdit: (id: string, content: string) => Promise<void>
   onClose: () => void
 }
 
 export function TodoHistoryProgressModal({
   item,
+  error,
+  onEdit,
   onClose,
 }: TodoHistoryProgressModalProps): JSX.Element {
+  /** 正在订正的那一条（`null` = 全部是读态）；草稿只在编辑期间存在 */
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const startEdit = (entry: TodoProgressDto): void => {
+    setEditingId(entry.id)
+    setDraft(entry.content)
+  }
+
+  const cancelEdit = (): void => {
+    setEditingId(null)
+    setDraft('')
+  }
+
+  const saveEdit = async (): Promise<void> => {
+    if (editingId === null || saving || draft.trim() === '') return
+    setSaving(true)
+    try {
+      await onEdit(editingId, draft)
+      cancelEdit()
+    } catch {
+      // 失败留在编辑态：刚改的字还在框里，页面已经报了错
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const close = (): void => {
+    cancelEdit()
+    onClose()
+  }
+
   return (
     <Modal
       open={item !== null}
@@ -138,7 +187,7 @@ export function TodoHistoryProgressModal({
       centered
       destroyOnHidden
       footer={null}
-      onCancel={onClose}
+      onCancel={close}
     >
       {item ? (
         <div className="todo-history-progress" data-testid="todo-history-progress-modal">
@@ -149,6 +198,15 @@ export function TodoHistoryProgressModal({
             <span aria-hidden="true">·</span>
             <span>完成于 {formatMoment(item.completedAt)}</span>
           </p>
+          {error ? (
+            <p
+              role="alert"
+              className="todo-history-progress__error"
+              data-testid="todo-history-progress-error"
+            >
+              {error}
+            </p>
+          ) : null}
           {item.progress.length > 0 ? (
             <ul className="todo-history-progress__list">
               {item.progress.map((entry) => (
@@ -160,10 +218,33 @@ export function TodoHistoryProgressModal({
                   <span className="todo-history-progress__check" aria-hidden="true">
                     {entry.done ? <Icon name="Check" size={10} /> : null}
                   </span>
-                  <span className="todo-history-progress__text">{entry.content}</span>
-                  <span className="todo-history-progress__time">
-                    {formatMoment(entry.createdAt, true)}
-                  </span>
+                  {editingId === entry.id ? (
+                    <TodoProgressEditor
+                      testId="todo-history-progress"
+                      value={draft}
+                      saving={saving}
+                      onChange={setDraft}
+                      onSave={() => void saveEdit()}
+                      onCancel={cancelEdit}
+                    />
+                  ) : (
+                    <>
+                      <span className="todo-history-progress__text">{entry.content}</span>
+                      <span className="todo-history-progress__time">
+                        {formatMoment(entry.createdAt, true)}
+                      </span>
+                      <button
+                        type="button"
+                        className="tr-icon-btn todo-progress-edit"
+                        data-testid="todo-history-progress-edit"
+                        aria-label="编辑这条进度"
+                        title="编辑进度"
+                        onClick={() => startEdit(entry)}
+                      >
+                        <Icon name="Edit" size={12} />
+                      </button>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

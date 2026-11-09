@@ -24,6 +24,7 @@ export function createTodoHandlers(
   | 'todo_progress_add'
   | 'todo_progress_delete'
   | 'todo_progress_done'
+  | 'todo_progress_update'
 > {
   return {
     todo_cards(request) {
@@ -140,6 +141,17 @@ export function createTodoHandlers(
       if (!id) throw new AppError('id is required', { status: 400 })
       todoService.setProgressDone(workspaceDb(), id, raw.done === true)
       return null
+    },
+
+    todo_progress_update(request) {
+      const raw = asObject(request)
+      const id = String(raw.id ?? '')
+      if (!id) throw new AppError('id is required', { status: 400 })
+      return todoService.updateProgress(
+        workspaceDb(),
+        id,
+        typeof raw.content === 'string' ? raw.content : '',
+      )
     },
   }
 }

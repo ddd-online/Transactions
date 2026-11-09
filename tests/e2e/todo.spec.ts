@@ -128,6 +128,27 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-progress-add').click()
     await expect(page.getByTestId('todo-item')).toContainText('完成一半')
 
+    // 进度可以就地订正：行尾的铅笔把正文换成输入框，Enter 保存（勾选与记录时间不动）
+    await page.getByTestId('todo-progress-row').hover()
+    await page.getByTestId('todo-progress-edit').click()
+    await expect(page.getByTestId('todo-progress-editor')).toHaveValue('完成一半')
+    await page.getByTestId('todo-progress-editor').fill('完成一大半')
+    await page.waitForTimeout(200)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'todo-progress-edit.png'),
+    })
+    await page.getByTestId('todo-progress-editor').press('Enter')
+    await expect(page.getByTestId('todo-progress-editor')).toHaveCount(0)
+    await expect(page.getByTestId('todo-item')).toContainText('完成一大半')
+
+    // Esc 取消：库里留着上一次保存的正文
+    await page.getByTestId('todo-progress-row').hover()
+    await page.getByTestId('todo-progress-edit').click()
+    await page.getByTestId('todo-progress-editor').fill('不要这条')
+    await page.getByTestId('todo-progress-editor').press('Escape')
+    await expect(page.getByTestId('todo-progress-editor')).toHaveCount(0)
+    await expect(page.getByTestId('todo-item')).toContainText('完成一大半')
+
     // 进度记录缩进到事项标题的竖线上：和事项勾选框同列时，两块读起来是兄弟而不是父子
     const indent = await page.evaluate(() => {
       const left = (selector: string): number => {
@@ -201,19 +222,43 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await expect(page.getByTestId('todo-history-item')).toContainText('工作')
     await expect(page.getByTestId('todo-item')).toHaveCount(0)
 
-    // 历史里的进度数字可点开查看记录（只读弹层，不提供勾选/删除）
+    // 历史里的进度数字可点开查看记录（弹层里只订正正文，不提供勾选 / 删除）
     await page.getByTestId('todo-history-progress').click()
     const progressModal = page.getByTestId('todo-history-progress-modal')
     await expect(progressModal).toBeVisible()
     await expect(progressModal).toContainText('工作')
     await expect(progressModal).toContainText('写周报')
     await expect(page.getByTestId('todo-history-progress-row')).toHaveCount(1)
-    await expect(page.getByTestId('todo-history-progress-row')).toContainText('完成一半')
+    await expect(page.getByTestId('todo-history-progress-row')).toContainText('完成一大半')
     await expect(page.getByTestId('todo-history-progress-row')).toHaveClass(/is-done/)
+    // 弹层进场动画走完再悬停：动画中途落的鼠标位置会随弹层一起移开
     await page.waitForTimeout(600)
+
+    // 弹层里也能订正：保存后这一行跟着变，勾选仍是记录原样
+    await page.getByTestId('todo-history-progress-row').hover()
+    await page.getByTestId('todo-history-progress-edit').click()
+    await expect(page.getByTestId('todo-history-progress-editor')).toHaveValue('完成一大半')
+    await page.getByTestId('todo-history-progress-editor').fill('完成一大半，剩收尾')
+    await page.getByTestId('todo-history-progress-editor').press('Enter')
+    await expect(page.getByTestId('todo-history-progress-editor')).toHaveCount(0)
+    await expect(page.getByTestId('todo-history-progress-row')).toContainText(
+      '完成一大半，剩收尾',
+    )
+    await expect(page.getByTestId('todo-history-progress-row')).toHaveClass(/is-done/)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-progress.png'),
     })
+
+    // Esc 只取消这次订正，不关弹层（也不把改了一半的字留下）
+    await page.getByTestId('todo-history-progress-row').hover()
+    await page.getByTestId('todo-history-progress-edit').click()
+    await page.getByTestId('todo-history-progress-editor').fill('不要这条')
+    await page.getByTestId('todo-history-progress-editor').press('Escape')
+    await expect(page.getByTestId('todo-history-progress-editor')).toHaveCount(0)
+    await expect(progressModal).toBeVisible()
+    await expect(page.getByTestId('todo-history-progress-row')).toContainText(
+      '完成一大半，剩收尾',
+    )
     await page.keyboard.press('Escape')
     await expect(progressModal).toBeHidden()
 
@@ -261,7 +306,7 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
       importance: 5,
     })
     expect(item.completed_at).toBeGreaterThan(0)
-    expect(progress).toEqual({ content: '完成一半', done: 1 })
+    expect(progress).toEqual({ content: '完成一大半，剩收尾', done: 1 })
 
     // 二次确认点「删除」：历史与库里都不再有这一条
     await page.getByTestId('todo-history-delete').click()

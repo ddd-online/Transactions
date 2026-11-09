@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
+import { errorMessage } from '../../shared/errors'
 import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
 import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
@@ -9,21 +10,13 @@ import {
   TodoCardColumns,
   TodoQuadrantView,
 } from './todo-card-columns'
-import { TodoHistoryProgressModal, TodoHistoryView } from './todo-history'
+import { TodoHistoryProgressModal, TodoHistoryView, withProgressRow } from './todo-history'
 import {
   TodoCardCreateModal,
   TodoItemEditor,
   type TodoItemDraft,
   type TodoItemEditorRequest,
 } from './todo-item-editor'
-
-function errorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'msg' in error) {
-    return String((error as { msg: unknown }).msg)
-  }
-  if (error instanceof Error) return error.message
-  return String(error)
-}
 
 export interface TodoPageProps {
   ledgerId: string
@@ -72,14 +65,6 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     setLoaded(false)
     void load()
   }, [load])
-
-  const openCardModal = useCallback((): void => {
-    setCardOpen(true)
-  }, [])
-
-  const closeCardModal = useCallback((): void => {
-    setCardOpen(false)
-  }, [])
 
   const createCard = useCallback(
     async (title: string): Promise<void> => {
@@ -254,6 +239,23 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
     [load],
   )
 
+  const editProgress = useCallback(
+    async (id: string, content: string): Promise<void> => {
+      setError('')
+      try {
+        const saved = await window.api.invoke('todo_progress_update', { id, content })
+        // 历史弹层拿着打开那一刻的一份拷贝：把订正后的那一行换进去，弹层跟着变
+        setHistoryProgress((current) => (current ? withProgressRow(current, saved) : current))
+        await load()
+      } catch (editError) {
+        setError(errorMessage(editError))
+        // 面板据此留在编辑态：刚改的字不丢，用户可以改完再存
+        throw editError
+      }
+    },
+    [load],
+  )
+
   const toggleItem = useCallback((id: string): void => {
     setExpandedItems((current) => ({ ...current, [id]: !current[id] }))
   }, [])
@@ -344,7 +346,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
             onExpandAll={expandAllCards}
             onCollapseAll={collapseAllCards}
             canCreate={Boolean(ledgerId) && !busy}
-            onCreate={openCardModal}
+            onCreate={() => setCardOpen(true)}
           />
         ) : undefined
       }
@@ -394,6 +396,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
                 onProgressTextChange={changeProgressText}
                 onAddProgress={(itemId) => void addProgress(itemId)}
                 onToggleProgress={(id, done) => void toggleProgress(id, done)}
+                onEditProgress={editProgress}
                 onRemoveProgress={(id) => void removeProgress(id)}
               />
             ) : (
@@ -414,7 +417,7 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
         busy={busy}
         createDisabled={!ledgerId}
         onSubmit={createCard}
-        onCancel={closeCardModal}
+        onCancel={() => setCardOpen(false)}
       />
 
       <TodoItemEditor
@@ -427,6 +430,8 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
 
       <TodoHistoryProgressModal
         item={historyProgress}
+        error={error}
+        onEdit={editProgress}
         onClose={() => setHistoryProgress(null)}
       />
     </PageLayout>

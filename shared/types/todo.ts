@@ -51,7 +51,8 @@ export interface TodoItem {
 /**
  * 一条进度记录。表 `todo_progress`。
  *
- * 只增不写：记录写完不提供「编辑」（要改就删了重记），`createdAt` 就是记录时间。
+ * 正文可以订正（`todo_progress_update`）：改的只是那几个字，`createdAt`（记录时刻）与
+ * `done`（勾选）都不跟着变 —— 订正错字不是「重记一条」，也不是「完成了一条」。
  */
 export interface TodoProgress {
   id: string
@@ -166,6 +167,12 @@ export interface TodoItemStatusRequest {
 export interface TodoProgressCreateRequest {
   ledger_id: string
   item_id: string
+  content?: string | null
+}
+
+/** `todo_progress_update` 的请求：只改正文（勾选走 `todo_progress_done`）。 */
+export interface TodoProgressUpdateRequest {
+  id: string
   content?: string | null
 }
 

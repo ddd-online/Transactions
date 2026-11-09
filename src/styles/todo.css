@@ -572,6 +572,45 @@
   pointer-events: auto;
 }
 
+/* 进度正文的「编辑」：卡片视图与历史弹层同一枚图标键，同样行悬停才出现 */
+.todo-progress-edit {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transactions-transition-fast);
+}
+
+.todo-progress__row:hover .todo-progress-edit,
+.todo-history-progress__row:hover .todo-progress-edit,
+.todo-progress-edit:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 就地订正：勾选框之后换成一个输入框，时间与那两枚图标让位给「保存 / 取消」。
+ * 一条进度只有一行字，为改几个字再开一张弹窗比正文本身还重，所以就在原地换掉。 */
+.todo-progress-editor {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+}
+
+.todo-progress-editor > .ant-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-progress-editor__save,
+.todo-progress-editor__cancel {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+
 .todo-progress__empty {
   margin: 0;
   color: var(--transactions-color-text-secondary);
@@ -705,7 +744,8 @@
 }
 
 /* ---------------- 历史：进度记录弹层 ---------------- */
-/* 只读视图：不复用卡片视图的勾选/删除控件，勾只在已完成的行里是实心的。 */
+/* 不复用卡片视图的勾选/删除控件：勾只在已完成的行里是实心的，能动的只有「编辑」——
+ * 订正正文，不改勾选、不新增也不删除。 */
 .todo-history-progress {
   display: flex;
   flex-direction: column;
@@ -728,6 +768,12 @@
   padding: 0;
   max-height: 46vh;
   overflow-y: auto;
+}
+
+/* 这一列是滚动容器：图标键按下时那 1px 的位移会让「恰好放得下」的内容多出滚动条，
+ * 弹层一抖、按钮跟着左移 15px，指针落在外面这一下就白按了。弹层里不要这 1px。 */
+.todo-history-progress__list .tr-icon-btn:active {
+  translate: none;
 }
 
 .todo-history-progress__row {
@@ -789,6 +835,13 @@
 .todo-history-progress__empty {
   margin: 0;
   color: var(--transactions-color-text-secondary);
+  font-size: var(--transactions-size-text-caption);
+}
+
+/* 订正失败就报在弹层里：页面顶部那条横幅在遮罩后面，等于没报 */
+.todo-history-progress__error {
+  margin: 0;
+  color: var(--transactions-color-expense);
   font-size: var(--transactions-size-text-caption);
 }
 

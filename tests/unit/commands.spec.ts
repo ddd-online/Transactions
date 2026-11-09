@@ -120,6 +120,9 @@ describe('command catalog', () => {
       true,
     )
     expect(commandSchemas.todo_progress_done.safeParse({ id: 'p1', done: true }).success).toBe(true)
+    expect(
+      commandSchemas.todo_progress_update.safeParse({ id: 'p1', content: '订正后的进度' }).success,
+    ).toBe(true)
   })
 
   it('validates stock account requests', () => {

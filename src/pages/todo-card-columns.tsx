@@ -72,6 +72,7 @@ export interface TodoCardColumnsProps {
   onProgressTextChange: (itemId: string, value: string) => void
   onAddProgress: (itemId: string) => void
   onToggleProgress: (id: string, done: boolean) => void
+  onEditProgress: (id: string, content: string) => Promise<void>
   onRemoveProgress: (id: string) => void
 }
 
@@ -99,6 +100,7 @@ export function TodoCardColumns({
   onProgressTextChange,
   onAddProgress,
   onToggleProgress,
+  onEditProgress,
   onRemoveProgress,
 }: TodoCardColumnsProps): JSX.Element {
   const renderLevels = (item: TodoItemDto): JSX.Element | null => {
@@ -222,6 +224,7 @@ export function TodoCardColumns({
             onTextChange={(value) => onProgressTextChange(item.id, value)}
             onAdd={() => onAddProgress(item.id)}
             onToggleDone={onToggleProgress}
+            onEdit={onEditProgress}
             onRemove={onRemoveProgress}
           />
         ) : null}

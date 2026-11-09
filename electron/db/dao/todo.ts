@@ -321,6 +321,24 @@ export function listProgressByLedger(db: Db, ledgerId: string): TodoProgress[] {
   return rows.map(progressFromRow)
 }
 
+/** 取一条进度记录；不存在时返回 `null`（服务层据此报 404）。 */
+export function findProgress(db: Db, id: string): TodoProgress | null {
+  const row = db.prepare(`SELECT ${PROGRESS_COLUMNS} FROM todo_progress WHERE id = ?`).get(id) as
+    | ProgressRow
+    | undefined
+  return row ? progressFromRow(row) : null
+}
+
+/**
+ * 改一条进度记录的正文，返回改动的行数（0 = 本来就没有这一行）。
+ *
+ * 只动 `content`：`created_at` 与 `done` 都是这条记录的另一部分，不因为订正错字而改。
+ */
+export function updateProgressContent(db: Db, id: string, content: string): number {
+  const result = db.prepare('UPDATE todo_progress SET content = ? WHERE id = ?').run(content, id)
+  return Number(result.changes)
+}
+
 /** 删一条进度记录，返回删掉的行数（0 = 本来就没有这一行）。 */
 export function deleteProgress(db: Db, id: string): number {
   const result = db.prepare('DELETE FROM todo_progress WHERE id = ?').run(id)
