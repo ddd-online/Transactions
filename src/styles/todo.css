@@ -492,20 +492,22 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-2xs);
+  gap: var(--transactions-space-xs);
 }
 
 .todo-progress__row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--transactions-space-sm);
   min-height: 28px;
 }
 
+/* 多行正文时勾选框、时间与行尾图标都贴住**第一行**，不浮在整段的正中间 */
 .todo-progress__check {
   flex-shrink: 0;
   width: 14px;
   height: 14px;
+  margin-top: 2px;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -518,6 +520,11 @@
   transition: color var(--transactions-transition-fast),
     border-color var(--transactions-transition-fast),
     background-color var(--transactions-transition-fast);
+}
+
+/* 编辑时勾选框挨着的是带内边距的输入框，不是正文：跟着第一行文字下移 */
+.todo-progress__row.is-editing .todo-progress__check {
+  margin-top: 6px;
 }
 
 .todo-progress__check:hover {
@@ -541,6 +548,7 @@
   min-width: 0;
   color: var(--transactions-color-text-major);
   font-size: var(--transactions-size-text-body-sm);
+  line-height: var(--transactions-height-snug);
   word-break: break-word;
   white-space: pre-wrap;
 }
@@ -552,6 +560,7 @@
 
 .todo-progress__time {
   flex-shrink: 0;
+  margin-top: 2px;
   color: var(--transactions-color-text-secondary);
   font-size: var(--transactions-size-text-caption);
   font-variant-numeric: tabular-nums;
@@ -561,6 +570,7 @@
   flex-shrink: 0;
   width: 22px;
   height: 22px;
+  margin-top: -2px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transactions-transition-fast);
@@ -577,6 +587,7 @@
   flex-shrink: 0;
   width: 22px;
   height: 22px;
+  margin-top: -2px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transactions-transition-fast);
@@ -589,19 +600,21 @@
   pointer-events: auto;
 }
 
-/* 就地订正：勾选框之后换成一个输入框，时间与那两枚图标让位给「保存 / 取消」。
- * 一条进度只有一行字，为改几个字再开一张弹窗比正文本身还重，所以就在原地换掉。 */
+/* 就地订正：勾选框之后换成会自己长高的输入框，时间与那两枚图标让位给「保存 / 取消」。
+ * 一条进度只有一行字，为改几个字再开一张弹窗比正文本身还重，所以就在原地换掉；
+ * 长文则在框里最多铺 6 行（见 TodoProgressEditor），不把整段压成一条单行输入。 */
 .todo-progress-editor {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--transactions-space-sm);
 }
 
 .todo-progress-editor > .ant-input {
   flex: 1;
   min-width: 0;
+  resize: none;
 }
 
 .todo-progress-editor__save,
@@ -609,6 +622,7 @@
   flex-shrink: 0;
   width: 22px;
   height: 22px;
+  margin-top: 2px;
 }
 
 .todo-progress__empty {

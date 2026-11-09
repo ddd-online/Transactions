@@ -9,7 +9,7 @@ import { Icon } from '../components/icon'
 import { TablePager } from '../components/pagination'
 import { TodoSkeleton } from './todo-card-columns'
 import { doneCountOf, formatMoment } from './todo-format'
-import { TodoProgressEditor } from './todo-progress'
+import { TodoProgressEditor, useProgressEditFocus } from './todo-progress'
 
 /** 历史表每页条数与可选项：与资金变化记录同一条分页行。 */
 const DEFAULT_PAGE_SIZE = 10
@@ -184,15 +184,24 @@ export function TodoHistoryProgressModal({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  const { pencilRef, restoreFocus } = useProgressEditFocus()
 
   const startEdit = (entry: TodoProgressDto): void => {
     setEditingId(entry.id)
     setDraft(entry.content)
   }
 
-  const cancelEdit = (): void => {
+  /** 收起编辑态；`restore` 为假时（关弹层）不把焦点送回正在消失的行 */
+  const stopEdit = (restore = true): void => {
+    if (restore && editingId !== null) restoreFocus(editingId)
     setEditingId(null)
     setDraft('')
+  }
+
+  /** Esc / ✕：保存已经发出去了就别再取消 —— 那一笔改不回来，收起编辑态只会骗人 */
+  const cancelEdit = (): void => {
+    if (saving) return
+    stopEdit()
   }
 
   const saveEdit = async (): Promise<void> => {
@@ -200,7 +209,7 @@ export function TodoHistoryProgressModal({
     setSaving(true)
     try {
       await onEdit(editingId, draft)
-      cancelEdit()
+      stopEdit()
     } catch {
       // 失败留在编辑态：刚改的字还在框里，页面已经报了错
     } finally {
@@ -209,7 +218,7 @@ export function TodoHistoryProgressModal({
   }
 
   const close = (): void => {
-    cancelEdit()
+    stopEdit(false)
     onClose()
   }
 
@@ -273,6 +282,7 @@ export function TodoHistoryProgressModal({
                         data-testid="todo-history-progress-edit"
                         aria-label="编辑这条进度"
                         title="编辑进度"
+                        ref={pencilRef(entry.id)}
                         onClick={() => startEdit(entry)}
                       >
                         <Icon name="Edit" size={12} />

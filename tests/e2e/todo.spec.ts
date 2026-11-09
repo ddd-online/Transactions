@@ -140,6 +140,8 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-progress-editor').press('Enter')
     await expect(page.getByTestId('todo-progress-editor')).toHaveCount(0)
     await expect(page.getByTestId('todo-item')).toContainText('完成一大半')
+    // 焦点回到这一行的铅笔：不掉到 <body> 上，键盘用户下一步还在原处
+    await expect(page.getByTestId('todo-progress-edit')).toBeFocused()
 
     // Esc 取消：库里留着上一次保存的正文
     await page.getByTestId('todo-progress-row').hover()
@@ -148,6 +150,25 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     await page.getByTestId('todo-progress-editor').press('Escape')
     await expect(page.getByTestId('todo-progress-editor')).toHaveCount(0)
     await expect(page.getByTestId('todo-item')).toContainText('完成一大半')
+    await expect(page.getByTestId('todo-progress-edit')).toBeFocused()
+
+    // 长文订正：框自己长高（单行输入只会滚到结尾），Enter 仍是保存
+    const longNote = '把这一季度的流水按分类重新对了一遍，差异出在几笔跨月的退款上；'.repeat(10)
+    await page.getByTestId('todo-progress-input').fill(longNote)
+    await page.getByTestId('todo-progress-input').press('Enter')
+    await expect(page.getByTestId('todo-progress-row')).toHaveCount(2)
+    await page.getByTestId('todo-progress-row').last().hover()
+    await page.getByTestId('todo-progress-row').last().getByTestId('todo-progress-edit').click()
+    await expect(page.getByTestId('todo-progress-editor')).toHaveValue(longNote)
+    const editorBox = await page.getByTestId('todo-progress-editor').boundingBox()
+    if (!editorBox) throw new Error('没有量到进度输入框')
+    expect(editorBox.height).toBeGreaterThan(60)
+    await page.getByTestId('todo-progress-editor').press('Escape')
+    // 订正用的长文删掉，后面的历史断言仍只有一条进度
+    await page.getByTestId('todo-progress-row').last().hover()
+    await page.getByTestId('todo-progress-row').last().getByTestId('todo-progress-delete').click()
+    await page.locator('.ant-popconfirm-buttons button').last().click()
+    await expect(page.getByTestId('todo-progress-row')).toHaveCount(1)
 
     // 进度记录缩进到事项标题的竖线上：和事项勾选框同列时，两块读起来是兄弟而不是父子
     const indent = await page.evaluate(() => {

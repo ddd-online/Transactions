@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
 
 import { Input, Popconfirm } from 'antd'
 
@@ -9,7 +9,39 @@ import { Icon } from '../components/icon'
 import { formatMoment } from './todo-format'
 
 /**
- * 一条进度就地订正时的输入行：Enter 保存、Esc 取消，另配两枚图标键（保存 / 取消）。
+ * 「订正完把焦点还给那一行的铅笔」。
+ *
+ * 输入框一卸载焦点就掉到 `<body>` 上，键盘用户下一次 Tab 得从页面开头重新走一遍；
+ * 保存 / 取消之后把焦点送回这一行的铅笔，才能接着勾选或删除。
+ */
+export function useProgressEditFocus(): {
+  pencilRef: (id: string) => (node: HTMLButtonElement | null) => void
+  restoreFocus: (id: string) => void
+} {
+  const nodes = useRef(new Map<string, HTMLButtonElement>())
+  const [pending, setPending] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (pending === null) return
+    nodes.current.get(pending)?.focus()
+    setPending(null)
+  }, [pending])
+
+  return {
+    pencilRef: (id) => (node) => {
+      if (node) nodes.current.set(id, node)
+      else nodes.current.delete(id)
+    },
+    restoreFocus: (id) => setPending(id),
+  }
+}
+
+/**
+ * 一条进度就地订正时的输入框：Enter 保存、Shift+Enter 换行、Esc 取消，另配两枚图标键。
+ *
+ * 用会自己长高的多行框而不是单行输入：正文上限 2000 字，长文在单行框里会滚到结尾、
+ * 只剩最后几个字可看；框最多长到 6 行，再长就在框里滚。第一次拿到焦点时光标放在开头
+ * （长文的开头才是「这条进度是什么」），不放在结尾。
  *
  * 卡片视图与历史弹层共用它（行的外壳、勾选框各画各的），输入框与图标键因此只有一份样式。
  */
@@ -31,24 +63,41 @@ export function TodoProgressEditor({
   onSave,
   onCancel,
 }: TodoProgressEditorProps): JSX.Element {
+  const focused = useRef(false)
+
   return (
     <span className="todo-progress-editor">
-      <Input
+      <Input.TextArea
         size="small"
         autoFocus
+        autoSize={{ minRows: 1, maxRows: 6 }}
         maxLength={TODO_PROGRESS_MAX}
         className="todo-progress-editor__input"
         aria-label="编辑进度"
         data-testid={`${testId}-editor`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        onPressEnter={onSave}
+        onFocus={(event) => {
+          if (focused.current) return
+          focused.current = true
+          const node = event.currentTarget
+          node.setSelectionRange(0, 0)
+          node.scrollTop = 0
+        }}
         onKeyDown={(event) => {
-          if (event.key !== 'Escape') return
-          // Esc 先归这次编辑：不让它继续冒泡到历史弹层，变成「关掉整个弹层」
-          event.preventDefault()
-          event.stopPropagation()
-          onCancel()
+          // 中文输入法里回车是「选词」：组字中的键一律放行，不然一条半截的进度会先存下去
+          if (event.nativeEvent.isComposing) return
+          if (event.key === 'Escape') {
+            // Esc 先归这次编辑：不让它继续冒泡到历史弹层，变成「关掉整个弹层」
+            event.preventDefault()
+            event.stopPropagation()
+            onCancel()
+            return
+          }
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault()
+            onSave()
+          }
         }}
       />
       <button
@@ -107,15 +156,23 @@ export function TodoProgressPanel({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  const { pencilRef, restoreFocus } = useProgressEditFocus()
 
   const startEdit = (entry: TodoProgressDto): void => {
     setEditingId(entry.id)
     setDraft(entry.content)
   }
 
-  const cancelEdit = (): void => {
+  const stopEdit = (): void => {
+    if (editingId !== null) restoreFocus(editingId)
     setEditingId(null)
     setDraft('')
+  }
+
+  /** Esc / ✕：保存已经发出去了就别再取消 —— 那一笔改不回来，收起编辑态只会骗人 */
+  const cancelEdit = (): void => {
+    if (saving) return
+    stopEdit()
   }
 
   const saveEdit = async (): Promise<void> => {
@@ -123,7 +180,7 @@ export function TodoProgressPanel({
     setSaving(true)
     try {
       await onEdit(editingId, draft)
-      cancelEdit()
+      stopEdit()
     } catch {
       // 失败留在编辑态：刚改的字还在框里，页面已经报了错
     } finally {
@@ -140,7 +197,9 @@ export function TodoProgressPanel({
             return (
               <li
                 key={entry.id}
-                className={`todo-progress__row${entry.done ? ' is-done' : ''}`}
+                className={`todo-progress__row${entry.done ? ' is-done' : ''}${
+                  editing ? ' is-editing' : ''
+                }`}
                 data-testid="todo-progress-row"
               >
                 <button
@@ -174,6 +233,7 @@ export function TodoProgressPanel({
                       data-testid="todo-progress-edit"
                       aria-label="编辑这条进度"
                       title="编辑进度"
+                      ref={pencilRef(entry.id)}
                       onClick={() => startEdit(entry)}
                     >
                       <Icon name="Edit" size={12} />
@@ -212,7 +272,11 @@ export function TodoProgressPanel({
           placeholder="记一条进度…"
           value={text}
           onChange={(event) => onTextChange(event.target.value)}
-          onPressEnter={onAdd}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return
+            event.preventDefault()
+            onAdd()
+          }}
         />
         <Button variant="secondary" size="sm" testId="todo-progress-add" onClick={onAdd}>
           记录
