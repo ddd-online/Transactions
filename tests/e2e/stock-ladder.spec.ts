@@ -732,13 +732,20 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
 
     await expect.poll(() => dayCounts()).toMatchObject({ today: 1, previous: 1 })
 
-    // 翻到前一天再翻回来：当天已入库，不应再为当天发请求
+    // 翻到前一天再翻回来：当天已入库，不应再为当天发请求。
+    // 页面的「上一天」是**日历**上的前一天（周日也能翻，翻到就显示「周末休市」），
+    // 所以周一要退三步才落在上一个交易日；两步之间隔着周末，没有池子可翻。
+    const dayGap = Math.round((today.getTime() - previous.getTime()) / 86_400_000)
     const todayQuery = ymd(today).replaceAll('-', '')
     const todayRequests = (): number => requests.filter((date) => date === todayQuery).length
     const beforeSwitch = todayRequests()
-    await page.getByTestId('stock-ladder-date-prev').click()
+    for (let step = 0; step < dayGap; step += 1) {
+      await page.getByTestId('stock-ladder-date-prev').click()
+    }
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(3)
-    await page.getByTestId('stock-ladder-date-next').click()
+    for (let step = 0; step < dayGap; step += 1) {
+      await page.getByTestId('stock-ladder-date-next').click()
+    }
     await expect(ladder.getByTestId('stock-ladder-rung')).toHaveCount(3)
     expect(todayRequests()).toBe(beforeSwitch)
 
