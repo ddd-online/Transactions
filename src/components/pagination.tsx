@@ -67,3 +67,55 @@ export function Pagination({
     </div>
   )
 }
+
+export interface TablePagerProps {
+  /** 一共多少条 / 笔（「共 N 条」） */
+  total: number
+  page: number
+  pageSize: number
+  /** 每页条数可选项；不传就没有条数选择器（每页条数固定） */
+  pageSizeOptions?: number[]
+  onChange: (page: number, pageSize: number) => void
+  /** 「共 N 条」的量词：条目用「条」、笔数用「笔」 */
+  unit?: string
+  /** 整行（总数 + 翻页）的 testid */
+  testId?: string
+  /** 翻页控件自己的 testid 前缀（上一页 / 下一页是 `<前缀>-prev` / `-next`）；省略时跟整行一致 */
+  pagerTestId?: string
+}
+
+/**
+ * 表格底部的分页行：左边「共 N 条」，右边翻页与每页条数 —— 就是资金变化记录那一版。
+ *
+ * 统计明细与待办历史沿用同一行：三张表各写一遍时，改一次「每页条数」的交互就得改三处，
+ * 而它们本来就该长成一样。
+ */
+export function TablePager({
+  total,
+  page,
+  pageSize,
+  pageSizeOptions,
+  onChange,
+  unit = '条',
+  testId,
+  pagerTestId,
+}: TablePagerProps): JSX.Element {
+  return (
+    <div className="tr-table-foot" data-testid={testId}>
+      <span className="tr-table-foot__total">
+        共 {total} {unit}
+      </span>
+      <AntPagination
+        size="small"
+        current={page}
+        total={total}
+        pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        showSizeChanger={pageSizeOptions !== undefined}
+        showLessItems
+        onChange={onChange}
+        itemRender={pagerItemRender(pagerTestId ?? testId)}
+      />
+    </div>
+  )
+}

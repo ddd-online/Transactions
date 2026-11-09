@@ -266,16 +266,6 @@
   background: transparent;
 }
 
-.stock-table-foot {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--transactions-space-md);
-  padding: var(--transactions-space-sm) var(--transactions-space-lg);
-  border-top: 1px solid var(--transactions-color-divider);
-}
-
 .stock-fund-table .ant-table-thead > tr > th {
   position: sticky;
   top: 0;

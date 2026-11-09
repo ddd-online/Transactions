@@ -635,6 +635,11 @@
   padding: 0 0 var(--transactions-space-lg);
 }
 
+/* 表格每一行都自带下边框：分页行再来一条上边线，两道发丝线会叠成一条粗的 */
+.todo-history .tr-table-foot {
+  border-top: none;
+}
+
 .todo-table {
   width: 100%;
   min-width: 780px;

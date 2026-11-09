@@ -5,7 +5,7 @@ import { Table } from 'antd'
 import { detailRowsNewestFirst } from '../../shared/domain/stock-stats'
 import type { StockStatisticsPointDto } from '../../shared/types/stock-statistics'
 import { EmptyState } from '../components/empty-state'
-import { Pagination } from '../components/pagination'
+import { TablePager } from '../components/pagination'
 import { stockDate, stockMoney, stockPercent, stockPnlClass } from './stock-format'
 
 /** 明细表每页条数（与记账明细的默认 15 条保持一致）。 */
@@ -181,16 +181,15 @@ export function StockStatisticsDetail({
               },
             ]}
           />
-          <div className="stock-table-foot" data-testid="stock-statistics-detail-foot">
-            <span className="stock-muted">共 {detailPoints.length} 笔</span>
-            <Pagination
-              page={detailPageNo}
-              totalPages={detailPageCount}
-              showSummary={false}
-              testId="stock-statistics-detail"
-              onChange={onPageChange}
-            />
-          </div>
+          <TablePager
+            total={detailPoints.length}
+            unit="笔"
+            page={detailPageNo}
+            pageSize={DETAIL_PAGE_SIZE}
+            onChange={(next) => onPageChange(next)}
+            testId="stock-statistics-detail-foot"
+            pagerTestId="stock-statistics-detail"
+          />
         </>
       )}
     </section>

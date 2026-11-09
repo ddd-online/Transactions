@@ -113,6 +113,44 @@
   color: var(--transactions-color-text-secondary);
 }
 
+/* 表格底部的分页行（共 N 条 + 翻页 + 每页条数）：资金变化记录那一版，统计明细与待办历史
+ * 沿用同一行。整行贴右，只用一条上发丝线与表格分节。 */
+.tr-table-foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md);
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+.tr-table-foot__total {
+  color: var(--transactions-color-text-secondary);
+}
+
+/* 选中的页码是主色实底：页码要翻成反白，AntD 默认的主色字压在实底上读不清 */
+.tr-table-foot .ant-pagination-item-active a {
+  color: var(--transactions-color-text-inverse);
+}
+
+/* 「N 条/页」是页码旁边同一档控件：别给它边框和纸白底 ——
+ * 一排扁平页码末尾挂一个描边输入框，会把页脚里最重的注意力吸到「改条数」上。 */
+.tr-table-foot .ant-pagination-options .ant-select {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.tr-table-foot .ant-pagination-options .ant-select:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.tr-table-foot .ant-pagination-options .ant-select-content {
+  font-size: var(--transactions-size-text-caption);
+}
+
 .tr-empty {
   flex: 1;
   display: flex;

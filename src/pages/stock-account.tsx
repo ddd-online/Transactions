@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState, type JSX } from 'react'
 
-import { Pagination, Table } from 'antd'
+import { Table } from 'antd'
 import type { HTMLAttributes } from 'react'
-
-import { pagerItemRender } from '../components/pagination'
 
 import type { StockAccountSummary, StockFundRecordPage } from '../../shared/types/stock'
 import type { StockOverviewDto } from '../../shared/types/stock-position'
 import { EmptyState } from '../components/empty-state'
+import { TablePager } from '../components/pagination'
 import { ScrollArea } from '../components/scroll-area'
 import {
   stockErrorMessage,
@@ -178,28 +177,23 @@ export function StockAccountPanel({
                   },
                 ]}
               />
-              <div className="stock-table-foot" data-testid="stock-fund-foot">
-                <span className="stock-muted">共 {funds.total} 条</span>
-                <Pagination
-                  size="small"
-                  current={fundPage}
-                  total={funds.total}
-                  pageSize={pageSize}
-                  pageSizeOptions={PAGE_SIZE_OPTIONS}
-                  showSizeChanger
-                  showLessItems
-                  onChange={(page, size) => {
-                    // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
-                    if (size !== pageSize) {
-                      setPageSize(size)
-                      setFundPage(1)
-                      return
-                    }
-                    setFundPage(page)
-                  }}
-                  itemRender={pagerItemRender('stock-fund')}
-                />
-              </div>
+              <TablePager
+                total={funds.total}
+                page={fundPage}
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                onChange={(page, size) => {
+                  // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
+                  if (size !== pageSize) {
+                    setPageSize(size)
+                    setFundPage(1)
+                    return
+                  }
+                  setFundPage(page)
+                }}
+                testId="stock-fund-foot"
+                pagerTestId="stock-fund"
+              />
             </>
           ) : error ? null : (
             <EmptyState

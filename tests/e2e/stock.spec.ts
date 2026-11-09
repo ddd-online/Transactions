@@ -65,7 +65,7 @@ test('股票：本金/支取/资金记录与费用设置', async () => {
     await expect(page.getByTestId('fund-row')).toHaveText(/追加本金/)
     await expect(page.getByTestId('fund-row')).toHaveText(/1000\.00/)
     // 分页跟着表格走：在表格下方、同一个滚动区里
-    await expect(page.locator('.stock-fund-scroll .stock-table-foot')).toContainText('共')
+    await expect(page.locator('.stock-fund-scroll .tr-table-foot')).toContainText('共')
     // 备注列（表头与单元格）居中
     await expect(page.locator('.stock-fund-table thead th').last()).toHaveCSS('text-align', 'center')
     await expect(page.getByTestId('fund-row').locator('td').last()).toHaveCSS('text-align', 'center')

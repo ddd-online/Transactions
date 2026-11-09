@@ -6,15 +6,23 @@ import type { TodoHistoryDto, TodoProgressDto } from '../../shared/types/todo'
 import { Button } from '../components/button'
 import { EmptyState } from '../components/empty-state'
 import { Icon } from '../components/icon'
+import { TablePager } from '../components/pagination'
 import { TodoSkeleton } from './todo-card-columns'
 import { doneCountOf, formatMoment } from './todo-format'
 import { TodoProgressEditor } from './todo-progress'
+
+/** 历史表每页条数与可选项：与资金变化记录同一条分页行。 */
+const DEFAULT_PAGE_SIZE = 10
+const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
 /**
  * 历史视图：已完成事项的表格，以及「进度记录」弹窗。
  *
  * 表格里「回到待办」与删除都回传页面；弹窗只显示打开的那一条（`null` 时关闭），
  * 弹窗里只做一件事 —— 订正进度正文（勾选 / 删除 / 新增仍旧只在待办视图里）。
+ *
+ * 分页是本视图自己的事：数据本来就整份取回来（完成事项的量级不需要再分一次 IPC），
+ * 翻页只是切一份切片。切到待办视图再回来会回到第一页，和收起状态的寿命一致。
  */
 export interface TodoHistoryViewProps {
   history: TodoHistoryDto[]
@@ -31,6 +39,9 @@ export function TodoHistoryView({
   onReopen,
   onRemove,
 }: TodoHistoryViewProps): JSX.Element {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+
   if (!loaded) return <TodoSkeleton />
   if (history.length === 0) {
     return (
@@ -41,6 +52,12 @@ export function TodoHistoryView({
       />
     )
   }
+
+  // 删掉末页最后一条时总页数会变小：按总页数夹一下，别停在一张空表上
+  const pageCount = Math.max(1, Math.ceil(history.length / pageSize))
+  const pageNo = Math.min(page, pageCount)
+  const rows = history.slice((pageNo - 1) * pageSize, pageNo * pageSize)
+
   return (
     <div className="todo-history">
       <table className="todo-table">
@@ -54,7 +71,7 @@ export function TodoHistoryView({
           </tr>
         </thead>
         <tbody>
-          {history.map((item) => (
+          {rows.map((item) => (
             <tr key={item.id} data-testid="todo-history-item">
               <td className="is-center todo-table__time">
                 <span className="todo-table__done">
@@ -119,6 +136,23 @@ export function TodoHistoryView({
           ))}
         </tbody>
       </table>
+      <TablePager
+        total={history.length}
+        page={pageNo}
+        pageSize={pageSize}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        onChange={(nextPage, nextSize) => {
+          // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
+          if (nextSize !== pageSize) {
+            setPageSize(nextSize)
+            setPage(1)
+            return
+          }
+          setPage(nextPage)
+        }}
+        testId="todo-history-foot"
+        pagerTestId="todo-history"
+      />
     </div>
   )
 }

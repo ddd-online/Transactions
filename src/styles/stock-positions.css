@@ -807,25 +807,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.stock-table-foot .ant-pagination-item-active a,
 .page-footer-bar .ant-pagination-item-active a {
   color: var(--transactions-color-text-inverse);
-}
-
-/* 页脚的「N 条/页」是页码旁边的同一档控件：别给它边框和纸白底 ——
- * 一排扁平页码末尾挂一个描边输入框，会把页脚里最重的注意力吸到"改条数"上。 */
-.stock-table-foot .ant-pagination-options .ant-select {
-  border-color: transparent;
-  background-color: transparent;
-  box-shadow: none;
-}
-
-.stock-table-foot .ant-pagination-options .ant-select:hover {
-  background-color: var(--transactions-color-hover-bg);
-}
-
-.stock-table-foot .ant-pagination-options .ant-select-content {
-  font-size: var(--transactions-size-text-caption);
 }
 
 .stock-review-list,
