@@ -98,8 +98,10 @@ export function StockStatisticsPanel({
   // 「明细」是逐笔结算的清单：口径恒为逐笔累计（分组点是给曲线用的，一行一格不是结算）。
   const detailRows = data?.points ?? []
   const points = strategy === 'grouped' ? (data?.groups ?? []) : detailRows
-  // 顶部合计始终读全量逐笔点，不跟着分组口径变成最后一组。
-  const latest = detailRows[detailRows.length - 1]
+  // 顶部合计读当前口径的最后一个点：逐笔累计就是所选范围内的全部结算，分组统计就是最近
+  // 一组 —— 卡片是曲线最后一格的读数，不另算一套（凯利值也跟着这一组走）。刚切到分组、
+  // 新数据还在路上时先沿用逐笔那个点，别让卡片闪一下空态。
+  const latest = points[points.length - 1] ?? detailRows[detailRows.length - 1]
 
   const toolbar = (
     <div className="stock-statistics-toolbar">
@@ -183,7 +185,7 @@ export function StockStatisticsPanel({
 
       {tabs === 'summary' ? (
         <>
-          <StockStatisticsSummary ledgerId={ledgerId} latest={latest} />
+          <StockStatisticsSummary ledgerId={ledgerId} latest={latest} strategy={strategy} />
 
           {points.length > 0 ? (
             <StockStatisticsChartSection

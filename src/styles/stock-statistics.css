@@ -420,12 +420,6 @@
   grid-column: span 2;
 }
 
-.stock-stat-cell.stock-stat-cell--wide strong {
-  font-size: var(--transactions-size-text-display-xl);
-  line-height: var(--transactions-height-tight);
-  letter-spacing: var(--transactions-tracking-amount-xl);
-}
-
 .stock-stat-cell {
   display: flex;
   flex-direction: column;
@@ -442,6 +436,34 @@
 .stock-stat-cell small {
   color: var(--transactions-color-text-tertiary);
   font-size: var(--transactions-size-text-caption);
+}
+
+/*
+ * 已实现盈亏那一格是双宽的：右边本来空着，凯利值就摆在空位里 —— 两个读数分占左右两栏，
+ * 读起来还是四列一行。另起一张卡会把七张卡挤成三行，最后一行只剩一格。
+ *
+ * 主数一栏给得宽一点（1.2fr）：`¥168,001.17` 这种七位数在 36px 等宽下要 240px，
+ * 窄窗里不能挤到凯利值那一栏去。
+ */
+.stock-stat-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--transactions-space-lg);
+}
+
+.stock-stat-hero__pnl,
+.stock-stat-hero__kelly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stock-stat-hero__pnl strong {
+  font-size: var(--transactions-size-text-display-xl);
+  line-height: var(--transactions-height-tight);
+  letter-spacing: var(--transactions-tracking-amount-xl);
 }
 
 .stock-chart-head {
