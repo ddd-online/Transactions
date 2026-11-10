@@ -442,21 +442,24 @@
  * 已实现盈亏那一格是双宽的：右边本来空着，凯利值就摆在空位里 —— 两个读数分占左右两栏，
  * 读起来还是四列一行。另起一张卡会把七张卡挤成三行，最后一行只剩一格。
  *
+ * 两栏是**四等分里的两格**：和外面那张四列网格同一条列宽、同一个列间距（space-md），
+ * 所以凯利值那一栏的左边正好压在下一行「盈亏比」的左边 —— 两张读数各给 1fr、间距给到
+ * space-lg 时，它比下一行右移了十几像素，一眼看得出没对齐。
+ *
  * 两栏排成同一张**三行**的网格（标签 / 数 / 说明），靠 `grid-auto-flow: column` 按列填：
  * 两个标签同一基线、两个数同一基线、两行小字同一基线。各自 flex 堆三行时，36px 的主数与
  * 16px 的凯利值行高不同，下面的说明会差出十几像素 —— 一行里的两张读数看起来没对齐。
- *
- * 主数一栏给得宽一点（1.2fr）：`¥168,001.17` 这种七位数在 36px 等宽下要 240px，
- * 窄窗里不能挤到凯利值那一栏去。
  */
 .stock-stat-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: auto auto auto;
   grid-auto-flow: column;
   align-items: baseline;
-  column-gap: var(--transactions-space-lg);
+  column-gap: var(--transactions-space-md);
   row-gap: 4px;
+  /* 主数按**这一格自己的宽度**退档，见下面两条容器查询 */
+  container-type: inline-size;
 }
 
 /* 两块自己不下场排版，只把六行交给上面那张网格。 */
@@ -465,10 +468,39 @@
   display: contents;
 }
 
+/* 凯利值那一行：满凯利与半凯利同一条基线，半凯利小一号、落在右下角；窄格子放不下时
+ * 整个半凯利折到下面一行，不挤到隔壁卡里去。 */
+.stock-stat-hero__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  min-width: 0;
+}
+
+.stock-stat-hero__half {
+  white-space: nowrap;
+}
+
 .stock-stat-hero__pnl strong {
   font-size: var(--transactions-size-text-display-xl);
   line-height: var(--transactions-height-tight);
   letter-spacing: var(--transactions-tracking-amount-xl);
+}
+
+/* 四等分之后主数只占一格：窗口一窄，36px 的 `¥-1639.59` 就会顶到凯利值那一栏。按**这一格
+ * 自己的宽度**退档（容器查询，不是窗口断点）—— 两列兜底时这一格又变宽，字号自己回到 36px。
+ * 560px 那一档还容得下 12 个字符（`¥1,234,567.89`），400px 那一档容得下 11 个。 */
+@container (max-width: 560px) {
+  .stock-stat-hero__pnl strong {
+    font-size: var(--transactions-size-text-display);
+  }
+}
+
+@container (max-width: 400px) {
+  .stock-stat-hero__pnl strong {
+    font-size: var(--transactions-size-text-display-sm);
+  }
 }
 
 .stock-chart-head {

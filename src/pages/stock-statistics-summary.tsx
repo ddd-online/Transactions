@@ -85,15 +85,24 @@ export function StockStatisticsSummary({
         <div className="stock-stat-grid" data-testid="stock-statistics-summary">
           <div className="stock-stat-cell stock-stat-cell--wide stock-stat-hero">
             <div className="stock-stat-hero__pnl">
-              <StatLabel text="已实现盈亏" />
+              <StatLabel text={strategy === 'grouped' ? '分组盈亏' : '已实现盈亏'} />
               <strong className={stockPnlClass(latest.totalPnl)} data-testid="stock-statistics-pnl">
                 {money(latest.totalPnl)}
               </strong>
               <small data-testid="stock-statistics-scope">{scopeText(strategy, latest.span)}</small>
             </div>
             <div className="stock-stat-hero__kelly">
-              <StatLabel text="凯利值" hint="按胜率与盈亏比算出的下注比例" />
-              <strong data-testid="stock-statistics-kelly">{kellyText(kelly)}</strong>
+              <StatLabel text="凯利值" hint="按胜率与盈亏比算出的下注比例，右下角是它的一半" />
+              <span className="stock-stat-hero__value">
+                <strong data-testid="stock-statistics-kelly">{kellyText(kelly)}</strong>
+                {kelly === null ? null : (
+                  // 半凯利：实盘通常只押满凯利的一半。它是**取整前**那个值的一半，
+                  // 不是把显示出来的 22.73% 再除二（那样会多一次取整）。
+                  <small className="stock-stat-hero__half" data-testid="stock-statistics-kelly-half">
+                    半 {kellyText(kelly / 2)}
+                  </small>
+                )}
+              </span>
               <small>{kellyCaption(kelly)}</small>
             </div>
           </div>
