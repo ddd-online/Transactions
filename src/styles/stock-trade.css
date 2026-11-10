@@ -311,8 +311,10 @@
 }
 
 @media (max-width: 900px) {
-  .stock-metrics,
-  .stock-stat-grid {
+  /* 统计的指标卡不在这里收列：`.stock-stat-grid` 的基础规则在 stock-statistics.css
+   * （本文件之后加载），同特异度会把这里的声明盖掉 —— 收列写在 stock-responsive.css，
+   * 那里加载在最后。 */
+  .stock-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -24,7 +24,7 @@ function StatLabel({ text, hint }: { text: string; hint?: string }): JSX.Element
     <span className="stock-stat-label">
       {text}
       {hint ? (
-        <Tooltip text={hint}>
+        <Tooltip text={hint} focusTrigger>
           <span
             className="stock-stat-hint"
             tabIndex={0}
@@ -57,9 +57,9 @@ function kellyCaption(value: number | null): string {
 
 /** 已实现盈亏那一格的范围说明：分组口径下这个数是**最近一组**的，不是全量累计。 */
 function scopeText(strategy: StatisticsStrategy, span: number): string {
-  return strategy === 'grouped'
-    ? `分组统计 · 最近一组 ${span} 笔`
-    : `逐笔累计 · 共 ${span} 笔`
+  // 口径本身在工具栏的下拉里写着，这里只说这个数覆盖了哪些结算 —— 重复一遍口径
+  // 既长又会在四列宽的卡片里挤出格子。
+  return strategy === 'grouped' ? `最近一组 ${span} 笔` : `共 ${span} 笔`
 }
 
 /**
@@ -92,7 +92,7 @@ export function StockStatisticsSummary({
               <small data-testid="stock-statistics-scope">{scopeText(strategy, latest.span)}</small>
             </div>
             <div className="stock-stat-hero__kelly">
-              <StatLabel text="凯利值" hint="按胜率与盈亏比算出的下注比例（占本金）" />
+              <StatLabel text="凯利值" hint="按胜率与盈亏比算出的下注比例" />
               <strong data-testid="stock-statistics-kelly">{kellyText(kelly)}</strong>
               <small>{kellyCaption(kelly)}</small>
             </div>

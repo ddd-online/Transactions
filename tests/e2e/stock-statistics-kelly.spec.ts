@@ -108,7 +108,7 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     const summary = page.getByTestId('stock-statistics-summary')
 
     // 逐笔累计 · 全部：7 胜 2 负，胜率 77.78%、盈亏比 1 → 7/9 − (2/9)/1 = 55.56%
-    await expect(scope).toHaveText('逐笔累计 · 共 9 笔')
+    await expect(scope).toHaveText('共 9 笔')
     await expect(pnl).toHaveText('¥7.50')
     await expect(summary).toContainText('77.78%')
     await expect(kelly).toHaveText('55.56%')
@@ -121,14 +121,14 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     // 最近 3 笔（+300 / −200 / −100）：胜率 33.33%、盈亏比 2 → 正好 0，副标题说没有正期望
     await page.getByTestId('statistics-range-recent').click()
     await page.getByTestId('statistics-recent').fill('3')
-    await expect(scope).toHaveText('逐笔累计 · 共 3 笔')
+    await expect(scope).toHaveText('共 3 笔')
     await expect(pnl).toHaveText('¥0.00')
     await expect(kelly).toHaveText('0.00%')
     await expect(summary).toContainText('没有正期望')
 
     // 最近 1 笔（−100）：只有亏损样本 → 没有赔率，给占位符而不是 0
     await page.getByTestId('statistics-recent').fill('1')
-    await expect(scope).toHaveText('逐笔累计 · 共 1 笔')
+    await expect(scope).toHaveText('共 1 笔')
     await expect(kelly).toHaveText('—')
     await expect(summary).toContainText('样本不足')
 
@@ -136,7 +136,7 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     await page.getByTestId('statistics-range-all').click()
     await page.getByTestId('statistics-strategy').click()
     await page.locator('.ant-select-item-option').filter({ hasText: '分组统计' }).click()
-    await expect(scope).toHaveText('分组统计 · 最近一组 4 笔')
+    await expect(scope).toHaveText('最近一组 4 笔')
     await expect(pnl).toHaveText('¥2.50')
     await expect(summary).toContainText('50.00%')
     await expect(kelly).toHaveText('22.73%')

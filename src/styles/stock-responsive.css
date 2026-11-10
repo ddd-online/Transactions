@@ -77,6 +77,17 @@
   }
 }
 
+/* 统计的指标卡在 720 以下是两列：再窄下去 36px 的主数（`¥7.50` 就要 98px）会顶到
+ * 凯利值那一栏，小字也开始折行。收成两列后双宽的已实现盈亏那格自己占满一行，
+ * 「已实现盈亏 | 凯利值」仍是一行两个读数。
+ * 这条不收在 stock-trade.css：那边的 `@media` 在本文件之前加载，同特异度会被
+ * stock-statistics.css 里的四列规则盖掉。 */
+@media (max-width: 720px) {
+  .stock-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stock-position-card,
   .stock-history-card,

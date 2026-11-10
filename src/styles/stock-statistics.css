@@ -442,22 +442,27 @@
  * 已实现盈亏那一格是双宽的：右边本来空着，凯利值就摆在空位里 —— 两个读数分占左右两栏，
  * 读起来还是四列一行。另起一张卡会把七张卡挤成三行，最后一行只剩一格。
  *
+ * 两栏排成同一张**三行**的网格（标签 / 数 / 说明），靠 `grid-auto-flow: column` 按列填：
+ * 两个标签同一基线、两个数同一基线、两行小字同一基线。各自 flex 堆三行时，36px 的主数与
+ * 16px 的凯利值行高不同，下面的说明会差出十几像素 —— 一行里的两张读数看起来没对齐。
+ *
  * 主数一栏给得宽一点（1.2fr）：`¥168,001.17` 这种七位数在 36px 等宽下要 240px，
  * 窄窗里不能挤到凯利值那一栏去。
  */
 .stock-stat-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  align-items: start;
-  gap: var(--transactions-space-lg);
+  grid-template-rows: auto auto auto;
+  grid-auto-flow: column;
+  align-items: baseline;
+  column-gap: var(--transactions-space-lg);
+  row-gap: 4px;
 }
 
+/* 两块自己不下场排版，只把六行交给上面那张网格。 */
 .stock-stat-hero__pnl,
 .stock-stat-hero__kelly {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+  display: contents;
 }
 
 .stock-stat-hero__pnl strong {
@@ -499,6 +504,14 @@
 
 .stock-stat-hint:hover {
   color: var(--transactions-color-text-secondary);
+}
+
+/* 键盘走到这颗 ⓘ 时，焦点得看得见：它没有按钮的外形，UA 默认那一圈细线压在
+ * 12px 的图标上几乎看不出，于是按按钮同一条主色环来。 */
+.stock-stat-hint:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--transactions-radius-sm);
 }
 
 .stock-chart-metrics {
