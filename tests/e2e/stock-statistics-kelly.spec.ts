@@ -105,7 +105,7 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     await page.getByTestId('stock-tab-statistics').click()
 
     const kelly = page.getByTestId('stock-statistics-kelly')
-    const half = page.getByTestId('stock-statistics-kelly-half')
+    const note = page.getByTestId('stock-statistics-kelly-note')
     const scope = page.getByTestId('stock-statistics-scope')
     const pnl = page.getByTestId('stock-statistics-pnl')
     const summary = page.getByTestId('stock-statistics-summary')
@@ -117,7 +117,7 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     await expect(summary).toContainText('77.78%')
     await expect(kelly).toHaveText('55.56%')
     // 半凯利取满凯利的一半，跟着它一起写：27.78%
-    await expect(half).toHaveText('半 27.78%')
+    await expect(note).toHaveText(/建议仓位.*半凯利 27\.78%/)
     await expect(summary).toContainText('建议仓位')
     await page.waitForTimeout(300)
     await page.screenshot({
@@ -130,14 +130,14 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     await expect(scope).toHaveText('共 3 笔')
     await expect(pnl).toHaveText('¥0.00')
     await expect(kelly).toHaveText('0.00%')
-    await expect(half).toHaveText('半 0.00%')
+    await expect(note).toHaveText(/没有正期望.*半凯利 0\.00%/)
     await expect(summary).toContainText('没有正期望')
 
     // 最近 1 笔（−100）：只有亏损样本 → 没有赔率，给占位符而不是 0（半凯利也没有可写的）
     await page.getByTestId('statistics-recent').fill('1')
     await expect(scope).toHaveText('共 1 笔')
     await expect(kelly).toHaveText('—')
-    await expect(half).toHaveCount(0)
+    await expect(note).toHaveText('样本不足')
     await expect(summary).toContainText('样本不足')
 
     // 分组统计（每组 5 笔）：卡片换成最近一组（第 6-9 笔）→ 2 胜 2 负、盈亏比 1.833
@@ -149,7 +149,7 @@ test('股票统计：凯利值跟着交易范围与逐笔 / 分组口径变', as
     await expect(pnl).toHaveText('¥2.50')
     await expect(summary).toContainText('50.00%')
     await expect(kelly).toHaveText('22.73%')
-    await expect(half).toHaveText('半 11.36%')
+    await expect(note).toHaveText(/建议仓位.*半凯利 11\.36%/)
     await page.waitForTimeout(300)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'stock-statistics-kelly-grouped.png'),

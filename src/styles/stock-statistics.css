@@ -468,24 +468,16 @@
   display: contents;
 }
 
-/* 凯利值那一行：满凯利与半凯利同一条基线，半凯利小一号、落在右下角；窄格子放不下时
- * 整个半凯利折到下面一行，不挤到隔壁卡里去。 */
-.stock-stat-hero__value {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 6px;
-  min-width: 0;
-}
-
-.stock-stat-hero__half {
-  white-space: nowrap;
-}
-
 .stock-stat-hero__pnl strong {
   font-size: var(--transactions-size-text-display-xl);
   line-height: var(--transactions-height-tight);
   letter-spacing: var(--transactions-tracking-amount-xl);
+}
+
+/* 注释里的半凯利是一整句（「半凯利 27.78%」），窄格子换行时不许把数和它的名字拆开；
+ * 「·」与前半句用不换行空格连着，换行只发生在它后面。 */
+.stock-stat-hero__half {
+  white-space: nowrap;
 }
 
 /* 四等分之后主数只占一格：窗口一窄，36px 的 `¥-1639.59` 就会顶到凯利值那一栏。按**这一格
