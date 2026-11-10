@@ -25,6 +25,7 @@ import {
   RecordsFilterDialogs,
   emptyFilter,
   filterHasContent,
+  filterWithCategoryOrType,
   nextSortField,
   toQueryItem,
   type RecordFilter,
@@ -219,9 +220,18 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     setShowFilter(true)
   }, [filters])
 
-  const updateFilterEditor = useCallback((patch: Partial<RecordFilter>): void => {
-    setFilterEditor((current) => ({ ...current, ...patch }))
-  }, [])
+  const updateFilterEditor = useCallback(
+    (patch: Partial<RecordFilter>): void => {
+      setFilterEditor((current) => {
+        // 换分类 / 换类型时标签候选跟着换，不属于新组合的已选标签一并摘掉
+        const scoped = 'category' in patch || 'transactionType' in patch
+        return scoped
+          ? filterWithCategoryOrType(current, patch, tagOptions)
+          : { ...current, ...patch }
+      })
+    },
+    [tagOptions],
+  )
 
   /** 把编辑区当前条件收进列表并清空编辑区；什么都没填时不收录。 */
   const addFilterCondition = useCallback((): void => {

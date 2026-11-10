@@ -6,8 +6,8 @@ import type { TransactionRecordDto } from '../../shared/types/transaction'
 import {
   type RecordDraft,
   type RecordSavePorts,
-  allTagOptions,
   categoryOptions,
+  filterTagOptions,
   composerDefaultDate,
   draftAfterTemplate,
   draftOfRecord,
@@ -303,9 +303,22 @@ describe('options', () => {
     expect(tagOptionsForCategory(tagRows, '', '')).toEqual([])
   })
 
-  it('全部标签名去重（筛选不绑定单一分类）', () => {
-    const tagRows = [tag('工作日', '餐饮', 'expense'), tag('工作日', '餐饮', 'income')]
-    expect(allTagOptions(tagRows)).toEqual([{ value: '工作日', label: '工作日' }])
+  it('筛选的标签候选跟着已选的分类 / 类型收窄，两端都不限时列全部', () => {
+    const tagRows = [
+      tag('工作日', '餐饮', 'expense'),
+      tag('通勤', '交通', 'expense'),
+      tag('工资', '工资', 'income'),
+    ]
+    expect(filterTagOptions(tagRows, '', '').map((option) => option.value)).toEqual([
+      '工作日',
+      '通勤',
+      '工资',
+    ])
+    expect(filterTagOptions(tagRows, '餐饮', 'expense')).toEqual([
+      { value: '工作日', label: '工作日' },
+    ])
+    expect(filterTagOptions(tagRows, '', 'income').map((option) => option.value)).toEqual(['工资'])
+    expect(filterTagOptions(tagRows, '餐饮', 'income')).toEqual([])
   })
 })
 

@@ -20,7 +20,7 @@
 import { parseYmd } from '../../shared/domain/calendar'
 import { transactionTypeText } from '../../shared/domain/format'
 import { centsToYuan, yuanToCents } from '../../shared/domain/money'
-import { tagNamesForCategory } from '../../shared/domain/tag-names'
+import { tagNamesForCategory, tagNamesForFilter } from '../../shared/domain/tag-names'
 import { formatTimestamp, todayYmd } from '../../shared/domain/time'
 import { errorMessage } from '../../shared/errors'
 import type { CommandReq } from '../../shared/commands'
@@ -218,11 +218,13 @@ export function tagOptionsForCategory(
   }))
 }
 
-/** 全部标签名（去重；筛选弹窗用 —— 它不绑定单一分类）。 */
-export function allTagOptions(
-  tagRows: readonly Pick<TagDto, 'name'>[],
+/** 全部标签名（去重；两端口径见 {@link filterTagOptions}）。 */
+export function filterTagOptions(
+  tagRows: readonly Pick<TagDto, 'name' | 'categoryTransactionType'>[],
+  category: string,
+  transactionType: string,
 ): DraftOption[] {
-  return Array.from(new Set(tagRows.map((tag) => tag.name))).map((name) => ({
+  return tagNamesForFilter(tagRows, category, transactionType).map((name) => ({
     value: name,
     label: name,
   }))

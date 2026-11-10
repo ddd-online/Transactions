@@ -9,6 +9,7 @@ import { Input, Modal, Select } from 'antd'
 import type { JSX } from 'react'
 
 import { transactionTypeText } from '../../shared/domain/format'
+import { tagNamesForFilter } from '../../shared/domain/tag-names'
 import type { CategoryDto, TagDto } from '../../shared/types/category'
 import type { QueryConditionSortField } from '../../shared/types/transaction'
 
@@ -16,7 +17,7 @@ import { Button } from '../components/button'
 import { Icon } from '../components/icon'
 import { Segmented } from '../components/segmented'
 import { TimeRangePicker, type TimeRangeMode } from '../components/time-range-picker'
-import { allTagOptions, categoryOptions, type DraftOption } from './record-draft'
+import { categoryOptions, filterTagOptions, type DraftOption } from './record-draft'
 
 /** 一条筛选条件（弹窗里编辑的那份草稿也是这个形状）。 */
 export interface RecordFilter {
@@ -43,6 +44,24 @@ export function filterHasContent(filter: RecordFilter): boolean {
   return Boolean(
     filter.transactionType || filter.category || filter.tags.length > 0 || filter.description.trim(),
   )
+}
+
+/**
+ * 改分类 / 消费类型：标签候选跟着换，不属于新组合的已选标签一起摘掉。
+ *
+ * 与「记一笔」换分类时的处理同一条规则（`draftWithCategoryOrType`）—— 标签按
+ * `分类:类型` 归档，留着别的组合的标签，这条条件永远查不到记录。分类与类型都不限时
+ * 清单本来就是全部标签，没有可摘的。
+ */
+export function filterWithCategoryOrType(
+  filter: RecordFilter,
+  patch: Partial<RecordFilter>,
+  tagRows: readonly Pick<TagDto, 'name' | 'categoryTransactionType'>[],
+): RecordFilter {
+  const next = { ...filter, ...patch }
+  if (next.category.trim() === '' && next.transactionType === '') return next
+  const valid = new Set(tagNamesForFilter(tagRows, next.category, next.transactionType))
+  return { ...next, tags: next.tags.filter((tag) => valid.has(tag)) }
 }
 
 /** 条件列表里的一行摘要，例如：`收入 / 工资奖金 / 工资`。 */
@@ -209,7 +228,13 @@ export function RecordsFilterDialogs({
   onFilterClear,
   onFilterApply,
 }: RecordsFilterDialogsProps): JSX.Element {
-  const tagSelectOptions: DraftOption[] = allTagOptions(tagRows)
+  // 标签候选跟着已选的分类 / 消费类型收窄：只列这个组合下真实存在的标签（筛选允许两端
+  // 都不限，那就列全部）。
+  const tagSelectOptions: DraftOption[] = filterTagOptions(
+    tagRows,
+    filterEditor.category,
+    filterEditor.transactionType,
+  )
 
   return (
     <>

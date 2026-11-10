@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   emptyFilter,
   filterSummary,
+  filterWithCategoryOrType,
   toQueryItem,
   type RecordFilter,
 } from '../../src/pages/records-filter-bar'
@@ -73,5 +74,41 @@ describe('toQueryItem', () => {
       tagNot: true,
       description: '奖金',
     })
+  })
+})
+
+describe('filterWithCategoryOrType', () => {
+  const tagRows = [
+    { name: '三餐', categoryTransactionType: '餐饮美食:expense' },
+    { name: '打车', categoryTransactionType: '交通出行:expense' },
+    { name: '工资', categoryTransactionType: '工资奖金:income' },
+  ]
+
+  it('换分类时摘掉不属于新分类的标签', () => {
+    const next = filterWithCategoryOrType(
+      filter({ tags: ['三餐', '打车'] }),
+      { category: '餐饮美食' },
+      tagRows,
+    )
+    expect(next.category).toBe('餐饮美食')
+    expect(next.tags).toEqual(['三餐'])
+  })
+
+  it('只选类型时按类型收窄（支出记录上的收入标签会被摘掉）', () => {
+    const next = filterWithCategoryOrType(
+      filter({ tags: ['三餐', '工资'] }),
+      { transactionType: 'income' },
+      tagRows,
+    )
+    expect(next.tags).toEqual(['工资'])
+  })
+
+  it('分类与类型都不限时清单是全部标签，一个都不摘', () => {
+    const next = filterWithCategoryOrType(
+      filter({ tags: ['三餐', '工资'] }),
+      { transactionType: '', category: '' },
+      tagRows,
+    )
+    expect(next.tags).toEqual(['三餐', '工资'])
   })
 })

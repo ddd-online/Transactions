@@ -289,6 +289,42 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await page.getByTestId('tr-filter-type-income').click()
     await expect(page.getByTestId('tr-filter-type-income')).toHaveAttribute('aria-pressed', 'true')
     await page.getByTestId('tr-filter-type-all').click()
+    // 标签候选跟着分类走：选「餐饮美食」只列它下面的标签（此前把全库标签都列了出来）。
+    // 下拉是虚拟列表、只渲染前几项，所以断言「列出来的都属于这个分类」而不是逐个比全量。
+    const openDropdowns = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden)')
+    await page.getByTestId('tr-filter-category').click()
+    await page.locator('.ant-select-item-option').filter({ hasText: '餐饮美食' }).click()
+    // 关闭动画里下拉还算「可见」，等它收完再开标签下拉，免得把分类的选项算进来
+    await expect(openDropdowns).toHaveCount(0)
+    const visibleTagOptions = page.locator(
+      '.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option',
+    )
+    const filterTagTitles = (): Promise<(string | null)[]> =>
+      visibleTagOptions.evaluateAll((els) => els.map((el) => el.getAttribute('title')))
+    await page.getByTestId('tr-filter-tags').click()
+    await expect.poll(async () => (await filterTagTitles()).length).toBeGreaterThan(0)
+    for (const title of await filterTagTitles()) {
+      expect(tagsOf('餐饮美食:expense')).toContain(title)
+    }
+    expect(await filterTagTitles()).not.toContain('打车')
+    // 选一个餐饮标签，再换分类：不属于新分类的标签跟着摘掉（与「记一笔」同一条规则）
+    await page.keyboard.type('三餐')
+    await visibleTagOptions.filter({ hasText: '三餐' }).click()
+    await expect(page.getByTestId('tr-filter-tags')).toContainText('三餐')
+    await page.keyboard.press('Escape')
+    await expect(openDropdowns).toHaveCount(0)
+    await page.getByTestId('tr-filter-category').click()
+    await page.locator('.ant-select-item-option').filter({ hasText: '生活缴费' }).click()
+    await expect(page.getByTestId('tr-filter-tags')).not.toContainText('三餐')
+    await expect(openDropdowns).toHaveCount(0)
+    await page.getByTestId('tr-filter-tags').click()
+    await expect.poll(async () => (await filterTagTitles()).length).toBeGreaterThan(0)
+    for (const title of await filterTagTitles()) {
+      expect(tagsOf('生活缴费:expense')).toContain(title)
+    }
+    await page.keyboard.press('Escape')
+    await expect(openDropdowns).toHaveCount(0)
+    await page.getByTestId('tr-filter-clear').click()
     await page.getByTestId('tr-filter-description').fill('午')
     // 「添加条件」把编辑区收进条件列表：列表出现摘要行、编辑区清空
     await page.getByTestId('tr-filter-add').click()
