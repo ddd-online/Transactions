@@ -16,7 +16,7 @@ function environment(overrides: Record<string, string>): Record<string, string> 
   return { ...result, ...overrides }
 }
 
-test('待办历史：默认每页 10 条，可切换条数', async () => {
+test('待办历史：默认每页 15 条，可切换条数', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-todo-history-page-'))
   const home = join(root, 'home')
@@ -91,32 +91,37 @@ test('待办历史：默认每页 10 条，可切换条数', async () => {
 
     const rows = page.getByTestId('todo-history-item')
     const foot = page.getByTestId('todo-history-foot')
-    await expect(rows).toHaveCount(10)
+    await expect(rows).toHaveCount(15)
     await expect(foot).toContainText('共 21 条')
-    // 分页条默认就是每页 10 条
-    await expect(foot).toContainText('10 条/页')
+    // 分页条默认就是每页 15 条
+    await expect(foot).toContainText('15 条/页')
     // 分页跟着表格走：在表格下方、同一个滚动区里
     await expect(page.locator('.todo-scroll .tr-table-foot')).toContainText('共 21 条')
     // 完成时刻倒序：最新完成的排在第一行
     await expect(rows.nth(0)).toContainText('事项 20')
-    await expect(rows.nth(9)).toContainText('事项 11')
+    await expect(rows.nth(14)).toContainText('事项 6')
     await page.waitForTimeout(300)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-page1.png'),
     })
 
     await foot.locator('.ant-pagination-item-2').click()
-    await expect(rows).toHaveCount(10)
-    await expect(rows.nth(0)).toContainText('事项 10')
-    await foot.locator('.ant-pagination-item-3').click()
-    await expect(rows).toHaveCount(1)
-    await expect(rows.nth(0)).toContainText('事项 0')
+    await expect(rows).toHaveCount(6)
+    await expect(rows.nth(0)).toContainText('事项 5')
+    await expect(rows.nth(5)).toContainText('事项 0')
     await page.waitForTimeout(300)
     await page.screenshot({
-      path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-page3.png'),
+      path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-page2.png'),
     })
 
-    // 换成每页 20 条：回到第一页，两页装下
+    // 换成每页 30 条：回到第一页，21 条一页装下
+    await foot.locator('.ant-pagination-options .ant-select').click()
+    await page.locator('.ant-select-item-option', { hasText: '30 条/页' }).click()
+    await expect(rows).toHaveCount(21)
+    await expect(foot).toContainText('30 条/页')
+    await expect(foot.locator('.ant-pagination-item-2')).toHaveCount(0)
+
+    // 换成每页 20 条：同样回第一页，两页装下
     await foot.locator('.ant-pagination-options .ant-select').click()
     await page.locator('.ant-select-item-option', { hasText: '20 条/页' }).click()
     await expect(rows).toHaveCount(20)
@@ -125,7 +130,7 @@ test('待办历史：默认每页 10 条，可切换条数', async () => {
     await expect(rows).toHaveCount(1)
     await page.waitForTimeout(300)
     await page.screenshot({
-      path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-page2.png'),
+      path: join(repositoryRoot, 'artifacts', 'tests', 'todo-history-page2-size20.png'),
     })
 
     // 删掉末页唯一的这条：总页数缩回一页，按总页数夹一下，不停在一张空表上

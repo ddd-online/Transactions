@@ -11,9 +11,9 @@ import { TodoSkeleton } from './todo-card-columns'
 import { doneCountOf, formatMoment } from './todo-format'
 import { TodoProgressEditor, useProgressEditFocus } from './todo-progress'
 
-/** 历史表每页条数与可选项：与资金变化记录同一条分页行。 */
-const DEFAULT_PAGE_SIZE = 10
-const PAGE_SIZE_OPTIONS = [10, 20, 50]
+/** 历史表每页条数与可选项：分页行与资金变化记录同一条，条数按历史表的密度定。 */
+const DEFAULT_PAGE_SIZE = 15
+const PAGE_SIZE_OPTIONS = [15, 20, 30]
 
 /**
  * 历史视图：已完成事项的表格，以及「进度记录」弹窗。
