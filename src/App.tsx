@@ -15,7 +15,8 @@ const DiaryPage = lazy(async () => ({ default: (await import('./pages/diary')).D
 const TodoPage = lazy(async () => ({ default: (await import('./pages/todo')).TodoPage }))
 import { AntdProvider } from './components/antd-provider'
 import { AppLedgerMenu } from './app-ledger-menu'
-import { AppShell, viewFeature, type View } from './app-shell'
+import { AppShell } from './app-shell'
+import { resolveView, type View } from './app-view'
 import { WorkspaceOverlay } from './app-workspace-overlay'
 import { SettingsPage } from './pages/settings'
 import { PageBoundary } from './components/page-boundary'
@@ -68,11 +69,15 @@ export function App(): JSX.Element {
     onError: setError,
   })
 
-  // 当前视图被功能开关关掉时退回记账页（设置页永远可进）。
+  // 实际渲染哪一页：当前页被功能开关关掉时落到第一个还开着的功能（设置页永远可进）。
+  // 派生而不是在 effect 里改 state —— 配置到达时第一帧就是对的那页，不会先闪一下记账页。
+  const currentView = resolveView(view, effectiveFeatures)
+
+  // state 跟着派生结果追上：否则开关关掉时 state 还停在旧页，等开关再打开就会把用户
+  // 从设置页拽回去。渲染只看 currentView，这一步只是让两边不打架。
   useEffect(() => {
-    const feature = viewFeature(view)
-    if (feature && effectiveFeatures?.[feature] === false) setView('accounting')
-  }, [effectiveFeatures, view])
+    if (currentView !== view) setView(currentView)
+  }, [currentView, view])
 
   const controlWindow = useCallback(
     (action: 'minimize' | 'maximize' | 'close'): void => {
@@ -98,7 +103,7 @@ export function App(): JSX.Element {
         />
 
         <AppShell
-          view={view}
+          view={currentView}
           onViewChange={setView}
           features={effectiveFeatures}
           blockingWorkspace={blockingWorkspace}
@@ -121,7 +126,7 @@ export function App(): JSX.Element {
           workspace={workspace}
           version={version}
         >
-          {view === 'accounting' ? (
+          {currentView === 'accounting' ? (
             <PageRailProvider
               rail={
                 <div className="page-rail-nav">
@@ -181,21 +186,21 @@ export function App(): JSX.Element {
             </PageRailProvider>
           ) : null}
 
-          <PageBoundary key={`view-${view}`}>
+          <PageBoundary key={`view-${currentView}`}>
             <Suspense fallback={null}>
-              {view === 'stock' ? (
+              {currentView === 'stock' ? (
                 <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
               ) : null}
 
-              {view === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
+              {currentView === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
 
-              {view === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
+              {currentView === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
 
-              {view === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
+              {currentView === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
             </Suspense>
           </PageBoundary>
 
-          {view === 'settings' ? (
+          {currentView === 'settings' ? (
             <SettingsPage
               workspace={workspace}
               activeLedgerId={activeLedgerId}

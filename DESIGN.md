@@ -402,6 +402,7 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 - **Style:** 56px left rail, 18px icons with labels; inactive text-secondary.
 - **States:** hover fill (hover-bg); active item gets active-bg tint with Clarity Blue text, 8px radius.
+- **The landing page follows the switches.** 功能开关关掉的页连导航项一起消失，所以启动时（以及当前页被关掉时）落在**左侧导航里第一个还开着的功能**上，而不是写死记账 —— 记账自己就可能是关着的那个。开关全关只剩「应用设置」，它本来就不受开关约束。规则是纯函数（`src/app-view.ts` 的 `defaultView` / `resolveView`），外壳按它**派生**要渲染的页：配置到达的第一帧就已经是正确那页，不会先挂一帧记账页再跳走。派生结果也回写 state，否则用户回到设置里把开关打开时，会被旧 state 拽回原来那一页。
 
 ### Tables
 

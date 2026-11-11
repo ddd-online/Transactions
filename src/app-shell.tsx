@@ -3,16 +3,7 @@ import type { JSX, ReactNode } from 'react'
 import type { FeatureFlags } from '../shared/types/config'
 import { Icon, type IconName } from './components/icon'
 import { PageHeader } from './components/page-header'
-
-export type View = 'accounting' | 'stock' | 'events' | 'diary' | 'todo' | 'settings'
-
-const NAV: Array<[View, string, keyof FeatureFlags]> = [
-  ['accounting', '记账', 'accounting'],
-  ['stock', '股票', 'stock'],
-  ['todo', '待办', 'todo'],
-  ['events', '事件', 'keyEvent'],
-  ['diary', '日记', 'diary'],
-]
+import { NAV_VIEWS, viewLabel, type View } from './app-view'
 
 const NAV_ICON: Record<View, IconName> = {
   accounting: 'Transaction',
@@ -21,17 +12,6 @@ const NAV_ICON: Record<View, IconName> = {
   events: 'Star',
   diary: 'Read',
   settings: 'Setting',
-}
-
-const SETTINGS_TITLE = '应用设置'
-
-/** 某个视图对应的功能开关；设置页不受开关约束，返回 null。 */
-export function viewFeature(view: View): keyof FeatureFlags | null {
-  return NAV.find(([key]) => key === view)?.[2] ?? null
-}
-
-function pageTitle(view: View): string {
-  return view === 'settings' ? SETTINGS_TITLE : (NAV.find(([key]) => key === view)?.[1] ?? '记账')
 }
 
 export interface AppShellProps {
@@ -77,21 +57,23 @@ export function AppShell({
             <div className="sidebar-ledger">{ledgerMenu}</div>
 
             <nav className="sidebar-nav" aria-label="主导航">
-              {NAV.filter(([, , feature]) => features?.[feature] !== false).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  data-testid={`nav-${key}`}
-                  className={`nav-btn${view === key ? ' active' : ''}`}
-                  aria-label={label}
-                  onClick={() => onViewChange(key)}
-                >
-                  <span className="nav-btn-icon">
-                    <Icon name={NAV_ICON[key]} size={18} />
-                  </span>
-                  <span className="nav-btn-text">{label}</span>
-                </button>
-              ))}
+              {NAV_VIEWS.filter(({ feature }) => features?.[feature] !== false).map(
+                ({ view: key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    data-testid={`nav-${key}`}
+                    className={`nav-btn${view === key ? ' active' : ''}`}
+                    aria-label={label}
+                    onClick={() => onViewChange(key)}
+                  >
+                    <span className="nav-btn-icon">
+                      <Icon name={NAV_ICON[key]} size={18} />
+                    </span>
+                    <span className="nav-btn-text">{label}</span>
+                  </button>
+                ),
+              )}
             </nav>
 
             <div className="sidebar-spacer" />
@@ -113,7 +95,7 @@ export function AppShell({
         </aside>
 
         <main className="app-content">
-          <PageHeader title={pageTitle(view)} ariaHidden={blockingWorkspace} />
+          <PageHeader title={viewLabel(view)} ariaHidden={blockingWorkspace} />
           <div className="app-top-bar">
             <div className="window-controls">
               <button
