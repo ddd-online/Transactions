@@ -65,6 +65,26 @@ test('待办：主题 → 事项 → 进度 → 完成进入历史', async () =>
     // 六档默认「次低」，表单补齐起止时间与两档评估
     await expect(page.getByTestId('todo-item-urgency')).toContainText('次低')
     await expect(page.getByTestId('todo-item-importance')).toContainText('次低')
+
+    // 日历里的中文不止 antd 的文案：月份缩写与星期那一行来自 dayjs 的 zh-cn
+    // （DESIGN.md「DatePicker / Select」）。少了那份数据，这里是「2026年 Nov」与 Su/Mo/…
+    await page.getByTestId('todo-item-start-toggle').click()
+    const calendar = page.locator('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)')
+    await expect(calendar.locator('.ant-picker-content th')).toHaveText([
+      '一',
+      '二',
+      '三',
+      '四',
+      '五',
+      '六',
+      '日',
+    ])
+    await expect(calendar.locator('.ant-picker-month-btn')).toHaveText(/^\d+月$/)
+    await calendar.locator('.ant-picker-month-btn').click()
+    await expect(calendar.locator('.ant-picker-cell')).toHaveCount(12)
+    await expect(calendar.locator('.ant-picker-cell').first()).toHaveText(/^1月$/)
+    await calendar.locator('.ant-picker-cell').first().click()
+
     await page.getByTestId('todo-item-title').fill('写周报')
     await page.getByTestId('todo-item-start').fill('2026-01-05')
     await page.getByTestId('todo-item-start').press('Enter')
