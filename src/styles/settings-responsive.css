@@ -1,0 +1,34 @@
+/* 设置页的窄窗兜底：行（`.st-card`）在窄窗里的出血量与折行。
+ *
+ * 与 `shell.css` 的 `≤820` 一档配套：那一档把 `.page-content` 的内边距收到 12px，
+ * 行的负外边距必须跟着收 —— 仍按 16px 出血的话每一行都比版心宽 8px，整页多一条横向滚动。
+ *
+ * 同一档里允许控件整排落到下一行：`flex: 1 1 180px` 是标题的底线，低于它中文标题会被
+ * 挤成一列竖排（一个字一行）；标题与开关 / 短按钮仍然并排，只有放不下的那几行才折行。 */
+
+@media (max-width: 820px) {
+  .st-card {
+    margin-inline: calc(-1 * var(--transactions-space-md));
+    padding-inline: var(--transactions-space-md);
+    flex-wrap: wrap;
+    gap: var(--transactions-space-sm);
+  }
+
+  /* 纵向卡片本来就是「说明在上、动作在下」的 12px 间距，别被上面那条收窄 */
+  .st-card--block {
+    gap: var(--transactions-space-md);
+  }
+
+  .st-card-info {
+    flex: 1 1 180px;
+  }
+
+  .st-card-action {
+    /* 折到下一行时也贴右缘：与上面几行控件的右边缘对齐。基准层是 `flex-shrink: 0`
+     * （并排时不压控件），窄窗里必须放开，否则它宁可撑出卡片也不折行。 */
+    margin-left: auto;
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    max-width: 100%;
+  }
+}

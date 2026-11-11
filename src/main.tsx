@@ -30,6 +30,7 @@ import './styles/stock-statistics.css'
 import './styles/stock-responsive.css'
 import './styles/stock-ladder.css'
 import './styles/settings.css'
+import './styles/settings-responsive.css'
 import './styles/shell.css'
 import './styles/antd.css'
 

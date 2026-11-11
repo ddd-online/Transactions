@@ -180,12 +180,6 @@
   font-family: var(--transactions-font-mono);
 }
 
-.st-card-desc--empty {
-  font-family: var(--transactions-font-body);
-  font-style: italic;
-  color: var(--transactions-color-text-disabled);
-}
-
 .st-card-action {
   flex-shrink: 0;
   margin-left: var(--transactions-space-lg);

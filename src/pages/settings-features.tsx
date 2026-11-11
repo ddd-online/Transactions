@@ -39,7 +39,7 @@ export function SettingsFeatures({
           每个开关自己不必再配一段介绍 —— 五个名字就是左侧导航的五个名字。 */}
       <div className="st-feature-hint" data-testid="feature-hint">
         {activeLedgerId
-          ? '关掉的项不显示在左侧导航。'
+          ? '只对当前账本生效；关掉的项不显示在左侧导航。'
           : '当前没有账本：这些开关是新账本的默认值。'}
       </div>
       <div className="st-list">

@@ -185,6 +185,21 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
         return Object.values(features).every((entry) => entry.stock !== false)
       })
       .toBe(true)
+
+    // 窄窗：页内边距收到 12px 时，行的出血量必须跟着收 —— 否则整页多出横向滚动。
+    // （720 也是标题会被右侧控件挤成竖排的那一档，这里守的是它的横向溢出。）
+    await electronApp.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0].setSize(720, 900)
+    })
+    await page.getByTestId('settings-tab-general').click()
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const content = document.querySelector('.page-content.settings-page-content')
+          return content ? content.scrollWidth - content.clientWidth : -1
+        }),
+      )
+      .toBe(0)
   } finally {
     await electronApp.close()
     await new Promise<void>((resolveServer) => proxyTarget.close(() => resolveServer()))
