@@ -172,7 +172,7 @@ export function StockSettingsPanel({ ledgerId, onLedgerChanged }: StockSettingsP
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
           <h2>交易标签</h2>
-          <p>每轮交易可选（最多 20 个、单个不超过 8 字）；删除不影响历史记录。</p>
+          <p>最多 20 个、每个 8 字；删除不影响历史记录。</p>
           <div className="stock-tag-list">
             {(tags?.tags ?? []).map((tag) => (
               <span key={tag} className="stock-tag-chip">

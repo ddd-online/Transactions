@@ -87,9 +87,7 @@ export function SettingsGeneral({
       <div className="st-card">
         <div className="st-card-info">
           <span className="st-card-title">软件图标</span>
-          <span className="st-card-desc">
-            侧栏左上角的方形图标；保存在当前工作空间里，切换工作空间会跟着换
-          </span>
+          <span className="st-card-desc">保存在当前工作空间，切换时跟着换</span>
         </div>
         <div className="st-card-action">
           {workspaceIconUrl ? <img className="st-icon-preview" src={workspaceIconUrl} alt="" /> : null}
@@ -108,7 +106,7 @@ export function SettingsGeneral({
         </div>
       </div>
 
-      <SettingsRow title="外观" description="界面配色，可跟随系统">
+      <SettingsRow title="外观">
         <Segmented
           testId="appearance"
           value={config?.appearance ?? 'system'}
@@ -122,7 +120,7 @@ export function SettingsGeneral({
         />
       </SettingsRow>
 
-      <SettingsRow title="关闭行为" description="点击右上角关闭按钮时的行为">
+      <SettingsRow title="关闭行为">
         <Segmented
           testId="close-behavior"
           value={normalizeCloseBehavior(config?.closeBehavior)}
@@ -147,9 +145,7 @@ export function SettingsGeneral({
               />
             ) : null}
           </span>
-          <span className="st-card-desc">
-            网络请求（行情、更新检查）走 HTTP 代理；检测会用当前设置请求 GitHub
-          </span>
+          <span className="st-card-desc">行情、涨停池与更新检查走代理</span>
         </div>
         <div className="st-card-action">
           <Segmented
@@ -206,7 +202,7 @@ export function SettingsGeneral({
         </div>
       </div>
 
-      <SettingsRow title="开发者工具" description="打开开发者工具，用于调试界面代码">
+      <SettingsRow title="开发者工具">
         <Button
           variant="secondary"
           testId="devtools-open"

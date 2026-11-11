@@ -98,7 +98,8 @@
   padding-top: var(--transactions-space-sm);
 }
 
-/* 功能开关（`settings.rs` 的 `FeatureSetting`）：作用域说明行 + 卡片列表。
+/* 功能开关（`settings.rs` 的 `FeatureSetting`）：一行说明 + 卡片列表。说明只说开关的
+ * 后果（关掉的项离开左侧导航 / 没有账本时是新账本的默认值），每个开关自己不再配介绍。
  * 说明行必须在 `.st-list` **外面** —— 进了列表，上面那条 `:first-child` 规则就不再命中
  * 任何一行（第一项变成了说明文字），第一行会重新贴到工具栏线上。这一层只负责把两者摞起来。 */
 .st-feature-pane {

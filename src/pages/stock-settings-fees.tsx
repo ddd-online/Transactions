@@ -40,7 +40,7 @@ export function StockSettingsFees({
           <p>
             佣金 万{Number(form.commission || 0).toLocaleString('zh-CN', { maximumFractionDigits: 4 })} ·
             最低 ¥{form.minCommission || '0.00'} · 印花税 {form.stamp || '0'}% ·
-            过户费 {form.transfer || '0'}%。建仓时按这里的默认值预填。
+            过户费 {form.transfer || '0'}%
           </p>
         </div>
         <div className="stock-setting-row__actions">
@@ -106,8 +106,7 @@ export function StockSettingsFees({
             </label>
           </div>
           <p className="stock-fee-note">
-            这些是默认值：建仓时按它预填（可在建仓弹窗里改），建仓那一刻起本轮的费率就固定了 ——
-            改这里不影响进行中的轮次，只对之后新建仓的轮次生效。
+            建仓时按这里的值预填；建仓之后本轮费率固定，改动只影响新轮次。
           </p>
           <div className="stock-modal-actions">
             <Button variant="secondary" onClick={onClose}>

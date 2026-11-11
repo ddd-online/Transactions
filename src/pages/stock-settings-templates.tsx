@@ -69,7 +69,7 @@ export function StockSettingsTemplates({
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
           <h2>本轮复盘模板</h2>
-          <p>本轮复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
+          <p>最多 200 字；留空用内置模板。</p>
         </div>
         <div className="stock-setting-row__actions">
           <Button
@@ -85,7 +85,7 @@ export function StockSettingsTemplates({
       <section className="stock-setting-row">
         <div className="stock-setting-row__info">
           <h2>每日复盘模板</h2>
-          <p>每日复盘时预填这份提纲（最多 200 字）；留空即用内置模板。</p>
+          <p>最多 200 字；留空用内置模板。</p>
         </div>
         <div className="stock-setting-row__actions">
           <Button

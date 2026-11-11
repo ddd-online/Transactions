@@ -96,9 +96,7 @@ export function DiaryTransfer({ ledgerId }: DiaryTransferProps): JSX.Element {
       <div className="st-card diary-transfer-card">
         <div className="st-card-info">
           <span className="st-card-title">导入日记</span>
-          <span className="st-card-desc">
-            从本地目录批量导入当前账本，文件名需为 YYYY-MM-DD.txt
-          </span>
+          <span className="st-card-desc">按本地目录批量导入，文件名需为 YYYY-MM-DD.txt</span>
         </div>
         <div className="st-card-action">
           <Button
@@ -116,9 +114,7 @@ export function DiaryTransfer({ ledgerId }: DiaryTransferProps): JSX.Element {
       <div className="st-card diary-transfer-card">
         <div className="st-card-info">
           <span className="st-card-title">导出日记</span>
-          <span className="st-card-desc">
-            把当前账本的日记导出为纯文本文件（YYYY-MM-DD.txt），可重新导入
-          </span>
+          <span className="st-card-desc">存成 YYYY-MM-DD.txt，可重新导入</span>
         </div>
         <div className="st-card-action">
           <div className="st-scope-row">

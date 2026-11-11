@@ -155,7 +155,8 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
     await page.getByTestId('settings-tab-features').click()
-    await expect(page.getByTestId('feature-hint')).toHaveCount(0)
+    // 每个开关不再配一段介绍：整页只说一次后果 —— 关掉的项不会出现在左侧导航。
+    await expect(page.getByTestId('feature-hint')).toContainText('不显示在左侧导航')
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'settings-features.png'),
     })

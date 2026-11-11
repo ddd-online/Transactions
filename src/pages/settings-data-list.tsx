@@ -126,9 +126,6 @@ export function SettingsDataRecentList({
       <div className="st-panel-head">
         <div className="st-card-info">
           <span className="st-card-title">最近工作空间</span>
-          <span className="st-card-desc">
-            最近打开过的 5 个位置；点一条切换，当前这条置灰，不可再点
-          </span>
         </div>
         <div className="st-panel-actions">
           <Button

@@ -295,6 +295,9 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 **The Panel Measure Rule.** Body text inside a panel fills that panel: 复盘 and note fields are read as itemised lines ("买入理由：…"), so they keep the width of the table above them — no `ch` cap, which in a panel merely shortens the wrap point and reads as content that failed to fill. Only continuous long-form prose caps its measure (事件描述, 75ch in `event-detail.css`).
 
+**The Label-Not-Annotation Rule.** 灰字只在控件自己说不清那个**事实**时才出现 —— 保留几份、恢复会不会重启、文件名怎么约定；一行写完，而且只说控件与小标题都没说的那半句。「外观」下面不写「界面配色，可跟随系统」（分段里就写着「跟随系统」），「关闭行为」下面不写「点击右上角关闭按钮时的行为」，「开发者工具」下面不写「打开开发者工具，用于调试界面代码」。一个数要解释怎么算，靠它的名字和旁边的数（盈亏比就挨着平均盈利 / 平均亏损），不再补一行公式。超过一句话的机制进 ⓘ 提示（`Tooltip`），不进常驻文本。所以设置页是一列「标题 + 控件」，只有真正带事实的行才多一行；功能开关页只有五个名字与五个开关 —— 它们就是左侧导航的五个名字，不需要再解释。
+
+
 ### Tracking tokens
 
 Letter-spacing is tokenised per role — `--transactions-tracking-display` (−0.015em, display/title text),

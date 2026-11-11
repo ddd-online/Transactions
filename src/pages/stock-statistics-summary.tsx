@@ -128,14 +128,12 @@ export function StockStatisticsSummary({
           <div className="stock-stat-cell">
             <StatLabel text="盈亏比" hint="赢一次的收获等于几次的代价" />
             <strong>{latest.pnlRatio === null ? '—' : latest.pnlRatio.toFixed(2)}</strong>
-            <small>盈利均值 ÷ 亏损均值</small>
           </div>
           <div className="stock-stat-cell">
             <StatLabel text="期望值" hint="每开一笔，长期平均赚多少" />
             <strong className={stockPnlClass(latest.expectancy)}>
               {money(latest.expectancy)}
             </strong>
-            <small>每笔均值</small>
           </div>
           <div className="stock-stat-cell">
             <StatLabel text="最大回撤" hint="最坏的时候我要忍多少" />
