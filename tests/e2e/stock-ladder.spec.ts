@@ -7,7 +7,21 @@ import { DatabaseSync } from 'node:sqlite'
 import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
 
 import { identityTone } from '../../shared/domain/identity-color'
+import {
+  LADDER_BOARD_PALETTES,
+  LADDER_PAGE_THEMES,
+  SINGLE_BOARD_SLOT,
+} from '../../src/pages/stock-ladder-page-theme'
 import { createLedger } from './ledger-helper'
+
+/** `#rrggbb` → 浏览器 `getComputedStyle` 给的 `rgb(r, g, b)`。 */
+function rgbOf(hex: string): string {
+  const value = hex.replace('#', '')
+  const [red, green, blue] = [0, 2, 4].map((offset) =>
+    Number.parseInt(value.slice(offset, offset + 2), 16),
+  )
+  return `rgb(${red}, ${green}, ${blue})`
+}
 
 function environment(overrides: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {}
@@ -208,11 +222,16 @@ async function captureLadderPage(
 interface LadderPageCard {
   top: number
   left: number
-  /** 板块色相槽位：`s0` … `s7`，没有板块的是 `none` */
+  /** 板块色槽：`s0` … `s5` 是鲜艳色相、`s6` 是主色蓝、`none` 是没有板块 */
   slot: string
   board: string
   broken: boolean
   borderStyle: string
+  /** 卡片底色：在板是分类色、断板是灰色 */
+  backgroundColor: string
+  /** 描边与板块名的 computed color：板块色就落在这两处 */
+  borderColor: string
+  boardColor: string
   /** 名称 / 价格的 computed color：涨停是语义红 */
   nameColor: string
   priceColor: string
@@ -282,13 +301,18 @@ async function inspectLadderPage(
                 const cardBox = box(card)
                 const name = card.querySelector('.name')
                 const price = card.querySelector('.price')
+                const board = card.querySelector('.board')
+                const style = getComputedStyle(card)
                 return {
                   top: Math.round(cardBox.top),
                   left: Math.round(cardBox.left),
                   slot: (String(card.className).match(/board-(s\\d+|none)/) || [])[1] || '',
-                  board: (card.querySelector('.board') || {}).textContent || '',
+                  board: (board || {}).textContent || '',
                   broken: card.classList.contains('is-broken'),
-                  borderStyle: getComputedStyle(card).borderTopStyle,
+                  borderStyle: style.borderTopStyle,
+                  backgroundColor: style.backgroundColor,
+                  borderColor: style.borderTopColor,
+                  boardColor: board ? getComputedStyle(board).color : '',
                   nameColor: name ? getComputedStyle(name).color : '',
                   priceColor: price ? getComputedStyle(price).color : '',
                 }
@@ -616,11 +640,14 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
     expect(highBoard).toBeGreaterThan(-1)
     expect(highBoard).toBeLessThan(lowBoard)
     expect(pageHtml).toContain(`<title>连板天梯 · ${ymd(today)}</title>`)
-    // 板块色铺成卡片底色：八个色相都写进样式，卡片挂的是当天分到的槽位
-    for (let slot = 0; slot < 8; slot += 1) {
+    // 板块色只在描边与板块名：六个鲜艳色相 + 主色蓝都写进样式
+    for (let slot = 0; slot < SINGLE_BOARD_SLOT + 1; slot += 1) {
       expect(pageHtml).toContain(`.board-s${slot}{--tone:`)
     }
     expect(pageHtml).toMatch(/class="card board-s\d/)
+    // 卡片底色：涨停铺分类色，断板换灰色虚线框
+    expect(pageHtml).toContain('background:var(--card-bg)')
+    expect(pageHtml).toContain('.card.is-broken{--card-sub:var(--ink-2);border-style:dashed;background:var(--minor)}')
     // 价格与断板都在
     expect(pageHtml).toContain('11.00')
     expect(pageHtml).toContain('1550.00')
@@ -650,27 +677,39 @@ test('连板天梯：收盘后入库、翻日读库、刷新重抓', async () =>
       expect(level.headRight).toBeLessThanOrEqual(level.cards[0].left)
       expect(level.cards[0].left - level.left).toBeGreaterThanOrEqual(100)
     }
-    // 断板是虚线框，连板是实线；同一天的每个板块一个色相，互不相同
+    // 断板是虚线框，连板是实线；只有多家涨停的板块才占鲜艳色相，
+    // 孤家寡人（含只剩断板的）统一主色蓝
     const cards = layout.levels.flatMap((level) => level.cards)
     expect(cards.some((card) => card.broken)).toBe(true)
     for (const card of cards) {
       expect(card.borderStyle).toBe(card.broken ? 'dashed' : 'solid')
     }
-    const hueOfBoard = new Map<string, string>()
+    const clusterCard = cards.find((card) => card.board === '电网设备' && !card.broken)
+    expect(clusterCard).toBeDefined()
+    const clusterSlot = Number(clusterCard?.slot.replace('s', ''))
+    expect(clusterSlot).toBeLessThan(SINGLE_BOARD_SLOT)
+    const clusters = LADDER_BOARD_PALETTES.light[clusterSlot]
+    const single = LADDER_BOARD_PALETTES.light[SINGLE_BOARD_SLOT]
     for (const card of cards) {
-      const hue = hueOfBoard.get(card.board)
-      if (hue === undefined) hueOfBoard.set(card.board, card.slot)
-      else expect(card.slot).toBe(hue)
+      const palette = card.board === '电网设备' ? clusters : single
+      expect(card.slot).toBe(
+        card.board === '电网设备' ? `s${clusterSlot}` : `s${SINGLE_BOARD_SLOT}`,
+      )
+      expect(card.borderColor).toBe(rgbOf(palette.border))
+      expect(card.boardColor).toBe(rgbOf(palette.boardInk))
+      // 底色：涨停铺分类色，断板铺灰色
+      expect(card.backgroundColor).toBe(
+        card.broken ? 'rgb(243, 244, 246)' : rgbOf(palette.background),
+      )
     }
-    expect(hueOfBoard.size).toBe(5)
-    expect(new Set(hueOfBoard.values()).size).toBe(hueOfBoard.size)
 
-    // 涨停的名字与价格是语义红（#bb2323），断板的退成板块色的次要字
+    // 涨停的名字与价格是语义红（#bb2323），断板退成中性的次要字
     const limitCard = cards.find((card) => !card.broken)
     expect(limitCard?.nameColor).toBe('rgb(187, 35, 35)')
     expect(limitCard?.priceColor).toBe('rgb(187, 35, 35)')
     for (const card of cards.filter((entry) => entry.broken)) {
-      expect(card.nameColor).not.toBe('rgb(187, 35, 35)')
+      expect(card.nameColor).toBe(rgbOf(LADDER_PAGE_THEMES.light.ink2))
+      expect(card.priceColor).toBe(rgbOf(LADDER_PAGE_THEMES.light.ink2))
     }
 
     // 一板 3 家 + 断板 1 家，桌面宽度下排在同一行

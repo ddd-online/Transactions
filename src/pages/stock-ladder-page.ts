@@ -31,7 +31,9 @@ export {
   LADDER_BOARD_HUES,
   LADDER_BOARD_PALETTES,
   LADDER_PAGE_THEMES,
+  SINGLE_BOARD_SLOT,
   boardSlots,
+  chipOver,
   ladderTagPalette,
   mixHex,
   weekdayZh,
@@ -43,13 +45,15 @@ export type { LadderBoardPalette, LadderPageTheme } from './stock-ladder-page-th
  *
  * 约束：
  * * 与软件同一套世界（纸面、墨色、主色、语义红绿、等宽数字），但按「读」的尺度排版，
- *   不是在软件里那一屏的放大版 —— 一个板数一段、从上到下由高到低，
- *   板块用身份色铺成卡片底色。
+ *   不是在软件里那一屏的放大版 —— 一个板数一段、从上到下由高到低。
+ * * 涨停卡铺分类色的淡底、断板卡铺中性灰；同一个分类色也落在描边与板块名上。
+ *   只有多家涨停的板块才分到一个鲜艳色相，孤家寡人统一用主色蓝 —— 颜色回答的是
+ *   「哪些板块真的成了气候」，不是「这是第几个板块」。
  * * 单文件：样式内联、字体由主进程以 base64 注入（见 `LADDER_PAGE_FONT_MARKER`），
  *   不联网、不引外部资源；唯一的脚本是「打印 / 存为 PDF」那一下 `window.print()`。
  * * 颜色按浅色 / 深色两套预先算成字面量（不依赖 `color-mix`），并随
  *   `prefers-color-scheme` 切换；打印一律落回浅色纸面。
- * * 卡片底色只做「这是哪个板块」的辅助，板块名始终以文字出现，颜色从不单独承担信息。
+ * * 颜色从不单独承担信息：板块名始终以文字出现，断板还有虚线框与「断」标签。
  */
 
 function escapeHtml(value: string): string {
@@ -78,7 +82,7 @@ function pageCss(): string {
   const dark = LADDER_PAGE_THEMES.dark
   return `
 /* impeccable-disable overused-font -- Inter / JetBrains Mono 是 DESIGN.md 钉下来的既定身份：界面用 Inter、数字用 JetBrains Mono；导出页跟着同一套字。 */
-/* impeccable-disable design-system-color -- 这张网页要脱离应用单文件存在：主题色是 tokens.css 的令牌抄成的字面量，板块八色是纸上自己的一套（等明度等彩度的八个色相，由 scripts/ladder-board-palette.mjs 算出），字色 × 底色的对比度在 tests/unit/ladder-page.spec.ts 里逐条算过。 */
+/* impeccable-disable design-system-color -- 这张网页要脱离应用单文件存在：主题色是 tokens.css 的令牌抄成的字面量，板块色是纸上自己的一套（六个等明度等彩度的色相 + 主色蓝那一档，由 scripts/ladder-board-palette.mjs 算出），字色 × 底色的对比度在 tests/unit/ladder-page.spec.ts 里逐条算过。 */
 /* impeccable-disable design-system-font-size -- 11px 是 DESIGN.md 的 micro-label 档、24px 是窄屏标题的 display-sm；单文件页面不引变量，只能写字面量。 */
 :root{color-scheme:light dark;${themeVars(light)};${tagVars(light)}}
 ${boardRules(LADDER_BOARD_PALETTES.light)}
@@ -124,8 +128,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter','Sego
 .level-meta{display:flex;flex-direction:column;gap:2px;margin:0;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:11px;line-height:1.45;font-variant-numeric:tabular-nums;color:var(--ink-3)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));align-content:start;gap:8px;margin:0;padding:0;list-style:none}
 .card{padding:10px 11px;border:1px solid var(--card-border);border-radius:12px;background:var(--card-bg)}
-.card.is-broken{border-style:dashed;background:var(--card-bg-broken)}
-.board-none{--card-bg:var(--sheet);--card-bg-broken:var(--minor);--card-border:var(--rule-strong);--board-ink:var(--ink-3);--card-sub:var(--ink-2)}
+.card.is-broken{--card-sub:var(--ink-2);border-style:dashed;background:var(--minor)}
+.board-none{--card-bg:var(--sheet);--card-border:var(--rule-strong);--board-ink:var(--ink-3);--card-sub:var(--ink-2)}
 .card-top{display:flex;align-items:baseline;gap:8px}
 .name{min-width:0;overflow:hidden;font-size:14px;font-weight:600;line-height:20px;color:var(--rise-ink);text-overflow:ellipsis;white-space:nowrap}
 .price{margin-left:auto;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;font-weight:500;line-height:20px;font-variant-numeric:tabular-nums;color:var(--rise-ink);white-space:nowrap}

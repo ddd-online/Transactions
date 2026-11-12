@@ -4,8 +4,8 @@
  * 这里盯四件事：
  * 1. 页面结构与内容（高板在前、价格 / 断板 / 标签齐全）；
  * 2. 文本转义（股票名与板块名来自外部数据源，绝不能进 HTML）；
- * 3. 颜色：主题令牌与 tokens.css 同值、卡片底色与文字都过 AA、八个板块色相真的分得开
- *    （网页不继承软件的样式，只能在这里守）；
+ * 3. 颜色：主题令牌与 tokens.css 同值、字色与描边过 AA、板块色真的分得开、
+ *    只有多家涨停的板块才占一个鲜艳色相（网页不继承软件的样式，只能在这里守）；
  * 4. 自包含：没有外部资源、没有脚本，字体由主进程注入。
  */
 
@@ -18,9 +18,12 @@ import type {
   StockLimitRung,
 } from '../../shared/types/stock-limit'
 import {
+  LADDER_BOARD_HUES,
   LADDER_BOARD_PALETTES,
   LADDER_PAGE_THEMES,
+  SINGLE_BOARD_SLOT,
   boardSlots,
+  chipOver,
   ladderTagPalette,
   mixHex,
   renderLadderPage,
@@ -184,46 +187,59 @@ describe('ladder page palette', () => {
     expect(contrast(theme.ink, theme.sheet)).toBeGreaterThanOrEqual(AA)
     expect(contrast(theme.ink2, theme.sheet)).toBeGreaterThanOrEqual(AA)
     expect(contrast(theme.ink3, theme.sheet)).toBeGreaterThanOrEqual(AA)
+    // 断板卡的灰底上还有板块名、次要字与标签
+    expect(contrast(theme.ink, theme.minor)).toBeGreaterThanOrEqual(AA)
+    expect(contrast(theme.ink2, theme.minor)).toBeGreaterThanOrEqual(AA)
 
-    // 标签的面是一层半透明白（浅色 55% / 深色 10%），压在彩卡上还是个标签：
-    // 三枚语义字色要在这层白下面的每一种底色上都过 AA
-    const chipOn = (background: string): string =>
-      mixHex(background, '#ffffff', name === 'light' ? 0.55 : 0.1)
+    // 标签面是一层半透明白（浅色 55% / 深色 10%），压在白卡与灰卡上：
+    // 三枚语义字色都要在两种卡面上过 AA
     const tag = ladderTagPalette(theme)
-    expect(contrast(tag.upInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
-    expect(contrast(tag.downInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
-    expect(contrast(tag.hotInk, chipOn(theme.sheet))).toBeGreaterThanOrEqual(AA)
+    for (const face of [theme.sheet, theme.minor]) {
+      const chip = chipOver(face, theme)
+      expect(contrast(tag.upInk, chip)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(tag.downInk, chip)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(tag.hotInk, chip)).toBeGreaterThanOrEqual(AA)
+    }
     expect(contrast(theme.riseInk, theme.sheet)).toBeGreaterThanOrEqual(AA)
 
     for (const card of LADDER_BOARD_PALETTES[name]) {
-      // 卡片底色是板块色：正文、次要文字（代码 / 封板时间）、板块名、断板底色都要单独过 AA
+      // 涨停卡铺分类色：正文、涨停红、代码行、板块名、语义标签都要过 AA
       expect(contrast(theme.ink, card.background)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(theme.ink, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
-      // 涨停的名字与价格是红的 —— 压在八张彩卡上都要过 AA
       expect(contrast(theme.riseInk, card.background)).toBeGreaterThanOrEqual(AA)
       expect(contrast(card.subInk, card.background)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(card.subInk, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
       expect(contrast(card.boardInk, card.background)).toBeGreaterThanOrEqual(AA)
-      expect(contrast(card.boardInk, card.backgroundBroken)).toBeGreaterThanOrEqual(AA)
       for (const ink of [tag.upInk, tag.downInk, tag.hotInk]) {
-        expect(contrast(ink, chipOn(card.background))).toBeGreaterThanOrEqual(AA)
+        expect(contrast(ink, chipOver(card.background, theme))).toBeGreaterThanOrEqual(AA)
       }
+      // 断板卡的灰底上：板块名（描边 + 板块名都保留分类色）与中性次要字
+      expect(contrast(card.boardInk, theme.minor)).toBeGreaterThanOrEqual(AA)
+      expect(contrast(theme.ink2, theme.minor)).toBeGreaterThanOrEqual(AA)
       // 汇总条上的圆点是「有意义的图形」：3:1
       expect(contrast(card.tone, theme.paper)).toBeGreaterThanOrEqual(3)
-      // 描边要看得见（断板的虚线框是「断了」的唯一结构线索）：对着自己的底色 2:1 起
+      // 描边在彩底与灰底上都要看得见（断板改成虚线）
       expect(contrast(card.border, card.background)).toBeGreaterThanOrEqual(2)
+      expect(contrast(card.border, theme.minor)).toBeGreaterThanOrEqual(2)
     }
   })
 
-  it.each(themes)('gives the eight boards hues you can tell apart (%s)', (name) => {
+  it.each(themes)('saves the vivid hues for clusters and blue for singletons (%s)', (name) => {
     const cards = LADDER_BOARD_PALETTES[name]
-    expect(cards).toHaveLength(8)
-    for (let left = 0; left < cards.length; left += 1) {
-      for (let right = left + 1; right < cards.length; right += 1) {
-        // 相邻两档只差 45°；底色是淡的，ΔE76 掉到 10 以下就真的看不出是两块了
-        expect(deltaE(cards[left].background, cards[right].background)).toBeGreaterThanOrEqual(10)
-        expect(deltaE(cards[left].boardInk, cards[right].boardInk)).toBeGreaterThanOrEqual(20)
+    expect(cards).toHaveLength(LADDER_BOARD_HUES.length + 1)
+    const clusters = cards.slice(0, SINGLE_BOARD_SLOT)
+    const single = cards[SINGLE_BOARD_SLOT]
+    for (let left = 0; left < clusters.length; left += 1) {
+      for (let right = left + 1; right < clusters.length; right += 1) {
+        // 相邻两档只差 45°；底色、描边与板块名都得真的分得开
+        expect(deltaE(clusters[left].background, clusters[right].background)).toBeGreaterThanOrEqual(10)
+        expect(deltaE(clusters[left].border, clusters[right].border)).toBeGreaterThanOrEqual(10)
+        expect(deltaE(clusters[left].boardInk, clusters[right].boardInk)).toBeGreaterThanOrEqual(20)
       }
+    }
+    // 主色蓝与六个鲜艳色也分得开：「蓝 = 只有一家」才读得出来
+    for (const card of clusters) {
+      expect(deltaE(card.background, single.background)).toBeGreaterThanOrEqual(10)
+      expect(deltaE(card.border, single.border)).toBeGreaterThanOrEqual(10)
+      expect(deltaE(card.boardInk, single.boardInk)).toBeGreaterThanOrEqual(20)
     }
   })
 })
@@ -297,52 +313,77 @@ describe('renderLadderPage', () => {
     expect(html).toContain('缺少前一交易日数据')
   })
 
-  it('tints cards by board, one hue per board on the page', () => {
-    const ladder = fixture()
+  it('puts the board color on the border and the label, not in the fill', () => {
+    // 光伏设备同层两家 → 占一个鲜艳色相；化学制药只有一家 → 主色蓝
+    const ladder = fixture({
+      rungs: [
+        rung(1, [
+          entry('600001', '金安国纪', 1, 92500, '光伏设备'),
+          entry('600002', '阳光电源', 1, 92600, '光伏设备'),
+          entry('600003', '新和成', 1, 92700, '化学制药'),
+        ]),
+      ],
+    })
     const slots = boardSlots(ladder)
     const slot = slots.get('光伏设备')
     expect(slot).toBeTypeOf('number')
+    expect(slot).toBeLessThan(SINGLE_BOARD_SLOT)
+    expect(slots.get('化学制药')).toBe(SINGLE_BOARD_SLOT)
+
     const html = renderLadderPage(ladder)
     expect(html).toContain(
       `<li class="card board-s${slot}"><div class="card-top"><span class="name">金安国纪</span>`,
     )
+    expect(html).toContain(
+      `<li class="card board-s${SINGLE_BOARD_SLOT}"><div class="card-top"><span class="name">新和成</span>`,
+    )
     // 汇总条上的圆点用同一个槽位 —— 那一排就是这张纸的图例
     expect(html).toContain(`<i class="dot board-s${slot}"></i><span>光伏设备</span>`)
-    // 八个色相都写进了样式，断板卡片是虚线框 + 浅一档的底
-    for (let index = 0; index < 8; index += 1) {
+    expect(html).toContain(
+      `<i class="dot board-s${SINGLE_BOARD_SLOT}"></i><span>化学制药</span>`,
+    )
+    // 七个槽位都写进了样式：前六个鲜艳色相 + 主色蓝
+    for (let index = 0; index < SINGLE_BOARD_SLOT + 1; index += 1) {
       expect(html).toContain(`.board-s${index}{--tone:`)
     }
-    expect(html).toContain('.card.is-broken{border-style:dashed;background:var(--card-bg-broken)}')
-    // 涨停的名字与价格用语义红（两处正好），断板的退成板块色的次要字
+    // 涨停卡铺分类色淡底，断板卡换灰色虚线框
+    expect(html).toContain('border:1px solid var(--card-border);border-radius:12px;background:var(--card-bg)')
+    expect(html).toContain('.card.is-broken{--card-sub:var(--ink-2);border-style:dashed;background:var(--minor)}')
+    // 涨停的名字与价格用语义红（两处正好），断板退成中性的次要字
     expect(html.match(/color:var\(--rise-ink\)/g)).toHaveLength(2)
     expect(html).toContain('.is-broken .name,.is-broken .price{color:var(--card-sub)}')
-    const brokenSlot = slots.get('专用设备')
-    expect(html).toContain(`class="card board-s${brokenSlot} is-broken"`)
-    expect(LADDER_BOARD_PALETTES.light[brokenSlot ?? 0].backgroundBroken).not.toBe(
-      LADDER_BOARD_PALETTES.light[brokenSlot ?? 0].background,
-    )
   })
 
-  it('gives every board on the page its own hue slot', () => {
+  it('colors only the boards with more than one limit-up', () => {
+    // 断板-only 的板块（专用设备）与只有一家的板块都是主色蓝
     const slots = boardSlots(fixture())
     expect(slots.size).toBe(5)
-    expect(new Set(slots.values()).size).toBe(5)
-    for (const slot of slots.values()) expect(slot).toBeGreaterThanOrEqual(0)
+    for (const slot of slots.values()) expect(slot).toBe(SINGLE_BOARD_SLOT)
 
-    // 超过八个板块才开始复用色相，且不会卡死
-    const many = Array.from({ length: 10 }, (_, index) => `板块${index}`)
-    const crowded = boardSlots(
-      fixture({
-        rungs: [
-          rung(
-            1,
-            many.map((board, index) => entry(`60000${index}`, `股票${index}`, 1, 92500, board)),
-          ),
-        ],
-      }),
-    )
+    // 六个成群板块以内，各占一个互不相同的鲜艳槽位
+    const clustered = (count: number): ReturnType<typeof boardSlots> =>
+      boardSlots(
+        fixture({
+          rungs: [
+            rung(
+              1,
+              Array.from({ length: count }, (_, index) => [
+                entry(`60010${index}`, `股票${index}A`, 1, 92500, `板块${index}`),
+                entry(`60020${index}`, `股票${index}B`, 1, 92600, `板块${index}`),
+              ]).flat(),
+            ),
+          ],
+        }),
+      )
+    const six = clustered(LADDER_BOARD_HUES.length)
+    expect(six.size).toBe(LADDER_BOARD_HUES.length)
+    expect(new Set(six.values()).size).toBe(LADDER_BOARD_HUES.length)
+    for (const slot of six.values()) expect(slot).toBeLessThan(SINGLE_BOARD_SLOT)
+
+    // 超过六个成群板块才开始复用色相，且不会卡死
+    const crowded = clustered(10)
     expect(crowded.size).toBe(10)
-    expect(new Set(crowded.values()).size).toBe(8)
+    expect(new Set(crowded.values()).size).toBe(LADDER_BOARD_HUES.length)
   })
 
   it('escapes external text from the pool', () => {
