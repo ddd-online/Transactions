@@ -94,6 +94,8 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
 
     await page.getByTestId('tr-amount').fill('12.34')
     await page.getByTestId('tr-category').fill('餐饮美食')
+    // 输入框里已经是完整分类名时，分类候选不能只剩它自己（AutoComplete 默认拿输入框的值当过滤词）
+    await expect(page.locator('.ant-select-item-option[title="购物消费"]')).toBeVisible()
     // 标签选项跟着分类走：只列该分类下的标签（以库里的 分类:类型 归档为准）
     const tagsOf = (categoryTransactionType: string): string[] => {
       const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })

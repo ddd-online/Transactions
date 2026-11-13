@@ -206,6 +206,23 @@ export function categoryOptions(
   return Array.from(names).map((name) => ({ value: name, label: name }))
 }
 
+/**
+ * 分类候选的过滤：输入框里已经是某个完整分类名时**不过滤**（全部列出来），否则按子串过滤。
+ *
+ * 选中的分类会留在输入框里，而输入框的值就是过滤词 —— 不这样豁免，再次展开时候选只剩它自己，
+ * 换分类得先把字删掉。模板带进来的分类、手打完的完整分类名同理。
+ */
+export function categoryFilterOption(
+  input: string,
+  optionValue: string,
+  options: readonly DraftOption[],
+): boolean {
+  const text = input.trim().toLowerCase()
+  if (!text) return true
+  if (options.some((option) => option.value.toLowerCase() === text)) return true
+  return optionValue.toLowerCase().includes(text)
+}
+
 /** 标签候选：只给当前分类 + 类型下的标签（表单用）。 */
 export function tagOptionsForCategory(
   tagRows: readonly Pick<TagDto, 'name' | 'categoryTransactionType'>[],

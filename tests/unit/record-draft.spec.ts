@@ -6,6 +6,7 @@ import type { TransactionRecordDto } from '../../shared/types/transaction'
 import {
   type RecordDraft,
   type RecordSavePorts,
+  categoryFilterOption,
   categoryOptions,
   filterTagOptions,
   composerDefaultDate,
@@ -293,6 +294,19 @@ describe('options', () => {
     expect(categoryOptions(categories, 'expense')).toEqual([{ value: '餐饮', label: '餐饮' }])
     expect(categoryOptions(categories, 'income')).toEqual([{ value: '工资', label: '工资' }])
     expect(categoryOptions(categories, '').map((option) => option.value)).toEqual(['餐饮', '工资'])
+  })
+
+  it('分类候选：输入框里是完整分类名时不过滤，否则按子串过滤', () => {
+    const expenseOptions = categoryOptions([...categories, category('交通', 'expense')], 'expense')
+    // 选中后输入框里是完整分类名，再次展开要列出全部分类（曾经只剩选中的那一条）
+    expect(categoryFilterOption('餐饮', '交通', expenseOptions)).toBe(true)
+    expect(categoryFilterOption(' 餐饮 ', '交通', expenseOptions)).toBe(true)
+    // 正在输入：按子串过滤
+    expect(categoryFilterOption('交', '交通', expenseOptions)).toBe(true)
+    expect(categoryFilterOption('交', '餐饮', expenseOptions)).toBe(false)
+    // 空输入 / 自造分类：不过滤或没有候选
+    expect(categoryFilterOption('', '餐饮', expenseOptions)).toBe(true)
+    expect(categoryFilterOption('别的', '餐饮', expenseOptions)).toBe(false)
   })
 
   it('标签候选只给当前分类 + 类型下的标签（表单）', () => {

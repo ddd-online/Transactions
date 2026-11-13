@@ -22,6 +22,7 @@ import {
   type DraftErrorField,
   type RecordDraft,
   type RecordSavePorts,
+  categoryFilterOption,
   categoryOptions,
   draftAfterTemplate,
   draftOfRecord,
@@ -247,7 +248,9 @@ export function RecordComposer({
             <AutoComplete
               value={draft.category}
               options={categoryChoices}
-              filterOption
+              filterOption={(input, option) =>
+                categoryFilterOption(input, String(option?.value ?? ''), categoryChoices)
+              }
               onChange={(next: string) => changeCategoryOrType({ category: next })}
             >
               <Input
