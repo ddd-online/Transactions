@@ -195,15 +195,14 @@ export function AppLedgerMenu({
         <div className="tr-modal-form">
           <div className="tr-modal-field">
             <span className="tr-modal-label">名称</span>
+            {/* 输入法确认候选词的那次回车不算提交：antd 的 onPressEnter 自带 isComposing 守卫 */}
             <Input
               data-testid="ledger-name"
               placeholder="请输入账本名称"
               value={name}
               disabled={busy || !workspace}
               onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void submit()
-              }}
+              onPressEnter={() => void submit()}
             />
           </div>
           <div className="tr-modal-field">
@@ -214,9 +213,7 @@ export function AppLedgerMenu({
               value={description}
               disabled={busy || !workspace}
               onChange={(event) => setDescription(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void submit()
-              }}
+              onPressEnter={() => void submit()}
             />
           </div>
           {error ? (

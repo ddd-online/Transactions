@@ -54,6 +54,14 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     await page.getByTestId('ledger-open-create').click()
     await page.getByTestId('ledger-name').fill('测试账本')
     await page.getByTestId('ledger-description').fill('测试描述')
+    // 中文输入法确认候选词的那次回车（isComposing）不算提交：否则账本名会在选词时被提前建掉
+    await page.getByTestId('ledger-name').evaluate((input) => {
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true }),
+      )
+    })
+    await expect(page.getByTestId('ledger-name')).toBeVisible()
+    await expect(page.getByTestId('ledger-trigger')).not.toContainText('测试账本')
     await page.getByTestId('ledger-create').click()
     await expect(page.getByTestId('ledger-trigger')).toContainText('测试账本')
     await expect(page.getByTestId('toast').first()).toContainText('账本已创建')

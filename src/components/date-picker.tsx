@@ -102,7 +102,10 @@ export function DatePicker({
               }}
               onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
                 props.onKeyDown?.(event)
-                if (event.key === 'Enter') commit(event.currentTarget.value)
+                // 输入法确认候选词的那次回车（isComposing）不提交日期
+                if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                  commit(event.currentTarget.value)
+                }
               }}
             />
           )
