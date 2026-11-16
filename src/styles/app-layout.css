@@ -339,120 +339,22 @@
 
 
 
-.empty-guide-icon {
-  display: inline-flex;
-  color: var(--transactions-color-primary);
-  opacity: 0.4;
-}
-
-.empty-guide-icon svg {
-  width: 48px;
-  height: 48px;
-  fill: currentColor;
-}
-
-.empty-guide-title {
-  font-family: var(--transactions-font-display);
-  font-size: var(--transactions-size-text-title-sm);
-  font-weight: var(--transactions-weight-semibold);
-  line-height: var(--transactions-height-snug);
-  letter-spacing: var(--transactions-tracking-display);
-  text-wrap: balance;
-  color: var(--transactions-color-text-major);
-  margin: 0;
-}
-
-.empty-guide-text {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-secondary);
-  margin: 0;
-  max-width: 460px;
-}
-
-.empty-guide-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  margin-top: var(--transactions-space-sm);
-}
-
-.empty-guide-loading {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-secondary);
-}
-
 /* ============================================
  * 工作空间选择（只保留必要的目录选择入口）
  * ============================================ */
 
-.workspace-picker-text {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-secondary);
-  margin: 0 0 var(--transactions-space-lg) 0;
-}
-
 /* 首屏正文只有一句话 + 一个 ⓘ（细节收进浮层）：与 ⓘ 同一行，垂直居中对齐 */
-.workspace-picker-lead {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  margin: 0 0 var(--transactions-space-md) 0;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-secondary);
-}
-
 /* ⓘ 触发器：与「交易费用设置」标题旁那个同款（`.st-panel-tip`），只是这里属于外壳。
  * 尺寸给足 16px 见方，鼠标好停；颜色走 tertiary —— 它是"补充说明"，不是正文。 */
-.workspace-picker-tip {
-  display: inline-flex;
-  align-items: center;
-  color: var(--transactions-color-text-tertiary);
-  cursor: help;
-}
-
-.workspace-picker-tip svg {
-  width: 16px;
-  height: 16px;
-}
-
-.workspace-picker-path {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-major);
-  background-color: var(--transactions-color-minor-background);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  margin-bottom: var(--transactions-space-lg);
-  word-break: break-all;
-}
-
 /* 工作空间未指定时的**强制选择屏**：铺满窗口、叠在**完整渲染的外壳**之上
  * （选目录之前用户先看到"应用长什么样"）。这一层因此**不填色** —— 只留
  * `.ui-modal__mask` 那层浅浅的遮罩把背景压下去，内容那层同时 `inert`，
  * 鼠标键盘都进不去。选择屏自己不可关闭：没有 × / 「取消」、点遮罩不关。 */
-.workspace-required {
-  position: fixed;
-  inset: 0;
-}
-
 /* 遮罩本身承担两件事：
  *  1. **压底重一档**（`--transactions-color-screen-scrim`）—— 背景不再是空白，而是真的
  *     应用界面（侧栏 + 版心），得让它退到后面去，同时仍看得清版式；
  *  2. **当拖动区** —— 遮罩盖住了自绘标题栏（`.app-top-bar` / `.page-header`，它们平时
  *     负责拖窗口），所以卡片以外的空白处要能拖窗口，卡片上不行（按钮要能点）。 */
-.workspace-required .ui-modal__mask {
-  background-color: var(--transactions-color-screen-scrim);
-  -webkit-app-region: drag;
-}
-
-.workspace-required .ui-modal__content {
-  -webkit-app-region: no-drag;
-}
 /* 退出遮罩：整屏虚化 + 一条流动的斜纹条。
  * 它盖住的是**已经画好的应用**（侧栏、版心、自绘标题栏都在后面），所以只做
  * `backdrop-filter` 虚化，不另画一层背景。卡片里只有一句标题、一条斜纹条和

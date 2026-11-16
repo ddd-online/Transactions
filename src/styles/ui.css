@@ -10,120 +10,9 @@
  * Modal —— 16px 圆角 + 大阴影
  * ============================================ */
 
-.ui-modal__mask {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  /* 弹窗**水平垂直居中**：`center` + 内容 `margin: auto`。
-   * 上下留 40px：窗口顶部有 48px 的自绘标题栏，居中后弹窗不会被它压住；
-   * 弹窗比可视区还高时 `margin: auto` 会把内容顶到可滚动区顶部（配合 mask 的 overflow-y），
-   * 既不会把顶部裁掉，也仍然能滚到底。 */
-  align-items: center;
-  justify-content: center;
-  padding: 40px var(--transactions-space-lg);
-  overflow-y: auto;
-  background-color: var(--transactions-color-hover-bg);
-  animation: tr-fade-in var(--transactions-transition-fast);
-}
-
-.ui-modal__content {
-  /* 兜底宽度 = `ModalSize::Medium`：调用方不给 `size`/`width` 时就用它。
-   * 三档见 components/ui/modal.rs 的 `ModalSize`，下面的 `--sm/md/lg` 与之对应。 */
-  width: 520px;
-  max-width: 100%;
-  /* 居中用 `margin: auto`（配合 mask 的 `align-items: center`）；弹窗比可视区还高时
-   * 由 mask 的 `overflow-y: auto` 接管滚动，顶部不会被裁掉。 */
-  margin: auto;
-  /* 超长弹窗在视口内滚动，而不是把遮罩撑长 */
-  max-height: calc(100vh - 80px);
-  background-color: var(--transactions-color-major-background);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-xl);
-  /* **不要 `overflow: hidden`**：弹窗里的下拉面板（DatePicker / Select 的 dropdown 都是
-   * `position: absolute` 的子元素）会被裁掉 —— 小弹窗（如「关联事件」）里日历被裁到
-   * 只剩标题和星期行，日期格子**看不见也点不动**（面板是弹窗的自有子元素，不像第三方组件那样
-   * portal 到 body，所以会被裁掉 —— 这是重写时引入的真实缺陷）。圆角不靠裁剪实现：header/footer 都是透明底、只有一条边框线，
-   * body 有内边距，没有任何子元素会画到圆角外。 */
-  overflow: visible;
-  box-shadow: var(--transactions-shadow-xl);
-  /* 弹窗本体的落位：遮罩只淡入（`tr-fade-in`），面板自己 4px 落定 ——
-   * 原来只有遮罩有动画，面板是硬切进来的，观感上像"没画完就出现了"。 */
-  animation: tr-rise-in var(--transactions-transition-enter);
-}
-
 /* 弹窗宽度三档（对应 `ModalSize`）。**新弹窗只用这三档**，别写裸像素：
  * 历史上出现过 11 个不同宽度（360…800），同类弹窗宽窄不一、"新增记录"甚至宽到 800。
  * 都带 `max-width: 100%`（继承自基类），窄窗口下不会被顶出屏。 */
-.ui-modal__content--sm {
-  width: 400px;
-}
-
-.ui-modal__content--md {
-  width: 520px;
-}
-
-.ui-modal__content--lg {
-  width: 640px;
-}
-
-.ui-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-md);
-  border-bottom: 1px solid var(--transactions-color-divider);
-  padding: var(--transactions-space-lg) var(--transactions-space-xl);
-}
-
-.ui-modal__title {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-title-sm);
-  font-weight: var(--transactions-weight-semibold);
-  line-height: var(--transactions-height-snug);
-  letter-spacing: var(--transactions-tracking-display);
-  text-wrap: balance;
-  color: var(--transactions-color-text-major);
-  margin: 0;
-}
-
-.ui-modal__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: none;
-  border-radius: var(--transactions-radius-sm);
-  cursor: pointer;
-  color: var(--transactions-color-icon);
-  transition: all var(--transactions-transition-fast);
-}
-
-.ui-modal__close:hover {
-  background-color: var(--transactions-color-danger-hover-bg);
-  color: var(--transactions-color-expense);
-}
-
-.ui-modal__body {
-  padding: var(--transactions-space-xl);
-}
-
-.ui-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--transactions-space-sm);
-  border-top: 1px solid var(--transactions-color-divider);
-  padding: var(--transactions-space-lg) var(--transactions-space-xl);
-}
-
-.ui-modal__footer.is-hidden {
-  display: none;
-}
-
 /* ============================================
  * Tag —— 语义色 10% 底 + 语义色文字
  * ============================================ */
@@ -247,41 +136,11 @@
   background-color: var(--transactions-color-primary);
 }
 
-.ui-popover__panel.is-hidden {
-  display: none;
-}
-
 /* 通用隐藏类：给"常驻 DOM + 显隐切换"的浮层用（避免 `Show` 造成的 FnOnce 约束）*/
-.ui-btn.is-hidden,
-.ui-popover__panel.is-hidden,
-.ui-popconfirm__panel.is-hidden {
-  display: none;
-}
-
 /* ============================================
  * DESIGN.md「Do」：尊重 prefers-reduced-motion
  * 统一关掉 P6-a 组件的过渡与进场动画（旋转指示器已有独立规则）
  * ============================================ */
-@media (prefers-reduced-motion: reduce) {
-  .ui-tabs__tab,
-  .ui-segmented__item,
-  .ui-switch,
-  .ui-switch__handle,
-  .ui-checkbox__box,
-  .ui-progress__bar,
-  .ui-date-picker__trigger,
-  .ui-date-picker__cell,
-  .ui-date-picker__nav,
-  .ui-dropdown__item {
-    transition: none;
-  }
-
-  .ui-drawer__mask,
-  .ui-drawer__content {
-    animation: none;
-  }
-}
-
 /* ============================================
  * 时间范围选择器（共享组件 `TimeRangePicker`）
  *    原来长在 `transactions.css`（类名 `.tr-time*`）：现在消费记录页与分析子功能共用。
@@ -297,10 +156,6 @@
 }
 
 /* 翻页箭头是图标按钮，但在工具条里要与 36px 的区间字段对齐 */
-.ui-time .ui-icon-btn {
-  --ui-icon-btn-size: var(--transactions-btn-height-md);
-}
-
 .ui-time__field {
   position: relative;
   display: inline-flex;
@@ -372,10 +227,6 @@
 
 .ui-time--year .ui-time__value {
   text-align: center;
-}
-
-.ui-time--year .ui-icon-btn {
-  --ui-icon-btn-size: 32px;
 }
 
 .ui-time__panel {
@@ -464,15 +315,6 @@
 }
 
 /* 面板内嵌的区间选择器：去掉自带的下拉定位，直接作为面板内容 */
-.ui-time__panel .ui-date-range-picker .ui-date-picker__dropdown {
-  position: static;
-  margin-top: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  box-shadow: none;
-}
-
 .ui-time__panel-head {
   display: flex;
   align-items: center;
@@ -604,171 +446,21 @@
 
 /* 图表根：**填满所在容器**（容器高度由页面给：分栏里是 `flex: 1`，内容流里是固定高度）。
  * 不填满的话，画布只能靠 min-height，图表就不跟着区域长高。 */
-.chart {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-sm);
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-
 /* 图例：**自绘 HTML**（不再是 charts-rs 画在 SVG 里的那份）。
  * 换行与间距由浏览器按真实字体度量排版 —— SVG 那份用 charts-rs 内置的 Roboto 量宽，
  * 与页面字体（JetBrains Mono + 中文回退）不一致，中文系列名会叠在一起。 */
-.chart__legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--transactions-space-xs) var(--transactions-space-md);
-  flex-shrink: 0;
-  padding: 0 0 var(--transactions-space-xs) 0;
-}
-
-.chart__legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  min-width: 0;
-}
-
-.chart__legend-label {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  /* 再长的系列名也只是一行被平台省略号截断，不会把整行撑破 */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* tooltip 行首与图例共用的色点 */
-.chart__legend-swatch {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
 /* 画布：图表**按它的实测尺寸渲染**（见 chart.rs 的 `watch_canvas_size`），
  * 所以这里必须给一个确定的高度来源：分栏内靠 `flex: 1` 撑满，内容流里靠下面的 min-height。 */
-.chart__canvas {
-  position: relative;
-  width: 100%;
-  /* 图例之下全部给画布（图表按画布实测尺寸渲染） */
-  flex: 1;
-  min-height: 200px;
-}
-
 /* plotters 的图层**绝对定位铺满画布**：它不参与布局 ——
  * 否则 SVG 的固有高度会反过来决定容器高度（量尺寸 → 渲染 → 尺寸又变），
  * 宽高比不匹配时还会在右侧或下方留白。 */
-.chart__plot {
-  position: absolute;
-  inset: 0;
-}
-
-.chart__plot svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 /* 叠层与 plotters 层**同一个 viewBox**，因此坐标可以直接复用 */
-.chart__overlay {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  touch-action: none;
-}
-
-.chart__cursor {
-  stroke: var(--transactions-color-border-l3);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
 /* 参考线（如盈亏 0 轴）：贯穿绘图区的虚线 */
-.chart__reference {
-  stroke: var(--transactions-color-window-border);
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
-}
-
-.chart__dot {
-  stroke: var(--transactions-color-major-background);
-  stroke-width: 1.5;
-}
-
 /* tooltip：**位置由 JS 内联样式给**（贴着鼠标、并按画布四边避让/翻面），
  * 这里只负责外观 —— 不要再写 `top`/`left`/`transform`，否则会盖掉内联定位。 */
-.chart__tooltip {
-  position: absolute;
-  min-width: 160px;
-  max-width: 280px;
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  background: var(--transactions-color-major-background);
-  box-shadow: var(--transactions-shadow-lg);
-  pointer-events: none;
-  /* 浮层跟着鼠标走：不要在它身上做过渡，否则会"追着鼠标飘" */
-  transition: none;
-  z-index: 2;
-}
-
-.chart__tooltip-title {
-  font-size: var(--transactions-size-text-caption);
-  font-weight: var(--transactions-weight-semibold);
-  color: var(--transactions-color-text-major);
-  margin-bottom: var(--transactions-space-xs);
-}
-
-.chart__tooltip-row {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  line-height: var(--transactions-height-snug);
-}
-
-.chart__tooltip-label {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chart__tooltip-value {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-caption);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-major);
-}
-
-.chart__empty {
-  text-align: center;
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-  padding: var(--transactions-space-lg);
-}
-
 /* charts-rs 的入场动画用 `stroke-dasharray:1 / stroke-dashoffset:1` 描出折线：
  * 减动效时必须把它复位，否则线会**一直是隐藏状态**。 */
-@media (prefers-reduced-motion: reduce) {
-  .chart__plot svg path {
-    animation: none !important;
-    stroke-dasharray: none !important;
-    stroke-dashoffset: 0 !important;
-  }
-}
-
 /* ============================================
  * 方形裁剪（共享组件 `ImageCropDialog`）
  *
@@ -870,50 +562,8 @@
  * 卡片里**不再套第二层边框**：层级靠留白与字号，不靠盒子套盒子。
  * ============================================ */
 
-.ui-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-md);
-  width: fit-content;
-  max-width: 100%;
-  min-width: 0;
-  padding: var(--transactions-space-xl);
-  background: var(--transactions-color-card-surface);
-  border: 1px solid var(--transactions-color-border-l1);
-  border-radius: var(--transactions-radius-lg);
-  box-shadow: var(--transactions-shadow-sm);
-}
-
 /* 标题行：只有标题，永远贴卡片左上角 —— 中段有没有按钮都不改变它的位置 */
-.ui-card__head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-md);
-  min-height: 22px;
-}
-
-.ui-card__title {
-  margin: 0;
-  font-size: var(--transactions-size-text-section);
-  font-weight: var(--transactions-weight-semibold, 600);
-  letter-spacing: var(--transactions-tracking-display);
-  color: var(--transactions-color-text-major);
-}
-
 /* 中段：这张卡自己的操作区（分段切换 / 更多），随内容出现或消失，整段不渲染时不留空 */
-.ui-card__tools {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-sm);
-  min-width: 0;
-}
-
-.ui-card__body {
-  min-width: 0;
-}
-
-
 /* ============================================
  * 悬浮滚动条（OverlayScrollbars）
  * 滚动条覆盖在内容上、不占布局宽度；默认滚动时出现，离开后淡出。

@@ -243,43 +243,6 @@
   font-size: var(--transactions-size-text-body-sm);
 }
 
-.tr-table .ant-table-cell.m0-amount-income,
-.tr-table .ant-table-cell.m0-amount-expense,
-.tr-table .ant-table-cell.m0-amount-transfer {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.m0-new-record {
-  align-items: center;
-}
-
-.m0-new-record .ant-input {
-  flex: 1 1 120px;
-  min-width: 100px;
-  width: auto;
-}
-
-.m0-new-record .ant-select {
-  flex: 0 0 100px;
-}
-
-.m0-new-record .tr-date-picker {
-  flex: 0 0 180px;
-}
-
-.m0-new-record .tr-date-picker .ant-picker {
-  width: 100%;
-}
-
-.m0-new-record .ant-checkbox-wrapper {
-  flex: none;
-}
-
-.m0-new-record > .ant-btn {
-  flex: none;
-}
-
 .tr-pagination .ant-pagination-item-active a {
   color: var(--transactions-color-text-inverse);
 }
