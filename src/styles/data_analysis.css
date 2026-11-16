@@ -197,19 +197,6 @@
 
 /* 图表头右侧的两个控件**同尺寸**：粒度下拉与「重命名」都按小号按钮（28px）对齐。
  * 实测原来下拉是 36px（md）、按钮是 28px（sm），并排高度差 8px、宽度差 3px。 */
-.da-chart__meta .ui-select,
-.da-chart__meta .ui-select__trigger,
-.da-chart__meta .ui-btn {
-  height: var(--transactions-btn-height-sm);
-  min-width: 64px;
-}
-
-.da-chart__meta .ui-select,
-.da-chart__meta .ui-select__trigger {
-  width: auto;
-  font-size: var(--transactions-btn-font-size-sm);
-}
-
 .da-chart__body {
   display: flex;
   gap: var(--transactions-space-lg);
@@ -631,15 +618,6 @@
 
 .da-table {
   font-size: var(--transactions-size-text-body-sm);
-}
-
-.da-line-switch {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-major);
-  cursor: pointer;
 }
 
 @media (max-width: 1080px) {
