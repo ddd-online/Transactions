@@ -151,53 +151,6 @@
 }
 
 /* 同步目标账本气泡（.sync-popover-content） */
-.tr-sync-panel {
-  position: absolute;
-  z-index: 1050;
-  top: calc(100% + var(--transactions-space-xs));
-  right: 0;
-  min-width: 140px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: var(--transactions-space-xs);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  background-color: var(--transactions-color-elevated);
-  box-shadow: var(--transactions-shadow-lg);
-}
-
-.tr-sync-panel.is-hidden {
-  display: none;
-}
-
-.tr-sync-item {
-  display: block;
-  width: 100%;
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border: none;
-  border-radius: var(--transactions-radius-sm);
-  background: none;
-  color: var(--transactions-color-text-major);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body-sm);
-  text-align: left;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color var(--transactions-transition-fast);
-}
-
-.tr-sync-item:hover {
-  background-color: var(--transactions-color-hover-bg);
-}
-
-.tr-sync-empty {
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  color: var(--transactions-color-text-secondary);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  white-space: nowrap;
-}
-
 /* 行内删除确认气泡右对齐，避免在表格右侧溢出 */
 @media (prefers-reduced-motion: reduce) {
   .tr-sync-icon.is-spinning {
@@ -236,13 +189,6 @@
   color: var(--transactions-color-text-secondary);
 }
 
-.tr-modal-inline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
 /* 并排的两个字段等分宽度 */
 .tr-modal-row {
   display: grid;
@@ -262,17 +208,6 @@
   min-width: 0;
 }
 
-.tr-modal-full {
-  width: 100%;
-}
-
-.tr-modal-hint {
-  margin: var(--transactions-space-xs) 0 0 0;
-  font-size: var(--transactions-size-text-caption);
-  line-height: var(--transactions-height-snug);
-  color: var(--transactions-color-text-tertiary);
-}
-
 /* 弹窗底栏（`Modal` 的 footer 被关掉，按钮放在内容里） */
 .tr-modal-footer {
   display: flex;
@@ -287,120 +222,6 @@
 /* ============================================
  * 5. 标签多选（TrCheckList，对应 a-select mode="multiple"）
  * ============================================ */
-
-.tr-taglist {
-  position: relative;
-  width: 100%;
-}
-
-.tr-taglist__trigger {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  width: 100%;
-  min-height: 36px;
-  padding: var(--transactions-space-xs) var(--transactions-space-sm);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  background-color: var(--transactions-color-major-background);
-  color: var(--transactions-color-text-major);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color var(--transactions-transition-fast);
-}
-
-.tr-taglist__trigger:hover {
-  border-color: var(--transactions-color-primary);
-}
-
-.tr-taglist.is-open .tr-taglist__trigger {
-  border-color: var(--transactions-color-primary);
-}
-
-.tr-taglist__value {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  min-width: 0;
-}
-
-.tr-taglist__placeholder {
-  color: var(--transactions-color-text-disabled);
-}
-
-.tr-taglist__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--transactions-space-2xs);
-  max-width: 100%;
-  padding: 0 var(--transactions-space-xs);
-  border-radius: var(--transactions-radius-sm);
-  background-color: var(--transactions-color-minor-background);
-  color: var(--transactions-color-text-major);
-  font-size: var(--transactions-size-text-caption);
-  line-height: 20px;
-}
-
-.tr-taglist__chip-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tr-taglist__chip-close {
-  display: inline-flex;
-  align-items: center;
-  color: var(--transactions-color-icon);
-  cursor: pointer;
-}
-
-.tr-taglist__chip-close:hover {
-  color: var(--transactions-color-expense);
-}
-
-.tr-taglist__panel {
-  position: absolute;
-  z-index: 1050;
-  top: calc(100% + var(--transactions-space-xs));
-  left: 0;
-  right: 0;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: var(--transactions-space-xs);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  background-color: var(--transactions-color-elevated);
-  box-shadow: var(--transactions-shadow-lg);
-}
-
-.tr-taglist__option {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  width: 100%;
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border: none;
-  border-radius: var(--transactions-radius-sm);
-  background: none;
-  color: var(--transactions-color-text-major);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body-sm);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--transactions-transition-fast);
-}
-
-.tr-taglist__option:hover {
-  background-color: var(--transactions-color-hover-bg);
-}
-
-.tr-taglist__option.is-selected {
-  color: var(--transactions-color-primary);
-}
 
 /* ============================================
  * 6. 筛选弹窗
@@ -506,11 +327,6 @@
   flex: 0 0 100px;
 }
 
-.tr-sort__add-icon {
-  display: inline-flex;
-  margin-right: var(--transactions-space-xs);
-}
-
 .tr-sort__actions {
   display: flex;
   align-items: center;
@@ -553,31 +369,11 @@
  *   * `.tr-body` **四边都不留**：消费记录的表格要**通到版心边缘**（表头底边线、
  *     行分隔线从版心左边一路到右边），内缩交给单元格自己的 padding；
  *     分页行与空态各自带内边距。 */
-.st-panes {
-  padding: 0 var(--transactions-space-lg) var(--transactions-space-lg);
-}
-
 .tr-body {
   padding: 0;
 }
 
 /* 消费记录页工具栏：底边线与外边距由 `.page-toolbar` 统一给，这里只管左右两簇的排布 */
-.tr-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-md);
-  flex: 1;
-}
-
-.tr-toolbar-left,
-.tr-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-md);
-}
-
 .tr-body {
   display: flex;
   flex-direction: column;
@@ -651,62 +447,8 @@
 }
 
 /* 页码按钮与「每页条数」下拉共用同一套外观（原来两份逐字重复的声明） */
-.tr-pagination__item,
-.tr-pagination__size {
-  height: 32px;
-  padding: 0 var(--transactions-space-sm);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-sm);
-  background-color: var(--transactions-color-major-background);
-  color: var(--transactions-color-text-major);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body-sm);
-  cursor: pointer;
-}
-
 /* 页码按钮自己的部分：居中 + 最小宽度 + 过渡（`__size` 是原生 select，不需要这些） */
-.tr-pagination__item {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  transition: all var(--transactions-transition-fast);
-}
-
-.tr-pagination__item:hover:not(:disabled) {
-  border-color: var(--transactions-color-primary);
-  color: var(--transactions-color-primary);
-}
-
-.tr-pagination__item.is-active {
-  border-color: var(--transactions-color-primary);
-  background-color: var(--transactions-color-active-bg);
-  color: var(--transactions-color-primary);
-  font-weight: var(--transactions-weight-medium);
-}
-
-.tr-pagination__item:disabled {
-  cursor: not-allowed;
-  color: var(--transactions-color-text-disabled);
-}
-
-.tr-pagination__item:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
-}
-
-.tr-pagination__ellipsis {
-  padding: 0 var(--transactions-space-2xs);
-  color: var(--transactions-color-text-tertiary);
-  font-size: var(--transactions-size-text-body-sm);
-}
-
 /* `.tr-pagination__size` 的外观与 `.tr-pagination__item` 共用（见上方合并规则） */
-.tr-pagination__size:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
-}
-
 /* 表格单元格 */
 .tr-table {
   min-width: 880px;
@@ -733,14 +475,6 @@
 .tr-table.ant-table-wrapper .ant-table-tbody > tr.ant-table-row > td.ant-table-cell {
   padding-top: 4px;
   padding-bottom: 4px;
-}
-
-.tr-cell {
-  white-space: nowrap;
-}
-
-.tr-cell--center {
-  text-align: center;
 }
 
 .tr-cell-date {
@@ -830,14 +564,3 @@
 /* 空态引导（empty-guide）
  * `height: 100%` 是必需的：父容器 `.tr-content` 是**块级滚动容器**（不是 flex），
  * 不给高度的话这一块只有内容那么高，"justify-content: center" 就没有垂直居中的参照。 */
-.empty-guide {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--transactions-space-md);
-  height: 100%;
-  padding: var(--transactions-space-3xl);
-  text-align: center;
-}
-

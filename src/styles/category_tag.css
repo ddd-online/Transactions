@@ -274,45 +274,12 @@
 }
 
 /* 初始化引导（`.empty-init`） */
-.ct-empty-init {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--transactions-space-md);
-  text-align: center;
-}
-
-.ct-empty-init-icon {
-  width: 64px;
-  height: 64px;
-  color: var(--transactions-color-text-secondary);
-  opacity: 0.4;
-}
-
-.ct-empty-init-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.ct-empty-init-text {
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-secondary);
-}
-
 /* ========== 弹窗 ========== */
 
 .ct-modal-form {
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-xs);
-}
-
-.ct-delete-message {
-  margin: 0;
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-major);
-  line-height: 1.6;
 }
 
 /* ========== 动效降级 ========== */
@@ -324,4 +291,3 @@
     transition: none;
   }
 }
-
