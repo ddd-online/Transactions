@@ -4,8 +4,6 @@
  * 字符串字面量是数据既有的一部分（数据库中存的是这些值），修改即为破坏性变更。
  */
 
-export const LOG_NAME = 'transactions.log'
-export const DB_NAME = 'transactions.db'
 export const ALL = 'all'
 
 // ---------- 关闭行为 ----------
@@ -70,9 +68,6 @@ export function defaultStockTradeTags(): string[] {
     STOCK_TAG_XULI,
   ]
 }
-
-export const TAG_POLICY_ANY = 'any'
-export const TAG_POLICY_ALL = 'all'
 
 // ---------- 本轮复盘模板 ----------
 export const STOCK_REVIEW_TEMPLATE_DEFAULT =

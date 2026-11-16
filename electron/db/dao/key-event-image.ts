@@ -64,13 +64,6 @@ export function queryByEventDate(db: Db, ledgerId: string, date: string): KeyEve
   return rows.map(fromRow)
 }
 
-export function queryByLedgerId(db: Db, ledgerId: string): KeyEventImage[] {
-  const rows = db
-    .prepare(`SELECT ${COLUMNS} FROM key_event_image WHERE ledger_id = ?`)
-    .all(ledgerId) as unknown as KeyEventImageRow[]
-  return rows.map(fromRow)
-}
-
 export function deleteById(db: Db, imageId: string): void {
   db.prepare('DELETE FROM key_event_image WHERE id = ?').run(imageId)
 }

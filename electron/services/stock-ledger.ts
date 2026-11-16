@@ -8,7 +8,6 @@ import type { StockLedgerDto } from '../../shared/types/stock-ledger'
 import { AppError } from '../../shared/errors'
 import type { Db } from '../db/driver'
 import {
-  attachOpenStockLedger,
   getOpenStockLedger,
   getStockLedgerByRound,
   insertStockLedger,
@@ -209,15 +208,4 @@ export function saveStockLedger(
   if (existing) updateStockLedger(db, row)
   else insertStockLedger(db, row)
   return toDto(row, false, numbersOf(current, false))
-}
-
-/** 清仓时把持仓期台账挂到新轮次（由 stock-trade-write 在归档事务里调用）。 */
-export function attachStockLedger(
-  db: Db,
-  ledgerId: string,
-  stockCode: string,
-  roundId: string,
-  at: number,
-): void {
-  attachOpenStockLedger(db, ledgerId, stockCode, roundId, at)
 }

@@ -31,8 +31,3 @@ export function createTray(options: TrayOptions): Tray {
   tray.on('click', () => options.show())
   return tray
 }
-
-export function destroyTray(): void {
-  tray?.destroy()
-  tray = null
-}

@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto'
-
 import type { Db } from '../driver'
 import type { KeyEvent } from '../../../shared/domain/models'
 
@@ -73,20 +71,4 @@ export function queryByYear(db: Db, ledgerId: string, year: string): KeyEvent[] 
 
 export function deleteByDate(db: Db, ledgerId: string, date: string): void {
   db.prepare('DELETE FROM key_event WHERE ledger_id = ? AND date = ?').run(ledgerId, date)
-}
-
-/** 确保某天存在事件：不存在则创建一条空事件，返回是否新建。 */
-export function ensureExists(db: Db, ledgerId: string, date: string): boolean {
-  if (queryByDate(db, ledgerId, date)) return false
-  upsert(db, {
-    id: randomUUID(),
-    date,
-    title: '',
-    content: '',
-    color: '',
-    createdAt: 0,
-    updatedAt: 0,
-    ledgerId,
-  })
-  return true
 }

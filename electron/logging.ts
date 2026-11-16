@@ -5,7 +5,6 @@ const MAX_LOG_SIZE = 5 * 1024 * 1024
 const MAX_LOG_BACKUPS = 5
 
 let appLogPath: string | null = null
-let workspaceLogPath: string | null = null
 
 function pad(value: number): string {
   return value < 10 ? `0${value}` : String(value)
@@ -49,7 +48,6 @@ function append(path: string, line: string): void {
 function write(level: 'INFO' | 'WARN' | 'ERROR' | 'DEBUG', message: string): void {
   const line = `${timestamp()} ${level} ${message}`
   if (appLogPath) append(appLogPath, line)
-  if (workspaceLogPath) append(workspaceLogPath, line)
   const target = level === 'ERROR' ? console.error : level === 'WARN' ? console.warn : console.log
   target(line)
 }
@@ -64,14 +62,6 @@ export function initLogging(appDirectory: string): void {
   }
 }
 
-export function appLogFile(): string | null {
-  return appLogPath
-}
-
-export function setWorkspaceLog(directory: string | null): void {
-  workspaceLogPath = directory ? join(directory, 'transactions.log') : null
-}
-
 export function logInfo(message: string): void {
   write('INFO', message)
 }
@@ -82,10 +72,6 @@ export function logWarn(message: string): void {
 
 export function logError(message: string): void {
   write('ERROR', message)
-}
-
-export function logDebug(message: string): void {
-  write('DEBUG', message)
 }
 
 export function logStartup(isDev: boolean, configPath: string): void {

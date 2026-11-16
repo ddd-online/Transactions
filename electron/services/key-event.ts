@@ -5,7 +5,6 @@ import type { KeyEvent, KeyEventImage } from '../../shared/domain/models'
 import type { Db } from '../db/driver'
 import {
   deleteByDate as deleteEventByDate,
-  ensureExists,
   queryByDate,
   queryByYear,
   TITLE_MAX_CHARS,
@@ -130,9 +129,4 @@ export function deleteImage(db: Db, workspaceDir: string, imageId: string): void
     logWarn(`删除图片时未找到记录: ${imageId}`)
   }
   deleteImageRow(db, imageId)
-}
-
-/** 关联交易时用来确保目标日期有关键事件。 */
-export function ensureKeyEventExists(db: Db, ledgerId: string, date: string): boolean {
-  return ensureExists(db, ledgerId, date)
 }

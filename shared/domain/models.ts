@@ -82,10 +82,6 @@ export interface Ledger {
   updatedAt: number
 }
 
-export interface TransactionRecordFlags {
-  outlier: boolean
-}
-
 export interface TransactionRecord {
   transactionId: string
   ledgerId: string

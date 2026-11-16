@@ -57,9 +57,6 @@ export type ChartValueKind = (typeof ChartValueKind)[keyof typeof ChartValueKind
 /** 默认取值语义（对应 `#[default] Money`）。 */
 export const DEFAULT_CHART_VALUE_KIND: ChartValueKind = ChartValueKind.Money
 
-/** 拿不到容器尺寸时的兜底宽度 */
-export const FALLBACK_WIDTH = 720
-
 /** X 轴标签最小间距（px，按渲染像素算） */
 const X_LABEL_MIN_GAP = 56
 
@@ -109,15 +106,6 @@ export interface TooltipPlacement {
   readonly translateX: number
   /** `translateY` 的百分比（`-100` = 浮层整体位于 `top` 之上，`0` = 位于其下） */
   readonly translateY: number
-}
-
-/** 内联样式串（对应 的 `TooltipPlacement::style`，界面里直接用）。 */
-export function tooltipStyle(placement: TooltipPlacement): string {
-  return (
-    `left: ${placement.left.toFixed(1)}px; top: ${placement.top.toFixed(1)}px; ` +
-    `transform: translateX(-${placement.translateX.toFixed(0)}%) ` +
-    `translateY(${placement.translateY.toFixed(0)}%);`
-  )
 }
 
 /** 按"指针位置 + 画布尺寸 + 浮层尺寸"算落点。 */
@@ -666,25 +654,6 @@ export function displayValue(value: number, kind: ChartValueKind): number {
     case ChartValueKind.Count:
       return Math.fround(value)
   }
-}
-
-/** 全部序列的显示值范围（与图表库自己算范围的口径一致：只看数据点）。 */
-export function displayRange(
-  series: readonly ChartSeries[],
-  slots: number,
-  kind: ChartValueKind,
-): readonly [min: number, max: number] {
-  let min = Number.POSITIVE_INFINITY
-  let max = Number.NEGATIVE_INFINITY
-  for (const item of series) {
-    for (let slot = 0; slot < slots; slot += 1) {
-      const value = displayValue(at(item.data, slot) ?? 0, kind)
-      min = Math.min(min, value)
-      max = Math.max(max, value)
-    }
-  }
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return [0, 0]
-  return [min, max]
 }
 
 /**

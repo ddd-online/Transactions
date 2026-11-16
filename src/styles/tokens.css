@@ -216,7 +216,6 @@
   --transactions-radius-lg: 12px;
   --transactions-radius-xl: 16px;
   --transactions-radius-full: 9999px;
-  --transactions-radius-chat: 20px;
 
   /* ---------- Transitions（$transitions） ---------- */
   --transactions-transition-fast: 150ms ease;

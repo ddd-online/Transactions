@@ -8,11 +8,6 @@ function isFeatureKey(feature: string): feature is FeatureKey {
   return (FEATURE_KEYS as readonly string[]).includes(feature)
 }
 
-export function featureValue(flags: FeatureFlags, feature: string): boolean | null {
-  if (!isFeatureKey(feature)) return null
-  return flags[feature]
-}
-
 function setFeatureValue(flags: FeatureFlags, feature: string, enabled: boolean): void {
   if (feature === 'accounting') flags.accounting = enabled
   else if (feature === 'stock') flags.stock = enabled

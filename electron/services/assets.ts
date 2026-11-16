@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
-import { basename, extname, join, relative, resolve, sep } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 
 import { AppError } from '../../shared/errors'
 import { DISPLAYABLE_IMAGE_MIMES, sniffImage } from './image-sniff'
@@ -218,10 +218,3 @@ export function removeImageFiles(
   }
 }
 
-export function assetFileName(relativePath: string): string {
-  return basename(relativePath)
-}
-
-export function assetExtension(relativePath: string): string {
-  return extname(relativePath)
-}

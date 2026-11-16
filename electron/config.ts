@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
@@ -208,9 +208,4 @@ export class ConfigStore {
     writeRaw(this.path, this.raw)
     return result
   }
-}
-
-/** 测试与工具用：确保父目录存在。 */
-export function ensureConfigDirectory(path: string): void {
-  mkdirSync(path, { recursive: true })
 }

@@ -267,14 +267,6 @@ export function listItemsByCard(db: Db, cardId: string, status: string): TodoIte
   return rows.map(itemFromRow)
 }
 
-/** 某卡片下**全部**事项的 id（既有 DAO 的对齐接口；删卡片走 SQL 子查询，不依赖它）。 */
-export function listItemIdsByCard(db: Db, cardId: string): string[] {
-  const rows = db.prepare('SELECT id FROM todo_item WHERE card_id = ?').all(cardId) as unknown as Array<{
-    id: string
-  }>
-  return rows.map((row) => row.id)
-}
-
 /** 删一个事项（进度记录由服务层在同一个事务里一起删）。 */
 export function deleteItem(db: Db, id: string): void {
   db.prepare('DELETE FROM todo_item WHERE id = ?').run(id)
