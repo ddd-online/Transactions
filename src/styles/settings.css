@@ -390,6 +390,9 @@
 /* 更新说明：GitHub Release Markdown，渲染成可读的分段 / 列表 / 标题。 */
 .st-release-body {
   width: 100%;
+  /* 与上面那行状态 / 按钮拉开距离：`.st-about-update` 是不带 gap 的纵向 flex，
+   * 不写这一条时说明卡片会直接贴在「下载更新」按钮行下面。 */
+  margin-top: var(--transactions-space-md);
   max-height: 240px;
   overflow-y: auto;
   padding: var(--transactions-space-md) var(--transactions-space-lg);

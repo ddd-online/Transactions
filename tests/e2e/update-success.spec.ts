@@ -91,6 +91,11 @@ test('更新：检查到新版本、下载并校验 SHA256', async () => {
     await expect(notes.locator('h2')).toHaveText('测试更新')
     await expect(notes.locator('li')).toHaveCount(2)
     await expect(notes.locator('strong')).toHaveText('重要')
+    // 按钮行与说明卡片之间要有间隔：`.st-about-update` 是不带 gap 的纵向 flex，
+    // 少了这条间距说明会直接贴住「下载更新」那一行（曾经如此）。
+    const rowBox = await page.locator('.st-update-row').first().boundingBox()
+    const notesBox = await notes.boundingBox()
+    expect(notesBox!.y - (rowBox!.y + rowBox!.height)).toBeGreaterThanOrEqual(8)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'update-markdown.png'),
     })
