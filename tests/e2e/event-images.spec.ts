@@ -6,18 +6,10 @@ import { DatabaseSync } from 'node:sqlite'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
+import { environment } from './helpers'
 
 const HEIC_STILL = readFileSync(resolve(__dirname, '../../fixtures/heic/gradient-512.heic'))
 const MOTION = readFileSync(resolve(__dirname, '../../fixtures/media/live-motion.mp4'))
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
 
 interface ImageRow {
   file_path: string

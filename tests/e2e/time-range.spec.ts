@@ -6,22 +6,7 @@ import { _electron as electron, expect, test } from '@playwright/test'
 
 import { addDays } from '../../shared/domain/calendar'
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
-
-function ymd(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+import { environment, ymd } from './helpers'
 
 test('时间范围：记录与分析共用粒度、区间与快捷项，分析默认本年、切页不丢', async () => {
   const repositoryRoot = resolve(__dirname, '../..')

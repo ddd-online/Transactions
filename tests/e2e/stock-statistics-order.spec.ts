@@ -5,15 +5,7 @@ import { join, resolve } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 /** 同一天建仓、不同天清仓：明细表的行序必须跟结算序号走。 */
 test('股票统计明细：同日建仓的两轮按清仓先后排列', async () => {

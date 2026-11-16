@@ -5,15 +5,7 @@ import { join, resolve } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 test('股票记录：选中股票默认展开最新一轮', async () => {
   const repositoryRoot = resolve(__dirname, '../..')

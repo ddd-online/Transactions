@@ -1,29 +1,10 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, type Server } from 'node:http'
+import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 import { _electron as electron, expect, test } from '@playwright/test'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
-
-function listen(server: Server): Promise<number> {
-  return new Promise((resolveListening, reject) => {
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address()
-      if (!address || typeof address === 'string') reject(new Error('无法获取端口'))
-      else resolveListening(address.port)
-    })
-  })
-}
+import { environment, listen } from './helpers'
 
 test('更新：慢速下载可取消并回到可下载状态', async () => {
   const repositoryRoot = resolve(__dirname, '../..')

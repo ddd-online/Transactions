@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, type Server, type ServerResponse } from 'node:http'
+import { createServer, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -7,33 +7,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
-
-function listen(server: Server): Promise<number> {
-  return new Promise((resolveListening, reject) => {
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address()
-      if (!address || typeof address === 'string') reject(new Error('无法获取端口'))
-      else resolveListening(address.port)
-    })
-  })
-}
-
-function ymd(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+import { environment, ymd, listen } from './helpers'
 
 /** 腾讯行情的一段：第 1 段是**名称**（除权当天会带 `XD` 前缀），第 2 段是代码。 */
 function quoteLine(code: string, name: string, day: string): string {

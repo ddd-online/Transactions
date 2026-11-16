@@ -5,15 +5,7 @@ import { join, resolve } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 /**
  * 分页按需加载之后多了一种新的坏法：chunk 读不到。

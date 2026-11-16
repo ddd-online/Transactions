@@ -5,16 +5,7 @@ import { join, resolve } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { openDatabase } from '../../electron/db/driver'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  // 本机（以及一些 CI）会设置 ELECTRON_RUN_AS_NODE=1，Electron 会退化成 Node 直接退出。
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 test('应用：窗口 / 工作空间 / 配置闭环', async () => {
   const repositoryRoot = resolve(__dirname, '../..')

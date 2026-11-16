@@ -5,17 +5,9 @@ import { dirname, join, resolve } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { openDatabase } from '../../electron/db/driver'
+import { environment } from './helpers'
 
 const packagedExecutable = process.env.TRANSACTIONS_PACKAGED_EXE
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
 
 test.skip(!packagedExecutable, '未设置 TRANSACTIONS_PACKAGED_EXE，跳过打包产物冒烟')
 

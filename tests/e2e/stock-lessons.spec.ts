@@ -6,15 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { _electron as electron, expect, test } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 test('股票心得：新建 / 关联轮次 / 跳转 / 编辑 / 删除', async () => {
   const repositoryRoot = resolve(__dirname, '../..')

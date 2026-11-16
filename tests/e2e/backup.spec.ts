@@ -15,6 +15,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { _electron as electron, expect, test, type Page } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
+import { environment } from './helpers'
 
 /**
  * 当前迁移号（`electron/db/migrate.ts` 的 `MIGRATIONS.at(-1).version`，现在是第 12 条）。
@@ -23,15 +24,6 @@ import { createLedger } from './ledger-helper'
  * electron-vite 认识，Playwright 的转译器不认识 `?raw`。加迁移时同步这一行。
  */
 const SUPPORTED_SCHEMA_VERSION = 12
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
 
 interface Fixture {
   root: string

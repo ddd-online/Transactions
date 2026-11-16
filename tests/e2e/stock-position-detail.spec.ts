@@ -8,15 +8,7 @@ import { _electron as electron, expect, test } from '@playwright/test'
 import { addDays } from '../../shared/domain/calendar'
 import { todayYmd } from '../../shared/domain/time'
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 /** 详情里的两段：信息区（行情 / 台账 / 复盘）与成交记录区，各自的盒子尺寸。 */
 interface DetailBoxes {

@@ -3,15 +3,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 import { _electron as electron, expect, test, type ElectronApplication } from '@playwright/test'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 async function launch(
   closeBehavior: string,

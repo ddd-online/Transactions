@@ -5,15 +5,7 @@ import { join, resolve } from 'node:path'
 import { _electron as electron, expect, test, type Page } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 /** 某个选择器上实际生效的过渡 / 动画时长（秒）。 */
 async function timings(

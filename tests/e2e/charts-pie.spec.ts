@@ -6,15 +6,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { _electron as electron, expect, test, type Page } from '@playwright/test'
 
 import { createLedger } from './ledger-helper'
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
+import { environment } from './helpers'
 
 /** 在下拉里挑一项（AntD 把选项渲染成带 title 的 option 节点）。 */
 async function pickOption(page: Page, selectTestId: string, text: string): Promise<void> {

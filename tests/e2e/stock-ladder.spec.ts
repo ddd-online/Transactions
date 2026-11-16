@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, type Server, type ServerResponse } from 'node:http'
+import { createServer, type ServerResponse } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
@@ -13,6 +13,7 @@ import {
   SINGLE_BOARD_SLOT,
 } from '../../src/pages/stock-ladder-page-theme'
 import { createLedger } from './ledger-helper'
+import { environment, ymd, listen } from './helpers'
 
 /** `#rrggbb` → 浏览器 `getComputedStyle` 给的 `rgb(r, g, b)`。 */
 function rgbOf(hex: string): string {
@@ -21,33 +22,6 @@ function rgbOf(hex: string): string {
     Number.parseInt(value.slice(offset, offset + 2), 16),
   )
   return `rgb(${red}, ${green}, ${blue})`
-}
-
-function environment(overrides: Record<string, string>): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (typeof value === 'string') result[key] = value
-  }
-  delete result.ELECTRON_RUN_AS_NODE
-  return { ...result, ...overrides }
-}
-
-function listen(server: Server): Promise<number> {
-  return new Promise((resolveListening, reject) => {
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address()
-      if (!address || typeof address === 'string') reject(new Error('无法获取端口'))
-      else resolveListening(address.port)
-    })
-  })
-}
-
-function ymd(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }
 
 /** 东财 `date` 参数：`YYYYMMDD`。 */
