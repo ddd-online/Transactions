@@ -26,7 +26,6 @@ export interface AppConfig {
   features: FeatureFlags
   ledgerFeatures: LedgerFeatures
   keyEventLinkedOpen: boolean
-  sidebarCollapsed: boolean
   /** 分析页右侧「曲线合计」是否收起；true = 只留窄条。 */
   chartSummaryCollapsed: boolean
   dataVersion: number
@@ -48,7 +47,6 @@ export interface ConfigSnapshot {
   features: FeatureFlags
   ledgerFeatures: LedgerFeatures
   keyEventLinkedOpen: boolean
-  sidebarCollapsed: boolean
   chartSummaryCollapsed: boolean
   /** 解析后的绝对路径（永远非空）；raw 里的 `backupDir` 可能是空串 */
   backupDir: string

@@ -76,7 +76,6 @@ export function defaultConfig(): AppConfig {
     features: defaultFeatures(),
     ledgerFeatures: {},
     keyEventLinkedOpen: true,
-    sidebarCollapsed: false,
     chartSummaryCollapsed: false,
     dataVersion: 2,
     backupDir: '',
@@ -99,7 +98,6 @@ export function normalizeConfig(raw: Record<string, unknown>): AppConfig {
     features: normalizeFlags(raw.features, defaults.features),
     ledgerFeatures: normalizeLedgerFeatures(raw.ledgerFeatures),
     keyEventLinkedOpen: boolOr(raw.keyEventLinkedOpen, defaults.keyEventLinkedOpen),
-    sidebarCollapsed: boolOr(raw.sidebarCollapsed, defaults.sidebarCollapsed),
     chartSummaryCollapsed: boolOr(raw.chartSummaryCollapsed, defaults.chartSummaryCollapsed),
     dataVersion: numberOr(raw.dataVersion, defaults.dataVersion),
     // 备份位置保留 raw 里的空串（空串 = 默认目录）；最近工作空间是用户数据，脏值逐条丢掉
@@ -122,7 +120,6 @@ function serializeConfig(config: AppConfig): Record<string, unknown> {
     features: config.features,
     ledgerFeatures: config.ledgerFeatures,
     keyEventLinkedOpen: config.keyEventLinkedOpen,
-    sidebarCollapsed: config.sidebarCollapsed,
     chartSummaryCollapsed: config.chartSummaryCollapsed,
     dataVersion: config.dataVersion,
     backupDir: config.backupDir,
@@ -193,7 +190,6 @@ export class ConfigStore {
       features: structuredClone(this.config.features),
       ledgerFeatures: structuredClone(this.config.ledgerFeatures),
       keyEventLinkedOpen: this.config.keyEventLinkedOpen,
-      sidebarCollapsed: this.config.sidebarCollapsed,
       chartSummaryCollapsed: this.config.chartSummaryCollapsed,
       // 与 raw 里的 backupDir 不同：快照给的是解析后的绝对路径
       backupDir: this.backupDir(),

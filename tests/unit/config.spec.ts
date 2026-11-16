@@ -38,7 +38,6 @@ describe('config normalization', () => {
       todo: true,
     })
     expect(config.keyEventLinkedOpen).toBe(true)
-    expect(config.sidebarCollapsed).toBe(false)
     expect(config.chartSummaryCollapsed).toBe(false)
     // 数据安全底座的三个新键
     expect(config.backupDir).toBe('')
@@ -121,14 +120,12 @@ describe('config store', () => {
     const store = new ConfigStore({ path, isDev: true })
     store.update((config) => {
       config.closeBehavior = 'tray'
-      config.sidebarCollapsed = true
       config.chartSummaryCollapsed = true
     })
 
     const reloaded = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>
     expect(reloaded.width).toBe(800)
     expect(reloaded.closeBehavior).toBe('tray')
-    expect(reloaded.sidebarCollapsed).toBe(true)
     expect(reloaded.chartSummaryCollapsed).toBe(true)
     expect(reloaded.futureFeature).toEqual({ enabled: true })
     expect(reloaded.sourceNumber).toBe(7)
