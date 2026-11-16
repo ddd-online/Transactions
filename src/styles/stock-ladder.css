@@ -169,25 +169,13 @@
 
 /* OverlayScrollbars 的滑块浮在右缘：让出 16px 的位置改由行自己的右内边距给，
  * 行的底色才能铺满整列（不再在右侧留一条白边）。 */
-.stock-ladder__list .rc-listy {
-  padding-right: 0;
-}
-
 /* 行：左右各 8 的内边距（右侧再加 16 给滚动条滑块），文字不再贴着底色边缘。 */
 .stock-ladder__list .stock-ladder__item {
   padding-right: calc(var(--transactions-space-sm) + var(--transactions-space-lg));
 }
 
 /* Listy 在这里只负责按行渲染；滚动条交给外层的 OverlayScrollbars。 */
-.stock-ladder__list .rc-listy-item {
-  overflow: hidden;
-}
-
 /* 最后一行补一条底线：滚到底或列本身很短时，列有收口。 */
-.stock-ladder__list .rc-listy > .rc-listy-item:last-child .stock-ladder__item {
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
 .stock-ladder__rung:first-child {
   border-left: 0;
 }

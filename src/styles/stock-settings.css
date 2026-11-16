@@ -2,71 +2,8 @@
 
 /* 「操作记录」弹窗里的列表：一行一次操作 —— 上一行是操作名（+「最新」标记）与时间，
  * 下一行是摘要。窄弹窗里三列会挤，所以纵向堆叠而不是做表格。 */
-.stock-op-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-xs);
-  margin-bottom: var(--transactions-space-sm);
-}
-
-.stock-op-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border-radius: var(--transactions-radius-md);
-  background-color: var(--transactions-color-minor-background);
-}
-
-.stock-op-item__head {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
-.stock-op-item__action {
-  font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
-  color: var(--transactions-color-text-major);
-}
-
 /* 「最新」= 下一次回滚会撤销的那一条：用强调色 tint（全站"选中/当前"的语言） */
-.stock-op-item__badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--transactions-space-sm);
-  border-radius: var(--transactions-radius-sm);
-  background-color: var(--transactions-color-primary-tint);
-  color: var(--transactions-color-primary);
-  font-size: var(--transactions-size-text-caption);
-  font-weight: var(--transactions-weight-medium);
-}
-
-.stock-op-item__time {
-  margin-left: auto;
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-  white-space: nowrap;
-}
-
-.stock-op-item__detail {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* 只读弹窗（`footer=false`）自带的关闭入口：贴右下，与 `Modal` 底栏同一位置 */
-.stock-op-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--transactions-space-md);
-}
-
 /* ---------------- 设置 ---------------- */
 
 .stock-settings-view {
@@ -109,14 +46,6 @@
 
 .stock-setting-row__actions .ant-input {
   width: 220px;
-}
-
-.stock-setting-row--stack {
-  flex-wrap: wrap;
-}
-
-.stock-setting-row--stack .stock-template-input {
-  flex: 1 0 100%;
 }
 
 .stock-tag-list {
@@ -164,25 +93,6 @@
   outline: none;
 }
 
-.stock-fee-panel {
-  margin: var(--transactions-space-lg);
-  padding: var(--transactions-space-md);
-  background: var(--transactions-color-minor-background);
-}
-
-.stock-fee-panel__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-}
-
-.stock-fee-panel__head h3 {
-  margin: 0;
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-semibold);
-}
-
 .stock-fee-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -215,4 +125,3 @@
   padding: var(--transactions-space-sm) 0;
   border-bottom: 1px solid var(--transactions-color-divider);
 }
-

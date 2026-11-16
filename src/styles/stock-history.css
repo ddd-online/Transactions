@@ -1,140 +1,10 @@
 /* ---------------- 子功能三：记录（已清仓的轮次历史） ---------------- */
 
-.stock-summary-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-lg);
-  flex-wrap: wrap;
-  padding: var(--transactions-space-md);
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.stock-summary-bar__cells {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--transactions-space-md);
-  flex: 1;
-  min-width: 0;
-}
-
-.stock-summary-cell {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-}
-
-.stock-summary-cell__label {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
-.stock-summary-cell__value {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-major);
-}
-
 /* 仓位历史（记录子功能）的网格：**吃掉子功能剩余高度**，两栏面板才会撑满，
  * 里面的 `.stock-empty` 也才有剩余空间可居中（`.stock-history` 自己早就是填满的弹性列，
  * 断链断在这一层：网格没有 `flex: 1` → 面板只有内容高，"暂无已清仓股票"就浮在顶部）。
  * `align-items: stretch`（而不是 `start`）+ `grid-auto-rows: minmax(0, 1fr)`：单个隐式行撑满，
  * 面板跟着长高；内容多时由 `.stock-history__cards` 自己滚动。 */
-.stock-history__grid {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: var(--transactions-space-lg);
-  align-items: stretch;
-  grid-auto-rows: minmax(0, 1fr);
-  flex: 1;
-  min-height: 0;
-  padding: var(--transactions-space-md);
-}
-
-.stock-history__cards {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-sm);
-  padding: var(--transactions-space-sm);
-  max-height: 70vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.stock-history-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  width: 100%;
-  padding: var(--transactions-space-sm);
-  /* 静息 = 软灰卡面；透明描边占位，hover 换色时不产生 1px 位移 */
-  background: var(--transactions-color-minor-background);
-  border: 1px solid transparent;
-  border-radius: var(--transactions-radius-md);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--transactions-transition-fast),
-    border-color var(--transactions-transition-fast);
-}
-
-.stock-history-card:hover {
-  /* 悬停不用阴影：底色翻成纸面 + 一条发丝描边（DESIGN.md：先色调与 1px 线，阴影留给真浮起） */
-  background: var(--transactions-color-major-background);
-  border-color: var(--transactions-color-window-border);
-}
-
-.stock-history-card.is-active {
-  background: var(--transactions-color-active-bg);
-}
-
-.stock-history-card__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-}
-
-.stock-history-card__name {
-  font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
-  color: var(--transactions-color-text-major);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stock-history-card__code {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.stock-history-card__quote {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-xs);
-  font-size: var(--transactions-size-text-caption);
-}
-
-.stock-history-card__label {
-  color: var(--transactions-color-text-secondary);
-}
-
-.stock-history-card__value {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-disabled);
-}
-
-.stock-history-card__foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
 .stock-rounds {
   display: flex;
   flex-direction: column;
@@ -201,21 +71,6 @@
   font-weight: var(--transactions-weight-medium);
 }
 
-.stock-round__result.result-win {
-  background: var(--transactions-color-expense-tint);
-  color: var(--transactions-color-expense);
-}
-
-.stock-round__result.result-loss {
-  background: var(--transactions-color-income-tint);
-  color: var(--transactions-color-income);
-}
-
-.stock-round__result.result-even {
-  background: var(--transactions-color-hover-bg);
-  color: var(--transactions-color-text-secondary);
-}
-
 .stock-round__rate {
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
@@ -227,10 +82,6 @@
  * 已清仓股票卡（记录子功能左栏）—— 与持仓卡片同一套三态
  *   静息 = 软灰卡面（白纸上一个层次）· 悬停 = 纸面 + 轻阴影 · 选中 = 强调色底
  * ============================================ */
-
-.stock-history-card.is-active .stock-history-card__name {
-  color: var(--transactions-color-primary);
-}
 
 /* ============================================
  * 轮次复盘 / 轮次头部的一排控件对齐
@@ -245,24 +96,6 @@
  *    22px 的芯片反而更齐。所以 28px 不再套在下拉上。
  * ============================================ */
 
-.stock-review__toggle {
-  flex: 1;
-  min-width: 0;
-}
-
-.stock-review__title {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.stock-review__head .ui-btn {
-  flex-shrink: 0;
-  height: var(--transactions-btn-height-sm);
-  padding: 0 var(--transactions-space-sm);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-}
-
 /* 轮次头的标签芯片：宽度贴内容（原来是 128px 定宽的字段，见上），面板**往左铺** ——
  * 这枚芯片坐在右侧那串「标签 + 盈利徽标 + 金额 + 涨跌率」的最左端，默认那套 `left: 0` 会让面板
  * 从芯片右缘继续往右长：既压在盈利与金额上，长标签（上限 8 字 ≈ 135px 的面板）在窄窗口里还会
@@ -271,15 +104,6 @@
  * 右缘与芯片右缘只差 7 物理像素，左缘越过芯片左缘。 */
 .stock-round__tag {
   flex-shrink: 0;
-}
-
-.stock-round__tag .ui-select {
-  width: auto;
-}
-
-.stock-round__tag .ui-select__panel {
-  left: auto;
-  right: 0;
 }
 
 .stock-round__head .ui-btn,
@@ -308,16 +132,7 @@
  * ============================================ */
 
 /* ① 开场带 */
-.stock-summary-bar {
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
 /* ② 左栏轨道 */
-
-.stock-history__grid > *:first-child {
-  background-color: var(--transactions-color-minor-background);
-  border-right: 1px solid var(--transactions-color-divider);
-}
 
 /* ③ 右栏：轮次头作为段落抬头压一层软灰 */
 .stock-round__head {
@@ -333,34 +148,9 @@
  * 金额沿用既有的 `amount-income` / `amount-expense` 语义色类，不新增颜色。
  * ============================================ */
 
-.stock-history-card__name {
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-semibold);
-}
-
 /* 现价这一行是"参考值"：比标签清楚一点，但不与盈亏争大小 */
-.stock-history-card__value {
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-  letter-spacing: var(--transactions-tracking-amount);
-}
-
 /* 卡上最该被看见的数：盈亏金额 */
-.stock-history-card .amount-income,
-.stock-history-card .amount-expense {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-}
-
 /* 轮次 / 日期那行是脚注：压低一档，别与卡名抢 */
-.stock-history-card__foot {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
-
 /* ============================================
  * 成交记录 · 左栏：去掉"区域框"，让卡片与上方文案左对齐
  *
@@ -371,11 +161,6 @@
  *   · 去掉列表的左右内边距 → 卡片左缘 = 网格的 12px = 汇总条的 12px ✓ 与文案对齐；
  *   · 卡片自己保留软灰卡面（灰底已足够成为一张卡，再描边是双重表态）。
  * ============================================ */
-
-.stock-history__grid > *:first-child {
-  background: none;
-  border-right: 0;
-}
 
 /* ============================================
  * 成交记录 · 左栏卡片区：**照旧自己滚动，但不画滚动条**
@@ -388,11 +173,6 @@
  * scrollbar-ban-exempt —— 全站唯一一处刻意写 `::-webkit-scrollbar` 的地方
  * （`ScrollArea` 的规矩在这处按 `scrollbar-ban-exempt` 标记放行；别在别处照抄）。
  * ============================================ */
-
-.stock-history__cards::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
 
 /* ============================================
  * 记录 · 详情卡的开场带：一行"账本题注"
@@ -408,88 +188,7 @@
  * 高度 133 → 46px，与下方轮次列表只隔一条发丝线。
  * ============================================ */
 
-.stock-detail-head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-xl);
-  row-gap: var(--transactions-space-xs);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  padding: var(--transactions-space-md) var(--transactions-space-lg);
-  border-bottom: 1px solid var(--transactions-color-divider);
-}
-
-.stock-detail-head__id {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-sm);
-  min-width: 0;
-}
-
-.stock-detail-head__name {
-  font-size: var(--transactions-size-text-section);
-  font-weight: var(--transactions-weight-semibold);
-  line-height: var(--transactions-height-snug);
-  color: var(--transactions-color-text-major);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stock-detail-head__code {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-caption);
-  letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.stock-detail-head__stats {
-  display: flex;
-  align-items: baseline;
-  gap: var(--transactions-space-lg);
-  row-gap: var(--transactions-space-2xs);
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.stock-detail-head__pnl {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--transactions-space-xs);
-}
-
-.stock-detail-head__label {
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
 /* 题注里的主数字：比正文高一档、语义色，但仍与名字同一基线 */
-.stock-detail-head__amount {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--transactions-size-text-section);
-  font-weight: var(--transactions-weight-semibold);
-  line-height: var(--transactions-height-tight);
-  letter-spacing: var(--transactions-tracking-amount-lg);
-}
-
-.stock-detail-head__rate {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--transactions-size-text-caption);
-  letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-secondary);
-}
-
-.stock-detail-head__meta {
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--transactions-size-text-body-sm);
-  letter-spacing: var(--transactions-tracking-amount);
-  color: var(--transactions-color-text-secondary);
-  white-space: nowrap;
-}
-
 /* ============================================
  * 记录子功能 —— 按"填满区域"的结构重排
  *
@@ -504,51 +203,10 @@
  * 这里把它变成"占满 + 弹性列"，并用 `min-height: 0` 让内部滚动容器真的能滚。
  * ============================================ */
 
-.stock-history {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 /* 上栏：汇总数据 —— 自然高度，不参与伸缩 */
-.stock-history > .stock-summary-bar {
-  flex-shrink: 0;
-}
-
 /* 下栏：左右两栏占满剩余高度（两列等高） */
-.stock-history > .stock-history__grid {
-  flex: 1;
-  min-height: 0;
-  align-items: stretch;
-  overflow: hidden;
-}
-
 /* 左栏：卡片列表占满左栏并在内部滚动（滚动条已隐藏） */
-.stock-history__grid > *:first-child {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.stock-history__cards {
-  flex: 1;
-  min-height: 0;
-  max-height: none;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 /* 右栏：详情占满右栏，内部按"标题 / 数据 / 每轮交易"纵向排 */
-.stock-history__grid > *:last-child {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 /* 详情末端（每轮交易）吃掉剩余高度，滚动交给 OverlayScrollbars。 */
 .stock-rounds-scroll {
   flex: 1;
@@ -569,13 +227,6 @@
  * 内部沿用既有的分段：标题（发丝线）→ 数据 → 每轮交易（末端自己滚）。
  * ============================================ */
 
-.stock-history__grid > *:last-child {
-  background: var(--transactions-color-major-background);
-  border: 1px solid var(--transactions-color-divider);
-  border-radius: var(--transactions-radius-lg);
-  box-shadow: var(--transactions-shadow-sm);
-}
-
 /* ============================================
  * /impeccable layout —— 卡片布局的间距节奏
  *
@@ -592,10 +243,6 @@
  * ============================================ */
 
 /* ① 区域之间：16px → 24px */
-.stock-history > .stock-history__grid {
-  column-gap: var(--transactions-space-xl);
-}
-
 /* ============================================
  * 记录子功能：只保留**主卡片**的内边距，去掉嵌套叠加
  *
@@ -605,15 +252,6 @@
  * 这里把左右与底部归零，让内容直接落在主卡片那一层内边距上；
  * 纵向仍留出与「开场带」（汇总条下方那条发丝线）之间的间距。
  * ============================================ */
-
-.stock-history > .stock-summary-bar {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.stock-history > .stock-history__grid {
-  padding: var(--transactions-space-md) 0 0;
-}
 
 /* ---------------- 记录详情 ---------------- */
 
@@ -918,4 +556,3 @@
   margin: var(--transactions-space-xs) 0 0;
   font-size: var(--transactions-size-text-caption);
 }
-
