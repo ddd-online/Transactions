@@ -149,13 +149,6 @@
 }
 
 /* 确认弹窗的正文（删除事件不可恢复，顺带说明图片会一起删） */
-.key-event-confirm-text {
-  margin: 0;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-secondary);
-}
-
 .key-event-card:hover .key-event-card__delete,
 .key-event-card.is-active .key-event-card__delete {
   opacity: 1;
@@ -168,4 +161,3 @@
 .key-event-card__delete:focus-visible {
   opacity: 1;
 }
-

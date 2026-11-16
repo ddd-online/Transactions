@@ -130,20 +130,6 @@
   display: flex;
 }
 
-.key-event-gallery__actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-sm);
-  flex-shrink: 0;
-}
-
-.key-event-gallery__progress {
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  padding: var(--transactions-space-sm);
-  background-color: var(--transactions-color-minor-background);
-}
-
 .key-event-gallery__empty {
   flex: 1;
   display: flex;
@@ -451,31 +437,6 @@
 }
 
 /* 灯箱 */
-.key-event-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--transactions-color-window-border);
-  backdrop-filter: blur(2px);
-}
-
-.key-event-lightbox__toolbar {
-  position: absolute;
-  top: var(--transactions-space-lg);
-  right: var(--transactions-space-lg);
-  display: flex;
-  gap: var(--transactions-space-sm);
-}
-
-.key-event-lightbox__img {
-  max-width: 90vw;
-  max-height: 86vh;
-  transition: transform var(--transactions-transition-normal);
-}
-
 /* 描述区 */
 .key-event-description {
   display: flex;
@@ -524,16 +485,6 @@
   min-height: 0;
 }
 
-.key-event-textarea {
-  flex: 1;
-  min-height: 160px;
-}
-
-.key-event-textarea .ui-textarea__control {
-  height: 100%;
-  min-height: 160px;
-}
-
 /* 详情底栏：一条发丝线收住动作区，按钮右对齐。 */
 .key-event-detail__footer {
   display: flex;
@@ -545,4 +496,3 @@
   border-top: 1px solid var(--transactions-color-divider);
   flex-shrink: 0;
 }
-
