@@ -10,17 +10,6 @@
  * 外壳骨架
  * ============================================ */
 
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background-color: var(--transactions-color-major-background);
-  user-select: none;
-  -webkit-user-select: none;
-}
-
 /* 骨架用**网格**：左侧栏固定一列，内容区吃掉剩余宽度。
  * 侧栏不再收起，所以这里没有列宽动画。 */
 .app-shell-body {
@@ -780,4 +769,3 @@
   height: 12px;
   fill: currentColor;
 }
-
