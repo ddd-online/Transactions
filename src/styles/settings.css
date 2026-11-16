@@ -55,29 +55,11 @@
 /* 设置页的内容容器：**纵向不留内边距**（左右由统一规则给 16px）。
  * 每行自带 12px 上下内边距，所以第一行的分隔线正好落在工具栏那条线上 ——
  * 以前这里还有 16px 顶部内边距，工作空间那一行离工具栏的空档就显得很长。 */
-.st-panes {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
 /* 页签面板容器（`TabPane` 渲染出的 `.ui-tab-pane`）：
  *  1) **去掉它自带的 16px 上内边距** —— 实测这就是"工作空间上方空一截"的来源
  *     （`.st-panes` 已经是 0，间隔全在它身上；去掉后首行紧贴工具栏那条线）；
  *  2) **撑满分栏高度** —— 否则它是内容高度，"关于软件"这类需要垂直居中的面板
  *     分不到多余空间，内容只能停在顶部（实测面板高 483 vs 分栏高 876）。 */
-.st-panes > .ui-tab-pane {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
 /* 说明：`.st-pane-title`（「消费模板」「日记配置」「股票」那三个分区标题）已删除 ——
  * 页签本身已经说明当前在看哪一页，标题只是重复一遍。若将来某一页内容复杂到需要
  * 二级分区，再按"分区标题 + 发丝线"的样式新加，不要恢复到"标题重复页签"的老样子。 */
@@ -227,13 +209,6 @@
 
 /* 缩略图选择器在本页当正常按钮用：与同排的「切换」「恢复默认」同一档（36px），
  * 不跟着事件页详情底栏那套 28px 走。 */
-.st-card-action .image-picker__button {
-  height: var(--transactions-btn-height-md);
-  padding: 0 var(--transactions-btn-padding-h-md);
-  font-size: var(--transactions-btn-font-size-md);
-  border-radius: var(--transactions-radius-md);
-}
-
 /* ---------------------------------------------------------------- 日记配置 */
 
 .st-scope-row {
@@ -253,288 +228,10 @@
 
 /* 「代理」行的手动地址：协议 / 域名 / 端口三段一排。固定宽度免得把这一行撑变形，
  * 顺序与"拼回一条 URL"的读法一致（`http://` + 域名 + `:` + 端口）。 */
-.st-proxy-fields {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
-.st-proxy-fields__scheme {
-  width: 104px;
-}
-
-.st-proxy-fields__host {
-  width: 150px;
-}
-
-.st-proxy-fields__port {
-  width: 84px;
-}
-
 /* 「检测」按钮的宽度在**两种状态之间钉住**：`Button` 的 loading 会在文案前插一个 14px 图标
  * （外加 8px 间隙 = +22px），不钉住的话一点「检测」整排按钮就向左挤一下、松手又弹回来
  * （用户报的）。84px = 文案 28 + 图标 14 + 间隙 8 + 左右内边距 32 + 边框 2。 */
-.st-progress-card {
-  margin-top: var(--transactions-space-md);
-  padding: var(--transactions-space-md);
-  background-color: var(--transactions-color-major-background);
-  border: 1px solid var(--transactions-color-divider);
-  border-radius: var(--transactions-radius-md);
-}
-
-.st-summary-title {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-semibold);
-  color: var(--transactions-color-text-major);
-  margin-bottom: var(--transactions-space-sm);
-}
-
-.st-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--transactions-space-sm);
-  margin-bottom: var(--transactions-space-sm);
-}
-
-.st-summary-text {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body-sm);
-  font-weight: var(--transactions-weight-medium);
-  color: var(--transactions-color-text-major);
-}
-
-.st-summary-percent {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-}
-
-.st-bar-track {
-  width: 100%;
-  height: 4px;
-  border-radius: var(--transactions-radius-full);
-  background-color: var(--transactions-color-minor-background);
-  overflow: hidden;
-}
-
-.st-bar-fill {
-  height: 100%;
-  border-radius: var(--transactions-radius-full);
-  background-color: var(--transactions-color-primary);
-  transform-origin: left center;
-  transition: transform var(--transactions-transition-normal);
-}
-
-.st-bar-fill--done {
-  background-color: var(--transactions-color-success);
-}
-
-.st-bar-fill--error {
-  background-color: var(--transactions-color-expense);
-}
-
-.st-file-list {
-  display: flex;
-  flex-direction: column;
-  margin-top: var(--transactions-space-sm);
-  max-height: 280px;
-  overflow-y: auto;
-}
-
-.st-file-row {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  padding: var(--transactions-space-xs);
-  border-radius: var(--transactions-radius-sm);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-major);
-}
-
-.st-file-row:hover {
-  background-color: var(--transactions-color-hover-bg);
-}
-
-.st-file-row--importing {
-  background-color: var(--transactions-color-hover-bg);
-}
-
-.st-file-row--done {
-  background-color: var(--transactions-color-primary-tint);
-}
-
-.st-file-row--error {
-  background-color: var(--transactions-color-danger-hover-bg);
-}
-
-.st-file-dot {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.st-dot {
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: var(--transactions-radius-full);
-  background-color: var(--transactions-color-text-disabled);
-}
-
-.st-file-date {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--transactions-font-mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.st-file-status {
-  flex-shrink: 0;
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.st-file-status--done {
-  color: var(--transactions-color-success);
-}
-
-.st-file-status--importing {
-  color: var(--transactions-color-primary);
-}
-
-.st-file-status--error {
-  color: var(--transactions-color-expense);
-}
-
-.st-icon-done {
-  display: inline-flex;
-  align-items: center;
-  color: var(--transactions-color-success);
-}
-
-.st-icon-error {
-  display: inline-flex;
-  align-items: center;
-  color: var(--transactions-color-expense);
-}
-
 /* ---------------------------------------------------------------- 股票 */
-
-.st-tag-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-sm) var(--transactions-space-xl);
-  width: 100%;
-}
-
-.st-tag-head .st-card-info {
-  flex: 1;
-  min-width: min(320px, 100%);
-}
-
-.st-tag-action {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-}
-
-.st-tag-input {
-  width: 190px;
-}
-
-.st-tag-list {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-xs) var(--transactions-space-sm);
-}
-
-.st-tag-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--transactions-space-2xs);
-  padding: 2px var(--transactions-space-xs) 2px var(--transactions-space-sm);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-  background-color: var(--transactions-color-minor-background);
-  border-radius: var(--transactions-radius-sm);
-}
-
-.st-tag-item--default {
-  color: var(--transactions-color-primary);
-  background-color: var(--transactions-color-primary-tint);
-}
-
-.st-tag-item-name {
-  line-height: var(--transactions-height-snug);
-}
-
-.st-tag-item-default {
-  flex-shrink: 0;
-  padding-left: var(--transactions-space-xs);
-  border-left: 1px solid currentColor;
-  font-size: var(--transactions-size-text-small);
-  line-height: var(--transactions-height-snug);
-  opacity: 0.85;
-}
-
-.st-tag-item-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--transactions-color-text-tertiary);
-  cursor: pointer;
-  transition: color var(--transactions-transition-fast);
-}
-
-.st-tag-item-remove:hover:not(:disabled) {
-  color: var(--transactions-color-expense);
-}
-
-.st-tag-item-remove:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 1px;
-  border-radius: var(--transactions-radius-sm);
-}
-
-.st-tag-item-remove:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.st-tag-empty {
-  width: 100%;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-}
 
 /* 费用设置 */
 .st-panel-head {
@@ -542,12 +239,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
-}
-
-.st-panel-title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
 }
 
 /* 卡头右侧的动作组（本轮复盘模板：恢复默认 + 保存）：不参与收缩，宽度由按钮自己定 */
@@ -560,26 +251,6 @@
 
 /* 复盘模板的写作面：四行起（内置模板就三行，一打开要看全），
  * 长模板按内容长高 —— 与复盘弹窗同一个 `auto_grow` 机制。 */
-.st-review-template .ui-textarea__control {
-  min-height: 108px;
-  line-height: var(--transactions-height-relaxed);
-}
-
-.st-panel-title {
-  margin: 0;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  font-weight: var(--transactions-weight-semibold);
-  color: var(--transactions-color-text-major);
-}
-
-.st-panel-tip {
-  display: inline-flex;
-  align-items: center;
-  color: var(--transactions-color-text-tertiary);
-  cursor: help;
-}
-
 /* 费用说明是多行文案：`data-tooltip` 里带换行，按原样折行显示。
  *
  * 两个变体按**触发器在行内的位置**选（错选会让 320px 的气泡越出版心，压到侧栏或窗口外）：
@@ -589,64 +260,11 @@
  * ⚠ 这里**不能只写 `max-width`**：气泡是绝对定位的，包含块是那个 ~14px 宽的图标触发器，
  * shrink-to-fit 的可用宽度就等于它 —— 只给上限的话文案会被压成一列窄条（实测 bug）。
  * 宽度由基类 `.ui-tooltip::after` 的 `width: max-content` 铺开，这里只收上限与对齐。 */
-.st-fee-tip::after {
-  left: auto;
-  right: 0;
-  transform: none;
-  max-width: 320px;
-  line-height: var(--transactions-height-snug);
-}
-
 /* 标题行那个图标（在面板左半边）：**左对齐向右铺开**。
  * 若沿用右对齐，320px 的气泡会从图标往左伸出面板、压到侧栏上。 */
-.st-fee-tip--start::after {
-  left: 0;
-  right: auto;
-  transform: none;
-  max-width: 320px;
-  line-height: var(--transactions-height-snug);
-}
-
 /* 费用表单：网格列必须**允许收缩**（`min-width: 0`）。
  * 否则列内容（输入框 + "万分之/元/委托"后缀 + 提示图标）会撑到列宽之外，
  * 把 `.page-pane` 顶出横向滚动条 —— 实测 `ui-form-item` 272 → scroll 279。 */
-.st-fee-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--transactions-space-md) var(--transactions-space-lg);
-}
-
-.st-fee-form > * {
-  min-width: 0;
-}
-
-.st-fee-field {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-  min-width: 0;
-}
-
-.st-fee-field .ui-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.st-fee-addon {
-  flex-shrink: 0;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
-.st-modal-text {
-  margin: 0;
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
-  color: var(--transactions-color-text-major);
-  line-height: var(--transactions-height-relaxed);
-}
-
 /* ---------------------------------------------------------------- 关于软件 */
 
 /* 关于软件：内容在分栏里**水平垂直居中**。
@@ -733,14 +351,6 @@
 }
 
 /* 下载速度：按任务单增补的小字 */
-.st-update-speed {
-  font-family: var(--transactions-font-mono);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-tertiary);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--transactions-tracking-amount);
-}
-
 .st-update-success .st-update-icon {
   color: var(--transactions-color-income);
 }
