@@ -49,9 +49,7 @@ import {
 } from '../../electron/db/dao/stock-fund'
 import {
   getPosition,
-  getTrade,
   listAllTradesAsc,
-  listPositions as listPositionRows,
   listTradeHistories,
   listTradeRounds,
   listTradeRoundsByStock,
@@ -76,8 +74,6 @@ import {
 import { getTradeHistoryDetail } from '../../electron/services/stock-history'
 import {
   deleteTradeOrder,
-  previewRollback,
-  previewTradeChange,
   rollbackLatest,
   updateTradeFill,
 } from '../../electron/services/stock-trade-edit'
@@ -243,41 +239,6 @@ function positionOf(workspace: OpenedWorkspace, code: string): [number, number] 
     if (error instanceof AppError && error.status === 404) return [0, 0]
     throw error
   }
-}
-
-/**
- * 股票侧「库内容指纹」：各表行数 + 轮次的标签/复盘 + 本金。
- *
- * 用来断言「预演绝不落库」——只比对行数不够（改写复盘也看得见），所以把轮次元数据也带上。
- */
-function stockFingerprint(db: Db): string {
-  const tables = [
-    'stock_account',
-    'stock_position',
-    'stock_trade',
-    'stock_trade_round',
-    'stock_trade_history',
-    'stock_fund_record',
-    'stock_operation',
-  ]
-  let out = ''
-  for (const table of tables) {
-    const row = db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get() as unknown as {
-      count: number
-    }
-    out += `${table}=${row.count};`
-  }
-  const rounds = db
-    .prepare('SELECT id, round_no, tag, review FROM stock_trade_round ORDER BY id')
-    .all() as unknown as Array<{ id: string; round_no: number; tag: string; review: string }>
-  out += rounds
-    .map((row) => `${row.id}:${row.round_no}:${row.tag}:${row.review}`)
-    .join('|')
-  const principal = db
-    .prepare('SELECT COALESCE(SUM(principal_cents), 0) AS total FROM stock_account')
-    .get() as unknown as { total: number }
-  out += `;principal=${principal.total}`
-  return out
 }
 
 /** 插入一条每日复盘（`roundId = ''` 表示"当前还没归档的那一轮"）。 */
@@ -681,14 +642,14 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     expect(round2After?.review).toBe('阶段三：第二轮复盘（编辑后必须保留）')
   })
 
-  it('keeps the database intact after a preview and still replays later', () => {
+  it('keeps the database intact after edits and still replays later', () => {
     const workspace = newWorkspace()
     setPrincipal(workspace.db, LEDGER, 100_000_000)
 
-    const opens = createTradeOrder(workspace.db, {
+    createTradeOrder(workspace.db, {
       ...orderRequest({ fills: [fill(38_060, 1), fill(38_060, 1)], tradeTime: T1 }),
     })
-    const closes = createTradeOrder(workspace.db, {
+    createTradeOrder(workspace.db, {
       ...orderRequest({
         tradeType: STOCK_TRADE_CLOSE,
         fills: [fill(39_000, 2)],
@@ -697,39 +658,7 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     })
     expect(listAllTradesAsc(workspace.db, LEDGER)).toHaveLength(3)
 
-    // ① 非法预演：删建仓委托 → 只剩卖出，预演自己就该以 400 拒绝
-    const invalid = appError(() =>
-      previewTradeChange(workspace.db, {
-        ledgerId: LEDGER,
-        action: 'delete_order',
-        tradeId: '',
-        orderId: opens[0].orderId,
-        priceMilli: 0,
-        lots: 0,
-        tradeTime: 0,
-      }),
-    )
-    expect(invalid.status).toBe(400)
-    expect(invalid.message).toBe('卖出数量超过持仓（当前 0 股）')
-    expect(listAllTradesAsc(workspace.db, LEDGER)).toHaveLength(3)
-
-    // ② 合法预演：删清仓委托 → 删完仍是"持有 2 手"
-    const impact = previewTradeChange(workspace.db, {
-      ledgerId: LEDGER,
-      action: 'delete_order',
-      tradeId: '',
-      orderId: closes[0].orderId,
-      priceMilli: 0,
-      lots: 0,
-      tradeTime: 0,
-    })
-    expect(impact.positionAfter).toBe(200)
-
-    // 预演必须零副作用
-    expect(listAllTradesAsc(workspace.db, LEDGER)).toHaveLength(3)
-    expect(getPosition(workspace.db, LEDGER, CODE).quantity).toBe(0)
-
-    // ③ 之后再触发一次重放：必须成功，不能报超卖
+    // 之后再触发一次重放：必须成功，不能报超卖
     const target = listAllTradesAsc(workspace.db, LEDGER).find(
       (trade) => trade.tradeType === STOCK_TRADE_OPEN,
     )
@@ -986,78 +915,6 @@ describe('stock-trade-edit: edit / delete / replay', () => {
     expect(trades.every((trade) => trade.tradeType !== STOCK_TRADE_CLOSE)).toBe(true)
     const records = listAllFundRecords(workspace.db, LEDGER)
     expect(records.every((record) => record.eventType !== STOCK_EVENT_SELL)).toBe(true)
-  })
-
-  it('rolls back the impact preview and reports removed rounds', () => {
-    const workspace = newWorkspace()
-    const items = createXieheOrder(workspace)
-
-    const impact = previewTradeChange(workspace.db, {
-      ledgerId: LEDGER,
-      action: 'delete_order',
-      tradeId: '',
-      orderId: items[0].orderId,
-      priceMilli: 0,
-      lots: 0,
-      tradeTime: 0,
-    })
-    expect(impact.positionAfter).toBe(200)
-    expect(impact.removedRounds).toHaveLength(1)
-    expect(impact.removedRounds[0].roundNo).toBe(1)
-
-    // 预演必须回滚：持仓与交易保持原样
-    expect(listPositionRows(workspace.db, LEDGER).filter((row) => row.quantity > 0)).toHaveLength(0)
-    expect(listTradesAsc(workspace.db, LEDGER, ORDER_CODE)).toHaveLength(3)
-  })
-
-  it('previews an edit without writing', () => {
-    const workspace = newWorkspace()
-    setPrincipal(workspace.db, LEDGER, 10_000_000)
-    const trade = createTrade(workspace.db, singleRequest({ lots: 2, tradeTime: T1 }))
-    const before = getPosition(workspace.db, LEDGER, CODE)
-    const recordsBefore = listAllFundRecords(workspace.db, LEDGER)
-
-    const impact = previewTradeChange(workspace.db, {
-      ledgerId: LEDGER,
-      action: 'update_trade',
-      tradeId: trade.id,
-      orderId: '',
-      priceMilli: 110_000,
-      lots: 3,
-      tradeTime: T1,
-    })
-    expect(impact.stockCode).toBe(CODE)
-    expect(impact.stockName).toBe(NAME)
-    expect(impact.positionAfter).toBe(300)
-    // 110.00 元 × 300 股 = 33,000 元；佣金 7.77 + 过户费 0.33 = 8.10 元
-    expect(impact.cashAfter).toBe(10_000_000 - 3_300_810)
-
-    // 预演绝不能落库：成交、持仓、资金记录都是原样
-    expect(getTrade(workspace.db, trade.id).price).toBe(100_000)
-    expect(getPosition(workspace.db, LEDGER, CODE)).toMatchObject({
-      quantity: before.quantity,
-      totalCost: before.totalCost,
-    })
-    const recordsAfter = listAllFundRecords(workspace.db, LEDGER)
-    expect(recordsAfter).toHaveLength(recordsBefore.length)
-    expect(recordsAfter[0].amountChange).toBe(recordsBefore[0].amountChange)
-  })
-
-  it('rejects an unknown preview action with a 400', () => {
-    const workspace = newWorkspace()
-    const error = appError(() =>
-      previewTradeChange(workspace.db, {
-        ledgerId: LEDGER,
-        action: 'noop',
-        tradeId: '',
-        orderId: '',
-        priceMilli: 0,
-        lots: 0,
-        tradeTime: 0,
-      }),
-    )
-    expect(error.message).toBe('无效的预演动作')
-    expect(error.status).toBe(400)
   })
 
   it('validates ids, price and lots before touching the database', () => {
@@ -1354,23 +1211,6 @@ describe('stock-trade-edit: rollback', () => {
     expect(listOperations(workspace.db, LEDGER)).toHaveLength(0)
   })
 
-  it('previews a fund rollback without writing or popping the log', () => {
-    const workspace = newWorkspace()
-    setPrincipal(workspace.db, LEDGER, 1_000_000)
-    addPrincipal(workspace.db, LEDGER, 50_000)
-    const before = getAccountSummary(workspace.db, LEDGER)
-
-    const preview = previewRollback(workspace.db, LEDGER)
-    expect(preview.action).toBe('追加本金')
-    expect(preview.detail).toBe('¥500.00')
-    expect(preview.removedRounds).toEqual([])
-
-    // 资金类操作没有轮次影响，但预演同样不能改本金 / 删记录 / 弹栈
-    expect(getAccountSummary(workspace.db, LEDGER).principal).toBe(before.principal)
-    expect(countFundRecords(workspace.db, LEDGER)).toBe(1)
-    expect(listOperations(workspace.db, LEDGER)).toHaveLength(1)
-  })
-
   it('undoes a withdraw and an interest without touching the principal', () => {
     const workspace = newWorkspace()
     setPrincipal(workspace.db, LEDGER, 1_000_000)
@@ -1457,10 +1297,6 @@ describe('stock-trade-edit: rollback', () => {
     const rollbackError = appError(() => rollbackLatest(workspace.db, LEDGER))
     expect(rollbackError.status).toBe(400)
     expect(rollbackError.message).toBe('没有可回滚的操作')
-
-    const previewError = appError(() => previewRollback(workspace.db, LEDGER))
-    expect(previewError.status).toBe(400)
-    expect(previewError.message).toBe('没有可回滚的操作')
   })
 
   it('skips when the target is already gone', () => {
@@ -1477,28 +1313,6 @@ describe('stock-trade-edit: rollback', () => {
     expect(result.skipped).toBe(true)
     // 记录要弹掉，否则一条死记录会把栈顶卡住
     expect(listOperations(workspace.db, LEDGER)).toHaveLength(0)
-  })
-
-  it('lists lost rounds in the rollback preview and never writes', () => {
-    const workspace = newWorkspace()
-    setPrincipal(workspace.db, LEDGER, 10_000_000)
-    closeRoundHelper(workspace.db, CODE, NAME, 100_000, 120_000)
-    const detail = getTradeHistoryDetail(workspace.db, LEDGER, CODE)
-    updateTradeRoundReview(workspace.db, detail.rounds[0].id, '本轮复盘原文')
-
-    const operationsBefore = listOperations(workspace.db, LEDGER)
-    expect(operationsBefore).toHaveLength(2)
-    const fingerprint = stockFingerprint(workspace.db)
-
-    const preview = previewRollback(workspace.db, LEDGER)
-    expect(preview.action).toBe('清仓')
-    expect(preview.removedRounds).toHaveLength(1)
-    expect(preview.removedRounds[0].roundNo).toBe(1)
-    expect(preview.removedRounds[0].hasReview).toBe(true)
-
-    // 预演绝不落库：行数、轮次标签/复盘、本金一个都没动，记录也没被弹掉
-    expect(stockFingerprint(workspace.db)).toBe(fingerprint)
-    expect(listOperations(workspace.db, LEDGER)).toHaveLength(operationsBefore.length)
   })
 
   it('removes the round and its review when rolling back a close', () => {
@@ -1556,19 +1370,7 @@ describe('stock-trade-edit: day reviews follow the round through replay', () => 
     expect(replayed.rounds[0].dayReviews).toHaveLength(1)
     expect(replayed.rounds[0].dayReviews[0].review).toBe('盘前计划')
 
-    // 删除清仓委托 → 该轮不再成立：每日复盘与轮次一起消失；预演先说清楚
-    const preview = previewTradeChange(workspace.db, {
-      ledgerId: LEDGER,
-      action: 'delete_order',
-      tradeId: '',
-      orderId: closeTrade!.orderId,
-      priceMilli: 0,
-      lots: 0,
-      tradeTime: 0,
-    })
-    expect(preview.removedRounds).toHaveLength(1)
-    expect(preview.removedRounds[0].dayReviewCount).toBe(1)
-
+    // 删除清仓委托 → 该轮不再成立：每日复盘与轮次一起消失
     deleteTradeOrder(workspace.db, { ledgerId: LEDGER, orderId: closeTrade!.orderId })
     expect(() => getTradeHistoryDetail(workspace.db, LEDGER, CODE)).toThrow(AppError)
     expect(dayReviewRows(workspace.db, CODE)).toHaveLength(0)

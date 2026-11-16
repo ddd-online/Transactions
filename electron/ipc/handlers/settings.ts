@@ -27,12 +27,10 @@ export function createSettingsHandlers(
 ): Pick<
   HandlerMap,
   | 'config_get'
-  | 'config_file_path'
   | 'config_set_close_behavior'
   | 'config_set_appearance'
   | 'config_set_feature'
   | 'config_set_key_event_linked_open'
-  | 'config_set_sidebar_collapsed'
   | 'config_set_chart_summary_collapsed'
   | 'config_set_proxy'
   | 'proxy_resolve'
@@ -46,10 +44,6 @@ export function createSettingsHandlers(
   return {
     config_get() {
       return ctx.config.snapshot()
-    },
-
-    config_file_path() {
-      return ctx.config.path
     },
 
     config_set_close_behavior(request) {
@@ -90,14 +84,6 @@ export function createSettingsHandlers(
       return ctx.config.update((config) => {
         config.keyEventLinkedOpen = open
         return config.keyEventLinkedOpen
-      })
-    },
-
-    config_set_sidebar_collapsed(request) {
-      const collapsed = asObject(request).collapsed === true
-      return ctx.config.update((config) => {
-        config.sidebarCollapsed = collapsed
-        return config.sidebarCollapsed
       })
     },
 

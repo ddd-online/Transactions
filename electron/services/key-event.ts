@@ -54,10 +54,6 @@ export function queryKeyEventsByYear(db: Db, ledgerId: string, year: string): Ke
   return queryByYear(db, ledgerId, year)
 }
 
-export function queryDatesByYear(db: Db, ledgerId: string, year: string): string[] {
-  return queryByYear(db, ledgerId, year).map((event) => event.date)
-}
-
 /** 删除某天的事件：事务内删图片记录与事件，提交后清理磁盘文件。 */
 export function deleteKeyEventByDate(
   db: Db,

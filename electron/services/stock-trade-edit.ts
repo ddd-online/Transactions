@@ -7,8 +7,6 @@
  * * `update_trade_fill` / `update_trade_fill_tx`：改一笔成交，按当前费用重算**所属委托**的
  *   全部费用后分摊，再整体重放；
  * * `delete_trade_order` / `delete_trade_order_tx`：删掉整笔委托的成交后整体重放；
- * * `preview_trade_change` / `preview_rollback`：在事务里**真的执行改动**、比对前后差异，
- *   最后用哨兵错误强制回滚 —— **绝不落库**；
  * * `rebuild_trades` / `flush_replay_order`：按 `(trade_time, created_at, order_seq, id)` 的
  *   规范顺序重建成交的派生数据（持仓、轮次、历史集合、买卖资金记录、现金链）；
  * * `rollback_latest`：弹掉最新一条操作记录并撤销它（委托类复用"删委托"，资金类删那条
@@ -17,8 +15,6 @@
  * ## 事务边界
  *
  * 校验（空 ID / 价格 / 手数）在事务**之前**；改动 + 重放 + 现金链复算全在**同一个事务**里。
- * 预演与真写走的是同一段事务代码（预演只是最后抛哨兵回滚），所以"预演看到的影响"就是
- * "真做之后的影响"。
  *
  * ## 重放为什么是幂等的
  *
@@ -44,7 +40,7 @@
  *
  * 两条路径共用同一份**成交口径**（取整、减仓成本结转、品种兜底、轮次费用设置的转换、
  * 成交 → wire 形状、资金记录备注、404 判定）：它们都在 `shared/domain/trade-rules` 与
- * `shared/errors`。本文件只留自己独有的编排 —— 改一笔成交后整体重放、预演与回滚。
+ * `shared/errors`。本文件只留自己独有的编排 —— 改一笔成交后整体重放与回滚。
  * 新增一条成交规则请加在那个 module 里，不要在这里另写一份"字面相同"的实现。
  */
 
@@ -74,11 +70,7 @@ import type { StockFundRecord } from '../../shared/types/stock'
 import type { StockTradeDto } from '../../shared/types/stock-history'
 import type {
   DeleteTradeOrderRequest,
-  PreviewTradeChangeRequest,
   StockOperationRollbackDto,
-  StockOperationRollbackPreviewDto,
-  StockTradeImpactDto,
-  StockTradeImpactRoundDto,
   UpdateTradeFillRequest,
 } from '../../shared/types/stock-trade-edit'
 import type { Db } from '../db/driver'
@@ -90,7 +82,6 @@ import {
   getFundRecord,
   latestOperation,
   listAllFundRecords,
-  queryLatestFundRecord,
 } from '../db/dao/stock-fund'
 import {
   type StockPosition,
@@ -102,11 +93,9 @@ import {
   deleteTradeHistoriesByLedger,
   deleteTradeRound,
   deleteTradesByIds,
-  getPosition,
   getTrade,
   listAllTradesAsc,
   listPositions,
-  listTradeHistories,
   listTradeRounds,
   listTradesByOrder,
   updatePosition,
@@ -124,23 +113,6 @@ import {
   unixToDate,
 } from './stock-account'
 
-// ---------------------------------------------------------------- 预演哨兵
-
-/**
- * 预演专用哨兵文案：事务内执行改动后强制回滚，**不对外暴露**（与既有
- * `ERR_PREVIEW_ROLLBACK` 同一个字符串）。
- */
-const PREVIEW_ROLLBACK = 'trade impact preview rollback'
-
-/** 预演哨兵（不是 `AppError`：它不该被当成业务失败暴露给调用方）。 */
-function previewSentinel(): Error {
-  return new Error(PREVIEW_ROLLBACK)
-}
-
-function isPreviewSentinel(error: unknown): boolean {
-  return error instanceof Error && error.message === PREVIEW_ROLLBACK
-}
-
 // ---------------------------------------------------------------- 委托 / 轮次索引
 
 /** 成交所属委托 ID；存量数据未标记委托时以自身为独立委托（既有 `order_key_of`）。 */
@@ -153,70 +125,9 @@ function roundMetaKey(stockCode: string, roundNo: number): string {
   return `${stockCode}#${roundNo}`
 }
 
-// ---------------------------------------------------------------- 每日复盘（DAO 尚未移植）
-
-/**
- * 每个轮次的每日复盘条数（`round_id` 非空）：影响预演据此说明"这一轮会丢几篇"。
- *
- * 每日复盘的 DAO 尚未随本切片移植：按既有 DAO 的同一条 SQL（表 / 列 / 分组口径逐字一致）就地读。
- * 值一律 `?`，只拼接常量。
- */
-function countDayReviewsByRounds(db: Db, ledgerId: string): Array<[string, number]> {
-  const rows = db
-    .prepare(
-      'SELECT round_id, COUNT(*) AS count FROM stock_day_review ' +
-        "WHERE ledger_id = ? AND round_id <> '' GROUP BY round_id",
-    )
-    .all(ledgerId) as unknown as Array<{ round_id: string; count: number }>
-  return rows.map((row) => [row.round_id, row.count])
-}
-
 /** 轮次不再成立（重放删掉了它）时，该轮的每日复盘一起删掉 —— 与轮次复盘同命。 */
 function deleteDayReviewsByRound(db: Db, roundId: string): void {
   db.prepare('DELETE FROM stock_day_review WHERE round_id = ?').run(roundId)
-}
-
-// ---------------------------------------------------------------- 轮次索引 / 影响预演
-
-/**
- * 读取当前轮次索引（用于比对编辑 / 删除后哪些轮次会失效），既有 `round_meta_index`。
- *
- * 键 = `股票#轮次序号`；股票名取自交易历史集合（没有历史集合时为空串）。
- */
-function roundMetaIndex(
-  db: Db,
-  ledgerId: string,
-): Map<string, StockTradeImpactRoundDto> {
-  const rounds = listTradeRounds(db, ledgerId)
-  const histories = listTradeHistories(db, ledgerId)
-  const stockNames = new Map<string, string>()
-  for (const history of histories) {
-    stockNames.set(history.stockCode, history.stockName)
-  }
-  // 每轮的每日复盘条数：轮次不再成立时它们也会一起删，影响预演要说得出这件事。
-  const dayCounts = new Map<string, number>(countDayReviewsByRounds(db, ledgerId))
-
-  const index = new Map<string, StockTradeImpactRoundDto>()
-  for (const round of rounds) {
-    index.set(roundMetaKey(round.stockCode, round.roundNo), {
-      roundId: round.id,
-      stockCode: round.stockCode,
-      stockName: stockNames.get(round.stockCode) ?? '',
-      roundNo: round.roundNo,
-      tag: round.tag,
-      hasReview: round.review.trim() !== '',
-      dayReviewCount: dayCounts.get(round.id) ?? 0,
-    })
-  }
-  return index
-}
-
-/** 失效轮次的排序：股票代码 → 轮次序号（既有 `sort_by`）。 */
-function sortImpactRounds(rounds: StockTradeImpactRoundDto[]): void {
-  rounds.sort((left, right) => {
-    if (left.stockCode !== right.stockCode) return left.stockCode < right.stockCode ? -1 : 1
-    return left.roundNo - right.roundNo
-  })
 }
 
 // ---------------------------------------------------------------- 成交编辑 / 委托删除
@@ -723,129 +634,6 @@ export function deleteTradeOrder(db: Db, request: DeleteTradeOrderRequest): void
     if (error instanceof AppError) throw error
     throw new AppError('删除股票委托失败', { status: 500 })
   }
-}
-
-/**
- * 预演编辑 / 删除的影响：同一事务内执行改动并重放后强制回滚，
- * 返回变动后的持仓、可用现金，以及会因此失效（复盘丢失）的轮次。
- *
- * 既有 `preview_trade_change`：`update_trade` / `delete_order` 复用同一入口。
- */
-export function previewTradeChange(
-  db: Db,
-  request: PreviewTradeChangeRequest,
-): StockTradeImpactDto {
-  const { ledgerId, action, tradeId, orderId, priceMilli, lots, tradeTime } = request
-  let impact: StockTradeImpactDto | null = null
-
-  try {
-    db.transaction(() => {
-      const before = roundMetaIndex(db, ledgerId)
-
-      let stockCode: string
-      switch (action) {
-        case 'update_trade':
-          stockCode = updateTradeFillTx(db, ledgerId, tradeId, priceMilli, lots, tradeTime)
-          break
-        case 'delete_order':
-          stockCode = deleteTradeOrderTx(db, ledgerId, orderId)
-          break
-        default:
-          throw new AppError('无效的预演动作', { status: 400 })
-      }
-
-      const after = roundMetaIndex(db, ledgerId)
-
-      const preview: StockTradeImpactDto = {
-        stockCode,
-        stockName: '',
-        positionAfter: 0,
-        cashAfter: 0,
-        removedRounds: [],
-      }
-      try {
-        const position = getPosition(db, ledgerId, stockCode)
-        preview.positionAfter = position.quantity
-        preview.stockName = position.stockName
-      } catch (error) {
-        if (!isNotFoundError(error)) throw error
-      }
-      const latest = queryLatestFundRecord(db, ledgerId)
-      if (latest) preview.cashAfter = latest.cashBalance
-
-      for (const [key, meta] of before) {
-        if (after.has(key)) continue
-        preview.removedRounds.push(meta)
-      }
-      sortImpactRounds(preview.removedRounds)
-      if (preview.stockName === '') {
-        const round = preview.removedRounds.find((item) => item.stockCode === stockCode)
-        if (round) preview.stockName = round.stockName
-      }
-      impact = preview
-      // 哨兵错误：强制回滚，预演绝不落库
-      throw previewSentinel()
-    })
-  } catch (error) {
-    if (!isPreviewSentinel(error)) throw error
-  }
-
-  if (!impact) throw new AppError('预演失败', { status: 400 })
-  return impact
-}
-
-/**
- * 回滚预演：要撤销的是哪一次操作、会不会让某些轮次失效（复盘随之丢失）。
- *
- * 与 {@link previewTradeChange} 同一手法：委托类操作在事务里**真的执行撤销**、比对前后的
- * 轮次索引，最后返回哨兵错误强制回滚 —— **预演绝不落库**。
- * 资金类操作没有轮次影响，只回填操作名与摘要。
- */
-export function previewRollback(
-  db: Db,
-  ledgerId: string,
-): StockOperationRollbackPreviewDto {
-  let preview: StockOperationRollbackPreviewDto | null = null
-
-  try {
-    db.transaction(() => {
-      const operation = latestOperation(db, ledgerId)
-      if (!operation) {
-        throw new AppError('没有可回滚的操作', { status: 400 })
-      }
-      const previewForCall: StockOperationRollbackPreviewDto = {
-        action: operation.action,
-        detail: operation.detail,
-        removedRounds: [],
-      }
-      if (operation.kind === STOCK_OP_KIND_ORDER) {
-        const before = roundMetaIndex(db, ledgerId)
-        // 目标可能已经被别的改动删掉了（例如手动删除整笔委托）：那不是错误，
-        // 实际回滚会走"跳过"路径，预演里也就没有失效轮次
-        let deleted = true
-        try {
-          deleteTradeOrderTx(db, ledgerId, operation.targetId)
-        } catch {
-          deleted = false
-        }
-        if (deleted) {
-          const after = roundMetaIndex(db, ledgerId)
-          for (const [key, meta] of before) {
-            if (!after.has(key)) previewForCall.removedRounds.push(meta)
-          }
-          sortImpactRounds(previewForCall.removedRounds)
-        }
-      }
-      preview = previewForCall
-      // 哨兵错误：强制回滚，预演绝不落库
-      throw previewSentinel()
-    })
-  } catch (error) {
-    if (!isPreviewSentinel(error)) throw error
-  }
-
-  if (!preview) throw new AppError('没有可回滚的操作', { status: 400 })
-  return preview
 }
 
 /**

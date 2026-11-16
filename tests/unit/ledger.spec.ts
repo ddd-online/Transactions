@@ -10,7 +10,6 @@ import {
   createLedger,
   deleteLedgerById,
   listAllLedgers,
-  modifyLedger,
   queryLedgerById,
 } from '../../electron/services/ledger'
 import { AppError } from '../../shared/errors'
@@ -31,7 +30,7 @@ afterEach(() => {
 })
 
 describe('ledger service', () => {
-  it('creates, lists, updates and queries ledgers', () => {
+  it('creates, lists and queries ledgers', () => {
     const workspace = openWorkspace(workspaceDirectory())
     const first = createLedger(workspace.db, '默认账本', '说明')
     const second = createLedger(workspace.db, '第二个', '')
@@ -40,9 +39,8 @@ describe('ledger service', () => {
     expect(all.map((ledger) => ledger.id)).toEqual([first, second])
     expect(all[0]?.name).toBe('默认账本')
 
-    modifyLedger(workspace.db, first, '改名', '新说明')
-    expect(queryLedgerById(workspace.db, first).name).toBe('改名')
-    expect(queryLedgerById(workspace.db, first).description).toBe('新说明')
+    expect(queryLedgerById(workspace.db, first).name).toBe('默认账本')
+    expect(queryLedgerById(workspace.db, first).description).toBe('说明')
   })
 
   it('reports a missing ledger as 404', () => {

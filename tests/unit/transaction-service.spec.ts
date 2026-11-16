@@ -10,11 +10,9 @@ import {
   createTr,
   deleteTrById,
   linkToKeyEvent,
-  queryLinkedByDate,
   queryTrsForChart,
   queryTrsForPieChart,
   queryTrsOnCondition,
-  unlinkFromKeyEvent,
 } from '../../electron/services/transaction-record'
 import type {
   ChartQueryRequest,
@@ -297,7 +295,7 @@ describe('transaction service', () => {
     expect(links.count).toBe(0)
   })
 
-  it('links to a key event, auto-creates it once, and unlinks', () => {
+  it('links to a key event and auto-creates it once', () => {
     const db = database()
     const id = createTr(db, dto(100, 'expense', '餐饮美食', 10, ['三餐']))
 
@@ -306,16 +304,12 @@ describe('transaction service', () => {
       count: number
     }
     expect(events.count).toBe(1)
-    expect(queryLinkedByDate(db, 'l1', '2026-01-01')).toHaveLength(1)
 
     linkToKeyEvent(db, id, '2026-01-01')
     const again = db.prepare('SELECT COUNT(*) AS count FROM key_event').get() as {
       count: number
     }
     expect(again.count).toBe(1)
-
-    unlinkFromKeyEvent(db, id)
-    expect(queryLinkedByDate(db, 'l1', '2026-01-01')).toHaveLength(0)
   })
 
   it('reports a missing transaction with the stable link message', () => {
@@ -323,6 +317,5 @@ describe('transaction service', () => {
     expect(() => linkToKeyEvent(db, 'absent', '2026-01-01')).toThrow(
       'transaction not found: absent',
     )
-    expect(() => unlinkFromKeyEvent(db, 'absent')).toThrow('transaction not found: absent')
   })
 })

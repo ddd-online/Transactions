@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-import { AppError, isNotFoundError } from '../../shared/errors'
+import { AppError } from '../../shared/errors'
 import { TRANSACTION_TYPES } from '../../shared/domain/consts'
 import type { ChartLine, TransactionRecord, TrTag } from '../../shared/domain/models'
 import { transactionTypeText } from '../../shared/domain/format'
@@ -20,7 +20,6 @@ import {
   create as createRecord,
   createBatch as createRecords,
   deleteById as deleteRecord,
-  queryByKeyEventDate,
   queryById as queryRecordById,
   queryChartLineData,
   queryChartPieData,
@@ -322,34 +321,6 @@ export function linkToKeyEvent(db: Db, transactionId: string, date: string): voi
     logError(`关联交易 ${transactionId} 到关键事件 ${date} 失败: ${String(error)}`)
     throw error instanceof AppError ? error : new AppError('关联关键事件失败', { status: 500 })
   }
-}
-
-/** 解除关键事件关联（把 key_event_date 清空）。 */
-export function unlinkFromKeyEvent(db: Db, transactionId: string): void {
-  try {
-    queryRecordById(db, transactionId)
-    updateKeyEventDate(db, transactionId, '')
-  } catch (error) {
-    if (isNotFoundError(error)) {
-      throw new AppError(`transaction not found: ${transactionId}`, { status: 500 })
-    }
-    throw error instanceof AppError ? error : new AppError('解除关联失败', { status: 500 })
-  }
-}
-
-/** 某账本下关联到指定日期的全部记录（含标签）。 */
-export function queryLinkedByDate(db: Db, ledgerId: string, date: string): TransactionRecordDto[] {
-  const records = queryByKeyEventDate(db, ledgerId, date)
-  const tagMap = queryByTrIds(
-    db,
-    records.map((record) => record.transactionId),
-  )
-  return records.map((record) =>
-    dtoFromRecord(
-      record,
-      (tagMap[record.transactionId] ?? []).map((tag) => tag.tag),
-    ),
-  )
 }
 
 /** 由实际桶范围生成连续时间轴；月 `YYYY-MM`、年 `YYYY`。 */

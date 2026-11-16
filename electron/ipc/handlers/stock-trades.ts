@@ -10,8 +10,6 @@ import { createTradeOrderWithRoundFee } from '../../services/stock-trade-write'
 import { archiveStockData, resetStockData } from '../../services/stock-lifecycle'
 import {
   deleteTradeOrder,
-  previewRollback,
-  previewTradeChange,
   rollbackLatest,
   updateTradeFill,
 } from '../../services/stock-trade-edit'
@@ -27,8 +25,6 @@ export function createStockTradeHandlers(
   | 'stock_archive'
   | 'stock_trade_update'
   | 'stock_trade_order_delete'
-  | 'stock_trade_impact'
-  | 'stock_operation_preview'
   | 'stock_operation_rollback'
 > {
   return {
@@ -113,27 +109,6 @@ export function createStockTradeHandlers(
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       deleteTradeOrder(workspaceDb(), { ledgerId, orderId })
       return null
-    },
-
-    stock_trade_impact(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return previewTradeChange(workspaceDb(), {
-        ledgerId,
-        action: String(raw.action ?? ''),
-        tradeId: String(raw.trade_id ?? ''),
-        orderId: String(raw.order_id ?? ''),
-        priceMilli: priceYuanToMilli(Number(raw.price ?? 0)),
-        lots: Math.trunc(Number(raw.lots ?? 0)),
-        tradeTime: Math.trunc(Number(raw.trade_time ?? 0)),
-      })
-    },
-
-    stock_operation_preview(request) {
-      const ledgerId = String(asObject(request).ledger_id ?? '')
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return previewRollback(workspaceDb(), ledgerId)
     },
 
     stock_operation_rollback(request) {

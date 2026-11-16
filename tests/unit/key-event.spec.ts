@@ -10,7 +10,6 @@ import {
   deleteImage,
   deleteKeyEventByDate,
   listImages,
-  queryDatesByYear,
   queryKeyEventByDate,
   queryKeyEventsByYear,
   upsertKeyEvent,
@@ -75,7 +74,6 @@ describe('key event service', () => {
 
     expect(queryKeyEventsByYear(workspace.db, 'l1', '2026')).toHaveLength(1)
     expect(queryKeyEventsByYear(workspace.db, 'l1', '2025')).toHaveLength(1)
-    expect(queryDatesByYear(workspace.db, 'l2', '2026')).toEqual(['2026-01-01'])
     expect(queryKeyEventByDate(workspace.db, 'l2', '2026-01-01').title).toBe('B')
   })
 

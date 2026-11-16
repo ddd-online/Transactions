@@ -33,11 +33,7 @@ import type { StockLimitLadder } from './types/stock-limit'
 import type { TransactionTemplateDto } from './types/template'
 import type { FileSaveResponse, ProxyResolveResponse, ProxyTestResponse } from './types/shell'
 import type { UpdateInstallResponse, UpdateSnapshot } from './domain/update'
-import type {
-  StockOperationRollbackDto,
-  StockOperationRollbackPreviewDto,
-  StockTradeImpactDto,
-} from './types/stock-trade-edit'
+import type { StockOperationRollbackDto } from './types/stock-trade-edit'
 import type {
   TodoCardDto,
   TodoHistoryDto,
@@ -47,7 +43,6 @@ import type {
 import type {
   ChartPieResponse,
   ChartQueryResponse,
-  TransactionRecordDto,
   TrQueryResult,
 } from './types/transaction'
 import type { Ledger } from './domain/models'
@@ -121,7 +116,6 @@ const updateChartSchema = z.object({
 export const commandSchemas = {
   app_info: z.object({ field: z.enum(['name', 'version', 'isDev']) }),
   config_get: z.undefined(),
-  config_file_path: z.undefined(),
   workspace_get: z.undefined(),
   workspace_open: z.object({
     workspaceDir: z.string(),
@@ -142,15 +136,8 @@ export const commandSchemas = {
   }),
   /** M0 冒烟用：写一张 1×1 PNG 到工作空间资产目录，验证 trasset://。 */
   debug_write_asset: z.undefined(),
-  debug_echo: z.object({ message: z.string() }),
   ledger_list: z.object({ id: z.string() }),
   ledger_create: z.object({
-    name: z.string().optional(),
-    description: z.string().optional(),
-  }),
-  ledger_get: z.object({ id: z.string() }),
-  ledger_update: z.object({
-    id: z.string(),
     name: z.string().optional(),
     description: z.string().optional(),
   }),
@@ -163,7 +150,6 @@ export const commandSchemas = {
     ledgerId: z.string().optional(),
   }),
   config_set_key_event_linked_open: z.object({ open: z.boolean() }),
-  config_set_sidebar_collapsed: z.object({ collapsed: z.boolean() }),
   config_set_chart_summary_collapsed: z.object({ collapsed: z.boolean() }),
   config_set_proxy: z.object({ mode: z.string(), url: z.string() }),
   category_list: z.object({
@@ -226,8 +212,6 @@ export const commandSchemas = {
   tr_batch_create: z.array(transactionRecordDtoSchema),
   tr_delete: z.object({ id: z.string() }),
   tr_link: z.object({ transaction_id: z.string(), date: z.string() }),
-  tr_unlink: z.object({ transaction_id: z.string() }),
-  tr_linked_by_date: z.object({ ledger_id: z.string(), date: z.string() }),
   chart_create: createChartSchema,
   chart_delete: z.object({
     chartId: z.string().optional(),
@@ -258,7 +242,6 @@ export const commandSchemas = {
     month: z.number().nullable().optional(),
   }),
   key_event_list_by_year: z.object({ ledger_id: z.string(), year: z.string() }),
-  key_event_dates_by_year: z.object({ ledger_id: z.string(), year: z.string() }),
   key_event_get: z.object({ ledger_id: z.string(), date: z.string() }),
   key_event_upsert: z.object({
     ledger_id: z.string(),
@@ -448,16 +431,6 @@ export const commandSchemas = {
     ledger_id: z.string(),
     order_id: z.string().default(''),
   }),
-  stock_trade_impact: z.object({
-    ledger_id: z.string(),
-    action: z.string().default(''),
-    trade_id: z.string().default(''),
-    order_id: z.string().default(''),
-    price: z.number().default(0),
-    lots: z.number().default(0),
-    trade_time: z.number().default(0),
-  }),
-  stock_operation_preview: z.object({ ledger_id: z.string() }),
   stock_operation_rollback: z.object({ ledger_id: z.string() }),
   update_check: z.object({}),
   update_download: z.object({
@@ -517,7 +490,6 @@ export const commandSchemas = {
     ledgerId: z.string().optional(),
     sortOrder: z.number().default(0),
   }),
-  workspace_set: z.object({ workspaceDir: z.string() }),
   workspace_icon_get: z.object({}),
   workspace_icon_set: z.object({ data: z.string().default('') }),
   proxy_test: z.object({ mode: z.string(), url: z.string().default('') }),
@@ -538,7 +510,6 @@ export const commandSchemas = {
   }),
   /** 渲染层把「正在退出」画到屏幕上之后的回执（退出流程据此继续） */
   app_quit_ready: z.object({}),
-  devtools_get_state: z.object({}),
   devtools_toggle: z.object({ enabled: z.boolean() }),
 } as const
 
@@ -549,7 +520,6 @@ export type CommandReq<N extends CommandName> = z.infer<(typeof commandSchemas)[
 export interface CommandResponses {
   app_info: string
   config_get: ConfigSnapshot
-  config_file_path: string
   workspace_get: string
   workspace_open: null
   asset_url: string
@@ -557,17 +527,13 @@ export interface CommandResponses {
   window_control: null
   clipboard_write_text: null
   debug_write_asset: string
-  debug_echo: string
   ledger_list: Ledger[]
   ledger_create: string
-  ledger_get: Ledger
-  ledger_update: null
   ledger_delete: null
   config_set_close_behavior: null
   config_set_appearance: null
   config_set_feature: FeatureFlags
   config_set_key_event_linked_open: boolean
-  config_set_sidebar_collapsed: boolean
   config_set_chart_summary_collapsed: boolean
   config_set_proxy: ProxySetting
   category_list: CategoryDto[]
@@ -586,8 +552,6 @@ export interface CommandResponses {
   tr_batch_create: number
   tr_delete: null
   tr_link: string
-  tr_unlink: string
-  tr_linked_by_date: TransactionRecordDto[]
   chart_create: ChartDto
   chart_delete: null
   chart_list: ChartDto[]
@@ -601,7 +565,6 @@ export interface CommandResponses {
   diary_import_file: DiaryEntry
   diary_export: DiaryExportResult
   key_event_list_by_year: KeyEvent[]
-  key_event_dates_by_year: string[]
   key_event_get: KeyEvent
   key_event_upsert: string
   key_event_delete: null
@@ -653,8 +616,6 @@ export interface CommandResponses {
   stock_archive: string
   stock_trade_update: StockTradeDto
   stock_trade_order_delete: null
-  stock_trade_impact: StockTradeImpactDto
-  stock_operation_preview: StockOperationRollbackPreviewDto
   stock_operation_rollback: StockOperationRollbackDto
   update_check: UpdateSnapshot
   update_download: UpdateSnapshot
@@ -673,7 +634,6 @@ export interface CommandResponses {
   template_list: TransactionTemplateDto[]
   template_delete: null
   template_update_sort: null
-  workspace_set: null
   workspace_icon_get: string
   workspace_icon_set: string
   proxy_test: ProxyTestResponse
@@ -687,7 +647,6 @@ export interface CommandResponses {
   config_set_auto_backup: ConfigSnapshot
   dialog_open_file: DialogOpenResponse
   app_quit_ready: null
-  devtools_get_state: boolean
   devtools_toggle: boolean
 }
 

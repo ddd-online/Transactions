@@ -16,7 +16,6 @@ export function createEventHandlers(
 ): Pick<
   HandlerMap,
   | 'key_event_list_by_year'
-  | 'key_event_dates_by_year'
   | 'key_event_get'
   | 'key_event_upsert'
   | 'key_event_delete'
@@ -32,15 +31,6 @@ export function createEventHandlers(
       if (!year) throw new AppError('missing year parameter', { status: 400 })
       if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
       return keyEventService.queryKeyEventsByYear(workspaceDb(), ledgerId, year)
-    },
-
-    key_event_dates_by_year(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      const year = String(raw.year ?? '')
-      if (!year) throw new AppError('missing year parameter', { status: 400 })
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return keyEventService.queryDatesByYear(workspaceDb(), ledgerId, year)
     },
 
     key_event_get(request) {

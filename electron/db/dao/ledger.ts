@@ -65,20 +65,6 @@ export function createLedger(
   ).run(ledger.id, ledger.name, ledger.description, now, now)
 }
 
-/** 修改名称/描述并刷新 updated_at；不存在的 id 视为成功（命中 0 行不报错）。 */
-export function updateLedger(
-  db: Db,
-  ledger: { id: string; name: string; description: string },
-  now = nowUnix(),
-): void {
-  db.prepare('UPDATE ledger SET name = ?, description = ?, updated_at = ? WHERE id = ?').run(
-    ledger.name,
-    ledger.description,
-    now,
-    ledger.id,
-  )
-}
-
 export function listLedgers(db: Db): Ledger[] {
   const rows = db
     .prepare(`SELECT ${COLUMNS} FROM ledger ORDER BY created_at, rowid`)

@@ -12,7 +12,6 @@ import {
   createLedger,
   deleteLedgerById,
   listAllLedgers,
-  modifyLedger,
   queryLedgerById,
 } from '../../services/ledger'
 import * as transactionService from '../../services/transaction-record'
@@ -25,16 +24,12 @@ export function createRecordHandlers(
   HandlerMap,
   | 'ledger_list'
   | 'ledger_create'
-  | 'ledger_get'
-  | 'ledger_update'
   | 'ledger_delete'
   | 'tr_query'
   | 'tr_create'
   | 'tr_batch_create'
   | 'tr_delete'
   | 'tr_link'
-  | 'tr_unlink'
-  | 'tr_linked_by_date'
 > {
   return {
     ledger_list(request) {
@@ -62,24 +57,6 @@ export function createRecordHandlers(
       }
       const description = typeof raw.description === 'string' ? raw.description : ''
       return createLedger(workspaceDb(), raw.name, description)
-    },
-
-    ledger_get(request) {
-      const id = String(asObject(request).id ?? '')
-      if (!id) throw new AppError('missing ledger id', { status: 400 })
-      return queryLedgerById(workspaceDb(), id)
-    },
-
-    ledger_update(request) {
-      const raw = asObject(request)
-      const id = String(raw.id ?? '')
-      if (!id) throw new AppError('missing ledger id', { status: 400 })
-      if (typeof raw.name !== 'string') {
-        throw new AppError('name在请求体中不存在', { status: 400 })
-      }
-      const description = typeof raw.description === 'string' ? raw.description : ''
-      modifyLedger(workspaceDb(), id, raw.name, description)
-      return null
     },
 
     ledger_delete(request) {
@@ -126,24 +103,6 @@ export function createRecordHandlers(
       }
       transactionService.linkToKeyEvent(workspaceDb(), transactionId, date)
       return date
-    },
-
-    tr_unlink(request) {
-      const transactionId = String(asObject(request).transaction_id ?? '')
-      if (!transactionId) {
-        throw new AppError('transaction_id is required', { status: 400 })
-      }
-      transactionService.unlinkFromKeyEvent(workspaceDb(), transactionId)
-      return transactionId
-    },
-
-    tr_linked_by_date(request) {
-      const raw = asObject(request)
-      const ledgerId = String(raw.ledger_id ?? '')
-      const date = String(raw.date ?? '')
-      if (!date) throw new AppError('date is required', { status: 400 })
-      if (!ledgerId) throw new AppError('ledger_id is required', { status: 400 })
-      return transactionService.queryLinkedByDate(workspaceDb(), ledgerId, date)
     },
   }
 }

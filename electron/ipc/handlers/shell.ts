@@ -11,7 +11,7 @@ import { app, clipboard, dialog } from 'electron'
 
 import { addRecentWorkspace } from '../../../shared/domain/backup'
 import { AppError, errorMessage, workspaceNotOpened } from '../../../shared/errors'
-import { DEVTOOLS_STATE_CHANGED, WORKSPACE_CHANGED } from '../../../shared/events'
+import { WORKSPACE_CHANGED } from '../../../shared/events'
 import { currentWorkspace, openWorkspace } from '../../db'
 import { logInfo, logWarn } from '../../logging'
 import { removeWorkspaceIcon, resolveAsset, saveWorkspaceIcon, workspaceIconRelative } from '../../services/assets'
@@ -38,14 +38,11 @@ export function createShellHandlers(
   | 'app_quit_ready'
   | 'clipboard_write_text'
   | 'debug_write_asset'
-  | 'debug_echo'
-  | 'workspace_set'
   | 'workspace_icon_get'
   | 'workspace_icon_set'
   | 'workspace_open_dir'
   | 'dialog_open_file'
   | 'file_save_image'
-  | 'devtools_get_state'
   | 'devtools_toggle'
 > {
   return {
@@ -146,18 +143,6 @@ export function createShellHandlers(
       return relativePath
     },
 
-    debug_echo(request) {
-      return String(asObject(request).message ?? '')
-    },
-
-    workspace_set(request) {
-      const workspaceDir = String(asObject(request).workspaceDir ?? '')
-      ctx.config.update((config) => {
-        config.workspaceDir = workspaceDir
-      })
-      return null
-    },
-
     workspace_icon_get() {
       const workspace = currentWorkspace()
       return workspace ? workspaceIconRelative(workspace.directory) : ''
@@ -224,10 +209,6 @@ export function createShellHandlers(
       }
     },
 
-    devtools_get_state() {
-      return getMainWindow()?.webContents.isDevToolsOpened() ?? false
-    },
-
     async devtools_toggle(request) {
       const enabled = asObject(request).enabled === true
       const window = getMainWindow()
@@ -244,7 +225,6 @@ export function createShellHandlers(
       else window.webContents.closeDevTools()
       await settled
       const opened = window.webContents.isDevToolsOpened()
-      sendEvent(DEVTOOLS_STATE_CHANGED, opened)
       return opened
     },
   }

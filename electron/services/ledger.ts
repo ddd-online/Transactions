@@ -8,7 +8,6 @@ import {
   deleteLedgerCascade,
   findLedger,
   listLedgers,
-  updateLedger as updateLedgerRow,
 } from '../db/dao/ledger'
 import { logError } from '../logging'
 
@@ -21,20 +20,6 @@ export function createLedger(db: Db, name: string, description: string): string 
   } catch (error) {
     logError(`创建账本失败, name: ${name}, err: ${String(error)}`)
     throw new AppError('创建账本失败', { status: 500 })
-  }
-}
-
-export function modifyLedger(
-  db: Db,
-  ledgerId: string,
-  name: string,
-  description: string,
-): void {
-  try {
-    updateLedgerRow(db, { id: ledgerId, name, description })
-  } catch (error) {
-    logError(`修改账本失败, id: ${ledgerId}, err: ${String(error)}`)
-    throw new AppError('修改账本失败', { status: 500 })
   }
 }
 

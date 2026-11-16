@@ -27,8 +27,6 @@ describe('command catalog', () => {
     expect(commandSchemas.ledger_list.safeParse({}).success).toBe(false)
     expect(commandSchemas.ledger_create.safeParse({ name: '账本' }).success).toBe(true)
     expect(commandSchemas.ledger_create.safeParse({}).success).toBe(true)
-    expect(commandSchemas.ledger_get.safeParse({ id: 'l1' }).success).toBe(true)
-    expect(commandSchemas.ledger_update.safeParse({ id: 'l1', name: '新名' }).success).toBe(true)
     expect(commandSchemas.ledger_delete.safeParse({ id: 'l1' }).success).toBe(true)
   })
 
@@ -57,9 +55,6 @@ describe('command catalog', () => {
     expect(commandSchemas.tr_query.safeParse({ ledgerId: 'l1' }).success).toBe(true)
     expect(commandSchemas.tr_delete.safeParse({ id: 't1' }).success).toBe(true)
     expect(commandSchemas.tr_link.safeParse({ transaction_id: 't1', date: '2026-01-01' }).success).toBe(
-      true,
-    )
-    expect(commandSchemas.tr_linked_by_date.safeParse({ ledger_id: 'l1', date: '2026-01-01' }).success).toBe(
       true,
     )
     expect(commandSchemas.tr_chart_data.safeParse({ ledgerId: 'l1', lines: [] }).success).toBe(true)
@@ -205,13 +200,6 @@ describe('command catalog', () => {
       commandSchemas.stock_trade_order_delete.safeParse({ ledger_id: 'l1', order_id: 'o1' })
         .success,
     ).toBe(true)
-    expect(
-      commandSchemas.stock_trade_impact.safeParse({
-        ledger_id: 'l1',
-        action: 'delete_order',
-        order_id: 'o1',
-      }).success,
-    ).toBe(true)
     expect(commandSchemas.stock_operation_rollback.safeParse({ ledger_id: 'l1' }).success).toBe(true)
   })
 
@@ -293,7 +281,6 @@ describe('command catalog', () => {
   })
 
   it('validates shell/icon/devtools requests', () => {
-    expect(commandSchemas.workspace_set.safeParse({ workspaceDir: 'D:/ws' }).success).toBe(true)
     expect(commandSchemas.workspace_icon_set.safeParse({ data: '' }).success).toBe(true)
     expect(commandSchemas.file_save_image.safeParse({ relativePath: 'a.png' }).success).toBe(true)
     expect(commandSchemas.devtools_toggle.safeParse({ enabled: true }).success).toBe(true)
