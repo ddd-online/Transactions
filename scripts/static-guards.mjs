@@ -125,6 +125,11 @@ check('发布说明版本与构建脚本', () => {
   // 发布脚本必须按 tag 切出这一节再交给 gh，文件攒了历史也不能整份发出去
   const release = read('build/release.ps1')
   assert(release.includes("'--notes-file', $releaseBody"), 'release.ps1 必须用切出的单版本正文发布')
+  // 发布成功后必须清掉本地产物：output/ 里的安装包会按版本累积（曾攒到 2.6GB 十四份）
+  assert(
+    release.includes('clean.ps1'),
+    'release.ps1 必须在发布成功后调用 build/clean.ps1 清理产物（-SkipClean 可跳过）',
+  )
   return `v${packageJson.version}`
 })
 

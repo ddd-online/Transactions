@@ -83,6 +83,7 @@ E2E 默认 **4 并发**；`$env:TRANSACTIONS_E2E_WORKERS=1; pnpm test:e2e` 退�
 ## 发布纪律
 
 只有用户明确要求发布时才运行 `build/release.ps1` 或创建 GitHub Release。日常改动只构建、测试、提交、推送。
+发布成功后脚本会自动清空本地 `output/` 产物；要保留安装包排查时加 `-SkipClean`。
 
 ## License
 

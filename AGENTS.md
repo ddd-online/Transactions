@@ -52,6 +52,8 @@ pnpm package          # NSIS 安装包，产物在 output/
 - **`build/release_notes.md` 只留本次要发的版本那一节**：GitHub release 正文和应用内「关于 /
   更新」的更新日志都直接读它，历史条目留在各自版本的 release 里。静态护栏会拒绝多版本的
   文件；`build/release.ps1` 另外按 tag 再切一次，文件攒了历史也不会整份发出去。
+- **发布成功后自动清空 `output/`**：安装包、`win-unpacked` 与构建日志都只是发布物料，留在
+  本机只会按版本累积（曾攒到 2.6GB）。要保留现场排查时加 `-SkipClean`。
 
 ## 提交纪律
 

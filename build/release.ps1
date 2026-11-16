@@ -5,6 +5,10 @@
   用法：
     pwsh -File build/release.ps1 -Tag v1.0.0
     pwsh -File build/release.ps1 -Tag v1.0.0 -Repo ddd-online/Transactions
+    pwsh -File build/release.ps1 -Tag v1.0.0 -SkipClean
+
+  发布成功后默认清空本地 output/（安装包、win-unpacked、构建日志）；
+  要保留现场排查时加 -SkipClean。
 
   只上传普通 .exe 资产；应用内更新读取 release 的 tag_name 与 asset.digest，
   所以不生成 latest.yml，也不需要签名密钥。
@@ -13,7 +17,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$Tag,
     [string]$Repo = 'ddd-online/Transactions',
-    [switch]$Draft
+    [switch]$Draft,
+    [switch]$SkipClean
 )
 
 $ErrorActionPreference = 'Stop'
@@ -72,6 +77,12 @@ try {
     Write-Host "[release] gh $($arguments -join ' ')"
     gh @arguments
     if ($LASTEXITCODE -ne 0) { throw "gh release create 失败（exit $LASTEXITCODE）" }
+
+    if (-not $SkipClean) {
+        # 产物已经在 release 里了，本地再留一份只会越积越多（历史安装包曾攒到 2.6GB）。
+        Write-Host '[release] 清理本地发布产物（output/）'
+        & (Join-Path $PSScriptRoot 'clean.ps1')
+    }
 
     Write-Host "[release] 完成：https://github.com/$Repo/releases/tag/$Tag"
 }
