@@ -28,7 +28,7 @@ export type SettingsTab = 'general' | 'features' | 'data' | 'diary' | 'about'
 
 const TABS: ReadonlyArray<readonly [SettingsTab, string, IconName]> = [
   ['general', '通用设置', 'Setting'],
-  ['features', '功能开关', 'Sliders'],
+  ['features', '功能开关', 'Appstore'],
   ['data', '数据', 'Inbox'],
   ['diary', '日记配置', 'Read'],
   ['about', '关于软件', 'InfoCircle'],

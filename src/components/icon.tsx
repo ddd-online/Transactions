@@ -1,6 +1,7 @@
 import type { ComponentType, CSSProperties, JSX } from 'react'
 import {
   AimOutlined,
+  AppstoreOutlined,
   ArrowUpOutlined,
   BarChartOutlined,
   BookOutlined,
@@ -118,6 +119,7 @@ export type IconName =
   | 'DragHandle'
   | 'GitHub'
   | 'User'
+  | 'Appstore'
   | 'Sliders'
   | 'CreditCard'
   | 'Signal'
@@ -188,6 +190,7 @@ const ICONS: Record<IconName, IconComponent> = {
   DragHandle: HolderOutlined,
   GitHub: GithubOutlined,
   User: UserOutlined,
+  Appstore: AppstoreOutlined,
   Sliders: SlidersOutlined,
   CreditCard: CreditCardOutlined,
   Signal: SignalFilled,
