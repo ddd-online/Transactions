@@ -41,7 +41,8 @@
   border-right: 1px solid var(--transactions-color-border-l1);
 }
 
-/* 图标条里的按钮：40×40 方形、图标居中；激活态与侧栏 `.nav-btn.active` 同一套语言
+/* 图标条里的按钮：与主导航、标题栏外观键是同一颗 `IconButton`
+ * （32 × 32、图标 16，见 app-shell.css 的 `.icon-btn`）；激活态也同一套语言
  * （纸白方块 + 轻投影 + 主色图标）。悬停提示/可访问名就是子功能名（记录 / 标签 / 模板）。 */
 .page-rail-nav {
   display: flex;
@@ -49,56 +50,6 @@
   align-items: center;
   gap: var(--transactions-space-2xs);
   width: 100%;
-}
-
-.page-rail-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: none;
-  background: none;
-  border-radius: var(--transactions-radius-md);
-  cursor: pointer;
-  color: var(--transactions-color-icon);
-  transition: background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast),
-    box-shadow var(--transactions-transition-fast);
-}
-
-.page-rail-btn:hover {
-  background-color: var(--transactions-color-hover-bg);
-  color: var(--transactions-color-text-major);
-}
-
-.page-rail-btn.is-active {
-  background-color: var(--transactions-color-elevated);
-  color: var(--transactions-color-primary);
-  box-shadow: var(--transactions-shadow-sm);
-}
-
-/* 与侧栏 `.nav-btn` 同一档按压反馈（下沉用 `translate`，不覆盖定位用的 `transform`） */
-.page-rail-btn:active {
-  translate: 0 1px;
-}
-
-.page-rail-btn:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
-}
-
-.page-rail-btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.page-rail-btn-icon svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
 }
 
 /* 工具栏里只有一个主动作时把它推到右侧（记账 · 模板子功能在用） */

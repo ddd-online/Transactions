@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import { errorMessage } from '../../shared/errors'
 import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
-import { Icon } from '../components/icon'
+import { IconButton } from '../components/icon-button'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import {
@@ -310,30 +310,20 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
       contentClassName="todo-page"
       rail={
         <div className="page-rail-nav">
-          <button
-            type="button"
-            className={`page-rail-btn${todoMode === 'cards' ? ' is-active' : ''}`}
-            data-testid="todo-tab-cards"
-            title="待办"
-            aria-label="待办"
+          <IconButton
+            icon="FileText"
+            label="待办"
+            active={todoMode === 'cards'}
+            testId="todo-tab-cards"
             onClick={() => setTodoMode('cards')}
-          >
-            <span className="page-rail-btn-icon">
-              <Icon name="FileText" size={18} />
-            </span>
-          </button>
-          <button
-            type="button"
-            className={`page-rail-btn${todoMode === 'history' ? ' is-active' : ''}`}
-            data-testid="todo-tab-history"
-            title="历史"
-            aria-label="历史"
+          />
+          <IconButton
+            icon="History"
+            label="历史"
+            active={todoMode === 'history'}
+            testId="todo-tab-history"
             onClick={() => setTodoMode('history')}
-          >
-            <span className="page-rail-btn-icon">
-              <Icon name="History" size={18} />
-            </span>
-          </button>
+          />
         </div>
       }
       toolbar={

@@ -24,7 +24,7 @@ import { SettingsPage, type SettingsTab } from './pages/settings'
 import { PageBoundary } from './components/page-boundary'
 import { PageRailProvider } from './components/page-layout'
 import { QuitScreen } from './components/quit-screen'
-import { Icon } from './components/icon'
+import { IconButton } from './components/icon-button'
 import { notify } from './components/toast'
 import { useQuitFlow } from './state/use-quit-flow'
 import { useAppStartup } from './state/use-app-startup'
@@ -212,19 +212,14 @@ export function App(): JSX.Element {
                       ['templates', '模板', 'FileText'],
                     ] as const
                   ).map(([key, label, icon]) => (
-                    <button
+                    <IconButton
                       key={key}
-                      type="button"
-                      data-testid={`acct-tab-${key}`}
-                      className={`page-rail-btn${accountingTab === key ? ' is-active' : ''}`}
-                      title={label}
-                      aria-label={label}
+                      icon={icon}
+                      label={label}
+                      active={accountingTab === key}
+                      testId={`acct-tab-${key}`}
                       onClick={() => setAccountingTab(key)}
-                    >
-                      <span className="page-rail-btn-icon">
-                        <Icon name={icon} size={18} />
-                      </span>
-                    </button>
+                    />
                   ))}
                 </div>
               }

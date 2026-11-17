@@ -7,6 +7,7 @@ import type { StockTradeHistorySummaryDto } from '../../shared/types/stock-histo
 import type { StockLessonDto } from '../../shared/types/stock-lesson'
 import { Button } from '../components/button'
 import { Icon, type IconName } from '../components/icon'
+import { IconButton } from '../components/icon-button'
 import { PageLayout } from '../components/page-layout'
 import { notify } from '../components/toast'
 import { StockAccountPanel } from './stock-account'
@@ -220,19 +221,14 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
       rail={
         <div className="page-rail-nav">
           {TABS.map(([key, label, icon]) => (
-            <button
+            <IconButton
               key={key}
-              type="button"
-              data-testid={`stock-tab-${key}`}
-              className={`page-rail-btn${tab === key ? ' is-active' : ''}`}
-              title={label}
-              aria-label={label}
+              icon={icon}
+              label={label}
+              active={tab === key}
+              testId={`stock-tab-${key}`}
               onClick={() => setTab(key)}
-            >
-              <span className="page-rail-btn-icon">
-                <Icon name={icon} size={18} />
-              </span>
-            </button>
+            />
           ))}
         </div>
       }

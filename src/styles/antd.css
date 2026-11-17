@@ -2,7 +2,7 @@
 
 .tr-btn {
   font-weight: 500;
-  /* 按下时下沉 1px（与 `.nav-btn` / `.page-rail-btn` 同一档，见 DESIGN.md「The Press Rule」）：
+  /* 按下时下沉 1px（与 `.icon-btn` / `.tr-icon-btn` 同一档，见 DESIGN.md「The Press Rule」）：
    * 桌面端点击没有原生按压反馈，这一像素就是"按到了"。
    *
    * 用**独立的 `translate` 属性**而不是 `transform`：账本菜单的删除键这类按钮自己用

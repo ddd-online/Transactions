@@ -202,15 +202,21 @@
   --transactions-space-2xl: 32px;
   --transactions-space-3xl: 48px;
 
-  /* ---------- Layout（$layout-sizes） ----------
-   * 这里原来还有 `header-height: 48px` / `sider-width: 56px` / `content-padding: 20px` 三条
-   * （从 Ant 的令牌表搬来的），值与现有骨架对不上、全仓零引用，已删：
-   *   * 顶部那条带用下文的 `size-top-band`（40px，含义是"横贯窗口的标题栏"）；
-   *   * 侧栏宽是下面的 `size-sidebar`（57px 图标列）—— 56px 那条只对得上子功能图标条；
-   *   * 内容内边距由各页自己的容器给（贴边型 0 / 卡片型 16px），没有全局的 20px。 */
+  /* ---------- 外壳的一条带（标题栏高度 / 两个图标栏宽度） ----------
+   * 三处**共用同一个值**：32px 图标键 + 左右（上下）各 8px 留白 = 48px。
+   * 横的标题栏与两条竖栏等宽等高，左上角才闭合成一个直角；
+   * 侧栏宽含 1px 右边框（`box-sizing: border-box`），内容区因此是 48 − 1。
+   * 这里以前三个数各写一份（40 / 57 / 56），改一处另外两处就对不上。
+   *
+   * 标题栏在窗口最上面，侧栏从它下面开始；窗口三键与页面名都排在这一条里，
+   * 三键满高排在右端。线下方由 `.sidebar-nav` / `.page-toolbar` 各自留 8px。 */
+  --transactions-size-shell-band: calc(
+    var(--transactions-icon-btn-size-lg) + var(--transactions-space-lg)
+  );
+  --transactions-size-top-band: var(--transactions-size-shell-band);
+  --transactions-size-sidebar: var(--transactions-size-shell-band);
+  --transactions-size-rail-width: var(--transactions-size-shell-band);
   --transactions-size-footer-height: 44px;
-  /* 子功能图标条宽度（`.page-rail`）。**不是侧边栏**：侧栏宽是 `size-sidebar`。 */
-  --transactions-size-rail-width: 56px;
 
   /* ---------- Border radius（$border-radius） ---------- */
   --transactions-radius-sm: 6px;
@@ -243,27 +249,17 @@
   --transactions-btn-font-size-sm: 13px;
   --transactions-btn-font-size-md: 14px;
   --transactions-btn-font-size-lg: 16px;
-  /* 图标动作按钮（IconButton）：全仓唯一尺寸 */
+  /* 图标键（IconButton）：行内动作 28px，外壳导航 32px。
+   * 外壳那档与 `size-shell-band` 配套（32 + 8×2 = 48）；两档都是唯一来源，
+   * 页面里不要再写 28 / 32 的裸值。 */
   --transactions-icon-btn-size: 28px;
+  --transactions-icon-btn-size-lg: 32px;
 
   /* ---------- 间距节奏（页面布局用语义名，不用裸的 space-*） ----------
    * 三级节奏：区域内紧凑 8 / 控件簇 12 / 区域之间 16。
    * 页面与面板之间的"大分隔"一律用 region，避免每个页面各写一个值。 */
   --transactions-space-row: 12px;
   --transactions-space-region: 16px;
-
-  /* ---------- 标题栏高度（横贯窗口） ----------
-   * 自绘标题栏在窗口最上面，侧栏从它下面开始；窗口三键与页面名都排在这一条里。
-   * 40px：容器底边就是那条横贯全窗口的分隔线；窗口三键满高排在右端。
-   * 线下方由 `.sidebar-nav` / `.page-toolbar` 各自留 8px，把导航组与工具栏推下去同一段距离。
-   * 注意：容器里最高的内容是页面名（见 app-shell.css 的 `.app-titlebar__title`），
-   * 改字号别超过这个高度。 */
-  --transactions-size-top-band: 40px;
-
-  /* ---------- 左侧导航栏宽度 ----------
-   * 侧栏固定为纯图标列：内侧 8px 边距 × 2 + 40px 图标键 + 1px 右边框 = 57px。
-   * 没有展开形态，也不拖拽。 */
-  --transactions-size-sidebar: 57px;
 
   /* 动效专用缓动：落地感（exponential ease-out），用于“数据落定”类进场 */
   --transactions-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);

@@ -2,6 +2,7 @@ import type { JSX, ReactNode } from 'react'
 
 import type { FeatureFlags } from '../shared/types/config'
 import { Icon, type IconName } from './components/icon'
+import { IconButton } from './components/icon-button'
 import type { ThemeMode } from './theme/theme-mode'
 import { NAV_VIEWS, viewLabel, type View } from './app-view'
 
@@ -78,19 +79,16 @@ export function AppShell({
             {viewLabel(view)}
           </h1>
           <div className="app-titlebar__end">
-            <button
-              type="button"
-              className="titlebar-theme"
-              data-testid="theme-toggle"
-              title="外观模式"
-              inert={blockingWorkspace || undefined}
-              aria-label={
+            <IconButton
+              icon={themeMode === 'dark' ? 'Moon' : 'Sun'}
+              label="外观模式"
+              ariaLabel={
                 themeMode === 'dark' ? '外观模式：深色，点击切换浅色' : '外观模式：浅色，点击切换深色'
               }
+              testId="theme-toggle"
+              inert={blockingWorkspace || undefined}
               onClick={onToggleTheme}
-            >
-              <Icon name={themeMode === 'dark' ? 'Moon' : 'Sun'} size={16} />
-            </button>
+            />
             <div className="window-controls">
               <button
                 type="button"
@@ -129,37 +127,27 @@ export function AppShell({
               <nav className="sidebar-nav" aria-label="主导航">
                 {NAV_VIEWS.filter(({ feature }) => features?.[feature] !== false).map(
                   ({ view: key, label }) => (
-                    <button
+                    <IconButton
                       key={key}
-                      type="button"
-                      data-testid={`nav-${key}`}
-                      className={`nav-btn${view === key ? ' active' : ''}`}
-                      title={label}
-                      aria-label={label}
+                      icon={NAV_ICON[key]}
+                      label={label}
+                      active={view === key}
+                      testId={`nav-${key}`}
                       onClick={() => onViewChange(key)}
-                    >
-                      <span className="nav-btn-icon">
-                        <Icon name={NAV_ICON[key]} size={18} />
-                      </span>
-                    </button>
+                    />
                   ),
                 )}
               </nav>
 
               <div className="sidebar-spacer" />
               <div className="sidebar-bottom">
-                <button
-                  type="button"
-                  data-testid="nav-settings"
-                  className={`nav-btn${view === 'settings' ? ' active' : ''}`}
-                  title="应用设置"
-                  aria-label="应用设置"
+                <IconButton
+                  icon="Setting"
+                  label="应用设置"
+                  active={view === 'settings'}
+                  testId="nav-settings"
                   onClick={onOpenSettings}
-                >
-                  <span className="nav-btn-icon">
-                    <Icon name="Setting" size={18} />
-                  </span>
-                </button>
+                />
               </div>
             </div>
           </aside>

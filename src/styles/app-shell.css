@@ -1,7 +1,7 @@
 /* ============================================
  * 应用外壳与页面样式
  *
- * 应用外壳骨架样式：横贯窗口的标题栏 + 固定 69px 的图标侧栏 + 内容区，
+ * 应用外壳骨架样式：横贯窗口的标题栏 + 固定 48px 的图标侧栏 + 内容区，
  * 取值全部走 `--transactions-*` 令牌。
  * 设计令牌本身在 `tokens.css`，不要在本文档里重复定义。
  * ============================================ */
@@ -414,59 +414,57 @@
   padding: 0;
 }
 
-/* 导航按钮：40 × 40 的图标键，居中排在图标列里。
- * 当前页不是「换底色」而是**浮出一枚纸白方块**（参考图的选中态）：图标列是一条连续
- * 的灰带，选中项从这条带上抬起来；深色主题下同一个变量换成抬高一档的暗面。 */
-.nav-btn {
-  position: relative;
+/* 图标键（`IconButton` 组件）：主导航、子功能图标条、标题栏外观键共用这一颗。
+ * 32 × 32、图标 16、radius-md 只在这里写一次 —— 三处曾经各写一份 class，
+ * 于是长成了 40 / 40 / 32 三种大小。
+ *
+ * 当前项不是「换底色」而是**浮出一枚纸白方块**：图标列是一条连续的灰带，
+ * 选中项从这条带上抬起来；深色主题下同一个变量换成抬高一档的暗面。
+ * 32 + 两侧各 8 的外壳取 48（tokens 的 `size-shell-band`），
+ * 两条侧栏的宽度与标题栏高度因此是同一个数。 */
+.icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--transactions-icon-btn-size-lg);
+  height: var(--transactions-icon-btn-size-lg);
   padding: 0;
   border: none;
   border-radius: var(--transactions-radius-md);
   background: none;
-  color: var(--transactions-color-text-secondary);
+  color: var(--transactions-color-icon);
   cursor: pointer;
-  transition: background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast), box-shadow var(--transactions-transition-fast);
+  transition:
+    background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast),
+    translate 90ms var(--transactions-ease-out-expo);
 }
 
-.nav-btn:hover {
+.icon-btn:hover {
   background-color: var(--transactions-color-hover-bg);
-  color: var(--transactions-color-text-major);
+  color: var(--transactions-color-icon-hover);
 }
 
-.nav-btn.active {
+.icon-btn.is-active {
   background-color: var(--transactions-color-elevated);
-  color: var(--transactions-color-primary);
+  color: var(--transactions-color-icon-active);
   box-shadow: var(--transactions-shadow-sm);
 }
 
-/* 按下时下沉 1px（与 .ui-btn / .page-rail-btn 同一档）：桌面端点击没有原生按压反馈 */
-.nav-btn:active {
+/* 桌面端点击没有原生按压反馈：下沉 1px（DESIGN.md 的 Press Rule）。
+ * 用独立的 `translate`，不碰定位用的 `transform`。 */
+.icon-btn:active {
   translate: 0 1px;
 }
 
-.nav-btn:focus-visible {
+.icon-btn:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
-.nav-btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-}
-
-.nav-btn-icon svg {
-  width: 18px;
-  height: 18px;
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
@@ -474,7 +472,7 @@
  * 标题栏（自绘无边框窗口的那一条）
  *
  * 横贯整窗、压在侧栏之上：左边是应用菜单，中间是页面名，右边是窗口三键。
- * 高度与侧栏共用 `--transactions-size-top-band`；底色取侧栏那一档，
+ * 高度与两条侧栏共用 `--transactions-size-shell-band`（48px）；底色取侧栏那一档，
  * 「顶栏 + 侧栏」拼成一副灰色外壳，纸白版心落在里面。
  * 1fr / auto / 1fr 的三列让标题精确落在窗口中线，与两侧内容多宽无关。
  * ============================================ */
@@ -521,47 +519,13 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: var(--transactions-space-xs);
   justify-self: end;
   height: 100%;
   -webkit-app-region: no-drag;
 }
 
-/* 外观模式：太阳 / 月亮，一按翻面；与窗口三键之间留 4px，不吃标题栏的拖动区。 */
-.titlebar-theme {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-right: var(--transactions-space-xs);
-  padding: 0;
-  border: none;
-  border-radius: var(--transactions-radius-md);
-  background: none;
-  color: var(--transactions-color-icon);
-  cursor: pointer;
-  transition: background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast), box-shadow var(--transactions-transition-fast);
-}
-
-.titlebar-theme:hover {
-  background-color: var(--transactions-color-elevated);
-  color: var(--transactions-color-icon-hover);
-  box-shadow: var(--transactions-shadow-sm);
-}
-
-.titlebar-theme:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
-}
-
-.titlebar-theme svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-
-/* 窗口三键：贴住窗口右缘的一簇满高按钮（46 × 40），与系统窗口一致。
+/* 窗口三键：贴住窗口右缘的一簇满高按钮（48 × 48），与系统窗口一致。
  * 关闭键悬停是实心底 + 白叉 —— 这是 Windows 的窗口惯例，不是数据语义色。 */
 .window-controls {
   position: relative;
@@ -576,7 +540,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
+  width: var(--transactions-size-shell-band);
   height: 100%;
   -webkit-app-region: no-drag;
   padding: 0;
