@@ -17,6 +17,8 @@ const NAV_ICON: Record<View, IconName> = {
 export interface AppShellProps {
   view: View
   onViewChange: (view: View) => void
+  /** 打开设置浮层（应用设置是工具窗，不是导航里的一页）。 */
+  onOpenSettings: () => void
   /** 全局默认 + 当前账本的覆盖；null = 配置还没读到，导航先全显示。 */
   features: FeatureFlags | null
   /** 首屏阻塞层盖住整屏：外壳对指针、键盘、读屏都关掉。 */
@@ -47,6 +49,7 @@ export interface AppShellProps {
 export function AppShell({
   view,
   onViewChange,
+  onOpenSettings,
   features,
   blockingWorkspace,
   maximized,
@@ -150,7 +153,7 @@ export function AppShell({
                   data-testid="nav-settings"
                   className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
                   aria-label="应用设置"
-                  onClick={() => onViewChange('settings')}
+                  onClick={onOpenSettings}
                 >
                   <span className="nav-btn-icon">
                     <Icon name="Setting" size={18} />

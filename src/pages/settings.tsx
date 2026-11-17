@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState, type JSX } from 'react'
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import { errorMessage } from '../../shared/errors'
 import type { UpdateSnapshot } from '../../shared/domain/update'
 import type { ConfigSnapshot, FeatureFlags } from '../../shared/types/config'
-import { PageLayout } from '../components/page-layout'
+import { Icon, type IconName } from '../components/icon'
+import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { SettingsAbout, SettingsDiary } from './settings-about'
 import { SettingsData } from './settings-data'
@@ -11,21 +12,25 @@ import { SettingsFeatures } from './settings-features'
 import { SettingsGeneral, type ProxyState } from './settings-general'
 
 /**
- * 设置页：五个分栏、四类写入（外观 / 关闭行为 / 代理 / 功能开关）、图标与关于。
+ * 设置：一块浮在应用上的两栏面板（左分栏、右内容），不是又一页。
  *
- * 它从外壳里搬出来了 —— 外壳只关心「现在哪一页、哪个账本」，设置自己的草稿、
- * 探测状态与消息回执都在这里；它向外只报告三件外壳确实需要知道的事：
- * 配置换了（主题 / 导航可见性）、图标换了（本页预览）、以及「切换工作空间」这个动作。
+ * 外壳只关心「开没开、哪一栏」；设置自己的草稿、探测状态与消息回执都在这里，
+ * 向外只报告三件外壳确实需要知道的事：配置换了（主题 / 导航可见性）、
+ * 图标换了（数据页预览）、以及「切换工作空间」这个动作。
+ *
+ * 浮层是**非模态**的：点面板外面会关掉它，但那一击照常落到下面的控件上（点侧栏
+ * 就切页、点应用菜单就弹菜单）—— 设置是工具窗，不是拦住整屏的确认框。只在没有
+ * 任何功能页可回（功能全关）时，关闭入口才不出现。
  */
 
 export type SettingsTab = 'general' | 'features' | 'data' | 'diary' | 'about'
 
-const TABS: ReadonlyArray<readonly [SettingsTab, string]> = [
-  ['general', '通用设置'],
-  ['features', '功能开关'],
-  ['data', '数据'],
-  ['diary', '日记配置'],
-  ['about', '关于软件'],
+const TABS: ReadonlyArray<readonly [SettingsTab, string, IconName]> = [
+  ['general', '通用设置', 'Setting'],
+  ['features', '功能开关', 'Sliders'],
+  ['data', '数据', 'Inbox'],
+  ['diary', '日记配置', 'Read'],
+  ['about', '关于软件', 'InfoCircle'],
 ]
 
 export interface SettingsPageProps {
@@ -42,6 +47,9 @@ export interface SettingsPageProps {
   /** 当前分栏由外壳持有：应用菜单可以直接落到「关于软件」。 */
   tab: SettingsTab
   onTabChange: (tab: SettingsTab) => void
+  /** 关闭浮层：没有可回的功能页时（功能全关）外壳会传 false，只留关闭入口不可用。 */
+  canClose: boolean
+  onClose: () => void
   onUpdateSnapshot: (snapshot: UpdateSnapshot | null) => void
   /** 换一个工作空间：由外壳弹目录框并落库 */
   onPickWorkspace: () => Promise<void>
@@ -63,6 +71,8 @@ export function SettingsPage({
   updateSnapshot,
   tab,
   onTabChange,
+  canClose,
+  onClose,
   onUpdateSnapshot,
   onPickWorkspace,
   onOpenWorkspace,
@@ -75,6 +85,43 @@ export function SettingsPage({
   const [proxyResolved, setProxyResolved] = useState('')
   const [proxyState, setProxyState] = useState<ProxyState>('idle')
   const [picking, setPicking] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // 打开时把焦点交给面板；Esc / 点外面关闭（非模态：外面那一击照常生效）。
+  useEffect(() => {
+    dialogRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (!canClose) return
+    // 面板里弹出的 AntD 浮层（恢复备份、下拉、气泡）挂在 body 上，**不在** dialog 里：
+    // 点它们不算「点外面」，否则确认框会在 pointerdown 时被一起卸掉。
+    const inPortal = (target: EventTarget | null): boolean =>
+      target instanceof Element &&
+      target.closest(
+        '.ant-modal-root, .ant-select-dropdown, .ant-picker-dropdown, .ant-popover, .ant-tooltip, .ant-message',
+      ) !== null
+    const modalOpen = (): boolean =>
+      Array.from(document.querySelectorAll('.ant-modal-wrap')).some(
+        (element) => element.getClientRects().length > 0,
+      )
+    const onPointerDown = (event: PointerEvent): void => {
+      if (dialogRef.current?.contains(event.target as Node)) return
+      if (inPortal(event.target)) return
+      onClose()
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape' || modalOpen()) return
+      event.stopPropagation()
+      onClose()
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [canClose, onClose])
 
   const applyConfig = useCallback(
     (next: ConfigSnapshot): void => {
@@ -240,79 +287,113 @@ export function SettingsPage({
     }
   }
 
+  const currentLabel = TABS.find(([key]) => key === tab)?.[1] ?? '设置'
+
   return (
-    <PageLayout
-      contentClassName="settings-page-content"
-      toolbar={
-        <div className="st-tabbar" role="tablist" aria-label="设置分栏">
-          {TABS.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={tab === key}
-              data-testid={`settings-tab-${key}`}
-              className={`st-tab${tab === key ? ' is-active' : ''}`}
-              onClick={() => onTabChange(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      }
-    >
-      {tab === 'general' ? (
-        <SettingsGeneral
-          workspace={workspace}
-          config={config}
-          workspaceIconUrl={workspaceIconUrl}
-          picking={picking}
-          proxyMode={proxyMode}
-          proxyUrl={proxyUrl}
-          proxyResolved={proxyResolved}
-          proxyState={proxyState}
-          proxyTesting={proxyTesting}
-          onPickWorkspace={pickWorkspace}
-          onAppearanceChange={setAppearance}
-          onCloseBehaviorChange={setCloseBehavior}
-          onProxyModeChange={changeProxyMode}
-          onProxyUrlChange={changeProxyUrl}
-          onProxySave={saveProxy}
-          onProxyDetect={detectProxy}
-          onWorkspaceIconChange={changeWorkspaceIcon}
-          onWorkspaceIconClear={clearWorkspaceIcon}
-          onOpenDevtools={openDevtools}
-        />
-      ) : null}
+    <div className="settings-layer" data-testid="settings-layer">
+      <div
+        ref={dialogRef}
+        className="settings-dialog"
+        role="dialog"
+        aria-label="设置"
+        tabIndex={-1}
+      >
+        <aside className="settings-nav">
+          <div className="settings-nav__head">设置</div>
+          <nav className="settings-nav__list" aria-label="设置分栏">
+            {TABS.map(([key, label, icon]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={tab === key}
+                data-testid={`settings-tab-${key}`}
+                className={`settings-nav__item${tab === key ? ' is-active' : ''}`}
+                onClick={() => onTabChange(key)}
+              >
+                <Icon name={icon} size={16} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      {tab === 'features' ? (
-        <SettingsFeatures
-          activeLedgerId={activeLedgerId}
-          config={config}
-          effectiveFeatures={effectiveFeatures}
-          onFeatureChange={setFeature}
-        />
-      ) : null}
+        <section className="settings-main">
+          <header className="settings-main__head">
+            <h2 className="settings-main__title">{currentLabel}</h2>
+            {canClose ? (
+              <button
+                type="button"
+                className="settings-main__close"
+                data-testid="settings-close"
+                aria-label="关闭设置"
+                title="关闭设置"
+                onClick={onClose}
+              >
+                <Icon name="Close" size={16} />
+              </button>
+            ) : null}
+          </header>
 
-      {tab === 'data' ? (
-        <SettingsData
-          workspace={workspace}
-          config={config}
-          onPickWorkspace={onPickWorkspace}
-          onOpenWorkspace={onOpenWorkspace}
-          onConfigChanged={onConfigChanged}
-        />
-      ) : null}
+          <ScrollArea className="settings-main__scroll">
+            <div className="settings-main__body">
+              {tab === 'general' ? (
+              <SettingsGeneral
+                workspace={workspace}
+                config={config}
+                workspaceIconUrl={workspaceIconUrl}
+                picking={picking}
+                proxyMode={proxyMode}
+                proxyUrl={proxyUrl}
+                proxyResolved={proxyResolved}
+                proxyState={proxyState}
+                proxyTesting={proxyTesting}
+                onPickWorkspace={pickWorkspace}
+                onAppearanceChange={setAppearance}
+                onCloseBehaviorChange={setCloseBehavior}
+                onProxyModeChange={changeProxyMode}
+                onProxyUrlChange={changeProxyUrl}
+                onProxySave={saveProxy}
+                onProxyDetect={detectProxy}
+                onWorkspaceIconChange={changeWorkspaceIcon}
+                onWorkspaceIconClear={clearWorkspaceIcon}
+                onOpenDevtools={openDevtools}
+              />
+            ) : null}
 
-      {tab === 'diary' ? <SettingsDiary ledgerId={activeLedgerId} /> : null}
+            {tab === 'features' ? (
+              <SettingsFeatures
+                activeLedgerId={activeLedgerId}
+                config={config}
+                effectiveFeatures={effectiveFeatures}
+                onFeatureChange={setFeature}
+              />
+            ) : null}
 
-      {tab === 'about' ? (
-        <SettingsAbout
-          version={version}
-          updateSnapshot={updateSnapshot}
-          onUpdateSnapshot={onUpdateSnapshot}
-        />
-      ) : null}
-    </PageLayout>
+            {tab === 'data' ? (
+              <SettingsData
+                workspace={workspace}
+                config={config}
+                onPickWorkspace={onPickWorkspace}
+                onOpenWorkspace={onOpenWorkspace}
+                onConfigChanged={onConfigChanged}
+              />
+            ) : null}
+
+            {tab === 'diary' ? <SettingsDiary ledgerId={activeLedgerId} /> : null}
+
+            {tab === 'about' ? (
+              <SettingsAbout
+                version={version}
+                updateSnapshot={updateSnapshot}
+                onUpdateSnapshot={onUpdateSnapshot}
+              />
+              ) : null}
+            </div>
+          </ScrollArea>
+        </section>
+      </div>
+    </div>
   )
 }
+

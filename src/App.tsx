@@ -18,7 +18,7 @@ const TodoPage = lazy(async () => ({ default: (await import('./pages/todo')).Tod
 import { AntdProvider } from './components/antd-provider'
 import { AppMenu } from './app-menu'
 import { AppShell } from './app-shell'
-import { resolveView, type View } from './app-view'
+import { resolveView, defaultView, type View } from './app-view'
 import { WorkspaceOverlay } from './app-workspace-overlay'
 import { SettingsPage, type SettingsTab } from './pages/settings'
 import { PageBoundary } from './components/page-boundary'
@@ -77,13 +77,31 @@ export function App(): JSX.Element {
   // 派生而不是在 effect 里改 state —— 配置到达时第一帧就是对的那页，不会先闪一下记账页。
   const currentView = resolveView(view, effectiveFeatures)
 
-  // 设置页的分栏由外壳持有：应用菜单里的「应用设置 / 关于软件」要能直接落到对应那一栏。
+  // 设置是浮在当前页上的一块工具窗（不是又一页）：`settingsOpen` 只管浮层，
+  // 背后的页面照常挂着、只是被遮罩压暗。功能全关时没有任何页可回，设置就变成
+  // 唯一的内容（`currentView === 'settings'`），此时关不掉。
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('general')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  /** 关掉设置就把当前页重挂一次：设置里的导入 / 恢复改的也是这一页的数据，
+   *  以前靠「设置是一页、离开就卸载」拿到刷新，浮层不卸载页面，得自己补这一下。 */
+  const [pageEpoch, setPageEpoch] = useState(0)
 
   const openSettings = useCallback((tab: SettingsTab): void => {
     setSettingsTab(tab)
-    setView('settings')
+    setSettingsOpen(true)
   }, [])
+
+  /** 没有任何功能页可回时（功能全关），设置不能关 —— 关了只剩一片空白。 */
+  const canCloseSettings = defaultView(effectiveFeatures) !== 'settings'
+
+  const closeSettings = useCallback((): void => {
+    if (!canCloseSettings) return
+    setSettingsOpen(false)
+    if (view === 'settings') setView(defaultView(effectiveFeatures))
+    setPageEpoch((epoch) => epoch + 1)
+  }, [canCloseSettings, effectiveFeatures, view])
+
+  const settingsVisible = settingsOpen || currentView === 'settings'
 
   // state 跟着派生结果追上：否则开关关掉时 state 还停在旧页，等开关再打开就会把用户
   // 从设置页拽回去。渲染只看 currentView，这一步只是让两边不打架。
@@ -140,6 +158,7 @@ export function App(): JSX.Element {
         <AppShell
           view={currentView}
           onViewChange={setView}
+          onOpenSettings={() => openSettings('general')}
           features={effectiveFeatures}
           blockingWorkspace={blockingWorkspace}
           maximized={maximized}
@@ -214,7 +233,7 @@ export function App(): JSX.Element {
                   骨架反而会闪一下。Suspense 放在 PageRailProvider **里面** —— 在外面的话
                   每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。
                   `key` 跟着子功能走：某一页挂了之后切走再回来，边界自己重置一次。 */}
-              <PageBoundary key={`accounting-${accountingTab}`}>
+              <PageBoundary key={`accounting-${accountingTab}-${pageEpoch}`}>
                 <Suspense fallback={null}>
                   {accountingTab === 'records' ? (
                     <RecordsPage ledgerId={activeLedgerId} ledgers={ledgers} />
@@ -227,39 +246,43 @@ export function App(): JSX.Element {
             </PageRailProvider>
           ) : null}
 
-          <PageBoundary key={`view-${currentView}`}>
-            <Suspense fallback={null}>
-              {currentView === 'stock' ? (
-                <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
-              ) : null}
+          {currentView === 'settings' ? null : (
+            <PageBoundary key={`view-${currentView}-${pageEpoch}`}>
+              <Suspense fallback={null}>
+                {currentView === 'stock' ? (
+                  <StockPage ledgerId={activeLedgerId} onLedgerChanged={() => void refreshLedgers()} />
+                ) : null}
 
-              {currentView === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
+                {currentView === 'events' ? <EventsPage ledgerId={activeLedgerId} /> : null}
 
-              {currentView === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
+                {currentView === 'diary' ? <DiaryPage ledgerId={activeLedgerId} /> : null}
 
-              {currentView === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
-            </Suspense>
-          </PageBoundary>
-
-          {currentView === 'settings' ? (
-            <SettingsPage
-              workspace={workspace}
-              activeLedgerId={activeLedgerId}
-              config={config}
-              effectiveFeatures={effectiveFeatures}
-              version={version}
-              workspaceIconUrl={workspaceIconUrl}
-              updateSnapshot={updateSnapshot}
-              tab={settingsTab}
-              onTabChange={setSettingsTab}
-              onUpdateSnapshot={setUpdateSnapshot}
-              onPickWorkspace={openWorkspace}
-              onOpenWorkspace={openWorkspaceAt}
-              onConfigChanged={setConfig}
-              onWorkspaceIconChanged={setWorkspaceIconUrl}
-            />
-          ) : null}
+                {currentView === 'todo' ? <TodoPage ledgerId={activeLedgerId} /> : null}
+              </Suspense>
+            </PageBoundary>
+          )}
         </AppShell>
+
+        {settingsVisible ? (
+          <SettingsPage
+            workspace={workspace}
+            activeLedgerId={activeLedgerId}
+            config={config}
+            effectiveFeatures={effectiveFeatures}
+            version={version}
+            workspaceIconUrl={workspaceIconUrl}
+            updateSnapshot={updateSnapshot}
+            tab={settingsTab}
+            onTabChange={setSettingsTab}
+            canClose={canCloseSettings}
+            onClose={closeSettings}
+            onUpdateSnapshot={setUpdateSnapshot}
+            onPickWorkspace={openWorkspace}
+            onOpenWorkspace={openWorkspaceAt}
+            onConfigChanged={setConfig}
+            onWorkspaceIconChanged={setWorkspaceIconUrl}
+          />
+        ) : null}
         {quitting ? <QuitScreen label={quitLabel} /> : null}
       </>
     </AntdProvider>

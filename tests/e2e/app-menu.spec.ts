@@ -104,10 +104,17 @@ test('标题栏：工作空间名入口、账本、外观切换、设置与关�
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
 
     // 「应用设置」落到通用分栏，「关于软件」落到关于分栏 —— 同一个菜单两种落点。
+    // 设置是浮在当前页上的工具窗：背后的页面还挂着，标题仍是那一页。
     await page.getByTestId('app-menu-trigger').click()
     await page.getByTestId('app-menu-settings').click()
+    await expect(page.getByTestId('settings-layer')).toBeVisible()
     await expect(page.getByTestId('settings-tab-general')).toHaveAttribute('aria-selected', 'true')
     await expect(page.getByTestId('appearance-light')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('app-title')).toHaveText('记账')
+    await page.waitForTimeout(260)
+    await page.screenshot({
+      path: join(repositoryRoot, 'artifacts', 'tests', 'settings-dialog.png'),
+    })
 
     await page.getByTestId('app-menu-trigger').click()
     await page.getByTestId('app-menu-about').click()
@@ -116,6 +123,17 @@ test('标题栏：工作空间名入口、账本、外观切换、设置与关�
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'app-menu-about.png'),
     })
+
+    // 关闭入口 + Esc：关闭后回到原来那一页，标题也跟着回来。
+    await page.getByTestId('settings-close').click()
+    await expect(page.getByTestId('settings-layer')).toHaveCount(0)
+    await expect(page.getByTestId('app-title')).toHaveText('记账')
+
+    await page.getByTestId('nav-settings').click()
+    await expect(page.getByTestId('settings-layer')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('settings-layer')).toHaveCount(0)
+    await expect(page.getByTestId('app-title')).toHaveText('记账')
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

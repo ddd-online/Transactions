@@ -52,8 +52,8 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
 
-    await page.getByTestId('nav-settings').click()
     await createLedger(page, '设置账本')
+    await page.getByTestId('nav-settings').click()
     await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('update-status')).toContainText('检查更新')
     // 数据导入已移除：分栏回归为「备份 / 恢复」，没有任何导入入口
@@ -178,8 +178,7 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
       })
       .toBe(true)
 
-    // 窄窗：页内边距收到 12px 时，行的出血量必须跟着收 —— 否则整页多出横向滚动。
-    // （720 也是标题会被右侧控件挤成竖排的那一档，这里守的是它的横向溢出。）
+    // 窄窗：设置面板的分栏横到顶上，内容区必须跟着收 —— 否则面板会横向溢出。
     await electronApp.evaluate(({ BrowserWindow }) => {
       BrowserWindow.getAllWindows()[0].setSize(720, 900)
     })
@@ -187,8 +186,8 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await expect
       .poll(() =>
         page.evaluate(() => {
-          const content = document.querySelector('.page-content.settings-page-content')
-          return content ? content.scrollWidth - content.clientWidth : -1
+          const dialog = document.querySelector('.settings-dialog')
+          return dialog ? dialog.scrollWidth - dialog.clientWidth : -1
         }),
       )
       .toBe(0)

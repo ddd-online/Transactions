@@ -15,54 +15,238 @@
 
 /* ---------------------------------------------------------------- 分栏骨架 */
 
-/* 设置分栏在布局工具栏里（`.page-toolbar` 给内边距与发丝线）。 */
-.st-tabbar {
+/* ---------------------------------------------------------------- 浮层骨架 */
+
+/* 设置是浮在当前页上的一块工具窗：遮罩只压暗、**不吃指针** —— 点外面会关掉它，
+ * 那一击照常落到下面的控件上（点侧栏切页、点应用菜单弹菜单）。
+ * 2000：高于外壳（60）与页面内浮层，低于 AntD 的弹窗（3000）与消息（4000）。 */
+.settings-layer {
+  position: fixed;
+  inset: var(--transactions-size-top-band) 0 0;
+  z-index: 2000;
   display: flex;
   align-items: center;
-  gap: var(--transactions-space-xs);
+  justify-content: center;
+  padding: var(--transactions-space-xl);
+  background: var(--transactions-color-screen-scrim);
+  pointer-events: none;
 }
 
-.st-tab {
-  height: 32px;
-  padding: 0 var(--transactions-space-md);
-  border: 0;
+.settings-dialog {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  width: min(1180px, 100%);
+  height: min(780px, 100%);
+  overflow: hidden;
+  background: var(--transactions-color-elevated);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-xl);
+  box-shadow: var(--transactions-shadow-xl);
+  outline: none;
+  animation: tr-rise-in var(--transactions-transition-enter);
+}
+
+/* 左栏：标题 + 分栏清单 */
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-sm);
+  padding: var(--transactions-space-lg) var(--transactions-space-md);
+  border-right: 1px solid var(--transactions-color-divider);
+  overflow: hidden;
+}
+
+.settings-nav__head {
+  padding: 0 var(--transactions-space-sm);
+  font-size: var(--transactions-size-text-title-sm);
+  font-weight: var(--transactions-weight-semibold);
+  color: var(--transactions-color-text-major);
+}
+
+.settings-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.settings-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--transactions-space-sm);
+  border: none;
   border-radius: var(--transactions-radius-md);
-  background: transparent;
+  background: none;
   color: var(--transactions-color-text-secondary);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-body);
+  font-family: inherit;
+  font-size: var(--transactions-size-text-body-sm);
   font-weight: var(--transactions-weight-medium);
+  text-align: left;
   cursor: pointer;
   transition: background-color var(--transactions-transition-fast),
     color var(--transactions-transition-fast);
 }
 
-.st-tab:hover {
+.settings-nav__item .icon {
+  color: var(--transactions-color-text-tertiary);
+}
+
+.settings-nav__item:hover {
   background: var(--transactions-color-hover-bg);
   color: var(--transactions-color-text-major);
 }
 
-.st-tab.is-active {
+.settings-nav__item.is-active {
   background: var(--transactions-color-active-bg);
   color: var(--transactions-color-primary);
 }
 
-.st-tab:focus-visible {
+.settings-nav__item.is-active .icon {
+  color: var(--transactions-color-primary);
+}
+
+.settings-nav__item:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
 
-/* 设置页的内容容器：**纵向不留内边距**（左右由统一规则给 16px）。
- * 每行自带 12px 上下内边距，所以第一行的分隔线正好落在工具栏那条线上 ——
- * 以前这里还有 16px 顶部内边距，工作空间那一行离工具栏的空档就显得很长。 */
-/* 页签面板容器（`TabPane` 渲染出的 `.ui-tab-pane`）：
- *  1) **去掉它自带的 16px 上内边距** —— 实测这就是"工作空间上方空一截"的来源
- *     （`.st-panes` 已经是 0，间隔全在它身上；去掉后首行紧贴工具栏那条线）；
- *  2) **撑满分栏高度** —— 否则它是内容高度，"关于软件"这类需要垂直居中的面板
- *     分不到多余空间，内容只能停在顶部（实测面板高 483 vs 分栏高 876）。 */
-/* 说明：`.st-pane-title`（「消费模板」「日记配置」「股票」那三个分区标题）已删除 ——
- * 页签本身已经说明当前在看哪一页，标题只是重复一遍。若将来某一页内容复杂到需要
- * 二级分区，再按"分区标题 + 发丝线"的样式新加，不要恢复到"标题重复页签"的老样子。 */
+/* 右栏：分区标题 + 可滚内容 */
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.settings-main__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--transactions-space-md);
+  flex-shrink: 0;
+  height: 64px;
+  padding: 0 var(--transactions-space-xl) 0 var(--transactions-space-2xl);
+  border-bottom: 1px solid var(--transactions-color-divider);
+}
+
+.settings-main__title {
+  margin: 0;
+  font-size: var(--transactions-size-text-title-sm);
+  font-weight: var(--transactions-weight-semibold);
+}
+
+.settings-main__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  background: none;
+  color: var(--transactions-color-icon);
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.settings-main__close:hover {
+  background: var(--transactions-color-hover-bg);
+  color: var(--transactions-color-icon-hover);
+}
+
+.settings-main__close:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.settings-main__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 内边距给滚动内容自己的容器：OverlayScrollbars 的视口会写内联 padding，规则盖不过去。
+ * 设置行用同一个值反向出血：分隔线通到面板边缘，行内文字仍与分区标题对齐。 */
+.settings-main__body {
+  --settings-inset: var(--transactions-space-2xl);
+  padding: var(--transactions-space-sm) var(--settings-inset) var(--transactions-space-xl);
+}
+
+.settings-main__body .st-card {
+  margin-left: calc(-1 * var(--settings-inset));
+  margin-right: calc(-1 * var(--settings-inset));
+  padding-left: var(--settings-inset);
+  padding-right: var(--settings-inset);
+}
+
+/* 窄窗：左栏收窄；再窄就把分栏清单横过来放到面板顶上。 */
+@media (max-width: 900px) {
+  .settings-dialog {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .settings-main__head {
+    padding-left: var(--transactions-space-lg);
+  }
+
+  .settings-main__body {
+    --settings-inset: var(--transactions-space-lg);
+  }
+}
+
+@media (max-width: 720px) {
+  .settings-layer {
+    padding: var(--transactions-space-sm);
+  }
+
+  .settings-dialog {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--transactions-space-sm);
+    padding: var(--transactions-space-sm) var(--transactions-space-md);
+    border-right: none;
+    border-bottom: 1px solid var(--transactions-color-divider);
+    overflow: visible;
+  }
+
+  .settings-nav__head {
+    display: none;
+  }
+
+  .settings-nav__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .settings-nav__item {
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .settings-main__head {
+    height: 52px;
+    padding: 0 var(--transactions-space-md);
+  }
+
+  .settings-main__body {
+    --settings-inset: var(--transactions-space-md);
+    padding: var(--transactions-space-sm) var(--settings-inset) var(--transactions-space-lg);
+  }
+}
 
 /* ---------------------------------------------------------------- 卡片列表 */
 

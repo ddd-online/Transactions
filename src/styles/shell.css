@@ -245,12 +245,6 @@
   color: var(--transactions-color-primary);
 }
 
-.settings-page-content {
-  overflow-y: auto;
-  min-height: 0;
-  gap: 0;
-}
-
 .tr-page-size {
   flex: none;
   width: 110px !important;
