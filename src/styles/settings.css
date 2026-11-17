@@ -247,26 +247,8 @@
   padding-top: var(--transactions-space-md);
 }
 
-/* 窄窗：左栏收窄；再窄就把分栏清单横过来放到面板顶上。 */
-@media (max-width: 900px) {
-  .settings-dialog {
-    grid-template-columns: 200px minmax(0, 1fr);
-  }
-
-  .settings-main__head {
-    padding-left: var(--transactions-space-lg);
-  }
-
-  .settings-main__body {
-    --settings-inset: var(--transactions-space-lg);
-  }
-}
-
-@media (max-width: 720px) {
-  .settings-layer {
-    padding: var(--transactions-space-sm);
-  }
-
+/* 窄窗一档：分栏清单横到内容上方，内容拿回整幅宽度 —— 不到 960 时两栏会把代理控件挤成两行。 */
+@media (max-width: 960px) {
   .settings-dialog {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
@@ -290,12 +272,28 @@
   .settings-nav__list {
     flex-direction: row;
     flex-wrap: wrap;
+    gap: var(--transactions-space-xs);
     overflow: visible;
   }
 
   .settings-nav__item {
     width: auto;
     white-space: nowrap;
+  }
+
+  .settings-main__head {
+    padding-left: var(--transactions-space-lg);
+  }
+
+  .settings-main__body {
+    --settings-inset: var(--transactions-space-lg);
+  }
+}
+
+/* 再窄：面板贴近窗口、标题带收矮；分栏去掉图标，五项保持一行。 */
+@media (max-width: 720px) {
+  .settings-layer {
+    padding: var(--transactions-space-sm);
   }
 
   .settings-main__head {
@@ -306,6 +304,16 @@
   .settings-main__body {
     --settings-inset: var(--transactions-space-md);
     padding: 0 var(--settings-inset) var(--transactions-space-lg);
+  }
+}
+
+@media (max-width: 520px) {
+  .settings-nav__item {
+    padding: 0 var(--transactions-space-sm);
+  }
+
+  .settings-nav__item .icon {
+    display: none;
   }
 }
 
@@ -503,7 +511,8 @@
 .st-about {
   flex: 1;
   align-items: center;
-  justify-content: center;
+  /* 纵向居中交给 .st-about-main 的 margin:auto：内容高于面板时 auto 归零，
+   * 顶部不会被 justify-content:center 推到滚不到的地方。 */
   padding: var(--transactions-space-2xl) var(--transactions-space-lg);
 }
 
