@@ -280,8 +280,7 @@ describe('command catalog', () => {
     ).toBe(true)
   })
 
-  it('validates shell/icon/devtools requests', () => {
-    expect(commandSchemas.workspace_icon_set.safeParse({ data: '' }).success).toBe(true)
+  it('validates shell/devtools requests', () => {
     expect(commandSchemas.file_save_image.safeParse({ relativePath: 'a.png' }).success).toBe(true)
     expect(commandSchemas.devtools_toggle.safeParse({ enabled: true }).success).toBe(true)
   })

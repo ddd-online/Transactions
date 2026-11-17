@@ -1,8 +1,8 @@
 /**
- * 设置 · 通用分栏：工作空间、软件图标、外观、关闭行为、代理与开发者工具。
+ * 设置 · 通用分栏：工作空间、外观、关闭行为、代理与开发者工具。
  *
- * 草稿状态、配置写入、代理探测与图标读写都在设置页；这里只收当前值与回调，
- * 按原样渲染。代理那两处「改了就清掉上次检测结果」的副作用也留在页面。
+ * 草稿状态、配置写入与代理探测都在设置页；这里只收当前值与回调，按原样渲染。
+ * 代理那两处「改了就清掉上次检测结果」的副作用也留在页面。
  */
 
 import { Input } from 'antd'
@@ -16,7 +16,6 @@ import {
 } from '../../shared/domain/consts'
 import type { ConfigSnapshot } from '../../shared/types/config'
 import { Button } from '../components/button'
-import { FileButton } from '../components/file-button'
 import { Segmented } from '../components/segmented'
 import { SettingsRow } from '../components/settings-row'
 
@@ -27,7 +26,6 @@ export interface SettingsGeneralProps {
   /** 当前工作空间目录（未打开时为空串） */
   workspace: string
   config: ConfigSnapshot | null
-  workspaceIconUrl: string
   /** 目录框开着：切换按钮进入进行中态 */
   picking: boolean
   proxyMode: string
@@ -45,15 +43,12 @@ export interface SettingsGeneralProps {
   onProxyUrlChange: (url: string) => void
   onProxySave: () => void
   onProxyDetect: () => void
-  onWorkspaceIconChange: (file: File | undefined) => void
-  onWorkspaceIconClear: () => void
   onOpenDevtools: () => void
 }
 
 export function SettingsGeneral({
   workspace,
   config,
-  workspaceIconUrl,
   picking,
   proxyMode,
   proxyUrl,
@@ -67,8 +62,6 @@ export function SettingsGeneral({
   onProxyUrlChange,
   onProxySave,
   onProxyDetect,
-  onWorkspaceIconChange,
-  onWorkspaceIconClear,
   onOpenDevtools,
 }: SettingsGeneralProps): JSX.Element {
   return (
@@ -83,35 +76,6 @@ export function SettingsGeneral({
           切换
         </Button>
       </SettingsRow>
-
-      <div className="st-card">
-        <div className="st-card-info">
-          <span className="st-card-title">软件图标</span>
-          <span className="st-card-desc">保存在当前工作空间，切换时跟着换</span>
-        </div>
-        <div className="st-card-action">
-          {workspaceIconUrl ? (
-            <img
-              className="st-icon-preview"
-              data-testid="workspace-icon"
-              src={workspaceIconUrl}
-              alt=""
-            />
-          ) : null}
-          <FileButton
-            testId="workspace-icon-input"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            onSelect={(file) => void onWorkspaceIconChange(file)}
-          />
-          <Button
-            variant="secondary"
-            testId="workspace-icon-clear"
-            onClick={() => void onWorkspaceIconClear()}
-          >
-            恢复默认
-          </Button>
-        </div>
-      </div>
 
       <SettingsRow title="外观">
         <Segmented

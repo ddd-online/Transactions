@@ -15,8 +15,6 @@ export interface WorkspaceSessionOptions {
 export interface WorkspaceSession {
   /** 当前工作空间目录；空串 = 还没有工作空间。 */
   workspace: string
-  workspaceIconUrl: string
-  setWorkspaceIconUrl: (url: string) => void
   /** 首屏阻塞层：还没有工作空间、用户也还没选择「应用设置」时盖住外壳。 */
   blockingWorkspace: boolean
   /** 弹目录框换一个工作空间。 */
@@ -28,7 +26,7 @@ export interface WorkspaceSession {
 }
 
 /**
- * 工作空间会话：恢复上次的工作空间、打开 / 切换、图标，以及首屏「有没有工作空间」。
+ * 工作空间会话：恢复上次的工作空间、打开 / 切换，以及首屏「有没有工作空间」。
  *
  * 启动顺序与原来一致：配置先读到（`config` 由启动 hook 给出），再用 `workspace_get`
  * 取回上次目录；配置里还记着 `workspaceDir` 的那份需要真正 `workspace_open` 一次。
@@ -40,7 +38,6 @@ export function useWorkspaceSession({
   onError,
 }: WorkspaceSessionOptions): WorkspaceSession {
   const [workspace, setWorkspace] = useState('')
-  const [workspaceIconUrl, setWorkspaceIconUrl] = useState('')
   const [promptDismissed, setPromptDismissed] = useState(false)
 
   const alive = useRef(true)
@@ -83,28 +80,6 @@ export function useWorkspaceSession({
     })
   }, [])
 
-  useEffect(() => {
-    let active = true
-    if (!workspace) {
-      setWorkspaceIconUrl('')
-      return
-    }
-    void (async () => {
-      try {
-        const relative = await window.api.invoke('workspace_icon_get', {})
-        const url = relative
-          ? await window.api.invoke('asset_url', { filePath: relative })
-          : ''
-        if (active) setWorkspaceIconUrl(url)
-      } catch {
-        if (active) setWorkspaceIconUrl('')
-      }
-    })()
-    return () => {
-      active = false
-    }
-  }, [workspace])
-
   const refreshWorkspace = useCallback(async (): Promise<void> => {
     const directory = await window.api.invoke('workspace_get')
     setWorkspace(directory)
@@ -141,8 +116,6 @@ export function useWorkspaceSession({
 
   return {
     workspace,
-    workspaceIconUrl,
-    setWorkspaceIconUrl,
     blockingWorkspace: !workspace && !promptDismissed,
     openWorkspace,
     openWorkspaceAt,

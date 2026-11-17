@@ -16,8 +16,8 @@ import { SettingsGeneral, type ProxyState } from './settings-general'
  * 设置：一块浮在应用上的两栏面板（左分栏、右内容），不是又一页。
  *
  * 外壳只关心「开没开、哪一栏」；设置自己的草稿、探测状态与消息回执都在这里，
- * 向外只报告三件外壳确实需要知道的事：配置换了（主题 / 导航可见性）、
- * 图标换了（数据页预览）、以及「切换工作空间」这个动作。
+ * 向外只报告两件外壳确实需要知道的事：配置换了（主题 / 导航可见性）、
+ * 以及「切换工作空间」这个动作。
  *
  * 浮层是**非模态**的：点面板外面会关掉它，但那一击照常落到下面的控件上（点侧栏
  * 就切页、点应用菜单就弹菜单）—— 设置是工具窗，不是拦住整屏的确认框。只在没有
@@ -51,7 +51,6 @@ export interface SettingsPageProps {
   /** 全局默认 + 当前账本的覆盖，已在外壳里算好（导航可见性读的是同一份） */
   effectiveFeatures: FeatureFlags | null
   version: string
-  workspaceIconUrl: string
   updateSnapshot: UpdateSnapshot | null
   /** 当前分栏由外壳持有：应用菜单可以直接落到「关于软件」。 */
   tab: SettingsTab
@@ -68,8 +67,6 @@ export interface SettingsPageProps {
   onOpenWorkspace: (dir: string) => Promise<void>
   /** 配置改了：外壳据此换主题、收放导航 */
   onConfigChanged: (config: ConfigSnapshot) => void
-  /** 图标改了：侧栏左上角立刻跟着换 */
-  onWorkspaceIconChanged: (url: string) => void
 }
 
 export function SettingsPage({
@@ -78,7 +75,6 @@ export function SettingsPage({
   config,
   effectiveFeatures,
   version,
-  workspaceIconUrl,
   updateSnapshot,
   tab,
   onTabChange,
@@ -88,7 +84,6 @@ export function SettingsPage({
   onPickWorkspace,
   onOpenWorkspace,
   onConfigChanged,
-  onWorkspaceIconChanged,
 }: SettingsPageProps): JSX.Element {
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
@@ -270,34 +265,6 @@ export function SettingsPage({
     }
   }
 
-  const changeWorkspaceIcon = async (file: File | undefined): Promise<void> => {
-    if (!file) return
-    try {
-      const data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result))
-        reader.onerror = () => reject(reader.error ?? new Error('读取图标失败'))
-        reader.readAsDataURL(file)
-      })
-      const relative = await window.api.invoke('workspace_icon_set', { data })
-      if (relative) {
-        onWorkspaceIconChanged(await window.api.invoke('asset_url', { filePath: relative }))
-        notify('工作空间图标已更新')
-      }
-    } catch (error) {
-      notify(errorMessage(error), 'error')
-    }
-  }
-
-  const clearWorkspaceIcon = async (): Promise<void> => {
-    try {
-      await window.api.invoke('workspace_icon_set', { data: '' })
-      onWorkspaceIconChanged('')
-    } catch (error) {
-      notify(errorMessage(error), 'error')
-    }
-  }
-
   const currentLabel = TABS.find(([key]) => key === tab)?.[1] ?? '设置'
   const currentTip = tabTip(tab, activeLedgerId)
 
@@ -368,7 +335,6 @@ export function SettingsPage({
               <SettingsGeneral
                 workspace={workspace}
                 config={config}
-                workspaceIconUrl={workspaceIconUrl}
                 picking={picking}
                 proxyMode={proxyMode}
                 proxyUrl={proxyUrl}
@@ -382,8 +348,6 @@ export function SettingsPage({
                 onProxyUrlChange={changeProxyUrl}
                 onProxySave={saveProxy}
                 onProxyDetect={detectProxy}
-                onWorkspaceIconChange={changeWorkspaceIcon}
-                onWorkspaceIconClear={clearWorkspaceIcon}
                 onOpenDevtools={openDevtools}
               />
             ) : null}

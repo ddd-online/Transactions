@@ -14,7 +14,7 @@ import { AppError, errorMessage, workspaceNotOpened } from '../../../shared/erro
 import { WORKSPACE_CHANGED } from '../../../shared/events'
 import { currentWorkspace, openWorkspace } from '../../db'
 import { logInfo, logWarn } from '../../logging'
-import { removeWorkspaceIcon, resolveAsset, saveWorkspaceIcon, workspaceIconRelative } from '../../services/assets'
+import { resolveAsset } from '../../services/assets'
 import { assetUrl, normalizeAssetRequestPath } from '../../shell/asset-path'
 import { openDirectory, openFile } from '../../shell/dialogs'
 import { getMainWindow, notifyQuitReady, registerWindowControl } from '../../shell/window'
@@ -38,8 +38,6 @@ export function createShellHandlers(
   | 'app_quit_ready'
   | 'clipboard_write_text'
   | 'debug_write_asset'
-  | 'workspace_icon_get'
-  | 'workspace_icon_set'
   | 'workspace_open_dir'
   | 'dialog_open_file'
   | 'file_save_image'
@@ -141,22 +139,6 @@ export function createShellHandlers(
       mkdirSync(directory, { recursive: true })
       writeFileSync(join(directory, 'm0.png'), Buffer.from(PNG_1X1, 'base64'))
       return relativePath
-    },
-
-    workspace_icon_get() {
-      const workspace = currentWorkspace()
-      return workspace ? workspaceIconRelative(workspace.directory) : ''
-    },
-
-    workspace_icon_set(request) {
-      const workspace = currentWorkspace()
-      if (!workspace) throw workspaceNotOpened()
-      const data = String(asObject(request).data ?? '')
-      if (!data.trim()) {
-        removeWorkspaceIcon(workspace.directory)
-        return ''
-      }
-      return saveWorkspaceIcon(workspace.directory, data)
     },
 
     async workspace_open_dir(request) {

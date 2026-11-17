@@ -490,8 +490,6 @@ export const commandSchemas = {
     ledgerId: z.string().optional(),
     sortOrder: z.number().default(0),
   }),
-  workspace_icon_get: z.object({}),
-  workspace_icon_set: z.object({ data: z.string().default('') }),
   proxy_test: z.object({ mode: z.string(), url: z.string().default('') }),
   proxy_resolve: z.object({ mode: z.string(), url: z.string().default('') }),
   file_save_image: z.object({ relativePath: z.string() }),
@@ -634,8 +632,6 @@ export interface CommandResponses {
   template_list: TransactionTemplateDto[]
   template_delete: null
   template_update_sort: null
-  workspace_icon_get: string
-  workspace_icon_set: string
   proxy_test: ProxyTestResponse
   proxy_resolve: ProxyResolveResponse
   file_save_image: FileSaveResponse

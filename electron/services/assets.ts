@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 
 import { AppError } from '../../shared/errors'
@@ -16,16 +16,6 @@ import { DISPLAYABLE_IMAGE_MIMES, sniffImage } from './image-sniff'
  * 缩略图由渲染层 canvas 生成（宽 300 / JPEG q75）；HEIC 源图的展示图与缩略图
  * 由主进程转码生成（Chromium 不能解码 HEIC），主进程只做格式/路径校验与落盘。
  */
-
-export const WORKSPACE_ICON_STEM = 'workspace-icon'
-const WORKSPACE_ICON_EXTENSIONS = ['.png', '.jpg', '.webp', '.gif'] as const
-
-const MIME_EXTENSIONS: Record<string, string> = {
-  'image/png': '.png',
-  'image/jpeg': '.jpg',
-  'image/webp': '.webp',
-  'image/gif': '.gif',
-}
 
 const DISPLAY_EXTENSIONS = new Set(['png', 'jpg', 'webp', 'gif'])
 const ORIGINAL_EXTENSIONS = new Set(['heic', 'heif'])
@@ -66,46 +56,6 @@ export function decodeDataUri(raw: string): DecodedDataUri {
   }
   if (bytes.length === 0) throw new AppError('无效的图片数据（内容为空）', { status: 400 })
   return { mime, bytes }
-}
-
-function requireImage(bytes: Buffer, message: string): string {
-  const mime = sniffImage(bytes)
-  if (!mime || !MIME_EXTENSIONS[mime]) {
-    throw new AppError(message, { status: 400 })
-  }
-  return mime
-}
-
-export function workspaceIconRelative(workspaceDir: string): string {
-  const root = assetsRoot(workspaceDir)
-  for (const extension of WORKSPACE_ICON_EXTENSIONS) {
-    const name = `${WORKSPACE_ICON_STEM}${extension}`
-    if (existsSync(join(root, name))) return name
-  }
-  return ''
-}
-
-export function removeWorkspaceIcon(workspaceDir: string): void {
-  const root = assetsRoot(workspaceDir)
-  for (const extension of WORKSPACE_ICON_EXTENSIONS) {
-    rmSync(join(root, `${WORKSPACE_ICON_STEM}${extension}`), { force: true })
-  }
-}
-
-/** 保存工作空间图标，返回相对 `data/assets` 的路径；只允许 PNG/JPEG/WebP/GIF。 */
-export function saveWorkspaceIcon(workspaceDir: string, dataUri: string): string {
-  const { mime, bytes } = decodeDataUri(dataUri)
-  const extension = MIME_EXTENSIONS[mime]
-  if (!extension) {
-    throw new AppError('图标只支持 PNG / JPEG / WebP / GIF', { status: 400 })
-  }
-  requireImage(bytes, '图标不是可解码的图片')
-  const root = assetsRoot(workspaceDir)
-  mkdirSync(root, { recursive: true })
-  removeWorkspaceIcon(workspaceDir)
-  const name = `${WORKSPACE_ICON_STEM}${extension}`
-  writeFileSync(join(root, name), bytes)
-  return name
 }
 
 /** 已经过格式校验、准备落盘的一份文件。 */

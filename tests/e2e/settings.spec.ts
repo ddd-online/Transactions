@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -126,25 +126,6 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     await page.getByTestId('proxy-mode-off').click()
     await expect(page.getByTestId('proxy-save')).toHaveCount(0)
     await expect(page.getByTestId('proxy-detect')).toHaveCount(0)
-
-    await page.getByTestId('workspace-icon-input').setInputFiles({
-      name: 'icon.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-        'base64',
-      ),
-    })
-    await expect(page.getByTestId('workspace-icon')).toBeVisible()
-    const iconWidth = await page
-      .getByTestId('workspace-icon')
-      .evaluate((element) => (element as HTMLImageElement).naturalWidth)
-    expect(iconWidth).toBeGreaterThan(0)
-    expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(true)
-
-    await page.getByTestId('workspace-icon-clear').click()
-    await expect(page.getByTestId('workspace-icon')).toHaveCount(0)
-    expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
     await page.getByTestId('settings-tab-features').click()
     // 后果挂在分区标题旁的 ⓘ 上，不再占一行正文：读屏读 aria-label，鼠标 / 焦点出气泡。

@@ -45,8 +45,6 @@ export function App(): JSX.Element {
   })
   const {
     workspace,
-    workspaceIconUrl,
-    setWorkspaceIconUrl,
     blockingWorkspace,
     openWorkspace,
     openWorkspaceAt,
@@ -279,7 +277,6 @@ export function App(): JSX.Element {
             config={config}
             effectiveFeatures={effectiveFeatures}
             version={version}
-            workspaceIconUrl={workspaceIconUrl}
             updateSnapshot={updateSnapshot}
             tab={settingsTab}
             onTabChange={setSettingsTab}
@@ -289,7 +286,6 @@ export function App(): JSX.Element {
             onPickWorkspace={openWorkspace}
             onOpenWorkspace={openWorkspaceAt}
             onConfigChanged={setConfig}
-            onWorkspaceIconChanged={setWorkspaceIconUrl}
           />
         ) : null}
         {quitting ? <QuitScreen label={quitLabel} /> : null}

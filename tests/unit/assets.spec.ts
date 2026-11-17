@@ -7,11 +7,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   assetsRoot,
   removeImageFiles,
-  removeWorkspaceIcon,
   resolveAsset,
   saveImage,
-  saveWorkspaceIcon,
-  workspaceIconRelative,
 } from '../../electron/services/assets'
 import { AppError } from '../../shared/errors'
 
@@ -35,10 +32,6 @@ const PNG_BYTES = Buffer.from(PNG_1X1, 'base64')
 const JPEG_BYTES = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x00])
 const HEIC_BYTES = readFileSync(resolve(__dirname, '../../fixtures/heic/flat-64.heic'))
 const MOTION_BYTES = Buffer.from('fake-motion')
-
-function pngUri(): string {
-  return `data:image/png;base64,${PNG_1X1}`
-}
 
 describe('workspace assets', () => {
   it('saves an image and its thumbnail in the source layout', () => {
@@ -116,16 +109,6 @@ describe('workspace assets', () => {
         motion: { ext: 'avi', bytes: MOTION_BYTES },
       }),
     ).toThrow('实况视频只支持 MOV / MP4 / M4V / WebM')
-  })
-
-  it('saves, finds and removes the workspace icon', () => {
-    const directory = workspace()
-    expect(workspaceIconRelative(directory)).toBe('')
-    const name = saveWorkspaceIcon(directory, pngUri())
-    expect(name).toBe('workspace-icon.png')
-    expect(workspaceIconRelative(directory)).toBe(name)
-    removeWorkspaceIcon(directory)
-    expect(workspaceIconRelative(directory)).toBe('')
   })
 
   it('rejects path traversal when resolving assets', () => {
