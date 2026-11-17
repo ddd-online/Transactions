@@ -134,10 +134,36 @@
   border-bottom: 1px solid var(--transactions-color-divider);
 }
 
+.settings-main__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  min-width: 0;
+}
+
 .settings-main__title {
   margin: 0;
   font-size: var(--transactions-size-text-title-sm);
   font-weight: var(--transactions-weight-semibold);
+}
+
+/* 标题旁的 ⓘ：只解释这一栏没说清的那半句。12px 三级灰、光标 help，
+ * 焦点环与气泡都跟 hover / focus 走（见 components/tooltip.tsx 的 focusTrigger）。 */
+.settings-main__hint {
+  display: inline-flex;
+  align-items: center;
+  color: var(--transactions-color-text-tertiary);
+  cursor: help;
+  border-radius: var(--transactions-radius-sm);
+}
+
+.settings-main__hint:hover {
+  color: var(--transactions-color-text-secondary);
+}
+
+.settings-main__hint:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
 }
 
 .settings-main__close {
@@ -189,8 +215,7 @@
 }
 
 /* 每个分栏的第一项都贴住标题那条线：把旧页面里「第一行收 8px」的规则还原成行内边距。 */
-.settings-main__body .st-list > .st-card:first-child,
-.settings-main__body .st-feature-hint {
+.settings-main__body .st-list > .st-card:first-child {
   padding-top: var(--transactions-space-md);
 }
 
@@ -272,25 +297,10 @@
   padding-top: var(--transactions-space-sm);
 }
 
-/* 功能开关（`settings.rs` 的 `FeatureSetting`）：一行说明 + 卡片列表。说明只说开关的
- * 后果（关掉的项离开左侧导航 / 没有账本时是新账本的默认值），每个开关自己不再配介绍。
- * 说明行必须在 `.st-list` **外面** —— 进了列表，上面那条 `:first-child` 规则就不再命中
- * 任何一行（第一项变成了说明文字），第一行会重新贴到工具栏线上。这一层只负责把两者摞起来。 */
-.st-feature-pane {
-  display: flex;
-  flex-direction: column;
-}
+/* 功能开关（`settings.rs` 的 `FeatureSetting`）：一行一个开关的卡片列表。
+ * 开关的后果只说在分区标题旁的 ⓘ 上，每个开关自己不再配介绍。 */
 
-/* 位置与 `.st-list > .st-card:first-child` 同一意图：紧贴工具栏那条底边线。 */
-.st-feature-hint {
-  padding-top: var(--transactions-space-sm);
-  padding-bottom: var(--transactions-space-2xs);
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  line-height: var(--transactions-height-snug);
-  color: var(--transactions-color-text-secondary);
-}
-
+/* 位置与 `.st-list > .st-card:first-child` 同一意图：紧贴标题那条线。 */
 /* **最后一行同样画线**（不再有 `:last-child { border-bottom: none }` 那个例外）：
  * 少了这条线时，列表在最后一行看起来像被截断 —— 而且同一页里"上面三行有线、最后一行没有"
  * 会被读成渲染坏了。所有设置行列表（通用设置 / 日记配置 / 股票）都以一条线收尾。 */

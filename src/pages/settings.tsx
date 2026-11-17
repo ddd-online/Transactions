@@ -6,6 +6,7 @@ import type { ConfigSnapshot, FeatureFlags } from '../../shared/types/config'
 import { Icon, type IconName } from '../components/icon'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
+import { Tooltip } from '../components/tooltip'
 import { SettingsAbout, SettingsDiary } from './settings-about'
 import { SettingsData } from './settings-data'
 import { SettingsFeatures } from './settings-features'
@@ -32,6 +33,14 @@ const TABS: ReadonlyArray<readonly [SettingsTab, string, IconName]> = [
   ['diary', '日记配置', 'Read'],
   ['about', '关于软件', 'InfoCircle'],
 ]
+
+/** 分区标题旁的 ⓘ：只解释这一栏没说清的那半句，不占一行正文。 */
+function tabTip(tab: SettingsTab, activeLedgerId: string): string {
+  if (tab !== 'features') return ''
+  return activeLedgerId
+    ? '只对当前账本生效；关掉的不进导航'
+    : '当前没有账本：这些开关是新账本的默认值'
+}
 
 export interface SettingsPageProps {
   /** 当前工作空间目录（未打开时为空串） */
@@ -288,6 +297,7 @@ export function SettingsPage({
   }
 
   const currentLabel = TABS.find(([key]) => key === tab)?.[1] ?? '设置'
+  const currentTip = tabTip(tab, activeLedgerId)
 
   return (
     <div className="settings-layer" data-testid="settings-layer">
@@ -320,7 +330,22 @@ export function SettingsPage({
 
         <section className="settings-main">
           <header className="settings-main__head">
-            <h2 className="settings-main__title">{currentLabel}</h2>
+            <div className="settings-main__heading">
+              <h2 className="settings-main__title">{currentLabel}</h2>
+              {currentTip ? (
+                <Tooltip text={currentTip} focusTrigger>
+                  <span
+                    className="settings-main__hint"
+                    data-testid="feature-hint"
+                    role="img"
+                    tabIndex={0}
+                    aria-label={currentTip}
+                  >
+                    <Icon name="InfoCircle" size={12} />
+                  </span>
+                </Tooltip>
+              ) : null}
+            </div>
             {canClose ? (
               <button
                 type="button"

@@ -147,8 +147,13 @@ test('设置：外观落盘并驱动 data-theme；功能开关键名落盘', asy
     expect(existsSync(join(workspace, 'data', 'assets', 'workspace-icon.png'))).toBe(false)
 
     await page.getByTestId('settings-tab-features').click()
-    // 每个开关不再配一段介绍：整页只说一次后果 —— 关掉的项不会出现在左侧导航。
-    await expect(page.getByTestId('feature-hint')).toContainText('不显示在左侧导航')
+    // 后果挂在分区标题旁的 ⓘ 上，不再占一行正文：读屏读 aria-label，鼠标 / 焦点出气泡。
+    const featureHint = page.getByTestId('feature-hint')
+    await expect(featureHint).toHaveAttribute('aria-label', /只对当前账本生效/)
+    await featureHint.hover()
+    await expect(page.locator('.ant-tooltip:not(.ant-tooltip-hidden)')).toContainText(
+      '只对当前账本生效',
+    )
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'settings-features.png'),
     })

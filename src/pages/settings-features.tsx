@@ -34,16 +34,10 @@ export function SettingsFeatures({
   onFeatureChange,
 }: SettingsFeaturesProps): JSX.Element {
   return (
-    <div className="st-feature-pane">
-      {/* 一个开关的后果（导航里少一项、新账本沿用）不在这张表上，所以整页只说一次；
-          每个开关自己不必再配一段介绍 —— 五个名字就是左侧导航的五个名字。 */}
-      <div className="st-feature-hint" data-testid="feature-hint">
-        {activeLedgerId
-          ? '只对当前账本生效；关掉的项不显示在左侧导航。'
-          : '当前没有账本：这些开关是新账本的默认值。'}
-      </div>
-      <div className="st-list">
-        {FEATURES.map(({ key, title }) => {
+    // 开关的后果（只作用于当前账本、关掉的项离开导航）不占正文一行：
+    // 它挂在分区标题旁的 ⓘ 上，见 settings.tsx 的 tabTip。
+    <div className="st-list">
+      {FEATURES.map(({ key, title }) => {
           const checked = activeLedgerId
             ? (effectiveFeatures?.[key] ?? true)
             : (config?.features[key] ?? true)
@@ -64,7 +58,6 @@ export function SettingsFeatures({
             </div>
           )
         })}
-      </div>
     </div>
   )
 }
