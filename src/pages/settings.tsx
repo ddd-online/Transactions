@@ -58,7 +58,9 @@ export interface SettingsPageProps {
   onTabChange: (tab: SettingsTab) => void
   /** 关闭浮层：没有可回的功能页时（功能全关）外壳会传 false，只留关闭入口不可用。 */
   canClose: boolean
-  onClose: () => void
+  /** 关闭浮层：`restoreFocus` 只在显式关闭（× / Esc）时为真 ——
+   *  点外面是为了继续操作下面那个控件，焦点不该被拉回设置入口。 */
+  onClose: (restoreFocus?: boolean) => void
   onUpdateSnapshot: (snapshot: UpdateSnapshot | null) => void
   /** 换一个工作空间：由外壳弹目录框并落库 */
   onPickWorkspace: () => Promise<void>
@@ -122,7 +124,7 @@ export function SettingsPage({
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape' || modalOpen()) return
       event.stopPropagation()
-      onClose()
+      onClose(true)
     }
     document.addEventListener('pointerdown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
@@ -353,7 +355,7 @@ export function SettingsPage({
                 data-testid="settings-close"
                 aria-label="关闭设置"
                 title="关闭设置"
-                onClick={onClose}
+                onClick={() => onClose(true)}
               >
                 <Icon name="Close" size={16} />
               </button>

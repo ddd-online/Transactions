@@ -87,21 +87,27 @@
   position: relative;
   display: flex;
   align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 260px;
   -webkit-app-region: no-drag;
 }
 
 /* 入口是「工作空间目录名 + ⌄」：静止时只是标题栏上的一行字，悬停 / 展开才浮出
- * 纸白圆角底（与参考图一致），名字最长 260px。 */
+ * 纸白圆角底（与参考图一致）。锚点最长 260px、可收缩：窄窗里长目录名省略，
+ * 不会顶开居中的页面名。 */
 .app-menu-trigger {
   display: inline-flex;
   align-items: center;
   gap: var(--transactions-space-xs);
-  max-width: 260px;
+  min-width: 0;
+  max-width: 100%;
   height: 28px;
   padding: 0 var(--transactions-space-sm);
   border: none;
   border-radius: var(--transactions-radius-sm);
   background: none;
+  overflow: hidden;
   cursor: pointer;
   font-family: inherit;
   font-size: var(--transactions-size-text-body-sm);
@@ -475,7 +481,11 @@
 .app-titlebar {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr minmax(0, auto) 1fr;
+  /* 两侧都用 minmax(0, 1fr)：`1fr` 的自动最小值会被长工作空间名撑大，
+   * 中间那列就不再落在窗口正中。minmax(0, 1fr) 把最小宽度压到 0，两侧严格等宽。
+   * 列间距对称，居中不受影响；窄窗里长目录名与页面名之间仍有 8px 呼吸。 */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  column-gap: var(--transactions-space-sm);
   align-items: center;
   flex-shrink: 0;
   height: var(--transactions-size-top-band);
@@ -489,6 +499,7 @@
   display: flex;
   align-items: center;
   justify-self: start;
+  width: 100%;
   min-width: 0;
   padding-left: var(--transactions-space-md);
 }

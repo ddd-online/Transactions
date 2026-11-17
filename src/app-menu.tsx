@@ -201,45 +201,54 @@ export function AppMenu({
               暂无账本
             </div>
           ) : (
-            ledgers.map((ledger) => (
-              <div
-                key={ledger.id}
-                data-testid="ledger-menu-row"
-                className={`app-menu__row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
-              >
-                <Tooltip text={ledger.description.trim() || '暂无描述'}>
-                  <button
-                    type="button"
-                    className="app-menu__item app-menu__item--ledger"
-                    role="menuitemradio"
-                    aria-checked={ledger.id === activeLedgerId}
-                    data-menu-item
-                    onClick={() => {
-                      onSelect(ledger.id)
-                      close(true)
-                    }}
-                  >
-                    <IdentityDot seed={ledger.id} size={6} />
-                    <span className="app-menu__label">{ledger.name}</span>
-                    {ledger.id === activeLedgerId ? (
-                      <Icon name="Check" size={13} className="app-menu__check" />
-                    ) : null}
-                  </button>
-                </Tooltip>
+            ledgers.map((ledger) => {
+              const description = ledger.description.trim()
+              const nameButton = (
                 <button
                   type="button"
-                  className="app-menu__delete"
-                  data-testid="ledger-delete"
-                  aria-label={`删除账本 ${ledger.name}`}
+                  className="app-menu__item app-menu__item--ledger"
+                  role="menuitemradio"
+                  aria-checked={ledger.id === activeLedgerId}
+                  data-menu-item
                   onClick={() => {
-                    close()
-                    setDeleteTarget(ledger.id)
+                    onSelect(ledger.id)
+                    close(true)
                   }}
                 >
-                  <Icon name="Trash" size={14} />
+                  <IdentityDot seed={ledger.id} size={6} />
+                  <span className="app-menu__label">{ledger.name}</span>
+                  {ledger.id === activeLedgerId ? (
+                    <Icon name="Check" size={13} className="app-menu__check" />
+                  ) : null}
                 </button>
-              </div>
-            ))
+              )
+              return (
+                <div
+                  key={ledger.id}
+                  data-testid="ledger-menu-row"
+                  className={`app-menu__row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
+                >
+                  {/* 没有描述就不挂 Tooltip：悬停弹一句「暂无描述」只是噪音。 */}
+                  {description ? (
+                    <Tooltip text={description}>{nameButton}</Tooltip>
+                  ) : (
+                    nameButton
+                  )}
+                  <button
+                    type="button"
+                    className="app-menu__delete"
+                    data-testid="ledger-delete"
+                    aria-label={`删除账本 ${ledger.name}`}
+                    onClick={() => {
+                      close()
+                      setDeleteTarget(ledger.id)
+                    }}
+                  >
+                    <Icon name="Trash" size={14} />
+                  </button>
+                </div>
+              )
+            })
           )}
 
           <button

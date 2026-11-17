@@ -123,9 +123,9 @@ export function AppShell({
           </div>
         </header>
 
-        <div className="app-shell-body is-sidebar-collapsed">
+        <div className="app-shell-body">
           <aside className="app-sidebar" inert={blockingWorkspace || undefined}>
-            <div className="app-left-bar is-collapsed">
+            <div className="app-left-bar">
               <nav className="sidebar-nav" aria-label="主导航">
                 {NAV_VIEWS.filter(({ feature }) => features?.[feature] !== false).map(
                   ({ view: key, label }) => (

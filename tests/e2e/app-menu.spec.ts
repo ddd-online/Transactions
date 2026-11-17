@@ -130,16 +130,18 @@ test('标题栏：工作空间名入口、账本、外观切换与设置浮层',
       path: join(repositoryRoot, 'artifacts', 'tests', 'settings-about.png'),
     })
 
-    // 关闭入口 + Esc：关闭后回到原来那一页，标题也跟着回来。
+    // 关闭入口 + Esc：关闭后回到原来那一页，焦点还回侧栏设置入口。
     await page.getByTestId('settings-close').click()
     await expect(page.getByTestId('settings-layer')).toHaveCount(0)
     await expect(page.getByTestId('app-title')).toHaveText('记账')
+    await expect(page.getByTestId('nav-settings')).toBeFocused()
 
     await page.getByTestId('nav-settings').click()
     await expect(page.getByTestId('settings-layer')).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('settings-layer')).toHaveCount(0)
     await expect(page.getByTestId('app-title')).toHaveText('记账')
+    await expect(page.getByTestId('nav-settings')).toBeFocused()
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type JSX } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type JSX } from 'react'
 
 import { errorMessage } from '../shared/errors'
 
@@ -82,11 +82,15 @@ export function App(): JSX.Element {
   // 唯一的内容（`currentView === 'settings'`），此时关不掉。
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('general')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  /** 打开设置前的焦点落点：显式关闭（× / Esc）时还给它。 */
+  const settingsOpener = useRef<HTMLElement | null>(null)
   /** 关掉设置就把当前页重挂一次：设置里的导入 / 恢复改的也是这一页的数据，
    *  以前靠「设置是一页、离开就卸载」拿到刷新，浮层不卸载页面，得自己补这一下。 */
   const [pageEpoch, setPageEpoch] = useState(0)
 
   const openSettings = useCallback((tab: SettingsTab): void => {
+    settingsOpener.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
     setSettingsTab(tab)
     setSettingsOpen(true)
   }, [])
@@ -94,12 +98,24 @@ export function App(): JSX.Element {
   /** 没有任何功能页可回时（功能全关），设置不能关 —— 关了只剩一片空白。 */
   const canCloseSettings = defaultView(effectiveFeatures) !== 'settings'
 
-  const closeSettings = useCallback((): void => {
-    if (!canCloseSettings) return
-    setSettingsOpen(false)
-    if (view === 'settings') setView(defaultView(effectiveFeatures))
-    setPageEpoch((epoch) => epoch + 1)
-  }, [canCloseSettings, effectiveFeatures, view])
+  const closeSettings = useCallback(
+    (restoreFocus = false): void => {
+      if (!canCloseSettings) return
+      setSettingsOpen(false)
+      if (view === 'settings') setView(defaultView(effectiveFeatures))
+      setPageEpoch((epoch) => epoch + 1)
+      if (!restoreFocus) return
+      // 等浮层卸下、页面重挂之后再还焦点：入口可能已被菜单卸载，退回到侧栏设置键。
+      requestAnimationFrame(() => {
+        const opener = settingsOpener.current
+        const target = opener?.isConnected
+          ? opener
+          : document.querySelector<HTMLElement>('[data-testid="nav-settings"]')
+        target?.focus()
+      })
+    },
+    [canCloseSettings, effectiveFeatures, view],
+  )
 
   const settingsVisible = settingsOpen || currentView === 'settings'
 

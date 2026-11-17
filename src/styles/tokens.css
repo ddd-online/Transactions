@@ -205,8 +205,8 @@
   /* ---------- Layout（$layout-sizes） ----------
    * 这里原来还有 `header-height: 48px` / `sider-width: 56px` / `content-padding: 20px` 三条
    * （从 Ant 的令牌表搬来的），值与现有骨架对不上、全仓零引用，已删：
-   *   * 顶部那条带用下文的 `size-top-band`（同为 48px，含义是"横贯窗口的标题栏"）；
-   *   * 侧栏宽是上面的 `size-sidebar`（69px 收起态）—— 56px 那条只对得上子功能图标条；
+   *   * 顶部那条带用下文的 `size-top-band`（40px，含义是"横贯窗口的标题栏"）；
+   *   * 侧栏宽是下面的 `size-sidebar`（57px 图标列）—— 56px 那条只对得上子功能图标条；
    *   * 内容内边距由各页自己的容器给（贴边型 0 / 卡片型 16px），没有全局的 20px。 */
   --transactions-size-footer-height: 44px;
   /* 子功能图标条宽度（`.page-rail`）。**不是侧边栏**：侧栏宽是 `size-sidebar`。 */
@@ -260,14 +260,10 @@
    * 改字号别超过这个高度。 */
   --transactions-size-top-band: 40px;
 
-  /* 标题栏分隔线到下方内容之间的距离 */
-  --transactions-space-top-gap: 8px;
-
   /* ---------- 左侧导航栏宽度 ----------
-   * 侧栏固定为**收起态**（57px 图标列），没有展开形态，也不拖拽。 */
-  --transactions-size-sidebar: 200px;
-  /* 固定收起态的侧栏宽：内侧 8px 边距 × 2 + 40px 图标键 + 1px 右边框 = 57px。 */
-  --transactions-size-sidebar-collapsed: 57px;
+   * 侧栏固定为纯图标列：内侧 8px 边距 × 2 + 40px 图标键 + 1px 右边框 = 57px。
+   * 没有展开形态，也不拖拽。 */
+  --transactions-size-sidebar: 57px;
 
   /* 动效专用缓动：落地感（exponential ease-out），用于“数据落定”类进场 */
   --transactions-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);

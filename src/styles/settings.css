@@ -101,13 +101,27 @@
   color: var(--transactions-color-text-major);
 }
 
+/* 选中行：主色字压在 8% tint 上只有 4.14:1，浅色换深一档（≈5.3:1）；
+ * 深色主色本身是深蓝，换成亮一档的 primary-200。 */
 .settings-nav__item.is-active {
   background: var(--transactions-color-active-bg);
-  color: var(--transactions-color-primary);
+  color: var(--transactions-color-primary-hover);
 }
 
 .settings-nav__item.is-active .icon {
-  color: var(--transactions-color-primary);
+  color: var(--transactions-color-primary-hover);
+}
+
+[data-theme='dark'] .settings-nav__item.is-active,
+[data-theme='dark'] .settings-nav__item.is-active .icon {
+  color: var(--transactions-color-primary-200);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .settings-nav__item.is-active,
+  html:not([data-theme]) .settings-nav__item.is-active .icon {
+    color: var(--transactions-color-primary-200);
+  }
 }
 
 .settings-nav__item:focus-visible {
@@ -962,9 +976,14 @@
   cursor: not-allowed;
 }
 
-.st-recent-row.is-current .st-recent-name,
+/* 当前那条仍然可读：它只是不能再点，不是禁用信息。
+ * 名字用主文字色、路径用次要色，改由「当前」徽标与不可点光标表达状态。 */
+.st-recent-row.is-current .st-recent-name {
+  color: var(--transactions-color-text-major);
+}
+
 .st-recent-row.is-current .st-recent-path {
-  color: var(--transactions-color-text-disabled);
+  color: var(--transactions-color-text-secondary);
 }
 
 .st-recent-main {
@@ -1005,10 +1024,34 @@
   padding: 1px var(--transactions-space-xs);
   border-radius: var(--transactions-radius-sm);
   background-color: var(--transactions-color-primary-tint);
-  color: var(--transactions-color-primary);
+  color: var(--transactions-color-primary-hover);
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-small);
   line-height: var(--transactions-height-snug);
+}
+
+[data-theme='dark'] .st-recent-badge {
+  color: var(--transactions-color-primary-200);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .st-recent-badge {
+    color: var(--transactions-color-primary-200);
+  }
+}
+
+/* 最窄一档：备份名与元信息并排时名字会被挤成两行（auto- / 20261118.db），
+ * 改成上下两段，名字与元信息各自占满一行。 */
+@media (max-width: 520px) {
+  .st-backup-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--transactions-space-2xs);
+  }
+
+  .st-backup-meta {
+    justify-content: flex-start;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

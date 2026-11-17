@@ -41,8 +41,8 @@
   border-right: 1px solid var(--transactions-color-border-l1);
 }
 
-/* 图标条里的按钮：40×40 方形、图标居中；激活态用主动作色 + 浅底（与侧栏 `.nav-btn.active` 同一套语言）。
- * 悬停提示/可访问名就是子功能名（记录 / 标签 / 模板）。 */
+/* 图标条里的按钮：40×40 方形、图标居中；激活态与侧栏 `.nav-btn.active` 同一套语言
+ * （纸白方块 + 轻投影 + 主色图标）。悬停提示/可访问名就是子功能名（记录 / 标签 / 模板）。 */
 .page-rail-nav {
   display: flex;
   flex-direction: column;
@@ -65,7 +65,7 @@
   color: var(--transactions-color-icon);
   transition: background-color var(--transactions-transition-fast),
     color var(--transactions-transition-fast),
-    transform var(--transactions-transition-fast);
+    box-shadow var(--transactions-transition-fast);
 }
 
 .page-rail-btn:hover {
@@ -74,13 +74,14 @@
 }
 
 .page-rail-btn.is-active {
-  background-color: var(--transactions-color-active-bg);
+  background-color: var(--transactions-color-elevated);
   color: var(--transactions-color-primary);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
-/* 与侧栏 `.nav-btn` 同一档按压反馈 */
+/* 与侧栏 `.nav-btn` 同一档按压反馈（下沉用 `translate`，不覆盖定位用的 `transform`） */
 .page-rail-btn:active {
-  transform: translateY(1px);
+  translate: 0 1px;
 }
 
 .page-rail-btn:focus-visible {
