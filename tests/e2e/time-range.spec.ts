@@ -100,6 +100,14 @@ test('时间范围：记录与分析共用粒度、区间与快捷项，分析�
     await page.getByTestId('acct-tab-charts').click()
     await expect(page.getByTestId('chart-time-trigger')).toHaveText(yearKey)
     await expect(page.getByTestId('chart-time-mode-year')).toHaveAttribute('aria-pressed', 'true')
+
+    // 工具栏最左侧的「今天」：哪怕粒度已切到月，一次点击也收回「日 + 今天」
+    await page.getByTestId('acct-tab-records').click()
+    await page.getByTestId('tr-time-mode-month').click()
+    await expect(page.getByTestId('tr-time-mode-month')).toHaveAttribute('aria-pressed', 'true')
+    await page.getByTestId('tr-today').click()
+    await expect(page.getByTestId('tr-time-trigger')).toHaveText(todayYmd)
+    await expect(page.getByTestId('tr-time-mode-date')).toHaveAttribute('aria-pressed', 'true')
   } finally {
     await electronApp.close()
     rmSync(root, { recursive: true, force: true })

@@ -121,6 +121,8 @@ export interface RecordsFilterBarProps {
   activeFilterCount: number
   onRangeModeChange: (mode: TimeRangeMode) => void
   onRangeChange: (start: string, end: string) => void
+  /** 「今天」：粒度收回日、区间收到今天。 */
+  onToday: () => void
   onOpenSort: () => void
   onOpenFilter: () => void
   onCreate: () => void
@@ -134,6 +136,7 @@ export function RecordsFilterBar({
   activeFilterCount,
   onRangeModeChange,
   onRangeChange,
+  onToday,
   onOpenSort,
   onOpenFilter,
   onCreate,
@@ -141,6 +144,9 @@ export function RecordsFilterBar({
   return (
     <>
       <div className="m0-actions">
+        <Button variant="secondary" testId="tr-today" onClick={onToday}>
+          今天
+        </Button>
         <TimeRangePicker
           testId="tr-time"
           mode={rangeMode}

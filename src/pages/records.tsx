@@ -199,6 +199,12 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
     [load],
   )
 
+  /** 「今天」：粒度回到日、区间收到今天，与日记页那颗按钮同一手势。 */
+  const goToday = useCallback((): void => {
+    const today = todayYmd()
+    updateRange({ mode: 'date', start: today, end: today })
+  }, [updateRange])
+
   const goLastMonth = useCallback((): void => {
     const parsed = parseYearMonth(todayYmd())
     if (!parsed) return
@@ -306,6 +312,7 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
           activeFilterCount={activeFilterCount}
           onRangeModeChange={(mode) => updateRange({ mode })}
           onRangeChange={(start, end) => updateRange({ start, end })}
+          onToday={goToday}
           onOpenSort={openSort}
           onOpenFilter={openFilter}
           onCreate={openComposer}
