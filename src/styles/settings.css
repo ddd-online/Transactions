@@ -920,13 +920,21 @@
   flex-direction: column;
 }
 
+/* 最近工作空间：目录名与路径同一行，卡片只为「标题 + 一行目录」长高；
+ * 名单里多一条也不再叠两层文字。 */
+.st-recent {
+  gap: var(--transactions-space-sm);
+  padding-top: var(--transactions-space-sm);
+  padding-bottom: var(--transactions-space-sm);
+}
+
 .st-recent-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--transactions-space-md);
   width: 100%;
-  padding: var(--transactions-space-sm) 0;
+  padding: var(--transactions-space-xs) 0;
   border: 0;
   border-bottom: 1px solid var(--transactions-color-divider);
   background: transparent;
@@ -961,12 +969,17 @@
 
 .st-recent-main {
   display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--transactions-space-sm);
+  flex: 1;
   min-width: 0;
 }
 
 .st-recent-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
   font-family: var(--transactions-font-body);
   font-size: var(--transactions-size-text-body-sm);
   font-weight: var(--transactions-weight-medium);
@@ -977,6 +990,8 @@
 }
 
 .st-recent-path {
+  flex: 1;
+  min-width: 0;
   font-family: var(--transactions-font-mono);
   font-size: var(--transactions-size-text-caption);
   color: var(--transactions-color-text-secondary);

@@ -122,7 +122,7 @@ export function SettingsDataRecentList({
   onOpen,
 }: SettingsDataRecentListProps): JSX.Element {
   return (
-    <div className="st-card st-card--block">
+    <div className="st-card st-card--block st-recent">
       <div className="st-panel-head">
         <div className="st-card-info">
           <span className="st-card-title">最近工作空间</span>
