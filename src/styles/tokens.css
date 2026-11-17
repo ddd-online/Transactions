@@ -203,15 +203,15 @@
   --transactions-space-3xl: 48px;
 
   /* ---------- 外壳的一条带（标题栏高度 / 两个图标栏宽度） ----------
-   * 三处**共用同一个值**：32px 图标键 + 左右（上下）各 8px 留白 = 48px。
+   * 三处**共用同一个值**：32px 图标键 + 两侧各 4px 留白 = 40px。
    * 横的标题栏与两条竖栏等宽等高，左上角才闭合成一个直角；
-   * 侧栏宽含 1px 右边框（`box-sizing: border-box`），内容区因此是 48 − 1。
+   * 侧栏宽含 1px 右边框（`box-sizing: border-box`），内容区因此是 40 − 1。
    * 这里以前三个数各写一份（40 / 57 / 56），改一处另外两处就对不上。
    *
    * 标题栏在窗口最上面，侧栏从它下面开始；窗口三键与页面名都排在这一条里，
    * 三键满高排在右端。线下方由 `.sidebar-nav` / `.page-toolbar` 各自留 8px。 */
   --transactions-size-shell-band: calc(
-    var(--transactions-icon-btn-size-lg) + var(--transactions-space-lg)
+    var(--transactions-icon-btn-size-lg) + var(--transactions-space-sm)
   );
   --transactions-size-top-band: var(--transactions-size-shell-band);
   --transactions-size-sidebar: var(--transactions-size-shell-band);
@@ -250,7 +250,7 @@
   --transactions-btn-font-size-md: 14px;
   --transactions-btn-font-size-lg: 16px;
   /* 图标键（IconButton）：行内动作 28px，外壳导航 32px。
-   * 外壳那档与 `size-shell-band` 配套（32 + 8×2 = 48）；两档都是唯一来源，
+   * 外壳那档与 `size-shell-band` 配套（32 + 4×2 = 40）；两档都是唯一来源，
    * 页面里不要再写 28 / 32 的裸值。 */
   --transactions-icon-btn-size: 28px;
   --transactions-icon-btn-size-lg: 32px;
