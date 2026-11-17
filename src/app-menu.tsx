@@ -46,7 +46,6 @@ export interface AppMenuProps {
   activeLedgerName: string
   /** 空串 = 还没有工作空间：新建表单禁用。 */
   workspace: string
-  version: string
   busy: boolean
   onSelect: (id: string) => void
   /**
@@ -60,7 +59,6 @@ export interface AppMenuProps {
   ) => Promise<string | null>
   onDelete: (id: string) => Promise<void>
   onOpenSettings: () => void
-  onOpenAbout: () => void
   onOpenDevtools: () => void
 }
 
@@ -69,13 +67,11 @@ export function AppMenu({
   activeLedgerId,
   activeLedgerName,
   workspace,
-  version,
   busy,
   onSelect,
   onCreate,
   onDelete,
   onOpenSettings,
-  onOpenAbout,
   onOpenDevtools,
 }: AppMenuProps): JSX.Element {
   const [open, setOpen] = useState(false)
@@ -272,22 +268,6 @@ export function AppMenu({
           >
             <Icon name="Setting" size={15} />
             <span className="app-menu__label">应用设置</span>
-          </button>
-
-          <button
-            type="button"
-            className="app-menu__item"
-            data-testid="app-menu-about"
-            role="menuitem"
-            data-menu-item
-            onClick={() => {
-              close(true)
-              onOpenAbout()
-            }}
-          >
-            <Icon name="InfoCircle" size={15} />
-            <span className="app-menu__label">关于软件</span>
-            <span className="app-menu__value app-menu__value--mono">{version}</span>
           </button>
 
           <button

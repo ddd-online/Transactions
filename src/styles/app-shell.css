@@ -274,17 +274,6 @@
   }
 }
 
-.app-menu__value {
-  flex-shrink: 0;
-  font-size: var(--transactions-size-text-small);
-  color: var(--transactions-color-text-tertiary);
-}
-
-.app-menu__value--mono {
-  font-family: var(--transactions-font-mono);
-  letter-spacing: var(--transactions-tracking-amount);
-}
-
 /* 面板里的每一行都是一颗按钮：按下同样下沉 1px（DESIGN 的 Press Rule）。 */
 .app-menu-trigger:active,
 .app-menu__item:active,

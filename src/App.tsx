@@ -171,13 +171,11 @@ export function App(): JSX.Element {
               activeLedgerId={activeLedgerId}
               activeLedgerName={activeLedgerName}
               workspace={workspace}
-              version={version}
               busy={busy}
               onSelect={setActiveLedgerId}
               onCreate={createLedger}
               onDelete={deleteLedger}
               onOpenSettings={() => openSettings('general')}
-              onOpenAbout={() => openSettings('about')}
               onOpenDevtools={openDevtools}
             />
           }

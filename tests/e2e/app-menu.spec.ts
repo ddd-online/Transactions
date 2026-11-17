@@ -7,7 +7,7 @@ import { _electron as electron, expect, test } from '@playwright/test'
 import { createLedger } from './ledger-helper'
 import { environment } from './helpers'
 
-test('标题栏：工作空间名入口、账本、外观切换、设置与关于分栏', async () => {
+test('标题栏：工作空间名入口、账本、外观切换与设置浮层', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-menu-'))
   const home = join(root, 'home')
@@ -103,8 +103,7 @@ test('标题栏：工作空间名入口、账本、外观切换、设置与关�
     await themeToggle.click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
 
-    // 「应用设置」落到通用分栏，「关于软件」落到关于分栏 —— 同一个菜单两种落点。
-    // 设置是浮在当前页上的工具窗：背后的页面还挂着，标题仍是那一页。
+    // 「应用设置」落到通用分栏；设置是浮在当前页上的工具窗，背后的页面还挂着。
     await page.getByTestId('app-menu-trigger').click()
     await page.getByTestId('app-menu-settings').click()
     await expect(page.getByTestId('settings-layer')).toBeVisible()
@@ -116,12 +115,19 @@ test('标题栏：工作空间名入口、账本、外观切换、设置与关�
       path: join(repositoryRoot, 'artifacts', 'tests', 'settings-dialog.png'),
     })
 
+    // 关于软件只在设置里：菜单不再有这一行。
     await page.getByTestId('app-menu-trigger').click()
-    await page.getByTestId('app-menu-about').click()
+    await expect(page.getByTestId('app-menu')).toBeVisible()
+    await expect(page.getByTestId('app-menu-about')).toHaveCount(0)
+    await page.keyboard.press('Escape')
+
+    // 从设置的分栏进「关于软件」，版本与更新入口都还在。
+    await page.getByTestId('nav-settings').click()
+    await page.getByTestId('settings-tab-about').click()
     await expect(page.getByTestId('settings-tab-about')).toHaveAttribute('aria-selected', 'true')
     await expect(page.locator('.st-app-version')).toContainText('版本')
     await page.screenshot({
-      path: join(repositoryRoot, 'artifacts', 'tests', 'app-menu-about.png'),
+      path: join(repositoryRoot, 'artifacts', 'tests', 'settings-about.png'),
     })
 
     // 关闭入口 + Esc：关闭后回到原来那一页，标题也跟着回来。
