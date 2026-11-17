@@ -107,7 +107,7 @@ test('标题栏：工作空间名入口、账本、外观切换与设置浮层',
     await page.getByTestId('app-menu-trigger').click()
     await page.getByTestId('app-menu-settings').click()
     await expect(page.getByTestId('settings-layer')).toBeVisible()
-    await expect(page.getByTestId('settings-tab-general')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByTestId('settings-tab-general')).toHaveAttribute('aria-current', 'page')
     await expect(page.getByTestId('appearance-light')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('app-title')).toHaveText('记账')
     await page.waitForTimeout(260)
@@ -124,7 +124,7 @@ test('标题栏：工作空间名入口、账本、外观切换与设置浮层',
     // 从设置的分栏进「关于软件」，版本与更新入口都还在。
     await page.getByTestId('nav-settings').click()
     await page.getByTestId('settings-tab-about').click()
-    await expect(page.getByTestId('settings-tab-about')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByTestId('settings-tab-about')).toHaveAttribute('aria-current', 'page')
     await expect(page.locator('.st-app-version')).toContainText('版本')
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'settings-about.png'),

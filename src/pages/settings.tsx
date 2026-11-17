@@ -4,6 +4,7 @@ import { errorMessage } from '../../shared/errors'
 import type { UpdateSnapshot } from '../../shared/domain/update'
 import type { ConfigSnapshot, FeatureFlags } from '../../shared/types/config'
 import { Icon, type IconName } from '../components/icon'
+import { IconButton } from '../components/icon-button'
 import { ScrollArea } from '../components/scroll-area'
 import { notify } from '../components/toast'
 import { Tooltip } from '../components/tooltip'
@@ -284,8 +285,7 @@ export function SettingsPage({
               <button
                 key={key}
                 type="button"
-                role="tab"
-                aria-selected={tab === key}
+                aria-current={tab === key ? 'page' : undefined}
                 data-testid={`settings-tab-${key}`}
                 className={`settings-nav__item${tab === key ? ' is-active' : ''}`}
                 onClick={() => onTabChange(key)}
@@ -316,69 +316,65 @@ export function SettingsPage({
               ) : null}
             </div>
             {canClose ? (
-              <button
-                type="button"
-                className="settings-main__close"
-                data-testid="settings-close"
-                aria-label="关闭设置"
-                title="关闭设置"
+              <IconButton
+                icon="Close"
+                label="关闭设置"
+                testId="settings-close"
                 onClick={() => onClose(true)}
-              >
-                <Icon name="Close" size={16} />
-              </button>
+              />
             ) : null}
           </header>
 
           <ScrollArea className="settings-main__scroll">
             <div className="settings-main__body">
               {tab === 'general' ? (
-              <SettingsGeneral
-                workspace={workspace}
-                config={config}
-                picking={picking}
-                proxyMode={proxyMode}
-                proxyUrl={proxyUrl}
-                proxyResolved={proxyResolved}
-                proxyState={proxyState}
-                proxyTesting={proxyTesting}
-                onPickWorkspace={pickWorkspace}
-                onAppearanceChange={setAppearance}
-                onCloseBehaviorChange={setCloseBehavior}
-                onProxyModeChange={changeProxyMode}
-                onProxyUrlChange={changeProxyUrl}
-                onProxySave={saveProxy}
-                onProxyDetect={detectProxy}
-                onOpenDevtools={openDevtools}
-              />
-            ) : null}
+                <SettingsGeneral
+                  workspace={workspace}
+                  config={config}
+                  picking={picking}
+                  proxyMode={proxyMode}
+                  proxyUrl={proxyUrl}
+                  proxyResolved={proxyResolved}
+                  proxyState={proxyState}
+                  proxyTesting={proxyTesting}
+                  onPickWorkspace={pickWorkspace}
+                  onAppearanceChange={setAppearance}
+                  onCloseBehaviorChange={setCloseBehavior}
+                  onProxyModeChange={changeProxyMode}
+                  onProxyUrlChange={changeProxyUrl}
+                  onProxySave={saveProxy}
+                  onProxyDetect={detectProxy}
+                  onOpenDevtools={openDevtools}
+                />
+              ) : null}
 
-            {tab === 'features' ? (
-              <SettingsFeatures
-                activeLedgerId={activeLedgerId}
-                config={config}
-                effectiveFeatures={effectiveFeatures}
-                onFeatureChange={setFeature}
-              />
-            ) : null}
+              {tab === 'features' ? (
+                <SettingsFeatures
+                  activeLedgerId={activeLedgerId}
+                  config={config}
+                  effectiveFeatures={effectiveFeatures}
+                  onFeatureChange={setFeature}
+                />
+              ) : null}
 
-            {tab === 'data' ? (
-              <SettingsData
-                workspace={workspace}
-                config={config}
-                onPickWorkspace={onPickWorkspace}
-                onOpenWorkspace={onOpenWorkspace}
-                onConfigChanged={onConfigChanged}
-              />
-            ) : null}
+              {tab === 'data' ? (
+                <SettingsData
+                  workspace={workspace}
+                  config={config}
+                  onPickWorkspace={onPickWorkspace}
+                  onOpenWorkspace={onOpenWorkspace}
+                  onConfigChanged={onConfigChanged}
+                />
+              ) : null}
 
-            {tab === 'diary' ? <SettingsDiary ledgerId={activeLedgerId} /> : null}
+              {tab === 'diary' ? <SettingsDiary ledgerId={activeLedgerId} /> : null}
 
-            {tab === 'about' ? (
-              <SettingsAbout
-                version={version}
-                updateSnapshot={updateSnapshot}
-                onUpdateSnapshot={onUpdateSnapshot}
-              />
+              {tab === 'about' ? (
+                <SettingsAbout
+                  version={version}
+                  updateSnapshot={updateSnapshot}
+                  onUpdateSnapshot={onUpdateSnapshot}
+                />
               ) : null}
             </div>
           </ScrollArea>

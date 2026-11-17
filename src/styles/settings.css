@@ -2,18 +2,15 @@
  * 应用设置页专属样式（5 个分栏）
  *
  * 覆盖内容：
- *   - 分栏骨架（页签 + 内容区）
- *   - 分栏标题 + 卡片列表
- *   - 通用设置 / 消费模板 / 日记配置 / 股票 / 关于软件
- *   - 「交易费用设置」那一组表单（挂在股票分栏下）
+ *   - 浮层骨架（左栏分栏 + 内容区，窄窗收成单栏）
+ *   - 分栏标题 + 设置行 / 卡片列表
+ *   - 通用设置 / 功能开关 / 数据 / 日记配置 / 关于软件
  *
  * 约定：
  *   - 类名一律 st- 前缀；
  *   - 取值只用 --transactions-* 令牌（禁止裸 hex / rgb）；
- *   - 导航形态是自定义顶部页签，不使用 AntD Tabs。
+ *   - 分栏导航是自定义按钮（左栏，窄窗横到内容上方），不使用 AntD Tabs。
  * ============================================ */
-
-/* ---------------------------------------------------------------- 分栏骨架 */
 
 /* ---------------------------------------------------------------- 浮层骨架 */
 
@@ -176,32 +173,6 @@
 }
 
 .settings-main__hint:focus-visible {
-  outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
-}
-
-.settings-main__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  border-radius: var(--transactions-radius-md);
-  background: none;
-  color: var(--transactions-color-icon);
-  cursor: pointer;
-  transition: background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast);
-}
-
-.settings-main__close:hover {
-  background: var(--transactions-color-hover-bg);
-  color: var(--transactions-color-icon-hover);
-}
-
-.settings-main__close:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
 }
@@ -395,7 +366,7 @@
   text-overflow: ellipsis;
 }
 
-/* 工作空间路径用等宽字体（`.setting-desc` 的 `--transactions-font-mono`） */
+/* 工作空间路径用等宽字体（`.st-card-desc--mono`） */
 .st-card-desc--mono {
   font-family: var(--transactions-font-mono);
 }
@@ -471,22 +442,6 @@
   gap: var(--transactions-space-sm);
 }
 
-/* 复盘模板的写作面：四行起（内置模板就三行，一打开要看全），
- * 长模板按内容长高 —— 与复盘弹窗同一个 `auto_grow` 机制。 */
-/* 费用说明是多行文案：`data-tooltip` 里带换行，按原样折行显示。
- *
- * 两个变体按**触发器在行内的位置**选（错选会让 320px 的气泡越出版心，压到侧栏或窗口外）：
- *   * `.st-fee-tip`（**行尾**的图标：印花税 / 过户费）→ 右对齐，向左铺开；
- *   * `.st-fee-tip--start`（**标题行**里的图标：交易费用设置）→ 左对齐，向右铺开。
- *
- * ⚠ 这里**不能只写 `max-width`**：气泡是绝对定位的，包含块是那个 ~14px 宽的图标触发器，
- * shrink-to-fit 的可用宽度就等于它 —— 只给上限的话文案会被压成一列窄条（实测 bug）。
- * 宽度由基类 `.ui-tooltip::after` 的 `width: max-content` 铺开，这里只收上限与对齐。 */
-/* 标题行那个图标（在面板左半边）：**左对齐向右铺开**。
- * 若沿用右对齐，320px 的气泡会从图标往左伸出面板、压到侧栏上。 */
-/* 费用表单：网格列必须**允许收缩**（`min-width: 0`）。
- * 否则列内容（输入框 + "万分之/元/委托"后缀 + 提示图标）会撑到列宽之外，
- * 把 `.page-pane` 顶出横向滚动条 —— 实测 `ui-form-item` 272 → scroll 279。 */
 /* ---------------------------------------------------------------- 关于软件 */
 
 /* 关于软件：内容在分栏里**水平垂直居中**。
@@ -925,6 +880,10 @@
 .st-recent-list {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  /* 路径是 nowrap 的长串：默认 `min-width: auto` 会把列撑出卡片，
+   * 路径与「当前」徽标因此一起被推出可视区。压到 0 后 ellipsis 才生效。 */
+  min-width: 0;
 }
 
 /* 最近工作空间：目录名与路径同一行，卡片只为「标题 + 一行目录」长高；
@@ -941,6 +900,7 @@
   justify-content: space-between;
   gap: var(--transactions-space-md);
   width: 100%;
+  min-width: 0;
   padding: var(--transactions-space-xs) 0;
   border: 0;
   border-bottom: 1px solid var(--transactions-color-divider);
@@ -1050,8 +1010,6 @@
 @media (prefers-reduced-motion: reduce) {
   .st-card,
   .ui-drag-handle,
-  .st-tag-item-remove,
-  .st-bar-fill,
   .st-backup-row,
   .st-recent-row {
     transition: none;

@@ -73,7 +73,7 @@ test('旧版工作空间：打开被拒绝，设置里不再有数据导入', as
     await page.getByTestId('open-app-settings').click()
     await expect(page.getByTestId('settings-tab-general')).toBeVisible()
     await page.getByTestId('settings-tab-data').click()
-    await expect(page.getByTestId('settings-tab-data')).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByTestId('settings-tab-data')).toHaveAttribute('aria-current', 'page')
     await expect(page.getByTestId('backup-now')).toBeVisible()
     await expect(page.getByRole('button', { name: /导入/ })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /导入/ })).toHaveCount(0)

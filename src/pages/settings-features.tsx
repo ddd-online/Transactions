@@ -38,26 +38,26 @@ export function SettingsFeatures({
     // 它挂在分区标题旁的 ⓘ 上，见 settings.tsx 的 tabTip。
     <div className="st-list">
       {FEATURES.map(({ key, title }) => {
-          const checked = activeLedgerId
-            ? (effectiveFeatures?.[key] ?? true)
-            : (config?.features[key] ?? true)
-          return (
-            <div className="st-card" key={key} data-testid={`feature-row-${key}`}>
-              <div className="st-card-info">
-                <span className="st-card-title">{title}</span>
-              </div>
-              <div className="st-card-action">
-                <AntSwitch
-                  checked={checked}
-                  disabled={!config}
-                  data-testid={`feature-${key}`}
-                  aria-label={title}
-                  onChange={(next) => void onFeatureChange(key, next)}
-                />
-              </div>
+        const checked = activeLedgerId
+          ? (effectiveFeatures?.[key] ?? true)
+          : (config?.features[key] ?? true)
+        return (
+          <div className="st-card" key={key} data-testid={`feature-row-${key}`}>
+            <div className="st-card-info">
+              <span className="st-card-title">{title}</span>
             </div>
-          )
-        })}
+            <div className="st-card-action">
+              <AntSwitch
+                checked={checked}
+                disabled={!config}
+                data-testid={`feature-${key}`}
+                aria-label={title}
+                onChange={(next) => void onFeatureChange(key, next)}
+              />
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
