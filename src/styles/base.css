@@ -163,6 +163,19 @@ textarea,
   background-color: var(--transactions-color-window-border);
 }
 
+/* 窄窗：三组读数仍要一行读完。标签与金额不许折字（420 宽时「收入」会竖成两行），
+ * 组间距从 32 / 12 收到 8 / 4，320 宽也放得下。 */
+@media (max-width: 520px) {
+  .statistics-footer {
+    gap: var(--transactions-space-sm);
+  }
+
+  .statistics-footer-item {
+    gap: var(--transactions-space-xs);
+    white-space: nowrap;
+  }
+}
+
 /* 模态内表单 */
 
 /* 区块标题行 */
