@@ -90,8 +90,8 @@
   -webkit-app-region: no-drag;
 }
 
-/* 入口是「工作空间目录名 + ⌄」的文字按钮（桌面包惯例）：纸白小方片贴在灰色标题栏上，
- * 名字最长 260px；展开时主色 tint，与侧栏导航项同一套语言。 */
+/* 入口是「工作空间目录名 + ⌄」：静止时只是标题栏上的一行字，悬停 / 展开才浮出
+ * 纸白圆角底（与参考图一致），名字最长 260px。 */
 .app-menu-trigger {
   display: inline-flex;
   align-items: center;
@@ -99,25 +99,27 @@
   max-width: 260px;
   height: 28px;
   padding: 0 var(--transactions-space-sm);
-  border: 1px solid var(--transactions-color-window-border);
+  border: none;
   border-radius: var(--transactions-radius-sm);
-  background-color: var(--transactions-color-elevated);
+  background: none;
   cursor: pointer;
   font-family: inherit;
   font-size: var(--transactions-size-text-body-sm);
   font-weight: var(--transactions-weight-medium);
-  color: var(--transactions-color-text-major);
+  color: var(--transactions-color-text-secondary);
   transition: background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast);
+    color var(--transactions-transition-fast), box-shadow var(--transactions-transition-fast);
 }
 
 .app-menu-trigger:hover {
-  background-color: var(--transactions-color-hover-bg);
+  background-color: var(--transactions-color-elevated);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
 .app-menu-trigger.is-open {
-  background-color: var(--transactions-color-active-bg);
+  background-color: var(--transactions-color-elevated);
   color: var(--transactions-color-primary);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
 .app-menu-trigger:focus-visible {
@@ -135,10 +137,16 @@
 .app-menu-trigger__chevron {
   flex-shrink: 0;
   color: var(--transactions-color-text-tertiary);
-  transition: transform var(--transactions-transition-fast);
+  transition: transform var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.app-menu-trigger:hover .app-menu-trigger__chevron {
+  color: var(--transactions-color-text-secondary);
 }
 
 .app-menu-trigger.is-open .app-menu-trigger__chevron {
+  color: currentColor;
   transform: rotate(180deg);
 }
 

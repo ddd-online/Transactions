@@ -169,6 +169,7 @@ export function AppMenu({
         type="button"
         className={`app-menu-trigger${open ? ' is-open' : ''}`}
         data-testid="app-menu-trigger"
+        title="应用菜单"
         aria-label={`应用菜单，工作空间 ${workspaceName(workspace)}，当前账本 ${activeLedgerName}`}
         aria-haspopup="menu"
         aria-expanded={open}
