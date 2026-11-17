@@ -196,60 +196,63 @@ export function AppMenu({
           onKeyDown={onPanelKeyDown}
         >
           <div className="app-menu__caption">账本</div>
-          {ledgers.length === 0 ? (
-            <div className="app-menu__empty" data-testid="ledger-menu-empty">
-              暂无账本
-            </div>
-          ) : (
-            ledgers.map((ledger) => {
-              const description = ledger.description.trim()
-              const nameButton = (
-                <button
-                  type="button"
-                  className="app-menu__item app-menu__item--ledger"
-                  role="menuitemradio"
-                  aria-checked={ledger.id === activeLedgerId}
-                  data-menu-item
-                  onClick={() => {
-                    onSelect(ledger.id)
-                    close(true)
-                  }}
-                >
-                  <IdentityDot seed={ledger.id} size={6} />
-                  <span className="app-menu__label">{ledger.name}</span>
-                  {ledger.id === activeLedgerId ? (
-                    <Icon name="Check" size={13} className="app-menu__check" />
-                  ) : null}
-                </button>
-              )
-              return (
-                <div
-                  key={ledger.id}
-                  data-testid="ledger-menu-row"
-                  className={`app-menu__row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
-                >
-                  {/* 没有描述就不挂 Tooltip：悬停弹一句「暂无描述」只是噪音。 */}
-                  {description ? (
-                    <Tooltip text={description}>{nameButton}</Tooltip>
-                  ) : (
-                    nameButton
-                  )}
+          {/* 账本可能很多：只有这一段滚动，「创建账本」与下面的应用动作始终留在面板里。 */}
+          <div className="app-menu__list">
+            {ledgers.length === 0 ? (
+              <div className="app-menu__empty" data-testid="ledger-menu-empty">
+                暂无账本
+              </div>
+            ) : (
+              ledgers.map((ledger) => {
+                const description = ledger.description.trim()
+                const nameButton = (
                   <button
                     type="button"
-                    className="app-menu__delete"
-                    data-testid="ledger-delete"
-                    aria-label={`删除账本 ${ledger.name}`}
+                    className="app-menu__item app-menu__item--ledger"
+                    role="menuitemradio"
+                    aria-checked={ledger.id === activeLedgerId}
+                    data-menu-item
                     onClick={() => {
-                      close()
-                      setDeleteTarget(ledger.id)
+                      onSelect(ledger.id)
+                      close(true)
                     }}
                   >
-                    <Icon name="Trash" size={14} />
+                    <IdentityDot seed={ledger.id} size={6} />
+                    <span className="app-menu__label">{ledger.name}</span>
+                    {ledger.id === activeLedgerId ? (
+                      <Icon name="Check" size={13} className="app-menu__check" />
+                    ) : null}
                   </button>
-                </div>
-              )
-            })
-          )}
+                )
+                return (
+                  <div
+                    key={ledger.id}
+                    data-testid="ledger-menu-row"
+                    className={`app-menu__row${ledger.id === activeLedgerId ? ' is-active' : ''}`}
+                  >
+                    {/* 没有描述就不挂 Tooltip：悬停弹一句「暂无描述」只是噪音。 */}
+                    {description ? (
+                      <Tooltip text={description}>{nameButton}</Tooltip>
+                    ) : (
+                      nameButton
+                    )}
+                    <button
+                      type="button"
+                      className="app-menu__delete"
+                      data-testid="ledger-delete"
+                      aria-label={`删除账本 ${ledger.name}`}
+                      onClick={() => {
+                        close()
+                        setDeleteTarget(ledger.id)
+                      }}
+                    >
+                      <Icon name="Trash" size={14} />
+                    </button>
+                  </div>
+                )
+              })
+            )}
+          </div>
 
           <button
             type="button"

@@ -162,6 +162,9 @@
   top: calc(100% + var(--transactions-space-sm));
   left: 0;
   width: 252px;
+  /* 账本多 / 窗口矮时不能顶出窗口：面板最多占到标题栏下沿再留 8px，
+   * 账本那一段自己滚（见 `.app-menu__list`），应用动作不会被挤出可视区。 */
+  max-height: calc(100vh - var(--transactions-size-top-band) - 2 * var(--transactions-space-sm));
   display: flex;
   flex-direction: column;
   gap: var(--transactions-space-2xs);
@@ -172,6 +175,16 @@
   box-shadow: var(--transactions-shadow-lg);
   -webkit-app-region: no-drag;
   animation: tr-rise-in var(--transactions-transition-enter);
+}
+
+/* 账本列表是面板里唯一可滚的一段：键盘方向键走到看不见的行时，浏览器会把它滚进来。 */
+.app-menu__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* 「账本」这枚小标题把菜单分成两半：上半是数据上下文，下半是应用动作。 */
@@ -511,6 +524,29 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 窗很窄时（< 400）两条 1fr 不够右侧 32 + 4 + 46×3 的键簇，被挤出的键簇会压到
+ * 居中的页面名上（360 宽实测重叠 7px）。这里改一行 flex：入口吃掉剩余宽度、可省略，
+ * 页面名与键簇各自保留自己的宽度，页面名会从「窗口正中」略偏左，但不再互相覆盖。 */
+@media (max-width: 400px) {
+  .app-titlebar {
+    display: flex;
+  }
+
+  .app-titlebar__start {
+    flex: 1 1 0%;
+    width: auto;
+    min-width: 0;
+  }
+
+  .app-titlebar__title {
+    flex: 0 0 auto;
+  }
+
+  .app-titlebar__end {
+    flex: 0 0 auto;
+  }
 }
 
 /* 窗口三键要浮在**首屏阻塞层**之上（选择工作空间时窗口仍要能最小化 / 拖动）：
