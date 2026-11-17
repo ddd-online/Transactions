@@ -203,8 +203,22 @@
 .settings-main__body {
   --settings-inset: var(--transactions-space-2xl);
   /* 顶部不留内边距：分区标题下面那条发丝线就是第一行的起点，
-   * 第一行的 12px 行内边距已经给了呼吸，再叠一层就是标题下方那条空带。 */
+   * 第一行的 12px 行内边距已经给了呼吸，再叠一层就是标题下方那条空带。
+   * 撑满滚动视口：关于软件要靠这段高度做垂直居中。 */
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
   padding: 0 var(--settings-inset) var(--transactions-space-xl);
+}
+
+/* 列表按内容高度排；只有关于软件那一块吃掉剩余高度、把内容居中。
+ * 这一栏也不留底部内边距：面板可视高度就是那块内容的容器，居中才落在正中间。 */
+.settings-main__body > .st-list {
+  flex: 0 0 auto;
+}
+
+.settings-main__body:has(> .st-about) {
+  padding-bottom: 0;
 }
 
 .settings-main__body .st-card {
