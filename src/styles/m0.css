@@ -44,6 +44,12 @@ body {
   background: var(--transactions-color-major-background);
 }
 
+/* 这一层是**容器**不是控件：焦点进来时读屏已经报过「选择工作空间」，
+ * 不该再给整屏描一圈系统焦点色（Windows 上那是系统强调色，和界面无关）。 */
+.app-workspace-overlay:focus {
+  outline: none;
+}
+
 .app-workspace-card {
   width: min(420px, calc(100vw - 40px));
   padding: 32px;
