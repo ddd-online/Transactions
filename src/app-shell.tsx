@@ -134,13 +134,13 @@ export function AppShell({
                       type="button"
                       data-testid={`nav-${key}`}
                       className={`nav-btn${view === key ? ' active' : ''}`}
+                      title={label}
                       aria-label={label}
                       onClick={() => onViewChange(key)}
                     >
                       <span className="nav-btn-icon">
                         <Icon name={NAV_ICON[key]} size={18} />
                       </span>
-                      <span className="nav-btn-text">{label}</span>
                     </button>
                   ),
                 )}
@@ -151,14 +151,14 @@ export function AppShell({
                 <button
                   type="button"
                   data-testid="nav-settings"
-                  className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
+                  className={`nav-btn${view === 'settings' ? ' active' : ''}`}
+                  title="应用设置"
                   aria-label="应用设置"
                   onClick={onOpenSettings}
                 >
                   <span className="nav-btn-icon">
                     <Icon name="Setting" size={18} />
                   </span>
-                  <span className="nav-btn-text">应用设置</span>
                 </button>
               </div>
             </div>

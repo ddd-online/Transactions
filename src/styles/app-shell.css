@@ -390,41 +390,42 @@
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  padding: var(--transactions-space-top-gap) var(--transactions-space-md);
-  padding-bottom: var(--transactions-space-md);
+  align-items: center;
+  gap: var(--transactions-space-xs);
+  padding: var(--transactions-space-sm) 0;
 }
 
 .sidebar-spacer {
   flex: 1;
 }
 
+/* 底部工具键：与导航同一列中轴，和页面底栏同高，但不画分隔线（图标列是连续的一条）。 */
 .sidebar-bottom {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
   height: var(--transactions-size-footer-height);
-  padding: 0 var(--transactions-space-md);
-  border-top: 1px solid var(--transactions-color-divider);
+  padding: 0;
 }
 
-/* 导航按钮 */
+/* 导航按钮：40 × 40 的图标键，居中排在图标列里。
+ * 当前页不是「换底色」而是**浮出一枚纸白方块**（参考图的选中态）：图标列是一条连续
+ * 的灰带，选中项从这条带上抬起来；深色主题下同一个变量换成抬高一档的暗面。 */
 .nav-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-sm);
-  width: 100%;
-  padding: var(--transactions-space-sm) var(--transactions-space-md);
-  border: none;
-  background: none;
-  border-radius: var(--transactions-radius-md);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--transactions-size-text-body-sm);
-  color: var(--transactions-color-text-secondary);
-  text-align: left;
-  transition: all var(--transactions-transition-fast);
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  background: none;
+  color: var(--transactions-color-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast), box-shadow var(--transactions-transition-fast);
 }
 
 .nav-btn:hover {
@@ -433,33 +434,19 @@
 }
 
 .nav-btn.active {
-  background-color: var(--transactions-color-active-bg);
+  background-color: var(--transactions-color-elevated);
   color: var(--transactions-color-primary);
-  font-weight: var(--transactions-weight-medium);
+  box-shadow: var(--transactions-shadow-sm);
 }
 
-/* 按下时下沉 1px（与 `.ui-btn` / `.page-rail-btn` 同一档）：桌面端点击没有原生按压反馈 */
+/* 按下时下沉 1px（与 .ui-btn / .page-rail-btn 同一档）：桌面端点击没有原生按压反馈 */
 .nav-btn:active {
-  transform: translateY(1px);
+  translate: 0 1px;
 }
 
 .nav-btn:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
-}
-
-/* 次级导航按钮 —— 设置等工具项，视觉降权 */
-.nav-btn-secondary .nav-btn-icon {
-  font-size: 16px; /* impeccable-disable-line design-system-font-size -- 图标方框尺寸，不是文字角色 */
-}
-
-.nav-btn-secondary .nav-btn-text {
-  color: var(--transactions-color-text-secondary);
-}
-
-.nav-btn-secondary:hover .nav-btn-text,
-.nav-btn-secondary.active .nav-btn-text {
-  color: inherit;
 }
 
 .nav-btn-icon {
@@ -468,55 +455,13 @@
   justify-content: center;
   flex-shrink: 0;
   width: 20px;
+  height: 20px;
 }
 
 .nav-btn-icon svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
-}
-
-.nav-btn-text {
-  white-space: nowrap;
-}
-
-/* ============================================
- * 固定收起态（`.app-left-bar.is-collapsed`）
- *
- * 图标在上、名字在下：69px 的侧栏放不下一行"图标 + 名字"，
- * 但放得下两行的"图标 / 名字"，功能名因此仍然看得见。
- * 顶部方块与每个导航图标都落在侧栏中轴上。
- * ============================================ */
-.app-left-bar.is-collapsed .nav-btn {
-  width: 100%;
-  height: 44px;
-  padding: 0;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  justify-content: center;
-}
-
-.app-left-bar.is-collapsed .sidebar-bottom .nav-btn {
-  width: 36px;
-  height: 36px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.app-left-bar.is-collapsed .nav-btn-icon svg {
-  transform: scale(1.1111);
-}
-
-.app-left-bar.is-collapsed .nav-btn .nav-btn-text {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: var(--transactions-size-text-small);
-  line-height: var(--transactions-height-tight);
-}
-
-.app-left-bar.is-collapsed .sidebar-bottom .nav-btn-text {
-  display: none;
 }
 
 /* ============================================

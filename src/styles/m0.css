@@ -21,18 +21,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.app-sidebar {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  height: calc(100vh - 36px);
-  padding: 18px 14px;
-  box-sizing: border-box;
-  border-right: 1px solid var(--transactions-color-border-l1);
-  background: var(--transactions-color-minor-background);
-}
+/* 侧栏骨架与导航样式在 app-shell.css / shell.css；这里不再重复一套（旧版残留会盖掉宽度与内边距）。 */
 
 .app-workspace-overlay {
   position: fixed;

@@ -264,10 +264,10 @@
   --transactions-space-top-gap: 8px;
 
   /* ---------- 左侧导航栏宽度 ----------
-   * 侧栏固定为**收起态**（69px 图标列），没有展开形态，也不拖拽。 */
+   * 侧栏固定为**收起态**（57px 图标列），没有展开形态，也不拖拽。 */
   --transactions-size-sidebar: 200px;
-  /* 固定收起态的侧栏宽：内侧 12px 边距 × 2 + 44px 方块 + 1px 右边框 = 69px。 */
-  --transactions-size-sidebar-collapsed: 69px;
+  /* 固定收起态的侧栏宽：内侧 8px 边距 × 2 + 40px 图标键 + 1px 右边框 = 57px。 */
+  --transactions-size-sidebar-collapsed: 57px;
 
   /* 动效专用缓动：落地感（exponential ease-out），用于“数据落定”类进场 */
   --transactions-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
