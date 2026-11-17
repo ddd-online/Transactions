@@ -17,10 +17,6 @@
   margin: var(--transactions-space-sm) var(--transactions-space-lg) 0;
 }
 
-.key-event-page .page-header {
-  align-items: center;
-}
-
 /* 年份切换是图标按钮，但在页头工具区里与 32px 的年份文字对齐 */
 /* 三栏 = 同一张纸上的三条轨道：没有卡片底、描边与阴影，行直接铺在画布上。
  * 左右两条侧轨不填色，栏间只留一条竖直发丝线；行与行之间再用横向发丝线分。

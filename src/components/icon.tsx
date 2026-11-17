@@ -11,6 +11,7 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   ClockCircleOutlined,
+  CodeOutlined,
   CloseCircleOutlined,
   CloseOutlined,
   CompressOutlined,
@@ -49,6 +50,7 @@ import {
   SortDescendingOutlined,
   StarOutlined,
   StockOutlined,
+  SunOutlined,
   SwitcherOutlined,
   SyncOutlined,
   TagOutlined,
@@ -119,6 +121,8 @@ export type IconName =
   | 'CreditCard'
   | 'Signal'
   | 'Export'
+  | 'Sun'
+  | 'Code'
 
 type IconComponent = ComponentType<{
   className?: string
@@ -186,6 +190,8 @@ const ICONS: Record<IconName, IconComponent> = {
   CreditCard: CreditCardOutlined,
   Signal: SignalFilled,
   Export: ExportOutlined,
+  Sun: SunOutlined,
+  Code: CodeOutlined,
 }
 
 export interface IconProps {

@@ -192,7 +192,7 @@ Cool neutrals carry the interface; Clarity Blue is the single accent; a small se
 
 Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c6963a, slate-blue #5c8db5, vermillion #d9705a, warm-brown #8c7b6e, ochre #9e8c7e, moss #6b9e7e, camel #b89a80. Dark theme lightens each for legibility.
 
-颜色按账本 id 做 FNV-1a 哈希取模（`shared/domain/identity-color.ts` 的 `identityTone` / `identityColor`），同一账本永远同一色，不需要数据库字段或选择器。呈现只用一个 6px 圆点，放在账本菜单每一行的名称前；切换器里的头像不加点，保持头像本身居中。名称始终在点旁边，颜色不承担唯一信息。
+颜色按账本 id 做 FNV-1a 哈希取模（`shared/domain/identity-color.ts` 的 `identityTone` / `identityColor`），同一账本永远同一色，不需要数据库字段或选择器。呈现只用一个 6px 圆点，放在应用菜单里账本那一行的名称前；名字始终在点旁边，颜色不承担唯一信息。
 
 **同一组色也给连板天梯的板块名用。** 板块名（涨停池的行业字段）按名字哈希取色，做成**文字**而不是圆点：因为 6px 圆点那套对比度标准撑不住 11px 小字，文字版是「70% 身份色 + 30% 墨色」，浅色下自动压暗、深色下自动提亮，两套主题都过 4.5:1。同一个板块在任何一列、任何一天都是同一色；颜色只是辅助，名字始终在旁边。
 
@@ -281,7 +281,7 @@ Eight natural tones give each ledger a stable identity: forest #4a8e70, amber #c
 
 ### Heading levels
 
-- **三档，且不跳级。** 窗口标题带是 `h1`（`Transactions-页面名`）；页面里的顶级区块是 `h2`（设置面板、待办主题段、资金变化记录、天梯每一段、空态那句话）；区块内部才是 `h3`（分析页的「曲线配置 / 分组合计」）；`h4` 起不再使用。级别之间的差别由字号与间距承担 —— 中文只有 400 / 700 两档真实字重，再加粗也换不来一个层级（见 Two-Real-Weights Rule）。跟着读屏走一遍：从 `h1` 跳下去该能一路到 `h3`，中间不缺一级。
+- **三档，且不跳级。** 窗口标题栏里是 `h1`（只有页面名，产品身份由左边的 Tr 标志承担）；页面里的顶级区块是 `h2`（设置面板、待办主题段、资金变化记录、天梯每一段、空态那句话）；区块内部才是 `h3`（分析页的「曲线配置 / 分组合计」）；`h4` 起不再使用。级别之间的差别由字号与间距承担 —— 中文只有 400 / 700 两档真实字重，再加粗也换不来一个层级（见 Two-Real-Weights Rule）。跟着读屏走一遍：从 `h1` 跳下去该能一路到 `h3`，中间不缺一级。
 
 ### Named Rules
 
@@ -309,7 +309,7 @@ Letter-spacing is tokenised per role — `--transactions-tracking-display` (−0
 
 ## Layout
 
-The spacing scale is 8px-based (2 / 4 / 8 / 12 / 16 / 24 / 32 / 48). The app shell fixes a 48px top band, a 69px navigation rail (fixed collapsed: icon above label), a 56px sub-function rail, and a 44px footer; page content insets are 16px (full-bleed tables take 0 and pad their own cells). Data surfaces are fixed-sidebar layouts (`280px + minmax(0, 1fr)`；事件/日记的两侧轨用 `clamp()` 随窗口收放) or single-column stacks；设置页的字段组用 `repeat(auto-fit, minmax(200px, 1fr))`。多栏页面在 ≤1080px 收成一栏，个别三栏更早先收一档（≤1280 / ≤1200）；共享组件与记账/待办的窄窗兜底在 ≤820px / ≤720px。设置行（`.st-card`）在 ≤820px 跟着页面内边距一起收到 12px，放不下的控件整排折到标题下面 —— 标题有 180px 的底线，不会被右侧控件挤成一列竖排（`settings-responsive.css`）。The window has no minimum size — the breakpoints above carry narrow widths, so they must stay live.
+The spacing scale is 8px-based (2 / 4 / 8 / 12 / 16 / 24 / 32 / 48). The app shell fixes a 48px full-width title bar (logo at the far left, page name centred, window controls at the right), a 69px navigation rail starting below it (fixed collapsed: icon above label), a 56px sub-function rail, and a 44px footer; page content insets are 16px (full-bleed tables take 0 and pad their own cells). Data surfaces are fixed-sidebar layouts (`280px + minmax(0, 1fr)`；事件/日记的两侧轨用 `clamp()` 随窗口收放) or single-column stacks；设置页的字段组用 `repeat(auto-fit, minmax(200px, 1fr))`。多栏页面在 ≤1080px 收成一栏，个别三栏更早先收一档（≤1280 / ≤1200）；共享组件与记账/待办的窄窗兜底在 ≤820px / ≤720px。设置行（`.st-card`）在 ≤820px 跟着页面内边距一起收到 12px，放不下的控件整排折到标题下面 —— 标题有 180px 的底线，不会被右侧控件挤成一列竖排（`settings-responsive.css`）。The window has no minimum size — the breakpoints above carry narrow widths, so they must stay live.
 
 ## Elevation & Depth
 
@@ -403,6 +403,8 @@ Gently curved, consistent radii: 6px for tags and dropdown items, 8px for button
 
 ### Navigation
 
+- **Title bar:** one 48px band across the whole window. Tr mark at the far left opens the app menu, the current page name sits on the window centre line (1fr / auto / 1fr grid), and the three window keys stay at the right. The rail starts below the bar, so the two tones join into one L-shaped chrome around the Paper canvas.
+- **App menu:** one panel holds both contexts — ledgers first (identity dot, name, check on the active one, hover-revealed delete, then 「创建账本」), a divider, then 应用设置 / 主题 ‹submenu› / 关于软件 (with version) / 开发者工具. It opens from the logo, focuses its first item, closes on Esc (returning focus to the trigger) or outside click, and moves with arrow keys; the theme submenu opens with → or hover. There is no avatar or separate ledger switcher in the shell — the menu is the only place to switch ledgers, so the active one carries both the tint and the check.
 - **Style:** 56px left rail, 18px icons with labels; inactive text-secondary.
 - **States:** hover fill (hover-bg); active item gets active-bg tint with Clarity Blue text, 8px radius.
 - **The landing page follows the switches.** 功能开关关掉的页连导航项一起消失，所以启动时（以及当前页被关掉时）落在**左侧导航里第一个还开着的功能**上，而不是写死记账 —— 记账自己就可能是关着的那个。开关全关只剩「应用设置」，它本来就不受开关约束。规则是纯函数（`src/app-view.ts` 的 `defaultView` / `resolveView`），外壳按它**派生**要渲染的页：配置到达的第一帧就已经是正确那页，不会先挂一帧记账页再跳走。派生结果也回写 state，否则用户回到设置里把开关打开时，会被旧 state 拽回原来那一页。

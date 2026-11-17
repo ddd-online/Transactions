@@ -115,7 +115,7 @@ test('导航：关掉记账后默认落在第一个还开着的功能', async ()
     await expect(page.getByTestId('nav-accounting')).toHaveCount(0)
     await expect(page.getByTestId('acct-tab-records')).toHaveCount(0)
     await expect(page.getByTestId('stock-tab-account')).toBeVisible()
-    await expect(page.locator('.page-title')).toHaveText('Transactions-股票')
+    await expect(page.getByTestId('app-title')).toHaveText('股票')
     await expect(page.getByTestId('nav-stock')).toHaveClass(/active/)
 
     // 在设置里把记账打开：留在设置页，开关写回不等于「带我去那一页」。

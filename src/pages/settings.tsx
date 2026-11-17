@@ -15,10 +15,10 @@ import { SettingsGeneral, type ProxyState } from './settings-general'
  *
  * 它从外壳里搬出来了 —— 外壳只关心「现在哪一页、哪个账本」，设置自己的草稿、
  * 探测状态与消息回执都在这里；它向外只报告三件外壳确实需要知道的事：
- * 配置换了（主题 / 导航可见性）、图标换了（侧栏左上角）、以及「切换工作空间」这个动作。
+ * 配置换了（主题 / 导航可见性）、图标换了（本页预览）、以及「切换工作空间」这个动作。
  */
 
-type SettingsTab = 'general' | 'features' | 'data' | 'diary' | 'about'
+export type SettingsTab = 'general' | 'features' | 'data' | 'diary' | 'about'
 
 const TABS: ReadonlyArray<readonly [SettingsTab, string]> = [
   ['general', '通用设置'],
@@ -39,6 +39,9 @@ export interface SettingsPageProps {
   version: string
   workspaceIconUrl: string
   updateSnapshot: UpdateSnapshot | null
+  /** 当前分栏由外壳持有：应用菜单可以直接落到「关于软件」。 */
+  tab: SettingsTab
+  onTabChange: (tab: SettingsTab) => void
   onUpdateSnapshot: (snapshot: UpdateSnapshot | null) => void
   /** 换一个工作空间：由外壳弹目录框并落库 */
   onPickWorkspace: () => Promise<void>
@@ -58,13 +61,14 @@ export function SettingsPage({
   version,
   workspaceIconUrl,
   updateSnapshot,
+  tab,
+  onTabChange,
   onUpdateSnapshot,
   onPickWorkspace,
   onOpenWorkspace,
   onConfigChanged,
   onWorkspaceIconChanged,
 }: SettingsPageProps): JSX.Element {
-  const [tab, setTab] = useState<SettingsTab>('general')
   const [proxyMode, setProxyMode] = useState('auto')
   const [proxyUrl, setProxyUrl] = useState('')
   const [proxyTesting, setProxyTesting] = useState(false)
@@ -249,7 +253,7 @@ export function SettingsPage({
               aria-selected={tab === key}
               data-testid={`settings-tab-${key}`}
               className={`st-tab${tab === key ? ' is-active' : ''}`}
-              onClick={() => setTab(key)}
+              onClick={() => onTabChange(key)}
             >
               {label}
             </button>

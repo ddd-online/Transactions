@@ -164,31 +164,6 @@ textarea,
 }
 
 /* 模态内表单 */
-/* 页面标题 = 标题栏（`.page-header`）里的**居中小字**，文案 `Transactions-记账`。
- *
- * 它是"窗口标题"性质的处所标签，不是页面大标题：页面身份由侧栏当前项与子功能
- * 图标条给出，这里只留一行安静的说明，不与内容抢注意力（弱化色 + caption 档）。
- * 居中分两步：`.page-header` 的左右等宽内边距先把标题摆在**容器**（内容区那一列）正中，
- * 但内容区左边还有一列固定宽度的侧栏，所以容器正中比窗口正中偏右半个侧栏宽 ——
- * 这里再往左挪回半个侧栏，才是**软件宽度**的正中（视觉上才不偏）。
- * 窄窗口里宁可省略号收尾，也不让长标题把右上角的窗口三键顶开。 */
-.page-title {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  font-weight: var(--transactions-weight-medium);
-  color: var(--transactions-color-text-secondary);
-  margin: 0;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* 居中补偿：侧栏宽的一半（往左）。见上面那段说明与 tokens.css 的
-   * `--transactions-size-sidebar`。 */
-  transform: translateX(calc(-0.5 * var(--transactions-size-sidebar)));
-  /* 侧栏收起 / 展开时补偿量跟着变（同一个变量），让它与侧栏宽度**同步**走完，
-   * 否则标题会先跳一下、栏再慢慢收。 */
-  transition: transform var(--transactions-transition-settle);
-}
 
 /* 区块标题行 */
 

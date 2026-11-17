@@ -2,7 +2,6 @@ import type { JSX, ReactNode } from 'react'
 
 import type { FeatureFlags } from '../shared/types/config'
 import { Icon, type IconName } from './components/icon'
-import { PageHeader } from './components/page-header'
 import { NAV_VIEWS, viewLabel, type View } from './app-view'
 
 const NAV_ICON: Record<View, IconName> = {
@@ -23,8 +22,10 @@ export interface AppShellProps {
   blockingWorkspace: boolean
   maximized: boolean
   onWindowControl: (action: 'minimize' | 'maximize' | 'close') => void
-  /** 左侧栏顶部的账本切换（由 app-ledger-menu 提供）。 */
-  ledgerMenu: ReactNode
+  /** 标题栏左上角的应用菜单（由 app-menu 提供）。 */
+  menu: ReactNode
+  /** 当前账本名：侧栏不再常驻头像与名字，读屏仍要读得出现在记在哪一本上。 */
+  ledgerName: string
   error: string
   workspace: string
   version: string
@@ -32,7 +33,10 @@ export interface AppShellProps {
 }
 
 /**
- * 外壳骨架：左侧图标条 + 导航 + 顶部窗口控制 + 内容区，以及两个给测试/读屏的状态文本。
+ * 外壳骨架：横贯窗口的标题栏 + 左侧图标条 + 内容区，以及给测试/读屏的状态文本。
+ *
+ * 标题栏是窗口自己的（自绘无边框窗口）：左边是应用菜单入口，中间是页面名，
+ * 右边是窗口三键。侧栏从标题栏下面才开始，二者拼成一副灰色外壳包住纸白版心。
  *
  * 纯展示模块：窗口控制、导航切换都由 props 回调决定，自己不碰 `window.api`。
  */
@@ -43,7 +47,8 @@ export function AppShell({
   blockingWorkspace,
   maximized,
   onWindowControl,
-  ledgerMenu,
+  menu,
+  ledgerName,
   error,
   workspace,
   version,
@@ -51,52 +56,19 @@ export function AppShell({
 }: AppShellProps): JSX.Element {
   return (
     <>
-      <div className="app-shell-body is-sidebar-collapsed">
-        <aside className="app-sidebar" inert={blockingWorkspace || undefined}>
-          <div className="app-left-bar is-collapsed">
-            <div className="sidebar-ledger">{ledgerMenu}</div>
-
-            <nav className="sidebar-nav" aria-label="主导航">
-              {NAV_VIEWS.filter(({ feature }) => features?.[feature] !== false).map(
-                ({ view: key, label }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    data-testid={`nav-${key}`}
-                    className={`nav-btn${view === key ? ' active' : ''}`}
-                    aria-label={label}
-                    onClick={() => onViewChange(key)}
-                  >
-                    <span className="nav-btn-icon">
-                      <Icon name={NAV_ICON[key]} size={18} />
-                    </span>
-                    <span className="nav-btn-text">{label}</span>
-                  </button>
-                ),
-              )}
-            </nav>
-
-            <div className="sidebar-spacer" />
-            <div className="sidebar-bottom">
-              <button
-                type="button"
-                data-testid="nav-settings"
-                className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
-                aria-label="应用设置"
-                onClick={() => onViewChange('settings')}
-              >
-                <span className="nav-btn-icon">
-                  <Icon name="Setting" size={18} />
-                </span>
-                <span className="nav-btn-text">应用设置</span>
-              </button>
-            </div>
+      <div className="app-shell">
+        <header className="app-titlebar">
+          <div className="app-titlebar__start" inert={blockingWorkspace || undefined}>
+            {menu}
           </div>
-        </aside>
-
-        <main className="app-content">
-          <PageHeader title={viewLabel(view)} ariaHidden={blockingWorkspace} />
-          <div className="app-top-bar">
+          <h1
+            className="app-titlebar__title"
+            data-testid="app-title"
+            aria-hidden={blockingWorkspace || undefined}
+          >
+            {viewLabel(view)}
+          </h1>
+          <div className="app-titlebar__end">
             <div className="window-controls">
               <button
                 type="button"
@@ -127,17 +99,65 @@ export function AppShell({
               </button>
             </div>
           </div>
-          <div className="app-router-view" inert={blockingWorkspace || undefined}>
-            {error ? (
-              <p role="alert" className="m0-error" data-testid="error">
-                {error}
-              </p>
-            ) : null}
+        </header>
 
-            {children}
-          </div>
-        </main>
+        <div className="app-shell-body is-sidebar-collapsed">
+          <aside className="app-sidebar" inert={blockingWorkspace || undefined}>
+            <div className="app-left-bar is-collapsed">
+              <nav className="sidebar-nav" aria-label="主导航">
+                {NAV_VIEWS.filter(({ feature }) => features?.[feature] !== false).map(
+                  ({ view: key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      data-testid={`nav-${key}`}
+                      className={`nav-btn${view === key ? ' active' : ''}`}
+                      aria-label={label}
+                      onClick={() => onViewChange(key)}
+                    >
+                      <span className="nav-btn-icon">
+                        <Icon name={NAV_ICON[key]} size={18} />
+                      </span>
+                      <span className="nav-btn-text">{label}</span>
+                    </button>
+                  ),
+                )}
+              </nav>
+
+              <div className="sidebar-spacer" />
+              <div className="sidebar-bottom">
+                <button
+                  type="button"
+                  data-testid="nav-settings"
+                  className={`nav-btn nav-btn-secondary${view === 'settings' ? ' active' : ''}`}
+                  aria-label="应用设置"
+                  onClick={() => onViewChange('settings')}
+                >
+                  <span className="nav-btn-icon">
+                    <Icon name="Setting" size={18} />
+                  </span>
+                  <span className="nav-btn-text">应用设置</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <main className="app-content">
+            <div className="app-router-view" inert={blockingWorkspace || undefined}>
+              {error ? (
+                <p role="alert" className="m0-error" data-testid="error">
+                  {error}
+                </p>
+              ) : null}
+
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
+      <span className="sr-only" data-testid="ledger-state">
+        {ledgerName ? `当前账本：${ledgerName}` : '未选择账本'}
+      </span>
       <span className="sr-only" data-testid="workspace-state">
         {workspace ? `已打开：${workspace}` : '未打开工作空间'}
       </span>

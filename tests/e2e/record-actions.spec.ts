@@ -85,13 +85,13 @@ test('记录操作：编辑 / 事件日期 / 同步到其他账本 / 删除', as
 
     // ---- 同步到另一个账本 ----
     await createLedger(page, '乙账本')
-    await page.getByTestId('ledger-trigger').click()
+    await page.getByTestId('app-menu-trigger').click()
     await page
       .getByTestId('ledger-menu-row')
       .filter({ hasText: '甲账本' })
-      .locator('.ledger-menu-name')
+      .locator('.app-menu__item--ledger')
       .click()
-    await expect(page.getByTestId('ledger-trigger')).toContainText('甲账本')
+    await expect(page.getByTestId('ledger-state')).toContainText('甲账本')
 
     await page.getByTestId('tr-sync').click()
     await page.getByRole('menuitem', { name: '乙账本' }).click()

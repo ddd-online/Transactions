@@ -2,7 +2,8 @@
 .app-shell-body {
   display: grid;
   grid-template-columns: var(--transactions-size-sidebar) minmax(0, 1fr);
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -17,11 +18,6 @@
   min-width: 0;
   overflow: hidden;
 }
-
-.page-header {
-  flex-shrink: 0;
-}
-
 
 .app-sidebar {
   position: relative;
@@ -158,26 +154,15 @@
   font-weight: var(--transactions-weight-semibold);
 }
 
-/* 窗口控制必须显式 no-drag：标题栏整条是拖动区，仅靠父级 no-drag
+/* 窗口三键必须显式 no-drag：标题栏整条是拖动区，仅靠父级 no-drag
  * 在部分 Electron/Windows 组合下仍会把三键当成拖动区。 */
-.app-top-bar {
-  z-index: 2000;
+.window-controls,
+.window-btn {
   pointer-events: auto;
   -webkit-app-region: no-drag;
 }
 
-.app-top-bar .window-controls,
-.app-top-bar .window-btn {
-  pointer-events: auto;
-  -webkit-app-region: no-drag;
-}
-
-.page-header {
-  position: relative;
-  z-index: 0;
-}
-
-/* 顶栏只放窗口三键；不再整条设为拖动区，拖动交给下面的 .page-header。 */
+/* 拖动区是标题栏本身（`.app-titlebar`），页面里的工具栏也留了一份。 */
 
 .diary-layout {
   flex: 1;
@@ -265,11 +250,6 @@
   min-height: 0;
   gap: 0;
 }
-
-.app-top-bar {
-  position: fixed;
-}
-
 
 .tr-page-size {
   flex: none;

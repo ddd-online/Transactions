@@ -43,7 +43,7 @@ test('工作空间：切换后账本隔离并写回配置', async () => {
     await page.getByTestId('nav-settings').click()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText(second)
-    await expect(page.getByTestId('ledger-trigger')).toContainText('默认账本')
+    await expect(page.getByTestId('ledger-state')).toContainText('默认账本')
     await page.getByTestId('nav-settings').click()
     await createLedger(page, 'B 账本')
 

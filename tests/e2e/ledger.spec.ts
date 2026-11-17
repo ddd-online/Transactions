@@ -35,13 +35,13 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     const page = await electronApp.firstWindow()
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
-    await page.getByTestId('ledger-trigger').click()
+    await page.getByTestId('app-menu-trigger').click()
     await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
     // 账本菜单会盖住左侧页面导航，先点内容区空白处关闭它，再点页面导航
     await page.getByTestId('tr-empty').click()
     await expect(page.getByTestId('ledger-menu-empty')).toHaveCount(0)
     await page.getByTestId('acct-tab-records').click()
-    await page.getByTestId('ledger-trigger').click()
+    await page.getByTestId('app-menu-trigger').click()
     await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
     await page.getByTestId('ledger-open-create').click()
     await page.getByTestId('ledger-name').fill('测试账本')
@@ -53,9 +53,9 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
       )
     })
     await expect(page.getByTestId('ledger-name')).toBeVisible()
-    await expect(page.getByTestId('ledger-trigger')).not.toContainText('测试账本')
+    await expect(page.getByTestId('ledger-state')).not.toContainText('测试账本')
     await page.getByTestId('ledger-create').click()
-    await expect(page.getByTestId('ledger-trigger')).toContainText('测试账本')
+    await expect(page.getByTestId('ledger-state')).toContainText('测试账本')
     await expect(page.getByTestId('toast').first()).toContainText('账本已创建')
 
     const database = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })
@@ -69,7 +69,7 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
     expect(rows[0]?.name).toBe('测试账本')
     expect(rows[0]?.description).toBe('测试描述')
 
-    await page.getByTestId('ledger-trigger').click()
+    await page.getByTestId('app-menu-trigger').click()
     await page
       .getByTestId('ledger-menu-row')
       .filter({ hasText: '测试账本' })
@@ -77,8 +77,8 @@ test('账本：新建 → 列表 → 落库 → 删除', async () => {
       .click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await page.getByTestId('confirm-dialog-confirm').click()
-    await expect(page.getByTestId('ledger-trigger')).toContainText('默认账本')
-    await page.getByTestId('ledger-trigger').click()
+    await expect(page.getByTestId('ledger-state')).toContainText('默认账本')
+    await page.getByTestId('app-menu-trigger').click()
     await expect(page.getByTestId('ledger-menu-empty')).toContainText('暂无账本')
 
     const after = new DatabaseSync(join(workspace, 'transactions.db'), { readOnly: true })

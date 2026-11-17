@@ -1,5 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState, type JSX } from 'react'
 
+import { errorMessage } from '../shared/errors'
+
 /* 页面按需加载：一次只挂一页，但此前八页（外加 G2、react-markdown）全被打进同一个
  * 6.5MB 的 chunk，开哪个页面都要先把所有页面的代码解析一遍。拆开之后入口只剩外壳与
  * antd，图表页与日记页各自带着自己的那份（详见 DESIGN.md「Performance」）。 */
@@ -14,15 +16,16 @@ const EventsPage = lazy(async () => ({ default: (await import('./pages/events'))
 const DiaryPage = lazy(async () => ({ default: (await import('./pages/diary')).DiaryPage }))
 const TodoPage = lazy(async () => ({ default: (await import('./pages/todo')).TodoPage }))
 import { AntdProvider } from './components/antd-provider'
-import { AppLedgerMenu } from './app-ledger-menu'
+import { AppMenu } from './app-menu'
 import { AppShell } from './app-shell'
 import { resolveView, type View } from './app-view'
 import { WorkspaceOverlay } from './app-workspace-overlay'
-import { SettingsPage } from './pages/settings'
+import { SettingsPage, type SettingsTab } from './pages/settings'
 import { PageBoundary } from './components/page-boundary'
 import { PageRailProvider } from './components/page-layout'
 import { QuitScreen } from './components/quit-screen'
 import { Icon } from './components/icon'
+import { notify } from './components/toast'
 import { useQuitFlow } from './state/use-quit-flow'
 import { useAppStartup } from './state/use-app-startup'
 import { useWorkspaceSession } from './state/use-workspace-session'
@@ -73,6 +76,14 @@ export function App(): JSX.Element {
   // 派生而不是在 effect 里改 state —— 配置到达时第一帧就是对的那页，不会先闪一下记账页。
   const currentView = resolveView(view, effectiveFeatures)
 
+  // 设置页的分栏由外壳持有：应用菜单里的「应用设置 / 关于软件」要能直接落到对应那一栏。
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('general')
+
+  const openSettings = useCallback((tab: SettingsTab): void => {
+    setSettingsTab(tab)
+    setView('settings')
+  }, [])
+
   // state 跟着派生结果追上：否则开关关掉时 state 还停在旧页，等开关再打开就会把用户
   // 从设置页拽回去。渲染只看 currentView，这一步只是让两边不打架。
   useEffect(() => {
@@ -86,6 +97,23 @@ export function App(): JSX.Element {
     [],
   )
 
+  /** 标题栏菜单里的主题切换：与设置页那条分段是同一个写入、同一份配置。 */
+  const changeAppearance = useCallback(
+    async (appearance: string): Promise<void> => {
+      try {
+        await window.api.invoke('config_set_appearance', { appearance })
+        if (config) setConfig({ ...config, appearance })
+      } catch (appearanceError) {
+        notify(errorMessage(appearanceError), 'error')
+      }
+    },
+    [config, setConfig],
+  )
+
+  const openDevtools = useCallback((): void => {
+    void window.api.invoke('devtools_toggle', { enabled: true })
+  }, [])
+
   return (
     <AntdProvider appearance={config?.appearance}>
       <>
@@ -98,7 +126,7 @@ export function App(): JSX.Element {
             // 还没有工作空间时也要能进设置：代理与检查更新是应用级的，
             // 不该被「先选工作空间」挡在外面。
             dismissPrompt()
-            setView('settings')
+            openSettings('general')
           }}
         />
 
@@ -109,19 +137,25 @@ export function App(): JSX.Element {
           blockingWorkspace={blockingWorkspace}
           maximized={maximized}
           onWindowControl={controlWindow}
-          ledgerMenu={
-            <AppLedgerMenu
+          menu={
+            <AppMenu
               ledgers={ledgers}
               activeLedgerId={activeLedgerId}
               activeLedgerName={activeLedgerName}
-              workspaceIconUrl={workspaceIconUrl}
               workspace={workspace}
+              version={version}
+              appearance={config?.appearance ?? 'system'}
               busy={busy}
               onSelect={setActiveLedgerId}
               onCreate={createLedger}
               onDelete={deleteLedger}
+              onAppearanceChange={(appearance) => void changeAppearance(appearance)}
+              onOpenSettings={() => openSettings('general')}
+              onOpenAbout={() => openSettings('about')}
+              onOpenDevtools={openDevtools}
             />
           }
+          ledgerName={activeLedgerName}
           error={error}
           workspace={workspace}
           version={version}
@@ -209,6 +243,8 @@ export function App(): JSX.Element {
               version={version}
               workspaceIconUrl={workspaceIconUrl}
               updateSnapshot={updateSnapshot}
+              tab={settingsTab}
+              onTabChange={setSettingsTab}
               onUpdateSnapshot={setUpdateSnapshot}
               onPickWorkspace={openWorkspace}
               onOpenWorkspace={openWorkspaceAt}

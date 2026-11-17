@@ -90,7 +90,14 @@ export function SettingsGeneral({
           <span className="st-card-desc">保存在当前工作空间，切换时跟着换</span>
         </div>
         <div className="st-card-action">
-          {workspaceIconUrl ? <img className="st-icon-preview" src={workspaceIconUrl} alt="" /> : null}
+          {workspaceIconUrl ? (
+            <img
+              className="st-icon-preview"
+              data-testid="workspace-icon"
+              src={workspaceIconUrl}
+              alt=""
+            />
+          ) : null}
           <FileButton
             testId="workspace-icon-input"
             accept="image/png,image/jpeg,image/webp,image/gif"
