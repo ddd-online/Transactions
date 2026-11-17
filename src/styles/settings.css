@@ -176,7 +176,9 @@
  * 设置行用同一个值反向出血：分隔线通到面板边缘，行内文字仍与分区标题对齐。 */
 .settings-main__body {
   --settings-inset: var(--transactions-space-2xl);
-  padding: var(--transactions-space-sm) var(--settings-inset) var(--transactions-space-xl);
+  /* 顶部不留内边距：分区标题下面那条发丝线就是第一行的起点，
+   * 第一行的 12px 行内边距已经给了呼吸，再叠一层就是标题下方那条空带。 */
+  padding: 0 var(--settings-inset) var(--transactions-space-xl);
 }
 
 .settings-main__body .st-card {
@@ -184,6 +186,12 @@
   margin-right: calc(-1 * var(--settings-inset));
   padding-left: var(--settings-inset);
   padding-right: var(--settings-inset);
+}
+
+/* 每个分栏的第一项都贴住标题那条线：把旧页面里「第一行收 8px」的规则还原成行内边距。 */
+.settings-main__body .st-list > .st-card:first-child,
+.settings-main__body .st-feature-hint {
+  padding-top: var(--transactions-space-md);
 }
 
 /* 窄窗：左栏收窄；再窄就把分栏清单横过来放到面板顶上。 */
@@ -244,7 +252,7 @@
 
   .settings-main__body {
     --settings-inset: var(--transactions-space-md);
-    padding: var(--transactions-space-sm) var(--settings-inset) var(--transactions-space-lg);
+    padding: 0 var(--settings-inset) var(--transactions-space-lg);
   }
 }
 
