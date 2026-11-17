@@ -7,7 +7,7 @@ import { _electron as electron, expect, test } from '@playwright/test'
 import { createLedger } from './ledger-helper'
 import { environment } from './helpers'
 
-test('标题栏：应用菜单切账本、主题、设置与关于分栏', async () => {
+test('标题栏：工作空间名入口、账本、外观切换、设置与关于分栏', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-menu-'))
   const home = join(root, 'home')
@@ -37,9 +37,9 @@ test('标题栏：应用菜单切账本、主题、设置与关于分栏', async
     await page.getByTestId('open-workspace').click()
     await expect(page.getByTestId('workspace-state')).toContainText('已打开')
 
-    // 标题栏：左边是应用菜单入口，中间只有一个页面名（不再带 Transactions- 前缀）。
+    // 标题栏：左边是「工作空间目录名 + ⌄」，中间只有一个页面名（不再带 Transactions- 前缀）。
     await expect(page.getByTestId('app-title')).toHaveText('记账')
-    await expect(page.getByTestId('app-menu-trigger')).toBeVisible()
+    await expect(page.getByTestId('app-menu-trigger')).toContainText('ws')
 
     // 还没有账本时，菜单第一节说的是「暂无账本」，创建入口就在它下面。
     await page.getByTestId('app-menu-trigger').click()
@@ -53,7 +53,7 @@ test('标题栏：应用菜单切账本、主题、设置与关于分栏', async
     await createLedger(page, '测试账本')
     await expect(page.getByTestId('app-title')).toHaveText('记账')
 
-    // 菜单：账本一节在最上面，当前账本带对勾；下面是应用动作。
+    // 菜单：账本一节在最上面，当前账本带对勾；下面是应用动作，外观不再占一行。
     await page.getByTestId('app-menu-trigger').click()
     await expect(page.getByTestId('app-menu')).toBeVisible()
     const activeRow = page
@@ -66,26 +66,21 @@ test('标题栏：应用菜单切账本、主题、设置与关于分栏', async
       page.getByTestId('ledger-menu-row').filter({ hasText: '测试账本' }).getByTestId('ledger-delete'),
     ).toHaveCSS('opacity', '0')
     await expect(page.getByTestId('app-menu-settings')).toBeVisible()
+    await expect(page.getByTestId('app-menu-theme')).toHaveCount(0)
     await page.waitForTimeout(260)
     await page.screenshot({ path: join(repositoryRoot, 'artifacts', 'tests', 'app-menu.png') })
+    await page.keyboard.press('Escape')
 
-    // 主题是二级菜单：选中深色后立刻落库并换肤。
-    await page.getByTestId('app-menu-theme').click()
-    await expect(page.getByTestId('app-menu-theme-menu')).toBeVisible()
-    await page.waitForTimeout(260)
-    await page.screenshot({
-      path: join(repositoryRoot, 'artifacts', 'tests', 'app-menu-theme.png'),
-    })
-    await page.getByTestId('app-menu-theme-dark').click()
+    // 外观模式：标题栏的太阳键一按翻面，写回同一条配置；深色下再开菜单留一张证据。
+    const themeToggle = page.getByTestId('theme-toggle')
+    await expect(themeToggle).toHaveAttribute('title', '外观模式')
+    await themeToggle.click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-    await expect(page.getByTestId('app-menu')).toHaveCount(0)
     await page.getByTestId('app-menu-trigger').click()
     await page.waitForTimeout(260)
     await page.screenshot({
       path: join(repositoryRoot, 'artifacts', 'tests', 'app-menu-dark.png'),
     })
-
-    // 键盘：Esc 收起菜单并把焦点还给入口。
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('app-menu')).toHaveCount(0)
     await expect(page.getByTestId('app-menu-trigger')).toBeFocused()
@@ -104,11 +99,9 @@ test('标题栏：应用菜单切账本、主题、设置与关于分栏', async
     })
     await page.keyboard.press('Escape')
 
-    // 主题走同一条配置写入：换回浅色，设置页的外观分段跟着变。
-    await page.getByTestId('app-menu-trigger').click()
-    await page.getByTestId('app-menu-theme').click()
-    await page.getByTestId('app-menu-theme-light').click()
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark')
+    // 再按一次太阳 / 月亮键回到浅色，设置页的外观分段跟着变。
+    await themeToggle.click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
 
     // 「应用设置」落到通用分栏，「关于软件」落到关于分栏 —— 同一个菜单两种落点。
     await page.getByTestId('app-menu-trigger').click()

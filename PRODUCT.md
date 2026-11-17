@@ -40,7 +40,7 @@ web
 ## Brand Commitments
 
 - 产品名：Transactions（一款桌面端记账工具）。
-- 应用内「Tr」图形是唯一品牌图形；标题栏左上角与「关于软件」共用同一份标识。
+- 应用内「Tr」图形是唯一品牌图形；只出现在「关于软件」页。
 - 中文界面与文案；公开分发渠道为 GitHub Release。
 
 ## Evidence on Hand

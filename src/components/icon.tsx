@@ -38,6 +38,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MinusOutlined,
+  MoonOutlined,
   PlusOutlined,
   ReadOutlined,
   ReloadOutlined,
@@ -122,6 +123,7 @@ export type IconName =
   | 'Signal'
   | 'Export'
   | 'Sun'
+  | 'Moon'
   | 'Code'
 
 type IconComponent = ComponentType<{
@@ -191,6 +193,7 @@ const ICONS: Record<IconName, IconComponent> = {
   Signal: SignalFilled,
   Export: ExportOutlined,
   Sun: SunOutlined,
+  Moon: MoonOutlined,
   Code: CodeOutlined,
 }
 

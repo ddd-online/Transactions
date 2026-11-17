@@ -113,6 +113,8 @@
   --transactions-color-hover-bg: rgba(15, 17, 21, 0.06);
   --transactions-color-active-bg: rgba(57, 100, 254, 0.10);
   --transactions-color-danger-hover-bg: rgba(220, 38, 38, 0.10);
+  /* 窗口关闭键的悬停底：Windows 的窗口惯例（实心红 + 白叉），不随数据语义色走。 */
+  --transactions-color-window-close-hover: #e81123;
   /* 叠在图片上的浮层控件底：浅色主题下也必须是"暗底 + 亮图标"才看得清 */
   --transactions-color-overlay-scrim: rgba(15, 17, 21, 0.55);
   /* 阻塞屏（选工作空间）的压底：比弹窗遮罩重、比灯箱 scrim 轻 ——
@@ -252,11 +254,11 @@
 
   /* ---------- 标题栏高度（横贯窗口） ----------
    * 自绘标题栏在窗口最上面，侧栏从它下面开始；窗口三键与页面名都排在这一条里。
-   * 48px：容器底边就是那条横贯全窗口的分隔线；
+   * 40px：容器底边就是那条横贯全窗口的分隔线；窗口三键满高排在右端。
    * 线下方由 `.sidebar-nav` / `.page-toolbar` 各自留 8px，把导航组与工具栏推下去同一段距离。
    * 注意：容器里最高的内容是页面名（见 app-shell.css 的 `.app-titlebar__title`），
    * 改字号别超过这个高度。 */
-  --transactions-size-top-band: 48px;
+  --transactions-size-top-band: 40px;
 
   /* 标题栏分隔线到下方内容之间的距离 */
   --transactions-space-top-gap: 8px;
@@ -345,6 +347,7 @@
   --transactions-color-hover-bg: rgba(255, 255, 255, 0.08);
   --transactions-color-active-bg: rgba(57, 100, 254, 0.22);
   --transactions-color-danger-hover-bg: rgba(248, 113, 113, 0.14);
+  --transactions-color-window-close-hover: #c42b1c;
 
   /* 叠在图片上的浮层控件底：两套深色定义保持一致，图片前始终可读 */
   --transactions-color-overlay-scrim: rgba(15, 17, 21, 0.55);
@@ -448,6 +451,7 @@
     --transactions-color-hover-bg: rgba(255, 255, 255, 0.08);
     --transactions-color-active-bg: rgba(57, 100, 254, 0.22);
     --transactions-color-danger-hover-bg: rgba(248, 113, 113, 0.14);
+    --transactions-color-window-close-hover: #c42b1c;
 
     /* 叠在图片上的浮层控件底：两套深色定义保持一致，图片前始终可读 */
     --transactions-color-overlay-scrim: rgba(15, 17, 21, 0.55);

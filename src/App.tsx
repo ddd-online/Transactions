@@ -30,6 +30,7 @@ import { useQuitFlow } from './state/use-quit-flow'
 import { useAppStartup } from './state/use-app-startup'
 import { useWorkspaceSession } from './state/use-workspace-session'
 import { useLedgerSession } from './state/use-ledger-session'
+import { useThemeMode } from './theme/theme-mode'
 
 export function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
@@ -114,6 +115,12 @@ export function App(): JSX.Element {
     void window.api.invoke('devtools_toggle', { enabled: true })
   }, [])
 
+  /** 标题栏的太阳 / 月亮键：按当前**生效**的外观一按就翻面，写回显式 light / dark。 */
+  const themeMode = useThemeMode()
+  const toggleTheme = useCallback((): void => {
+    void changeAppearance(themeMode === 'dark' ? 'light' : 'dark')
+  }, [changeAppearance, themeMode])
+
   return (
     <AntdProvider appearance={config?.appearance}>
       <>
@@ -137,6 +144,8 @@ export function App(): JSX.Element {
           blockingWorkspace={blockingWorkspace}
           maximized={maximized}
           onWindowControl={controlWindow}
+          themeMode={themeMode}
+          onToggleTheme={toggleTheme}
           menu={
             <AppMenu
               ledgers={ledgers}
@@ -144,12 +153,10 @@ export function App(): JSX.Element {
               activeLedgerName={activeLedgerName}
               workspace={workspace}
               version={version}
-              appearance={config?.appearance ?? 'system'}
               busy={busy}
               onSelect={setActiveLedgerId}
               onCreate={createLedger}
               onDelete={deleteLedger}
-              onAppearanceChange={(appearance) => void changeAppearance(appearance)}
               onOpenSettings={() => openSettings('general')}
               onOpenAbout={() => openSettings('about')}
               onOpenDevtools={openDevtools}

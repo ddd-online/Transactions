@@ -2,6 +2,7 @@ import type { JSX, ReactNode } from 'react'
 
 import type { FeatureFlags } from '../shared/types/config'
 import { Icon, type IconName } from './components/icon'
+import type { ThemeMode } from './theme/theme-mode'
 import { NAV_VIEWS, viewLabel, type View } from './app-view'
 
 const NAV_ICON: Record<View, IconName> = {
@@ -22,6 +23,9 @@ export interface AppShellProps {
   blockingWorkspace: boolean
   maximized: boolean
   onWindowControl: (action: 'minimize' | 'maximize' | 'close') => void
+  /** 当前生效的外观：太阳 / 月亮键据此换图标。 */
+  themeMode: ThemeMode
+  onToggleTheme: () => void
   /** 标题栏左上角的应用菜单（由 app-menu 提供）。 */
   menu: ReactNode
   /** 当前账本名：侧栏不再常驻头像与名字，读屏仍要读得出现在记在哪一本上。 */
@@ -47,6 +51,8 @@ export function AppShell({
   blockingWorkspace,
   maximized,
   onWindowControl,
+  themeMode,
+  onToggleTheme,
   menu,
   ledgerName,
   error,
@@ -69,6 +75,19 @@ export function AppShell({
             {viewLabel(view)}
           </h1>
           <div className="app-titlebar__end">
+            <button
+              type="button"
+              className="titlebar-theme"
+              data-testid="theme-toggle"
+              title="外观模式"
+              inert={blockingWorkspace || undefined}
+              aria-label={
+                themeMode === 'dark' ? '外观模式：深色，点击切换浅色' : '外观模式：浅色，点击切换深色'
+              }
+              onClick={onToggleTheme}
+            >
+              <Icon name={themeMode === 'dark' ? 'Moon' : 'Sun'} size={16} />
+            </button>
             <div className="window-controls">
               <button
                 type="button"

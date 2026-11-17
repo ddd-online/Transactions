@@ -90,18 +90,25 @@
   -webkit-app-region: no-drag;
 }
 
+/* 入口是「工作空间目录名 + ⌄」的文字按钮（桌面包惯例）：纸白小方片贴在灰色标题栏上，
+ * 名字最长 260px；展开时主色 tint，与侧栏导航项同一套语言。 */
 .app-menu-trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: none;
-  border-radius: var(--transactions-radius-md);
-  background: none;
+  gap: var(--transactions-space-xs);
+  max-width: 260px;
+  height: 28px;
+  padding: 0 var(--transactions-space-sm);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-sm);
+  background-color: var(--transactions-color-elevated);
   cursor: pointer;
-  transition: background-color var(--transactions-transition-fast);
+  font-family: inherit;
+  font-size: var(--transactions-size-text-body-sm);
+  font-weight: var(--transactions-weight-medium);
+  color: var(--transactions-color-text-major);
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
 }
 
 .app-menu-trigger:hover {
@@ -110,6 +117,7 @@
 
 .app-menu-trigger.is-open {
   background-color: var(--transactions-color-active-bg);
+  color: var(--transactions-color-primary);
 }
 
 .app-menu-trigger:focus-visible {
@@ -117,9 +125,21 @@
   outline-offset: 2px;
 }
 
-.app-menu-trigger .app-mark {
-  width: 22px;
-  height: 22px;
+.app-menu-trigger__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-menu-trigger__chevron {
+  flex-shrink: 0;
+  color: var(--transactions-color-text-tertiary);
+  transition: transform var(--transactions-transition-fast);
+}
+
+.app-menu-trigger.is-open .app-menu-trigger__chevron {
+  transform: rotate(180deg);
 }
 
 .app-menu {
@@ -236,27 +256,20 @@
 }
 
 /* 选中态的文字与对勾用同一个蓝：一行里一深一浅会读成两个状态。
- * 深色下主色本身是深蓝（压在深色 tint / 弹层底上只有 ~2.5:1），统一换成亮一档。 */
+ * 深色下主色本身是深蓝（压在深色 tint 上只有 ~2.5:1），统一换成亮一档。 */
 .app-menu__row.is-active .app-menu__item--ledger,
-.app-menu__row.is-active .app-menu__check,
-.app-menu__submenu .app-menu__item.is-checked {
+.app-menu__row.is-active .app-menu__check {
   color: var(--transactions-color-primary-hover);
 }
 
-.app-menu__submenu .is-checked .app-menu__check {
-  color: currentColor;
-}
-
 [data-theme='dark'] .app-menu__row.is-active .app-menu__item--ledger,
-[data-theme='dark'] .app-menu__row.is-active .app-menu__check,
-[data-theme='dark'] .app-menu__submenu .app-menu__item.is-checked {
+[data-theme='dark'] .app-menu__row.is-active .app-menu__check {
   color: var(--transactions-color-primary-200);
 }
 
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) .app-menu__row.is-active .app-menu__item--ledger,
-  html:not([data-theme]) .app-menu__row.is-active .app-menu__check,
-  html:not([data-theme]) .app-menu__submenu .app-menu__item.is-checked {
+  html:not([data-theme]) .app-menu__row.is-active .app-menu__check {
     color: var(--transactions-color-primary-200);
   }
 }
@@ -270,12 +283,6 @@
 .app-menu__value--mono {
   font-family: var(--transactions-font-mono);
   letter-spacing: var(--transactions-tracking-amount);
-}
-
-.app-menu__chevron {
-  flex-shrink: 0;
-  color: var(--transactions-color-text-tertiary);
-  transition: transform var(--transactions-transition-fast);
 }
 
 /* 面板里的每一行都是一颗按钮：按下同样下沉 1px（DESIGN 的 Press Rule）。 */
@@ -345,70 +352,16 @@
   background-color: var(--transactions-color-divider);
 }
 
-/* 二级菜单：贴住「主题」这一行向右展开 */
-.app-menu__sub-anchor {
-  position: relative;
-}
-
-.app-menu__submenu {
-  position: absolute;
-  z-index: 1;
-  top: calc(-1 * var(--transactions-space-xs));
-  left: calc(100% + var(--transactions-space-xs));
-  width: 168px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--transactions-space-2xs);
-  padding: var(--transactions-space-xs);
-  background: var(--transactions-color-elevated);
-  border: 1px solid var(--transactions-color-window-border);
-  border-radius: var(--transactions-radius-md);
-  box-shadow: var(--transactions-shadow-lg);
-  animation: tr-rise-in var(--transactions-transition-enter);
-}
-
-.app-menu__submenu .app-menu__item {
-  flex: none;
-  width: 100%;
-}
-
-.app-menu__submenu .app-menu__check {
-  opacity: 0;
-}
-
-.app-menu__submenu .is-checked .app-menu__check {
-  opacity: 1;
-}
-
 /* 菜单行在面板里：焦点环内缩，贴住这一行的圆角，不糊到相邻行上。 */
 .app-menu__item:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: -2px;
 }
 
-/* 窄窗：二级菜单没有右侧空间，就落到「主题」下面，去掉浮层壳。
- * 给它一条左轨（与图标列同一条竖线）：三个主题项仍是「主题」的子项，不是新的动作。 */
+/* 窄窗：面板不许把窗口撑出横向滚动条。 */
 @media (max-width: 520px) {
   .app-menu {
     width: min(252px, calc(100vw - var(--transactions-space-lg)));
-  }
-
-  .app-menu__submenu {
-    position: static;
-    width: auto;
-    margin: var(--transactions-space-2xs) 0 var(--transactions-space-xs)
-      calc(var(--transactions-space-sm) + 20px + var(--transactions-space-sm));
-    padding-left: var(--transactions-space-sm);
-    border: none;
-    border-left: 1px solid var(--transactions-color-border-l1);
-    background: none;
-    box-shadow: none;
-    animation: none;
-  }
-
-  /* 展开方向朝下，箭头也跟着转 90°。 */
-  .app-menu__sub-anchor .app-menu__chevron {
-    transform: rotate(90deg);
   }
 }
 
@@ -584,7 +537,7 @@
   align-items: center;
   flex-shrink: 0;
   height: var(--transactions-size-top-band);
-  padding: 0 var(--transactions-space-sm);
+  padding: 0;
   background-color: var(--transactions-color-sidebar-fill);
   border-bottom: 1px solid var(--transactions-color-divider);
   -webkit-app-region: drag;
@@ -595,8 +548,7 @@
   align-items: center;
   justify-self: start;
   min-width: 0;
-  /* 8px：36px 的入口在标题栏里再右移一格，正中落在侧栏图标列（34.5px）上。 */
-  padding-left: var(--transactions-space-sm);
+  padding-left: var(--transactions-space-md);
 }
 
 .app-titlebar__title {
@@ -611,21 +563,59 @@
 }
 
 /* 窗口三键要浮在**首屏阻塞层**之上（选择工作空间时窗口仍要能最小化 / 拖动）：
- * 标题栏本身不建层叠上下文（`z-index: auto`），这一簇自己抬到遮罩（50）上面。 */
+ * 标题栏本身不建层叠上下文，只有这一簇抬到遮罩（50）上面；外观键跟着锁在外壳里。 */
 .app-titlebar__end {
   position: relative;
-  z-index: 60;
   display: flex;
   align-items: center;
   justify-self: end;
+  height: 100%;
   -webkit-app-region: no-drag;
 }
 
-/* 窗口三键：只是标题栏右端的一簇图标按钮 */
-.window-controls {
-  display: flex;
+/* 外观模式：太阳 / 月亮，一按翻面；与窗口三键之间留 4px，不吃标题栏的拖动区。 */
+.titlebar-theme {
+  display: inline-flex;
   align-items: center;
-  gap: var(--transactions-space-xs);
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: var(--transactions-space-xs);
+  padding: 0;
+  border: none;
+  border-radius: var(--transactions-radius-md);
+  background: none;
+  color: var(--transactions-color-icon);
+  cursor: pointer;
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast), box-shadow var(--transactions-transition-fast);
+}
+
+.titlebar-theme:hover {
+  background-color: var(--transactions-color-elevated);
+  color: var(--transactions-color-icon-hover);
+  box-shadow: var(--transactions-shadow-sm);
+}
+
+.titlebar-theme:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: 2px;
+}
+
+.titlebar-theme svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* 窗口三键：贴住窗口右缘的一簇满高按钮（46 × 40），与系统窗口一致。
+ * 关闭键悬停是实心底 + 白叉 —— 这是 Windows 的窗口惯例，不是数据语义色。 */
+.window-controls {
+  position: relative;
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
   -webkit-app-region: no-drag;
 }
 
@@ -633,16 +623,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 46px;
+  height: 100%;
   -webkit-app-region: no-drag;
   padding: 0;
   border: none;
   background: none;
-  border-radius: var(--transactions-radius-md);
+  border-radius: 0;
   cursor: pointer;
   color: var(--transactions-color-icon);
-  transition: all var(--transactions-transition-fast);
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
 }
 
 .window-btn:hover {
@@ -652,18 +643,18 @@
 
 .window-btn:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 .window-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
 .window-btn--close:hover {
-  background-color: var(--transactions-color-danger-hover-bg);
-  color: var(--transactions-color-expense);
+  background-color: var(--transactions-color-window-close-hover);
+  color: var(--transactions-color-text-inverse);
 }
 
 /* ============================================
