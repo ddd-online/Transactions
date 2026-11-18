@@ -23,6 +23,8 @@ export const AUTO_BACKUP_PREFIX = 'auto-'
 export const PRE_RESTORE_PREFIX = 'pre-restore-'
 /** 自动备份保留的份数（只数 `auto-YYYYMMDD.db`）。 */
 export const AUTO_BACKUP_KEEP = 7
+/** 手动备份保留的份数（整个目录，含图片资产）。 */
+export const MANUAL_BACKUP_KEEP = 7
 /** 最近工作空间保留的条数。 */
 export const RECENT_WORKSPACE_LIMIT = 5
 
@@ -230,7 +232,8 @@ function autoEntryOf(name: string): AutoEntry | null {
  * 同一天多份时先比后缀号（base 最早、后缀越大越新），再比名字 —— 边界由排序规则定死，
  * 不依赖目录返回顺序的偶然性。
  *
- * 手动备份与 pre-restore 永远不参与 —— 「我特意留下的那一份」不能被自动清理吃掉。
+ * 只认自动备份：手动备份由 {@link manualBackupsToDelete} 自己那一条 7 份规则管，
+ * pre-restore 永远不参与裁剪。
  */
 export function autoBackupsToDelete(names: string[], keep: number = AUTO_BACKUP_KEEP): string[] {
   const autos: AutoEntry[] = []
@@ -246,6 +249,50 @@ export function autoBackupsToDelete(names: string[], keep: number = AUTO_BACKUP_
   )
   // keep 为负按 0 处理：删完比留负数个更接近调用方的意图
   return autos.slice(Math.max(0, keep)).map((entry) => entry.name)
+}
+
+/** 一份手动备份目录：时间来自名字里的时间；`rank` 是同秒多份时的先后（base = 0）。 */
+interface ManualEntry {
+  name: string
+  timestamp: number
+  rank: number
+}
+
+/** 认一份手动备份目录；同秒的第二份带 `-2` 后缀，rank 记下它比 base 新。 */
+function manualEntryOf(name: string): ManualEntry | null {
+  const direct = manualNameSeconds(name)
+  if (direct !== null) return { name, timestamp: direct, rank: 0 }
+  const stripped = withoutNameSuffix(name)
+  if (stripped === name) return null
+  const timestamp = manualNameSeconds(stripped)
+  if (timestamp === null) return null
+  const match = NAME_SUFFIX_PATTERN.exec(name)
+  return { name, timestamp, rank: match ? Number(match[2]) : 0 }
+}
+
+/**
+ * 手动备份的保留裁剪：只认 `Transactions-备份-YYYYMMDD-HHmmss`（及同秒多份的 `-<n>`），
+ * 按名字里的时间新 → 旧保留前 `keep` 个，返回该删的目录名。
+ *
+ * 手动备份是整个目录（库 + `data/assets`），删的是整份；自动备份与 pre-restore 不参与。
+ * 同秒多份的先后与自动备份一致：后缀越大越新。
+ */
+export function manualBackupsToDelete(
+  names: string[],
+  keep: number = MANUAL_BACKUP_KEEP,
+): string[] {
+  const manuals: ManualEntry[] = []
+  for (const name of names) {
+    const entry = manualEntryOf(name)
+    if (entry) manuals.push(entry)
+  }
+  manuals.sort(
+    (left, right) =>
+      right.timestamp - left.timestamp ||
+      right.rank - left.rank ||
+      left.name.localeCompare(right.name),
+  )
+  return manuals.slice(Math.max(0, keep)).map((entry) => entry.name)
 }
 
 // ---------------------------------------------------------------- 最近工作空间

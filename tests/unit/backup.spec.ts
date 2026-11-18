@@ -4,6 +4,7 @@ import {
   AUTO_BACKUP_KEEP,
   AUTO_BACKUP_PREFIX,
   BACKUP_DIR_NAME,
+  MANUAL_BACKUP_KEEP,
   MANUAL_BACKUP_PREFIX,
   PRE_RESTORE_PREFIX,
   RECENT_WORKSPACE_LIMIT,
@@ -15,6 +16,7 @@ import {
   formatBytes,
   judgeSnapshot,
   manualBackupName,
+  manualBackupsToDelete,
   normalizeRecentWorkspaces,
   parseBackupName,
   preRestoreName,
@@ -44,6 +46,7 @@ describe('backup name constants', () => {
     expect(AUTO_BACKUP_PREFIX).toBe('auto-')
     expect(PRE_RESTORE_PREFIX).toBe('pre-restore-')
     expect(AUTO_BACKUP_KEEP).toBe(7)
+    expect(MANUAL_BACKUP_KEEP).toBe(7)
     expect(RECENT_WORKSPACE_LIMIT).toBe(5)
   })
 })
@@ -231,6 +234,66 @@ describe('automatic backup retention', () => {
     ])
     expect(autoBackupsToDelete(names, 2)).toEqual(['auto-20260105.db'])
     expect(autoBackupsToDelete(names, 3)).toEqual([])
+  })
+})
+
+describe('manual backup retention', () => {
+  const eightBackups = [
+    'Transactions-备份-20260108-030405',
+    'Transactions-备份-20260107-030405',
+    'Transactions-备份-20260106-030405',
+    'Transactions-备份-20260105-030405',
+    'Transactions-备份-20260104-030405',
+    'Transactions-备份-20260103-030405',
+    'Transactions-备份-20260102-030405',
+    'Transactions-备份-20260101-030405',
+  ]
+
+  it('keeps the newest seven and returns the oldest one', () => {
+    expect(manualBackupsToDelete(eightBackups)).toEqual([
+      'Transactions-备份-20260101-030405',
+    ])
+  })
+
+  it('keeps exactly seven untouched', () => {
+    expect(manualBackupsToDelete(eightBackups.slice(0, 7))).toEqual([])
+    expect(manualBackupsToDelete([])).toEqual([])
+  })
+
+  it('only crops directories it generated itself', () => {
+    const names = [
+      ...eightBackups,
+      'auto-20260109.db',
+      'pre-restore-20260109-030405.db',
+      'transactions.db',
+      '我的备份',
+    ]
+
+    expect(manualBackupsToDelete(names, 2)).toEqual([
+      'Transactions-备份-20260106-030405',
+      'Transactions-备份-20260105-030405',
+      'Transactions-备份-20260104-030405',
+      'Transactions-备份-20260103-030405',
+      'Transactions-备份-20260102-030405',
+      'Transactions-备份-20260101-030405',
+    ])
+  })
+
+  it('orders same-second duplicates deterministically and keeps the newest', () => {
+    const names = [
+      'Transactions-备份-20260105-030405',
+      'Transactions-备份-20260105-030405-2',
+      'Transactions-备份-20260105-030405-3',
+    ]
+    expect(manualBackupsToDelete(names, 1)).toEqual([
+      'Transactions-备份-20260105-030405-2',
+      'Transactions-备份-20260105-030405',
+    ])
+    expect(manualBackupsToDelete([...names].reverse(), 1)).toEqual([
+      'Transactions-备份-20260105-030405-2',
+      'Transactions-备份-20260105-030405',
+    ])
+    expect(manualBackupsToDelete(names, 3)).toEqual([])
   })
 })
 

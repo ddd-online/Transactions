@@ -213,6 +213,49 @@ describe('manual backup', () => {
     expect(error.message).toContain('工作空间内部')
     expect(existsSync(inside)).toBe(false)
   })
+
+  it('keeps only the newest seven manual backups and leaves everything else alone', () => {
+    const fixture = setup()
+    const workspace = openWorkspace(fixture.workspaceDirectory)
+    insertLedger(workspace.db, 'l1')
+    mkdirSync(fixture.backupDirectory, { recursive: true })
+    writeFileSync(join(fixture.backupDirectory, 'notes.txt'), 'keep me')
+    mkdirSync(join(fixture.backupDirectory, 'mine'))
+    // 名字像备份、实际是文件：认类型这一步要把它留下
+    const decoy = join(fixture.backupDirectory, 'Transactions-备份-20200101-000000')
+    writeFileSync(decoy, 'not a backup directory')
+
+    const service = serviceFor(fixture)
+    const names: string[] = []
+    for (let index = 0; index < 8; index += 1) {
+      fixture.clock.value = new Date(2026, 4, 1, 10, 30, index)
+      names.push(service.createManual().name)
+    }
+
+    const remaining = readdirSync(fixture.backupDirectory)
+    // 最新 7 份都在，最早的一份连同更早的假备份名文件一起被跳过 / 删掉
+    for (const name of names.slice(1)) expect(remaining).toContain(name)
+    expect(remaining).not.toContain(names[0])
+    expect(remaining).toContain('notes.txt')
+    expect(remaining).toContain('mine')
+    expect(existsSync(decoy)).toBe(true)
+  })
+
+  it('never deletes the backup it just made when the clock moves backwards', () => {
+    const fixture = setup()
+    const workspace = openWorkspace(fixture.workspaceDirectory)
+    insertLedger(workspace.db, 'l1')
+    const service = serviceFor(fixture)
+    for (let index = 0; index < 7; index += 1) {
+      fixture.clock.value = new Date(2026, 4, 1, 10, 30, index)
+      service.createManual()
+    }
+    // 时钟倒退到去年：新备份名字最老，也不能被本次清理当场删掉
+    fixture.clock.value = new Date(2025, 0, 1, 9, 0, 0)
+    const olderNamed = service.createManual()
+    expect(existsSync(olderNamed.path)).toBe(true)
+    expect(existsSync(join(fixture.backupDirectory, olderNamed.name))).toBe(true)
+  })
 })
 
 describe('backup list', () => {

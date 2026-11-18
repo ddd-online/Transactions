@@ -53,7 +53,7 @@ export function SettingsDataBackup({
       <div className="st-card">
         <div className="st-card-info">
           <span className="st-card-title">手动备份</span>
-          <span className="st-card-desc">库与图片资产，存到下面的备份位置</span>
+          <span className="st-card-desc">库与图片资产，存到下面的备份位置（保留最近 7 份）</span>
         </div>
         <div className="st-card-action">
           <Button

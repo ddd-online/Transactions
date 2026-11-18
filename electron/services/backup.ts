@@ -34,6 +34,7 @@ import {
   formatBytes,
   judgeSnapshot,
   manualBackupName,
+  manualBackupsToDelete,
   parseBackupName,
   preRestoreName,
   snapshotProblem,
@@ -217,6 +218,26 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     return entries
   }
 
+  /**
+   * 手动备份最多 7 份，超出删最早的。
+   *
+   * 只删**目录**：备份位置里可能有用户自己的文件 / 文件夹恰好叫得像备份名，rm 之前先认
+   * 类型；认不出的一律不碰。删除失败只记日志 —— 这一次备份本身已经成功。
+   * `preserve` 是刚产出的这一份：系统时钟往回拨时它的名字可能比旧备份还老，不能当场删掉。
+   */
+  function pruneManualBackups(directory: string, preserve: string): void {
+    for (const stale of manualBackupsToDelete(readdirSync(directory))) {
+      if (stale === preserve) continue
+      const path = join(directory, stale)
+      try {
+        if (!statSync(path).isDirectory()) continue
+        rmSync(path, { recursive: true, force: true })
+      } catch (error) {
+        options.log?.(`清理旧手动备份失败: ${errorMessage(error)}`)
+      }
+    }
+  }
+
   function createManual(): BackupResultDto {
     const workspace = requireWorkspace()
     const directory = options.backupDir()
@@ -245,6 +266,13 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
       copyDirectory(assetsSource, join(target, 'data', 'assets'))
     }
 
+    // 手动备份同样只留最近 7 份；清理失败不能反过来让这一份成功的备份报错
+    try {
+      pruneManualBackups(directory, name)
+    } catch (error) {
+      options.log?.(`清理旧手动备份失败: ${errorMessage(error)}`)
+    }
+
     return {
       name,
       path: target,
@@ -265,9 +293,11 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     return marker === '' || comparable(marker) === comparable(workspace.directory)
   }
 
-  /** 只裁剪自动备份：手动备份与 pre-restore 永远不参与。 */
-  function pruneAutoBackups(directory: string): void {
+  /** 只裁剪自动备份：手动备份走自己的 7 份规则，pre-restore 永远不参与。
+   *  刚产出的那一份同样不删：时钟往回拨时它可能排在最老的位置。 */
+  function pruneAutoBackups(directory: string, preserve?: string): void {
     for (const stale of autoBackupsToDelete(readdirSync(directory))) {
+      if (stale === preserve) continue
       try {
         rmSync(join(directory, stale), { force: true })
       } catch (error) {
@@ -317,7 +347,7 @@ export function createBackupService(options: BackupServiceOptions): BackupServic
     // 无论这次有没有写盘都要裁剪：只在新建时裁的话，攒到 8 份也降不下来。
     // 快速检查也打不开的目录（例如没有权限）不能让「打开工作空间」失败
     try {
-      pruneAutoBackups(directory)
+      pruneAutoBackups(directory, created ?? undefined)
     } catch (error) {
       options.log?.(`清理旧自动备份失败: ${errorMessage(error)}`)
     }
