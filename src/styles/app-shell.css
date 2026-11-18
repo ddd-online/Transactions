@@ -255,6 +255,14 @@
   color: var(--transactions-color-text-tertiary);
 }
 
+/* 面板底部那两颗动作（应用设置 / 开发者工具）直接挂在面板上，没有 `.app-menu__row`
+ * 包着 —— 悬停底色只能由按钮自己给。账本行由 `.app-menu__row:hover` 统一铺，
+ * 这里把它们排除掉：两层 rgba 叠起来会比别处深一倍。
+ * 「创建账本」有自己的主色 tint（见下面的 `--create:hover`），同样排除。 */
+.app-menu > .app-menu__item:not(.app-menu__item--create):hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
 /* 删除按钮绝对定位：让它参与布局的话，静止时就白白吃掉 24px，账本名被截短。 */
 .app-menu__item--ledger {
   padding-right: calc(var(--transactions-icon-btn-size) + var(--transactions-space-xs));
