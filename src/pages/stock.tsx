@@ -132,9 +132,6 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
   return (
     <PageLayout
       contentClassName="stock-page"
-      footerClassName={
-        tab === 'history' || tab === 'ladder' ? 'page-footer-bar--end' : undefined
-      }
       footer={
         tab === 'history' ? (
           <div className="statistics-footer stock-history-footer" data-testid="stock-history-summary">

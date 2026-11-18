@@ -302,7 +302,6 @@ export function RecordsPage({ ledgerId, ledgers }: RecordsPageProps): JSX.Elemen
   return (
     <PageLayout
       contentClassName="tr-page-content"
-      footerClassName="page-footer-bar--end"
       footer={<RecordsStatistics statistics={statistics} />}
       toolbar={
         <RecordsFilterBar

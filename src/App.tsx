@@ -173,6 +173,9 @@ export function App(): JSX.Element {
           view={currentView}
           onViewChange={setView}
           onOpenSettings={() => openSettings('general')}
+          onOpenAbout={() => openSettings('about')}
+          updateSnapshot={updateSnapshot}
+          onUpdateSnapshot={setUpdateSnapshot}
           features={effectiveFeatures}
           blockingWorkspace={blockingWorkspace}
           maximized={maximized}

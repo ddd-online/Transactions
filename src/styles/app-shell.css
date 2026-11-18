@@ -58,11 +58,162 @@
   flex-direction: column;
 }
 
-/* 说明：外壳**没有**全局底部栏了。
- * 以前这里有一条常驻的 `.app-footer`（左：工作空间 + 账本名；右：消费记录的收支统计），
- * 现在账本在标题栏的应用菜单里、工作空间在设置页，
- * 收支统计搬进「记账 · 记录」页的版心底栏（`.page-footer-bar`）。
- * 于是版心能一直触达窗口底边；相关样式随之删除，不要再加回来。 */
+/* 说明：外壳的底边是那条常驻的 `.app-footer-bar`（本文件下方「常驻底栏」一节）。
+ * 页面自己的汇总（记录页收支、股票汇总）投进它的右侧；页面的表格、图表一路通到底栏上沿。 */
+
+/* ============================================
+ * 常驻底栏
+ *
+ * 骨架三段里的最后一段：标题栏 / 中栏（侧栏 + 内容）/ 底栏。它横贯整宽、底色与
+ * 标题栏、侧栏同一档，于是三条灰带把纸白版心围住 —— 底栏不是某一页的一部分。
+ *
+ * 右侧自右向左：`?` 帮助键 → 竖发丝线 → 页面自己的汇总（记录页收支、股票汇总…）。
+ * 汇总由 `PageLayout` portal 进 `.app-footer-bar__page`；页面没有汇总时这块空着，
+ * 底栏只剩 `?`。左侧留白：底栏是状态栏，不抢内容的注意力。
+ * ============================================ */
+
+.app-footer-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-md);
+  flex-shrink: 0;
+  height: var(--transactions-size-footer-height);
+  padding: 0 var(--transactions-space-sm) 0 var(--transactions-space-lg);
+  background-color: var(--transactions-color-sidebar-fill);
+  border-top: 1px solid var(--transactions-color-divider);
+}
+
+/* 页面汇总的挂载点：贴右，吃掉除帮助键以外的整条宽度。 */
+.app-footer-bar__page {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* 有汇总时，它与帮助键之间补一条竖线 —— 数据与「关于这一栏的工具」不是一回事。 */
+.app-footer-bar__page:not(:empty) {
+  padding-right: var(--transactions-space-md);
+  border-right: 1px solid var(--transactions-color-window-border);
+}
+
+.app-footer-bar__help {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 窄窗：底栏右边要同时放下页面汇总与「?」。汇总的组间距收到 4px、栏本身的左右留白
+ * 各收 8px —— 520 宽时股票记录的四个读数正好一行读完，不会削掉第一个标签。 */
+@media (max-width: 600px) {
+  .app-footer-bar {
+    gap: var(--transactions-space-sm);
+    padding-left: var(--transactions-space-sm);
+  }
+
+  .app-footer-bar__page:not(:empty) {
+    padding-right: var(--transactions-space-sm);
+  }
+
+  .app-footer-bar .statistics-footer {
+    gap: var(--transactions-space-xs);
+  }
+}
+
+/* ============================================
+ * 底栏的「?」：帮助与更新
+ *
+ * 一张向上开的小面板，两行常驻（访问 GitHub 项目 / 检查更新）；查到新版本时顶部
+ * 多一行「下载新版本 x.y.z」。面板与标题栏的应用菜单同一套纸面：纸白、发丝边、
+ * shadow-lg、4px 内边距、32px 行高。
+ * ============================================ */
+
+.app-help {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.app-help__panel {
+  position: absolute;
+  right: 0;
+  /* 12px：键本身离栏顶 6px，再加 6px 空气，面板的阴影不压在栏的发丝线上。 */
+  bottom: calc(100% + var(--transactions-space-md));
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  gap: var(--transactions-space-2xs);
+  min-width: 224px;
+  padding: var(--transactions-space-xs);
+  background: var(--transactions-color-elevated);
+  border: 1px solid var(--transactions-color-window-border);
+  border-radius: var(--transactions-radius-lg);
+  box-shadow: var(--transactions-shadow-lg);
+  animation: tr-rise-in var(--transactions-transition-enter);
+}
+
+.app-help__item {
+  display: flex;
+  align-items: center;
+  gap: var(--transactions-space-sm);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--transactions-space-sm);
+  border: none;
+  border-radius: var(--transactions-radius-sm);
+  background: none;
+  color: var(--transactions-color-text-major);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--transactions-size-text-body-sm);
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--transactions-transition-fast),
+    color var(--transactions-transition-fast);
+}
+
+.app-help__item:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+/* 与全站一致：按下下沉 1px（DESIGN 的 Press Rule）。 */
+.app-help__item:active {
+  translate: 0 1px;
+}
+
+.app-help__item:focus-visible {
+  outline: 2px solid var(--transactions-color-primary);
+  outline-offset: -2px;
+}
+
+.app-help__item .icon {
+  flex-shrink: 0;
+  color: var(--transactions-color-text-tertiary);
+}
+
+/* 「下载 / 安装新版本」：菜单里唯一把用户往前推的一行，用主色，与「创建账本」同一条规则。 */
+.app-help__item--primary {
+  color: var(--transactions-color-primary);
+  font-weight: var(--transactions-weight-medium);
+}
+
+.app-help__item--primary .icon {
+  color: currentColor;
+}
+
+.app-help__item--primary:hover {
+  background-color: var(--transactions-color-primary-tint);
+}
+
+.app-help__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ============================================
  * 左侧导航
@@ -426,13 +577,13 @@
   flex: 1;
 }
 
-/* 底部工具键：与导航同一列中轴，和页面底栏同高，但不画分隔线（图标列是连续的一条）。 */
+/* 底部工具键：与导航同一列中轴，离常驻底栏 8px，不画分隔线（图标列是连续的一条）。
+ * 以前它和页面底栏同高（44px）；现在底栏横贯整窗，这一格只负责把设置键送到栏上方。 */
 .sidebar-bottom {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--transactions-size-footer-height);
-  padding: 0;
+  padding: 0 0 var(--transactions-space-sm);
 }
 
 /* 图标键（`IconButton` 组件）：主导航、子功能图标条、标题栏外观键共用这一颗。

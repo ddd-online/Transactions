@@ -1,4 +1,4 @@
-import type { JSX } from 'react'
+import type { JSX, Ref } from 'react'
 
 import { Icon, type IconName } from './icon'
 
@@ -10,16 +10,21 @@ export interface IconButtonProps {
   ariaLabel?: string
   /** 当前所在的页 / 子功能：抬起成纸白方块，图标换主色。 */
   active?: boolean
+  /** 菜单触发器展开时同样抬起，并给读屏 `aria-expanded`。 */
+  expanded?: boolean
+  /** 点开后弹出的是菜单（给读屏 `aria-haspopup`）。 */
+  hasPopup?: 'menu'
+  buttonRef?: Ref<HTMLButtonElement>
   testId?: string
   inert?: boolean
   onClick?: () => void
 }
 
 /**
- * 图标键：标题栏的外观模式键、主导航、子功能图标条共用这一颗按钮。
+ * 图标键：标题栏的外观模式键、主导航、子功能图标条、底栏的「?」共用这一颗按钮。
  *
  * 尺寸与三态只有一处来源，就是 `app-shell.css` 的 `.icon-btn`
- * （32 × 32、图标 16、radius-md）。这三处曾经各写一份 class，
+ * （32 × 32、图标 16、radius-md）。这几处曾经各写一份 class，
  * 于是长成了 40 / 40 / 32 三种大小。
  */
 export function IconButton({
@@ -27,6 +32,9 @@ export function IconButton({
   label,
   ariaLabel,
   active = false,
+  expanded,
+  hasPopup,
+  buttonRef,
   testId,
   inert,
   onClick,
@@ -34,10 +42,13 @@ export function IconButton({
   return (
     <button
       type="button"
-      className={`icon-btn${active ? ' is-active' : ''}`}
+      ref={buttonRef}
+      className={`icon-btn${active || expanded ? ' is-active' : ''}`}
       data-testid={testId}
       title={label}
       aria-label={ariaLabel ?? label}
+      aria-expanded={expanded}
+      aria-haspopup={hasPopup}
       inert={inert}
       onClick={onClick}
     >

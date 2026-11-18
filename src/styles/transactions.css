@@ -416,7 +416,7 @@
 }
 
 /* 分页行（版心的最后一行，底栏之上）：左侧「共 N 条」+ 右侧翻页控件，整行贴右。
- * 收支合计在底栏（`.page-footer-bar`）。 */
+ * 收支合计在外壳的常驻底栏（`.app-footer-bar`）。 */
 .tr-footer {
   display: flex;
   align-items: center;

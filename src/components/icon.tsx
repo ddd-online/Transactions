@@ -41,6 +41,7 @@ import {
   MinusOutlined,
   MoonOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
   ReadOutlined,
   ReloadOutlined,
   RightOutlined,
@@ -118,6 +119,7 @@ export type IconName =
   | 'WindowRestore'
   | 'DragHandle'
   | 'GitHub'
+  | 'Question'
   | 'User'
   | 'Appstore'
   | 'Sliders'
@@ -189,6 +191,7 @@ const ICONS: Record<IconName, IconComponent> = {
   WindowRestore: SwitcherOutlined,
   DragHandle: HolderOutlined,
   GitHub: GithubOutlined,
+  Question: QuestionCircleOutlined,
   User: UserOutlined,
   Appstore: AppstoreOutlined,
   Sliders: SlidersOutlined,
