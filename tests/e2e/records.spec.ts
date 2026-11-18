@@ -64,6 +64,8 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     })
     expect(emptyLayout).not.toBeNull()
     expect(Math.abs(emptyLayout!.contentCenter - emptyLayout!.areaCenter)).toBeLessThanOrEqual(4)
+    // 空表不挂分页行：没有可翻的页，就不在空态下面留一排灰掉的控件
+    await expect(page.getByTestId('tr-footer')).toHaveCount(0)
 
     // 默认日期跟随列表里选中的那一天：选到昨天时不再是今天（今天仍按今天算）
     const now = new Date()

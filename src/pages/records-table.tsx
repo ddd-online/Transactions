@@ -249,23 +249,26 @@ export function RecordsTable({
         </ScrollArea>
       </div>
 
-      <TablePager
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        pageSizeOptions={[15, 30, 50]}
-        disabled={loading}
-        onChange={(nextPage, nextSize) => {
-          // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
-          if (nextSize !== pageSize) {
-            onPageSizeChange(nextSize)
-            return
-          }
-          onPageChange(nextPage)
-        }}
-        testId="tr-footer"
-        totalTestId="tr-total"
-      />
+      {/* 空表不挂分页行：没有可翻的页，「共 0 条 + 灰掉的页码」只是空态下面的一排死控件。 */}
+      {total > 0 ? (
+        <TablePager
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          pageSizeOptions={[15, 30, 50]}
+          disabled={loading}
+          onChange={(nextPage, nextSize) => {
+            // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
+            if (nextSize !== pageSize) {
+              onPageSizeChange(nextSize)
+              return
+            }
+            onPageChange(nextPage)
+          }}
+          testId="tr-footer"
+          totalTestId="tr-total"
+        />
+      ) : null}
     </div>
   )
 }
