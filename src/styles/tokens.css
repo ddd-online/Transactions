@@ -219,9 +219,9 @@
     var(--transactions-icon-btn-size-lg) + 2 * var(--transactions-space-sm)
   );
   --transactions-size-rail-width: var(--transactions-size-shell-band);
-  /* 常驻底栏：44px，装页面汇总与「?」。窄窗（<480）汇总要换行时栏会自己长高，
+  /* 常驻底栏：40px，装页面汇总与「?」。窄窗（<480）汇总要换行时栏会自己长高，
    * 那是布局结果，不是第二档高度 —— 这里只给最小值。 */
-  --transactions-size-footer-height: 44px;
+  --transactions-size-footer-height: 40px;
 
   /* ---------- Border radius（$border-radius） ---------- */
   --transactions-radius-sm: 6px;

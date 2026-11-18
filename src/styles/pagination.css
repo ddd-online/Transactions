@@ -15,7 +15,7 @@
   flex-wrap: wrap;
   gap: var(--transactions-space-md);
   flex-shrink: 0;
-  /* 8px 上下内边距 + 28px 控件：与外壳的 44px 底栏同一档横带 */
+  /* 8px 上下内边距 + 28px 控件：一条 44px 的横带 */
   min-height: calc(var(--transactions-icon-btn-size) + 2 * var(--transactions-space-sm));
   padding: var(--transactions-space-sm) var(--transactions-space-lg);
 }

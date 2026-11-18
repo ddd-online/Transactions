@@ -146,11 +146,11 @@
   z-index: 3000;
 }
 
-/* 提示条落在常驻底栏上方：24px 的旧位置正好压在 44px 的底栏里，
- * 消息与栏里的汇总挤在同一条横带上。抬到「底栏 + 12px」。 */
+/* 提示条落在常驻底栏上方：旧位置（距窗口底 24px）正好压在底栏里，
+ * 消息与栏里的汇总挤在同一条横带上。抬到「底栏 + 16px」。 */
 .ant-message {
   top: auto !important;
-  bottom: calc(var(--transactions-size-footer-height) + var(--transactions-space-md)) !important;
+  bottom: calc(var(--transactions-size-footer-height) + var(--transactions-space-lg)) !important;
   height: auto !important;
   z-index: 4000;
 }

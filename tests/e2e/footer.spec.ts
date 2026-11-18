@@ -223,7 +223,7 @@ test('底栏：窄窗下股票汇总换行，不裁掉最左边那一个', async
     })
     expect(layout.statsLeft).toBeGreaterThanOrEqual(layout.slotLeft - 0.5)
     expect(layout.statsRight).toBeLessThanOrEqual(layout.slotRight + 0.5)
-    expect(layout.barHeight).toBeGreaterThan(44)
+    expect(layout.barHeight).toBeGreaterThan(40)
   } finally {
     await electronApp.close()
   }
