@@ -29,14 +29,16 @@
 /* 子功能图标条：**同一顶级功能下的子功能切换**（不是内容里的栏目）。
  * **不填色**：底色与版心完全一致，只靠一条右发丝线把自己与主列分开
  * （曾经用侧栏那档软灰，看着像"又一层侧栏"，与版心割裂）。
- * 它从标题栏下面开始（标题栏横跨整宽，见 `.page-region`），上下内边距与工具栏同档。 */
+ * 它从标题栏下面开始（标题栏横跨整宽，见 `.page-region`），上下内边距与工具栏同档。
+ * 间距与主导航 `.sidebar-nav` 取同一档：先 8px 顶距、键间 4px，
+ * 两列图标从第一颗起就逐颗对齐，切换页面时视线不用重新找节奏。 */
 .page-rail {
   flex-shrink: 0;
   width: var(--transactions-size-rail-width);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--transactions-space-2xs);
+  gap: var(--transactions-space-xs);
   padding: var(--transactions-space-sm) 0;
   border-right: 1px solid var(--transactions-color-border-l1);
 }
@@ -48,7 +50,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--transactions-space-2xs);
+  gap: var(--transactions-space-xs);
   width: 100%;
 }
 
