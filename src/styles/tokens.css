@@ -203,23 +203,23 @@
   --transactions-space-3xl: 48px;
 
   /* ---------- 外壳的一条带（标题栏高度 / 子功能页签高度） ----------
-   * 标题栏与页面顶部的子功能页签**共用同一个值**：32px 图标键 + 两侧各 4px = 40px。
-   * 页签条挨着标题栏下面，两条 40 的横带因此上下对齐。
+   * 标题栏与页面顶部的子功能页签**共用同一个值**：32px 图标键 + 两侧各 2px = 36px。
+   * 页签条挨着标题栏下面，两条 36 的横带因此上下对齐。
    *
    * 主导航侧栏单独一档 `size-sidebar`：32px 键 + 两侧各 8px = 48px。
-   * 它比标题栏宽 8px，图标两边各留 8，图标列因此离窗口左缘远一点。
+   * 它比标题栏宽 12px，图标两边各留 8，图标列因此离窗口左缘远一点。
    * 侧栏宽含 1px 右边框（`box-sizing: border-box`），内容区因此是 48 − 1。
    * 这里以前三个数各写一份（40 / 57 / 56），改一处另外两处就对不上。 */
   --transactions-size-shell-band: calc(
-    var(--transactions-icon-btn-size-lg) + var(--transactions-space-sm)
+    var(--transactions-icon-btn-size-lg) + 2 * var(--transactions-space-2xs)
   );
   --transactions-size-top-band: var(--transactions-size-shell-band);
   --transactions-size-sidebar: calc(
     var(--transactions-icon-btn-size-lg) + 2 * var(--transactions-space-sm)
   );
-  /* 常驻底栏：40px，装页面汇总与「?」。窄窗（<480）汇总要换行时栏会自己长高，
+  /* 常驻底栏：36px，装页面汇总与「?」。窄窗（<480）汇总要换行时栏会自己长高，
    * 那是布局结果，不是第二档高度 —— 这里只给最小值。 */
-  --transactions-size-footer-height: 40px;
+  --transactions-size-footer-height: 36px;
 
   /* ---------- Border radius（$border-radius） ---------- */
   --transactions-radius-sm: 6px;
@@ -253,7 +253,7 @@
   --transactions-btn-font-size-md: 14px;
   --transactions-btn-font-size-lg: 16px;
   /* 图标键（IconButton）：行内动作 28px，外壳导航 32px。
-   * 外壳那档与 `size-shell-band` 配套（32 + 4×2 = 40）；两档都是唯一来源，
+   * 外壳那档与 `size-shell-band` 配套（32 + 2×2 = 36）；两档都是唯一来源，
    * 页面里不要再写 28 / 32 的裸值。 */
   --transactions-icon-btn-size: 28px;
   --transactions-icon-btn-size-lg: 32px;
