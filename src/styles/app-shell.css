@@ -123,6 +123,29 @@
   }
 }
 
+/* 更窄时（<480）股票汇总的四个读数一行放不下：让底栏长成两行，而不是裁掉最左边那一个。
+ * 只在真的放不下时发生 —— 记录页的三组读数仍然是一行 44。 */
+@media (max-width: 480px) {
+  .app-footer-bar {
+    height: auto;
+    min-height: var(--transactions-size-footer-height);
+    padding-top: var(--transactions-space-xs);
+    padding-bottom: var(--transactions-space-xs);
+  }
+
+  .app-footer-bar .statistics-footer {
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: var(--transactions-space-xs);
+  }
+
+  /* 换行之后分隔线会落在行首 / 行尾；标签与数值本来就是一问一答，这里不再画线。 */
+  .app-footer-bar .statistics-footer-divider {
+    display: none;
+  }
+}
+
 /* ============================================
  * 底栏的「?」：帮助与更新
  *

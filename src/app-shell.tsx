@@ -55,7 +55,8 @@ export interface AppShellProps {
  * 右边是窗口三键。中栏从标题栏下面开始，底栏再横贯整宽 —— 三条灰带把纸白版心框住。
  * 页面自己的底栏（收支合计、股票汇总）由 `PageLayout` portal 进底栏右侧。
  *
- * 纯展示模块：窗口控制、导航切换都由 props 回调决定，自己不碰 `window.api`。
+ * 外壳本身不碰 `window.api`：窗口控制、导航切换都由 props 回调决定；
+ * 底栏的检查更新由 `FooterHelp` 自己走 IPC。
  */
 export function AppShell({
   view,

@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState, type JSX, type KeyboardEvent } from 'react'
 
 import {
+  NOTIFY_CHECK_FAILED,
   UPDATE_STATUS_AVAILABLE,
   UPDATE_STATUS_DOWNLOADED,
   UPDATE_STATUS_DOWNLOADING,
@@ -36,17 +37,13 @@ export interface FooterHelpProps {
   onSnapshot: (snapshot: UpdateSnapshot) => void
 }
 
-interface UpdateOffer {
-  label: string
-}
-
 /** 已经查到的版本能不能从底栏往下走一步：下载或安装都落到关于页。 */
-function updateOffer(snapshot: UpdateSnapshot): UpdateOffer | null {
+function updateOffer(snapshot: UpdateSnapshot): string | null {
   if (snapshot.status === UPDATE_STATUS_AVAILABLE) {
-    return { label: `下载新版本 ${snapshot.latestVersion}` }
+    return `下载新版本 ${snapshot.latestVersion}`
   }
   if (snapshot.status === UPDATE_STATUS_DOWNLOADED) {
-    return { label: `安装新版本 ${snapshot.latestVersion}` }
+    return `安装新版本 ${snapshot.latestVersion}`
   }
   return null
 }
@@ -108,17 +105,23 @@ export function FooterHelp({ onOpenAbout, snapshot, onSnapshot }: FooterHelpProp
         )
         return
       }
-      close(true)
+      // 只把焦点还回「?」键：用户要是已经点去别处了，别把焦点拽回来。
+      close(rootRef.current?.contains(document.activeElement) ?? false)
       if (result.status === UPDATE_STATUS_NO_UPDATE) {
         notify(updateStatusLabel(result.status))
       } else if (result.status === UPDATE_STATUS_FAILED) {
-        notify(result.error ?? updateStatusLabel(result.status), 'error')
+        notify(
+          result.error
+            ? `${NOTIFY_CHECK_FAILED}：${result.error}`
+            : updateStatusLabel(result.status),
+          'error',
+        )
       } else if (result.status === UPDATE_STATUS_DOWNLOADING) {
         notify('更新正在下载，可在「设置 · 关于软件」查看进度', 'info')
       }
     } catch (checkError) {
-      close(true)
-      notify(errorMessage(checkError), 'error')
+      close(rootRef.current?.contains(document.activeElement) ?? false)
+      notify(`${NOTIFY_CHECK_FAILED}：${errorMessage(checkError)}`, 'error')
     } finally {
       setChecking(false)
     }
@@ -177,7 +180,7 @@ export function FooterHelp({ onOpenAbout, snapshot, onSnapshot }: FooterHelpProp
               onClick={openAbout}
             >
               <Icon name="Download" size={15} />
-              <span className="app-help__label">{offer.label}</span>
+              <span className="app-help__label">{offer}</span>
             </button>
           ) : null}
 
