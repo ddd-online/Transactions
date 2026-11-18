@@ -521,7 +521,9 @@
   justify-self: start;
   width: 100%;
   min-width: 0;
-  padding-left: var(--transactions-space-md);
+  /* 左缘与侧栏图标键（32px）的左边线同一条：入口那枚纸白 pill 从 8px 起，
+   * 再叠上它自己的 8px 内边距，工作空间名正好落在图标 16px 字形那条线上。 */
+  padding-left: var(--transactions-space-sm);
 }
 
 .app-titlebar__title {
