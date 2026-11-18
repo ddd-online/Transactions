@@ -285,7 +285,10 @@ test('恢复：先另存 pre-restore，库回到快照，路径不变，重启�
       await expect(restoredPage.getByTestId('workspace-state')).toContainText(fixture.workspace)
       await restoredPage.getByTestId('nav-accounting').click()
       await restoredPage.getByTestId('acct-tab-records').click()
-      await expect(restoredPage.getByTestId('tr-total')).toHaveText('共 1 条')
+      // 恢复后要重启，4 并发时新实例的首次读库可能慢过默认的 5s
+      await expect(restoredPage.getByTestId('tr-total')).toHaveText('共 1 条', {
+        timeout: 15_000,
+      })
       await expect(restoredPage.getByTestId('tr-row')).toHaveCount(1)
       await expect(restoredPage.getByTestId('tr-row')).toContainText('备份前')
       await expect(restoredPage.getByTestId('tr-row')).not.toContainText('备份后')
