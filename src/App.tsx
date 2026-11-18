@@ -22,9 +22,8 @@ import { resolveView, defaultView, type View } from './app-view'
 import { WorkspaceOverlay } from './app-workspace-overlay'
 import { SettingsPage, type SettingsTab } from './pages/settings'
 import { PageBoundary } from './components/page-boundary'
-import { PageRailProvider } from './components/page-layout'
+import { PageTabsProvider } from './components/page-tabs'
 import { QuitScreen } from './components/quit-screen'
-import { IconButton } from './components/icon-button'
 import { notify } from './components/toast'
 import { useQuitFlow } from './state/use-quit-flow'
 import { useAppStartup } from './state/use-app-startup'
@@ -202,28 +201,21 @@ export function App(): JSX.Element {
           version={version}
         >
           {currentView === 'accounting' ? (
-            <PageRailProvider
-              rail={
-                <div className="page-rail-nav">
-                  {(
-                    [
-                      ['records', '记录', 'Edit'],
-                      ['charts', '分析', 'LineChart'],
-                      ['tags', '标签', 'Tag'],
-                      ['templates', '模板', 'FileText'],
-                    ] as const
-                  ).map(([key, label, icon]) => (
-                    <IconButton
-                      key={key}
-                      icon={icon}
-                      label={label}
-                      active={accountingTab === key}
-                      testId={`acct-tab-${key}`}
-                      onClick={() => setAccountingTab(key)}
-                    />
-                  ))}
-                </div>
-              }
+            <PageTabsProvider
+              tabs={(
+                [
+                  ['records', '记录'],
+                  ['charts', '分析'],
+                  ['tags', '标签'],
+                  ['templates', '模板'],
+                ] as const
+              ).map(([key, label]) => ({
+                key,
+                label,
+                active: accountingTab === key,
+                testId: `acct-tab-${key}`,
+                onClick: () => setAccountingTab(key),
+              }))}
             >
               <select
                 data-testid="ledger-select"
@@ -240,9 +232,8 @@ export function App(): JSX.Element {
               </select>
 
               {/* 兜底是 null：按需加载的等待只有几毫秒（本机 app:// 读盘），中间插一块
-                  骨架反而会闪一下。Suspense 放在 PageRailProvider **里面** —— 在外面的话
-                  每次切页都会把侧轨的展开状态与工具栏宿主一起重挂。
-                  `key` 跟着子功能走：某一页挂了之后切走再回来，边界自己重置一次。 */}
+                  骨架反而会闪一下。`key` 跟着子功能走：某一页挂了之后切走再回来，
+                  边界自己重置一次。 */}
               <PageBoundary key={`accounting-${accountingTab}-${pageEpoch}`}>
                 <Suspense fallback={null}>
                   {accountingTab === 'records' ? (
@@ -253,7 +244,7 @@ export function App(): JSX.Element {
                   {accountingTab === 'templates' ? <TemplatePage ledgerId={activeLedgerId} /> : null}
                 </Suspense>
               </PageBoundary>
-            </PageRailProvider>
+            </PageTabsProvider>
           ) : null}
 
           {currentView === 'settings' ? null : (

@@ -206,6 +206,14 @@ test('底栏：窄窗下股票汇总换行，不裁掉最左边那一个', async
     const bar = page.locator('.app-footer-bar')
     await expect(bar).toBeVisible()
     await expect(bar.getByText('已实现盈亏')).toBeVisible()
+    // 等视口变化后的换行落定，再量盒子（并行跑时 resize 与布局之间有一帧的差）
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Math.round(document.querySelector('.app-footer-bar')!.getBoundingClientRect().height),
+        ),
+      )
+      .toBeGreaterThan(40)
 
     const layout = await page.evaluate(() => {
       const slot = document.querySelector('.app-footer-bar__page') as HTMLElement

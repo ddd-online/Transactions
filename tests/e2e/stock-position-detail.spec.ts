@@ -171,7 +171,9 @@ test('股票持仓详情：成交记录吃掉剩余高度，表格自己滚而�
     // 整列不再滚动；成交记录区一直顶到详情底边
     expect(wide.detailScrolls).toBe(false)
     expect(wide.tradesBottom).toBe(wide.detailBottom)
-    expect(wide.tradesHeight).toBeGreaterThan(200)
+    // 页面顶部的子功能页签占 40：1000 高的窗口里成交区约 190，仍高于 180 的保底；
+    // 「宽窗信息区不滚」才是这一档真正要守住的结构。
+    expect(wide.tradesHeight).toBeGreaterThan(180)
     expect(wide.infoScrolls).toBe(false)
 
     await page.screenshot({

@@ -1,22 +1,13 @@
-import { createContext, useContext, type JSX, type ReactNode } from 'react'
+import { type JSX, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { usePageFooterSlot } from './page-footer'
+import { PageTabs, usePageTabs, type PageTab } from './page-tabs'
 import { ScrollArea } from './scroll-area'
 
-const PageRailContext = createContext<ReactNode>(null)
-
-export function PageRailProvider({ rail, children }: { rail: ReactNode; children: ReactNode }): JSX.Element {
-  return <PageRailContext.Provider value={rail}>{children}</PageRailContext.Provider>
-}
-
-export function usePageRail(): ReactNode {
-  return useContext(PageRailContext)
-}
-
 export interface PageLayoutProps {
-  /** 左侧子功能图标条的内容；不传则不渲染图标条。 */
-  rail?: ReactNode
+  /** 子功能页签；不传就用 `PageTabsProvider` 提供的（记账的四个子功能共用一组）。 */
+  tabs?: PageTab[]
   /** 顶部工具栏；渲染成 `.page-toolbar`，不传则不留空行。 */
   toolbar?: ReactNode
   /**
@@ -30,22 +21,22 @@ export interface PageLayoutProps {
   children: ReactNode
 }
 
-/** 功能页统一骨架：侧栏之外的子功能栏 / 工具栏 / 内容；页面底栏投进外壳底栏。 */
+/** 功能页统一骨架：子功能页签 / 工具栏 / 内容；页面底栏投进外壳底栏。 */
 export function PageLayout({
-  rail,
+  tabs,
   toolbar,
   footer,
   scrollable = false,
   contentClassName,
   children,
 }: PageLayoutProps): JSX.Element {
-  const contextRail = usePageRail()
-  const railContent = rail ?? contextRail
+  const contextTabs = usePageTabs()
+  const tabItems = tabs ?? contextTabs
   const footerSlot = usePageFooterSlot()
   return (
     <section className="page">
+      {tabItems && tabItems.length > 0 ? <PageTabs tabs={tabItems} /> : null}
       <div className="page-region">
-        {railContent ? <aside className="page-rail">{railContent}</aside> : null}
         <div className="page-main">
           {toolbar ? <div className="page-toolbar">{toolbar}</div> : null}
           <div

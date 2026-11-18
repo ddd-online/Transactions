@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, type JSX } from 'react'
 
 import { errorMessage } from '../../shared/errors'
 import type { TodoCardDto, TodoHistoryDto, TodoItemDto } from '../../shared/types/todo'
-import { IconButton } from '../components/icon-button'
 import { PageLayout } from '../components/page-layout'
 import { ScrollArea } from '../components/scroll-area'
 import {
@@ -308,24 +307,22 @@ export function TodoPage({ ledgerId }: TodoPageProps): JSX.Element {
   return (
     <PageLayout
       contentClassName="todo-page"
-      rail={
-        <div className="page-rail-nav">
-          <IconButton
-            icon="FileText"
-            label="待办"
-            active={todoMode === 'cards'}
-            testId="todo-tab-cards"
-            onClick={() => setTodoMode('cards')}
-          />
-          <IconButton
-            icon="History"
-            label="历史"
-            active={todoMode === 'history'}
-            testId="todo-tab-history"
-            onClick={() => setTodoMode('history')}
-          />
-        </div>
-      }
+      tabs={[
+        {
+          key: 'cards',
+          label: '待办',
+          active: todoMode === 'cards',
+          testId: 'todo-tab-cards',
+          onClick: () => setTodoMode('cards'),
+        },
+        {
+          key: 'history',
+          label: '历史',
+          active: todoMode === 'history',
+          testId: 'todo-tab-history',
+          onClick: () => setTodoMode('history'),
+        },
+      ]}
       toolbar={
         todoMode === 'cards' ? (
           <TodoBoardToolbar

@@ -202,13 +202,12 @@
   --transactions-space-2xl: 32px;
   --transactions-space-3xl: 48px;
 
-  /* ---------- 外壳的一条带（标题栏高度 / 子功能栏宽度） ----------
-   * 标题栏与子功能栏**共用同一个值**：32px 图标键 + 两侧各 4px 留白 = 40px。
-   * 横的标题栏与竖的子功能栏等高，左上角才闭合成一个直角。
+  /* ---------- 外壳的一条带（标题栏高度 / 子功能页签高度） ----------
+   * 标题栏与页面顶部的子功能页签**共用同一个值**：32px 图标键 + 两侧各 4px = 40px。
+   * 页签条挨着标题栏下面，两条 40 的横带因此上下对齐。
    *
    * 主导航侧栏单独一档 `size-sidebar`：32px 键 + 两侧各 8px = 48px。
-   * 它比标题栏宽 8px，图标两边各留 8（标题栏与子功能栏是各 4），
-   * 图标列因此离窗口左缘远一点，和子功能栏那一条 40 的窄条分得开。
+   * 它比标题栏宽 8px，图标两边各留 8，图标列因此离窗口左缘远一点。
    * 侧栏宽含 1px 右边框（`box-sizing: border-box`），内容区因此是 48 − 1。
    * 这里以前三个数各写一份（40 / 57 / 56），改一处另外两处就对不上。 */
   --transactions-size-shell-band: calc(
@@ -218,7 +217,6 @@
   --transactions-size-sidebar: calc(
     var(--transactions-icon-btn-size-lg) + 2 * var(--transactions-space-sm)
   );
-  --transactions-size-rail-width: var(--transactions-size-shell-band);
   /* 常驻底栏：40px，装页面汇总与「?」。窄窗（<480）汇总要换行时栏会自己长高，
    * 那是布局结果，不是第二档高度 —— 这里只给最小值。 */
   --transactions-size-footer-height: 40px;

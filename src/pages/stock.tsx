@@ -6,8 +6,7 @@ import { yuanToCents } from '../../shared/domain/money'
 import type { StockTradeHistorySummaryDto } from '../../shared/types/stock-history'
 import type { StockLessonDto } from '../../shared/types/stock-lesson'
 import { Button } from '../components/button'
-import { Icon, type IconName } from '../components/icon'
-import { IconButton } from '../components/icon-button'
+import { Icon } from '../components/icon'
 import { PageLayout } from '../components/page-layout'
 import { notify } from '../components/toast'
 import { StockAccountPanel } from './stock-account'
@@ -35,14 +34,14 @@ type StockTab =
   | 'settings'
 type AmountAction = 'principal' | 'withdraw' | 'interest'
 
-const TABS: Array<[StockTab, string, IconName]> = [
-  ['account', '账户', 'User'],
-  ['positions', '持仓', 'CreditCard'],
-  ['history', '记录', 'ClockCircle'],
-  ['lessons', '心得', 'Bulb'],
-  ['statistics', '统计', 'BarChart'],
-  ['ladder', '天梯', 'Signal'],
-  ['settings', '设置', 'Setting'],
+const TABS: Array<[StockTab, string]> = [
+  ['account', '账户'],
+  ['positions', '持仓'],
+  ['history', '记录'],
+  ['lessons', '心得'],
+  ['statistics', '统计'],
+  ['ladder', '天梯'],
+  ['settings', '设置'],
 ]
 
 const ACCOUNT_ACTIONS = {
@@ -215,20 +214,13 @@ export function StockPage({ ledgerId, onLedgerChanged }: StockPageProps): JSX.El
           <div className="stock-statistics__toolbar-host" ref={setStatsToolbar} />
         ) : undefined
       }
-      rail={
-        <div className="page-rail-nav">
-          {TABS.map(([key, label, icon]) => (
-            <IconButton
-              key={key}
-              icon={icon}
-              label={label}
-              active={tab === key}
-              testId={`stock-tab-${key}`}
-              onClick={() => setTab(key)}
-            />
-          ))}
-        </div>
-      }
+      tabs={TABS.map(([key, label]) => ({
+        key,
+        label,
+        active: tab === key,
+        testId: `stock-tab-${key}`,
+        onClick: () => setTab(key),
+      }))}
     >
       {tab === 'account' ? (
         <StockAccountPanel ledgerId={ledgerId} refreshToken={accountRefresh} />
