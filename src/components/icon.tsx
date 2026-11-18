@@ -17,6 +17,7 @@ import {
   CloseOutlined,
   CompressOutlined,
   CreditCardOutlined,
+  DatabaseOutlined,
   DeleteOutlined,
   DownloadOutlined,
   DownOutlined,
@@ -120,6 +121,7 @@ export type IconName =
   | 'DragHandle'
   | 'GitHub'
   | 'Question'
+  | 'Database'
   | 'User'
   | 'Appstore'
   | 'Sliders'
@@ -192,6 +194,7 @@ const ICONS: Record<IconName, IconComponent> = {
   DragHandle: HolderOutlined,
   GitHub: GithubOutlined,
   Question: QuestionCircleOutlined,
+  Database: DatabaseOutlined,
   User: UserOutlined,
   Appstore: AppstoreOutlined,
   Sliders: SlidersOutlined,
