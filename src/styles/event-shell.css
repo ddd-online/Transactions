@@ -122,12 +122,6 @@
   border-color: var(--transactions-color-border-l2);
 }
 
-/* 这一颗不要按压反馈：它自己靠 `translateY(-50%)` 定位，任何按下位移都会让它看起来"跳"一下
- * （48px 高的药丸按 1px 下沉，读起来是整颗歪了）。 */
-.key-event-rail-toggle:active:not(:disabled) {
-  translate: none;
-}
-
 /* 收起后竖线没了，把手贴到版心右缘（`- 8px` 内缩，不贴死窗口边） */
 .key-event-body.is-rail-collapsed .key-event-rail-toggle {
   right: var(--transactions-space-sm);

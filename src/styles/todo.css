@@ -339,10 +339,6 @@
   color: var(--transactions-color-primary);
 }
 
-.todo-item__check:active {
-  translate: 0 1px;
-}
-
 .todo-item__check:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: 2px;
@@ -784,12 +780,6 @@
   overflow-y: auto;
 }
 
-/* 这一列是滚动容器：图标键按下时那 1px 的位移会让「恰好放得下」的内容多出滚动条，
- * 弹层一抖、按钮跟着左移 15px，指针落在外面这一下就白按了。弹层里不要这 1px。 */
-.todo-history-progress__list .tr-icon-btn:active {
-  translate: none;
-}
-
 .todo-history-progress__row {
   display: flex;
   align-items: flex-start;
@@ -939,10 +929,6 @@
   stroke-width: 6px;
   stroke-linejoin: round;
   paint-order: stroke;
-}
-
-.todo-quadrant__name:active {
-  translate: 0 1px;
 }
 
 /* 轴端标注要比水印实，才能压在水印上照样被读到。 */

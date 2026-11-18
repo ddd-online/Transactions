@@ -26,7 +26,7 @@ async function timings(
   }, selector)
 }
 
-test('动效：按钮按压、表内行底色、展开层，以及减少动态下的兜底', async () => {
+test('动效：无按压位移、表内行底色、展开层，以及减少动态下的兜底', async () => {
   const repositoryRoot = resolve(__dirname, '../..')
   const root = mkdtempSync(join(tmpdir(), 'tr-e2e-motion-'))
   const home = join(root, 'home')
@@ -80,11 +80,38 @@ test('动效：按钮按压、表内行底色、展开层，以及减少动态�
     await page.getByTestId('acct-tab-records').click()
     await expect(page.locator('tr.ant-table-row').first()).toBeVisible()
 
-    // 工具栏按钮：按下的 1px 也要有过渡（不是硬跳）。
-    // 用独立的 `translate` 属性，不能写成 `transform` —— 那会覆盖按钮自己的定位变换。
-    const button = await timings(page, '.tr-btn')
-    expect(button.transitionProperties).toContain('translate')
-    expect(button.transitionSeconds.some((seconds) => seconds > 0 && seconds <= 0.2)).toBe(true)
+    // 按钮不做按压位移：任何 `:active` 规则都不许带 translate / transform / scale，
+    // 按钮的过渡里也不许出现 translate（按压只换颜色，不挪位置）。
+    const pressRules = await page.evaluate(() => {
+      const offenders: string[] = []
+      const walk = (rules: CSSRuleList): void => {
+        for (const rule of Array.from(rules)) {
+          if (rule instanceof CSSStyleRule) {
+            if (
+              rule.selectorText.includes(':active') &&
+              /(translate|transform|scale)\s*:/.test(rule.style.cssText)
+            ) {
+              offenders.push(rule.selectorText)
+            }
+          } else if (rule instanceof CSSMediaRule) {
+            walk(rule.cssRules)
+          }
+        }
+      }
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          walk(sheet.cssRules)
+        } catch {
+          // 跨源样式表读不到，跳过
+        }
+      }
+      return offenders
+    })
+    expect(pressRules).toEqual([])
+    for (const selector of ['.tr-btn', '.icon-btn', '.tr-icon-btn']) {
+      const control = await timings(page, selector)
+      expect(control.transitionProperties).not.toContain('translate')
+    }
 
     // 表内行的悬停底色走过渡，指到哪一行不是"闪一下"
     const cell = await page.evaluate(() => {

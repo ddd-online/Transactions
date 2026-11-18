@@ -180,11 +180,6 @@
   background-color: var(--transactions-color-hover-bg);
 }
 
-/* 与全站一致：按下下沉 1px（DESIGN 的 Press Rule）。 */
-.app-help__item:active {
-  translate: 0 1px;
-}
-
 .app-help__item:focus-visible {
   outline: 2px solid var(--transactions-color-primary);
   outline-offset: -2px;
@@ -460,13 +455,6 @@
   }
 }
 
-/* 面板里的每一行都是一颗按钮：按下同样下沉 1px（DESIGN 的 Press Rule）。 */
-.app-menu-trigger:active,
-.app-menu__item:active,
-.app-menu__delete:active {
-  translate: 0 1px;
-}
-
 .app-menu__delete {
   position: absolute;
   top: 50%;
@@ -609,8 +597,7 @@
   cursor: pointer;
   transition:
     background-color var(--transactions-transition-fast),
-    color var(--transactions-transition-fast),
-    translate 90ms var(--transactions-ease-out-expo);
+    color var(--transactions-transition-fast);
 }
 
 .icon-btn:hover {
@@ -622,12 +609,6 @@
   background-color: var(--transactions-color-elevated);
   color: var(--transactions-color-icon-active);
   box-shadow: var(--transactions-shadow-sm);
-}
-
-/* 桌面端点击没有原生按压反馈：下沉 1px（DESIGN.md 的 Press Rule）。
- * 用独立的 `translate`，不碰定位用的 `transform`。 */
-.icon-btn:active {
-  translate: 0 1px;
 }
 
 .icon-btn:focus-visible {

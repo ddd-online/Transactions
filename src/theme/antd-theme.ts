@@ -25,7 +25,7 @@ interface Palette {
   dangerInk: string
   /* 悬停 / 按下的实色底必须自己给，不能让算法推。
    * AntD 的默认算法把悬停往**亮**里推（浅色 #dc2626 → #e8524d），而按钮上压的是白字：
-   * 白 + 亮红 = 3.66:1、白 + 亮蓝 = 3.24:1，两个都掉出 4.5:1。见 DESIGN.md「The Press Rule」。 */
+   * 白 + 亮红 = 3.66:1、白 + 亮蓝 = 3.24:1，两个都掉出 4.5:1。 */
   primaryHover: string
   primaryActive: string
   errorHover: string
