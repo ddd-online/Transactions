@@ -414,41 +414,6 @@
 .tr-scroll .tr-empty {
   min-height: 100%;
 }
-
-/* 分页行（版心的最后一行，底栏之上）：左侧「共 N 条」+ 右侧翻页控件，整行贴右。
- * 收支合计在外壳的常驻底栏（`.app-footer-bar`）。 */
-.tr-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: var(--transactions-space-md);
-  /* 与顶部工具栏同高：8px 上下内边距 + 36px 控件，上下两条横带因此对齐 */
-  min-height: calc(var(--transactions-btn-height-md) + 2 * var(--transactions-space-sm));
-  padding: var(--transactions-space-sm) var(--transactions-space-lg);
-}
-
-.tr-footer-total {
-  font-family: var(--transactions-font-body);
-  font-size: var(--transactions-size-text-caption);
-  color: var(--transactions-color-text-secondary);
-}
-
-.tr-footer-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-md);
-}
-
-.tr-pagination {
-  display: flex;
-  align-items: center;
-  gap: var(--transactions-space-xs);
-}
-
-/* 页码按钮与「每页条数」下拉共用同一套外观（原来两份逐字重复的声明） */
-/* 页码按钮自己的部分：居中 + 最小宽度 + 过渡（`__size` 是原生 select，不需要这些） */
-/* `.tr-pagination__size` 的外观与 `.tr-pagination__item` 共用（见上方合并规则） */
 /* 表格单元格 */
 .tr-table {
   min-width: 880px;

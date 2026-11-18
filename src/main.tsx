@@ -33,6 +33,7 @@ import './styles/settings.css'
 import './styles/settings-responsive.css'
 import './styles/shell.css'
 import './styles/antd.css'
+import './styles/pagination.css'
 
 const container = document.getElementById('root')
 if (!container) throw new Error('缺少 #root 容器')

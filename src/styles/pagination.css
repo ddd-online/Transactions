@@ -1,0 +1,62 @@
+/* ============================================
+ * 分页行（`<TablePager>`）
+ *
+ * 全站只有这一条分页行：左边「共 N 条」，右边页码与「每页条数」。
+ * 记账记录、资金变化记录、统计明细、待办历史共用这一颗；页面里不再各写一行。
+ *
+ * **行本身不画上边线**：分隔由上方表格自己的末行边框承担 —— 分页行再画一条，
+ * 两道 1px 会贴成一条更粗的线（股票资金表曾经就是两条叠在一起）。
+ * ============================================ */
+
+.tr-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--transactions-space-md);
+  flex-shrink: 0;
+  /* 8px 上下内边距 + 28px 控件：与外壳的 44px 底栏同一档横带 */
+  min-height: calc(var(--transactions-icon-btn-size) + 2 * var(--transactions-space-sm));
+  padding: var(--transactions-space-sm) var(--transactions-space-lg);
+}
+
+.tr-pager__total {
+  color: var(--transactions-color-text-secondary);
+  font-family: var(--transactions-font-body);
+  font-size: var(--transactions-size-text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 页码是数据：等宽数字，翻页时不会左右抖。 */
+.tr-pager .ant-pagination-item a {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 选中页是主色实底：页码要翻成反白，AntD 默认的主色字压在实底上读不清。 */
+.tr-pager .ant-pagination-item-active a {
+  color: var(--transactions-color-text-inverse);
+}
+
+/* 「N 条/页」与页码同一档：不要边框、不要纸白底 ——
+ * 一排扁平页码末尾挂一个描边输入框，会把页脚里最重的注意力吸到「改条数」上。 */
+.tr-pager .ant-pagination-options .ant-select {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.tr-pager .ant-pagination-options .ant-select:hover {
+  background-color: var(--transactions-color-hover-bg);
+}
+
+.tr-pager .ant-pagination-options .ant-select-content {
+  font-size: var(--transactions-size-text-caption);
+}
+
+/* AntD 在 <576px 会把「每页条数」整颗藏掉（它自己的媒体查询）。这一行在窄窗里放得下，
+ * 不能悄悄少一个控件 —— 显式留着；真放不下时整行会换行，而不是让控件消失。 */
+@media (max-width: 576px) {
+  .tr-pager .ant-pagination-options {
+    display: inline-block;
+  }
+}

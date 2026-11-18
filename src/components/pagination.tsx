@@ -1,13 +1,23 @@
-import { Pagination as AntPagination } from 'antd'
+import { Pagination as AntPagination, type SelectProps } from 'antd'
 import { cloneElement, isValidElement, type JSX, type ReactElement, type ReactNode } from 'react'
 
-export interface PaginationProps {
+export interface TablePagerProps {
+  /** 一共多少条 / 笔（「共 N 条」） */
+  total: number
   page: number
-  totalPages: number
-  disabled?: boolean
-  onChange: (page: number) => void
+  pageSize: number
+  /** 每页条数可选项；不传就没有条数选择器（每页条数固定） */
+  pageSizeOptions?: number[]
+  onChange: (page: number, pageSize: number) => void
+  /** 「共 N 条」的量词：条目用「条」、笔数用「笔」 */
+  unit?: string
+  /** 整行的 testid */
   testId?: string
-  showSummary?: boolean
+  /** 翻页控件自己的 testid 前缀（上一页 / 下一页是 `<前缀>-prev` / `-next`）；省略时跟整行一致 */
+  pagerTestId?: string
+  /** 「共 N 条」自己的 testid；省略时不挂 */
+  totalTestId?: string
+  disabled?: boolean
 }
 
 /**
@@ -15,10 +25,8 @@ export interface PaginationProps {
  *
  * AntD 把箭头图标自己的英文名（`aria-label="left"` / `"right"`）当成了按钮的可读名，
  * 读屏会念 "left"，所以这里克隆按钮补上 `aria-label`；`title` 顺带给出鼠标提示。
- * 独立导出是因为有的页面直接用了 AntD 的 Pagination（股票·账户那条），
- * 它们的焦点环与可读名必须和共用分页条一致。
  */
-export function pagerItemRender(
+function pagerItemRender(
   testId?: string,
 ): (_: number, type: string, originalElement: ReactNode) => ReactNode {
   return (_, type, originalElement) => {
@@ -37,58 +45,14 @@ export function pagerItemRender(
   }
 }
 
-/** 分页条：AntD Pagination，保留现有 testid 语义。 */
-export function Pagination({
-  page,
-  totalPages,
-  disabled = false,
-  onChange,
-  testId = 'tr',
-  showSummary = true,
-}: PaginationProps): JSX.Element {
-  return (
-    <div className="tr-pagination">
-      {showSummary ? (
-        <span className="tr-pagination__summary" data-testid={`${testId}-page`}>
-          {page} / {totalPages}
-        </span>
-      ) : null}
-      <AntPagination
-        size="small"
-        current={page}
-        total={Math.max(1, totalPages)}
-        pageSize={1}
-        showSizeChanger={false}
-        showLessItems
-        disabled={disabled}
-        onChange={onChange}
-        itemRender={pagerItemRender(testId)}
-      />
-    </div>
-  )
-}
-
-export interface TablePagerProps {
-  /** 一共多少条 / 笔（「共 N 条」） */
-  total: number
-  page: number
-  pageSize: number
-  /** 每页条数可选项；不传就没有条数选择器（每页条数固定） */
-  pageSizeOptions?: number[]
-  onChange: (page: number, pageSize: number) => void
-  /** 「共 N 条」的量词：条目用「条」、笔数用「笔」 */
-  unit?: string
-  /** 整行（总数 + 翻页）的 testid */
-  testId?: string
-  /** 翻页控件自己的 testid 前缀（上一页 / 下一页是 `<前缀>-prev` / `-next`）；省略时跟整行一致 */
-  pagerTestId?: string
-}
-
 /**
- * 表格底部的分页行：左边「共 N 条」，右边翻页与每页条数 —— 就是资金变化记录那一版。
+ * 全站唯一的分页行：左边「共 N 条」，右边页码与「每页条数」。
  *
- * 统计明细与待办历史沿用同一行：三张表各写一遍时，改一次「每页条数」的交互就得改三处，
- * 而它们本来就该长成一样。
+ * 记账记录、资金变化记录、统计明细、待办历史共用这一颗 —— 以前记账页自己拼了一行
+ * （还带一个描边下拉），表格页另有一行；同一个动作长了两张脸。样式只在
+ * `styles/pagination.css` 里定义一次。
+ *
+ * 换每页条数由调用方回第一页：停在原来的页码上只会看到空白或错位。
  */
 export function TablePager({
   total,
@@ -99,10 +63,12 @@ export function TablePager({
   unit = '条',
   testId,
   pagerTestId,
+  totalTestId,
+  disabled = false,
 }: TablePagerProps): JSX.Element {
   return (
-    <div className="tr-table-foot" data-testid={testId}>
-      <span className="tr-table-foot__total">
+    <div className="tr-pager" data-testid={testId}>
+      <span className="tr-pager__total" data-testid={totalTestId}>
         共 {total} {unit}
       </span>
       <AntPagination
@@ -111,8 +77,13 @@ export function TablePager({
         total={total}
         pageSize={pageSize}
         pageSizeOptions={pageSizeOptions}
-        showSizeChanger={pageSizeOptions !== undefined}
+        showSizeChanger={
+          pageSizeOptions !== undefined
+            ? ({ 'aria-label': '每页条数' } as SelectProps)
+            : false
+        }
         showLessItems
+        disabled={disabled}
         onChange={onChange}
         itemRender={pagerItemRender(pagerTestId ?? testId)}
       />

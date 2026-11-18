@@ -142,6 +142,13 @@ test('记录：记一笔 → 列表/统计 → 筛选 → 删除', async () => {
     await expect(page.getByTestId('tr-row')).toHaveText(/午餐/)
     await expect(page.getByTestId('tr-row')).toHaveText(/-12\.34/)
     await expect(page.getByTestId('tr-total')).toHaveText('共 1 条')
+
+    // 分页行与资金记录 / 待办历史共用同一个 `<TablePager>`：条数、页码、每页条数同一行
+    const pager = page.getByTestId('tr-footer')
+    await expect(pager).toContainText('15 条/页')
+    await pager.locator('.ant-pagination-options .ant-select').click()
+    await page.locator('.ant-select-item-option', { hasText: '30 条/页' }).click()
+    await expect(pager).toContainText('30 条/页')
     await expect(page.getByTestId('tr-row')).toContainText('离群值')
     await expect(page.getByTestId('tr-row').locator('.tr-cell-mark')).toHaveAttribute(
       'title',

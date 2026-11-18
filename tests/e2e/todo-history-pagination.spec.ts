@@ -88,7 +88,7 @@ test('待办历史：默认每页 15 条，可切换条数', async () => {
     // 分页条默认就是每页 15 条
     await expect(foot).toContainText('15 条/页')
     // 分页跟着表格走：在表格下方、同一个滚动区里
-    await expect(page.locator('.todo-scroll .tr-table-foot')).toContainText('共 21 条')
+    await expect(page.locator('.todo-scroll .tr-pager')).toContainText('共 21 条')
     // 完成时刻倒序：最新完成的排在第一行
     await expect(rows.nth(0)).toContainText('事项 20')
     await expect(rows.nth(14)).toContainText('事项 6')

@@ -5,7 +5,7 @@
  * 行右侧的三枚动作由 {@link RecordRowActions} 渲染，同步请求的发起仍在页面。
  */
 
-import { Select, Table, type TableProps } from 'antd'
+import { Table, type TableProps } from 'antd'
 import { useRef, type HTMLAttributes, type JSX } from 'react'
 
 import { signedAmount, transactionTypeText } from '../../shared/domain/format'
@@ -16,7 +16,7 @@ import type { TransactionRecordDto } from '../../shared/types/transaction'
 
 import { Button } from '../components/button'
 import { Icon } from '../components/icon'
-import { Pagination } from '../components/pagination'
+import { TablePager } from '../components/pagination'
 import { ScrollArea } from '../components/scroll-area'
 import { RecordRowActions } from './records-row-actions'
 
@@ -96,7 +96,6 @@ export function RecordsTable({
   onCreate,
 }: RecordsTableProps): JSX.Element {
   const contentRef = useRef<HTMLDivElement>(null)
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   const columns: TableProps<TransactionRecordDto>['columns'] = [
     {
@@ -250,32 +249,23 @@ export function RecordsTable({
         </ScrollArea>
       </div>
 
-      <div className="tr-footer">
-        <span className="tr-footer-total" data-testid="tr-total">
-          共 {total} 条
-        </span>
-        <div className="tr-footer-controls">
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            disabled={loading}
-            showSummary={false}
-            onChange={onPageChange}
-          />
-          <Select
-            data-testid="tr-page-size"
-            aria-label="每页条数"
-            value={pageSize}
-            style={{ width: 110 }}
-            onChange={onPageSizeChange}
-            options={[
-              { value: 15, label: '15 条/页' },
-              { value: 30, label: '30 条/页' },
-              { value: 50, label: '50 条/页' },
-            ]}
-          />
-        </div>
-      </div>
+      <TablePager
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        pageSizeOptions={[15, 30, 50]}
+        disabled={loading}
+        onChange={(nextPage, nextSize) => {
+          // 换每页条数就回第一页：停在原来的页码上只会看到空白或错位。
+          if (nextSize !== pageSize) {
+            onPageSizeChange(nextSize)
+            return
+          }
+          onPageChange(nextPage)
+        }}
+        testId="tr-footer"
+        totalTestId="tr-total"
+      />
     </div>
   )
 }
