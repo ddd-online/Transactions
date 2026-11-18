@@ -52,7 +52,10 @@
 }
 
 /* 事件行 = 平铺在左轨上的一条记录：没有卡片壳，选中用主色 tint，行间一条发丝线。
- * 左侧 3px 色条继续承担事件颜色。 */
+ * 左侧 3px 色条继续承担事件颜色。
+ *
+ * 底边线挂在**每一行自己**身上（不是「下一行带顶边线」）：最后一行也要收口，
+ * 列表末尾才不会突然断掉。 */
 .key-event-card {
   position: relative;
   display: flex;
@@ -60,11 +63,8 @@
   min-height: 80px;
   cursor: pointer;
   background-color: transparent;
+  border-bottom: 1px solid var(--transactions-color-divider);
   transition: background-color var(--transactions-transition-fast);
-}
-
-.key-event-card + .key-event-card {
-  border-top: 1px solid var(--transactions-color-divider);
 }
 
 .key-event-card:hover {
